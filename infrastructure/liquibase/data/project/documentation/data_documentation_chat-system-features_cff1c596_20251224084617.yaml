@@ -1,0 +1,128 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-chat-system-features-cff1c596
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-871662541330786'
+        - column:
+            name: doc_id
+            value: chat-system-features
+        - column:
+            name: title
+            value: Функциональные системы чата
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: features
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: null
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - chat
+            - features
+            - channels
+            - moderation
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value: []
+        - column:
+            name: related_documents
+            value: '[]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: ''
+        - column:
+            name: audience
+            value: []
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "chat-system-features", "title": "Функциональные
+              системы чата", "document_type": "architecture", "category": "features",
+              "status": "draft", "version": "1.0.0", "owners": [{"role": "architect",
+              "contact": "architect@necp.game"}], "tags": ["chat", "features", "channels",
+              "moderation"]}, "summary": {"goal": "Описать функциональные системы
+              каналов, модерации и форматирования."}, "content": {"sections": [{"id":
+              "channel-system", "title": "Система каналов", "body": "## Типы каналов\n\n###
+              Глобальные каналы\n- **GLOBAL**: Общий чат сервера (max 500 символов,
+              cooldown 5 сек)\n- **TRADE**: Торговый чат (max 300 символов, cooldown
+              10 сек)\n- **NEWBIE**: Чат для новичков (max 200 символов, cooldown
+              3 сек)\n\n### Локальные каналы\n- **LOCAL**: Чат зоны (радиус 100м,
+              max 200 символов)\n- **INSTANCE**: Чат инстанса (текущий данжон/рейд)\n-
+              **AREA**: Чат района города\n\n### Групповые каналы\n- **PARTY**: Группа
+              (2-5 игроков)\n- **RAID**: Рейд (6-40 игроков)\n- **GUILD**: Гильдия
+              (до 100 игроков)\n\n### Приватные каналы\n- **WHISPER**: Личное сообщение\n-
+              **SYSTEM**: Системные уведомления\n\n### Боевые каналы\n- **COMBAT_LOG**:
+              Лог боя\n- **RP_EMOTE**: Ролевые эмоции\n\n## Управление правами\n```json\n{\n  \"read\":
+              true,\n  \"write\": true,\n  \"moderate\": false,\n  \"invite\": true,\n  \"kick\":
+              false\n}\n```\n", "mechanics_links": [], "assets": []}, {"id": "moderation-system",
+              "title": "Система модерации", "body": "## Фильтры контента\n\n### Profanity
+              Filter\n- Список запрещенных слов\n- Whitelist разрешенных URL\n- Нормализация
+              регистра\n- Замена повторяющихся символов\n\n### Spam Detection\n- Rate
+              limiting: max 10 сообщений/минуту\n- Duplicate detection\n- Pattern
+              recognition\n\n## Система банов\n- **TEXT_MUTE**: Запрет на текстовый
+              чат\n- **CHANNEL_BAN**: Бан в конкретном канале\n- **GLOBAL_BAN**: Полный
+              бан чата\n\n## Авто-баны\n- 3 нарушения → 1 час mute\n- 5 нарушений
+              → 24 часа ban\n- 10 нарушений → permanent ban\n", "mechanics_links":
+              [], "assets": []}, {"id": "formatting-system", "title": "Система форматирования",
+              "body": "## Rich Formatting\n```\n**bold text** → <strong>bold text</strong>\n*italic
+              text* → <em>italic text</em>\n`code` → <code>code</code>\n:smile: →
+              [EMOJI]\n@username → <span class=\"mention\">@username</span>\n```\n\n##
+              Slash-команды\n```\n/w username message    - Личное сообщение\n/r message            -
+              Ответить на последнее сообщение\n/party message        - Сообщение группе\n/help                 -
+              Справка\n/ignore username      - Игнорировать пользователя\n/report
+              username      - Пожаловаться\n```\n", "mechanics_links": [], "assets":
+              []}, {"id": "history-system", "title": "Система истории сообщений",
+              "body": "## Хранение данных\n- **Redis**: Последние 1000 сообщений на
+              канал (TTL 24 часа)\n- **PostgreSQL**: Полная история (удаление через
+              30 дней)\n\n## Пагинация\n```\nGET /api/v1/chat/history/{channelId}?before=msg_123&limit=50\n```\n\n##
+              Поиск и фильтрация\n- Поиск по тексту сообщений\n- Фильтрация по пользователю\n-
+              Фильтрация по времени\n", "mechanics_links": [], "assets": []}, {"id":
+              "data-flows", "title": "Потоки данных", "body": "## Отправка сообщения\n1.
+              Клиент → chat-core-service\n2. Валидация через chat-moderation-service\n3.
+              Форматирование текста\n4. Определение получателей через chat-channel-service\n5.
+              Сохранение через chat-history-service\n6. Отправка через WebSocket\n\n##
+              Модерация\n1. Проверка запрещенных слов\n2. Анализ спама через Redis\n3.
+              Авто-бан при нарушениях\n4. Уведомление модераторов\n", "mechanics_links":
+              [], "assets": []}]}, "implementation": {"github_issue": 172}}'
+        - column:
+            name: metadata
+            value: '{"id": "chat-system-features", "title": "Функциональные системы
+              чата", "document_type": "architecture", "category": "features", "status":
+              "draft", "version": "1.0.0", "owners": [{"role": "architect", "contact":
+              "architect@necp.game"}], "tags": ["chat", "features", "channels", "moderation"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\chat-system-features.yaml

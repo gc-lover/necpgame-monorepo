@@ -1,0 +1,152 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-chat-channels-0aafd317
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-101426099870002'
+        - column:
+            name: doc_id
+            value: backend-chat-channels
+        - column:
+            name: title
+            value: Chat Channels — Типы чат-каналов
+        - column:
+            name: document_type
+            value: implementation
+        - column:
+            name: category
+            value: backend
+        - column:
+            name: status
+            value: approved
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-07 05:30:00+00:00
+        - column:
+            name: concept_approved
+            value: true
+        - column:
+            name: concept_reviewed_at
+            value: 2025-11-07 05:30:00+00:00
+        - column:
+            name: owners
+            value: '[{"role": "communications_lead", "contact": "communications@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - chat
+            - communication
+            - channels
+        - column:
+            name: topics
+            value:
+            - player-communication
+            - social-systems
+        - column:
+            name: related_systems
+            value:
+            - chat-service
+            - moderation-service
+            - voice-service
+        - column:
+            name: related_documents
+            value: '[{"id": "backend-chat-moderation", "relation": "complements"},
+              {"id": "backend-chat-features", "relation": "complements"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/implementation/backend/chat/chat-channels.md
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - backend
+            - community
+            - live-ops
+        - column:
+            name: risk_level
+            value: high
+        - column:
+            name: content
+            value: '{"metadata": {"id": "backend-chat-channels", "title": "Chat Channels
+              — Типы чат-каналов", "document_type": "implementation", "category":
+              "backend", "status": "approved", "version": "1.0.0", "last_updated":
+              "2025-11-07T05:30:00+00:00", "concept_approved": true, "concept_reviewed_at":
+              "2025-11-07T05:30:00+00:00", "owners": [{"role": "communications_lead",
+              "contact": "communications@necp.game"}], "tags": ["chat", "communication",
+              "channels"], "topics": ["player-communication", "social-systems"], "related_systems":
+              ["chat-service", "moderation-service", "voice-service"], "related_documents":
+              [{"id": "backend-chat-moderation", "relation": "complements"}, {"id":
+              "backend-chat-features", "relation": "complements"}], "source": "shared/docs/knowledge/implementation/backend/chat/chat-channels.md",
+              "visibility": "internal", "audience": ["backend", "community", "live-ops"],
+              "risk_level": "high"}, "review": {"chain": [{"role": "communications_lead",
+              "reviewer": "", "reviewed_at": "2025-11-07T05:30:00+00:00", "status":
+              "approved"}], "next_actions": []}, "summary": {"problem": "Требовалось
+              зафиксировать типы чат-каналов, их ограничения и права доступа для подготовки
+              API и сервисов модерации.", "goal": "Стандартизировать конфигурацию
+              всех каналов (global, local, group, private, combat) и правила их использования.",
+              "essence": "Документ описывает схему данных `chat_channels`, характеристики
+              каналов, алгоритмы выбора получателей и необходимые API.", "key_points":
+              ["Более десяти типов каналов с отдельными cooldown, лимитами сообщений
+              и областью действия.", "Права чтения/записи и параметры антиспама фиксируются
+              в одной схеме `chat_channels`.", "Реципиенты вычисляются сервисами сессий,
+              расположения, групп и гильдий для разных режимов общения."]}, "content":
+              {"sections": [{"id": "overview", "title": "Краткое описание системы",
+              "body": "Система чата поддерживает глобальные, локальные, групповые,
+              приватные и боевые каналы. Для каждого канала определены\nобласть действия,
+              лимиты частоты сообщений и правила модерации. Конфигурация каналов используется
+              как на сервере, так и\nв клиентских UI.\n", "mechanics_links": [], "assets":
+              []}, {"id": "data_model", "title": "Схема данных `chat_channels`", "body":
+              "Таблица `chat_channels` хранит тип канала, параметры владения, настройки
+              доступа, cooldown, максимальную длину сообщения\nи статус активности.
+              Индексы по типу и владельцу ускоряют выборки для кастомных каналов и
+              модерации.\n", "mechanics_links": [], "assets": []}, {"id": "channel_catalog",
+              "title": "Каталог каналов и настройки", "body": "Глобальные каналы (GLOBAL,
+              TRADE, NEWBIE) охватывают сервер и имеют строгие cooldown. Локальные
+              каналы ограничены зоной\nили инстансом. Групповые (PARTY, RAID, GUILD,
+              GUILD_OFFICER) обеспечивают координацию отрядов и гильдий. Приватные
+              каналы\nвключают WHISPER и SYSTEM, а боевые каналы предоставляют Combat
+              Log и RP Emote поток.\n", "mechanics_links": [], "assets": []}, {"id":
+              "recipient_logic", "title": "Определение получателей сообщений", "body":
+              "Реципиенты выбираются специализированными сервисами: session-service
+              для глобальных и торговых чатов, location-service для\nлокальных каналов,
+              party/raid/guild сервисы для групповых, а whisper направляется отдельному
+              игроку. Алгоритм гарантирует\nдоставку только актуальным участникам
+              и учитывает кросс-региональные ограничения.\n", "mechanics_links": [],
+              "assets": []}, {"id": "api_endpoints", "title": "API и операции", "body":
+              "REST API включает получение списка каналов, присоединение и выход,
+              а также получение участников конкретного канала.\nДополнительные endpoint''ы
+              поддерживают историю сообщений и управление пользовательскими каналами
+              в других частях системы.\n", "mechanics_links": [], "assets": []}]},
+              "appendix": {"glossary": [], "references": [], "decisions": []}, "implementation":
+              {"needs_task": false, "github_issue": 77, "queue_reference": ["shared/trackers/queues/concept/queued.yaml#backend-chat-channels"],
+              "blockers": []}, "history": [{"version": "1.0.0", "date": "2025-11-07",
+              "author": "ai_brain_manager", "changes": "Создан каталог чат-каналов,
+              схема `chat_channels` и логика определения получателей."}], "validation":
+              {"checksum": "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "backend-chat-channels", "title": "Chat Channels — Типы
+              чат-каналов", "document_type": "implementation", "category": "backend",
+              "status": "approved", "version": "1.0.0", "last_updated": "2025-11-07T05:30:00+00:00",
+              "concept_approved": true, "concept_reviewed_at": "2025-11-07T05:30:00+00:00",
+              "owners": [{"role": "communications_lead", "contact": "communications@necp.game"}],
+              "tags": ["chat", "communication", "channels"], "topics": ["player-communication",
+              "social-systems"], "related_systems": ["chat-service", "moderation-service",
+              "voice-service"], "related_documents": [{"id": "backend-chat-moderation",
+              "relation": "complements"}, {"id": "backend-chat-features", "relation":
+              "complements"}], "source": "shared/docs/knowledge/implementation/backend/chat/chat-channels.md",
+              "visibility": "internal", "audience": ["backend", "community", "live-ops"],
+              "risk_level": "high"}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\backend\chat\chat-channels.yaml

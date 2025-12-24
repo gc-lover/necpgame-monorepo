@@ -1,53 +1,67 @@
-# Issue: #1075
+# Issue: #249
 metadata:
-  id: canon-quest-sao-paulo-2020-2029-street-art
-  title: 'Сан-Паулу 2020-2029 — «Уличное искусство»'
+  id: canon-quest-sao-paulo-street-art
+  title: 'Сан-Паулу — Стены говорят'
   document_type: canon
-  category: timeline-author
-  status: draft
+  category: quest
+  status: approved
   version: '2.0.0'
   last_updated: 2025-11-29T00:00:00Z
-  concept_approved: false
-  concept_reviewed_at: ''
+  concept_approved: true
+  concept_reviewed_at: 2025-11-11T15:50:00Z
   owners:
-    - role: concept_director
-      contact: concept@necp.game
+    - role: narrative_team
+      contact: narrative@necp.game
   tags:
     - sao_paulo
-    - quest
-    - art
+    - street_art
+    - culture
   topics:
-    - city_quests
-    - cultural_experience
+    - art-tourism
+    - community-expression
+    - identity
   related_systems:
-    - narrative-service
-    - live-events-service
-  related_documents: [ ]
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/sao-paulo/2020-2029/quest-005-street-art.md
+    - heist-preparation-system
+    - stealth-system
+    - hacking-system
+    - skill-check-engine
+    - reputation-system
+    - world-state-system
+    - quest-engine
+  related_documents:
+    - id: canon-quest-sao-paulo-feijoada
+      relation: complements
+    - id: github-issue-365
+      title: GitHub Issue #365
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/365
+      relation: migrated_to
+      migrated_at: 2025-11-22T21:10:00Z
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/sao-paulo/2020-2029/quest-005-street-art.md
   visibility: internal
   audience:
-    - concept
+    - lore
     - narrative
-    - liveops
+    - quest-design
   risk_level: low
 review:
   chain:
-    - role: concept_director
+    - role: narrative_lead
       reviewer: ''
       reviewed_at: ''
       status: pending
   next_actions: [ ]
 summary:
-  problem: 'Квест о стрит-арте не учитывает динамику сцен и роль городских проектов поддержки художников.'
-  goal: 'Сделать тур по стрит-арту живым культурным событием с участием местных художников и интерактивных площадок.'
-  essence: 'Игрок исследует Beco do Batman и крупные муралы Сан-Паулу, взаимодействует с художниками и создаёт собственный тег.'
+  problem: "Квест организации нелегального massive mural требует детализации heist-style preparation, stealth infiltration и quick choices под давлением."
+  goal: "Создать полноценный контентный квест с механиками подготовки операции, скрытного проникновения и моральными выборами о самопожертвовании."
+  essence: "Игрок помогает коллективу Voz das Ruas организовать нелегальный massive mural на здании мэрии как протест против уничтожения граффити: отключить камеры, доставить краску, отвлечь полицию, создать 50-метровый фасад за одну ночь."
   key_points:
-    - 'Погружение в легализованную сцену стрит-арта и её историю.'
-    - 'Встреча с легендарными Os Gêmeos и другими художниками.'
-    - 'Создание личного граффити с использованием AR.'
+    - Heist-style preparation: отключить камеры (hack/paint/loop), доставить 200 баллонов краски, отвлечь полицию.
+    - Stealth infiltration и quick choices под давлением.
+    - Три финальных выбора: завершить mural (аресты, но победа), сбежать всем (незаконченно, но движение жив), отвлечь полицию самому (ты арестован, но герой).
+    - World state change: ban reversed если успех.
 quest_definition:
   quest_type: side
-  level_min: 2
+  level_min: 20
   level_max: null
   requirements:
     required_quests: [ ]
@@ -55,100 +69,166 @@ quest_definition:
     required_reputation: { }
     required_items: [ ]
   objectives:
-    - id: join_street_art_tour
-      text: "Прибыть в район Vila Madalena и присоединиться к туру по уличным арт-объектам Сан-Паулу, слушать гида о развитии сцены"
-      type: travel
-      target: sao_paulo_vila_madalena
+    - id: meet_voz_das_ruas
+      text: "Встретиться с коллективом Voz das Ruas и узнать о плане операции"
+      type: interact
+      target: voz_das_ruas_collective
       count: 1
       optional: false
-    - id: explore_beco_do_batman
-      text: "Начать тур в культовом переулке Бэтмена, наблюдать как стены меняются каждую неделю, общаться с художниками и участвовать в голосовании за лучший новый мурал"
-      type: explore
-      target: sao_paulo_beco_do_batman
+    - id: disable_cameras
+      text: "Отключить камеры (hack/paint/loop)"
+      type: choice
+      target: camera_disabling
       count: 1
       optional: false
-    - id: visit_city_murals
-      text: "Отправиться к гигантским муралам, созданным легендами (включая Os Gêmeos), использовать AR-гайды и аудио-комментарии"
-      type: explore
-      target: sao_paulo_city_murals
+    - id: deliver_paint
+      text: "Доставить 200 баллонов краски (курьер/DIY/inside job)"
+      type: choice
+      target: paint_delivery
       count: 1
       optional: false
-    - id: create_own_tag
-      text: "На площадке, предоставленной городом, создать свой символ или криптограффити с использованием AR"
-      type: craft
-      target: sao_paulo_own_graffiti
+    - id: distract_police
+      text: "Отвлечь полицию (ложная тревога/вечеринка/взятка)"
+      type: choice
+      target: police_distraction
+      count: 1
+      optional: false
+    - id: deal_with_guard
+      text: "Справиться с охранником во время ночи граффити"
+      type: interact
+      target: security_guard
+      count: 1
+      optional: false
+    - id: make_final_choice
+      text: "Принять финальное решение: завершить mural/сбежать/отвлечь полицию самому"
+      type: choice
+      target: final_mural_choice
       count: 1
       optional: false
   rewards:
-    experience: 1500
-    currency: -30
-    items: [ ]
-    reputation:
-      sao_paulo_art: 25
-    flags:
-      - street_artist_achievement
-  branches: [ ]
+    experience: 3000
+    money: 0
+    items:
+      - item_id: achievement_art_martyr
+        quantity: 1
+    reputation: { }
+    unlocks:
+      - street_art_quests
+      - artist_collaboration_system
+  branches:
+    - branch_id: complete_mural
+      description: "Завершить mural (аресты, но победа)"
+      consequences:
+        world_state:
+          mural_completed: true
+          ban_reversed: true
+          artists_arrested: true
+        reputation:
+          Street_Artists: +50
+          Police: -30
+        experience: 8000
+    - branch_id: escape_together
+      description: "Сбежать всем (незаконченно, но движение жив)"
+      consequences:
+        world_state:
+          mural_incomplete: true
+          movement_alive: true
+        reputation:
+          Street_Artists: +30
+          Police: -10
+        experience: 3000
+    - branch_id: self_sacrifice
+      description: "Отвлечь полицию самому (ты арестован, но герой)"
+      consequences:
+        world_state:
+          mural_completed: true
+          player_arrested: true
+          movement_saved: true
+        reputation:
+          Street_Artists: +60
+          Police: -40
+        experience: 8000
+        achievement: art_martyr
 content:
   sections:
-    - id: overview
-      title: Описание
+    - id: quest_profile
+      title: 'Параметры квеста'
       body: |
-        Игрок прибывает в район Vila Madalena и присоединяется к туру по уличным арт-объектам Сан-Паулу. Гид рассказывает
-        о развитии сцены и поддержке со стороны города.
-      mechanics_links:
-        - mechanics/quests/quest-structure.yaml
+        Тип: side quest (heist-style, stealth). Сложность: hard. Формат: solo/group. Длительность: 3-4 часа.
+        Награды: 3 000-8 000 XP (зависит от выбора), ачивка «Мученик искусства» (за самопожертвование), репутация Street Artists +30-60.
+      mechanics_links: [ ]
       assets: [ ]
-    - id: beco_do_batman
-      title: Beco do Batman
+    - id: stages
+      title: 'Этапы квеста'
       body: |
-        Тур стартует в культовом переулке Бэтмена. Игрок наблюдает, как стены меняются каждую неделю, общается с художниками
-        и участвует в голосовании за лучший новый мурал.
-      mechanics_links:
-        - mechanics/world/events/live-events-system.yaml
+        1. Встретиться с коллективом Voz das Ruas, узнать о плане нелегального massive mural на здании мэрии.
+        2. Подготовить операцию: отключить камеры (hack/paint/loop), доставить 200 баллонов краски (курьер/DIY/inside job), отвлечь полицию (ложная тревога/вечеринка/взятка).
+        3. Ночь граффити: проникнуть на территорию мэрии, справиться с охранником, начать создание 50-метрового фасада.
+        4. Принять финальное решение: завершить mural (аресты, но победа), сбежать всем (незаконченно, но движение жив), отвлечь полицию самому (ты арестован, но герой).
+      mechanics_links: [ ]
       assets: [ ]
-    - id: city_murals
-      title: Городские муралы
+    - id: systems_hooks
+      title: 'Системные крючки'
       body: |
-        Игрок отправляется к гигантским муралам, созданным легендами (включая Os Gêmeos). Используются AR-гайды и аудио-комментарии.
-      mechanics_links:
-        - mechanics/social/social-dialogue.yaml
+        heist-preparation-system обрабатывает планирование операции, stealth-system управляет скрытным проникновением, hacking-system обрабатывает отключение камер, skill-check-system проверяет навыки stealth/hacking/social, reputation-system обновляет отношения с Street_Artists/Police, world-state-system изменяет состояние ban на граффити и статус движения.
+      mechanics_links: [ ]
       assets: [ ]
-    - id: own_tag
-      title: Собственный тег
+    - id: regional_details
+      title: 'Региональные детали'
       body: |
-        На площадке, предоставленной городом, игрок создаёт свой символ или криптограффити. Возможна кооперация с другими
-        игроками и конкурсы.
-      mechanics_links:
-        - mechanics/world/world-state/player-impact-systems.yaml
+        Vila Madalena — heart уличного искусства Сан-Паулу, Beco do Batman — икона. Но gentrification пришла: новые владельцы закрашивают муралы, полиция арестовывает художников. Коллектив Voz das Ruas планирует final stand — 50 художников, одна ночь, 50-метровый фасад мэрии. Illegal, risky, revolutionary. Сан-Паулу — мировая столица street art, но власти пытаются контролировать искусство.
+      mechanics_links: [ ]
+      assets: [ ]
+    - id: preparation_choices
+      title: 'Выборы подготовки'
+      body: |
+        Отключить камеры: hack (нужен hacking skill 0.7), paint (закрасить объективы), loop (зациклить видео).
+        Доставить краску: курьер (быстро, но дорого), DIY (самому, но риск), inside job (нужна репутация с сотрудниками).
+        Отвлечь полицию: ложная тревога (hack системы), вечеринка (social skill), взятка (деньги).
+      mechanics_links: [ ]
+      assets: [ ]
+    - id: final_choices
+      title: 'Финальные выборы и последствия'
+      body: |
+        Завершить mural: 50 художников создают 50-метровый фасад, но все арестованы. Ban reversed, движение побеждает, но ценой свободы. 8 000 XP, репутация Street Artists +50, Police -30.
+        Сбежать всем: mural незакончен, но все свободны. Движение живет, но протест не завершен. 3 000 XP, репутация Street Artists +30, Police -10.
+        Отвлечь полицию самому: ты арестован, но остальные завершают mural. Ты герой, но в тюрьме. 8 000 XP, ачивка «Мученик искусства», репутация Street Artists +60, Police -40.
+      mechanics_links: [ ]
       assets: [ ]
     - id: rewards
-      title: Награды и последствия
+      title: 'Награды и последствия'
       body: |
-        - XP: 1 500, Валюта: -30.
-        - Показатель искусства +25 и ачивка «Уличный артист».
-        - Доступ к фестивалям и коллаборациям с художниками, временный скин для дрона/курьера.
-      mechanics_links:
-        - mechanics/progression/progression-attributes-matrix.yaml
+        Награды зависят от выбора: 3 000-8 000 XP, ачивка «Мученик искусства» (за самопожертвование), репутация Street Artists +30-60, Police -10-40.
+        World state изменяется: mural_completed/incomplete, ban_reversed, artists_arrested, player_arrested, movement_alive/saved в зависимости от выбора.
+      mechanics_links: [ ]
       assets: [ ]
 appendix:
   glossary: [ ]
-  references: [ ]
+  references:
+    - title: Beco do Batman Tourism Guide
+      link: https://www.timeout.com/sao-paulo
+    - title: Os Gêmeos Official Site
+      link: https://www.osgemeos.com.br
   decisions: [ ]
 implementation:
-  github_issue: 1075
+  github_issue: 249
   needs_task: false
-  queue_reference: [ ]
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
   blockers: [ ]
 history:
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer
-    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики культурного опыта и уличного искусства.'
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции "Стены говорят". Добавлены heist-style preparation mechanics, stealth infiltration, quick choices под давлением и моральные выборы о самопожертвовании. Интеграция с системами скрытности, взлома и world state.'
+  - version: '1.1.0'
+    date: 2025-11-11
+    author: narrative_team
+    changes: 'Добавлены системные крючки, обновлён маршрут и источники.'
   - version: '0.1.0'
-    date: 2025-11-12
-    author: concept_team
-    changes: 'Конвертация квеста «Уличное искусство» в формат знаний.'
+    date: 2025-11-09
+    author: narrative_team
+    changes: 'Markdown-описание тура по стрит-арту.'
 validation:
   checksum: ''
   schema_version: '1.0'
-

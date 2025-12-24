@@ -1,0 +1,196 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-player-character-data-flows-8c9edb95
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-416430554297246'
+        - column:
+            name: doc_id
+            value: player-character-data-flows
+        - column:
+            name: title
+            value: Архитектура системы управления персонажами игроков - Потоки данных
+              и синхронизация
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-30 20:45:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[]'
+        - column:
+            name: tags
+            value: []
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value: []
+        - column:
+            name: related_documents
+            value: '[{"id": "player-character-core", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: ''
+        - column:
+            name: audience
+            value: []
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "player-character-data-flows", "title": "Архитектура
+              системы управления персонажами игроков - Потоки данных и синхронизация",
+              "document_type": "architecture", "category": "systems", "status": "draft",
+              "version": "1.1.0", "last_updated": "2025-11-30T20:45:00+00:00", "github_issue":
+              389, "related_documents": [{"id": "player-character-core", "relation":
+              "extends"}]}, "data_flow": {"character_creation": "1. Игрок запрашивает
+              создание персонажа через API\n2. Character Creation Manager проверяет
+              доступные слоты\n3. Валидируется имя персонажа (уникальность)\n4. Создаётся
+              запись персонажа в БД\n5. Задаются атрибуты и навыки по классу и origin\n6.
+              Назначается стартовая зона и валюта\n7. Inventory Service создаёт инвентарь\n8.
+              Quest Service выдаёт начальные квесты\n9. Character Creation Manager
+              публикует CharacterCreated событие\n10. Notification Service уведомляет
+              игрока\n11. Realtime Gateway синхронизирует состояние\n", "character_deletion":
+              "1. Игрок запрашивает удаление персонажа\n2. Character Deletion Manager
+              проверяет права\n3. Создаётся снапшот для восстановления\n4. Устанавливается
+              флаг deleted и can_restore_until (30 дней)\n5. Освобождается слот (уменьшается
+              used_slots)\n6. Character Deletion Manager публикует CharacterDeleted
+              событие\n7. Интеграция с другими сервисами для очистки состояния\n8.
+              Notification Service уведомляет игрока\n9. Realtime Gateway синхронизирует
+              состояние\n", "character_switching": "1. Игрок запрашивает переключение
+              персонажа\n2. Character Switching Manager сохраняет текущего персонажа\n3.
+              Проверяются права на нового персонажа\n4. Обновляется session (current_character_id)\n5.
+              Обновляется last_played_at\n6. Character Switching Manager публикует
+              CharacterSwitched событие\n7. Inventory Service загружает инвентарь
+              нового персонажа\n8. Quest Service загружает квесты нового персонажа\n9.
+              Realtime Gateway синхронизирует состояние\n", "stats_recalculation":
+              "1. Триггер пересчёта статов (изменение атрибутов, экипировки, бафов)\n2.
+              Stats Recalculation Manager получает базовые статы из атрибутов\n3.
+              Добавляются бонусы от экипировки\n4. Добавляются бонусы от активных
+              бафов\n5. Синхронизируются здоровье и броня\n6. Валидируются значения
+              (защита от переполнения)\n7. Сохраняются обновлённые статы в БД\n8.
+              Realtime Gateway синхронизирует состояние\n"}, "data_consistency": {"strategy":
+              "Strong Consistency (ACID транзакции) для критичных операций (создание
+              персонажа, удаление, переключение)", "mechanisms": ["ACID транзакции
+              для создания персонажей, удаления и переключения", "Оптимистичные блокировки
+              (versioning) для предотвращения конфликтов при обновлении персонажей",
+              "Валидация перед созданием персонажа и переключением", "Синхронизация
+              с другими сервисами через Event Bus", "Outbox Pattern для гарантированной
+              доставки событий", "Saga Pattern для распределенных операций (создание
+              персонажа, удаление, переключение, покупка слотов)"]}, "data_synchronization":
+              {"event_sourcing": "Все изменения состояния персонажей (создание, удаление,
+              восстановление, переключение, обновление статов)\nзаписываются как события
+              в Event Store.\nЭто обеспечивает полный аудит, возможность восстановления
+              состояния и \"time travel\" для отладки.\nПримеры событий: CharacterCreatedEvent,
+              CharacterDeletedEvent, CharacterRestoredEvent, CharacterSwitchedEvent,
+              CharacterStatsRecalculatedEvent.\n", "cqrs_pattern": "Разделение команд
+              (создание персонажей, удаление, переключение, пересчёт статов) и запросов\n(получение
+              списка персонажей, получение информации о персонаже, получение слотов)
+              для оптимизации производительности\nи масштабируемости. Read-модели
+              могут быть кэшированы в Redis для быстрых запросов.\n", "saga_pattern":
+              "Для распределенных транзакций, таких как создание персонажа (создание,
+              выдача стартовых ресурсов,\nсоздание инвентаря, выдача начальных квестов,
+              уведомление игрока) или удаление персонажа (создание снапшота,\nустановка
+              флага deleted, освобождение слота, очистка состояния в других сервисах),
+              используется Saga Pattern\nдля обеспечения атомарности операций между
+              Character Service, Inventory Service, Quest Service, Economy Service
+              и Notification Service.\n", "outbox_pattern": "Для гарантированной доставки
+              событий в Event Bus используется Outbox Pattern,\nкоторый записывает
+              события в транзакционную таблицу перед публикацией.\n"}, "tickrate_specification":
+              {"character_creation_operations": {"tickrate": "Event-based (on-demand)",
+              "network_load": "- Создание персонажа: event-based, ~0.01-0.1 events/sec
+              на игрока\n- Проверка имени: event-based, ~0.01-0.05 requests/sec на
+              игрока\n- Получение доступных слотов: event-based, ~0.001-0.01 requests/sec
+              на игрока\n- Общий трафик: ~0.1-0.3 KB/sec на игрока для операций создания\n",
+              "latency_requirements": "< 500-1000ms для создания персонажа (включая
+              интеграции), < 30-100ms для проверки имени", "sync_strategy": "Strong
+              Consistency (ACID транзакции) для создания персонажей"}, "character_deletion_operations":
+              {"tickrate": "Event-based (on-demand)", "network_load": "- Удаление
+              персонажа: event-based, ~0.001-0.01 events/sec на игрока\n- Получение
+              статуса удаления: event-based, ~0.001-0.01 requests/sec на игрока\n-
+              Общий трафик: ~0.1-0.3 KB/sec для операций удаления\n", "latency_requirements":
+              "< 300-500ms для удаления персонажа (включая создание снапшота)", "sync_strategy":
+              "Strong Consistency (ACID транзакции) для удаления персонажей"}, "character_restoration_operations":
+              {"tickrate": "Event-based (on-demand)", "network_load": "- Восстановление
+              персонажа: event-based, ~0.001-0.01 events/sec на игрока\n- Получение
+              списка удалённых: event-based, ~0.001-0.01 requests/sec на игрока\n-
+              Общий трафик: ~0.1-0.3 KB/sec для операций восстановления\n", "latency_requirements":
+              "< 300-500ms для восстановления персонажа (включая восстановление состояния)",
+              "sync_strategy": "Strong Consistency (ACID транзакции) для восстановления
+              персонажей"}, "character_switching_operations": {"tickrate": "Event-based
+              (on-demand при переключении) + 1-5 Hz для обновления сессии", "network_load":
+              "- Переключение персонажа: event-based, ~0.01-0.1 events/sec на игрока\n-
+              Получение текущего персонажа: event-based, ~0.01-0.05 requests/sec на
+              игрока\n- Обновление сессии: 1-5 Hz, ~0.01-0.05 events/sec на игрока\n-
+              Общий трафик: ~0.2-0.5 KB/sec для операций переключения\n", "latency_requirements":
+              "< 200-400ms для переключения персонажа (включая загрузку инвентаря
+              и квестов)", "sync_strategy": "Strong Consistency (ACID транзакции)
+              для переключения персонажей"}, "slot_management_operations": {"tickrate":
+              "Event-based (on-demand)", "network_load": "- Получение информации о
+              слотах: event-based, ~0.001-0.01 requests/sec на игрока\n- Покупка слота:
+              event-based, ~0.001-0.01 events/sec на игрока\n- Получение доступных
+              слотов: event-based, ~0.001-0.01 requests/sec на игрока\n- Общий трафик:
+              ~0.1-0.3 KB/sec для операций слотов\n", "latency_requirements": "< 200-300ms
+              для покупки слота, < 30-100ms для получения информации", "sync_strategy":
+              "Strong Consistency (ACID транзакции) для покупки слотов"}, "stats_recalculation_operations":
+              {"tickrate": "Event-based (on-demand при изменении) + 1-5 Hz для периодического
+              пересчёта", "network_load": "- Пересчёт статов: event-based, ~0.01-0.1
+              events/sec на персонажа\n- Получение текущих статов: event-based, ~0.01-0.05
+              requests/sec на игрока\n- Периодический пересчёт: 1-5 Hz, ~0.01-0.05
+              events/sec на персонажа\n- Общий трафик: ~0.1-0.3 KB/sec для операций
+              пересчёта статов\n", "latency_requirements": "< 50-100ms для пересчёта
+              статов, < 30-100ms для получения статов", "sync_strategy": "Eventual
+              Consistency для пересчёта статов (кэширование результатов)"}, "state_management_operations":
+              {"tickrate": "Event-based (on-demand при сохранении/загрузке) + 1-10
+              Hz для автосохранения", "network_load": "- Сохранение состояния: event-based,
+              ~0.01-0.1 events/sec на персонажа\n- Загрузка состояния: event-based,
+              ~0.01-0.05 requests/sec на игрока\n- Создание снапшота: event-based,
+              ~0.001-0.01 events/sec на персонажа\n- Автосохранение: 1-10 Hz, ~0.01-0.05
+              events/sec на персонажа\n- Общий трафик: ~0.2-0.5 KB/sec для операций
+              управления состоянием\n", "latency_requirements": "< 200-400ms для сохранения
+              состояния, < 100-200ms для загрузки", "sync_strategy": "Strong Consistency
+              (ACID транзакции) для сохранения состояния"}, "event_handling": {"tickrate":
+              "Event-based (on-demand)", "network_load": "- Публикация событий персонажей:
+              event-based, ~0.1-0.5 events/sec\n- Подписка на события: event-based,
+              ~0.05-0.2 events/sec\n- Общий трафик: ~0.2-0.7 KB/sec для событий\n",
+              "latency_requirements": "< 100-300ms для публикации событий", "sync_strategy":
+              "Eventual Consistency для событий (через Event Bus)"}}}'
+        - column:
+            name: metadata
+            value: '{"id": "player-character-data-flows", "title": "Архитектура системы
+              управления персонажами игроков - Потоки данных и синхронизация", "document_type":
+              "architecture", "category": "systems", "status": "draft", "version":
+              "1.1.0", "last_updated": "2025-11-30T20:45:00+00:00", "github_issue":
+              389, "related_documents": [{"id": "player-character-core", "relation":
+              "extends"}]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\player-character-data-flows.yaml

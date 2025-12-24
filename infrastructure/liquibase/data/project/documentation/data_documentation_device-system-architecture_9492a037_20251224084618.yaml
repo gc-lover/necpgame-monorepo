@@ -1,0 +1,175 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-device-system-architecture-9492a037
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-452574087799995'
+        - column:
+            name: doc_id
+            value: device-system-architecture
+        - column:
+            name: title
+            value: Архитектура системы устройств
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-29 12:00:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - device
+            - gameplay
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - gameplay-service-go
+            - world-service-go
+        - column:
+            name: related_documents
+            value: '[{"id": "network-system-architecture", "relation": "extends"},
+              {"id": "local-network-system-architecture", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - gameplay
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "device-system-architecture", "title": "Архитектура
+              системы устройств", "document_type": "architecture", "category": "systems",
+              "status": "draft", "version": "1.0.0", "last_updated": "2025-11-29T12:00:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "device", "gameplay"], "related_systems": ["gameplay-service-go",
+              "world-service-go"], "related_documents": [{"id": "network-system-architecture",
+              "relation": "extends"}, {"id": "local-network-system-architecture",
+              "relation": "extends"}], "github_issue": 1449, "visibility": "internal",
+              "audience": ["architect", "backend", "gameplay", "api-designer"]}, "summary":
+              {"problem": "Требуется спроектировать архитектуру системы устройств
+              с поддержкой простых\nустройств (без сети) и сложных устройств (с сетью),
+              а также возможностью\nобъединения в локальную сеть.\n", "goal": "Создать
+              архитектурную схему системы устройств с определением:\n- Микросервисов
+              для управления устройствами\n- Компонентов для простых и сложных устройств\n-
+              Дистанционного взаимодействия\n- Объединения в локальную сеть\n- API
+              endpoints (высокоуровнево)\n- Структуры БД\n- Технического задания для
+              реализации\n", "essence": "Система управления устройствами с поддержкой
+              простых и сложных устройств,\nдистанционного взаимодействия и объединения
+              в локальную сеть.\n"}, "architecture": {"overview": "Система устройств
+              состоит из следующих компонентов:\n1. Device Service - управление устройствами\n2.
+              Simple Device Manager - управление простыми устройствами\n3. Network
+              Device Manager - управление сложными устройствами\n4. Device Interaction
+              Service - взаимодействие с устройствами\n5. Local Network Manager -
+              объединение устройств в локальную сеть\n", "device_types": [{"type":
+              "simple", "characteristics": [{"no_network": true}, {"local_interaction_only":
+              true}, {"no_remote_access": true}]}, {"type": "network", "characteristics":
+              [{"network_enabled": true}, {"remote_access": true}, {"local_network_capable":
+              true}]}], "microservices": [{"name": "device-service", "location": "gameplay-service-go
+              (модуль device)", "port": 8083, "responsibility": "Управление устройствами:\n-
+              CRUD операции с устройствами\n- Управление типами устройств\n- Управление
+              состоянием устройств\n- Интеграция с миром игры\n", "endpoints": ["GET
+              /api/v1/gameplay/devices - список устройств", "GET /api/v1/gameplay/devices/{deviceId}
+              - информация об устройстве", "POST /api/v1/gameplay/devices - создание
+              устройства", "PUT /api/v1/gameplay/devices/{deviceId} - обновление устройства",
+              "DELETE /api/v1/gameplay/devices/{deviceId} - удаление устройства"]},
+              {"name": "simple-device-manager", "location": "gameplay-service-go (модуль
+              device-simple)", "port": 8083, "responsibility": "Управление простыми
+              устройствами:\n- Управление простыми устройствами без сети\n- Локальное
+              взаимодействие\n- Проверка доступности устройства\n", "endpoints": ["POST
+              /api/v1/gameplay/devices/{deviceId}/interact - взаимодействие с устройством",
+              "GET /api/v1/gameplay/devices/{deviceId}/status - статус устройства"]},
+              {"name": "network-device-manager", "location": "gameplay-service-go
+              (модуль device-network)", "port": 8083, "responsibility": "Управление
+              сложными устройствами:\n- Управление устройствами с сетью\n- Подключение
+              устройств к сети\n- Дистанционное взаимодействие\n- Управление сетевыми
+              функциями\n", "endpoints": ["POST /api/v1/gameplay/devices/{deviceId}/network/connect
+              - подключение к сети", "POST /api/v1/gameplay/devices/{deviceId}/network/disconnect
+              - отключение от сети", "POST /api/v1/gameplay/devices/{deviceId}/remote/interact
+              - дистанционное взаимодействие", "GET /api/v1/gameplay/devices/{deviceId}/network/status
+              - статус сети"]}, {"name": "device-interaction-service", "location":
+              "gameplay-service-go (модуль device-interaction)", "port": 8083, "responsibility":
+              "Взаимодействие с устройствами:\n- Обработка взаимодействий с устройствами\n-
+              Валидация взаимодействий\n- Применение эффектов взаимодействий\n- Интеграция
+              с другими системами\n", "endpoints": ["POST /api/v1/gameplay/devices/{deviceId}/interact
+              - взаимодействие", "GET /api/v1/gameplay/devices/{deviceId}/interactions
+              - доступные взаимодействия"]}, {"name": "local-network-manager", "location":
+              "gameplay-service-go (модуль device-local-network)", "port": 8083, "responsibility":
+              "Объединение устройств в локальную сеть:\n- Создание локальной сети\n-
+              Добавление устройств в локальную сеть\n- Управление локальной сетью\n-
+              Изоляция от глобальной сети\n", "endpoints": ["POST /api/v1/gameplay/devices/local-network/create
+              - создание локальной сети", "POST /api/v1/gameplay/devices/local-network/{networkId}/devices/{deviceId}
+              - добавление устройства", "DELETE /api/v1/gameplay/devices/local-network/{networkId}/devices/{deviceId}
+              - удаление устройства", "GET /api/v1/gameplay/devices/local-network/{networkId}
+              - информация о локальной сети"]}], "integrations": {"network_service":
+              "- Подключение устройств к сети\n- Дистанционное взаимодействие\n- Сетевая
+              коммуникация\n", "local_network_service": "- Объединение устройств в
+              локальную сеть\n- Изоляция от глобальной сети\n- Управление локальной
+              сетью\n", "hacking_service": "- Взлом устройств\n- Защита устройств\n-
+              Установка бекдоров\n"}, "technical_tasks": {"phase_1": {"name": "Device
+              Service Core", "tasks": ["Реализация Device Service", "CRUD операции
+              с устройствами", "Управление типами устройств"], "estimated_effort":
+              "4 days"}, "phase_2": {"name": "Simple Device Manager", "tasks": ["Реализация
+              Simple Device Manager", "Локальное взаимодействие"], "estimated_effort":
+              "2 days"}, "phase_3": {"name": "Network Device Manager", "tasks": ["Реализация
+              Network Device Manager", "Подключение к сети", "Дистанционное взаимодействие"],
+              "estimated_effort": "4 days"}, "phase_4": {"name": "Device Interaction
+              Service", "tasks": ["Реализация Device Interaction Service", "Обработка
+              взаимодействий"], "estimated_effort": "3 days"}, "phase_5": {"name":
+              "Local Network Manager", "tasks": ["Реализация Local Network Manager",
+              "Объединение устройств", "Изоляция от глобальной сети"], "estimated_effort":
+              "3 days"}, "phase_6": {"name": "Интеграции", "tasks": ["Интеграция с
+              Network Service", "Интеграция с Local Network Service", "Интеграция
+              с Hacking Service", "WebSocket каналы"], "estimated_effort": "2 days"},
+              "total_estimated_effort": "18 days"}}}'
+        - column:
+            name: metadata
+            value: '{"id": "device-system-architecture", "title": "Архитектура системы
+              устройств", "document_type": "architecture", "category": "systems",
+              "status": "draft", "version": "1.0.0", "last_updated": "2025-11-29T12:00:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "device", "gameplay"], "related_systems": ["gameplay-service-go",
+              "world-service-go"], "related_documents": [{"id": "network-system-architecture",
+              "relation": "extends"}, {"id": "local-network-system-architecture",
+              "relation": "extends"}], "github_issue": 1449, "visibility": "internal",
+              "audience": ["architect", "backend", "gameplay", "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\device-system-architecture.yaml

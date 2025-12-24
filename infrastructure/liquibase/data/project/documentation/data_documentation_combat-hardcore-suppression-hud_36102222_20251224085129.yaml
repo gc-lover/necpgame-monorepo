@@ -1,0 +1,148 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-combat-hardcore-suppression-hud-36102222
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-169712326775084'
+        - column:
+            name: doc_id
+            value: combat-hardcore-suppression-hud
+        - column:
+            name: title
+            value: 'Хардкор: усиленная супрессия (сужение HUD/обзора, метка источника)'
+        - column:
+            name: document_type
+            value: mechanics
+        - column:
+            name: category
+            value: combat
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 0.1.0
+        - column:
+            name: last_updated
+            value: 2025-12-12 00:00:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: ''
+        - column:
+            name: owners
+            value: '[{"role": "game_balance", "contact": "balance@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - suppression
+            - hud
+            - hardcore
+            - risk_reward
+        - column:
+            name: topics
+            value:
+            - combat_effects
+            - ui_feedback
+        - column:
+            name: related_systems
+            value:
+            - gameplay-service
+            - combat-service
+            - realtime-service
+            - ai-service
+        - column:
+            name: related_documents
+            value: '[{"id": "combat-suppression-sound-ai", "relation": "complements"},
+              {"id": "combat-ux-guidelines", "relation": "references"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - combat
+            - gameplay
+            - analytics
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "combat-hardcore-suppression-hud", "title":
+              "Хардкор: усиленная супрессия (сужение HUD/обзора, метка источника)",
+              "document_type": "mechanics", "category": "combat", "status": "draft",
+              "version": "0.1.0", "last_updated": "2025-12-12T00:00:00+00:00", "concept_approved":
+              false, "concept_reviewed_at": "", "owners": [{"role": "game_balance",
+              "contact": "balance@necp.game"}], "tags": ["suppression", "hud", "hardcore",
+              "risk_reward"], "topics": ["combat_effects", "ui_feedback"], "related_systems":
+              ["gameplay-service", "combat-service", "realtime-service", "ai-service"],
+              "related_documents": [{"id": "combat-suppression-sound-ai", "relation":
+              "complements"}, {"id": "combat-ux-guidelines", "relation": "references"}],
+              "source": "", "visibility": "internal", "audience": ["combat", "gameplay",
+              "analytics"], "risk_level": "medium"}, "review": {"chain": [{"role":
+              "game_balance_lead", "reviewer": "", "reviewed_at": "", "status": "pending"}],
+              "next_actions": []}, "summary": {"problem": "Нужна усиленная супрессия
+              для хардкора с визуальным сужением обзора/HUD и маркером источника.",
+              "goal": "Определить пороги пуль/радиус/длительность, эффекты HUD/FOV,
+              метку источника, баланс и телеметрию.", "essence": {"При плотном огне
+              игрок получает сильный супресс-эффект": "HUD сужается, FOV уменьшается,
+              показывается направление источника; есть кулдауны и капы."}, "key_points":
+              ["Порог супрессии и таймеры.", "Эффекты HUD/FOV/разброс.", "Анти-абуз/кулдаун,
+              телеметрия."]}, "content": {"sections": [{"id": "thresholds", "title":
+              "Пороги и начисление", "body": "Событие срабатывает при наборе suppression_burst
+              >= 8 очков за 3 с.\nНачисление: пули <1.5 м = 2 очка, 1.5–3 м = 1 очко;
+              взрыв в 8 м = 4 очка.\nРадиус проверки: 10 м (пули), 14 м (взрывы).
+              Окклюзия стен -50%.\nКулдаун повторного триггера: 10 с (не складывается).\n"},
+              {"id": "effects", "title": "Эффекты HUD/FOV и штрафы", "body": "FOV
+              сужение: -12% на 4 с, плавный вход/выход 0.3 с.\nHUD vignette + directional
+              marker источника (±20° точность).\nРазброс +10%, скорость -6% на 4 с;
+              дрожание при ADS 15% шанс.\nМаркер пропадает через 2 с или при смене
+              позиции на >8 м.\n"}, {"id": "decay", "title": "Длительность и спад",
+              "body": "Активная фаза 4 с; после неё 3 с мягкого хвоста (FOV -4%, разброс
+              +4%).\nЕсли игрок сменил позицию >10 м или лёг, хвост обнуляется на
+              1 с раньше.\n"}, {"id": "ai_interaction", "title": "AI и игроки", "body":
+              "AI под эффектом: агрессия -20%, шанс сменить позицию 50%, дым/глушилка
+              30% при наличии.\nPvP: эффекты на игроков полные; на AI -20% к штрафам.\nВзаимодействие
+              с базовой супрессией: берётся максимум штрафов, FOV-эффект не суммируется.\n"},
+              {"id": "anti_abuse", "title": "Анти-абуз", "body": "Не триггерится от
+              союзного огня. От одного стрелка за 3 с максимум 6 очков; нужен второй
+              источник или взрыв.\nЕсли цель под эффектом менее 2 с назад, новые триггеры
+              игнорируются.\n"}, {"id": "telemetry", "title": "Телеметрия", "body":
+              "Логировать:\n- `hardcore_suppression.triggers`, `sources` (pistol/rifle/lmg/explosion).\n-
+              `hardcore_suppression.fov_events`, `marker_duration_avg`.\n- `position_changes_after_trigger`
+              (>8 м), смертность под эффектом.\n"}]}, "appendix": {"glossary": [{"term":
+              "suppression_burst", "definition": "Очки супрессии за короткое окно
+              (3 с), инициирующие хардкор-эффект."}]}, "implementation": {"needs_task":
+              false, "github_issue": 1772, "queue_reference": [], "blockers": []},
+              "history": [{"version": "0.1.0", "date": "2025-12-12", "author": "game_balance_team",
+              "changes": "Введены пороги, эффекты HUD/FOV, кулдаун и телеметрия для
+              хардкор-супрессии."}], "validation": {"checksum": "", "schema_version":
+              "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "combat-hardcore-suppression-hud", "title": "Хардкор: усиленная
+              супрессия (сужение HUD/обзора, метка источника)", "document_type": "mechanics",
+              "category": "combat", "status": "draft", "version": "0.1.0", "last_updated":
+              "2025-12-12T00:00:00+00:00", "concept_approved": false, "concept_reviewed_at":
+              "", "owners": [{"role": "game_balance", "contact": "balance@necp.game"}],
+              "tags": ["suppression", "hud", "hardcore", "risk_reward"], "topics":
+              ["combat_effects", "ui_feedback"], "related_systems": ["gameplay-service",
+              "combat-service", "realtime-service", "ai-service"], "related_documents":
+              [{"id": "combat-suppression-sound-ai", "relation": "complements"}, {"id":
+              "combat-ux-guidelines", "relation": "references"}], "source": "", "visibility":
+              "internal", "audience": ["combat", "gameplay", "analytics"], "risk_level":
+              "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\mechanics\combat\combat-hardcore-suppression-hud.yaml

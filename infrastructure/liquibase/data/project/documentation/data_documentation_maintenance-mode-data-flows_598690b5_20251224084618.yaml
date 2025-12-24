@@ -1,0 +1,181 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-maintenance-mode-data-flows-598690b5
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '8745899342293318'
+        - column:
+            name: doc_id
+            value: maintenance-mode-data-flows
+        - column:
+            name: title
+            value: Архитектура системы режима обслуживания - Потоки данных и синхронизация
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-30 20:55:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[]'
+        - column:
+            name: tags
+            value: []
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value: []
+        - column:
+            name: related_documents
+            value: '[{"id": "maintenance-mode-core", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: ''
+        - column:
+            name: audience
+            value: []
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "maintenance-mode-data-flows", "title": "Архитектура
+              системы режима обслуживания - Потоки данных и синхронизация", "document_type":
+              "architecture", "category": "systems", "status": "draft", "version":
+              "1.1.0", "last_updated": "2025-11-30T20:55:00+00:00", "github_issue":
+              316, "related_documents": [{"id": "maintenance-mode-core", "relation":
+              "extends"}]}, "data_flows": {"scheduled_maintenance_flow": "1. Администратор
+              создает окно обслуживания\n2. Maintenance Window Manager сохраняет окно
+              в БД\n3. Maintenance Notification Manager отправляет уведомления (24ч,
+              1ч)\n4. Maintenance Status Manager обновляет статус на \"starting\"\n5.
+              Connection Blocker блокирует новые соединения\n6. Graceful Shutdown
+              Manager начинает graceful shutdown\n7. Maintenance Operations выполняются\n8.
+              System Restart выполняется\n9. Connection Blocker разблокирует соединения\n10.
+              Maintenance Status Manager обновляет статус на \"completed\"\n11. Maintenance
+              Notification Manager отправляет уведомление о завершении\n12. Infrastructure
+              Service публикует событие maintenance.ended\n", "emergency_maintenance_flow":
+              "1. Триггер экстренного обслуживания (инфраструктурная тревога, критический
+              баг)\n2. Emergency Maintenance Manager создает экстренное окно\n3. Maintenance
+              Notification Manager отправляет немедленное уведомление\n4. Maintenance
+              Status Manager обновляет статус на \"starting\"\n5. Connection Blocker
+              блокирует новые соединения\n6. Graceful Shutdown Manager начинает graceful
+              shutdown\n7. Emergency Operations выполняются\n8. System Restart выполняется\n9.
+              Connection Blocker разблокирует соединения\n10. Maintenance Status Manager
+              обновляет статус на \"completed\"\n11. Maintenance Notification Manager
+              отправляет уведомление о завершении\n12. Infrastructure Service публикует
+              событие maintenance.ended\n"}, "data_consistency": {"strategy": "Strong
+              Consistency (ACID транзакции) для критичных операций (создание окна,
+              начало/завершение обслуживания)", "mechanisms": ["ACID транзакции для
+              создания окон обслуживания, обновления статуса и управления graceful
+              shutdown", "Оптимистичные блокировки (versioning) для предотвращения
+              конфликтов при обновлении статуса", "Валидация перед созданием окна
+              обслуживания и началом обслуживания", "Синхронизация с другими сервисами
+              через Event Bus", "Outbox Pattern для гарантированной доставки событий",
+              "Saga Pattern для распределенных операций (начало обслуживания, graceful
+              shutdown, завершение обслуживания)"]}, "data_synchronization": {"event_sourcing":
+              "Все изменения состояния режима обслуживания (создание окна, обновление
+              статуса, начало обслуживания,\nзавершение обслуживания, отправка уведомлений)
+              записываются как события в Event Store.\nЭто обеспечивает полный аудит,
+              возможность восстановления состояния и \"time travel\" для отладки.\nПримеры
+              событий: MaintenanceWindowCreatedEvent, MaintenanceStartedEvent, MaintenanceEndedEvent,
+              GracefulShutdownStartedEvent, NotificationSentEvent.\n", "cqrs_pattern":
+              "Разделение команд (создание окна, начало обслуживания, завершение обслуживания)
+              и запросов\n(получение статуса, получение списка окон, получение уведомлений)
+              для оптимизации производительности\nи масштабируемости. Read-модели
+              могут быть кэшированы в Redis для быстрых запросов.\n", "saga_pattern":
+              "Для распределенных транзакций, таких как начало обслуживания (обновление
+              статуса, блокировка соединений,\nначало graceful shutdown, отправка
+              уведомлений) или завершение обслуживания (завершение graceful shutdown,\nразблокировка
+              соединений, обновление статуса, отправка уведомлений), используется
+              Saga Pattern\nдля обеспечения атомарности операций между Infrastructure
+              Service, API Gateway, Notification Service и Realtime Gateway.\n", "outbox_pattern":
+              "Для гарантированной доставки событий в Event Bus используется Outbox
+              Pattern,\nкоторый записывает события в транзакционную таблицу перед
+              публикацией.\n"}, "tickrate_specification": {"status_operations": {"tickrate":
+              "Event-based (on-demand) + 1-5 Hz для обновления статуса во время обслуживания",
+              "network_load": "- Получение статуса: event-based, ~0.01-0.05 requests/sec
+              на клиента\n- Обновление статуса: 1-5 Hz во время обслуживания, ~0.01-0.05
+              events/sec\n- Общий трафик: ~0.1-0.3 KB/sec на клиента для операций
+              статуса\n", "latency_requirements": "< 20-50ms для получения статуса,
+              < 50-100ms для обновления статуса", "sync_strategy": "Strong Consistency
+              (ACID транзакции) для обновления статуса"}, "window_operations": {"tickrate":
+              "Event-based (on-demand)", "network_load": "- Создание окна: event-based,
+              ~0.001-0.01 events/sec (административные операции)\n- Получение списка
+              окон: event-based, ~0.001-0.01 requests/sec\n- Обновление окна: event-based,
+              ~0.001-0.01 events/sec\n- Общий трафик: ~0.1-0.3 KB/sec для операций
+              окон\n", "latency_requirements": "< 100-200ms для создания окна, < 30-100ms
+              для получения списка", "sync_strategy": "Strong Consistency (ACID транзакции)
+              для операций с окнами"}, "maintenance_operations": {"tickrate": "Event-based
+              (on-demand при начале/завершении обслуживания)", "network_load": "-
+              Начало обслуживания: event-based, ~0.001-0.01 events/sec\n- Завершение
+              обслуживания: event-based, ~0.001-0.01 events/sec\n- Экстренное обслуживание:
+              event-based, ~0.001-0.01 events/sec\n- Общий трафик: ~0.1-0.3 KB/sec
+              для операций обслуживания\n", "latency_requirements": "< 200-500ms для
+              начала обслуживания, < 200-500ms для завершения", "sync_strategy": "Strong
+              Consistency (ACID транзакции) для операций обслуживания"}, "graceful_shutdown_operations":
+              {"tickrate": "Event-based (on-demand при начале shutdown) + 1-10 Hz
+              для мониторинга прогресса", "network_load": "- Начало graceful shutdown:
+              event-based, ~0.001-0.01 events/sec\n- Мониторинг прогресса: 1-10 Hz,
+              ~0.01-0.05 events/sec\n- Завершение graceful shutdown: event-based,
+              ~0.001-0.01 events/sec\n- Общий трафик: ~0.1-0.3 KB/sec для операций
+              graceful shutdown\n", "latency_requirements": "< 100-300ms для начала
+              shutdown, < 30-100ms для мониторинга", "sync_strategy": "Strong Consistency
+              (ACID транзакции) для graceful shutdown"}, "connection_blocking_operations":
+              {"tickrate": "Event-based (on-demand при изменении статуса) + 1-5 Hz
+              для проверки статуса", "network_load": "- Блокировка соединений: event-based,
+              ~0.001-0.01 events/sec\n- Проверка статуса блокировки: 1-5 Hz, ~0.01-0.05
+              requests/sec\n- Разблокировка соединений: event-based, ~0.001-0.01 events/sec\n-
+              Общий трафик: ~0.1-0.3 KB/sec для операций блокировки\n", "latency_requirements":
+              "< 50-100ms для блокировки/разблокировки, < 10-30ms для проверки статуса",
+              "sync_strategy": "Strong Consistency (ACID транзакции) для блокировки
+              соединений"}, "notification_operations": {"tickrate": "Event-based (on-demand
+              при событиях обслуживания) + cron-triggered для заблаговременных уведомлений",
+              "network_load": "- Отправка уведомлений: event-based, ~0.01-0.1 events/sec\n-
+              Получение списка уведомлений: event-based, ~0.001-0.01 requests/sec\n-
+              Заблаговременные уведомления: cron-triggered, ~0.001-0.01 events/sec\n-
+              Общий трафик: ~0.2-0.5 KB/sec для операций уведомлений\n", "latency_requirements":
+              "< 100-300ms для отправки уведомлений, < 30-100ms для получения списка",
+              "sync_strategy": "Eventual Consistency для уведомлений (через Notification
+              Service)"}, "event_handling": {"tickrate": "Event-based (on-demand)",
+              "network_load": "- Публикация событий обслуживания: event-based, ~0.1-0.5
+              events/sec\n- Подписка на события: event-based, ~0.05-0.2 events/sec\n-
+              Общий трафик: ~0.2-0.7 KB/sec для событий\n", "latency_requirements":
+              "< 100-300ms для публикации событий", "sync_strategy": "Eventual Consistency
+              для событий (через Event Bus)"}}}'
+        - column:
+            name: metadata
+            value: '{"id": "maintenance-mode-data-flows", "title": "Архитектура системы
+              режима обслуживания - Потоки данных и синхронизация", "document_type":
+              "architecture", "category": "systems", "status": "draft", "version":
+              "1.1.0", "last_updated": "2025-11-30T20:55:00+00:00", "github_issue":
+              316, "related_documents": [{"id": "maintenance-mode-core", "relation":
+              "extends"}]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\maintenance-mode-data-flows.yaml

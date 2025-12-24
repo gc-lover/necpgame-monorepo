@@ -1,0 +1,272 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-economy-currency-exchange-system-architecture-49726f56
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '3337046936599805'
+        - column:
+            name: doc_id
+            value: economy-currency-exchange-system-architecture
+        - column:
+            name: title
+            value: Архитектура валютной биржи
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-23 14:30:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - economy
+            - currency-exchange
+            - trading
+            - exchange
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - economy-service
+            - wallet-service
+            - tax-service
+            - analytics-service
+        - column:
+            name: related_documents
+            value: '[{"id": "economy-currency-exchange", "relation": "extends"}, {"id":
+              "game-mechanics-systems-architecture", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - economy
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "economy-currency-exchange-system-architecture",
+              "title": "Архитектура валютной биржи", "document_type": "architecture",
+              "category": "systems", "status": "draft", "version": "1.0.0", "last_updated":
+              "2025-11-23T14:30:00+00:00", "owners": [{"role": "architect", "contact":
+              "architect@necp.game"}], "tags": ["architecture", "economy", "currency-exchange",
+              "trading", "exchange"], "related_systems": ["economy-service", "wallet-service",
+              "tax-service", "analytics-service"], "related_documents": [{"id": "economy-currency-exchange",
+              "relation": "extends"}, {"id": "game-mechanics-systems-architecture",
+              "relation": "extends"}], "github_issue": 224, "visibility": "internal",
+              "audience": ["architect", "backend", "economy", "api-designer"]}, "summary":
+              {"problem": "Требуется спроектировать архитектуру валютной биржи для
+              обмена региональных валют\nс поддержкой динамических курсов, instant
+              и limit ордеров, риск-контроля\nи интеграции с экономическими сервисами.\n",
+              "goal": "Создать архитектурную схему валютной биржи с определением:\n-
+              Микросервисов для управления обменом валют\n- Компонентов для курсов,
+              ордеров, matching engine, риск-контроля\n- API endpoints (высокоуровнево)\n-
+              Интеграций с другими экономическими системами\n- Структуры БД для хранения
+              курсов и ордеров\n- Технического задания для реализации\n", "essence":
+              "Валютная биржа управляет обменом валют через instant операции и лимитные
+              ордера,\nподдерживает динамические курсы, реагирующие на экономические
+              события,\nобеспечивает matching engine для исполнения ордеров и риск-контроль
+              для предотвращения злоупотреблений.\n"}, "architecture": {"overview":
+              "Валютная биржа состоит из следующих компонентов:\n1. Currency Exchange
+              Manager - управление обменом валют\n2. Exchange Rate Manager - управление
+              курсами валют\n3. Order Manager - управление ордерами (instant и limit)\n4.
+              Matching Engine - исполнение ордеров\n5. Risk Controller - контроль
+              рисков и AML\n6. Fee Calculator - расчёт комиссий и спредов\n7. Market
+              Maker - системный маркет-мейкер для основных пар\n8. Exchange Analytics
+              Collector - сбор аналитики по обменам\n", "microservices": [{"name":
+              "currency-exchange-service", "location": "services/currency-exchange-service",
+              "responsibility": "Основной сервис для управления валютной биржей:\n-
+              CRUD операции с ордерами\n- Управление курсами валют\n- Исполнение ордеров
+              через Matching Engine\n- Интеграция с wallet-service для блокировки
+              средств\n", "components": ["Currency Exchange Manager", "Exchange Rate
+              Manager", "Order Manager", "Matching Engine", "Fee Calculator"], "endpoints":
+              ["GET /api/v1/currency-exchange/rates - текущие курсы валют", "GET /api/v1/currency-exchange/rates/{pair}
+              - курс валютной пары", "GET /api/v1/currency-exchange/rates/history
+              - история курсов", "POST /api/v1/currency-exchange/quote - расчёт предварительной
+              котировки", "POST /api/v1/currency-exchange/orders/instant - instant
+              обмен", "POST /api/v1/currency-exchange/orders/limit - создание лимитного
+              ордера", "GET /api/v1/currency-exchange/orders/{id} - детали ордера",
+              "DELETE /api/v1/currency-exchange/orders/{id} - отмена ордера", "GET
+              /api/v1/currency-exchange/orders - список ордеров игрока", "GET /api/v1/currency-exchange/trades
+              - история сделок", "WS /ws/currency-exchange/rates - WebSocket для потоковых
+              котировок", "WS /ws/currency-exchange/orders/{id} - WebSocket для статуса
+              ордера"]}, {"name": "risk-service", "location": "services/risk-service
+              (или модуль в currency-exchange-service)", "responsibility": "Контроль
+              рисков валютной биржи:\n- AML лимиты\n- Троттлинг котировок\n- Торговые
+              остановки при волатильности\n- Защита от арбитража\n", "components":
+              ["Risk Controller", "AML Monitor", "Volatility Monitor"], "endpoints":
+              ["POST /api/v1/risk/check - проверка рисков для операции", "GET /api/v1/risk/limits/{player_id}
+              - лимиты игрока", "POST /api/v1/risk/trading-halt - остановка торговли"]},
+              {"name": "analytics-service", "location": "services/analytics-service",
+              "responsibility": "Аналитика по валютной бирже:\n- Сбор метрик обменов\n-
+              Анализ волатильности\n- Отчёты по торговле\n", "components": ["Exchange
+              Analytics Collector"], "endpoints": ["GET /api/v1/analytics/currency-exchange/volume
+              - объёмы торговли", "GET /api/v1/analytics/currency-exchange/volatility
+              - волатильность"]}], "components": [{"name": "Currency Exchange Manager",
+              "location": "currency-exchange-service", "responsibility": "Управление
+              обменом валют:\n- Создание instant обменов\n- Управление лимитными ордерами\n-
+              Валидация операций\n- Интеграция с wallet-service\n", "methods": ["createInstantExchange(playerId,
+              fromCurrency, toCurrency, amount)", "createLimitOrder(playerId, orderData)",
+              "cancelOrder(orderId)", "getOrder(orderId)", "listOrders(playerId, filters)"]},
+              {"name": "Exchange Rate Manager", "location": "currency-exchange-service",
+              "responsibility": "Управление курсами валют:\n- Обновление курсов валютных
+              пар\n- Расчёт спредов\n- Реакция на экономические события\n- История
+              курсов\n", "methods": ["updateRate(currencyPair, rate, spread)", "getRate(currencyPair)",
+              "getRateHistory(currencyPair, timeRange)", "applyEventImpact(eventId,
+              currencyPairs, impact)"]}, {"name": "Order Manager", "location": "currency-exchange-service",
+              "responsibility": "Управление ордерами:\n- Создание, обновление, отмена
+              ордеров\n- Управление жизненным циклом ордеров\n- Валидация ордеров\n-
+              Интеграция с Matching Engine\n", "methods": ["createOrder(orderData)",
+              "updateOrder(orderId, orderData)", "cancelOrder(orderId)", "getOrder(orderId)",
+              "listOrders(filters)", "transitionOrderStatus(orderId, newStatus)"]},
+              {"name": "Matching Engine", "location": "currency-exchange-service",
+              "responsibility": "Исполнение ордеров:\n- Matching ордеров по принципу
+              FIFO\n- Исполнение instant обменов\n- Исполнение лимитных ордеров\n-
+              Частичное исполнение ордеров\n- Интеграция с Market Maker\n", "methods":
+              ["matchOrders(currencyPair)", "executeInstantExchange(exchangeData)",
+              "executeLimitOrder(orderId)", "partialFill(orderId, amount)"]}, {"name":
+              "Risk Controller", "location": "risk-service", "responsibility": "Контроль
+              рисков:\n- Проверка AML лимитов\n- Троттлинг котировок\n- Торговые остановки
+              при волатильности\n- Защита от кросс-регионального арбитража\n", "methods":
+              ["checkAMLLimits(playerId, amount)", "throttleQuotes(playerId)", "checkVolatility(currencyPair)",
+              "haltTrading(currencyPair, reason)", "detectArbitrage(playerId, operations)"]},
+              {"name": "Fee Calculator", "location": "currency-exchange-service",
+              "responsibility": "Расчёт комиссий и спредов:\n- Расчёт базовой комиссии
+              (1%)\n- Скидки для крупных объёмов, VIP, торговых гильдий\n- Расчёт
+              спредов в зависимости от ликвидности\n- Финальная стоимость обмена\n",
+              "methods": ["calculateFee(amount, playerId, orderType)", "calculateSpread(currencyPair,
+              liquidity)", "applyDiscounts(playerId, baseFee)", "calculateTotalCost(amount,
+              rate, fee, spread)"]}, {"name": "Market Maker", "location": "currency-exchange-service",
+              "responsibility": "Системный маркет-мейкер:\n- Обеспечение ликвидности
+              для основных пар\n- Автоматическое создание ордеров\n- Поддержание спредов\n",
+              "methods": ["provideLiquidity(currencyPair)", "createMarketMakerOrders(currencyPair)",
+              "adjustSpread(currencyPair, liquidity)"]}, {"name": "Exchange Analytics
+              Collector", "location": "analytics-service", "responsibility": "Сбор
+              аналитики по обменам:\n- Сбор метрик обменов\n- Анализ волатильности\n-
+              Отчёты по торговле\n- Интеграция с analytics-service\n", "methods":
+              ["collectExchangeMetrics(currencyPair, timeRange)", "analyzeVolatility(currencyPair)",
+              "generateTradingReport(playerId, timeRange)"]}], "data_flow": {"instant_exchange":
+              "1. Игрок запрашивает instant обмен через Currency Exchange Manager\n2.
+              Exchange Rate Manager получает текущий курс валютной пары\n3. Fee Calculator
+              рассчитывает комиссию и спред\n4. Risk Controller проверяет AML лимиты
+              и троттлинг\n5. Wallet Service блокирует средства игрока\n6. Matching
+              Engine исполняет обмен\n7. Wallet Service разблокирует средства и переводит
+              валюту\n8. Транзакция создаётся и сохраняется в БД\n9. Событие публикуется
+              в Event Bus (currency.exchange.instant_executed)\n", "limit_order_creation":
+              "1. Игрок создаёт лимитный ордер через Order Manager\n2. Order Manager
+              валидирует ордер (курс, сумма, TTL)\n3. Risk Controller проверяет AML
+              лимиты\n4. Wallet Service блокирует средства игрока\n5. Ордер сохраняется
+              в БД со статусом PENDING\n6. Ордер добавляется в очередь Matching Engine\n7.
+              Событие публикуется в Event Bus (currency.exchange.order.created)\n",
+              "limit_order_matching": "1. Matching Engine проверяет очередь ордеров
+              для валютной пары\n2. Находит подходящие ордера по принципу FIFO\n3.
+              Исполняет ордера (полностью или частично)\n4. Order Manager обновляет
+              статус ордеров (FILLED, PARTIALLY_FILLED)\n5. Wallet Service переводит
+              валюту между игроками\n6. Транзакции создаются и сохраняются в БД\n7.
+              События публикуются в Event Bus (currency.exchange.order.filled, currency.exchange.order.partially_filled)\n",
+              "rate_update": "1. Exchange Rate Manager получает обновление курса (от
+              экономических событий или системы)\n2. Обновляет курс в БД\n3. Пересчитывает
+              спреды в зависимости от ликвидности\n4. WebSocket отправляет обновления
+              клиентам\n5. Matching Engine проверяет лимитные ордера на исполнение\n6.
+              Событие публикуется в Event Bus (currency.exchange.rate.updated)\n",
+              "risk_check": "1. Risk Controller проверяет операцию на AML лимиты\n2.
+              Проверяет троттлинг котировок для игрока\n3. Проверяет волатильность
+              валютной пары\n4. При превышении лимитов: блокирует операцию или останавливает
+              торговлю\n5. Генерирует алерт при необходимости\n6. Событие публикуется
+              в Event Bus (currency.exchange.risk.alert)\n"}, "integrations": {"with_wallet_service":
+              "- Блокировка средств при создании ордера\n- Перевод валюты при исполнении
+              ордера\n- Разблокировка средств при отмене ордера\n- Проверка баланса
+              игрока\n", "with_tax_service": "- Расчёт налогов с обменов\n- Удержание
+              налогов\n- Отчётность по налогам\n", "with_economy_events": "- Получение
+              активных экономических событий\n- Влияние событий на курсы валют\n-
+              Корректировка курсов при событиях\n", "with_analytics_service": "- Отправка
+              метрик обменов\n- Получение аналитики по торговле\n- Генерация отчётов\n",
+              "with_notification_service": "- Уведомления об исполнении ордеров\n-
+              Уведомления об отмене ордеров\n- Уведомления об изменениях курсов\n"},
+              "event_bus_events": {"published": ["currency.exchange.rate.updated",
+              "currency.exchange.order.created", "currency.exchange.order.filled",
+              "currency.exchange.order.partially_filled", "currency.exchange.order.cancelled",
+              "currency.exchange.instant_executed", "currency.exchange.trade.executed",
+              "currency.exchange.risk.alert", "currency.exchange.trading.halted"],
+              "subscribed": ["economy.event.active (для влияния на курсы)", "wallet.balance.updated
+              (для проверки баланса)"]}, "database_schema": {"tables": [{"name": "currency_exchange_rates",
+              "description": "Курсы валютных пар", "fields": [{"id": "UUID (PK)"},
+              {"currency_pair": "VARCHAR(10) (например, EDDY/USD, USD/EUR)"}, {"base_currency":
+              "VARCHAR(10)"}, {"quote_currency": "VARCHAR(10)"}, {"rate": "DECIMAL(20,8)"},
+              {"bid_rate": "DECIMAL(20,8) (курс покупки)"}, {"ask_rate": "DECIMAL(20,8)
+              (курс продажи)"}, {"spread": "DECIMAL(10,4)"}, {"daily_volume": "DECIMAL(20,2)"},
+              {"volatility": "DECIMAL(5,2)"}, {"last_updated": "TIMESTAMP"}, {"created_at":
+              "TIMESTAMP"}], "indexes": ["currency_pair, last_updated", "base_currency,
+              quote_currency"]}, {"name": "currency_exchange_rate_history", "description":
+              "История курсов валютных пар", "fields": [{"id": "UUID (PK)"}, {"currency_pair":
+              "VARCHAR(10)"}, {"rate": "DECIMAL(20,8)"}, {"bid_rate": "DECIMAL(20,8)"},
+              {"ask_rate": "DECIMAL(20,8)"}, {"spread": "DECIMAL(10,4)"}, {"volume":
+              "DECIMAL(20,2)"}, {"recorded_at": "TIMESTAMP"}], "indexes": ["currency_pair,
+              recorded_at", "recorded_at"]}, {"name": "currency_exchange_orders",
+              "description": "Ордера на обмен валют", "fields": [{"id": "UUID (PK)"},
+              {"player_id": "UUID (FK accounts)"}, {"currency_pair": "VARCHAR(10)"},
+              {"order_type": "ENUM (instant, limit)"}, {"side": "ENUM (buy, sell)"},
+              {"base_currency": "VARCHAR(10)"}, {"quote_currency": "VARCHAR(10)"},
+              {"amount": "DECIMAL(20,2)"}, {"limit_rate": "DECIMAL(20,8) (nullable,
+              для limit ордеров)"}, {"executed_amount": "DECIMAL(20,2) (для частичного
+              исполнения)"}, {"status": "ENUM (pending, active, partially_filled,
+              filled, cancelled, expired, blocked)"}, {"fee": "DECIMAL(10,2)"}, {"fee_discount":
+              "DECIMAL(5,2) (скидка на комиссию)"}, {"ttl_seconds": "INTEGER (nullable,
+              для limit ордеров)"}, {"expires_at": "TIMESTAMP (nullable)"}, {"created_at":
+              "TIMESTAMP"}, {"updated_at": "TIMESTAMP"}, {"executed_at": "TIMESTAMP
+              (nullable)"}], "indexes": ["player_id, status", "currency_pair, status,
+              created_at", "status, expires_at"]}, {"name": "currency_exchange_trades",
+              "description": "Исполненные сделки", "fields": [{"id": "UUID (PK)"},
+              {"buy_order_id": "UUID (FK currency_exchange_orders)"}, {"sell_order_id":
+              "UUID (FK currency_exchange_orders)"}, {"currency_pair": "VARCHAR(10)"},
+              {"base_currency": "VARCHAR(10)"}, {"quote_currency": "VARCHAR(10)"},
+              {"amount": "DECIMAL(20,2)"}, {"rate": "DECIMAL(20,8)"}]}]}}}'
+        - column:
+            name: metadata
+            value: '{"id": "economy-currency-exchange-system-architecture", "title":
+              "Архитектура валютной биржи", "document_type": "architecture", "category":
+              "systems", "status": "draft", "version": "1.0.0", "last_updated": "2025-11-23T14:30:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "economy", "currency-exchange", "trading",
+              "exchange"], "related_systems": ["economy-service", "wallet-service",
+              "tax-service", "analytics-service"], "related_documents": [{"id": "economy-currency-exchange",
+              "relation": "extends"}, {"id": "game-mechanics-systems-architecture",
+              "relation": "extends"}], "github_issue": 224, "visibility": "internal",
+              "audience": ["architect", "backend", "economy", "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\economy-currency-exchange-system-architecture.yaml

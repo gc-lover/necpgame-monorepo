@@ -1,0 +1,294 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-currency-exchange-system-architecture-9c0f8c8f
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-404671741198864'
+        - column:
+            name: doc_id
+            value: currency-exchange-system-architecture
+        - column:
+            name: title
+            value: Архитектура системы валютной биржи
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-30 19:20:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - currency-exchange
+            - backend
+            - economy
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - economy-service-go
+            - wallet-service-go
+            - tax-service-go
+            - analytics-service-go
+        - column:
+            name: related_documents
+            value: '[{"id": "economy-currency-exchange", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "currency-exchange-system-architecture", "title":
+              "Архитектура системы валютной биржи", "document_type": "architecture",
+              "category": "systems", "status": "draft", "version": "1.0.0", "last_updated":
+              "2025-11-30T19:20:00+00:00", "owners": [{"role": "architect", "contact":
+              "architect@necp.game"}], "tags": ["architecture", "currency-exchange",
+              "backend", "economy"], "related_systems": ["economy-service-go", "wallet-service-go",
+              "tax-service-go", "analytics-service-go"], "related_documents": [{"id":
+              "economy-currency-exchange", "relation": "extends"}], "github_issue":
+              224, "visibility": "internal", "audience": ["architect", "backend",
+              "api-designer"]}, "summary": {"problem": "Требуется спроектировать полную
+              техническую архитектуру системы валютной биржи\nдля обмена региональных
+              валют, поддержки instant и limit ордеров, динамических курсов,\nриск-контроля
+              и интеграции с экономическими сервисами.\n", "goal": "Создать архитектурную
+              схему системы валютной биржи с определением:\n- Компонентов системы
+              (микросервисы, модули)\n- API endpoints (высокоуровнево)\n- Потоков
+              данных и интеграций\n- Технического задания для реализации\n", "essence":
+              "Централизованная биржа с поддержкой instant и limit ордеров, динамическими
+              курсами,\nкомиссиями, риск-контролем и событийным API, синхронизированным
+              с экономическими событиями мира.\n"}, "architecture": {"overview": "Система
+              валютной биржи состоит из следующих компонентов:\n1. Exchange Manager
+              - управление биржей и операциями\n2. Order Manager - управление ордерами
+              (instant и limit)\n3. Matching Engine - сопоставление ордеров\n4. Rate
+              Manager - управление динамическими курсами\n5. Risk Manager - риск-контроль
+              и защита от злоупотреблений\n6. Commission Calculator - расчёт комиссий
+              и спредов\n7. Market Maker - системный маркет-мейкер для основных пар\n8.
+              Event Handler - обработка экономических событий\n", "components": [{"name":
+              "Exchange Manager", "location": "economy-service-go (модуль currency-exchange)",
+              "responsibility": "- Управление валютными парами\n- Валидация операций
+              обмена\n- Координация между компонентами\n- Управление жизненным циклом
+              ордеров\n- Интеграция с wallet-service для блокировки средств\n", "port":
+              "8085 (economy-service-go)", "endpoints": ["GET /api/v1/economy/exchange/pairs
+              - список валютных пар", "GET /api/v1/economy/exchange/rates - текущие
+              курсы", "GET /api/v1/economy/exchange/rates/{pair} - курс конкретной
+              пары", "POST /api/v1/economy/exchange/instant - instant обмен", "GET
+              /api/v1/economy/exchange/quote - предварительная котировка"]}, {"name":
+              "Order Manager", "location": "economy-service-go (модуль currency-exchange)",
+              "responsibility": "- Создание и управление ордерами (instant и limit)\n-
+              Валидация ордеров\n- Управление жизненным циклом ордеров\n- Отмена ордеров\n-
+              История ордеров игрока\n", "endpoints": ["POST /api/v1/economy/exchange/orders
+              - создание ордера", "GET /api/v1/economy/exchange/orders/{order_id}
+              - получение ордера", "DELETE /api/v1/economy/exchange/orders/{order_id}
+              - отмена ордера", "GET /api/v1/economy/exchange/orders - список ордеров
+              игрока", "GET /api/v1/economy/exchange/orders/history - история сделок"]},
+              {"name": "Matching Engine", "location": "economy-service-go (модуль
+              currency-exchange)", "responsibility": "- Сопоставление ордеров (FIFO)\n-
+              Обработка limit ордеров\n- Частичное исполнение ордеров\n- Управление
+              очередью ордеров\n- Расчёт объёмов и цен исполнения\n", "integration":
+              "Интегрируется с Order Manager для обновления статусов ордеров\nСинхронизирует
+              исполнение с wallet-service\n"}, {"name": "Rate Manager", "location":
+              "economy-service-go (модуль currency-exchange)", "responsibility": "-
+              Управление динамическими курсами валютных пар\n- Обновление курсов на
+              основе событий\n- Расчёт спредов\n- Управление волатильностью\n- История
+              курсов\n", "integration": "Подписывается на экономические события через
+              Event Bus\nОбновляет курсы в реальном времени\n", "endpoints": ["GET
+              /api/v1/economy/exchange/rates/history - история курсов", "GET /api/v1/economy/exchange/rates/stream
+              - WebSocket поток курсов"]}, {"name": "Risk Manager", "location": "economy-service-go
+              (модуль currency-exchange)", "responsibility": "- AML лимиты и проверки\n-
+              Троттлинг котировок\n- Торговые остановки при высокой волатильности\n-
+              Защита от арбитража\n- Мониторинг подозрительных операций\n", "integration":
+              "Интегрируется с analytics-service для анализа паттернов\nБлокирует
+              операции при превышении лимитов\n"}, {"name": "Commission Calculator",
+              "location": "economy-service-go (модуль currency-exchange)", "responsibility":
+              "- Расчёт комиссий (базовая 1%, снижение до 0.5%)\n- Учёт VIP статуса\n-
+              Учёт торговых гильдий\n- Учёт объёмов торговли\n- Расчёт спредов\n",
+              "integration": "Интегрируется с social-service для проверки гильдий\nИнтегрируется
+              с character-service для проверки VIP статуса\n"}, {"name": "Market Maker",
+              "location": "economy-service-go (модуль currency-exchange)", "responsibility":
+              "- Системный маркет-мейкер для основных пар\n- Обеспечение ликвидности\n-
+              Расширение спреда при недостаточной ликвидности\n- Управление системными
+              ордерами\n"}, {"name": "Event Handler", "location": "economy-service-go
+              (модуль currency-exchange)", "responsibility": "- Обработка экономических
+              событий мира\n- Обновление курсов на основе событий\n- Публикация событий
+              биржи\n- Интеграция с Event Bus\n", "integration": "Подписывается на
+              события через Event Bus\nПубликует события обновления курсов и исполнения
+              ордеров\n"}], "microservices": [{"name": "economy-service-go", "port":
+              8085, "responsibility": "Основной сервис для валютной биржи:\n- Управление
+              валютными парами и курсами\n- Обработка ордеров (instant и limit)\n-
+              Matching engine\n- Риск-контроль\n- Комиссии и спреды\n- Интеграция
+              с wallet-service, tax-service, analytics-service\n", "components": ["Exchange
+              Manager", "Order Manager", "Matching Engine", "Rate Manager", "Risk
+              Manager", "Commission Calculator", "Market Maker", "Event Handler"]}],
+              "database_schema": {"tables": [{"name": "currency_exchange_rates", "description":
+              "Хранит текущие курсы валютных пар\n", "columns": ["pair_id (UUID, PK)",
+              "base_currency (VARCHAR, NOT NULL)", "quote_currency (VARCHAR, NOT NULL)",
+              "rate (DECIMAL, NOT NULL)", "spread (DECIMAL, NOT NULL)", "daily_volume
+              (DECIMAL)", "volatility (DECIMAL)", "updated_at (TIMESTAMP)", "created_at
+              (TIMESTAMP)"], "indexes": ["idx_pair_currencies (base_currency, quote_currency)",
+              "idx_updated_at (updated_at)"]}, {"name": "currency_exchange_orders",
+              "description": "Хранит ордера игроков (instant и limit)\n", "columns":
+              ["order_id (UUID, PK)", "character_id (UUID, FK, NOT NULL)", "pair_id
+              (UUID, FK, NOT NULL)", "order_type (VARCHAR, NOT NULL) -- ''instant''
+              или ''limit''", "side (VARCHAR, NOT NULL) -- ''buy'' или ''sell''",
+              "amount (DECIMAL, NOT NULL)", "price (DECIMAL) -- для limit ордеров",
+              "status (VARCHAR, NOT NULL) -- ''pending'', ''active'', ''filled'',
+              ''partially_filled'', ''cancelled'', ''blocked''", "filled_amount (DECIMAL,
+              DEFAULT 0)", "commission (DECIMAL)", "created_at (TIMESTAMP)", "updated_at
+              (TIMESTAMP)", "expires_at (TIMESTAMP) -- для limit ордеров"], "indexes":
+              ["idx_character_id (character_id)", "idx_pair_id (pair_id)", "idx_status
+              (status)", "idx_order_type (order_type)", "idx_created_at (created_at)"]},
+              {"name": "currency_exchange_trades", "description": "Хранит историю
+              исполненных сделок\n", "columns": ["trade_id (UUID, PK)", "buy_order_id
+              (UUID, FK)", "sell_order_id (UUID, FK)", "pair_id (UUID, FK, NOT NULL)",
+              "price (DECIMAL, NOT NULL)", "amount (DECIMAL, NOT NULL)", "executed_at
+              (TIMESTAMP, NOT NULL)"], "indexes": ["idx_pair_id (pair_id)", "idx_executed_at
+              (executed_at)"]}, {"name": "currency_exchange_rate_history", "description":
+              "Хранит историю курсов для графиков\n", "columns": ["history_id (UUID,
+              PK)", "pair_id (UUID, FK, NOT NULL)", "rate (DECIMAL, NOT NULL)", "spread
+              (DECIMAL, NOT NULL)", "volume (DECIMAL)", "recorded_at (TIMESTAMP, NOT
+              NULL)"], "indexes": ["idx_pair_recorded (pair_id, recorded_at)"]}]},
+              "data_consistency": {"strategy": "Strong Consistency (ACID транзакции)
+              для критичных операций", "mechanisms": ["ACID транзакции для создания
+              и исполнения ордеров", "Оптимистичные блокировки (versioning) для предотвращения
+              конфликтов", "Валидация перед исполнением ордеров", "Синхронизация с
+              другими сервисами через Event Bus", "Outbox Pattern для гарантированной
+              доставки событий", "Saga Pattern для распределенных операций (обмен,
+              комиссии, налоги)"]}, "data_synchronization": {"event_sourcing": "Все
+              изменения состояния биржи (создание ордеров, исполнение, обновление
+              курсов)\nзаписываются как события в Event Store. Это обеспечивает полный
+              аудит,\nвозможность восстановления состояния и \"time travel\" для отладки.\nПримеры
+              событий: OrderCreatedEvent, OrderFilledEvent, RateUpdatedEvent.\n",
+              "cqrs_pattern": "Разделение команд (создание ордеров, обновление курсов)
+              и запросов (получение курсов,\nистория ордеров) для оптимизации производительности
+              и масштабируемости.\nRead-модели могут быть кэшированы в Redis для быстрых
+              запросов.\n", "saga_pattern": "Для распределенных транзакций, таких
+              как обмен валют (блокировка средств,\nисполнение ордера, комиссии, налоги),
+              используется Saga Pattern для обеспечения\nатомарности операций между
+              Exchange Service, Wallet Service, Tax Service.\n", "outbox_pattern":
+              "Для гарантированной доставки событий в Event Bus используется Outbox
+              Pattern,\nкоторый записывает события в транзакционную таблицу перед
+              публикацией.\n"}, "tickrate_specification": {"exchange_operations":
+              {"tickrate": "Event-based (on-demand) + 20-30 Hz для синхронизации курсов",
+              "network_load": "- Обновления курсов: 20-30 Hz, ~0.5-1 KB/sec на игрока\n-
+              Создание/исполнение ордеров: event-based, ~1-2 events/sec\n- WebSocket
+              поток курсов: 20-30 Hz, ~0.3-0.5 KB/sec на игрока\n- Общий трафик: ~1-2
+              KB/sec на игрока\n", "latency_requirements": "< 30-100ms для операций
+              обмена", "sync_strategy": "Strong Consistency (ACID транзакции) для
+              ордеров, Eventual Consistency для курсов"}}, "scalability_requirements":
+              ["Горизонтальное масштабирование через economy-service", "Распределение
+              нагрузки на обработку ордеров", "Оптимизация запросов к БД (batch, индексы)",
+              "Кэширование курсов в Redis", "WebSocket для потоковой передачи курсов"]},
+              "subtasks": {"phase_1": {"name": "Exchange Manager и Order Manager",
+              "tasks": ["Реализация Exchange Manager", "Реализация Order Manager",
+              "Валидация ордеров", "Управление жизненным циклом ордеров", "Интеграция
+              с wallet-service"], "estimated_effort": "5 days"}, "phase_2": {"name":
+              "Matching Engine", "tasks": ["Реализация Matching Engine", "FIFO очередь
+              ордеров", "Обработка limit ордеров", "Частичное исполнение"], "estimated_effort":
+              "4 days"}, "phase_3": {"name": "Rate Manager и Market Maker", "tasks":
+              ["Реализация Rate Manager", "Динамические курсы", "Системный маркет-мейкер",
+              "Управление спредами"], "estimated_effort": "4 days"}, "phase_4": {"name":
+              "Risk Manager и Commission Calculator", "tasks": ["Реализация Risk Manager",
+              "AML лимиты", "Троттлинг", "Commission Calculator", "Интеграция с социальными
+              сервисами"], "estimated_effort": "5 days"}, "phase_5": {"name": "Event
+              Handler и интеграции", "tasks": ["Реализация Event Handler", "Интеграция
+              с Event Bus", "Интеграция с tax-service", "Интеграция с analytics-service",
+              "WebSocket для потоковой передачи"], "estimated_effort": "4 days"},
+              "phase_6": {"name": "Тестирование и оптимизация", "tasks": ["Нагрузочное
+              тестирование", "Оптимизация запросов", "Мониторинг и алерты"], "estimated_effort":
+              "3 days"}, "total_estimated_effort": "25 days"}, "diagrams": {"component_diagram":
+              "```mermaid\ngraph TB\n    subgraph \"Economy Service\"\n        EM[Exchange
+              Manager]\n        OM[Order Manager]\n        ME[Matching Engine]\n        RM[Rate
+              Manager]\n        RKM[Risk Manager]\n        CC[Commission Calculator]\n        MM[Market
+              Maker]\n        EH[Event Handler]\n    end\n\n    subgraph \"Database\"\n        DB[(PostgreSQL<br/>currency_exchange_rates<br/>currency_exchange_orders<br/>currency_exchange_trades<br/>currency_exchange_rate_history)]\n    end\n\n    subgraph
+              \"External Services\"\n        WS[Wallet Service]\n        TS[Tax Service]\n        AS[Analytics
+              Service]\n        SS[Social Service]\n        CS[Character Service]\n        RG[Realtime
+              Gateway]\n        EB[Event Bus]\n    end\n\n    subgraph \"Client\"\n        CL[UE5
+              Client]\n    end\n\n    CL -->|API requests| EM\n    EM --> OM\n    EM
+              --> RM\n    OM --> ME\n    ME --> RKM\n    ME --> CC\n    RM --> MM\n    EM
+              -->|store| DB\n    OM -->|store| DB\n    ME -->|store| DB\n    RM -->|store|
+              DB\n    OM -->|block funds| WS\n    ME -->|execute| WS\n    CC -->|check
+              status| SS\n    CC -->|check VIP| CS\n    RKM -->|analyze| AS\n    ME
+              -->|tax| TS\n    EH -->|events| EB\n    EH -->|events| RG\n    RG -->|push
+              updates| CL\n```\n", "data_flow_diagram": "```mermaid\nsequenceDiagram\n    participant
+              CL as Client\n    participant EM as Exchange Manager\n    participant
+              OM as Order Manager\n    participant ME as Matching Engine\n    participant
+              RM as Rate Manager\n    participant WS as Wallet Service\n    participant
+              RG as Realtime Gateway\n\n    CL->>EM: Create instant order\n    EM->>RM:
+              Get current rate\n    RM->>EM: Return rate\n    EM->>OM: Create order\n    OM->>WS:
+              Block funds\n    WS->>OM: Funds blocked\n    OM->>ME: Execute order\n    ME->>ME:
+              Match order\n    ME->>WS: Execute trade\n    WS->>ME: Trade executed\n    ME->>OM:
+              Update order status\n    OM->>RG: Notify client\n    RG->>CL: Push update\n```\n",
+              "order_lifecycle": "```mermaid\nstateDiagram-v2\n    [*] --> Pending:
+              Order Created\n    Pending --> Active: Validated\n    Active --> Filled:
+              Fully Executed\n    Active --> PartiallyFilled: Partially Executed\n    PartiallyFilled
+              --> Filled: Fully Executed\n    PartiallyFilled --> Cancelled: Cancelled\n    Active
+              --> Cancelled: Cancelled\n    Pending --> Blocked: Risk Check Failed\n    Active
+              --> Blocked: Risk Check Failed\n    Blocked --> Cancelled: Cancelled\n    Filled
+              --> [*]\n    Cancelled --> [*]\n```\n"}, "decisions": [{"id": "adr-currency-exchange-architecture",
+              "title": "Централизованная модель валютной биржи", "status": "approved",
+              "rationale": "Обеспечивает единый контроль курсов, риск-контроль и интеграцию
+              с сервисами.\nУпрощает matching engine и обеспечивает консистентность
+              данных.\n"}], "history": [{"version": "1.0.0", "date": "2025-11-30",
+              "author": "Architect Agent", "changes": "Создана полная архитектура
+              системы валютной биржи:\n- Определены компоненты (Exchange Manager,
+              Order Manager, Matching Engine, Rate Manager, Risk Manager, Commission
+              Calculator, Market Maker, Event Handler)\n- Описаны API endpoints (высокоуровнево)\n-
+              Спроектированы потоки данных\n- Определена структура БД (currency_exchange_rates,
+              currency_exchange_orders, currency_exchange_trades, currency_exchange_rate_history)\n-
+              Спроектирована система ордеров (instant и limit)\n- Спроектирована система
+              динамических курсов\n- Добавлена детальная синхронизация данных (Event
+              Sourcing, CQRS, Saga Pattern, Outbox Pattern)\n- Добавлена спецификация
+              тикрейта для операций с биржей\n- Создано техническое задание\n- Разбито
+              на подзадачи\n"}]}'
+        - column:
+            name: metadata
+            value: '{"id": "currency-exchange-system-architecture", "title": "Архитектура
+              системы валютной биржи", "document_type": "architecture", "category":
+              "systems", "status": "draft", "version": "1.0.0", "last_updated": "2025-11-30T19:20:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "currency-exchange", "backend", "economy"],
+              "related_systems": ["economy-service-go", "wallet-service-go", "tax-service-go",
+              "analytics-service-go"], "related_documents": [{"id": "economy-currency-exchange",
+              "relation": "extends"}], "github_issue": 224, "visibility": "internal",
+              "audience": ["architect", "backend", "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\currency-exchange-system-architecture.yaml

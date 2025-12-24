@@ -1,0 +1,161 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-combat-session-system-part2-dataflows-7dc9186c
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-864205035123009'
+        - column:
+            name: doc_id
+            value: architecture-combat-session-part2
+        - column:
+            name: title
+            value: 'Combat Session System Architecture - Part 2: Data Flows & Events'
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: implementation
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-12-02 17:06:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect"}]'
+        - column:
+            name: tags
+            value:
+            - combat
+            - event-sourcing
+            - data-flows
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value: []
+        - column:
+            name: related_documents
+            value: '[{"id": "combat-session-part1", "relation": "continues"}, {"id":
+              "combat-session-part3", "relation": "continues"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: ''
+        - column:
+            name: audience
+            value: []
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "architecture-combat-session-part2", "title":
+              "Combat Session System Architecture - Part 2: Data Flows & Events",
+              "document_type": "architecture", "category": "implementation", "status":
+              "draft", "version": "1.0.0", "last_updated": "2025-12-02T17:06:00+00:00",
+              "owners": [{"role": "architect"}], "tags": ["combat", "event-sourcing",
+              "data-flows"], "related_documents": [{"id": "combat-session-part1",
+              "relation": "continues"}, {"id": "combat-session-part3", "relation":
+              "continues"}]}, "summary": {"problem": "Необходимо описать потоки данных
+              и event sourcing.", "goal": "Документировать data flows и Kafka интеграцию.",
+              "essence": "Part 2 описывает потоки данных, Event Sourcing, Kafka топики."},
+              "content": {"sections": [{"id": "data-flow-create", "title": "Создание
+              сессии", "body": "## Sequence\n\n1. Client → Realtime Gateway: Create
+              Combat Session\n2. Realtime Gateway → Gameplay Service: POST /combat/sessions\n3.
+              Gameplay → Character Service: GET Combat Stats\n4. Character Service
+              → Gameplay: Stats + Loadout\n5. Gameplay → PostgreSQL: INSERT combat_sessions\n6.
+              Gameplay → Redis: SETEX session:{id}\n7. Gameplay → Kafka: combat.session.created\n8.
+              Gameplay → Realtime Gateway: Session Created\n9. Realtime Gateway →
+              Client: Session ID + State\n10. Kafka → Analytics Service: Event processed\n\n##
+              Timing\n- Total: <100ms\n- DB write: <20ms\n- Event publish: <5ms\n"},
+              {"id": "data-flow-action", "title": "Обработка действия", "body": "##
+              Sequence\n\n1. Client → Realtime Gateway: Execute Action (WebSocket/UDP)\n2.
+              Realtime Gateway → Gameplay Service: POST /combat/actions\n3. Gameplay
+              → Security: Validate Action (Anti-Cheat)\n4. Security → Gameplay: Validation
+              Result\n\nIf Valid:\n5. Gameplay → Combat Engine: Calculate Damage\n6.
+              Combat Engine → Redis: Update State\n7. Gameplay → PostgreSQL: INSERT
+              combat_logs\n8. Gameplay → Kafka: combat.action.executed\n9. Gameplay
+              → Realtime Gateway: Action Result\n10. Realtime Gateway → Client: State
+              Update\n11. Kafka → Analytics: Event processed\n\nIf Invalid:\n5. Gameplay
+              → Security: Report Suspicious\n6. Gameplay → Realtime Gateway: Action
+              Rejected\n\n## Timing\n- Total: <50ms (valid), <30ms (invalid)\n- Anti-cheat:
+              <10ms\n- Damage calc: <5ms\n- DB write: <15ms\n"}, {"id": "data-flow-end",
+              "title": "Завершение сессии", "body": "## Sequence\n\n1. Gameplay: Session
+              Timeout/Win Condition\n2. Gameplay → PostgreSQL: UPDATE combat_sessions\n3.
+              Gameplay → Redis: DEL session:{id}\n4. Gameplay → Kafka: combat.session.ended\n5.
+              Kafka → Economy Service: Event received\n6. Economy → Economy: Calculate
+              Rewards\n7. Economy → Gameplay: POST /combat/rewards\n8. Gameplay →
+              Client: Session Ended + Rewards\n9. Kafka → Quest Service: Update Progress\n10.
+              Kafka → Analytics: Event processed\n\n## Timing\n- Total: <200ms\n-
+              Reward calc: <100ms\n- DB update: <30ms\n"}, {"id": "event-sourcing",
+              "title": "Event Sourcing", "body": "## Kafka Topics\n\n### combat.session.created\n```json\n{\n  \"event_id\":
+              \"uuid\",\n  \"event_type\": \"combat.session.created\",\n  \"timestamp\":
+              \"2025-12-02T17:00:00Z\",\n  \"session_id\": \"uuid\",\n  \"session_type\":
+              \"pvp_arena\",\n  \"participants\": [\"player_id1\", \"player_id2\"],\n  \"zone_id\":
+              \"arena_01\",\n  \"settings\": {}\n}\n```\n\n### combat.action.executed\n```json\n{\n  \"event_id\":
+              \"uuid\",\n  \"event_type\": \"combat.action.executed\",\n  \"timestamp\":
+              \"2025-12-02T17:00:01Z\",\n  \"session_id\": \"uuid\",\n  \"actor_id\":
+              \"player_id1\",\n  \"action_type\": \"attack\",\n  \"target_id\": \"player_id2\",\n  \"damage_dealt\":
+              150,\n  \"effects_applied\": [\"bleeding\"],\n  \"validation\": {\n    \"anti_cheat_passed\":
+              true,\n    \"position_valid\": true,\n    \"cooldown_valid\": true\n  }\n}\n```\n\n###
+              combat.session.ended\n```json\n{\n  \"event_id\": \"uuid\",\n  \"event_type\":
+              \"combat.session.ended\",\n  \"timestamp\": \"2025-12-02T17:05:00Z\",\n  \"session_id\":
+              \"uuid\",\n  \"winner_team\": \"team_a\",\n  \"duration_seconds\": 300,\n  \"participants_stats\":
+              [\n    {\n      \"player_id\": \"uuid\",\n      \"damage_dealt\": 5000,\n      \"kills\":
+              3,\n      \"deaths\": 1\n    }\n  ]\n}\n```\n"}, {"id": "event-consumers",
+              "title": "Event Consumers", "body": "## Economy Service\n- Topic: combat.session.ended\n-
+              Action: Generate rewards\n- Processing: Async\n- Retry: Exponential
+              backoff\n\n## Quest Service\n- Topics: combat.action.executed, combat.session.ended\n-
+              Action: Update quest progress\n- Processing: Async\n- Retry: At-least-once
+              delivery\n\n## Analytics Service\n- Topics: All combat.*\n- Action:
+              Store telemetry\n- Processing: Async, high throughput\n- Storage: ClickHouse\n\n##
+              Security Service\n- Topic: combat.action.executed\n- Action: Detect
+              cheats\n- Processing: Realtime (10ms timeout)\n- Alert: Suspicious actions\n"},
+              {"id": "integrations", "title": "Интеграции", "body": "## Character
+              Service\n- API: GET /characters/{id}/combat-stats\n- Data: HP, атрибуты,
+              импланты, loadout\n- Caching: Redis, TTL 10 min\n- Fallback: Default
+              stats\n\n## Economy Service\n- Event: combat.session.ended\n- API: POST
+              /economy/combat-rewards\n- Data: Rewards, loot, exp\n- Retry: Exponential
+              backoff\n\n## Quest Service\n- Event: combat.*, combat.session.ended\n-
+              API: POST /quests/progress/combat-event\n- Data: Quest events\n- Async:
+              Via Kafka\n\n## Analytics Service\n- Event: All combat.*\n- API: POST
+              /analytics/combat-telemetry\n- Data: Full telemetry\n- Storage: ClickHouse\n\n##
+              Security Service\n- Event: combat.action.executed\n- API: POST /security/validate-action\n-
+              Data: Action validation\n- Realtime: 50ms timeout\n"}]}, "appendix":
+              {"references": [{"title": "Part 1: Overview", "url": "combat-session-system-part1-overview.yaml"},
+              {"title": "Part 3: Infrastructure", "url": "combat-session-system-part3-infrastructure.yaml"}]},
+              "implementation": {"github_issue": 130}, "history": [{"version": "1.0.0",
+              "date": "2025-12-02", "author": "architect", "changes": "Part 2 - потоки
+              данных и события"}]}'
+        - column:
+            name: metadata
+            value: '{"id": "architecture-combat-session-part2", "title": "Combat Session
+              System Architecture - Part 2: Data Flows & Events", "document_type":
+              "architecture", "category": "implementation", "status": "draft", "version":
+              "1.0.0", "last_updated": "2025-12-02T17:06:00+00:00", "owners": [{"role":
+              "architect"}], "tags": ["combat", "event-sourcing", "data-flows"], "related_documents":
+              [{"id": "combat-session-part1", "relation": "continues"}, {"id": "combat-session-part3",
+              "relation": "continues"}]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\combat-session-system-part2-dataflows.yaml

@@ -1,0 +1,152 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-performance-part1-database-87a9e66e
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-765053872037554'
+        - column:
+            name: doc_id
+            value: narrative-coherence-performance-part1-database
+        - column:
+            name: title
+            value: Performance Tuning — Part 1 (Database)
+        - column:
+            name: document_type
+            value: canon
+        - column:
+            name: category
+            value: narrative-coherence
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-07 00:52:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: ''
+        - column:
+            name: owners
+            value: '[{"role": "concept_director", "contact": "concept@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - performance
+            - database
+            - narrative-coherence
+        - column:
+            name: topics
+            value:
+            - backend-optimization
+            - quest-runtime
+        - column:
+            name: related_systems
+            value:
+            - quest-service
+            - narrative-service
+            - data-platform
+        - column:
+            name: related_documents
+            value: '[{"id": "narrative-coherence-performance-part2-application", "relation":
+              "continues"}, {"id": "narrative-coherence-performance-part3-advanced",
+              "relation": "continues"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part1-database.md
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - concept
+            - backend
+            - platform
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "narrative-coherence-performance-part1-database",
+              "title": "Performance Tuning — Part 1 (Database)", "document_type":
+              "canon", "category": "narrative-coherence", "status": "draft", "version":
+              "1.0.0", "last_updated": "2025-11-07T00:52:00+00:00", "concept_approved":
+              false, "concept_reviewed_at": "", "owners": [{"role": "concept_director",
+              "contact": "concept@necp.game"}], "tags": ["performance", "database",
+              "narrative-coherence"], "topics": ["backend-optimization", "quest-runtime"],
+              "related_systems": ["quest-service", "narrative-service", "data-platform"],
+              "related_documents": [{"id": "narrative-coherence-performance-part2-application",
+              "relation": "continues"}, {"id": "narrative-coherence-performance-part3-advanced",
+              "relation": "continues"}], "source": "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part1-database.md",
+              "visibility": "internal", "audience": ["concept", "backend", "platform"],
+              "risk_level": "medium"}, "review": {"chain": [{"role": "concept_director",
+              "reviewer": "", "reviewed_at": "", "status": "pending"}], "next_actions":
+              []}, "summary": {"problem": "Нужен консистентный чеклист по базовым
+              оптимизациям БД, обслуживающей сюжетные квесты и ветвления.", "goal":
+              "Задать целевые latency для ключевых операций и описать обязательные
+              настройки индексов, партиционирования и пула соединений.", "essence":
+              "Руководство фиксирует базы оптимизации PostgreSQL для квестового пайплайна
+              с ориентирами на скорость получения и записи данных.", "key_points":
+              ["Целевые SLA для чтения и записи квестовых данных.", "Обязательные
+              индексы и партиционирование для событийных таблиц.", "Настройки пула
+              соединений для устойчивых пиковых нагрузок."]}, "content": {"sections":
+              [{"id": "introduction", "title": "Введение", "body": "Первая часть цикла
+              Performance Tuning описывает фундаментальные требования к базе данных
+              квестового домена.\nДокумент служит стартовой точкой перед оптимизацией
+              приложения и инфраструктуры и определяет метрики,\nкоторых должна придерживаться
+              команда данных и бэкенда.\n", "mechanics_links": [], "assets": []},
+              {"id": "latency-targets", "title": "Целевые метрики", "body": "Основные
+              операции должны укладываться в следующие показатели при нагрузке production-уровня:\n\n|
+              Операция            | Цель    |\n|---------------------|---------|\n|
+              Получение списка квестов | < 100ms |\n| Детали квеста           | <
+              50ms  |\n| Обработка выбора        | < 200ms |\n", "mechanics_links":
+              ["mechanics/performance/latency-benchmarks.yaml"], "assets": []}, {"id":
+              "database-optimization", "title": "Оптимизация базы", "body": "### Индексы\n\n```\nCREATE
+              INDEX idx_quests_era_level ON quests(era, min_level, max_level);\nCREATE
+              INDEX idx_player_flags_character_key ON player_flags(character_id, flag_key);\nCREATE
+              INDEX idx_quests_tags_gin ON quests USING GIN(tags);\n```\n\n### Партиционирование\n\n```\nCREATE
+              TABLE player_quest_choices_2025_01 PARTITION OF player_quest_choices\n    FOR
+              VALUES FROM (''2025-01-01'') TO (''2025-02-01'');\n```\n\n### Пул соединений\n\n```\nspring:\n  datasource:\n    hikari:\n      maximum-pool-size:
+              200\n      minimum-idle: 20\n```\n", "mechanics_links": ["services/backend/quest/database-schema.yaml"],
+              "assets": []}, {"id": "navigation", "title": "Навигация по серии", "body":
+              "Продолжение цикла описано в документах Part 2 (Application) и Part
+              3 (Advanced). Настоящая часть служит базой,\nкоторую необходимо внедрить
+              перед переходом к оптимизации сервисов и инфраструктуры.\n", "mechanics_links":
+              [], "assets": []}]}, "appendix": {"glossary": [], "references": [{"type":
+              "internal", "value": "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part2-application.md"},
+              {"type": "internal", "value": "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part3-advanced.md"}],
+              "decisions": []}, "implementation": {"github_issue": 109, "needs_task":
+              false, "queue_reference": [], "blockers": []}, "history": [{"version":
+              "1.0.0", "date": "2025-11-07", "author": "concept_director", "changes":
+              "Конвертировано руководство Performance Tuning Part 1 из Markdown в
+              YAML и закреплены целевые показатели БД."}], "validation": {"checksum":
+              "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "narrative-coherence-performance-part1-database", "title":
+              "Performance Tuning — Part 1 (Database)", "document_type": "canon",
+              "category": "narrative-coherence", "status": "draft", "version": "1.0.0",
+              "last_updated": "2025-11-07T00:52:00+00:00", "concept_approved": false,
+              "concept_reviewed_at": "", "owners": [{"role": "concept_director", "contact":
+              "concept@necp.game"}], "tags": ["performance", "database", "narrative-coherence"],
+              "topics": ["backend-optimization", "quest-runtime"], "related_systems":
+              ["quest-service", "narrative-service", "data-platform"], "related_documents":
+              [{"id": "narrative-coherence-performance-part2-application", "relation":
+              "continues"}, {"id": "narrative-coherence-performance-part3-advanced",
+              "relation": "continues"}], "source": "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part1-database.md",
+              "visibility": "internal", "audience": ["concept", "backend", "platform"],
+              "risk_level": "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\canon\narrative\narrative-coherence\phase6-documentation\dev-guides\performance-part1-database.yaml

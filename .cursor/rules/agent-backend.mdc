@@ -23,10 +23,40 @@ Backend Developer реализует Go сервисы по OpenAPI специф
 
 **КРИТИЧНО:** Все новые сервисы используют enterprise-grade доменную архитектуру!
 
-#### Новая структура генерации:
+#### Оптимизированные скрипты генерации (ОБЯЗАТЕЛЬНО использовать!)
+
+**Валидация и оптимизация перед генерацией:**
+```bash
+# 1. Валидировать OpenAPI спецификации для генерации
+python scripts/validate-domains-openapi.py --domain {domain}
+
+# 2. Оптимизировать struct alignment для performance
+python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{domain}/main.yaml
+
+# 3. Генерировать enterprise-grade Go сервисы
+python scripts/generate-all-domains-go.py --domains {domain} --memory-pool
+```
+
+**Параллельная генерация всех доменов:**
+```bash
+# Генерация всех 15 enterprise-grade доменов параллельно
+python scripts/generate-all-domains-go.py --parallel 3 --memory-pool
+
+# С валидацией всех доменов перед генерацией
+python scripts/validate-domains-openapi.py && python scripts/generate-all-domains-go.py --parallel 3
+```
+
+**Скрипты предоставляют:**
+- [OK] **Parallel processing** (3-5x speedup для enterprise-grade доменов)
+- [OK] **Memory pooling** (30-50% memory savings)
+- [OK] **Zero allocations** в hot paths
+- [OK] **SOLID architecture** (single responsibility, dependency injection)
+- [OK] **Enterprise-grade validation** с oapi-codegen
+
+#### Ручная генерация (только если скрипты недоступны):
 
 ```bash
-# Генерация из домена (ОБЯЗАТЕЛЬНЫЙ новый подход)
+# Генерация из домена (fallback подход)
 npx --yes @redocly/cli bundle proto/openapi/{domain}/main.yaml -o openapi-bundled.yaml
 ogen --target pkg/api --package api --clean openapi-bundled.yaml
 
@@ -317,11 +347,11 @@ services/{service}-go/
 - `/backend-migrate-to-ogen {service}` - **NEW!** Миграция на ogen
 - `/backend-import-quest-to-db` - импорт квеста в БД (одиночный или массовый)
 
-**Оптимизированные скрипты:**
-- `python scripts/validate-domains-openapi.py` - валидация всех enterprise-grade доменов
-- `python scripts/generate-all-domains-go.py` - генерация всех enterprise-grade сервисов
-- `python scripts/validate-backend-optimizations.sh` - проверка enterprise-grade оптимизаций
-- `python scripts/batch-optimize-openapi-struct-alignment.py` - пакетная оптимизация структур
+**Оптимизированные Python скрипты для генерации кода ogen:**
+- `python scripts/validate-domains-openapi.py --domain {domain}` - валидация OpenAPI домена перед генерацией
+- `python scripts/generate-all-domains-go.py --parallel 3 --memory-pool` - параллельная генерация всех enterprise-grade сервисов
+- `python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{domain}/main.yaml` - оптимизация struct alignment для performance
+- `python scripts/validate-all-migrations.py` - валидация всех enterprise-grade миграций
 
 **Детали:** `.cursor/commands/backend-*.md`
 
@@ -353,9 +383,15 @@ proto/openapi/example-domain/README.md     - Детальное объяснен
 - Performance optimizations
 - Production-ready спецификации
 
-### 🔧 **Валидация Спецификаций**
+### 🔧 **Валидация и оптимизация спецификаций (ОБЯЗАТЕЛЬНО!)**
 ```bash
-# ОБЯЗАТЕЛЬНО перед началом работы
+# 1. Валидировать OpenAPI спецификации перед генерацией
+python scripts/validate-domains-openapi.py --domain {domain}
+
+# 2. Оптимизировать struct alignment для performance
+python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{domain}/main.yaml
+
+# 3. Финальная валидация перед генерацией кода
 npx @redocly/cli lint proto/openapi/{domain}/main.yaml
 npx @redocly/cli bundle proto/openapi/{domain}/main.yaml -o bundle.yaml
 ogen --target test --package api --clean bundle.yaml

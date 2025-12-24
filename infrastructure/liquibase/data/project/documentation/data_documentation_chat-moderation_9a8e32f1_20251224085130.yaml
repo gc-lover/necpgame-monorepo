@@ -1,0 +1,149 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-chat-moderation-9a8e32f1
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '2613726653096950'
+        - column:
+            name: doc_id
+            value: backend-chat-moderation
+        - column:
+            name: title
+            value: Chat Moderation — Модерация чата
+        - column:
+            name: document_type
+            value: implementation
+        - column:
+            name: category
+            value: backend
+        - column:
+            name: status
+            value: approved
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-07 05:30:00+00:00
+        - column:
+            name: concept_approved
+            value: true
+        - column:
+            name: concept_reviewed_at
+            value: 2025-11-07 05:30:00+00:00
+        - column:
+            name: owners
+            value: '[{"role": "safety_lead", "contact": "safety@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - chat
+            - moderation
+            - safety
+        - column:
+            name: topics
+            value:
+            - player-communication
+            - trust-safety
+        - column:
+            name: related_systems
+            value:
+            - chat-service
+            - moderation-service
+            - security-service
+        - column:
+            name: related_documents
+            value: '[{"id": "backend-chat-channels", "relation": "complements"}, {"id":
+              "backend-chat-features", "relation": "complements"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/implementation/backend/chat/chat-moderation.md
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - safety
+            - backend
+            - live-ops
+        - column:
+            name: risk_level
+            value: high
+        - column:
+            name: content
+            value: '{"metadata": {"id": "backend-chat-moderation", "title": "Chat
+              Moderation — Модерация чата", "document_type": "implementation", "category":
+              "backend", "status": "approved", "version": "1.0.0", "last_updated":
+              "2025-11-07T05:30:00+00:00", "concept_approved": true, "concept_reviewed_at":
+              "2025-11-07T05:30:00+00:00", "owners": [{"role": "safety_lead", "contact":
+              "safety@necp.game"}], "tags": ["chat", "moderation", "safety"], "topics":
+              ["player-communication", "trust-safety"], "related_systems": ["chat-service",
+              "moderation-service", "security-service"], "related_documents": [{"id":
+              "backend-chat-channels", "relation": "complements"}, {"id": "backend-chat-features",
+              "relation": "complements"}], "source": "shared/docs/knowledge/implementation/backend/chat/chat-moderation.md",
+              "visibility": "internal", "audience": ["safety", "backend", "live-ops"],
+              "risk_level": "high"}, "review": {"chain": [{"role": "safety_lead",
+              "reviewer": "", "reviewed_at": "2025-11-07T05:30:00+00:00", "status":
+              "approved"}], "next_actions": []}, "summary": {"problem": "Нужна серверная
+              спецификация модерации чата для защиты от спама, нарушений и злоупотреблений.",
+              "goal": "Описать фильтрацию сообщений, алгоритмы спама, систему банов
+              и инструменты администраторов.", "essence": "Документ фиксирует схему
+              `chat_bans`, реализацию фильтров, детекцию спама, авто-баны и административные
+              API.", "key_points": ["Profanity filter комбинирует список запрещённых
+              слов, whitelist URL и защиту от повторов/CAPS.", "SpamDetector контролирует
+              частоту сообщений и дублирование с использованием Redis.", "Auto-ban
+              сервис создаёт глобальные баны и уведомляет игроков.", "REST API покрывает
+              жалобы, выдачу банов, просмотр и снятие блокировок."]}, "content": {"sections":
+              [{"id": "overview", "title": "Система модерации", "body": "Модерация
+              чата предотвращает токсичное поведение через автоматические фильтры
+              и админ-инструменты. Система объединяет\nфильтрацию сообщений, контроль
+              спама и управление банами.\n", "mechanics_links": [], "assets": []},
+              {"id": "data_model", "title": "Схема `chat_bans`", "body": "Таблица
+              `chat_bans` хранит информацию о забаненном игроке, канале, причине,
+              администраторе и сроке действия. Индексы\nпо игроку и сроку действия
+              ускоряют проверку активных банов.\n", "mechanics_links": [], "assets":
+              []}, {"id": "profanity_filter", "title": "Фильтр запрещённых выражений",
+              "body": "ModerationService обрабатывает сообщения, заменяя запрещённые
+              слова, блокируя не-whitelist ссылки, сокращая повторяющиеся\nсимволы
+              и нормализуя верхний регистр. Проверка severe violations запускает эскалацию.\n",
+              "mechanics_links": [], "assets": []}, {"id": "spam_detection", "title":
+              "Обнаружение спама", "body": "SpamDetector отслеживает частоту сообщений
+              (rate limit >10 в минуту) и повторение контента. Данные хранятся в Redis
+              с\nограниченным TTL, что позволяет быстро реагировать на спам.\n", "mechanics_links":
+              [], "assets": []}, {"id": "auto_ban", "title": "Автоматические баны",
+              "body": "Auto-ban сохраняет записи в `chat_bans`, уведомляет игрока
+              через WebSocket и журналирует событие. Глобальные баны\nподдерживают
+              конфигурацию по длительности.\n", "mechanics_links": [], "assets": []},
+              {"id": "api_endpoints", "title": "API модерации", "body": "Предоставлены
+              endpoints `POST /chat/report`, `POST /chat/ban`, `GET /chat/bans` и
+              `DELETE /chat/bans/{id}` для управления\nжалобами и банами администраторами.\n",
+              "mechanics_links": [], "assets": []}]}, "appendix": {"glossary": [],
+              "references": [], "decisions": []}, "implementation": {"needs_task":
+              false, "github_issue": 77, "queue_reference": ["shared/trackers/queues/concept/queued.yaml#backend-chat-moderation"],
+              "blockers": []}, "history": [{"version": "1.0.0", "date": "2025-11-07",
+              "author": "ai_brain_manager", "changes": "Описаны фильтрация, детекция
+              спама, авто-баны и административные API для модерации чата."}], "validation":
+              {"checksum": "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "backend-chat-moderation", "title": "Chat Moderation —
+              Модерация чата", "document_type": "implementation", "category": "backend",
+              "status": "approved", "version": "1.0.0", "last_updated": "2025-11-07T05:30:00+00:00",
+              "concept_approved": true, "concept_reviewed_at": "2025-11-07T05:30:00+00:00",
+              "owners": [{"role": "safety_lead", "contact": "safety@necp.game"}],
+              "tags": ["chat", "moderation", "safety"], "topics": ["player-communication",
+              "trust-safety"], "related_systems": ["chat-service", "moderation-service",
+              "security-service"], "related_documents": [{"id": "backend-chat-channels",
+              "relation": "complements"}, {"id": "backend-chat-features", "relation":
+              "complements"}], "source": "shared/docs/knowledge/implementation/backend/chat/chat-moderation.md",
+              "visibility": "internal", "audience": ["safety", "backend", "live-ops"],
+              "risk_level": "high"}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\backend\chat\chat-moderation.yaml

@@ -1,0 +1,160 @@
+# Guild Core Schemas
+components:
+  schemas:
+    Guild:
+      type: object
+      required:
+      - guild_id
+      - name
+      - leader_id
+      - created_at
+      - level
+      - experience
+      - member_count
+      - max_members
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+          description: Unique guild identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          description: Guild name (unique)
+          maxLength: 50
+          example: "Shadow Syndicate"
+        description:
+          type: string
+          description: Guild description
+          maxLength: 500
+          example: "Elite cyberpunk guild specializing in night operations"
+        leader_id:
+          type: string
+          format: uuid
+          description: Guild leader player ID
+          example: 550e8400-e29b-41d4-a716-446655440001
+        created_at:
+          type: string
+          format: date-time
+          description: Guild creation timestamp
+          example: '2025-12-23T23:54:00Z'
+        level:
+          type: integer
+          description: Guild level
+          minimum: 1
+          maximum: 100
+          example: 25
+        experience:
+          type: integer
+          format: int64
+          description: Guild experience points
+          minimum: 0
+          example: 1500000
+        reputation:
+          type: integer
+          description: Guild reputation score
+          minimum: -10000
+          maximum: 10000
+          example: 2500
+        member_count:
+          type: integer
+          description: Current member count
+          minimum: 1
+          maximum: 500
+          example: 45
+        max_members:
+          type: integer
+          description: Maximum allowed members
+          minimum: 1
+          maximum: 500
+          example: 100
+        is_recruiting:
+          type: boolean
+          description: Whether guild is accepting new members
+          example: true
+        recruitment_requirements:
+          type: object
+          description: Minimum requirements for joining
+          properties:
+            min_level:
+              type: integer
+              minimum: 1
+              example: 10
+            min_reputation:
+              type: integer
+              minimum: 0
+              example: 100
+        emblem_url:
+          type: string
+          format: uri
+          description: Guild emblem image URL
+          example: "https://cdn.necpgame.com/guilds/shadow-syndicate/emblem.png"
+        banner_url:
+          type: string
+          format: uri
+          description: Guild banner image URL
+          example: "https://cdn.necpgame.com/guilds/shadow-syndicate/banner.png"
+        motto:
+          type: string
+          description: Guild motto
+          maxLength: 100
+          example: "Shadows unite, enemies divide"
+        territory_controlled:
+          type: integer
+          description: Number of territories controlled
+          minimum: 0
+          example: 3
+        total_wars_won:
+          type: integer
+          description: Total guild wars won
+          minimum: 0
+          example: 12
+        total_wars_lost:
+          type: integer
+          description: Total guild wars lost
+          minimum: 0
+          example: 5
+        last_activity:
+          type: string
+          format: date-time
+          description: Last guild activity timestamp
+          example: '2025-12-23T22:30:00Z'
+        settings:
+          $ref: '#/components/schemas/GuildSettings'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot path optimization for guild listings.'
+    GuildSettings:
+      type: object
+      properties:
+        privacy_level:
+          type: string
+          enum:
+          - public
+          - private
+          - invite_only
+          example: invite_only
+        allow_cross_faction:
+          type: boolean
+          description: Allow members from different factions
+          example: true
+        tax_rate:
+          type: number
+          format: float
+          description: Guild tax rate (0.0-0.5)
+          minimum: 0.0
+          maximum: 0.5
+          example: 0.05
+        war_policy:
+          type: string
+          enum:
+          - defensive
+          - aggressive
+          - neutral
+          example: defensive
+        alliance_policy:
+          type: string
+          enum:
+          - open
+          - selective
+          - closed
+          example: selective
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

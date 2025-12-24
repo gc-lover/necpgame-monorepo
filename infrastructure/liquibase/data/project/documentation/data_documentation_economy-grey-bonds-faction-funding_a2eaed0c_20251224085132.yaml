@@ -1,0 +1,145 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-economy-grey-bonds-faction-funding-a2eaed0c
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-266769822133555'
+        - column:
+            name: doc_id
+            value: economy-grey-bonds-faction-funding
+        - column:
+            name: title
+            value: 'Серые облигации: игроки финансируют конвои/фракции'
+        - column:
+            name: document_type
+            value: mechanics
+        - column:
+            name: category
+            value: economy
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 0.1.0
+        - column:
+            name: last_updated
+            value: 2025-12-12 00:00:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: ''
+        - column:
+            name: owners
+            value: '[{"role": "game_balance", "contact": "balance@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - bonds
+            - economy
+            - risk_reward
+        - column:
+            name: topics
+            value:
+            - economy_rewards
+            - faction_support
+        - column:
+            name: related_systems
+            value:
+            - economy-service
+            - gameplay-service
+            - social-service
+        - column:
+            name: related_documents
+            value: '[{"id": "economy-grey-mail-contracts", "relation": "complements"},
+              {"id": "economy-extract-risk-overstay", "relation": "references"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - economy
+            - gameplay
+            - analytics
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "economy-grey-bonds-faction-funding", "title":
+              "Серые облигации: игроки финансируют конвои/фракции", "document_type":
+              "mechanics", "category": "economy", "status": "draft", "version": "0.1.0",
+              "last_updated": "2025-12-12T00:00:00+00:00", "concept_approved": false,
+              "concept_reviewed_at": "", "owners": [{"role": "game_balance", "contact":
+              "balance@necp.game"}], "tags": ["bonds", "economy", "risk_reward"],
+              "topics": ["economy_rewards", "faction_support"], "related_systems":
+              ["economy-service", "gameplay-service", "social-service"], "related_documents":
+              [{"id": "economy-grey-mail-contracts", "relation": "complements"}, {"id":
+              "economy-extract-risk-overstay", "relation": "references"}], "source":
+              "", "visibility": "internal", "audience": ["economy", "gameplay", "analytics"],
+              "risk_level": "medium"}, "review": {"chain": [{"role": "game_balance_lead",
+              "reviewer": "", "reviewed_at": "", "status": "pending"}], "next_actions":
+              []}, "summary": {"problem": "Игроки должны финансировать конвои/фракции
+              через облигации с риском провала.", "goal": "Определить суммы, срок,
+              доходность, риск провала, связь с событиями и ценовые шоки рынка.",
+              "essence": "Игрок вкладывает кредиты в конвой/фракцию; при успехе получает
+              доход, при провале теряет часть/всё и растут цены.", "key_points": ["Формулы
+              доходности/риска и лимиты вложений.", "Триггеры успеха/провала, ценовые
+              шоки.", "Телеметрия объёма, возвратов, дефолтов."]}, "content": {"sections":
+              [{"id": "bond_params", "title": "Параметры облигаций", "body": "Номинал:
+              1k/5k/10k кр. Срок: 15 мин (конвой) / 30 мин (фракция).\nДоходность
+              базовая: 6% (конвой), 10% (фракция).\nЛимит на игрока: 2 облигации каждого
+              типа одновременно; глобальный лимит на событие: 200 облигаций.\n"},
+              {"id": "risk_model", "title": "Риск и вероятность провала", "body":
+              "Вероятность провала = base_fail + threat_mod - support_mod.\nbase_fail:
+              конвой 0.08, фракция 0.12.\nthreat_mod: +0.03 за активный рейд в регионе;
+              +0.02 за низкую безопасность.\nsupport_mod: -0.02 за каждые 50 облигаций
+              (кап -0.08).\nПри провале: возврат 20% номинала, рынок цен на связанные
+              товары +8% на 10 мин (shock).\n"}, {"id": "success_payout", "title":
+              "Выплата при успехе", "body": "Выплата = номинал * (1 + доходность *
+              (1 - fail_prob)).\nДоп. бонус +2% если не было атак на конвой; +1 кейс
+              faction_support с шансом 25% при фракции.\n"}, {"id": "event_triggers",
+              "title": "Триггеры успеха/провала", "body": "Успех: конвой доставлен
+              / событие фракции завершено без провала ключевых целей.\nПровал: конвой
+              уничтожен или фракционное событие сорвано.\nЧасовой таймаут: если событие
+              не завершено, облигации возвращают 80% номинала без доходности.\n"},
+              {"id": "market_effects", "title": "Ценовые шоки", "body": "При провале:
+              цены на связанные товары растут на 8% (конвой) / 12% (фракция) на 10
+              мин; затем плавный спад 5 мин.\nПри успехе: скидка 5% на 5 мин на связанные
+              товары.\n"}, {"id": "telemetry", "title": "Телеметрия", "body": "Логировать:\n-
+              `bonds.issued`, `bonds.redeemed`, `bonds.defaulted`.\n- `bonds.volume_by_type`
+              (конвой/фракция), средняя доходность.\n- `market.shocks` (delta%), `support_mod`
+              динамика.\n"}]}, "appendix": {"glossary": [{"term": "support_mod", "definition":
+              "Снижение вероятности провала за счёт количества облигаций."}]}, "implementation":
+              {"needs_task": false, "github_issue": 1700, "queue_reference": [], "blockers":
+              []}, "history": [{"version": "0.1.0", "date": "2025-12-12", "author":
+              "game_balance_team", "changes": "Базовая модель серых облигаций с риском,
+              доходностью и шоками рынка."}], "validation": {"checksum": "", "schema_version":
+              "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "economy-grey-bonds-faction-funding", "title": "Серые облигации:
+              игроки финансируют конвои/фракции", "document_type": "mechanics", "category":
+              "economy", "status": "draft", "version": "0.1.0", "last_updated": "2025-12-12T00:00:00+00:00",
+              "concept_approved": false, "concept_reviewed_at": "", "owners": [{"role":
+              "game_balance", "contact": "balance@necp.game"}], "tags": ["bonds",
+              "economy", "risk_reward"], "topics": ["economy_rewards", "faction_support"],
+              "related_systems": ["economy-service", "gameplay-service", "social-service"],
+              "related_documents": [{"id": "economy-grey-mail-contracts", "relation":
+              "complements"}, {"id": "economy-extract-risk-overstay", "relation":
+              "references"}], "source": "", "visibility": "internal", "audience":
+              ["economy", "gameplay", "analytics"], "risk_level": "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\mechanics\economy\economy-grey-bonds-faction-funding.yaml

@@ -1,0 +1,304 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-weapon-type-specific-mechanics-architecture-395b0f59
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-331471109107360'
+        - column:
+            name: doc_id
+            value: weapon-type-specific-mechanics-architecture
+        - column:
+            name: title
+            value: Архитектура системы специальных механик по типам оружия
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: combat
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-12-07 00:00:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - combat
+            - weapons
+            - mechanics
+            - weapon-types
+            - special-mechanics
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - weapon-system
+            - combat-system
+            - character-system
+            - physics-system
+        - column:
+            name: related_documents
+            value: '[{"id": "weapon-special-mechanics-working", "relation": "implements"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - gameplay
+            - balance
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "weapon-type-specific-mechanics-architecture",
+              "title": "Архитектура системы специальных механик по типам оружия",
+              "document_type": "architecture", "category": "combat", "status": "draft",
+              "version": "1.0.0", "last_updated": "2025-12-07T00:00:00+00:00", "owners":
+              [{"role": "architect", "contact": "architect@necp.game"}], "tags": ["architecture",
+              "combat", "weapons", "mechanics", "weapon-types", "special-mechanics"],
+              "related_systems": ["weapon-system", "combat-system", "character-system",
+              "physics-system"], "related_documents": [{"id": "weapon-special-mechanics-working",
+              "relation": "implements"}], "github_issue": 1570, "visibility": "internal",
+              "audience": ["architect", "backend", "gameplay", "balance"]}, "summary":
+              {"problem": "Требуется спроектировать архитектуру системы специальных
+              механик по типам оружия,\nсоздающую уникальные стили боя для каждого
+              типа (режущего, колющего, автоматического,\nпистолетов, дробовиков,
+              пусковых установок).\n", "goal": "Создать масштабируемую архитектуру
+              с определением компонентов, API и потоков данных\nдля реализации уникальных
+              механик каждого типа оружия.\n", "essence": "Полная архитектура специальных
+              механик по типам оружия с микросервисами,\nevent-driven коммуникацией
+              и оптимизациями производительности.\n"}, "architecture": {"microservices":
+              [{"name": "weapon-type-mechanics-service", "port": 8106, "responsibility":
+              "Управление специальными механиками для каждого типа оружия:\n- Расчет
+              и применение уникальных эффектов по типам\n- Синхронизация с физической
+              системой для специальных взаимодействий\n- Управление состоянием специальных
+              механик\n- Предоставление API для получения информации о механиках\n",
+              "components": ["MeleeMechanicsEngine", "RangedMechanicsEngine", "SpecialEffectsManager",
+              "TypeRegistry", "PerformanceOptimizer"], "dependencies": ["weapon-service",
+              "combat-service", "physics-service", "character-service"]}], "api_endpoints":
+              {"rest": [{"path": "/api/v1/weapon-types/{weaponType}/mechanics", "method":
+              "GET", "description": "Получение специальных механик для типа оружия",
+              "request": {}, "response": {"type": "object", "properties": {"weaponType":
+              {"type": "string"}, "mechanics": {"type": "array", "items": {"type":
+              "object"}}}}}, {"path": "/api/v1/weapon-types/{weaponType}/effects",
+              "method": "POST", "description": "Активация специального эффекта типа
+              оружия", "request": {"type": "object", "properties": {"effectId": {"type":
+              "string"}, "parameters": {"type": "object"}}}, "response": {"type":
+              "object", "properties": {"status": {"type": "string"}, "effectResult":
+              {"type": "object"}}}}], "websocket": [{"path": "/ws/v1/weapon-mechanics/{characterId}",
+              "description": "Обновления механик оружия в реальном времени", "messages":
+              [{"type": "weapon_type_effect_triggered", "payload": {"type": "object",
+              "properties": {"weaponType": {"type": "string"}, "effectId": {"type":
+              "string"}, "targetId": {"type": "string"}, "parameters": {"type": "object"}}}},
+              {"type": "weapon_type_state_updated", "payload": {"type": "object",
+              "properties": {"weaponType": {"type": "string"}, "state": {"type": "object"}}}}]}]},
+              "event_streams": {"publish": [{"name": "weapon.type_effect.applied",
+              "description": "Событие применения эффекта типа оружия", "payload":
+              {"type": "object", "properties": {"weaponType": {"type": "string"},
+              "effectId": {"type": "string"}, "sourceCharacterId": {"type": "string"},
+              "targetCharacterId": {"type": "string"}, "damage": {"type": "number"},
+              "effects": {"type": "array", "items": {"type": "string"}}}}}, {"name":
+              "weapon.type_mechanic.triggered", "description": "Событие триггера специальной
+              механики", "payload": {"type": "object", "properties": {"weaponType":
+              {"type": "string"}, "mechanicId": {"type": "string"}, "characterId":
+              {"type": "string"}, "parameters": {"type": "object"}}}}], "subscribe":
+              [{"name": "weapon.fired", "description": "Событие выстрела из оружия"},
+              {"name": "weapon.hit", "description": "Событие попадания оружием"},
+              {"name": "weapon.melee_attack", "description": "Событие ближнего боя"},
+              {"name": "combat.damage_dealt", "description": "Событие нанесения урона"},
+              {"name": "physics.collision_detected", "description": "Событие физического
+              столкновения"}]}, "weapon_types": {"melee_weapons": {"katana": {"mechanics":
+              [{"name": "Режущий урон", "description": "Высокий урон по незащищенным
+              частям тела", "mechanics": [{"armor_penetration": "частичное игнорирование
+              брони"}, {"critical_zones": "повышенный урон по критическим зонам"},
+              {"bleeding_effect": "DoT урон от ран"}]}, {"name": "Комбо-атаки", "description":
+              "Последовательность быстрых ударов", "mechanics": [{"combo_multiplier":
+              "увеличение урона при комбо"}, {"speed_increase": "ускорение следующих
+              ударов"}, {"final_strike_bonus": "бонус к последнему удару"}]}, {"name":
+              "Блокировка выстрелов", "description": "Возможность блокировать пули
+              катаной", "mechanics": [{"bullet_deflection": "отклонение траектории
+              пуль"}, {"perfect_timing": "идеальная блокировка при правильном тайминге"},
+              {"counter_attack": "контратака после успешной блокировки"}]}]}, "knives":
+              {"mechanics": [{"name": "Быстрые атаки", "description": "Высокая скорость
+              атаки с низким уроном", "mechanics": [{"attack_speed": "2-3 атаки в
+              секунду"}, {"mobility_bonus": "повышенная мобильность при использовании"},
+              {"stealth_bonus": "бонус к скрытности"}]}, {"name": "Критические удары",
+              "description": "Высокий шанс критических попаданий", "mechanics": [{"critical_chance":
+              "25-40% шанс крита"}, {"critical_multiplier": "2-3x урон от крита"},
+              {"backstab_bonus": "дополнительный бонус при ударе в спину"}]}, {"name":
+              "Застревание", "description": "Нож может застрять в цели", "mechanics":
+              [{"stuck_chance": "шанс застревания в теле"}, {"stuck_damage": "дополнительный
+              урон при застревании"}, {"retrieval_mechanic": "возможность выдернуть
+              нож"}]}]}, "spears": {"mechanics": [{"name": "Пробивание брони", "description":
+              "Высокое проникновение через броню", "mechanics": [{"armor_penetration":
+              "50-80% игнорирования брони"}, {"range_advantage": "преимущество на
+              расстоянии"}, {"charge_attack": "мощная атака с разбега"}]}, {"name":
+              "Дистанционные удары", "description": "Возможность колоть на расстоянии",
+              "mechanics": [{"extended_reach": "увеличенная дальность атаки"}, {"thrust_damage":
+              "специализированный урон от колющих атак"}, {"guard_break": "возможность
+              ломать защиту противника"}]}]}, "claws": {"mechanics": [{"name": "Разрывание
+              брони", "description": "Разрывание и повреждение брони противника",
+              "mechanics": [{"armor_damage": "постепенное разрушение брони"}, {"exposed_damage":
+              "повышенный урон по поврежденной броне"}, {"disarm_chance": "шанс сорвать
+              броню противника"}]}, {"name": "Цепляние", "description": "Возможность
+              цепляться за поверхности", "mechanics": [{"wall_climbing": "лазание
+              по стенам"}, {"grapple_attack": "захват противника"}, {"mobility_boost":
+              "повышенная мобильность"}]}]}}, "ranged_weapons": {"assault_rifles":
+              {"mechanics": [{"name": "Контроль отдачи", "description": "Управление
+              отдачей для точной стрельбы", "mechanics": [{"recoil_control": "снижение
+              вертикальной отдачи"}, {"spread_reduction": "уменьшение разброса пуль"},
+              {"stability_bonus": "бонус к стабильности при прицеливании"}]}, {"name":
+              "Режимы стрельбы", "description": "Переключение между режимами огня",
+              "mechanics": [{"single_fire": "точная одиночная стрельба"}, {"burst_fire":
+              "короткие очереди по 3-5 пуль"}, {"full_auto": "автоматическая стрельба"}]},
+              {"name": "Подавляющий огонь", "description": "Создание зоны подавления
+              противника", "mechanics": [{"suppression_effect": "снижение точности
+              противника"}, {"cover_penalty": "штраф за укрытие противника"}, {"movement_restriction":
+              "ограничение передвижения"}]}]}, "pistols": {"mechanics": [{"name":
+              "Быстрая перезарядка", "description": "Мгновенная перезарядка пистолетов",
+              "mechanics": [{"quick_reload": "перезарядка за 0.5-1 секунду"}, {"speed_loader":
+              "бонус к скорости перезарядки"}, {"tactical_reload": "возможность прервать
+              перезарядку"}]}, {"name": "Высокая точность", "description": "Отличная
+              точность на средней дистанции", "mechanics": [{"accuracy_bonus": "+20-30%
+              к точности"}, {"hip_fire_bonus": "бонус к стрельбе от бедра"}, {"follow_up_bonus":
+              "повышенная точность второго выстрела"}]}, {"name": "Дуэльная механика",
+              "description": "Специализация на ближнем бое", "mechanics": [{"close_range_bonus":
+              "бонус к урону вблизи"}, {"pistol_whip": "ближний удар рукояткой"},
+              {"quick_draw": "быстрый выхват пистолета"}]}]}, "shotguns": {"mechanics":
+              [{"name": "Веерное рассеивание", "description": "Широкий конус поражения",
+              "mechanics": [{"pellet_spread": "8-12 дробин в конусе"}, {"damage_falloff":
+              "снижение урона с расстоянием"}, {"close_range_multiplier": "бонус к
+              урону вблизи"}]}, {"name": "Отбрасывание", "description": "Сильное отбрасывание
+              целей", "mechanics": [{"knockback_force": "сила отбрасывания"}, {"stagger_effect":
+              "оглушение противника"}, {"wall_slam_bonus": "дополнительный урон при
+              ударе о стену"}]}, {"name": "Ограниченная дальность", "description":
+              "Эффективность только на близком расстоянии", "mechanics": [{"range_limit":
+              "максимальная эффективная дальность 10-15м"}, {"falloff_penalty": "сильное
+              падение урона за пределами"}, {"point_blank_bonus": "бонус при стрельбе
+              в упор"}]}]}, "sniper_rifles": {"mechanics": [{"name": "Высокая точность",
+              "description": "Отличная точность на больших дистанциях", "mechanics":
+              [{"long_range_accuracy": "минимальный разброс на 50-100м"}, {"bullet_drop_compensation":
+              "компенсация падения пули"}, {"wind_compensation": "учет влияния ветра"}]},
+              {"name": "Низкая скорость стрельбы", "description": "Долгое время между
+              выстрелами", "mechanics": [{"bolt_action_delay": "задержка перезарядки
+              2-3 секунды"}, {"chambering_time": "время досылания патрона"}, {"cooling_system":
+              "система охлаждения ствола"}]}, {"name": "Пробивание укрытий", "description":
+              "Возможность стрелять сквозь тонкие укрытия", "mechanics": [{"penetration_chance":
+              "шанс пробить тонкие стены"}, {"material_analysis": "анализ материала
+              укрытия"}, {"ricochet_prediction": "расчет рикошетов"}]}]}, "smgs":
+              {"mechanics": [{"name": "Высокая скорострельность", "description": "Очень
+              высокая скорость стрельбы", "mechanics": [{"fire_rate": "800-1200 выстрелов
+              в минуту"}, {"magazine_capacity": "большой магазин 30-50 патронов"},
+              {"overheating_risk": "риск перегрева при длительной стрельбе"}]}, {"name":
+              "Мобильность", "description": "Легкость и маневренность", "mechanics":
+              [{"weight_reduction": "снижение веса оружия"}, {"handling_bonus": "улучшенная
+              управляемость"}, {"movement_speed": "бонус к скорости передвижения"}]},
+              {"name": "Ближний бой", "description": "Эффективность в ближнем бою",
+              "mechanics": [{"close_quarters_bonus": "бонус к урону вблизи"}, {"hip_fire_efficiency":
+              "эффективная стрельба от бедра"}, {"room_clearing": "специализация на
+              зачистке помещений"}]}]}, "rocket_launchers": {"mechanics": [{"name":
+              "Взрывной урон", "description": "Мощный взрывной урон по площади", "mechanics":
+              [{"explosion_radius": "радиус поражения 3-8 метров"}, {"splash_damage":
+              "урон по площади"}, {"blast_wave": "ударная волна отбрасывает цели"}]},
+              {"name": "Ограниченный боезапас", "description": "Малое количество снарядов",
+              "mechanics": [{"ammo_capacity": "1-4 снаряда"}, {"reload_time": "длительное
+              время перезарядки"}, {"ammo_management": "тщательный выбор момента выстрела"}]},
+              {"name": "Различные типы снарядов", "description": "Разные типы ракет
+              с разными эффектами", "mechanics": [{"explosive_rounds": "стандартные
+              взрывные снаряды"}, {"incendiary_rounds": "зажигательные снаряды"},
+              {"emp_rounds": "электромагнитные снаряды"}, {"cluster_rounds": "кластерные
+              снаряды"}]}]}}}, "data_models": {"weapon_type_definition": [{"name":
+              "WeaponType", "fields": [{"name": "id", "type": "string"}, {"name":
+              "name", "type": "string"}, {"name": "category", "type": "string"}, {"name":
+              "mechanics", "type": "array", "items": {"$ref": "#/components/schemas/WeaponMechanic"}}]}],
+              "weapon_mechanic": [{"name": "WeaponMechanic", "fields": [{"name": "id",
+              "type": "string"}, {"name": "name", "type": "string"}, {"name": "description",
+              "type": "string"}, {"name": "parameters", "type": "object"}, {"name":
+              "effects", "type": "array", "items": {"type": "string"}}]}]}, "data_storage":
+              {"database_schema": {"tables": [{"name": "weapon_types", "columns":
+              [{"name": "id", "type": "VARCHAR(50)", "primary_key": true}, {"name":
+              "name", "type": "VARCHAR(100)"}, {"name": "category", "type": "VARCHAR(20)"},
+              {"name": "mechanics_json", "type": "JSONB"}], "indexes": [{"name": "idx_weapon_types_category",
+              "columns": ["category"]}]}, {"name": "weapon_type_usage_stats", "columns":
+              [{"name": "id", "type": "UUID", "primary_key": true}, {"name": "weapon_type_id",
+              "type": "VARCHAR(50)", "foreign_key": "weapon_types(id)"}, {"name":
+              "character_id", "type": "UUID"}, {"name": "mechanic_id", "type": "VARCHAR(100)"},
+              {"name": "usage_count", "type": "INTEGER"}, {"name": "last_used_at",
+              "type": "TIMESTAMP WITH TIME ZONE"}], "indexes": [{"name": "idx_weapon_type_usage_character",
+              "columns": ["character_id"]}, {"name": "idx_weapon_type_usage_type",
+              "columns": ["weapon_type_id"]}]}]}, "caching_strategy": [{"type": "Redis",
+              "data": [{"key": "weapon_types", "description": "Кэш всех типов оружия
+              (TTL 3600s)"}, {"key": "weapon_type:{typeId}:mechanics", "description":
+              "Кэш механик типа оружия (TTL 1800s)"}]}]}, "performance_optimizations":
+              {"computation_optimization": {"mechanic_precomputation": "предварительный
+              расчет параметров механик", "effect_pooling": "пул эффектов для повторного
+              использования", "spatial_partitioning": "оптимизация расчетов для близких
+              целей"}, "network_optimization": {"effect_delta_compression": "сжатие
+              изменений эффектов", "batch_effect_updates": "пакетная отправка обновлений
+              эффектов"}}, "security_considerations": {"authentication": "JWT токены
+              для всех API запросов", "authorization": "RBAC для доступа к механикам
+              оружия", "input_validation": "строгая валидация параметров эффектов",
+              "anti_cheat": "серверная валидация применения механик"}, "monitoring_and_logging":
+              {"metrics": "Prometheus метрики по использованию механик каждого типа",
+              "logging": "Структурированные логи для всех операций с механиками",
+              "tracing": "Распределенное трассирование для цепочек эффектов", "alerting":
+              "Оповещения о аномалиях в использовании механик"}, "testing_strategy":
+              {"unit_tests": "для отдельных механик каждого типа оружия", "integration_tests":
+              "для взаимодействия механик с системой боя", "e2e_tests": "для полных
+              сценариев использования механик", "performance_tests": "нагрузочное
+              тестирование расчетов эффектов"}, "deployment_strategy": {"containerization":
+              "Docker для weapon-type-mechanics-service", "orchestration": "Kubernetes
+              для развертывания и масштабирования", "blue_green_deployment": "для
+              обновлений механик", "rollback_procedures": "автоматизированный откат
+              к предыдущей версии"}, "history": [{"version": "1.0.0", "date": "2025-12-07",
+              "author": "Architect Agent", "changes": "Создана полная архитектура
+              системы специальных механик по типам оружия:\n- Определены микросервисы
+              и компоненты\n- Спроектированы API endpoints и WebSocket каналы\n- Определены
+              потоки событий для механик\n- Детализированы механики для каждого типа
+              оружия (катаны, ножи, автоматы, пистолеты и т.д.)\n- Спроектирована
+              структура БД и стратегия кэширования\n- Добавлены оптимизации производительности
+              и безопасности\n- Определены стратегии тестирования и развертывания\n"}]}}'
+        - column:
+            name: metadata
+            value: '{"id": "weapon-type-specific-mechanics-architecture", "title":
+              "Архитектура системы специальных механик по типам оружия", "document_type":
+              "architecture", "category": "combat", "status": "draft", "version":
+              "1.0.0", "last_updated": "2025-12-07T00:00:00+00:00", "owners": [{"role":
+              "architect", "contact": "architect@necp.game"}], "tags": ["architecture",
+              "combat", "weapons", "mechanics", "weapon-types", "special-mechanics"],
+              "related_systems": ["weapon-system", "combat-system", "character-system",
+              "physics-system"], "related_documents": [{"id": "weapon-special-mechanics-working",
+              "relation": "implements"}], "github_issue": 1570, "visibility": "internal",
+              "audience": ["architect", "backend", "gameplay", "balance"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\weapon-type-specific-mechanics-architecture.yaml

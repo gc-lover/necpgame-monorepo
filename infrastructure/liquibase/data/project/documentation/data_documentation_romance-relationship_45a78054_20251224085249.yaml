@@ -1,0 +1,144 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-romance-relationship-45a78054
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '3396633444808299'
+        - column:
+            name: doc_id
+            value: implementation-romance-relationship-algorithm
+        - column:
+            name: title
+            value: Romance Relationship - Расчет отношений
+        - column:
+            name: document_type
+            value: implementation
+        - column:
+            name: category
+            value: algorithms
+        - column:
+            name: status
+            value: approved
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-07 06:35:00+00:00
+        - column:
+            name: concept_approved
+            value: true
+        - column:
+            name: concept_reviewed_at
+            value: 2025-11-07 06:35:00+00:00
+        - column:
+            name: owners
+            value: '[{"role": "ai_brain_manager", "contact": "ai@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - romance
+            - relationship
+            - ai
+        - column:
+            name: topics
+            value:
+            - implementation
+            - ai
+        - column:
+            name: related_systems
+            value:
+            - npc-ai-service
+            - social-service
+        - column:
+            name: related_documents
+            value: '[{"id": "implementation-romance-triggers", "relation": "references"},
+              {"id": "implementation-romance-dialogue", "relation": "references"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/implementation/algorithms/romance/romance-relationship.yaml
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - ai
+            - gameplay
+            - narrative
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "implementation-romance-relationship-algorithm",
+              "title": "Romance Relationship - Расчет отношений", "document_type":
+              "implementation", "category": "algorithms", "status": "approved", "version":
+              "1.0.0", "last_updated": "2025-11-07T06:35:00+00:00", "concept_approved":
+              true, "concept_reviewed_at": "2025-11-07T06:35:00+00:00", "owners":
+              [{"role": "ai_brain_manager", "contact": "ai@necp.game"}], "tags": ["romance",
+              "relationship", "ai"], "topics": ["implementation", "ai"], "related_systems":
+              ["npc-ai-service", "social-service"], "related_documents": [{"id": "implementation-romance-triggers",
+              "relation": "references"}, {"id": "implementation-romance-dialogue",
+              "relation": "references"}], "source": "shared/docs/knowledge/implementation/algorithms/romance/romance-relationship.yaml",
+              "visibility": "internal", "audience": ["ai", "gameplay", "narrative"],
+              "risk_level": "medium"}, "review": {"chain": [{"role": "ai_brain_manager",
+              "reviewer": "", "reviewed_at": "2025-11-07T06:35:00+00:00", "status":
+              "approved"}], "next_actions": []}, "summary": {"problem": "Нужен формализованный
+              алгоритм расчёта романтических отношений между игроком и NPC.", "goal":
+              "Определить диапазон очков, стадии отношений и обработку переходов с
+              генерацией событий.", "essence": "Алгоритм обновляет очки отношений,
+              ограничивает значения, вычисляет стадии и публикует события при смене
+              этапа.", "key_points": ["Диапазон очков от -100 до +100 с семью стадиями.",
+              "Изменения ограничиваются и приводят к событию `RelationshipStageChanged`.",
+              "Документ является частью набора микрофич (триггеры, расчёт, диалог)."]},
+              "content": {"sections": [{"id": "points", "title": "Диапазон и стадии",
+              "body": "Отношения хранятся в диапазоне от -100 (Hostile) до +100 (Love).
+              Стадии:\nHostile (-100..-50), Dislike (-49..0), Neutral (1..20), Friendly
+              (21..50),\nClose (51..75), Romantic Interest (76..90), Love (91..100).\n",
+              "mechanics_links": [], "assets": []}, {"id": "calculation", "title":
+              "Обновление очков", "body": "```\npublic void updateRelationship(String
+              playerId, String npcId, int change) {\n    int current = relationshipRepository.get(playerId,
+              npcId);\n    int newValue = Math.max(-100, Math.min(100, current + change));\n\n    relationshipRepository.set(playerId,
+              npcId, newValue);\n\n    String prevStage = getStage(current);\n    String
+              newStage = getStage(newValue);\n\n    if (!prevStage.equals(newStage))
+              {\n        eventPublisher.publish(new RelationshipStageChangedEvent(\n            playerId,
+              npcId, prevStage, newStage\n        ));\n    }\n}\n```\nЛогика гарантирует
+              ограничение значений и публикацию события при смене стадии.\n", "mechanics_links":
+              [], "assets": []}, {"id": "integration", "title": "Интеграция", "body":
+              "Алгоритм используется AI подсистемой романтики и связан с документами
+              по триггерам (`romance-triggers`) и диалогам\n(`romance-dialogue`).
+              Событие `RelationshipStageChanged` обрабатывается сценарной и UI логикой.\n",
+              "mechanics_links": [], "assets": []}, {"id": "history", "title": "История
+              изменений", "body": "v1.0.0 (2025-11-07) — выделена микрофича 2/3 из
+              `romance-event-engine.md`.\n", "mechanics_links": [], "assets": []}]},
+              "appendix": {"glossary": [], "references": [{"title": "Romance Triggers",
+              "link": "./romance-triggers.md"}, {"title": "Romance Dialogue", "link":
+              "./romance-dialogue.md"}], "decisions": []}, "implementation": {"github_issue":
+              136, "needs_task": false, "queue_reference": ["shared/trackers/queues/concept/queued.yaml"],
+              "blockers": []}, "history": [{"version": "1.0.0", "date": "2025-11-11",
+              "author": "ai_team", "changes": "Алгоритм расчёта романтических отношений
+              перенесён в YAML с кодом и стадиями отношений."}], "validation": {"checksum":
+              "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "implementation-romance-relationship-algorithm", "title":
+              "Romance Relationship - Расчет отношений", "document_type": "implementation",
+              "category": "algorithms", "status": "approved", "version": "1.0.0",
+              "last_updated": "2025-11-07T06:35:00+00:00", "concept_approved": true,
+              "concept_reviewed_at": "2025-11-07T06:35:00+00:00", "owners": [{"role":
+              "ai_brain_manager", "contact": "ai@necp.game"}], "tags": ["romance",
+              "relationship", "ai"], "topics": ["implementation", "ai"], "related_systems":
+              ["npc-ai-service", "social-service"], "related_documents": [{"id": "implementation-romance-triggers",
+              "relation": "references"}, {"id": "implementation-romance-dialogue",
+              "relation": "references"}], "source": "shared/docs/knowledge/implementation/algorithms/romance/romance-relationship.yaml",
+              "visibility": "internal", "audience": ["ai", "gameplay", "narrative"],
+              "risk_level": "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\algorithms\romance\romance-relationship.yaml

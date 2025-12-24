@@ -1,13 +1,13 @@
-# Issue: #1177
+# Issue: #332
 metadata:
-  id: quest-dallas-2029-rodeo
-  title: 'Даллас 2020-2029 — Родео Техаса'
+  id: quest-dallas-2029-005-rodeo
+  title: Даллас — техасское родео
   document_type: canon
-  category: timeline-quest
+  category: quest
   status: draft
   version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
-  concept_approved: true
+  last_updated: 2025-12-06T10:50:00Z
+  concept_approved: false
   concept_reviewed_at: ''
   owners:
     - role: concept_director
@@ -15,25 +15,31 @@ metadata:
   tags:
     - dallas
     - rodeo
-    - cowboy-culture
+    - culture
   topics:
+    - city_storylines
     - cultural_events
-    - sports_entertainment
   related_systems:
-    - gameplay-service
-    - quest-service
-    - character-service
-    - economy-service
+    - narrative-service
+    - event-service
     - social-service
   related_documents:
-    - id: timeline-author-quests-index
+    - id: master-timeline
       relation: references
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/dallas/2020-2029/quest-005-rodeo.md
+    - id: quest-system
+      relation: aligns
+    - id: github-issue-332
+      title: GitHub Issue #332
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/332
+      relation: migrated_to
+      migrated_at: 2025-11-22T19:45:00Z
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/dallas/2020-2029/quest-005-rodeo.md
   visibility: internal
   audience:
     - concept
     - narrative
-  risk_level: medium
+    - liveops
+  risk_level: low
 review:
   chain:
     - role: concept_director
@@ -42,16 +48,16 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: В культурной ветке Далласа не хватало квеста, раскрывающего традицию техасского родео.
-  goal: Структурировать сценарий посещения State Fair of Texas с акцентом на соревнования и атмосферу ковбоев.
-  essence: Игрок становится участником зрелищного родео, наблюдая bull riding, barrel racing и живую country-музыку.
+  problem: Исходный текст описывал родео, но не указывал, как событие влияет на фракции и социальную динамику игрока.
+  goal: Связать посещение родео со сценами выбора, влияющими на репутацию и сезонные активности.
+  essence: Игрок посещает State Fair of Texas, участвует в соревнованиях и укрепляет связи с ковбойской культурой.
   key_points:
-    - Родео подчёркивает историческую ковбойскую идентичность региона.
-    - Соревнования включают bull riding, barrel racing и демонстрации лассо.
-    - Атмосфера поддерживается музыкой, костюмами и традиционной атрибутикой.
+    - Родео выступает социальным центром с выбором между спортивной и фольклорной линией.
+    - Игрок может влиять на безопасность мероприятий и получить доступ к закулисным контактам.
+    - Событие открывает сезонные активности для фракций фермеров и организаторов ярмарки.
 quest_definition:
   quest_type: side
-  level_min: 5
+  level_min: 10
   level_max: null
   requirements:
     required_quests: [ ]
@@ -59,100 +65,87 @@ quest_definition:
     required_reputation: { }
     required_items: [ ]
   objectives:
-    - id: prepare_for_rodeo
-      text: "Приобрести билет и подготовить ковбойскую экипировку"
+    - id: buy_equipment_tickets
+      text: "Приобрести экипировку и билеты на State Fair of Texas"
       type: interact
-      target: rodeo_preparation
+      target: fair_ticket_office
       count: 1
       optional: false
-    - id: explore_fairgrounds
-      text: "Осмотреть ярмарочные павильоны и познакомиться с быками и всадниками"
-      type: explore
-      target: fairgrounds
+    - id: backstage_tour
+      text: "Пройти закулисный тур и оценить безопасность площадки"
+      type: travel
+      target: rodeo_backstage
       count: 1
       optional: false
-    - id: watch_competitions
-      text: "Наблюдать bull riding, barrel racing и работы с лассо"
-      type: interact
-      target: rodeo_competitions
-      count: 3
-      optional: false
-    - id: participate_dance
-      text: "Принять участие в танцах под country-музыку"
-      type: interact
-      target: country_dance
+    - id: watch_bull_riding
+      text: "Наблюдать за bull riding и поддержать выбранного участника"
+      type: minigame
+      target: bull_riding_event
       count: 1
       optional: false
-    - id: complete_experience
-      text: "Зафиксировать впечатления и получить бонус к культурной репутации"
+    - id: help_organizers
+      text: "Помочь организаторам с crowd-control или развлечением зрителей"
       type: interact
-      target: rodeo_reflection
+      target: organizer_assistance
+      count: 1
+      optional: true
+    - id: choose_alliance
+      text: "Выбрать союз — профессиональные наездники или семейные организаторы фестиваля"
+      type: dialogue
+      target: alliance_choice_npc
       count: 1
       optional: false
   rewards:
     experience: 1500
     money: -40
-    items:
-      - item_id: achievement_texas_cowboy
-        quantity: 1
-    reputation: { }
+    reputation:
+      culture: 20
+    items: [ ]
     unlocks:
-      - rodeo_quests
-      - cowboy_culture_access
-  branches:
-    - branch_id: master_cowboy
-      description: "Стать мастером ковбойской культуры"
-      consequences:
-        skills:
-          culture: +30
-        reputation:
-          Cowboy_Culture: +30
-        unlocks:
-          - exclusive_rodeo_access
+      achievements:
+        - "Ковбой Техаса"
+      flags: [ ]
+  branches: [ ]
 content:
   sections:
     - id: overview
       title: Описание
       body: |
-        Квест переносит игрока на State Fair of Texas, где проходят ключевые соревнования родео и демонстрируется ковбойская культура.
+        Квест начинается с покупки билетов на родео State Fair of Texas и подготовки экипировки. Игрок наблюдает соревнования,
+        помогает организаторам и выбирает, поддерживать ли профессиональных наездников или рекламировать семейный формат.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+      assets: [ ]
+    - id: regional_highlights
+      title: Региональные отсылки
+      body: |
+        Родео включает bull riding, barrel racing и номера с лассо. Традиционные ковбойские шляпы и country-музыка создают атмосферу
+        праздника, а символ Big Tex закрепляет связь с ярмаркой.
       mechanics_links: [ ]
       assets: [ ]
-    - id: stages
-      title: Этапы
+    - id: quest_flow
+      title: Этапы квеста
       body: |
-        1. Приобрести билет и подготовить ковбойскую экипировку.
-        2. Осмотреть ярмарочные павильоны и познакомиться с быками и всадниками.
-        3. Наблюдать bull riding, barrel racing и работы с лассо.
-        4. Принять участие в танцах под country-музыку.
-        5. Зафиксировать впечатления и получить бонус к культурной репутации.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: regional_details
-      title: Региональные детали
-      body: |
-        Родео в Техасе — многолетняя традиция, где bull riding считается главным испытанием. Ковбойские шляпы,
-        сапоги и country-музыка формируют единый стиль мероприятия.
-      mechanics_links: [ ]
+        1. Приобрести экипировку и билеты на State Fair of Texas.
+        2. Пройти закулисный тур и оценить безопасность площадки.
+        3. Наблюдать за bull riding и поддержать выбранного участника.
+        4. Помочь организаторам с crowd-control или развлечением зрителей.
+        5. Выбрать союз — профессиональные наездники или семейные организаторы фестиваля.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
       assets: [ ]
     - id: rewards
-      title: Награды
+      title: Награды и эффекты
       body: |
-        - Опыт: 1 500 XP
-        - Расходы: 40 единиц валюты
-        - Атрибут «Культура»: +20
-        - Ачивка: «Ковбой Техаса»
+        Квест даёт 1500 опыта, требует 40 единиц валюты на билеты и атрибутику, увеличивает культурный показатель на 20.
+        Открывается ачивка «Ковбой Техаса» и сезонные контракты на организацию ярмарок.
       mechanics_links: [ ]
       assets: [ ]
-    - id: mechanics
-      title: Механики
+    - id: integration
+      title: Интеграции и последствия
       body: |
-        Квест сочетает зрелищные события, культурные активности и социальные взаимодействия с NPC.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: connections
-      title: Связи
-      body: |
-        Связан с ковбойской линией Далласа и событиями State Fair of Texas, может продолжаться заданиями в Fort Worth Stockyards.
+        Event-service фиксирует родео как сезонное событие, social-service отслеживает репутацию среди ковбоев и семейных зрителей,
+        а narrative-service обновляет культурную линию города.
       mechanics_links: [ ]
       assets: [ ]
 appendix:
@@ -165,14 +158,14 @@ implementation:
   queue_reference: [ ]
   blockers: [ ]
 history:
-  - version: '2.0.0'
-    date: 2025-11-29
-    author: content_writer
-    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики культурного квеста, родео-соревнований и ковбойской культуры.'
-  - version: '1.0.0'
-    date: 2025-11-12
+  - version: '0.1.0'
+    date: 2025-11-11
     author: concept_team
-    changes: Конвертирован квест «Родео Техаса» в формат знаний.
+    changes: Описан квест «Техасское родео» с социальными ветвлениями и сезонными интеграциями.
+  - version: '2.0.0'
+    date: 2025-12-06
+    author: content_writer
+    changes: 'Добавлен quest_definition с полной структурой квеста согласно архитектуре системы квестов.'
 validation:
   checksum: ''
   schema_version: '1.0'

@@ -1,0 +1,188 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-combat-session-system-part1-overview-5df15f82
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '1343048544092253'
+        - column:
+            name: doc_id
+            value: architecture-combat-session-part1
+        - column:
+            name: title
+            value: 'Combat Session System Architecture - Part 1: Overview & Components'
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: implementation
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-12-02 17:05:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - combat
+            - sessions
+            - gameplay
+            - architecture
+        - column:
+            name: topics
+            value:
+            - combat-sessions
+            - realtime-combat
+            - session-management
+        - column:
+            name: related_systems
+            value:
+            - gameplay-service
+            - character-service
+            - economy-service
+            - quest-service
+            - analytics-service
+            - security-service
+        - column:
+            name: related_documents
+            value: '[{"id": "combat-session-part2", "relation": "continues"}, {"id":
+              "combat-session-part3", "relation": "continues"}, {"id": "combat-session-backend",
+              "relation": "implements"}]'
+        - column:
+            name: source
+            value: knowledge/implementation/architecture/combat-session-system-part1-overview.yaml
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architects
+            - backend
+            - gameplay
+        - column:
+            name: risk_level
+            value: high
+        - column:
+            name: content
+            value: '{"metadata": {"id": "architecture-combat-session-part1", "title":
+              "Combat Session System Architecture - Part 1: Overview & Components",
+              "document_type": "architecture", "category": "implementation", "status":
+              "draft", "version": "1.0.0", "last_updated": "2025-12-02T17:05:00+00:00",
+              "concept_approved": false, "owners": [{"role": "architect", "contact":
+              "architect@necp.game"}], "tags": ["combat", "sessions", "gameplay",
+              "architecture"], "topics": ["combat-sessions", "realtime-combat", "session-management"],
+              "related_systems": ["gameplay-service", "character-service", "economy-service",
+              "quest-service", "analytics-service", "security-service"], "related_documents":
+              [{"id": "combat-session-part2", "relation": "continues"}, {"id": "combat-session-part3",
+              "relation": "continues"}, {"id": "combat-session-backend", "relation":
+              "implements"}], "source": "knowledge/implementation/architecture/combat-session-system-part1-overview.yaml",
+              "visibility": "internal", "audience": ["architects", "backend", "gameplay"],
+              "risk_level": "high"}, "summary": {"problem": "Необходима стандартизованная
+              архитектура для управления боевыми сессиями.", "goal": "Спроектировать
+              микросервисную архитектуру системы боевых сессий.", "essence": "Часть
+              1 описывает обзор, компоненты, API endpoints и структуру БД.", "key_points":
+              ["Микросервисная архитектура с gameplay-service", "Event-driven интеграция
+              через Kafka", "Авторитативный сервер", "База данных PostgreSQL + Redis"]},
+              "content": {"sections": [{"id": "system-overview", "title": "Обзор системы",
+              "body": "Combat Session System управляет боевыми сессиями:\n- Создание
+              и настройка сессий (PvP/PvE/экстракт)\n- Управление участниками\n- Обработка
+              боевых действий realtime\n- Расчет урона, хитов, эффектов\n- Выдача
+              наград и лута\n- Интеграция с квестами\n\nПринципы:\n- Авторитативный
+              сервер\n- Event-driven архитектура\n- Микросервисы\n- Realtime синхронизация\n-
+              Телеметрия и античит\n"}, {"id": "components", "title": "Компоненты",
+              "body": "## gameplay-service\n**Ответственность:** Управление сессиями,
+              валидация, расчет урона\n**Технологии:** Go, PostgreSQL, Redis, Kafka\n**Масштабируемость:**
+              Stateless handlers + stateful session managers\n\nКомпоненты:\n- SessionManager
+              - жизненный цикл сессий\n- CombatEngine - расчет урона\n- ActionValidator
+              - античит валидация\n- StateSync - синхронизация с клиентами\n- EventPublisher
+              - Kafka события\n\n## character-service\n**Ответственность:** Персонажи,
+              атрибуты, импланты\n**API:** GET /characters/{id}/combat-stats\n\n##
+              economy-service\n**Ответственность:** Лут, награды\n**Интеграция:**
+              Слушает combat:ended\n**API:** POST /economy/combat-rewards\n\n## quest-service\n**Ответственность:**
+              Квесты\n**Интеграция:** Слушает combat:*\n**API:** POST /quests/progress/combat-event\n\n##
+              analytics-service\n**Ответственность:** Телеметрия\n**Интеграция:**
+              Слушает combat:*\n\n## security-service\n**Ответственность:** Античит\n**Интеграция:**
+              Анализирует combat:action\n**API:** POST /security/validate-action\n\n##
+              realtime-gateway-go\n**Ответственность:** WebSocket/UDP\n**Протоколы:**
+              WebSocket (PvE), UDP (PvP)\n"}, {"id": "api-endpoints", "title": "API
+              Endpoints", "body": "## Session Management\n\nPOST /api/v1/gameplay/combat/sessions\n-
+              Создание сессии\n- Request: session_type, participants, settings\n-
+              Response: session_id, session_state\n- Events: combat.session.created\n\nGET
+              /api/v1/gameplay/combat/sessions/{id}\n- Получение состояния\n- Response:
+              session_state, participants, turn\n\nDELETE /api/v1/gameplay/combat/sessions/{id}\n-
+              Завершение сессии\n- Events: combat.session.ended\n\n## Combat Actions\n\nPOST
+              /api/v1/gameplay/combat/sessions/{id}/actions\n- Выполнение действия\n-
+              Request: action_type, target_id, position\n- Response: action_result,
+              damage, effects\n- Events: combat.action.executed\n- Validation: Античит\n\nGET
+              /api/v1/gameplay/combat/sessions/{id}/state\n- Realtime состояние\n-
+              Response: participants, turn_order, effects\n\n## Analytics\n\nGET /api/v1/gameplay/combat/sessions/{id}/logs\n-
+              Логи сессии\n\nGET /api/v1/gameplay/combat/sessions/{id}/stats\n- Статистика\n"},
+              {"id": "database", "title": "База данных", "body": "## PostgreSQL\n\n###
+              combat_sessions\n```sql\nCREATE TABLE combat_sessions (\n  id UUID PRIMARY
+              KEY,\n  session_type VARCHAR(50),\n  zone_id VARCHAR(100),\n  status
+              VARCHAR(20),\n  difficulty VARCHAR(20),\n  max_participants INT,\n  settings
+              JSONB,\n  created_at TIMESTAMP,\n  started_at TIMESTAMP,\n  ended_at
+              TIMESTAMP,\n  duration_seconds INT,\n  winner_team VARCHAR(50)\n);\n\nCREATE
+              INDEX idx_sessions_status ON combat_sessions(status);\nCREATE INDEX
+              idx_sessions_created ON combat_sessions(created_at DESC);\n```\n\n###
+              combat_participants\n```sql\nCREATE TABLE combat_participants (\n  id
+              UUID PRIMARY KEY,\n  session_id UUID REFERENCES combat_sessions(id),\n  player_id
+              UUID,\n  character_id UUID,\n  team VARCHAR(50),\n  role VARCHAR(50),\n  damage_dealt
+              BIGINT,\n  damage_taken BIGINT,\n  kills INT,\n  deaths INT,\n  assists
+              INT,\n  health INT,\n  max_health INT,\n  status VARCHAR(20),\n  joined_at
+              TIMESTAMP,\n  left_at TIMESTAMP\n);\n\nCREATE INDEX idx_participants_session
+              ON combat_participants(session_id);\n```\n\n### combat_logs\n```sql\nCREATE
+              TABLE combat_logs (\n  id BIGSERIAL PRIMARY KEY,\n  session_id UUID
+              REFERENCES combat_sessions(id),\n  event_type VARCHAR(50),\n  actor_id
+              UUID,\n  target_id UUID,\n  action_data JSONB,\n  result_data JSONB,\n  timestamp
+              TIMESTAMP,\n  sequence_number BIGINT\n);\n\nCREATE INDEX idx_logs_session
+              ON combat_logs(session_id, sequence_number);\n```\n\n## Redis\n\nsession:{id}
+              (Hash, TTL 3600s)\n- status, participants, current_turn, last_action\n\nplayer:{id}:combat
+              (Hash, TTL 3600s)\n- session_id, health, position, status\n"}]}, "appendix":
+              {"glossary": [{"term": "Combat Session", "definition": "Инстанс боевого
+              взаимодействия"}], "references": [{"title": "Part 2: Data Flows", "url":
+              "combat-session-system-part2-dataflows.yaml"}, {"title": "Part 3: Infrastructure",
+              "url": "combat-session-system-part3-infrastructure.yaml"}]}, "implementation":
+              {"github_issue": 130, "needs_task": true, "next_steps": ["Database:
+              Миграции для БД", "API Designer: OpenAPI спецификация", "Backend: Реализация
+              handlers"]}, "history": [{"version": "1.0.0", "date": "2025-12-02",
+              "author": "architect", "changes": "Part 1 - обзор и компоненты"}], "validation":
+              {"checksum": "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "architecture-combat-session-part1", "title": "Combat Session
+              System Architecture - Part 1: Overview & Components", "document_type":
+              "architecture", "category": "implementation", "status": "draft", "version":
+              "1.0.0", "last_updated": "2025-12-02T17:05:00+00:00", "concept_approved":
+              false, "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["combat", "sessions", "gameplay", "architecture"], "topics":
+              ["combat-sessions", "realtime-combat", "session-management"], "related_systems":
+              ["gameplay-service", "character-service", "economy-service", "quest-service",
+              "analytics-service", "security-service"], "related_documents": [{"id":
+              "combat-session-part2", "relation": "continues"}, {"id": "combat-session-part3",
+              "relation": "continues"}, {"id": "combat-session-backend", "relation":
+              "implements"}], "source": "knowledge/implementation/architecture/combat-session-system-part1-overview.yaml",
+              "visibility": "internal", "audience": ["architects", "backend", "gameplay"],
+              "risk_level": "high"}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\combat-session-system-part1-overview.yaml

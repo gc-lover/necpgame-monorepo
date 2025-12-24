@@ -1,0 +1,163 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-global-state-overview-2ef89643
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '1061868240017684'
+        - column:
+            name: doc_id
+            value: global-state-overview
+        - column:
+            name: title
+            value: Global State System — обзор и маршрутизация
+        - column:
+            name: document_type
+            value: implementation
+        - column:
+            name: category
+            value: backend
+        - column:
+            name: status
+            value: approved
+        - column:
+            name: version
+            value: 1.0.1
+        - column:
+            name: last_updated
+            value: 2025-11-07 00:00:00+00:00
+        - column:
+            name: concept_approved
+            value: true
+        - column:
+            name: concept_reviewed_at
+            value: 2025-11-07 00:00:00+00:00
+        - column:
+            name: owners
+            value: '[{"role": "concept_director", "contact": "concept@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - world-state
+            - backend
+            - architecture
+        - column:
+            name: topics
+            value:
+            - world-service
+            - distributed-state
+        - column:
+            name: related_systems
+            value:
+            - world-service
+            - event-bus
+            - redis-cluster
+        - column:
+            name: related_documents
+            value: '[{"id": "global-state-core", "relation": "expands"}, {"id": "global-state-management",
+              "relation": "complements"}, {"id": "global-state-events", "relation":
+              "complements"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/implementation/global-state/README.md
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - concept
+            - backend
+            - devops
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "global-state-overview", "title": "Global
+              State System — обзор и маршрутизация", "document_type": "implementation",
+              "category": "backend", "status": "approved", "version": "1.0.1", "last_updated":
+              "2025-11-07T00:00:00+00:00", "concept_approved": true, "concept_reviewed_at":
+              "2025-11-07T00:00:00+00:00", "owners": [{"role": "concept_director",
+              "contact": "concept@necp.game"}], "tags": ["world-state", "backend",
+              "architecture"], "topics": ["world-service", "distributed-state"], "related_systems":
+              ["world-service", "event-bus", "redis-cluster"], "related_documents":
+              [{"id": "global-state-core", "relation": "expands"}, {"id": "global-state-management",
+              "relation": "complements"}, {"id": "global-state-events", "relation":
+              "complements"}], "source": "shared/docs/knowledge/implementation/global-state/README.md",
+              "visibility": "internal", "audience": ["concept", "backend", "devops"],
+              "risk_level": "medium"}, "review": {"chain": [{"role": "world_service_lead",
+              "reviewer": "", "reviewed_at": "2025-11-07T00:00:00+00:00", "status":
+              "approved"}], "next_actions": []}, "summary": {"problem": "Обзор глобального
+              состояния мира находился в Markdown и не обеспечивал структурированного
+              описания сервисов и событий.", "goal": "Систематизировать архитектуру
+              world-service, подключение к Event Bus и связанные документы для навигации
+              по подсистемам.", "essence": "Документ описывает маршруты, взаимодействие
+              сервисов, распределённое хранение и навигацию по деталям глобального
+              состояния.", "key_points": ["World-service отвечает за глобальное состояние
+              и взаимодействует со всеми сервисами через Event Bus.", "Распределённое
+              хранение использует PostgreSQL и Redis для кэша и realtime синхронизации.",
+              "Территориальные события публикуются и распространяются по сервисам
+              через единый пайплайн.", "Документ служит навигацией по частям core,
+              management, events, sync и operations."]}, "content": {"sections": [{"id":
+              "architecture_overview", "title": "Микросервисная архитектура", "body":
+              "World-service (порт 8086) предоставляет маршруты `/api/v1/world/state/*`,
+              координирует состояние и\nвзаимодействует со всеми сервисами через Event
+              Bus. События `world:state-changed`, `world:event-started`,\n`world:faction-war-update`
+              публикуются сервисом, а входящие события включают `combat:territory-captured`,\n`guild:war-declared`,
+              `quest:world-quest-completed`.\n", "mechanics_links": ["implementation/global-state/global-state-management.yaml"]},
+              {"id": "distributed_state", "title": "Распределённое состояние и синхронизация",
+              "body": "World-service управляет PostgreSQL-хранилищем и Redis-кэшем.
+              Другие сервисы (character-service,\ngameplay-service, social-service)
+              читают состояние через API, а Redis обеспечивает realtime обновления.\nСобытия
+              захвата территорий проходят полный цикл публикации и обратной отправки
+              уведомлений.\n", "mechanics_links": ["implementation/global-state/global-state-sync.yaml"]},
+              {"id": "document_structure", "title": "Структура документации", "body":
+              "Обзор связывает пять частей: core (архитектура и event sourcing), management
+              (pipeline обработки),\nevents (каталог мировых событий), sync (обновление
+              клиентов), operations (CRUD/API). Каждая часть описана\nотдельным документом
+              в каталоге `global-state`.\n", "mechanics_links": ["implementation/global-state/global-state-core.yaml"]},
+              {"id": "redis_strategy", "title": "Redis и realtime обновления", "body":
+              "Redis используется для хранения актуального состояния (`world:state:current`)
+              и публикации изменений через\n`redis.publish`. Подписчики (`redis.subscribe`)
+              обновляют локальный кэш. Паттерн обеспечивает быструю синхронизацию\nбез
+              нагрузки на основную БД.\n", "mechanics_links": ["implementation/global-state/global-state-sync.yaml"]},
+              {"id": "event_sourcing", "title": "Event Sourcing и аудит", "body":
+              "Все изменения мирового состояния можно сохранять как последовательность
+              событий (TerritoryCapture, FactionsWarDeclared,\nEconomyCrashEvent).
+              Реплей событий позволяет строить аудит, тайм-тревел и поддержку тестов.\n",
+              "mechanics_links": ["implementation/global-state/global-state-core.yaml"]},
+              {"id": "related_docs", "title": "Связанные документы", "body": "Навигация
+              по архитектуре микросервисов, backend-ядру и общей архитектуре помогает
+              понимать зависимости.\nОсновные ссылки: `microservices-overview`, `backend/README`,
+              `ARCHITECTURE`.\n", "mechanics_links": ["implementation/architecture/microservices-overview.yaml"]}]},
+              "appendix": {"glossary": [], "references": [], "decisions": []}, "implementation":
+              {"needs_task": false, "github_issue": 53, "queue_reference": ["shared/trackers/queues/concept/queued.yaml"],
+              "blockers": []}, "history": [{"version": "1.0.1", "date": "2025-11-07",
+              "author": "world_service_team", "changes": "Добавлена микросервисная
+              архитектура и распределённое состояние."}, {"version": "1.0.0", "date":
+              "2025-11-07", "author": "world_service_team", "changes": "Разделена
+              документация на пять частей."}], "validation": {"checksum": "", "schema_version":
+              "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "global-state-overview", "title": "Global State System
+              — обзор и маршрутизация", "document_type": "implementation", "category":
+              "backend", "status": "approved", "version": "1.0.1", "last_updated":
+              "2025-11-07T00:00:00+00:00", "concept_approved": true, "concept_reviewed_at":
+              "2025-11-07T00:00:00+00:00", "owners": [{"role": "concept_director",
+              "contact": "concept@necp.game"}], "tags": ["world-state", "backend",
+              "architecture"], "topics": ["world-service", "distributed-state"], "related_systems":
+              ["world-service", "event-bus", "redis-cluster"], "related_documents":
+              [{"id": "global-state-core", "relation": "expands"}, {"id": "global-state-management",
+              "relation": "complements"}, {"id": "global-state-events", "relation":
+              "complements"}], "source": "shared/docs/knowledge/implementation/global-state/README.md",
+              "visibility": "internal", "audience": ["concept", "backend", "devops"],
+              "risk_level": "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\global-state\global-state-overview.yaml

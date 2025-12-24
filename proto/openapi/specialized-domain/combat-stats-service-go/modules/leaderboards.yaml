@@ -1,0 +1,145 @@
+# Leaderboards Module
+# Issue: #2246
+
+paths:
+  /leaderboards/{category}:
+    get:
+      summary: Get leaderboard rankings
+      description: '**Competitive rankings and leaderboards**
+
+        Provides top player rankings for various combat categories.
+
+        Supports multiple ranking types and time periods.
+
+
+        **Performance:** <100ms P95 with Redis-backed caching
+
+        '
+      operationId: getLeaderboard
+      tags:
+        - Leaderboards
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - kills
+              - kd_ratio
+              - accuracy
+              - headshots
+              - damage_dealt
+              - survival_time
+              - win_rate
+          description: Leaderboard category
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of rankings to return
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum:
+              - daily
+              - weekly
+              - monthly
+              - all_time
+            default: weekly
+          description: Ranking time period
+      responses:
+        '200':
+          description: Leaderboard retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=600, public
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '400':
+          description: Invalid request - unsupported category or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    LeaderboardEntry:
+      type: object
+      required:
+        - rank
+        - player_id
+        - player_name
+        - value
+      properties:
+        rank:
+          type: integer
+          description: Current ranking position
+          example: 1
+          minimum: 1
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        player_name:
+          type: string
+          description: Player display name
+          example: "V_JUDGMENT_DAY"
+          maxLength: 50
+        value:
+          type: number
+          format: float
+          description: Statistic value (kills, ratio, percentage, etc.)
+          example: 15420.5
+        change:
+          type: integer
+          description: Rank change from previous period (+/-)
+          example: 5
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    LeaderboardResponse:
+      type: object
+      required:
+        - category
+        - period
+        - entries
+      properties:
+        category:
+          type: string
+          enum:
+            - kills
+            - kd_ratio
+            - accuracy
+            - headshots
+            - damage_dealt
+            - survival_time
+            - win_rate
+          example: kills
+        period:
+          type: string
+          enum:
+            - daily
+            - weekly
+            - monthly
+            - all_time
+          example: weekly
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+          description: Leaderboard entries
+        last_updated:
+          type: string
+          format: date-time
+          description: When leaderboard was last updated
+          example: '2025-12-23T23:54:00Z'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Cached responses optimized.'

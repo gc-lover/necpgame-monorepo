@@ -1,13 +1,13 @@
-# Issue: #1169
+# Issue: #207
 metadata:
-  id: quest-denver-2029-altitude-sickness
-  title: 'Денвер 2020-2029 — Высотная адаптация'
+  id: quest-denver-2029-007-altitude-sickness
+  title: "Денвер: борьба с высотной болезнью"
   document_type: canon
-  category: timeline-quest
-  status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-12T00:00:00Z
-  concept_approved: false
+  category: city-quest
+  status: approved
+  version: '2.0.0'
+  last_updated: 2025-11-29T07:10:00Z
+  concept_approved: true
   concept_reviewed_at: ''
   owners:
     - role: concept_director
@@ -15,22 +15,24 @@ metadata:
   tags:
     - denver
     - altitude
-    - physiology
+    - health
   topics:
-    - survival
-    - environment
+    - city-lore
   related_systems:
-    - narrative-service
-    - gameplay-service
-    - quest-service
-    - character-service
-    - economy-service
-    - survival-service
-    - wellbeing-service
+    - social-mechanics
+    - progression-service
   related_documents:
-    - id: timeline-author-quests-index
-      relation: references
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/denver/2020-2029/quest-007-altitude-sickness.md
+    - id: github-issue-337
+      title: GitHub Issue #337
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/337
+      relation: migrated_to
+      migrated_at: 2025-11-22T19:45:00Z
+    - id: github-issue-455
+      title: GitHub Issue #455
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/455
+      relation: migrated_to
+      migrated_at: 2025-11-22T20:55:00Z
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/denver/2020-2029/quest-007-altitude-sickness.md
   visibility: internal
   audience:
     - concept
@@ -44,74 +46,114 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: Нужно описать опыт туристов, сталкивающихся с высотной болезнью в «Mile High City».
-  goal: Сформировать квест адаптации к высоте 1 609 м с акцентом на физиологию и советы местных.
-  essence: Игрок проходит через симптомы (головная боль, одышка), обучается корректному режиму и получает бонус к выносливости.
+  problem: Черновик описывал высотную болезнь поверхностно и не раскрывал игровые механики адаптации.
+  goal: Структурировать квест по акклиматизации к разреженному воздуху Денвера с акцентом на тренировку персонажей.
+  essence: Игрок помогает новоприбывшим адаптироваться к высоте Mile High City через тесты здоровья, гидратацию и выбор активности.
   key_points:
-    - Денвер находится на высоте ровно одной мили и содержит на 17% меньше кислорода.
-    - Алкоголь и физические нагрузки действуют сильнее, требуется гидратация.
-    - Адаптация длится 2–3 дня и даёт устойчивый бонус.
+    - Система проверок устойчивости к высоте и подготовка к активности.
+    - Встреча с медиками и тренерами для получения баффов.
+    - Возможность провалить адаптацию и получить штрафные состояния.
+quest_definition:
+  quest_type: side
+  level_min: 2
+  level_max: null
+  requirements:
+    required_quests: [ ]
+    required_flags: [ ]
+    required_reputation: { }
+    required_items: [ ]
+  objectives:
+    - id: medical_checkup
+      text: "Медосмотр: анализ кислородной сатурации, выдача рекомендаций"
+      type: interact
+      target: oxygen_saturation_check
+      count: 1
+      optional: false
+    - id: hydration_nutrition
+      text: "Гидратация и питание: подбор напитков, исключение алкоголя"
+      type: interact
+      target: hydration_plan
+      count: 1
+      optional: false
+    - id: light_training
+      text: "Лёгкая тренировка: прогулка по парку, дыхательные упражнения"
+      type: interact
+      target: acclimatization_training
+      count: 1
+      optional: false
+    - id: final_check
+      text: "Финальная проверка: участие в коротком забеге либо походе"
+      type: interact
+      target: final_acclimatization_test
+      count: 1
+      optional: false
+  rewards:
+    xp: 1800
+    currency: -40
+    items: [ ]
+    reputation:
+      health: 15
+    achievements: [ ]
+    skill_boosts:
+      mile_high_resilience: 10
+  branches:
+    - condition: "Успешная адаптация"
+      outcome: "Открывает новые активности и снижает усталость"
+      next_quests: [ ]
+    - condition: "Частичный успех"
+      outcome: "Временный штраф, требуется доп. тренировка"
+      next_quests: [ ]
+    - condition: "Провал"
+      outcome: "Статус «Altitude Sick», требуется постельный режим"
+      next_quests: [ ]
 content:
   sections:
     - id: overview
-      title: Описание
+      title: Кратко
       body: |
-        Квест моделирует акклиматизацию персонажа после прибытия в Денвер: симптомы высотной болезни и методы их преодоления.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: stages
-      title: Этапы
+        - Квестовый ID: `DENVER-2029-007`
+        - Формат: социально-медицинская миссия, сложность средняя, solo.
+        - Локации: клиника Downtown, тренировочные площадки, парки.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+    - id: acclimatization
+      title: Этапы адаптации
       body: |
-        1. Прибыть в Денвер и зафиксировать начальные показатели здоровья.
-        2. Столкнуться с симптомами (головная боль, одышка, головокружение).
-        3. Получить советы местных NPC: пить воду, избегать алкоголя и тяжелых нагрузок.
-        4. Переждать 2–3 дня адаптации, постепенно увеличивая активность.
-        5. Получить бонус к выносливости и знание об условиях высокогорья.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: regional_details
-      title: Региональные детали
+        1. Медосмотр: анализ кислородной сатурации, выдача рекомендаций.
+        2. Гидратация и питание: подбор напитков, исключение алкоголя.
+        3. Лёгкая тренировка: прогулка по парку, дыхательные упражнения.
+        4. Финальная проверка: участие в коротком забеге либо походе.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+    - id: outcomes
+      title: Возможные исходы
       body: |
-        Денвер называют «Mile High City»: высота 1 609 м снижает плотность воздуха на 17% и усиливает действие алкоголя.
-        Жители рекомендуют пить больше воды и двигаться медленнее первые дни.
+        - Успешная адаптация открывает новые активности и снижает усталость.
+        - Частичный успех даёт временный штраф, требующий доп. тренировки.
+        - Провал фиксирует статус «Altitude Sick» и требует постельного режима.
       mechanics_links: [ ]
-      assets: [ ]
     - id: rewards
       title: Награды
       body: |
-        - Опыт: 1 500 XP
-        - Расходы: 0 единиц валюты
-        - Атрибут «Выносливость»: +20 (после адаптации)
-        - Дебафф: -20% Stamina в течение первых 3 дней
-        - Ачивка: «Покоритель Мили»
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: mechanics
-      title: Механики
-      body: |
-        Квест вводит физиологические эффекты высоты, управление дебаффами, необходимость гидратации и планирование активности.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: connections
-      title: Связи
-      body: |
-        Связан со спортивными и туристическими квестами Денвера, влияя на эффективность активности в первые дни.
-      mechanics_links: [ ]
-      assets: [ ]
+        - 1800 XP, расходы 40 кредитов на лекарства и напитки.
+        - Бафф «Mile High Resilience» (+10% выносливость на 8 часов).
+        - Доступ к расширенной спортивной линии Денвера.
+      mechanics_links:
+        - mechanics/progression/progression-skills.yaml
 appendix:
   glossary: [ ]
   references: [ ]
   decisions: [ ]
 implementation:
-  github_issue: 1169
+  github_issue: 140891911
   needs_task: false
   queue_reference: [ ]
   blockers: [ ]
 history:
-  - version: '1.0.0'
-    date: 2025-11-12
+  - version: '2.0.0'
+    date: 2025-11-11
     author: concept_team
-    changes: Конвертирован квест «Высотная адаптация» в формат знаний.
+    changes: "Конверсия квеста о высотной акклиматизации в формат знаний."
 validation:
   checksum: ''
   schema_version: '1.0'

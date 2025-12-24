@@ -1,0 +1,150 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-combat-session-system-part3-infrastructure-83a79456
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '7903113191342775'
+        - column:
+            name: doc_id
+            value: architecture-combat-session-part3
+        - column:
+            name: title
+            value: 'Combat Session System Architecture - Part 3: Infrastructure'
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: implementation
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-12-02 17:07:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect"}]'
+        - column:
+            name: tags
+            value:
+            - combat
+            - infrastructure
+            - networking
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value: []
+        - column:
+            name: related_documents
+            value: '[{"id": "combat-session-part1", "relation": "continues"}, {"id":
+              "combat-session-part2", "relation": "continues"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: ''
+        - column:
+            name: audience
+            value: []
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "architecture-combat-session-part3", "title":
+              "Combat Session System Architecture - Part 3: Infrastructure", "document_type":
+              "architecture", "category": "implementation", "status": "draft", "version":
+              "1.0.0", "last_updated": "2025-12-02T17:07:00+00:00", "owners": [{"role":
+              "architect"}], "tags": ["combat", "infrastructure", "networking"], "related_documents":
+              [{"id": "combat-session-part1", "relation": "continues"}, {"id": "combat-session-part2",
+              "relation": "continues"}]}, "summary": {"problem": "Необходимо описать
+              сетевую архитектуру и инфраструктуру.", "goal": "Документировать networking,
+              масштабируемость, безопасность.", "essence": "Part 3 описывает сеть,
+              тикрейт, масштабируемость, деплой."}, "content": {"sections": [{"id":
+              "network-architecture", "title": "Сетевая архитектура", "body": "##
+              Протоколы\n\n### PvE зоны (MMORPG)\n- Протокол: WebSocket (TCP)\n- Тикрейт:
+              20-30 Hz\n- Задержка: <100 мс\n- Игроков: 100-500\n\n### PvP small (Arenas)\n-
+              Протокол: UDP\n- Тикрейт: 60-128 Hz\n- Задержка: <30 мс\n- Игроков:
+              5-20\n\n### GvG 200\n- Протокол: UDP\n- Тикрейт: 60-80 Hz\n- Задержка:
+              <40 мс\n- Игроков: 100v100\n- Оптимизация: Spatial partitioning\n\n###
+              GvG 400\n- Протокол: UDP\n- Тикрейт: 40-60 Hz\n- Задержка: <50 мс\n-
+              Игроков: 200v200\n- Оптимизация: Spatial sharding (2-4)\n\n### Massive
+              war\n- Протокол: UDP\n- Тикрейт: 20-40 Hz\n- Задержка: <100 мс\n- Игроков:
+              2000+\n- Архитектура: Cluster (5-10 servers)\n\n## Server-Authoritative\n\n-
+              Клиент → намерения (input)\n- Сервер → валидация всех действий\n- Сервер
+              → расчет урона, движения\n- Клиент → результаты + обновление\n- Client-side
+              prediction\n- Lag compensation + rewind buffer\n"}, {"id": "scalability",
+              "title": "Масштабируемость", "body": "## Horizontal Scaling\n\n### Gameplay
+              Service\n- Stateless HTTP handlers\n- Stateful session managers (sticky)\n-
+              Шардирование: session_id % num_shards\n- Load balancing: Envoy\n\n###
+              Database\n- Партиции: combat_sessions по created_at\n- Read replicas:
+              Analytics\n- Redis cluster\n\n### Kafka\n- Партиции: По session_id\n-
+              Consumer groups: Параллельная обработка\n\n## Performance Targets\n\n-
+              Latency P99: <50ms (API)\n- Throughput: 10,000 actions/sec/instance\n-
+              Capacity: 1,000 sessions/instance\n- DB Write: 50,000 logs/sec\n- Event
+              Bus: 100,000 events/sec\n"}, {"id": "security", "title": "Безопасность",
+              "body": "## Auth\n\n- JWT токены\n- Session tokens (TTL 1h)\n- Rate
+              limiting: 100 actions/min/player\n- IP throttling: DDoS защита\n\n##
+              Anti-Cheat\n\n- Speed Hack: Max speed validation\n- Teleport: Position
+              delta validation\n- Aimbot: Accuracy pattern analysis\n- Cooldown: Server-side
+              tracking\n- Macro: Action timing analysis\n\n## Data Protection\n\n-
+              TLS 1.3: WebSocket/UDP\n- PostgreSQL: PII, stats\n- Redis: Temporary
+              data\n"}, {"id": "monitoring", "title": "Мониторинг", "body": "## Metrics
+              (Prometheus)\n\ncombat_sessions_total (counter)\ncombat_sessions_active
+              (gauge)\ncombat_sessions_duration_seconds (histogram)\ncombat_actions_total
+              (counter)\ncombat_actions_invalid (counter)\ncombat_api_latency_seconds
+              (histogram)\ncombat_event_processing_duration (histogram)\ncombat_anticheat_violations
+              (counter)\n\n## Logs (Loki)\n\n- JSON logging\n- session_id, player_id\n-
+              Correlation: trace_id\n\n## Tracing (Tempo)\n\n- Distributed tracing\n-
+              Correlation: logs + metrics\n- Sampling: 10% (normal), 100% (errors)\n\n##
+              Dashboards (Grafana)\n\n- Combat Session Overview\n- Performance Dashboard\n-
+              Anti-Cheat Dashboard\n- Player Behavior Analytics\n"}, {"id": "deployment",
+              "title": "Деплой", "body": "## Kubernetes\n\n### Gameplay Service\n```yaml\nreplicas:
+              10\nresources:\n  requests:\n    cpu: 2000m\n    memory: 4Gi\n  limits:\n    cpu:
+              4000m\n    memory: 8Gi\n```\n\n### Realtime Gateway\n```yaml\nreplicas:
+              20\nresources:\n  requests:\n    cpu: 1000m\n    memory: 2Gi\n  limits:\n    cpu:
+              2000m\n    memory: 4Gi\n```\n\n### PostgreSQL\n```yaml\ntype: StatefulSet\nreplicas:
+              3 (1 primary + 2 replicas)\nstorage: 1TB SSD\n```\n\n### Redis Cluster\n```yaml\ntype:
+              StatefulSet\nreplicas: 6 (3 masters + 3 replicas)\nmemory: 16GB/instance\n```\n\n###
+              Kafka Cluster\n```yaml\nreplicas: 5\npartitions: 20/topic\nreplication_factor:
+              3\n```\n\n## CI/CD\n\n- GitHub Actions: Build + Test\n- Docker images\n-
+              ArgoCD: K8s deploy\n- Canary: Critical services\n"}]}, "appendix": {"glossary":
+              [{"term": "Tick Rate", "definition": "Частота обновления состояния сервером"},
+              {"term": "Server-Authoritative", "definition": "Сервер контролирует
+              все действия"}], "decisions": [{"id": "arch-001", "decision": "Event-driven
+              через Kafka", "rationale": "Асинхронная интеграция"}, {"id": "arch-002",
+              "decision": "Server-authoritative", "rationale": "Предотвращение читерства"},
+              {"id": "arch-003", "decision": "WebSocket (PvE) + UDP (PvP)", "rationale":
+              "Оптимизация под задержку"}]}, "implementation": {"github_issue": 130,
+              "blockers": []}, "history": [{"version": "1.0.0", "date": "2025-12-02",
+              "author": "architect", "changes": "Part 3 - инфраструктура"}]}'
+        - column:
+            name: metadata
+            value: '{"id": "architecture-combat-session-part3", "title": "Combat Session
+              System Architecture - Part 3: Infrastructure", "document_type": "architecture",
+              "category": "implementation", "status": "draft", "version": "1.0.0",
+              "last_updated": "2025-12-02T17:07:00+00:00", "owners": [{"role": "architect"}],
+              "tags": ["combat", "infrastructure", "networking"], "related_documents":
+              [{"id": "combat-session-part1", "relation": "continues"}, {"id": "combat-session-part2",
+              "relation": "continues"}]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\combat-session-system-part3-infrastructure.yaml

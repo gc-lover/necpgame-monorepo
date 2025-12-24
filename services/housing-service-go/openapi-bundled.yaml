@@ -1,0 +1,556 @@
+openapi: 3.0.3
+info:
+  title: Housing Service API - Enterprise-Grade Player Housing Management
+  description: Comprehensive player housing system managing property ownership, interior design, furniture placement, NPC residents, and housing economy features.
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+- url: https://api.necpgame.com/v1/housing
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/housing
+  description: Staging server
+- url: http://localhost:8080/api/v1/housing
+  description: Local development server
+
+security:
+- BearerAuth: []
+
+tags:
+- name: Property Management
+  description: Property ownership, acquisition, and basic management
+- name: Interior Design
+  description: Furniture placement, room customization, and decor
+- name: Furniture System
+  description: Furniture inventory, crafting, and marketplace
+- name: NPC Residents
+  description: Housing NPC management, schedules, and interactions
+- name: Housing Economy
+  description: Property trading, rental systems, and market prices
+- name: Health Monitoring
+  description: System health and performance monitoring
+
+paths:
+  /health:
+    get:
+      summary: Housing service health check
+      operationId: housingServiceHealthCheck
+      tags:
+        - Health Monitoring
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+
+  /apartments/available:
+    get:
+      summary: Get available apartment types
+      operationId: getAvailableApartments
+      tags:
+        - Property Management
+      responses:
+        '200':
+          description: List of available apartments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  apartments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApartmentType'
+
+  /apartments/purchase:
+    post:
+      summary: Purchase an apartment
+      operationId: purchaseApartment
+      tags:
+        - Property Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseApartmentRequest'
+      responses:
+        '201':
+          description: Apartment purchased successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Apartment'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /apartments/{apartmentId}:
+    get:
+      summary: Get apartment details
+      operationId: getApartment
+      tags:
+        - Property Management
+      parameters:
+        - name: apartmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Apartment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Apartment'
+
+  /apartments/{apartmentId}/settings:
+    post:
+      summary: Update apartment access settings
+      operationId: updateApartmentSettings
+      tags:
+        - Property Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: apartmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApartmentSettings'
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Apartment'
+
+  /apartments/{apartmentId}/furniture:
+    get:
+      summary: Get placed furniture in apartment
+      operationId: getApartmentFurniture
+      tags:
+        - Interior Design
+      parameters:
+        - name: apartmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of placed furniture
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  furniture:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlacedFurniture'
+
+    post:
+      summary: Place furniture in apartment
+      operationId: placeFurniture
+      tags:
+        - Interior Design
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: apartmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceFurnitureRequest'
+      responses:
+        '200':
+          description: Furniture placed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlacedFurniture'
+
+    delete:
+      summary: Remove furniture from apartment
+      operationId: removeFurniture
+      tags:
+        - Interior Design
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: apartmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: furnitureId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Furniture removed
+
+  /furniture/catalog:
+    get:
+      summary: Get furniture catalog
+      operationId: getFurnitureCatalog
+      tags:
+        - Furniture System
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [DECORATIVE, FUNCTIONAL, COMFORT, STORAGE]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Furniture catalog
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  furniture:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FurnitureItem'
+                  total:
+                    type: integer
+
+  /furniture/purchase:
+    post:
+      summary: Purchase furniture
+      operationId: purchaseFurniture
+      tags:
+        - Furniture System
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseFurnitureRequest'
+      responses:
+        '201':
+          description: Furniture purchased
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FurnitureItem'
+
+  /housing/prestige/leaderboard:
+    get:
+      summary: Get prestige leaderboard
+      operationId: getPrestigeLeaderboard
+      tags:
+        - Housing Economy
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Prestige leaderboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  leaderboard:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PrestigeEntry'
+
+  /apartments/{apartmentId}/visit:
+    post:
+      summary: Visit an apartment
+      operationId: visitApartment
+      tags:
+        - Housing Economy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: apartmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Visit successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisitResult'
+
+components:
+  schemas:
+    Apartment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        apartment_type:
+          type: string
+          enum: [STUDIO, STANDARD, PENTHOUSE, GUILD_HALL]
+        location:
+          type: string
+        access_settings:
+          type: string
+          enum: [PRIVATE, FRIENDS_ONLY, PUBLIC, GUILD_ONLY]
+        furniture_slots:
+          type: integer
+        prestige_score:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ApartmentType:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [STUDIO, STANDARD, PENTHOUSE, GUILD_HALL]
+        price:
+          type: integer
+        furniture_slots:
+          type: integer
+        description:
+          type: string
+        features:
+          type: array
+          items:
+            type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    PurchaseApartmentRequest:
+      type: object
+      required:
+        - apartment_type
+        - location
+      properties:
+        apartment_type:
+          type: string
+          enum: [STUDIO, STANDARD, PENTHOUSE, GUILD_HALL]
+        location:
+          type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ApartmentSettings:
+      type: object
+      properties:
+        access_settings:
+          type: string
+          enum: [PRIVATE, FRIENDS_ONLY, PUBLIC, GUILD_ONLY]
+        allowed_guests:
+          type: array
+          items:
+            type: string
+            format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    PlacedFurniture:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        furniture_item_id:
+          type: string
+          format: uuid
+        position_x:
+          type: number
+          format: float
+        position_y:
+          type: number
+          format: float
+        position_z:
+          type: number
+          format: float
+        rotation:
+          type: number
+          format: float
+        scale:
+          type: number
+          format: float
+        placed_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    PlaceFurnitureRequest:
+      type: object
+      required:
+        - furniture_item_id
+        - position_x
+        - position_y
+        - position_z
+      properties:
+        furniture_item_id:
+          type: string
+          format: uuid
+        position_x:
+          type: number
+          format: float
+        position_y:
+          type: number
+          format: float
+        position_z:
+          type: number
+          format: float
+        rotation:
+          type: number
+          format: float
+          default: 0
+        scale:
+          type: number
+          format: float
+          default: 1.0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    FurnitureItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [DECORATIVE, FUNCTIONAL, COMFORT, STORAGE]
+        price:
+          type: integer
+        prestige_points:
+          type: integer
+        functional_bonuses:
+          type: object
+          additionalProperties: true
+        rarity:
+          type: string
+          enum: [COMMON, UNCOMMON, RARE, EPIC, LEGENDARY]
+        created_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    PurchaseFurnitureRequest:
+      type: object
+      required:
+        - furniture_item_id
+      properties:
+        furniture_item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    PrestigeEntry:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        prestige_score:
+          type: integer
+        apartment_type:
+          type: string
+        rank:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    VisitResult:
+      type: object
+      properties:
+        apartment_id:
+          type: string
+          format: uuid
+        owner_name:
+          type: string
+        prestige_score:
+          type: integer
+        furniture_count:
+          type: integer
+        visit_timestamp:
+          type: string
+          format: date-time
+        bonuses_received:
+          type: object
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+

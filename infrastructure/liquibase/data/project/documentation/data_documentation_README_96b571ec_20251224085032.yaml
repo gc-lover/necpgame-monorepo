@@ -1,0 +1,150 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-README-96b571ec
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '4271651255746424'
+        - column:
+            name: doc_id
+            value: narrative-coherence-event-matrix-export-scripts
+        - column:
+            name: title
+            value: YAML → JSON Export Scripts
+        - column:
+            name: document_type
+            value: canon
+        - column:
+            name: category
+            value: narrative-coherence
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-13 00:00:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: ''
+        - column:
+            name: owners
+            value: '[{"role": "narrative_tools", "contact": "tools@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - export
+            - event-matrix
+            - tooling
+        - column:
+            name: topics
+            value:
+            - pipelines
+            - backend-integration
+        - column:
+            name: related_systems
+            value:
+            - narrative-service
+            - backend-build
+        - column:
+            name: related_documents
+            value: '[{"id": "narrative-coherence-event-matrix-architecture", "relation":
+              "references"}, {"id": "narrative-coherence-quest-dependencies-graph",
+              "relation": "references"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/canon/narrative/narrative-coherence/phase3-event-matrix/export/README.md
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - concept
+            - narrative
+            - backend
+        - column:
+            name: risk_level
+            value: low
+        - column:
+            name: content
+            value: '{"metadata": {"id": "narrative-coherence-event-matrix-export-scripts",
+              "title": "YAML → JSON Export Scripts", "document_type": "canon", "category":
+              "narrative-coherence", "status": "draft", "version": "1.0.0", "last_updated":
+              "2025-11-13T00:00:00+00:00", "concept_approved": false, "concept_reviewed_at":
+              "", "owners": [{"role": "narrative_tools", "contact": "tools@necp.game"}],
+              "tags": ["export", "event-matrix", "tooling"], "topics": ["pipelines",
+              "backend-integration"], "related_systems": ["narrative-service", "backend-build"],
+              "related_documents": [{"id": "narrative-coherence-event-matrix-architecture",
+              "relation": "references"}, {"id": "narrative-coherence-quest-dependencies-graph",
+              "relation": "references"}], "source": "shared/docs/knowledge/canon/narrative/narrative-coherence/phase3-event-matrix/export/README.md",
+              "visibility": "internal", "audience": ["concept", "narrative", "backend"],
+              "risk_level": "low"}, "review": {"chain": [{"role": "tools_lead", "reviewer":
+              "", "reviewed_at": "", "status": "pending"}], "next_actions": []}, "summary":
+              {"problem": "Нужен единый процесс конвертации YAML графов событий в
+              JSON для backend.", "goal": "Описать доступные скрипты, входные и выходные
+              файлы и шаги проверки.", "essence": "Скрипты Python и Node.js генерируют
+              JSON-артефакты графа событий для загрузки в сервисы.", "key_points":
+              ["Рекомендуемый путь — Python с PyYAML.", "Поддерживается альтернативный
+              Node.js конвертер.", "Конвертируются четыре основных YAML файла в JSON.",
+              "Приведён формат JSON и шаги валидации."]}, "content": {"sections":
+              [{"id": "scripts", "title": "Доступные скрипты", "body": "### Python
+              (рекомендуется)\n```bash\npip install pyyaml\npython convert-quest-graph.py\n```\n\n###
+              Node.js\n```bash\nnpm install js-yaml\nnode convert-quest-graph.js\n```\n",
+              "mechanics_links": [], "assets": []}, {"id": "io-mapping", "title":
+              "Входные и выходные файлы", "body": "**Input YAML:**\n1. `phase2-narrative/connections/side-quests-matrix.yaml`\n2.
+              `phase2-narrative/connections/quest-triggers.yaml`\n3. `phase2-narrative/connections/quest-blockers.yaml`\n4.
+              `phase3-event-matrix/graph/quest-dependencies.yaml`\n\n**Output JSON:**\n1.
+              `export/side-quests-matrix.json`\n2. `export/quest-triggers.json`\n3.
+              `export/quest-blockers.json`\n4. `export/quest-dependencies-full.json`\n",
+              "mechanics_links": [], "assets": []}, {"id": "output-format", "title":
+              "Формат JSON", "body": "```\n{\n  \"metadata\": {\n    \"version\":
+              \"1.0.0\",\n    \"total_quests\": 550\n  },\n  \"nodes\": [\n    {\n      \"id\":
+              \"MQ-2020-001\",\n      \"name\": \"Первые шаги\",\n      \"era\": \"2020-2030\",\n      \"type\":
+              \"main\"\n    }\n  ],\n  \"edges\": [\n    {\n      \"from\": \"MQ-2020-001\",\n      \"to\":
+              \"MQ-2020-002\",\n      \"type\": \"unlocks\",\n      \"timing\": \"immediate\"\n    }\n  ],\n  \"statistics\":
+              {\n    \"total_nodes\": 550,\n    \"total_edges\": 1200\n  }\n}\n```\n",
+              "mechanics_links": [], "assets": []}, {"id": "backend-integration",
+              "title": "Интеграция с backend", "body": "```java\n@Service\npublic
+              class QuestGraphService {\n    private QuestGraph graph;\n\n    @PostConstruct\n    public
+              void init() {\n        ObjectMapper mapper = new ObjectMapper();\n        graph
+              = mapper.readValue(\n            new File(\"quest-dependencies-full.json\"),\n            QuestGraph.class\n        );\n    }\n}\n```\nСервис
+              загружает JSON, рассчитывает доступные квесты и использует граф для
+              выдачи веток игрокам.\n", "mechanics_links": [], "assets": []}, {"id":
+              "validation", "title": "Проверка результатов", "body": "```bash\nls
+              -lh export/\ncat export/quest-dependencies-full.json | jq ''.statistics''\ncat
+              export/quest-dependencies-full.json | jq ''.nodes | length''\ncat export/quest-dependencies-full.json
+              | jq ''.edges | length''\n```\nОжидаемые показатели: 4 файла, суммарный
+              размер ~500KB–1MB, 550+ узлов и 1200+ связей.\n", "mechanics_links":
+              [], "assets": []}]}, "appendix": {"glossary": [], "references": [],
+              "decisions": []}, "implementation": {"github_issue": 109, "needs_task":
+              false, "queue_reference": [], "blockers": []}, "history": [{"version":
+              "1.0.0", "date": "2025-11-13", "author": "concept_director", "changes":
+              "Конвертация руководства по экспортным скриптам из MD в YAML."}], "validation":
+              {"checksum": "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "narrative-coherence-event-matrix-export-scripts", "title":
+              "YAML → JSON Export Scripts", "document_type": "canon", "category":
+              "narrative-coherence", "status": "draft", "version": "1.0.0", "last_updated":
+              "2025-11-13T00:00:00+00:00", "concept_approved": false, "concept_reviewed_at":
+              "", "owners": [{"role": "narrative_tools", "contact": "tools@necp.game"}],
+              "tags": ["export", "event-matrix", "tooling"], "topics": ["pipelines",
+              "backend-integration"], "related_systems": ["narrative-service", "backend-build"],
+              "related_documents": [{"id": "narrative-coherence-event-matrix-architecture",
+              "relation": "references"}, {"id": "narrative-coherence-quest-dependencies-graph",
+              "relation": "references"}], "source": "shared/docs/knowledge/canon/narrative/narrative-coherence/phase3-event-matrix/export/README.md",
+              "visibility": "internal", "audience": ["concept", "narrative", "backend"],
+              "risk_level": "low"}'
+        - column:
+            name: source_file
+            value: knowledge\canon\narrative\narrative-coherence\phase3-event-matrix\export\README.yaml

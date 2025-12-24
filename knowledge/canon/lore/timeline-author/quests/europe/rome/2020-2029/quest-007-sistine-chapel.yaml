@@ -1,36 +1,38 @@
 # Issue: #609
 metadata:
-  id: canon-quest-rome-2029-007-sistine-chapel
-  title: 'Рим: шедевры Сикстинской капеллы'
+  id: canon-quest-rome-sistine-chapel
+  title: 'Рим 2020-2029 — Сикстинская капелла'
   document_type: canon
-  category: quests
+  category: quest
   status: draft
-  version: '2.1.0'
-  last_updated: 2025-12-01T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-06T12:00:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
-    - role: concept_director
-      contact: concept@necp.game
+    - role: narrative_lead
+      contact: narrative@necp.game
   tags:
     - rome
     - vatican
-    - renaissance-art
+    - art
   topics:
-    - cultural-tourism
-    - sacred-art
+    - culture
+    - tourism
   related_systems:
     - narrative-service
-    - quest-service
+    - culture-system
   related_documents:
-    - id: canon-region-europe-2020-2093
+    - id: canon-lore-timeline-author-index
       relation: references
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/europe/rome/2020-2029/quest-007-sistine-chapel.md
+    - id: canon-quest-vatican-master-route
+      relation: complements
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/europe/rome/2020-2029/quest-007-sistine-chapel.md
   visibility: internal
   audience:
-    - concept
     - narrative
-    - liveops
+    - vision
+    - content
   risk_level: low
 review:
   chain:
@@ -40,134 +42,83 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: Не было короткого квеста, раскрывающего художественное наследие Сикстинской капеллы и правила её посещения.
-  goal: Сформировать культурное событие с акцентом на фрески Микеланджело и атмосферу духовного пространства.
-  essence: Игрок отстаивает очередь, входит в капеллу, изучает «Сотворение Адама» и «Страшный суд», сохраняя тишину и уважение.
+  problem: Посещение Сикстинской капеллы описывалось в Markdown и не было включено в контроль качества знаний.
+  goal: Перевести квест в YAML, зафиксировать маршрут посещения, культурные детали и игровые награды.
+  essence: |
+    Игрок выстаивает очередь в Ватикан, входит в Сикстинскую капеллу и обозревает фрески Микеланджело, соблюдая правила тишины
+    и безфотографического режима, получая культурный прогресс.
   key_points:
-    - Подчёркнуты требования к поведению: запрет на фото, необходимость тишины.
-    - Описаны основные шедевры потолка и стены.
-    - Награды дают культурный рейтинг и ачивку «Взгляд Микеланджело».
+    - Уточнён поэтапный опыт: очередь, вход, наблюдение за потолком, ключевые фрески.
+    - Отражены ватиканские ограничения: Silenzio, запрет на фото и туристические толпы.
+    - Награды включают культурные очки, лёгкие расходы и достижение «Взгляд Микеланджело».
 quest_definition:
-  quest_type: side
-  level_min: 2
-  level_max: null
+  quest_type: exploration
+  level_min: 5
+  level_max: 50
   requirements:
-    required_quests: [ ]
-    required_flags: [ ]
-    required_reputation: { }
-    required_items: [ ]
+    completed_quests: [ ]
+    flags: [ ]
   objectives:
-    - id: get_vatican_pass
-      text: "Получить пропуск для туристической группы в Ватикан"
-      type: interact
-      target: vatican_tourist_pass
-      count: 1
-      optional: false
-    - id: wait_in_queue
-      text: "Отстоять очередь, используя аудио-гид для ознакомления с историей росписей"
-      type: interact
-      target: sistine_chapel_queue
-      count: 1
-      optional: false
+    - id: visit_vatican
+      type: location
+      description: "Отстоять очередь в музеи Ватикана"
+      required: true
     - id: enter_chapel
-      text: "Войти в капеллу, отключить запись и соблюдать тишину"
-      type: interact
-      target: sistine_chapel_entry
-      count: 1
-      optional: false
-    - id: study_ceiling_frescoes
-      text: "Изучить фрески потолка, включая «Сотворение Адама»"
-      type: investigate
-      target: sistine_ceiling_frescoes
-      count: 1
-      optional: false
-    - id: study_last_judgment
-      text: "Изучить фреску «Страшный суд» на стене"
-      type: investigate
-      target: last_judgment_fresco
-      count: 1
-      optional: false
-    - id: record_impressions
-      text: "Записать впечатления для культурного журнала"
-      type: interact
-      target: cultural_journal_entry
-      count: 1
-      optional: false
+      type: location
+      description: "Войти в Сикстинскую капеллу"
+      required: true
+    - id: observe_ceiling
+      type: interaction
+      description: "Исследовать потолок с фресками «Сотворение Адама»"
+      required: true
+    - id: observe_wall
+      type: interaction
+      description: "Осмотреть «Страшный суд» на стене"
+      required: true
   rewards:
     experience: 1500
-    currency: -20
-    items:
-      - item_id: achievement_michelangelo_gaze
-        quantity: 1
-        name: "Ачивка «Взгляд Микеланджело»"
+    money:
+      type: eddies
+      value: -20
     reputation:
-      rome_cultural: 20
-    flags:
-      - vatican_quests_unlocked
-  branches:
-    - id: perfect_etiquette_path
-      unlock_condition:
-        type: skill_check
-        skill: social
-        min_value: 0.7
-      consequences:
-        reputation:
-          rome_cultural: 15
-        flags:
-          - exclusive_cultural_events_unlocked
-        unlocked_content:
-          - quest_type: side
-            category: cultural
-            location: rome
+      culture: 20
+    unlocks:
+      achievements:
+        - id: michelangelo_gaze
+          name: Взгляд Микеланджело
+      flags: [ ]
+  branches: [ ]
 content:
   sections:
-    - id: overview
-      title: Обзор квеста
+    - id: quest_overview
+      title: Описание
       body: |
-        Квест ROME-2029-007 предлагает спокойно изучить Сикстинскую капеллу. Необходимо выдержать длинную очередь,
-        войти в часовню, соблюдать правила и собрать впечатления о величии ренессансного искусства.
-      mechanics_links:
-        - mechanics/quests/quest-system.yaml
-      assets: [ ]
-    - id: stages
-      title: Последовательность этапов
-      body: |
-        1. Подготовиться к посещению Ватикана и получить пропуск для туристической группы.
-        2. Отстоять очередь, используя аудио-гид для ознакомления с историей росписей.
-        3. Войти в капеллу, отключить запись, соблюдать тишину и рассмотреть потолок.
-        4. Зафиксировать ключевые сцены: «Сотворение Адама» и «Страшный суд».
-        5. Записать впечатления для культурного журнала и покинуть капеллу согласно регламенту.
+        Квест показывает сакральный опыт посещения Сикстинской капеллы, где игрок знакомится с высшими образцами ренессансного
+        искусства и атмосферой Ватикана.
       mechanics_links: [ ]
       assets: [ ]
-    - id: regional_context
+    - id: quest_flow
+      title: Этапы визита
+      body: |
+        1. Отстоять очередь в музеи Ватикана, соблюдая правила поведения.
+        2. Войти в капеллу и адаптироваться к строгим требованиям тишины.
+        3. Исследовать потолок с фресками «Сотворение Адама» и анимации сцен.
+        4. Осмотреть «Страшный суд» на стене, отслеживая символы Рафаэля и Микеланджело.
+        5. Завершить визит, фиксируя культурные впечатления и бонусы.
+      mechanics_links: [ ]
+      assets: [ ]
+    - id: regional_details
       title: Региональные детали
       body: |
-        - Фрески Микеланджело создавались в 1508–1512 годах; «Страшный суд» завершён в 1541 году.
-        - Охранники регулярно произносят «Silenzio!» и следят за запретом фотографий.
-        - Потолок полностью покрыт росписями; туристы вынуждены долго смотреть вверх.
+        Подчёркнуты расписной потолок, команды охраны «Silenzio!», запрет на фото и характерные толпы туристов, заставляющие
+        постоянно запрокидывать голову.
       mechanics_links: [ ]
       assets: [ ]
     - id: rewards
-      title: Награды и эффекты
+      title: Награды и механики
       body: |
-        - 1 500 XP.
-        - Валюта: -20 (стоимость билета и аудио-гид).
-        - Культурный рейтинг Рима +20.
-        - Ачивка «Взгляд Микеланджело».
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: mechanics
-      title: Задействованные механики
-      body: |
-        - Культурные сцены с ограничением взаимодействий.
-        - Система заметок и набора культурных очков.
-        - Проверка терпения и соблюдения правил внутри святыни.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: connections
-      title: Связи
-      body: |
-        Квест дополняет ватиканскую арку и раскрывает художественную составляющую религиозных сюжетов.
+        Игрок получает 1 500 XP, платит 20 едди и зарабатывает 20 очков культуры. Дополнительно открывается достижение «Взгляд
+        Микеланджело» и усиливаются культурные ветки Рима.
       mechanics_links: [ ]
       assets: [ ]
 appendix:
@@ -177,21 +128,18 @@ appendix:
 implementation:
   github_issue: 609
   needs_task: false
-  queue_reference: [ ]
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#canon-quest-rome-sistine-chapel
   blockers: [ ]
 history:
-  - version: '2.1.0'
-    date: 2025-12-01
-    author: content_writer
-    changes: 'Добавлен Issue в начало файла. Исправлена структура rewards (money -> currency, unlocks -> flags). Исправлена структура branches (branch_id -> id, description -> unlock_condition, убраны skills и unlocks из consequences, добавлены правильные поля). Структура quest_definition соответствует архитектуре системы квестов.'
-  - version: '2.0.0'
-    date: 2025-11-29
-    author: content_writer
-    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики культурного туризма и этикета.'
   - version: '0.1.0'
-    date: 2025-11-13
-    author: concept_team
-    changes: Добавлен YAML-квест посещения Сикстинской капеллы.
+    date: 2025-11-11
+    author: narrative_auto_converter
+    changes: Конвертация квеста «Сикстинская капелла» в формат знаний.
+  - version: '2.0.0'
+    date: 2025-12-06
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Обновлен github_issue на 609.'
 validation:
   checksum: ''
   schema_version: '1.0'

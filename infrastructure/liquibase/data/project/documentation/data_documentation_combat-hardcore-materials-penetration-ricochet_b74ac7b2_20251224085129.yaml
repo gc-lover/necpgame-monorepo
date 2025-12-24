@@ -1,0 +1,161 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-combat-hardcore-materials-penetration-ricochet-b74ac7b2
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-845653291758687'
+        - column:
+            name: doc_id
+            value: combat-hardcore-materials-penetration-ricochet
+        - column:
+            name: title
+            value: 'Хардкор: материалы и пенетрейшн (рикошеты, слои укрытий)'
+        - column:
+            name: document_type
+            value: mechanics
+        - column:
+            name: category
+            value: combat
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 0.1.0
+        - column:
+            name: last_updated
+            value: 2025-12-12 00:00:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: ''
+        - column:
+            name: owners
+            value: '[{"role": "game_balance", "contact": "balance@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - penetration
+            - ricochet
+            - cover
+            - hardcore
+        - column:
+            name: topics
+            value:
+            - combat_effects
+            - environment
+        - column:
+            name: related_systems
+            value:
+            - gameplay-service
+            - combat-service
+            - realtime-service
+            - ai-service
+        - column:
+            name: related_documents
+            value: '[{"id": "combat-cover-materials-overpenetration", "relation":
+              "complements"}, {"id": "combat-suppression-sound-ai", "relation": "references"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - combat
+            - gameplay
+            - analytics
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "combat-hardcore-materials-penetration-ricochet",
+              "title": "Хардкор: материалы и пенетрейшн (рикошеты, слои укрытий)",
+              "document_type": "mechanics", "category": "combat", "status": "draft",
+              "version": "0.1.0", "last_updated": "2025-12-12T00:00:00+00:00", "concept_approved":
+              false, "concept_reviewed_at": "", "owners": [{"role": "game_balance",
+              "contact": "balance@necp.game"}], "tags": ["penetration", "ricochet",
+              "cover", "hardcore"], "topics": ["combat_effects", "environment"], "related_systems":
+              ["gameplay-service", "combat-service", "realtime-service", "ai-service"],
+              "related_documents": [{"id": "combat-cover-materials-overpenetration",
+              "relation": "complements"}, {"id": "combat-suppression-sound-ai", "relation":
+              "references"}], "source": "", "visibility": "internal", "audience":
+              ["combat", "gameplay", "analytics"], "risk_level": "medium"}, "review":
+              {"chain": [{"role": "game_balance_lead", "reviewer": "", "reviewed_at":
+              "", "status": "pending"}], "next_actions": []}, "summary": {"problem":
+              "Нужны жёсткие правила пенетрейшна/рикошетов для хардкора с учётом материалов
+              и слоёв укрытий.", "goal": "Определить таблицу материалов/слоёв, pen-модификаторы,
+              шанс рикошета, over-penetration штрафы и UX-индикацию.", "essence":
+              "Слои укрытий с материалами влияют на пробитие; высокие калибры рискуют
+              over-penetration, рикошеты опасны в тесных местах; игроки видят прочность
+              слоёв.", "key_points": ["Таблица материалов и слоёв.", "Пенетрейшн/over-pen
+              формулы.", "Рикошет шансы и дрейф траектории.", "UX/AI реакции."]},
+              "content": {"sections": [{"id": "layered_materials", "title": "Материалы
+              и слои", "body": "Слои (hp_layer, pen_mod, ricochet_base):\n- Стекло:
+              hp 40, pen_mod 0.6, ricochet 3%.\n- Дерево: hp 90, pen_mod 0.8, ricochet
+              6%.\n- Гипс: hp 70, pen_mod 0.9, ricochet 5%.\n- Композит: hp 160, pen_mod
+              1.1, ricochet 9%.\n- Кирпич: hp 210, pen_mod 1.2, ricochet 12%.\n- Бетон:
+              hp 320, pen_mod 1.35, ricochet 16%.\n- Сталь: hp 460, pen_mod 1.6, ricochet
+              20%.\nМногослой: общая hp = сумма hp_layer; pen_mod итог = среднее взвешенное
+              по толщине слоёв.\n"}, {"id": "penetration_rules", "title": "Правила
+              пробития и over-pen", "body": "Условие: bullet_pen >= pen_mod * material_threshold.\nmaterial_threshold:
+              pistol 70, smg 90, rifle 130, dmr 170, ap 220, sniper 260.\nПотери после
+              пробития:\n- Урон: dmg_after = dmg * clamp(1 - 0.2 * (thickness / bullet_pen),
+              0.35, 1).\n- Скорость: vel_after = vel * clamp(1 - 0.25 * (thickness
+              / bullet_pen), 0.3, 1).\nthickness: стекло 0.4, дерево 0.9, гипс 0.8,
+              композит 1.1, кирпич 1.3, бетон 1.7, сталь 2.1.\nOver-pen штраф: если
+              bullet_pen > 1.8 * pen_mod * threshold, то dmg_after *= 0.85 (пуля проходит
+              слишком быстро).\n"}, {"id": "ricochet_rules", "title": "Рикошеты",
+              "body": "Шанс: p_ric = ricochet_base * angle_mod * material_mod.\nangle_mod
+              = clamp((impact_angle - 30)/30, 0, 1); material_mod = 1.0 (бетон 1.1,
+              сталь 1.2).\nПри рикошете: урон *0.45, траектория отражается + случайный
+              дрейф 8°.\nВ тесных помещениях (volume <120 м3) риск вторичного попадания
+              +12%.\n"}, {"id": "ux_indicators", "title": "UX индикация", "body":
+              "HUD показывает иконку слоя (3 состояния): intact (>60% hp), damaged
+              (30–60%), critical (<30%).\nПри пробитии отображается предупреждение
+              и вспышка направления.\nOver-pen маркер (тонкая красная линия) для снайперов,
+              если пуля пробила и потеряла <15% урона.\n"}, {"id": "ai_behavior",
+              "title": "AI реакция", "body": "AI помечает укрытие как unsafe при hp
+              <40% любого слоя; ищет новое в 10 м.\nПри рикошетах AI увеличивает разброс
+              на 5% и снижает агрессию на 15% на 2 с.\nЭлитные AI имеют pen_resist:
+              pen_mod слоёв для них считается +0.1 (сложнее пробить).\n"}, {"id":
+              "telemetry", "title": "Телеметрия", "body": "Логировать:\n- `hardcore_cover.penetrations`
+              (material, dmg_after, vel_after, overpen_flag).\n- `hardcore_cover.ricochet_events`,
+              вторичные попадания.\n- `hardcore_cover.layer_states` (intact/damaged/critical),
+              `ai_cover_switch`.\n"}]}, "appendix": {"glossary": [{"term": "material_threshold",
+              "definition": "Базовый порог пробития для класса боеприпаса."}], "formulas":
+              [{"name": "dmg_after", "expression": "dmg_after = dmg * clamp(1 - 0.2
+              * (thickness / bullet_pen), 0.35, 1)", "notes": "Учёт over-pen отдельным
+              множителем при избытке пробития."}]}, "implementation": {"needs_task":
+              false, "github_issue": 1773, "queue_reference": [], "blockers": []},
+              "history": [{"version": "0.1.0", "date": "2025-12-12", "author": "game_balance_team",
+              "changes": "Определены слои материалов, правила пробития/over-pen, рикошеты,
+              UX и телеметрия."}], "validation": {"checksum": "", "schema_version":
+              "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "combat-hardcore-materials-penetration-ricochet", "title":
+              "Хардкор: материалы и пенетрейшн (рикошеты, слои укрытий)", "document_type":
+              "mechanics", "category": "combat", "status": "draft", "version": "0.1.0",
+              "last_updated": "2025-12-12T00:00:00+00:00", "concept_approved": false,
+              "concept_reviewed_at": "", "owners": [{"role": "game_balance", "contact":
+              "balance@necp.game"}], "tags": ["penetration", "ricochet", "cover",
+              "hardcore"], "topics": ["combat_effects", "environment"], "related_systems":
+              ["gameplay-service", "combat-service", "realtime-service", "ai-service"],
+              "related_documents": [{"id": "combat-cover-materials-overpenetration",
+              "relation": "complements"}, {"id": "combat-suppression-sound-ai", "relation":
+              "references"}], "source": "", "visibility": "internal", "audience":
+              ["combat", "gameplay", "analytics"], "risk_level": "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\mechanics\combat\combat-hardcore-materials-penetration-ricochet.yaml

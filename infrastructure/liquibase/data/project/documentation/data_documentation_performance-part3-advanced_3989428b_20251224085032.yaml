@@ -1,0 +1,153 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-performance-part3-advanced-3989428b
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-125374164875164'
+        - column:
+            name: doc_id
+            value: narrative-coherence-performance-part3-advanced
+        - column:
+            name: title
+            value: Performance Tuning — Part 3 (Advanced)
+        - column:
+            name: document_type
+            value: canon
+        - column:
+            name: category
+            value: narrative-coherence
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-07 00:53:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: ''
+        - column:
+            name: owners
+            value: '[{"role": "concept_director", "contact": "concept@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - performance
+            - scaling
+            - monitoring
+        - column:
+            name: topics
+            value:
+            - distributed-architecture
+            - observability
+        - column:
+            name: related_systems
+            value:
+            - quest-service
+            - analytics-service
+            - infrastructure-platform
+        - column:
+            name: related_documents
+            value: '[{"id": "narrative-coherence-performance-part1-database", "relation":
+              "references"}, {"id": "narrative-coherence-performance-part2-application",
+              "relation": "references"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part3-advanced.md
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - platform
+            - backend
+            - operations
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "narrative-coherence-performance-part3-advanced",
+              "title": "Performance Tuning — Part 3 (Advanced)", "document_type":
+              "canon", "category": "narrative-coherence", "status": "draft", "version":
+              "1.0.0", "last_updated": "2025-11-07T00:53:00+00:00", "concept_approved":
+              false, "concept_reviewed_at": "", "owners": [{"role": "concept_director",
+              "contact": "concept@necp.game"}], "tags": ["performance", "scaling",
+              "monitoring"], "topics": ["distributed-architecture", "observability"],
+              "related_systems": ["quest-service", "analytics-service", "infrastructure-platform"],
+              "related_documents": [{"id": "narrative-coherence-performance-part1-database",
+              "relation": "references"}, {"id": "narrative-coherence-performance-part2-application",
+              "relation": "references"}], "source": "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part3-advanced.md",
+              "visibility": "internal", "audience": ["platform", "backend", "operations"],
+              "risk_level": "medium"}, "review": {"chain": [{"role": "concept_director",
+              "reviewer": "", "reviewed_at": "", "status": "pending"}], "next_actions":
+              []}, "summary": {"problem": "Масштабирование квестовых сервисов требует
+              дополнительной изоляции чтений, шардинга и наблюдаемости.", "goal":
+              "Описать advanced-практики, которые закрепляют SLA при росте одновременных
+              игроков и запросов.", "essence": "Финальная часть концентрируется на
+              репликах, шардинге и мониторинге, связывая архитектуру с целевыми бенчмарками.",
+              "key_points": ["Использование read-replicas для разгрузки чтений.",
+              "Хеш-базированный шардинг персонажей.", "Метрики и бенчмарки для контроля
+              производительности."]}, "content": {"sections": [{"id": "introduction",
+              "title": "Введение", "body": "Третья часть цикла Performance Tuning
+              собирает продвинутые техники для распределённой среды.\nДокумент дополняет
+              настройки БД и приложений, описанные в Part 1 и Part 2, и готовит сервис
+              к экстремальным нагрузкам.\n", "mechanics_links": [], "assets": []},
+              {"id": "read-replicas", "title": "Чтение с реплик", "body": "```\n@Transactional(readOnly
+              = true)\npublic List<Quest> getAvailableQuests(UUID characterId) {\n    //
+              Должно выполняться на реплике\n}\n```\n\nРеплики разгружают мастера
+              и позволяют масштабировать чтение квестов без влияния на запись прогресса.\n",
+              "mechanics_links": ["infrastructure/database/read-replicas.yaml"], "assets":
+              []}, {"id": "sharding", "title": "Шардинг", "body": "```\npublic String
+              getShardId(UUID characterId) {\n    int hash = Math.abs(characterId.hashCode());\n    return
+              \"shard-\" + (hash % TOTAL_SHARDS);\n}\n```\n\nПодход основан на стабильном
+              хеше идентификатора персонажа и гарантирует равномерное распределение
+              нагрузки.\n", "mechanics_links": ["infrastructure/database/sharding-strategy.yaml"],
+              "assets": []}, {"id": "monitoring", "title": "Мониторинг и метрики",
+              "body": "```\n@Component\npublic class QuestMetrics {\n    private final
+              Counter questsCompleted;\n\n    public void recordCompleted(Quest quest)
+              {\n        questsCompleted.increment();\n    }\n}\n```\n\nМетрики фиксируют
+              количество завершённых квестов и помогают отслеживать деградацию, коррелируя
+              с нагрузкой.\n", "mechanics_links": ["infrastructure/observability/metrics.yaml"],
+              "assets": []}, {"id": "benchmarks", "title": "Бенчмарки", "body": "Целевые
+              показатели для продвинутых сценариев:\n- Concurrent users: 1 000 000+\n-
+              Requests per second: 50 000+\n- Response time: < 100ms\n", "mechanics_links":
+              ["mechanics/performance/scaling-benchmarks.yaml"], "assets": []}]},
+              "appendix": {"glossary": [], "references": [{"type": "internal", "value":
+              "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part1-database.md"},
+              {"type": "internal", "value": "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part2-application.md"}],
+              "decisions": []}, "implementation": {"github_issue": 109, "needs_task":
+              false, "queue_reference": [], "blockers": []}, "history": [{"version":
+              "1.0.0", "date": "2025-11-07", "author": "concept_director", "changes":
+              "Конвертировано руководство Performance Tuning Part 3 из Markdown в
+              YAML с акцентом на масштабирование."}], "validation": {"checksum": "",
+              "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "narrative-coherence-performance-part3-advanced", "title":
+              "Performance Tuning — Part 3 (Advanced)", "document_type": "canon",
+              "category": "narrative-coherence", "status": "draft", "version": "1.0.0",
+              "last_updated": "2025-11-07T00:53:00+00:00", "concept_approved": false,
+              "concept_reviewed_at": "", "owners": [{"role": "concept_director", "contact":
+              "concept@necp.game"}], "tags": ["performance", "scaling", "monitoring"],
+              "topics": ["distributed-architecture", "observability"], "related_systems":
+              ["quest-service", "analytics-service", "infrastructure-platform"], "related_documents":
+              [{"id": "narrative-coherence-performance-part1-database", "relation":
+              "references"}, {"id": "narrative-coherence-performance-part2-application",
+              "relation": "references"}], "source": "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part3-advanced.md",
+              "visibility": "internal", "audience": ["platform", "backend", "operations"],
+              "risk_level": "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\canon\narrative\narrative-coherence\phase6-documentation\dev-guides\performance-part3-advanced.yaml

@@ -1,0 +1,332 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-party-system-architecture-096cad72
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-781958531949490'
+        - column:
+            name: doc_id
+            value: party-system-architecture
+        - column:
+            name: title
+            value: Архитектура системы групп (Party System)
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-30 18:55:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - party
+            - backend
+            - social
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - social-service-go
+            - gameplay-service-go
+            - economy-service-go
+            - matchmaking-go
+        - column:
+            name: related_documents
+            value: '[{"id": "backend-party-system", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "party-system-architecture", "title": "Архитектура
+              системы групп (Party System)", "document_type": "architecture", "category":
+              "systems", "status": "draft", "version": "1.1.0", "last_updated": "2025-11-30T18:55:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "party", "backend", "social"], "related_systems":
+              ["social-service-go", "gameplay-service-go", "economy-service-go", "matchmaking-go"],
+              "related_documents": [{"id": "backend-party-system", "relation": "extends"}],
+              "github_issue": 139, "visibility": "internal", "audience": ["architect",
+              "backend", "api-designer"]}, "summary": {"problem": "Требуется спроектировать
+              полную техническую архитектуру системы групп\nдля управления кооперативными
+              группами игроков, распределением лута,\nсовместными заданиями и интеграцией
+              с другими системами.\n", "goal": "Создать архитектурную схему системы
+              групп с определением:\n- Компонентов системы (микросервисы, модули)\n-
+              API endpoints (высокоуровнево)\n- Потоков данных и интеграций\n- Системы
+              распределения лута\n- Технического задания для реализации\n", "essence":
+              "Социальная система управления группами до 5 игроков с поддержкой приглашений,\nролей,
+              общих заданий, распределения лута и интеграции с матчмейкингом.\n"},
+              "architecture": {"overview": "Система групп состоит из четырёх основных
+              компонентов:\n1. Party Manager - управление группами и участниками\n2.
+              Invitation Handler - обработка приглашений\n3. Loot Distribution Manager
+              - распределение лута\n4. Party Quest Coordinator - координация совместных
+              заданий\n", "components": [{"name": "Party Manager", "location": "social-service-go
+              (модуль party)", "responsibility": "- Создание и управление группами\n-
+              Управление участниками (до 5 игроков)\n- Назначение ролей (лидер, участник)\n-
+              Управление статусом группы (active, disbanded)\n- Синхронизация состояния
+              через realtime-gateway\n- Интеграция с матчмейкингом\n", "port": "8084
+              (social-service-go)", "endpoints": ["POST /api/v1/social/party - создание
+              группы", "GET /api/v1/social/party/{party_id} - получение группы", "PUT
+              /api/v1/social/party/{party_id}/leader - смена лидера", "DELETE /api/v1/social/party/{party_id}
+              - роспуск группы", "GET /api/v1/social/party/player/{account_id} - группа
+              игрока"]}, {"name": "Invitation Handler", "location": "social-service-go
+              (модуль party-invitations)", "responsibility": "- Обработка приглашений
+              в группу\n- Управление входящими и исходящими приглашениями\n- Проверка
+              доступности игрока для приглашения\n- Таймауты приглашений\n- Уведомления
+              о приглашениях\n", "endpoints": ["POST /api/v1/social/party/{party_id}/invite
+              - приглашение игрока", "POST /api/v1/social/party/invitations/{invitation_id}/accept
+              - принятие приглашения", "POST /api/v1/social/party/invitations/{invitation_id}/decline
+              - отклонение приглашения", "GET /api/v1/social/party/invitations/player/{account_id}
+              - приглашения игрока"]}, {"name": "Member Manager", "location": "social-service-go
+              (модуль party-members)", "responsibility": "- Управление участниками
+              группы\n- Добавление и удаление участников\n- Назначение ролей\n- Проверка
+              лимитов группы\n- Обработка выхода участников\n", "endpoints": ["POST
+              /api/v1/social/party/{party_id}/members - добавление участника", "DELETE
+              /api/v1/social/party/{party_id}/members/{account_id} - удаление участника",
+              "PUT /api/v1/social/party/{party_id}/members/{account_id}/role - изменение
+              роли", "POST /api/v1/social/party/{party_id}/leave - выход из группы"]},
+              {"name": "Loot Distribution Manager", "location": "social-service-go
+              (модуль party-loot)", "responsibility": "- Управление режимами распределения
+              лута\n- Обработка распределения лута между участниками\n- Реализация
+              различных режимов (free-for-all, need-before-greed, master-looter)\n-
+              Интеграция с economy-service для распределения предметов\n- Логирование
+              распределения лута\n", "loot_modes": "- free_for_all: каждый забирает
+              свой лут\n- need_before_greed: приоритет нуждающимся\n- master_looter:
+              лидер распределяет\n- round_robin: по очереди\n", "endpoints": ["GET
+              /api/v1/social/party/{party_id}/loot-mode - текущий режим", "PUT /api/v1/social/party/{party_id}/loot-mode
+              - изменение режима", "POST /api/v1/social/party/{party_id}/loot/distribute
+              - распределение лута", "POST /api/v1/social/party/{party_id}/loot/roll
+              - бросок кубика для лута"]}, {"name": "Party Quest Coordinator", "location":
+              "social-service-go (модуль party-quests)", "responsibility": "- Координация
+              совместных заданий группы\n- Синхронизация прогресса заданий\n- Распределение
+              наград за задания\n- Интеграция с quest-service\n", "integration": "Интегрируется
+              с gameplay-service для синхронизации прогресса квестов\nОбеспечивает
+              общий прогресс для всех участников группы\n", "endpoints": ["GET /api/v1/social/party/{party_id}/quests
+              - задания группы", "POST /api/v1/social/party/{party_id}/quests/{quest_id}/sync
+              - синхронизация прогресса"]}], "data_flow": {"party_creation": "1. Игрок
+              создаёт группу\n2. Party Manager создаёт группу в БД\n3. Игрок становится
+              лидером группы\n4. Realtime Gateway уведомляет клиентов\n5. Событие
+              party:created публикуется в event bus\n", "invitation_flow": "1. Лидер
+              отправляет приглашение игроку\n2. Invitation Handler проверяет доступность
+              игрока\n3. Создаётся приглашение с таймаутом\n4. Notification-service
+              уведомляет приглашённого\n5. Игрок принимает/отклоняет приглашение\n6.
+              При принятии Member Manager добавляет участника\n7. Realtime Gateway
+              синхронизирует изменения\n", "loot_distribution": "1. После боя/квеста
+              генерируется лут\n2. Loot Distribution Manager получает информацию о
+              луте\n3. Применяется выбранный режим распределения\n4. Для need-before-greed:
+              участники делают выбор (need/greed)\n5. Для master-looter: лидер распределяет
+              предметы\n6. Economy-service перемещает предметы в инвентари\n7. Realtime
+              Gateway уведомляет участников\n"}, "integrations": {"with_gameplay_service":
+              "- Синхронизация прогресса квестов группы\n- Общие задания для всех
+              участников\n- Интеграция с боевыми сессиями\n", "with_economy_service":
+              "- Распределение лута между участниками\n- Перемещение предметов в инвентари\n-
+              Интеграция с системой торговли\n", "with_matchmaking": "- Групповая
+              очередь в матчмейкинг\n- Поиск матчей для всей группы\n- Интеграция
+              с системой рангов\n", "with_social_service": "- Интеграция с системой
+              друзей\n- Уведомления о приглашениях\n- История групп\n", "with_realtime_gateway":
+              "- Realtime синхронизация состояния группы\n- Push уведомления о событиях\n-
+              Синхронизация участников\n"}, "database_schema": {"tables": [{"name":
+              "parties", "description": "Группы игроков", "fields": [{"id": "UUID
+              (PK)"}, {"leader_id": "UUID (FK accounts)"}, {"name": "VARCHAR(255)
+              (nullable)"}, {"max_members": {"INTEGER (default": "5)"}}, {"loot_mode":
+              "ENUM (free_for_all, need_before_greed, master_looter, round_robin)"},
+              {"status": "ENUM (active, disbanded)"}, {"settings": "JSONB (дополнительные
+              настройки)"}, {"created_at": "TIMESTAMP"}, {"updated_at": "TIMESTAMP"}],
+              "indexes": ["leader_id, status", "status, created_at"]}, {"name": "party_members",
+              "description": "Участники групп", "fields": [{"id": "UUID (PK)"}, {"party_id":
+              "UUID (FK parties)"}, {"account_id": "UUID (FK accounts)"}, {"role":
+              "ENUM (leader, member)"}, {"joined_at": "TIMESTAMP"}, {"last_active_at":
+              "TIMESTAMP"}], "indexes": ["party_id, account_id (unique)", "account_id,
+              party_id"]}, {"name": "party_invitations", "description": "Приглашения
+              в группы", "fields": [{"id": "UUID (PK)"}, {"party_id": "UUID (FK parties)"},
+              {"inviter_id": "UUID (FK accounts)"}, {"invitee_id": "UUID (FK accounts)"},
+              {"status": "ENUM (pending, accepted, declined, expired)"}, {"expires_at":
+              "TIMESTAMP"}, {"created_at": "TIMESTAMP"}, {"responded_at": "TIMESTAMP
+              (nullable)"}], "indexes": ["invitee_id, status", "party_id, status",
+              "expires_at (для очистки)"]}, {"name": "party_loot_logs", "description":
+              "Логи распределения лута", "fields": [{"id": "UUID (PK)"}, {"party_id":
+              "UUID (FK parties)"}, {"item_id": "UUID (FK items)"}, {"distributed_to":
+              "UUID (FK accounts)"}, {"distribution_mode": "ENUM"}, {"roll_results":
+              "JSONB (результаты бросков кубика)"}, {"created_at": "TIMESTAMP"}],
+              "indexes": ["party_id, created_at", "distributed_to, created_at"]}]}},
+              "technical_specification": {"backend_requirements": [{"Реализация модулей
+              в social-service-go": ["party (управление группами)", "party-invitations
+              (приглашения)", "party-members (участники)", "party-loot (распределение
+              лута)", "party-quests (координация заданий)"]}, "Интеграция с gameplay-service
+              для квестов", "Интеграция с economy-service для лута", "Интеграция с
+              matchmaking для групповой очереди", "Оптимизация запросов к БД (индексы,
+              кэширование)"], "realtime_requirements": ["Синхронизация состояния группы
+              через WebSocket", "Push уведомления о событиях группы", "Обновление
+              списка участников в реальном времени", "Синхронизация прогресса заданий"],
+              "performance_requirements": ["Создание группы < 50ms", "Добавление участника
+              < 30ms", "Распределение лута < 100ms", "Поддержка до 10000 активных
+              групп", "Кэширование активных групп"], "scalability_requirements": ["Горизонтальное
+              масштабирование через social-service", "Распределение нагрузки на группы",
+              "Оптимизация запросов к БД (batch, индексы)", "Кэширование активных
+              групп в памяти (Redis)"], "data_consistency": {"strategy": "Strong Consistency
+              (ACID транзакции)", "mechanisms": ["ACID транзакции для операций с группами",
+              "Оптимистичные блокировки (versioning) для предотвращения конфликтов",
+              "Валидация перед сохранением изменений", "Синхронизация с другими сервисами
+              через Event Bus", "Outbox Pattern для гарантированной доставки событий",
+              "Saga Pattern для распределения лута (multi-service)"]}, "data_synchronization":
+              {"event_sourcing": "Все изменения групп записываются как события:\n-
+              PartyCreatedEvent - группа создана\n- MemberJoinedEvent - участник присоединился\n-
+              MemberLeftEvent - участник покинул группу\n- LeaderChangedEvent - лидер
+              изменен\n- LootDistributedEvent - лут распределен\n\nСобытия хранятся
+              в Event Store (Kafka topics) для:\n- Восстановления состояния группы\n-
+              Аудит-лога операций\n- Синхронизации с другими сервисами\n- Аналитики
+              и мониторинга\n", "cqrs_pattern": "Разделение команд и запросов:\n-
+              Write Model: Party Manager обрабатывает команды (create, invite, join,
+              leave)\n- Read Model: Оптимизированные представления для быстрого чтения
+              групп\n- Projections: Материализованные представления для частых запросов\n-
+              Event Handlers: Обработка событий для обновления read-моделей\n", "saga_pattern":
+              "Для распределения лута:\n- Loot Distribution Saga: координация между
+              economy, inventory, notification сервисами\n- Multi-service Saga: распределение
+              предметов между участниками\n\nКомпенсирующие транзакции:\n- Откат распределения
+              при ошибках\n- Восстановление состояния при сбоях\n", "outbox_pattern":
+              "Гарантированная доставка событий:\n- Запись событий в outbox таблицу
+              в той же транзакции\n- Outbox Processor публикует события в Event Bus\n-
+              Retry механизм для failed событий\n- Идемпотентность обработки событий\n"},
+              "tickrate_specification": {"party_operations": {"tickrate": "Event-based
+              (on-demand) + 20-30 Hz для синхронизации состояния", "description":
+              "Операции с группами выполняются по требованию (event-based),\nно требуется
+              периодическая синхронизация состояния для всех участников.\n", "network_load":
+              "- Изменения группы: event-based, ~2-5 events/sec на группу\n- Синхронизация
+              состояния: 20-30 updates/sec для всех участников\n- Распределение лута:
+              event-based, ~1-3 events/sec\n- Общий трафик: ~1-2 KB/sec на игрока
+              в группе\n", "sync_strategy": "Strong Consistency (ACID транзакции)
+              для операций, Eventual для статистики", "latency_requirements": "- Создание
+              группы: < 50ms\n- Добавление участника: < 30ms\n- Распределение лута:
+              < 100ms\n- Синхронизация состояния: < 50ms\n"}}}, "subtasks": [{"id":
+              "party-manager-module", "title": "Реализация модуля Party Manager",
+              "description": "Создание модуля управления группами\nCRUD операции для
+              групп\nУправление лидером\n", "priority": "high", "estimated_time":
+              "3-4 дня"}, {"id": "invitation-handler", "title": "Реализация Invitation
+              Handler", "description": "Обработка приглашений\nУправление таймаутами\nИнтеграция
+              с уведомлениями\n", "priority": "high", "estimated_time": "2-3 дня"},
+              {"id": "member-manager", "title": "Реализация Member Manager", "description":
+              "Управление участниками\nПроверка лимитов\nОбработка выхода участников\n",
+              "priority": "high", "estimated_time": "2-3 дня"}, {"id": "loot-distribution",
+              "title": "Реализация Loot Distribution Manager", "description": "Реализация
+              режимов распределения лута\nИнтеграция с economy-service\nЛогирование
+              распределения\n", "priority": "high", "estimated_time": "3-4 дня"},
+              {"id": "quest-coordinator", "title": "Реализация Party Quest Coordinator",
+              "description": "Координация совместных заданий\nСинхронизация прогресса\nИнтеграция
+              с quest-service\n", "priority": "medium", "estimated_time": "2-3 дня"},
+              {"id": "realtime-integration", "title": "Интеграция с Realtime Gateway",
+              "description": "Синхронизация состояния группы\nPush уведомления\nОптимизация
+              трафика\n", "priority": "high", "estimated_time": "2-3 дня"}, {"id":
+              "database-optimization", "title": "Оптимизация БД и запросов", "description":
+              "Создание индексов\nОптимизация запросов\nКэширование активных групп\n",
+              "priority": "medium", "estimated_time": "1-2 дня"}, {"id": "api-endpoints",
+              "title": "Реализация REST API endpoints", "description": "Создание всех
+              endpoints для групп\nИнтеграция с существующим API social-service\n",
+              "priority": "high", "estimated_time": "2-3 дня"}, {"id": "integration-testing",
+              "title": "Интеграционное тестирование", "description": "Тесты управления
+              группами\nТесты распределения лута\nТесты интеграций с другими сервисами\n",
+              "priority": "high", "estimated_time": "2-3 дня"}], "diagrams": {"component_diagram":
+              "```mermaid\ngraph TB\n    subgraph \"Social Service\"\n        PM[Party
+              Manager]\n        IH[Invitation Handler]\n        MM[Member Manager]\n        LDM[Loot
+              Distribution Manager]\n        PQC[Party Quest Coordinator]\n    end\n\n    subgraph
+              \"Database\"\n        DB[(PostgreSQL<br/>parties<br/>party_members<br/>party_invitations<br/>party_loot_logs)]\n    end\n\n    subgraph
+              \"External Services\"\n        GS[Gameplay Service]\n        ES[Economy
+              Service]\n        MS[Matchmaking Service]\n        NS[Notification Service]\n        RG[Realtime
+              Gateway]\n    end\n\n    subgraph \"Client\"\n        CL[UE5 Client]\n    end\n\n    CL
+              -->|API requests| PM\n    PM --> MM\n    PM --> IH\n    PM --> LDM\n    PM
+              --> PQC\n    PM -->|store| DB\n    MM -->|store| DB\n    IH -->|store|
+              DB\n    LDM -->|distribute loot| ES\n    PQC -->|sync quests| GS\n    PM
+              -->|queue| MS\n    IH -->|notify| NS\n    PM -->|sync state| RG\n    RG
+              -->|push events| CL\n```\n", "data_flow_diagram": "```mermaid\nsequenceDiagram\n    participant
+              L as Leader\n    participant PM as Party Manager\n    participant IH
+              as Invitation Handler\n    participant P as Player\n    participant
+              LDM as Loot Distribution Manager\n    participant ES as Economy Service\n\n    L->>PM:
+              Create party\n    PM->>PM: Store party\n    L->>IH: Invite player\n    IH->>P:
+              Send invitation\n    P->>IH: Accept invitation\n    IH->>PM: Add member\n    PM->>PM:
+              Update party\n\n    Note over LDM,ES: After combat/quest\n    LDM->>LDM:
+              Calculate loot distribution\n    LDM->>ES: Distribute items\n    ES->>LDM:
+              Distribution complete\n    LDM->>PM: Notify members\n```\n", "party_lifecycle":
+              "```mermaid\ngraph LR\n    subgraph \"Party Lifecycle\"\n        P1[Created<br/>Leader
+              only]\n        P2[Active<br/>Members joining]\n        P3[Full<br/>5
+              members]\n        P4[Disbanded<br/>Leader left]\n    end\n\n    subgraph
+              \"Member Actions\"\n        A1[Invite]\n        A2[Join]\n        A3[Leave]\n        A4[Kick]\n    end\n\n    P1
+              -->|A1, A2| P2\n    P2 -->|A2| P3\n    P2 -->|A3, A4| P1\n    P3 -->|A3,
+              A4| P2\n    P1 -->|leader leaves| P4\n    P2 -->|leader leaves| P4\n    P3
+              -->|leader leaves| P4\n```\n"}, "decisions": [{"id": "adr-party-architecture",
+              "summary": "Выбрана модульная архитектура внутри social-service-go для
+              обеспечения\nтесной интеграции с системой друзей и социальными функциями.\n"},
+              {"id": "adr-party-size", "summary": "Лимит в 5 участников обеспечивает
+              баланс между кооперативным геймплеем\nи управляемостью группы.\n"},
+              {"id": "adr-loot-modes", "summary": "Множественные режимы распределения
+              лута обеспечивают гибкость для разных\nстилей игры и предпочтений игроков.\n"},
+              {"id": "adr-realtime-sync", "summary": "Realtime синхронизация через
+              gateway обеспечивает актуальность данных\nдля всех участников и предотвращает
+              конфликты.\n"}, {"id": "adr-quest-sync", "summary": "Синхронизация прогресса
+              заданий позволяет группе проходить квесты\nсовместно с общим прогрессом.\n"}],
+              "validation": {"architecture_complete": true, "components_defined":
+              true, "microservices_identified": true, "api_endpoints_described": true,
+              "technical_specification_ready": true, "subtasks_defined": true}, "next_steps":
+              ["Передача задачи агенту API Designer для создания OpenAPI спецификации",
+              "Детализация API endpoints", "Создание request/response схем"], "history":
+              [{"version": "1.1.0", "date": "2025-11-30", "author": "Architect Agent",
+              "changes": "Обновлена архитектура системы групп:\n- Добавлена детальная
+              синхронизация данных (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)\n-
+              Добавлена спецификация тикрейта для операций с группами\n- Расширен
+              раздел data_consistency с механизмами синхронизации\n- Добавлены требования
+              к задержке для операций\n"}, {"version": "1.0.0", "date": "2025-11-22",
+              "author": "Architect Agent", "changes": "Создана полная архитектура
+              системы групп:\n- Определены компоненты (Party Manager, Invitation Handler,
+              Member Manager, Loot Distribution Manager, Quest Coordinator)\n- Описаны
+              API endpoints (высокоуровнево)\n- Спроектированы потоки данных\n- Определена
+              структура БД\n- Спроектирована система распределения лута\n- Создано
+              техническое задание\n- Разбито на подзадачи\n"}]}'
+        - column:
+            name: metadata
+            value: '{"id": "party-system-architecture", "title": "Архитектура системы
+              групп (Party System)", "document_type": "architecture", "category":
+              "systems", "status": "draft", "version": "1.1.0", "last_updated": "2025-11-30T18:55:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "party", "backend", "social"], "related_systems":
+              ["social-service-go", "gameplay-service-go", "economy-service-go", "matchmaking-go"],
+              "related_documents": [{"id": "backend-party-system", "relation": "extends"}],
+              "github_issue": 139, "visibility": "internal", "audience": ["architect",
+              "backend", "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\party-system-architecture.yaml

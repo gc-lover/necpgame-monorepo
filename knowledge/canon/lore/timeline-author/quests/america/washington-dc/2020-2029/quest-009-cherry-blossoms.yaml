@@ -1,40 +1,44 @@
-# Issue: #1036
+# Issue: #255
+# Issue: #207
 metadata:
-  id: canon-quest-washington-dc-2020-2029-cherry-blossoms
-  title: 'Вашингтон 2020-2029 — «Цветение сакуры у Tidal Basin»'
+  id: quest-009-cherry-blossoms
+  title: "Вашингтон — Цветение сакуры"
   document_type: canon
-  category: timeline-author
+  category: lore
   status: draft
-  version: '0.1.0'
-  last_updated: 2025-11-23T02:15:00Z
-  concept_approved: false
+  version: '2.0.0'
+  last_updated: 2025-11-29T00:00:00Z
+  concept_approved: true
   concept_reviewed_at: ''
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
     - washington-dc
-    - festival
-    - nature
+    - cherry-blossom
+    - festivals
   topics:
-    - urban-tourism
-    - seasonal-events
+    - timeline_author
+    - regional_quests
   related_systems:
-    - narrative-service
-    - event-service
+    - quest-engine
+    - tourism-service
+    - economy-service
   related_documents:
-    - id: github-issue-1036
-      title: GitHub Issue #1036
-      link: https://github.com/gc-lover/necpgame-monorepo/issues/1036
+    - id: questline-washington-nature
+      relation: collection
+    - id: github-issue-379
+      title: GitHub Issue #379
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/379
       relation: migrated_to
-      migrated_at: 2025-11-23T02:15:00Z
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/washington-dc/2020-2029/quest-009-cherry-blossoms.md
+      migrated_at: 2025-11-22T22:10:00Z
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/washington-dc/2020-2029/quest-009-cherry-blossoms.md
   visibility: internal
   audience:
     - concept
     - narrative
     - liveops
-  risk_level: low
+  risk_level: medium
 review:
   chain:
     - role: concept_director
@@ -43,79 +47,132 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: В природной ветке Вашингтона не было полноценного сценария цветения сакуры и фестиваля у Tidal Basin.
-  goal: Описать сезонное событие National Cherry Blossom Festival и создать туристический маршрут.
-  essence: Игрок планирует посещение пика цветения, исследует Tidal Basin и документирует символику подарка Японии.
+  problem: Квест сезонного цветения сакуры описан текстово и не учитывает события фестиваля, экономические эффекты и расписание.
+  goal: Структурировать сезонный опыт National Cherry Blossom Festival с интеграцией в туристическую и экономическую системы.
+  essence: Игрок планирует визит на Tidal Basin, наблюдает цветение 3 020 деревьев и участвует в фестивальных активностях.
   key_points:
-    - Цветение длится около двух недель и зависит от ежедневного прогноза.
-    - Более 3 000 деревьев сакуры были подарены Японией в 1912 году.
-    - Jefferson Memorial и набережная Tidal Basin формируют iconic-фото локации.
+    - Сакура — подарок Японии 1912 года, цветёт ~2 недели весной.
+    - Фестиваль привлекает тысяч туристов и влияет на городскую экономику.
+    - Квест выдаёт бафф эстетики и открывает природную линию.
+quest_definition:
+  quest_type: side
+  level_min: 1
+  level_max: null
+  requirements:
+    required_quests: [ ]
+    required_flags: [ ]
+    required_reputation: { }
+    required_items: [ ]
+  objectives:
+    - id: track_bloom_forecast
+      text: "Отслеживать прогноз пика цветения и резервировать слоты посещения"
+      type: interact
+      target: cherry_bloom_tracking
+      count: 1
+      optional: false
+    - id: visit_tidal_basin
+      text: "Посетить Tidal Basin, активировать AR-гид по истории деревьев и дару Японии"
+      type: interact
+      target: tidal_basin_visit
+      count: 1
+      optional: false
+    - id: participate_festival
+      text: "Участвовать в фестивальной активности (парад, фотоконкурс или ярмарка)"
+      type: interact
+      target: festival_activities
+      count: 1
+      optional: false
+    - id: photograph_jefferson_memorial
+      text: "Сделать фото Jefferson Memorial на фоне цветения и загрузить в туристический журнал"
+      type: interact
+      target: jefferson_photo_blossoms
+      count: 1
+      optional: false
+    - id: sync_economy_data
+      text: "Синхронизировать данные с экономической системой — рост посещаемости и расходов"
+      type: interact
+      target: tourism_economy_sync
+      count: 1
+      optional: false
+  rewards:
+    xp: 1500
+    currency: 0
+    items: [ ]
+    reputation:
+      aesthetics: 25
+      tourism: 15
+    achievements:
+      - id: witness_of_bloom
+        name: "Свидетель цветения"
+    skill_boosts:
+      aesthetics: 10
+  branches: [ ]
 content:
   sections:
-    - id: season_briefing
-      title: Подготовка к сезону
+    - id: introduction
+      title: Введение
       body: |
-        Квест стартует за несколько дней до пика цветения. Игрок отслеживает прогноз от National Park Service, бронирует окна
-        посещения и получает гайд по передвижению внутри зоны Tidal Basin.
+        Национальный фестиваль сакуры проходит на Tidal Basin в марте-апреле, создавая розовое облако вокруг Jefferson
+        Memorial. Квест управляет расписанием, прогнозами цветения и туристическими событиями.
       mechanics_links:
         - mechanics/quests/quest-structure.yaml
+        - mechanics/tourism/city-tour-flow.yaml
       assets: [ ]
-    - id: festival_flow
-      title: Маршрут фестиваля
+    - id: seasonal_context
+      title: Сезон и история
       body: |
-        1. Прибытие к Tidal Basin ранним утром, чтобы избежать толпы и сделать панорамные снимки.
-        2. Прогулка вокруг Jefferson Memorial и Martin Luther King Jr. Memorial с фиксацией сакуры.
-        3. Участие в активности фестиваля (парад, уличные перформансы, сувенирные рынки).
-        4. Создание фото-серии и отчёта для туристической сети LiveOps.
-        5. Ночная подсветка и вечерняя прогулка вдоль Basin.
-      mechanics_links: [ ]
+        - В 1912 году Япония подарила США 3 020 деревьев сакуры.
+        - Цветение длится около двух недель; пик прогнозируется Национальной службой парков.
+        - Festival включает парады, ярмарки, концерты и конкурсы фотографий.
+        - Локация: Tidal Basin, West Potomac Park, Jefferson Memorial.
+      mechanics_links:
+        - canon/lore/_03-lore/timeline-author/quests/america/washington-dc/index.yaml
       assets: [ ]
-    - id: cultural_context
-      title: Культурный контекст
+    - id: quest_flow
+      title: Этапы квеста
       body: |
-        - Подарок Японии из 3 020 деревьев укрепил дипломатические отношения в 1912 году.
-        - Фестиваль символизирует дружбу и обновление, а также привлекает сотни тысяч посетителей.
-        - Пик цветения длится 4–7 дней и сильно зависит от погодных условий.
-      mechanics_links: [ ]
+        1. Отслеживать прогноз пика цветения и резервировать слоты посещения.
+        2. Посетить Tidal Basin, активировать AR-гид по истории деревьев и дару Японии.
+        3. Участвовать в фестивальной активности (парад, фотоконкурс или ярмарка).
+        4. Сделать фото Jefferson Memorial на фоне цветения и загрузить в туристический журнал.
+        5. Синхронизировать данные с экономической системой — рост посещаемости и расходов.
+      mechanics_links:
+        - mechanics/progression/quest-checkpoints.yaml
+        - mechanics/economy/tourism-kpi.yaml
       assets: [ ]
     - id: rewards
-      title: Награды и последствия
+      title: Награды и эффекты
       body: |
-        - 1 500 XP.
-        - Атрибут «Эстетика» +25.
-        - Достижение «Свидетель цветения».
-      mechanics_links: [ ]
+        - 1 500 XP, +25 эстетического влияния, репутация туристической ветки +15.
+        - Ачивка «Свидетель цветения».
+        - Разблокировка квестов природной линии и сезонных мероприятий Японии.
+      mechanics_links:
+        - mechanics/progression/rewards-catalog.yaml
       assets: [ ]
     - id: mechanics
-      title: Задействованные механики
+      title: Особенности
       body: |
-        - Сезонные события и управление расписанием.
-        - Туристические активности и создание пользовательского контента.
-        - Социальные взаимодействия с NPC-гидами и фестивальными организаторами.
+        - Сезонное окно запуска квеста требует планирования и управления погодными условиями.
+        - Фестиваль увеличивает плотность NPC и шанс случайных событий.
+        - Экономические показатели фиксируют рост продаж и влияют на городскую экономику.
       mechanics_links:
-        - mechanics/social/player-orders-creation.yaml
-      assets: [ ]
-    - id: connections
-      title: Связи
-      body: |
-        Квест связывает природную линию Вашингтона с туристическими событиями National Mall и открывает миссии LiveOps по
-        сезонным фестивалям.
-      mechanics_links: [ ]
+        - mechanics/weather/event-impacts.yaml
+        - mechanics/social/random-encounters.yaml
       assets: [ ]
 appendix:
   glossary: [ ]
   references: [ ]
   decisions: [ ]
 implementation:
-  github_issue: 1036
+  github_issue: 379
   needs_task: false
   queue_reference: [ ]
   blockers: [ ]
 history:
-  - version: '0.1.0'
-    date: 2025-11-13
+  - version: '2.0.0'
+    date: 2025-11-11
     author: concept_team
-    changes: 'Конвертация квеста «Цветение сакуры у Tidal Basin» в формат знаний.'
+    changes: Конверсия квеста «Цветение сакуры» в структурированный формат.
 validation:
   checksum: ''
   schema_version: '1.0'

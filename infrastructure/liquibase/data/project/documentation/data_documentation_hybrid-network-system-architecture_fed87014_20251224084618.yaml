@@ -1,0 +1,303 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-hybrid-network-system-architecture-fed87014
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-186135301890182'
+        - column:
+            name: doc_id
+            value: hybrid-network-system-architecture
+        - column:
+            name: title
+            value: Архитектура гибридной сетевой системы (WebSocket/UDP)
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-29 12:00:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - networking
+            - websocket
+            - udp
+            - hybrid
+            - realtime
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - realtime-gateway-go
+            - ws-lobby-go
+            - matchmaking-go
+            - world-service-go
+        - column:
+            name: related_documents
+            value: '[{"id": "network-architecture-analysis", "relation": "extends"},
+              {"id": "realtime-server-system-architecture", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - infrastructure
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "hybrid-network-system-architecture", "title":
+              "Архитектура гибридной сетевой системы (WebSocket/UDP)", "document_type":
+              "architecture", "category": "systems", "status": "draft", "version":
+              "1.1.0", "last_updated": "2025-11-29T12:00:00+00:00", "owners": [{"role":
+              "architect", "contact": "architect@necp.game"}], "tags": ["architecture",
+              "networking", "websocket", "udp", "hybrid", "realtime"], "related_systems":
+              ["realtime-gateway-go", "ws-lobby-go", "matchmaking-go", "world-service-go"],
+              "related_documents": [{"id": "network-architecture-analysis", "relation":
+              "extends"}, {"id": "realtime-server-system-architecture", "relation":
+              "extends"}], "github_issue": 11, "visibility": "internal", "audience":
+              ["architect", "backend", "infrastructure", "api-designer"]}, "summary":
+              {"problem": "Требуется спроектировать гибридную сетевую архитектуру
+              с динамическим переключением\nмежду WebSocket (TCP) и UDP протоколами
+              для оптимальной производительности в различных\nрежимах игры: MMORPG
+              зоны (PvE/PvP), малые PvP зоны, GvG битвы (200-400 игроков),\nмасштабные
+              войны (2000+ игроков).\n", "goal": "Создать архитектурную схему гибридной
+              сетевой системы с определением:\n- Микросервисов для поддержки WebSocket
+              и UDP\n- Механизма динамического переключения протоколов\n- Архитектуры
+              для различных типов зон и масштабов битв\n- Стратегий оптимизации и
+              масштабирования\n- API endpoints (высокоуровнево)\n- Технического задания
+              для реализации\n", "essence": "Гибридная сетевая архитектура с:\n- WebSocket
+              для безопасных зон (PvP отключен) и открытого мира (PvE режим)\n- UDP
+              для выделенных PvP зон и боевых действий в открытом мире\n- Динамическим
+              переключением протоколов WebSocket ↔ UDP в открытом мире\n- Масштабированием
+              для больших битв (200-2000+ игроков)\n"}, "architecture": {"overview":
+              "Гибридная сетевая система состоит из следующих компонентов:\n1. Protocol
+              Gateway - единая точка входа с поддержкой WebSocket и UDP\n2. Protocol
+              Switch Manager - управление динамическим переключением протоколов (только
+              для открытого мира)\n3. WebSocket Gateway - обработка WebSocket соединений
+              (безопасные зоны и открытый мир в PvE режиме)\n4. UDP Gateway - обработка
+              UDP соединений (выделенные PvP зоны и открытый мир в PvP режиме)\n5.
+              Zone Manager - управление зонами и выбор протокола (определение типа
+              зоны: безопасная/открытый мир/выделенная PvP)\n6. Session Manager -
+              управление сессиями и состояние переключения\n7. Spatial Partitioning
+              Engine - оптимизация для средних битв (200 игроков)\n8. Spatial Sharding
+              Manager - масштабирование для больших битв (400+ игроков)\n9. Cluster
+              Coordinator - координация мультисерверных кластеров (2000+ игроков)\n",
+              "microservices": [{"name": "protocol-gateway", "location": "realtime-gateway-go
+              (расширение)", "responsibility": "Единая точка входа для всех сетевых
+              соединений:\n- Принятие WebSocket соединений (ws://, wss://)\n- Принятие
+              UDP соединений (udp://)\n- Маршрутизация к соответствующему обработчику\n-
+              Балансировка нагрузки между инстансами\n", "protocol_support": ["WebSocket
+              (TCP) на портах 8080, 8443 (TLS)", "UDP на портах 18080, 18081-18100
+              (диапазон для кластеров)", "Поддержка TLS для WebSocket (wss://)"],
+              "endpoints": ["WS /ws/game - WebSocket endpoint для игры", "WS /ws/lobby
+              - WebSocket endpoint для лобби", "UDP :18080 - UDP endpoint для PvP
+              зон", "GET /api/v1/gateway/status - статус gateway", "GET /api/v1/gateway/protocols
+              - поддерживаемые протоколы", "POST /api/v1/gateway/switch-protocol -
+              запрос на переключение протокола"]}, {"name": "protocol-switch-manager",
+              "location": "realtime-gateway-go (новый модуль)", "responsibility":
+              "Управление динамическим переключением протоколов:\n- Определение триггеров
+              переключения (вход/выход из боя)\n- Синхронизация состояния между протоколами\n-
+              Координация overlap периода (оба соединения активны)\n- Fallback на
+              WebSocket при проблемах с UDP\n", "switch_triggers": [{"Open world (WebSocket)
+              → PvP (UDP)": ["Вход в боевой режим (детекция врагов)", "Активация боевых
+              способностей", "Вход в зону боевых действий"]}, {"PvP (UDP) → Open world
+              (WebSocket)": ["Выход из боя (отсутствие врагов 5+ секунд)", "Выход
+              из зоны боевых действий", "Деактивация боевых способностей"]}, {"Safe
+              zones (безопасные зоны)": ["Переключение отключено (только WebSocket)"]},
+              {"Dedicated PvP zones (выделенные PvP зоны)": ["Переключение отключено
+              (только UDP)"]}, {"Fallback": [{"UDP недоступен": "Автоматический fallback
+              на WebSocket"}, {"Проблемы с UDP соединением": "Возврат на WebSocket"}]}],
+              "switch_mechanics": "1. Запрос на переключение от клиента или сервера\n2.
+              Синхронизация состояния через WebSocket (критичные данные)\n3. Установка
+              нового соединения (UDP или WebSocket)\n4. Overlap период (1-2 секунды):
+              оба соединения активны\n5. Миграция всех обновлений на новый протокол\n6.
+              Закрытие старого соединения после подтверждения\n7. Время переключения:
+              0.5-1 секунда\n", "endpoints": ["POST /api/v1/protocol/switch/request
+              - запрос на переключение", "POST /api/v1/protocol/switch/sync - синхронизация
+              состояния", "GET /api/v1/protocol/switch/status - статус переключения"]},
+              {"name": "websocket-gateway", "location": "ws-lobby-go (расширение)
+              + realtime-gateway-go", "responsibility": "Обработка WebSocket соединений
+              для MMORPG зон:\n- Управление WebSocket соединениями\n- Обработка сообщений
+              через WebSocket\n- Поддержка топиков (zone, character, world, chat)\n-
+              Heartbeat и keepalive\n", "zone_types": [{"Safe zones (безопасные зоны
+              - города, торговые зоны)": ["PvP отключен полностью", {"Протокол": "WebSocket
+              (постоянно, без переключения)"}, {"Применение": "города, торговые зоны,
+              лобби"}]}, {"Open world zones (открытый мир - PvE зоны с возможностью
+              PvP)": ["PvP возможен", {"Протокол": "WebSocket по умолчанию, UDP при
+              входе в бой (динамическое переключение)"}, {"Применение": "открытый
+              мир, квестовые зоны, исследовательские зоны"}]}, {"Social zones (социальные
+              зоны)": ["PvP отключен", {"Протокол": "WebSocket (постоянно)"}, {"Применение":
+              "лобби, торговые зоны, социальные хабы"}]}], "features": [{"Tick rate":
+              "20-30 Hz для PvE зон"}, {"Задержка": "<100 мс"}, "Поддержка до 500
+              игроков на зону", "Надежная доставка сообщений"], "endpoints": ["WS
+              /ws/game - основное WebSocket соединение", "WS /ws/lobby - WebSocket
+              для лобби", "POST /api/v1/websocket/connections/{id}/subscribe - подписка
+              на топик", "POST /api/v1/websocket/connections/{id}/unsubscribe - отписка"]},
+              {"name": "udp-gateway", "location": "realtime-gateway-go (новый модуль)",
+              "responsibility": "Обработка UDP соединений для PvP зон:\n- Управление
+              UDP соединениями\n- Обработка UDP пакетов (Protobuf)\n- Поддержка надежности
+              поверх UDP (sequence numbers, ACK/NACK)\n- QoS управление (prioritization,
+              packet ordering)\n", "zone_types": ["Small PvP zones (5-20 игроков)",
+              "GvG zones (200-400 игроков)", "Massive war zones (2000+ игроков)"],
+              "features": [{"Tick rate": "60-128 Hz (зависит от типа зоны)"}, {"Задержка":
+              "5-50 мс"}, {"Надежность": "собственная реализация (sequence, ACK)"},
+              {"Anti-cheat": "валидация пакетов, rate limiting"}], "endpoints": ["UDP
+              :18080 - основной UDP endpoint", "UDP :18081-18100 - UDP endpoints для
+              кластеров", "GET /api/v1/udp/connections/{id}/stats - статистика UDP
+              соединения", "POST /api/v1/udp/test - тест UDP соединения"]}, {"name":
+              "zone-manager", "location": "realtime-gateway-go (расширение модуля
+              zone-manager)", "responsibility": "Управление зонами и выбор протокола:\n-
+              Определение типа зоны (PvE/PvP)\n- Выбор оптимального протокола\n- Управление
+              лимитами игроков\n- Мониторинг производительности зон\n", "zone_protocol_mapping":
+              [{"Safe zones (безопасные зоны)": [{"Протокол": "WebSocket (TCP) - постоянно"},
+              {"PvP": "отключен"}, {"Переключение": "нет (только WebSocket)"}]}, {"Open
+              world zones (открытый мир)": [{"Протокол по умолчанию": "WebSocket (TCP)"},
+              {"Протокол в бою": "UDP (динамическое переключение)"}, {"PvP": "возможен"},
+              {"Переключение": "WebSocket ↔ UDP (автоматическое)"}]}, {"Dedicated
+              PvP zones (выделенные PvP зоны)": [{"Протокол": "UDP - постоянно"},
+              {"PvP": "всегда включен"}, {"Переключение": "нет (только UDP)"}, {"Типы":
+              "малые арены (5-20), GvG 200, GvG 400, Massive war 2000+"}]}, {"Small
+              PvP zones (5-20 игроков)": [{"Протокол": "UDP + Spatial Partitioning"}]},
+              {"GvG zones (200 игроков)": [{"Протокол": "UDP + Spatial Partitioning"}]},
+              {"GvG zones (400 игроков)": [{"Протокол": "UDP + Spatial Sharding"}]},
+              {"Massive war (2000+ игроков)": [{"Протокол": "UDP + Cluster + Sharding"}]}],
+              "endpoints": ["GET /api/v1/zones - список зон", "GET /api/v1/zones/{id}
+              - информация о зоне", "GET /api/v1/zones/{id}/protocol - рекомендуемый
+              протокол", "POST /api/v1/zones/{id}/join - присоединение к зоне"]},
+              {"name": "session-manager", "location": "realtime-gateway-go (новый
+              модуль)", "responsibility": "Управление сессиями и состоянием переключения:\n-
+              Создание и управление сессиями\n- Хранение состояния переключения протоколов\n-
+              Синхронизация данных между протоколами\n- Восстановление сессий после
+              разрывов\n", "session_states": [{"websocket_only": "только WebSocket
+              соединение"}, {"udp_only": "только UDP соединение"}, {"switching": "процесс
+              переключения"}, {"dual": "оба соединения активны (overlap)"}], "endpoints":
+              ["GET /api/v1/sessions/{id} - информация о сессии", "POST /api/v1/sessions/{id}/switch
+              - переключение протокола", "GET /api/v1/sessions/{id}/state - состояние
+              переключения"]}, {"name": "spatial-partitioning-engine", "location":
+              "realtime-gateway-go (новый модуль)", "responsibility": "Оптимизация
+              для средних битв (100-400 игроков):\n- Разделение зоны на сетку (grid)
+              100x100 м\n- Определение видимых игроков (своя ячейка + 8 соседних)\n-
+              Фильтрация обновлений по близости\n- Приоритезация обновлений\n", "optimization":
+              [{"Grid size": "100x100 метров"}, {"Visibility": "своя ячейка + 8 соседних
+              (3x3)"}, {"Traffic reduction": "80-90%"}, {"Max updates per tick": "50-100
+              (зависит от зоны)"}], "endpoints": ["GET /api/v1/spatial/{zone_id}/cells
+              - ячейки зоны", "GET /api/v1/spatial/{zone_id}/cells/{x}/{y}/players
+              - игроки в ячейке", "POST /api/v1/spatial/{zone_id}/update - обновление
+              позиции"]}, {"name": "spatial-sharding-manager", "location": "realtime-gateway-go
+              (новый модуль)", "responsibility": "Масштабирование для больших битв
+              (400-2000 игроков):\n- Разделение зоны на shards (серверы)\n- Распределение
+              игроков по shards по координатам\n- Синхронизация между shards\n- Edge
+              synchronization (границы shards)\n", "sharding_strategy": [{"400 игроков":
+              "2-4 shards"}, {"1000 игроков": "5-7 shards"}, {"2000 игроков": "8-10
+              shards"}, {"Shard size": "~200x200 метров"}, {"Edge buffer": "50 метров
+              (пересекающиеся зоны)"}], "endpoints": ["GET /api/v1/sharding/{zone_id}/shards
+              - shards зоны", "GET /api/v1/sharding/{zone_id}/shard/{id}/players -
+              игроки в shard", "POST /api/v1/sharding/{zone_id}/sync - синхронизация
+              между shards"]}, {"name": "cluster-coordinator", "location": "realtime-gateway-go
+              (новый модуль) + отдельный сервис", "responsibility": "Координация мультисерверных
+              кластеров (2000+ игроков):\n- Управление кластером серверов\n- Распределение
+              нагрузки\n- Синхронизация состояния между серверами\n- LOD (Level of
+              Detail) управление\n- Агрегация событий\n", "cluster_features": [{"Server
+              count": "5-10 серверов"}, "Spatial sharding по серверам", "Event aggregation
+              (батчинг 100 мс)", "LOD для дальних объектов (снижение детализации)",
+              "Global state synchronization"], "endpoints": ["GET /api/v1/cluster/status
+              - статус кластера", "GET /api/v1/cluster/servers - серверы в кластере",
+              "POST /api/v1/cluster/sync - синхронизация кластера"]}], "data_flow":
+              {"protocol_switching": "1. Игрок в PvE зоне (WebSocket), детектируется
+              вход в бой\n2. Protocol Switch Manager получает запрос на переключение\n3.
+              Синхронизация критичных данных через WebSocket (инвентарь, здоровье)\n4.
+              Установка UDP соединения параллельно с WebSocket\n5. Overlap период
+              (1-2 сек): оба соединения получают обновления\n6. Миграция всех обновлений
+              на UDP\n7. Подтверждение от клиента о получении UDP обновлений\n8. Закрытие
+              WebSocket соединения (или переход в idle режим)\n9. Игрок в PvP режиме
+              (UDP только)\n", "zone_joining": "1. Игрок запрашивает присоединение
+              к зоне\n2. Zone Manager определяет тип зоны и рекомендуемый протокол\n3.
+              Protocol Gateway устанавливает соединение (WebSocket или UDP)\n4. Session
+              Manager создает сессию\n5. Для PvP зон: Spatial Partitioning/Sharding
+              добавляет игрока в ячейку/shard\n6. Начальная синхронизация состояния\n7.
+              Игрок получает обновления через выбранный протокол\n", "large_battle_optimization":
+              "1. GvG битва 400 игроков начинается\n2. Spatial Sharding Manager делит
+              зону на 4 shards\n3. Игроки распределяются по shards по координатам\n4.
+              Каждый shard обрабатывается отдельным сервером\n5. Edge synchronization
+              обеспечивает синхронизацию на границах\n6. Spatial Partitioning внутри
+              каждого shard (grid 100x100 м)\n7. LOD снижает детализацию для дальних
+              объектов\n8. Event aggregation группирует события в батчи\n9. Клиенты
+              получают оптимизированные обновления через UDP\n"}, "integrations":
+              {"with_world_service": "- Получение данных о зонах\n- Синхронизация
+              мировых событий\n- Управление NPC и объектами\n", "with_gameplay_service":
+              "- Обработка боевых событий\n- Валидация боевых действий\n- Синхронизация
+              боевого состояния\n", "with_matchmaking_service": "- Создание PvP инстансов\n-
+              Распределение игроков по зонам\n- Управление очередями\n", "with_character_service":
+              "- Получение данных о персонажах\n- Синхронизация позиций\n- Обновление
+              статов\n"}, "database_schema": {"tables": [{"name": "zone_protocol_config",
+              "description": "Конфигурация протоколов для зон", "fields": [{"zone_id":
+              "UUID (PK, FK zones)"}, {"default_protocol": "ENUM (websocket, udp)"},
+              {"supports_switching": "BOOLEAN"}, {"min_players_for_udp": "INTEGER"},
+              {"tick_rate_websocket": "INTEGER"}, {"tick_rate_udp": "INTEGER"}, {"created_at":
+              "TIMESTAMP"}, {"updated_at": "TIMESTAMP"}]}, {"name": "protocol_sessions",
+              "description": "Сессии переключения протоколов", "fields": [{"id": "UUID
+              (PK)"}, {"player_id": "UUID (FK accounts)"}, {"character_id": "UUID
+              (FK characters)"}, {"zone_id": "UUID (FK zones)"}, {"current_protocol":
+              "ENUM (websocket, udp, switching, dual)"}, {"websocket_connection_id":
+              "UUID (nullable)"}, {"udp_connection_id": "UUID (nullable)"}, {"switch_state":
+              "JSONB (состояние переключения)"}, {"last_protocol_switch": "TIMESTAMP
+              (nullable)"}, {"created_at": "TIMESTAMP"}, {"updated_at": "TIMESTAMP"}]},
+              {"name": "spatial_cells", "description": "Ячейки spatial partitioning",
+              "fields": [{"id": "UUID (PK)"}, {"zone_id": "UUID (FK zones)"}, {"shard_id":
+              "UUID (FK shards, nullable)"}, {"cell_x": "INTEGER"}, {"cell_y": "INTEGER"},
+              {"min_x": "FLOAT"}, {"min_y": "FLOAT"}, {"max_x": "FLOAT"}, {"max_y":
+              "FLOAT"}, {"player_count": "INTEGER"}], "indexes": ["zone_id, cell_x,
+              cell_y", "shard_id, cell_x, cell_y"]}, {"name": "spatial_shards", "description":
+              "Shards для больших битв", "fields": [{"id": "UUID (PK)"}, {"zone_id":
+              "UUID (FK zones)"}, {"server_id": "UUID (FK game_instances)"}]}]}}}'
+        - column:
+            name: metadata
+            value: '{"id": "hybrid-network-system-architecture", "title": "Архитектура
+              гибридной сетевой системы (WebSocket/UDP)", "document_type": "architecture",
+              "category": "systems", "status": "draft", "version": "1.1.0", "last_updated":
+              "2025-11-29T12:00:00+00:00", "owners": [{"role": "architect", "contact":
+              "architect@necp.game"}], "tags": ["architecture", "networking", "websocket",
+              "udp", "hybrid", "realtime"], "related_systems": ["realtime-gateway-go",
+              "ws-lobby-go", "matchmaking-go", "world-service-go"], "related_documents":
+              [{"id": "network-architecture-analysis", "relation": "extends"}, {"id":
+              "realtime-server-system-architecture", "relation": "extends"}], "github_issue":
+              11, "visibility": "internal", "audience": ["architect", "backend", "infrastructure",
+              "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\hybrid-network-system-architecture.yaml

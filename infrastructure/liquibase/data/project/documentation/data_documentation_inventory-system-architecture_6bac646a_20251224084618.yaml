@@ -1,0 +1,274 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-inventory-system-architecture-6bac646a
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '8759217672459368'
+        - column:
+            name: doc_id
+            value: inventory-system-architecture
+        - column:
+            name: title
+            value: Архитектура системы инвентаря
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-30 18:45:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - inventory
+            - backend
+            - economy
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - economy-service-go
+            - character-service-go
+            - loot-system
+            - trade-system
+        - column:
+            name: related_documents
+            value: '[{"id": "backend-inventory-part1-core", "relation": "extends"},
+              {"id": "backend-inventory-part2-advanced", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "inventory-system-architecture", "title":
+              "Архитектура системы инвентаря", "document_type": "architecture", "category":
+              "systems", "status": "draft", "version": "1.1.0", "last_updated": "2025-11-30T18:45:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "inventory", "backend", "economy"], "related_systems":
+              ["economy-service-go", "character-service-go", "loot-system", "trade-system"],
+              "related_documents": [{"id": "backend-inventory-part1-core", "relation":
+              "extends"}, {"id": "backend-inventory-part2-advanced", "relation": "extends"}],
+              "github_issue": 135, "visibility": "internal", "audience": ["architect",
+              "backend", "api-designer"]}, "summary": {"problem": "Требуется спроектировать
+              полную техническую архитектуру системы инвентаря\nдля управления предметами
+              игроков, экипировкой, хранением, stacking,\nвесом и интеграцией с другими
+              системами.\n", "goal": "Создать архитектурную схему системы инвентаря
+              с определением:\n- Компонентов системы (микросервисы, модули)\n- API
+              endpoints (высокоуровнево)\n- Потоков данных и интеграций\n- Технического
+              задания для реализации\n", "essence": "Комплексная система управления
+              инвентарём с поддержкой backpack, equipment,\nbank/stash, stacking,
+              веса, экипировки и интеграцией с торговлей, лутом и персонажами.\n"},
+              "architecture": {"overview": "Система инвентаря состоит из пяти основных
+              компонентов:\n1. Inventory Manager - управление инвентарём персонажа\n2.
+              Equipment Manager - управление экипировкой\n3. Storage Manager - управление
+              банком/стэшем\n4. Item Stack Manager - управление стеками предметов\n5.
+              Weight Calculator - расчёт веса и ограничений\n", "components": [{"name":
+              "Inventory Manager", "location": "economy-service-go (модуль inventory)",
+              "responsibility": "- Управление инвентарём персонажа (backpack)\n- CRUD
+              операции с предметами\n- Управление слотами инвентаря\n- Поиск свободных
+              слотов\n- Оптимизация размещения предметов\n- Синхронизация с character-service\n",
+              "port": "8086 (economy-service-go)", "endpoints": ["GET /api/v1/economy/inventory/{character_id}
+              - получение инвентаря", "POST /api/v1/economy/inventory/{character_id}/items
+              - добавление предмета", "PUT /api/v1/economy/inventory/{character_id}/items/{item_id}
+              - обновление предмета", "DELETE /api/v1/economy/inventory/{character_id}/items/{item_id}
+              - удаление предмета", "POST /api/v1/economy/inventory/{character_id}/items/{item_id}/move
+              - перемещение предмета", "POST /api/v1/economy/inventory/{character_id}/items/{item_id}/split
+              - разделение стека", "POST /api/v1/economy/inventory/{character_id}/items/{item_id}/merge
+              - объединение стеков", "GET /api/v1/economy/inventory/{character_id}/free-slots
+              - свободные слоты"]}, {"name": "Equipment Manager", "location": "economy-service-go
+              (модуль equipment)", "responsibility": "- Управление экипировкой персонажа\n-
+              Проверка требований для экипировки\n- Применение статов от экипировки\n-
+              Управление слотами экипировки (weapon, armor, implants, etc.)\n- Снятие
+              экипировки\n- Валидация совместимости предметов\n", "integration": "Интегрируется
+              с character-service для применения статов\nСинхронизирует изменения
+              с progression system\n", "endpoints": ["GET /api/v1/economy/inventory/{character_id}/equipment
+              - получение экипировки", "POST /api/v1/economy/inventory/{character_id}/equipment/equip
+              - экипировка предмета", "POST /api/v1/economy/inventory/{character_id}/equipment/unequip
+              - снятие предмета", "GET /api/v1/economy/inventory/{character_id}/equipment/stats
+              - статы от экипировки"]}, {"name": "Storage Manager", "location": "economy-service-go
+              (модуль storage)", "responsibility": "- Управление банком/стэшем персонажа\n-
+              Расширение хранилища\n- Перемещение предметов между инвентарём и банком\n-
+              Управление несколькими хранилищами (личный банк, гильдия)\n- Оптимизация
+              хранения\n", "endpoints": ["GET /api/v1/economy/inventory/{character_id}/storage
+              - получение хранилища", "POST /api/v1/economy/inventory/{character_id}/storage/items
+              - добавление в хранилище", "POST /api/v1/economy/inventory/{character_id}/storage/transfer
+              - перемещение между инвентарём и хранилищем", "POST /api/v1/economy/inventory/{character_id}/storage/expand
+              - расширение хранилища"]}, {"name": "Item Stack Manager", "location":
+              "economy-service-go (модуль item-stack)", "responsibility": "- Управление
+              стеками предметов\n- Объединение стеков одинаковых предметов\n- Разделение
+              стеков\n- Проверка максимального размера стека\n- Оптимизация размещения
+              стеков\n", "endpoints": ["POST /api/v1/economy/inventory/{character_id}/items/{item_id}/stack
+              - операции со стеком", "GET /api/v1/economy/inventory/{character_id}/items/{item_id}/stack-info
+              - информация о стеке"]}, {"name": "Weight Calculator", "location": "economy-service-go
+              (модуль weight)", "responsibility": "- Расчёт веса инвентаря\n- Проверка
+              ограничений по весу\n- Валидация возможности подбора предмета\n- Расчёт
+              перегрузки\n- Применение модификаторов веса\n", "integration": "Использует
+              характеристики персонажа из character-service\nПрименяет модификаторы
+              от экипировки и перков\n", "endpoints": ["GET /api/v1/economy/inventory/{character_id}/weight
+              - текущий вес", "GET /api/v1/economy/inventory/{character_id}/weight/limit
+              - лимит веса", "POST /api/v1/economy/inventory/{character_id}/weight/validate
+              - валидация веса"]}], "data_flow": {"item_pickup": "1. Игрок подбирает
+              предмет (loot или trade)\n2. Weight Calculator проверяет возможность
+              подбора (вес, лимиты)\n3. Item Stack Manager проверяет возможность объединения
+              со стеком\n4. Inventory Manager ищет свободный слот\n5. Предмет добавляется
+              в инвентарь\n6. Weight Calculator обновляет вес\n7. Character-service
+              обновляет характеристики\n8. Realtime Gateway синхронизирует изменения\n",
+              "item_equip": "1. Игрок экипирует предмет\n2. Equipment Manager проверяет
+              требования (уровень, класс, характеристики)\n3. Проверяется совместимость
+              с текущей экипировкой\n4. Предмет перемещается из инвентаря в слот экипировки\n5.
+              Character-service применяет статы от предмета\n6. Equipment Manager
+              обновляет состояние экипировки\n7. Realtime Gateway синхронизирует изменения\n",
+              "item_storage": "1. Игрок перемещает предмет в хранилище\n2. Storage
+              Manager проверяет доступность хранилища\n3. Проверяется лимит хранилища\n4.
+              Предмет перемещается из инвентаря в хранилище\n5. Weight Calculator
+              обновляет вес инвентаря\n6. Realtime Gateway синхронизирует изменения\n"},
+              "integrations": {"with_character_service": "- Получение характеристик
+              персонажа для проверки требований\n- Применение статов от экипировки\n-
+              Обновление веса персонажа\n- Синхронизация изменений\n", "with_loot_system":
+              "- Получение предметов после боя/квестов\n- Интеграция с системой генерации
+              лута\n- Валидация подбора предметов\n", "with_trade_system": "- Проверка
+              владения предметами для торговли\n- Блокировка предметов во время торговли\n-
+              Перемещение предметов после обмена\n", "with_realtime_gateway": "- Realtime
+              синхронизация изменений инвентаря\n- Push уведомления о новых предметах\n-
+              Синхронизация экипировки\n"}, "database_schema": {"tables": [{"name":
+              "character_inventory", "description": "Инвентарь персонажа", "fields":
+              [{"character_id": "UUID (PK, FK)"}, {"max_slots": "INTEGER"}, {"current_weight":
+              "FLOAT"}, {"max_weight": "FLOAT"}, {"updated_at": "TIMESTAMP"}], "indexes":
+              ["character_id"]}, {"name": "character_items", "description": "Предметы
+              в инвентаре", "fields": [{"id": "UUID (PK)"}, {"character_id": "UUID
+              (FK)"}, {"item_template_id": "UUID (FK item_templates)"}, {"slot_index":
+              "INTEGER"}, {"stack_size": "INTEGER"}, {"durability": "INTEGER (nullable)"},
+              {"bind_status": "ENUM (unbound, bound, account_bound)"}, {"modifiers":
+              "JSONB (модификаторы предмета)"}, {"created_at": "TIMESTAMP"}, {"updated_at":
+              "TIMESTAMP"}], "indexes": ["character_id, slot_index", "character_id,
+              item_template_id"]}, {"name": "character_equipment", "description":
+              "Экипировка персонажа", "fields": [{"character_id": "UUID (PK, FK)"},
+              {"slot_type": "ENUM (weapon_primary, weapon_secondary, armor_head, armor_body,
+              armor_legs, implant_1, implant_2, etc.)"}, {"item_id": "UUID (FK character_items)"},
+              {"equipped_at": "TIMESTAMP"}], "indexes": ["character_id, slot_type"]},
+              {"name": "character_storage", "description": "Хранилище персонажа (банк/стэш)",
+              "fields": [{"id": "UUID (PK)"}, {"character_id": "UUID (FK)"}, {"storage_type":
+              "ENUM (personal_bank, guild_bank, stash)"}, {"max_slots": "INTEGER"},
+              {"current_weight": "FLOAT"}, {"max_weight": "FLOAT"}, {"updated_at":
+              "TIMESTAMP"}], "indexes": ["character_id, storage_type"]}, {"name":
+              "storage_items", "description": "Предметы в хранилище", "fields": [{"id":
+              "UUID (PK)"}, {"storage_id": "UUID (FK character_storage)"}, {"item_template_id":
+              "UUID (FK item_templates)"}, {"slot_index": "INTEGER"}, {"stack_size":
+              "INTEGER"}, {"durability": "INTEGER (nullable)"}, {"bind_status": "ENUM"},
+              {"modifiers": "JSONB"}, {"created_at": "TIMESTAMP"}, {"updated_at":
+              "TIMESTAMP"}], "indexes": ["storage_id, slot_index"]}, {"name": "item_templates",
+              "description": "Шаблоны предметов", "fields": [{"id": "UUID (PK)"},
+              {"name": "VARCHAR(255)"}, {"item_type": "ENUM (weapon, armor, consumable,
+              material, quest_item, etc.)"}, {"rarity": "ENUM (common, uncommon, rare,
+              epic, legendary)"}, {"weight": "FLOAT"}, {"max_stack_size": "INTEGER"},
+              {"bind_on_pickup": "BOOLEAN"}, {"requirements": "JSONB (требования для
+              использования)"}, {"stats": "JSONB (базовые статы)"}, {"created_at":
+              "TIMESTAMP"}], "indexes": ["item_type, rarity"]}]}}, "technical_specification":
+              {"backend_requirements": [{"Реализация модулей в economy-service-go":
+              ["inventory (управление инвентарём)", "equipment (управление экипировкой)",
+              "storage (управление хранилищем)", "item-stack (управление стеками)",
+              "weight (расчёт веса)"]}, "Интеграция с character-service для характеристик",
+              "Интеграция с loot-system для получения предметов", "Интеграция с trade-system
+              для торговли", "Оптимизация запросов к БД (batch, индексы)"], "performance_requirements":
+              ["Получение инвентаря < 50ms", "Добавление предмета < 30ms", "Экипировка
+              предмета < 50ms", "Поддержка до 1000 слотов в инвентаре", "Поддержка
+              до 10000 предметов на персонажа", "Кэширование активных инвентарей"],
+              "scalability_requirements": ["Горизонтальное масштабирование через economy-service",
+              "Распределение нагрузки на инвентари", "Оптимизация запросов к БД (batch,
+              индексы)", "Кэширование активных инвентарей в памяти (Redis)"], "data_consistency":
+              {"strategy": "Strong Consistency (ACID транзакции)", "mechanisms": ["ACID
+              транзакции для операций с предметами", "Оптимистичные блокировки (versioning)
+              для предотвращения конфликтов", "Валидация перед сохранением изменений",
+              "Синхронизация с character-service через Event Bus", "Outbox Pattern
+              для гарантированной доставки событий", "Saga Pattern для распределенных
+              транзакций (trade, loot)"]}, "data_synchronization": {"event_sourcing":
+              "Все изменения инвентаря записываются как события:\n- ItemAddedEvent
+              - предмет добавлен\n- ItemRemovedEvent - предмет удален\n- ItemMovedEvent
+              - предмет перемещен\n- ItemEquippedEvent - предмет экипирован\n- ItemUnequippedEvent
+              - предмет снят\n- StackMergedEvent - стеки объединены\n- StackSplitEvent
+              - стек разделен\n\nСобытия хранятся в Event Store (Kafka topics) для:\n-
+              Восстановления состояния инвентаря\n- Аудит-лога операций\n- Синхронизации
+              с другими сервисами\n- Аналитики и мониторинга\n", "cqrs_pattern": "Разделение
+              команд и запросов:\n- Write Model: Inventory Manager обрабатывает команды
+              (add, remove, move, equip)\n- Read Model: Оптимизированные представления
+              для быстрого чтения\n- Projections: Материализованные представления
+              для частых запросов\n- Event Handlers: Обработка событий для обновления
+              read-моделей\n", "saga_pattern": "Для распределенных транзакций:\n-
+              Trade Saga: обмен предметами между игроками\n- Loot Saga: получение
+              предметов после боя/квестов\n- Storage Transfer Saga: перемещение между
+              инвентарём и хранилищем\n\nКомпенсирующие транзакции:\n- Откат изменений
+              при ошибках\n- Восстановление состояния при сбоях\n", "outbox_pattern":
+              "Гарантированная доставка событий:\n- Запись событий в outbox таблицу
+              в той же транзакции\n- Outbox Processor публикует события в Event Bus\n-
+              Retry механизм для failed событий\n- Идемпотентность обработки событий\n"},
+              "tickrate_specification": {"inventory_operations": {"tickrate": "Event-based
+              (on-demand)", "description": "Операции с инвентарём выполняются по требованию
+              (event-based),\nне требуют постоянного тикрейта.\n", "network_load":
+              "- Изменения инвентаря: event-based, ~5-10 events/sec\n- Синхронизация
+              состояния: при изменении, ~1-2 updates/sec\n- Общий трафик: ~0.5-1 KB/sec
+              на игрока\n", "sync_strategy": "Strong Consistency (ACID транзакции)",
+              "latency_requirements": "- Получение инвентаря: < 50ms\n- Добавление
+              предмета: < 30ms\n- Экипировка предмета: < 50ms\n- Перемещение предмета:
+              < 30ms\n"}}}, "subtasks": [{"id": "inventory-manager-module", "title":
+              "Реализация модуля Inventory Manager", "description": "Создание модуля
+              управления инвентарём\nCRUD операции с предметами\nУправление слотами\n",
+              "priority": "high", "estimated_time": "4-5 дней"}, {"id": "equipment-manager",
+              "title": "Реализация Equipment Manager", "description": "Управление
+              экипировкой\nПроверка требований\nПрименение статов\n", "priority":
+              "high", "estimated_time": "3-4 дня"}, {"id": "storage-manager", "title":
+              "Реализация Storage Manager", "description": "Управление хранилищем\nПеремещение
+              предметов\nРасширение хранилища\n", "priority": "medium", "estimated_time":
+              "2-3 дня"}, {"id": "item-stack-manager", "title": "Реализация Item Stack
+              Manager", "description": "Управление стеками предметов\n"}]}'
+        - column:
+            name: metadata
+            value: '{"id": "inventory-system-architecture", "title": "Архитектура
+              системы инвентаря", "document_type": "architecture", "category": "systems",
+              "status": "draft", "version": "1.1.0", "last_updated": "2025-11-30T18:45:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "inventory", "backend", "economy"], "related_systems":
+              ["economy-service-go", "character-service-go", "loot-system", "trade-system"],
+              "related_documents": [{"id": "backend-inventory-part1-core", "relation":
+              "extends"}, {"id": "backend-inventory-part2-advanced", "relation": "extends"}],
+              "github_issue": 135, "visibility": "internal", "audience": ["architect",
+              "backend", "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\inventory-system-architecture.yaml

@@ -1,43 +1,42 @@
+# Issue: #253
 # Issue: #1057
 metadata:
-  id: quest-toronto-2029-canadian-healthcare
+  id: canon-quest-toronto-canadian-healthcare
   title: 'Торонто 2020-2029 — Канадская медицина'
   document_type: canon
-  category: timeline-quest
+  category: quest
   status: draft
   version: '2.0.0'
-  last_updated: 2025-11-23T02:30:00Z
-  concept_approved: true
+  last_updated: 2025-12-06T11:15:00Z
+  concept_approved: false
   concept_reviewed_at: ''
   owners:
-    - role: concept_director
-      contact: concept@necp.game
+    - role: narrative_lead
+      contact: narrative@necp.game
   tags:
     - toronto
     - healthcare
     - social_policy
   topics:
-    - welfare_state
-    - civic_services
+    - society
+    - public_services
   related_systems:
-    - gameplay-service
-    - quest-service
-    - character-service
-    - economy-service
-    - social-service
+    - narrative-service
+    - social-system
   related_documents:
-    - id: timeline-author-quests-index
+    - id: canon-lore-timeline-author-index
       relation: references
-    - id: github-issue-1057
-      title: GitHub Issue #1057
-      link: https://github.com/gc-lover/necpgame-monorepo/issues/1057
+    - id: github-issue-373
+      title: GitHub Issue #373
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/373
       relation: migrated_to
-      migrated_at: 2025-11-23T02:30:00Z
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/toronto/2020-2029/quest-010-canadian-healthcare.md
+      migrated_at: 2025-11-22T22:00:00Z
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/toronto/2020-2029/quest-010-canadian-healthcare.md
   visibility: internal
   audience:
-    - concept
     - narrative
+    - vision
+    - politics
   risk_level: medium
 review:
   chain:
@@ -47,16 +46,18 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: Социальная линия Канады не объясняла устройство системы Medicare и её влияние на игроков.
-  goal: Продемонстрировать сильные и слабые стороны бесплатного здравоохранения через сюжетный опыт в Торонто.
-  essence: Игрок посещает клиники, сталкивается с очередями и сравнивает систему с платной моделью США.
+  problem: Материал о системе Medicare находился в Markdown и не проходил проверки знаний.
+  goal: Структурировать квест о канадской медицине в YAML, выделив бесплатность, очереди и сравнение с США.
+  essence: |
+    Игрок изучает принципы Medicare, посещает врача с картой здоровья, сталкивается с очередями на неэкстренные процедуры и
+    анализирует плюсы и минусы по сравнению с американской системой.
   key_points:
-    - Medicare финансируется налогами, обеспечивая бесплатный доступ к основным услугам.
-    - Очереди на плановые процедуры остаются ключевой проблемой жителей.
-    - Система является источником национальной гордости и политических дискуссий.
+    - Этапы охватывают изучение политики, визит к врачу и сравнение систем здравоохранения.
+    - Уточнены особенности финансирования налогами, очереди на МРТ и гордость канадцев.
+    - Награды дают социальный ресурс и достижение «Знаток Medicare».
 quest_definition:
   quest_type: side
-  level_min: 3
+  level_min: 8
   level_max: null
   requirements:
     required_quests: [ ]
@@ -64,89 +65,79 @@ quest_definition:
     required_reputation: { }
     required_items: [ ]
   objectives:
+    - id: study_medicare_basics
+      text: "Изучить основы Medicare и налоговое финансирование"
+      type: interact
+      target: medicare_policy_study
+      count: 1
+      optional: false
     - id: visit_clinic
-      text: "Посетить клинику Medicare и столкнуться с очередями"
+      text: "Посетить клинику с картой здоровья и пройти приём"
       type: interact
-      target: medicare_clinic_toronto
+      target: healthcare_clinic
       count: 1
       optional: false
-    - id: understand_medicare
-      text: "Понять устройство системы Medicare и её финансирование"
+    - id: experience_waiting
+      text: "Столкнуться с ожиданием на неэкстренные процедуры, например МРТ"
       type: interact
-      target: medicare_education
+      target: mri_waiting_queue
       count: 1
       optional: false
-    - id: compare_with_us_system
-      text: "Сравнить канадскую систему с платной моделью США"
-      type: choice
+    - id: compare_with_usa
+      text: "Сравнить впечатления с платной системой США"
+      type: interact
       target: healthcare_comparison
       count: 1
-      optional: true
+      optional: false
+    - id: form_opinion
+      text: "Сформулировать свою позицию относительно эффективности модели"
+      type: choice
+      target: healthcare_opinion
+      count: 1
+      optional: false
   rewards:
-    experience: 800
+    experience: 3000
     money: 0
-    items:
-      - item_id: achievement_medicare_understanding
-        quantity: 1
     reputation:
-      Toronto_Social_Community: +15
+      social: 20
+    items: [ ]
     unlocks:
-      - healthcare_dialogues
-      - political_discussions
-  branches:
-    - branch_id: healthcare_advocate_path
-      description: "Стать защитником системы Medicare"
-      consequences:
-        skills:
-          social: +20
-          politics: +15
-        reputation:
-          Toronto_Social_Community: +25
+      achievements:
+        - "Знаток Medicare"
+      flags:
+        - "medicare_understood"
+        - "social_policy_quests_unlocked"
+  branches: [ ]
 content:
   sections:
-    - id: overview
+    - id: quest_overview
       title: Описание
       body: |
-        Квест погружает игрока в канадскую систему здравоохранения: от оформления карты здоровья до ожидания приёма
-        и обсуждения реформ со специалистами.
+        Квест раскрывает канадскую модель здравоохранения: бесплатный доступ для граждан, государственное финансирование и
+        компромиссы между доступностью и скоростью обслуживания.
       mechanics_links: [ ]
       assets: [ ]
-    - id: stages
-      title: Этапы
+    - id: quest_flow
+      title: Этапы исследования
       body: |
-        1. Изучить правила Medicare и подтвердить право на бесплатное обслуживание.
-        2. Посетить семейного врача, продемонстрировать карту здоровья и оценить время ожидания.
-        3. Получить направление на МРТ, зарегистрировать длительность очереди и реакцию NPC.
-        4. Сравнить результаты с американскими клиниками, проанализировать стоимость аналогичных процедур.
-        5. Сделать вывод о справедливости и эффективности системы.
+        1. Изучить основы Medicare и налоговое финансирование.
+        2. Посетить клинику с картой здоровья и пройти приём.
+        3. Столкнуться с ожиданием на неэкстренные процедуры, например МРТ.
+        4. Сравнить впечатления с платной системой США.
+        5. Сформулировать свою позицию относительно эффективности модели.
       mechanics_links: [ ]
       assets: [ ]
     - id: regional_details
       title: Региональные детали
       body: |
-        Канадская модель строится на провинциальных программах, финансируемых федеральным правительством. Система
-        обеспечивает базовую помощь, но сталкивается с недостатком ресурсов и персонала в мегаполисах.
+        Подчёркнуты бесплатность услуг для граждан, длительные очереди, гордость за общественную систему и контраст с США.
       mechanics_links: [ ]
       assets: [ ]
     - id: rewards
-      title: Награды
+      title: Награды и эффекты
       body: |
-        - Опыт: 3 000 XP
-        - Атрибут «Социальный»: +20
-        - Ачивка: «Знаток Medicare»
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: mechanics
-      title: Механики
-      body: |
-        Квест использует социальные и политические механики, влияя на доступ к медицинским услугам и отношение к
-        государственным институтам.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: connections
-      title: Связи
-      body: |
-        Связан с социальной линией Канады, сюжетами о налоговой системе и миссиями по гражданской ответственности.
+        Квест выдаёт 3 000 XP, не требует расходов и добавляет +20 к социальному ресурсу. Игрок получает достижение «Знаток
+        Medicare» и открывает ветки социально-политических сюжетов.
       mechanics_links: [ ]
       assets: [ ]
 appendix:
@@ -156,14 +147,20 @@ appendix:
 implementation:
   github_issue: 1057
   needs_task: false
-  queue_reference: [ ]
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#canon-quest-toronto-canadian-healthcare
   blockers: [ ]
 history:
   - version: '2.0.0'
-    date: 2025-11-12
-    author: concept_team
-    changes: Конвертирован квест «Канадская медицина» в формат знаний.
+    date: 2025-12-06
+    author: content_writer
+    changes: Добавлена полная структура quest_definition с objectives, rewards и branches. Обновлен github_issue на 1057.
+  - version: '0.1.0'
+    date: 2025-11-11
+    author: narrative_auto_converter
+    changes: Конвертация квеста «Канадская медицина» в структуру знаний.
 validation:
   checksum: ''
   schema_version: '1.0'
+
 

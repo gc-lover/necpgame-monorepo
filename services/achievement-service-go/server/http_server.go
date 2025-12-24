@@ -27,8 +27,8 @@ func NewAchievementService() *AchievementService {
 	if err != nil {
 		panic(err) // TODO: Proper error handling
 	}
-	logic := NewAchievementServiceLogic()
-	handler := NewAchievementHandler(logic, repo)
+	logic := NewAchievementServiceLogic(repo)
+	handler := NewAchievementHandler(logic)
 
 	svc.handler = handler
 

@@ -1,0 +1,185 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-loot-system-architecture-c0429c5e
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-649994578229404'
+        - column:
+            name: doc_id
+            value: architecture-loot-system
+        - column:
+            name: title
+            value: Loot System Architecture
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: implementation
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-12-02 18:25:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect"}]'
+        - column:
+            name: tags
+            value:
+            - loot
+            - economy
+            - gameplay
+            - architecture
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - economy-service
+            - gameplay-service
+            - inventory-service
+            - character-service
+        - column:
+            name: related_documents
+            value: '[{"id": "loot-system-part1", "relation": "implements"}, {"id":
+              "loot-system-part2", "relation": "implements"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: ''
+        - column:
+            name: audience
+            value: []
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "architecture-loot-system", "title": "Loot
+              System Architecture", "document_type": "architecture", "category": "implementation",
+              "status": "draft", "version": "1.0.0", "last_updated": "2025-12-02T18:25:00+00:00",
+              "owners": [{"role": "architect"}], "tags": ["loot", "economy", "gameplay",
+              "architecture"], "related_systems": ["economy-service", "gameplay-service",
+              "inventory-service", "character-service"], "related_documents": [{"id":
+              "loot-system-part1", "relation": "implements"}, {"id": "loot-system-part2",
+              "relation": "implements"}]}, "summary": {"problem": "Необходима архитектура
+              генерации и распределения лута.", "goal": "Спроектировать систему лута
+              с loot tables, smart loot, boss rewards.", "essence": "Архитектура описывает
+              генерацию, распределение, roll system."}, "content": {"sections": [{"id":
+              "system-overview", "title": "Обзор системы", "body": "Loot System управляет:\n-
+              Генерация предметов из loot tables\n- Распределение лута (personal/shared/roll)\n-
+              Smart loot (адаптация под класс)\n- Boss guaranteed rewards\n- Bad Luck
+              Protection\n- World drops management\n- Anti-duplicate protection\n\nПринципы:\n-
+              RNG с seed для воспроизводимости\n- Smart loot для релевантности\n-
+              Fair distribution в группах\n- Guaranteed rewards для боссов\n- Event-driven
+              интеграция\n"}, {"id": "components", "title": "Компоненты", "body":
+              "## economy-service (Loot Module)\n**Ответственность:** Генерация и
+              распределение лута\n**Технологии:** Go, PostgreSQL, Redis, Kafka\n**API:**
+              `/api/v1/economy/loot/*`\n\nКомпоненты:\n- LootGenerator - генерация
+              из tables\n- SmartLootEngine - адаптация под класс\n- DistributionManager
+              - распределение в группах\n- RollSystem - roll механика\n- BadLuckProtection
+              - гарантии дропа\n\n## Интеграции\n- **Gameplay Service:** События combat:enemy-killed,
+              raid:boss-defeated\n- **Inventory Service:** Добавление предметов\n-
+              **Character Service:** Класс, специализация, luck stats\n- **Party Service:**
+              Режим распределения, участники\n"}, {"id": "api-endpoints", "title":
+              "API Endpoints", "body": "## Loot Drops\n\nGET /api/v1/economy/loot/drops/nearby\n-
+              Предметы в радиусе\n- Query: position, radius\n- Response: Array of
+              world drops\n\nPOST /api/v1/economy/loot/pickup\n- Подбор предмета\n-
+              Request: drop_id\n- Response: Item added to inventory\n\nGET /api/v1/economy/loot/history\n-
+              История лута\n- Query: limit, offset\n- Response: Array of loot history\n\n##
+              Loot Rolls\n\nGET /api/v1/economy/loot/rolls/active\n- Активные roll''ы\n-
+              Response: Array of active rolls\n\nPOST /api/v1/economy/loot/rolls/{rollId}/submit\n-
+              Отправить roll\n- Request: choice (need/greed/pass)\n- Response: Roll
+              result\n\n## Loot Settings\n\nPUT /api/v1/economy/loot/settings\n- Настройки
+              auto-loot\n- Request: auto_loot preferences\n- Response: Updated settings\n"},
+              {"id": "database", "title": "База данных", "body": "## loot_tables\n```sql\nCREATE
+              TABLE loot_tables (\n  id UUID PRIMARY KEY,\n  source_type VARCHAR(50),\n  source_id
+              VARCHAR(100),\n  item_template_id UUID,\n  drop_chance DECIMAL(5,4),\n  min_quantity
+              INT,\n  max_quantity INT,\n  min_quality INT,\n  max_quality INT,\n  rarity
+              VARCHAR(20),\n  level_requirement INT,\n  conditions JSONB\n);\n```\n\n##
+              world_drops\n```sql\nCREATE TABLE world_drops (\n  id UUID PRIMARY KEY,\n  items
+              JSONB,\n  currency JSONB,\n  position JSONB,\n  zone_id VARCHAR(100),\n  created_at
+              TIMESTAMP,\n  expires_at TIMESTAMP,\n  picked_up BOOLEAN,\n  picked_up_by
+              UUID,\n  loot_mode VARCHAR(20)\n);\n```\n\n## loot_rolls\n```sql\nCREATE
+              TABLE loot_rolls (\n  id UUID PRIMARY KEY,\n  party_id UUID,\n  item_id
+              UUID,\n  roll_type VARCHAR(20),\n  participants JSONB,\n  results JSONB,\n  winner_id
+              UUID,\n  status VARCHAR(20),\n  created_at TIMESTAMP,\n  expires_at
+              TIMESTAMP\n);\n```\n\n## loot_history\n```sql\nCREATE TABLE loot_history
+              (\n  id UUID PRIMARY KEY,\n  player_id UUID,\n  item_id UUID,\n  quantity
+              INT,\n  source_type VARCHAR(50),\n  source_id UUID,\n  timestamp TIMESTAMP,\n  rarity
+              VARCHAR(20)\n);\n```\n"}, {"id": "loot-generation", "title": "Генерация
+              лута", "body": "## Loot Flow\n\n1. Enemy/Boss defeated\n2. Gameplay
+              Service → Event: combat:enemy-killed\n3. Loot Service (consumer) → Triggered\n4.
+              Load loot_tables for source\n5. RNG generation (with luck modifiers)\n6.
+              Smart Loot filter (class adaptation)\n7. Bad Luck Protection check\n8.
+              Create world_drop OR direct add to inventory\n9. Publish event: loot:generated\n\n##
+              Smart Loot Algorithm\n\n1. Get character class/specialization\n2. Filter
+              loot for relevant stats\n3. Increase probability for class items\n4.
+              Remove irrelevant items\n5. Apply luck modifiers\n\n## Bad Luck Protection\n\n-
+              Track legendary drops per player\n- If no legendary drop in 7 days →
+              guarantee next\n- Reset timer after legendary drop\n- Storage: PostgreSQL
+              + Redis cache\n"}, {"id": "distribution", "title": "Распределение лута",
+              "body": "## Personal Loot\n\n- Each player gets own loot\n- No competition\n-
+              Auto-pickup available\n- Best for solo/casual\n\n## Party Roll\n\n-
+              Items go to roll system\n- Players: Need/Greed/Pass\n- Highest roll
+              wins\n- Timeout: 60 seconds\n- Fair for groups\n\n## Master Loot\n\n-
+              Party leader distributes\n- Manual assignment\n- For organized groups/guilds\n\n##
+              Boss Loot\n\n- Guaranteed rewards for all participants\n- Extra boss-specific
+              loot (roll)\n- Achievement publishing\n- Logging for audit\n"}, {"id":
+              "events", "title": "Event Sourcing", "body": "## Topics\n\n### loot.generated\n```json\n{\n  \"event_type\":
+              \"loot.generated\",\n  \"source_type\": \"enemy\",\n  \"source_id\":
+              \"uuid\",\n  \"items\": [...],\n  \"player_ids\": [...]\n}\n```\n\n###
+              loot.picked_up\n```json\n{\n  \"event_type\": \"loot.picked_up\",\n  \"player_id\":
+              \"uuid\",\n  \"item_id\": \"uuid\",\n  \"drop_id\": \"uuid\"\n}\n```\n\n###
+              legendary.dropped\n```json\n{\n  \"event_type\": \"legendary.dropped\",\n  \"player_id\":
+              \"uuid\",\n  \"item_id\": \"uuid\",\n  \"rarity\": \"legendary\"\n}\n```\n\n##
+              Consumers\n- Inventory Service: Add items\n- Achievement Service: Legendary
+              drops\n- Analytics Service: Loot statistics\n"}, {"id": "scalability",
+              "title": "Масштабируемость", "body": "## Caching\n- Loot tables в Redis
+              (TTL: 1 hour)\n- Bad Luck Protection в Redis\n- Active rolls в Redis
+              (TTL: 2 minutes)\n\n## Background Jobs\n- Cleanup expired world drops
+              (every 5 min)\n- Cleanup expired rolls (every 1 min)\n- Update loot
+              table cache (every hour)\n\n## Performance\n- Loot generation: <50ms\n-
+              Pickup: <100ms\n- Roll: <10ms\n- DB queries: indexed\n"}]}, "appendix":
+              {"glossary": [{"term": "Smart Loot", "definition": "Адаптация лута под
+              класс персонажа"}, {"term": "Bad Luck Protection", "definition": "Гарантия
+              legendary дропа раз в 7 дней"}], "decisions": [{"id": "loot-001", "decision":
+              "Smart Loot обязателен", "rationale": "Улучшает игровой опыт"}, {"id":
+              "loot-002", "decision": "Multiple distribution modes", "rationale":
+              "Гибкость для разных групп"}]}, "implementation": {"github_issue": 142,
+              "needs_task": true, "next_steps": ["Database: Миграции для loot tables",
+              "API Designer: OpenAPI спецификация", "Backend: Реализация Loot Module"]},
+              "history": [{"version": "1.0.0", "date": "2025-12-02", "author": "architect",
+              "changes": "Создана архитектура Loot System"}]}'
+        - column:
+            name: metadata
+            value: '{"id": "architecture-loot-system", "title": "Loot System Architecture",
+              "document_type": "architecture", "category": "implementation", "status":
+              "draft", "version": "1.0.0", "last_updated": "2025-12-02T18:25:00+00:00",
+              "owners": [{"role": "architect"}], "tags": ["loot", "economy", "gameplay",
+              "architecture"], "related_systems": ["economy-service", "gameplay-service",
+              "inventory-service", "character-service"], "related_documents": [{"id":
+              "loot-system-part1", "relation": "implements"}, {"id": "loot-system-part2",
+              "relation": "implements"}]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\loot-system-architecture.yaml

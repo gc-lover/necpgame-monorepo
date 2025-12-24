@@ -1,0 +1,181 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-global-state-core-9eead0aa
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-647070735568145'
+        - column:
+            name: doc_id
+            value: global-state-core
+        - column:
+            name: title
+            value: Global State Core Architecture
+        - column:
+            name: document_type
+            value: implementation
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: approved
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-07 06:00:00+00:00
+        - column:
+            name: concept_approved
+            value: true
+        - column:
+            name: concept_reviewed_at
+            value: 2025-11-07 06:00:00+00:00
+        - column:
+            name: owners
+            value: '[{"role": "ai_brain_manager", "contact": "brain@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - global-state
+            - event-sourcing
+            - architecture
+        - column:
+            name: topics
+            value:
+            - backend_platform
+            - persistence
+        - column:
+            name: related_systems
+            value:
+            - state-service
+            - analytics-service
+            - event-bus
+        - column:
+            name: related_documents
+            value: '[{"id": "global-state-events", "relation": "expands"}, {"id":
+              "global-state-management", "relation": "expands"}, {"id": "global-state-sync",
+              "relation": "expands"}, {"id": "global-state-operations", "relation":
+              "expands"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/implementation/global-state/global-state-core.md
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - backend
+            - platform
+            - analytics
+        - column:
+            name: risk_level
+            value: critical
+        - column:
+            name: content
+            value: '{"metadata": {"id": "global-state-core", "title": "Global State
+              Core Architecture", "document_type": "implementation", "category": "systems",
+              "status": "approved", "version": "1.0.0", "last_updated": "2025-11-07T06:00:00+00:00",
+              "concept_approved": true, "concept_reviewed_at": "2025-11-07T06:00:00+00:00",
+              "owners": [{"role": "ai_brain_manager", "contact": "brain@necp.game"}],
+              "tags": ["global-state", "event-sourcing", "architecture"], "topics":
+              ["backend_platform", "persistence"], "related_systems": ["state-service",
+              "analytics-service", "event-bus"], "related_documents": [{"id": "global-state-events",
+              "relation": "expands"}, {"id": "global-state-management", "relation":
+              "expands"}, {"id": "global-state-sync", "relation": "expands"}, {"id":
+              "global-state-operations", "relation": "expands"}], "source": "shared/docs/knowledge/implementation/global-state/global-state-core.md",
+              "visibility": "internal", "audience": ["backend", "platform", "analytics"],
+              "risk_level": "critical"}, "review": {"chain": [{"role": "concept_director",
+              "reviewer": "", "reviewed_at": "", "status": "pending"}], "next_actions":
+              []}, "summary": {"problem": "Требуется единая система отслеживания состояния
+              мира с полной историей событий.", "goal": "Определить архитектуру Global
+              State Core на базе Event Sourcing с описанием схем и процессов.", "essence":
+              "Архитектура строится вокруг Event Store, менеджера глобального состояния
+              и механизмов реконструкции и снапшотов.", "key_points": ["Event Sourcing
+              фиксирует каждое изменение через `game_events`.", "Состояние хранится
+              в `global_state` с версионностью и ссылками на события.", "Снапшоты
+              ускоряют реконструкцию и обеспечивают контроль версий."]}, "content":
+              {"sections": [{"id": "introduction", "title": "Краткое описание", "body":
+              "Global State Core агрегирует игровые события через Event Sourcing.
+              Система служит источником правды для состояния игрока, мира и экономики,
+              поддерживая аудит, откаты и аналитику.\n", "mechanics_links": ["services/backend/global-state/overview.yaml"],
+              "assets": []}, {"id": "architecture", "title": "Архитектура", "body":
+              "Клиент взаимодействует через WebSocket и API Gateway. Бэкенд-сервисы
+              публикуют события в шину (Kafka или RabbitMQ), после чего Event Store
+              Writer сохраняет их в PostgreSQL. Global State Manager и аналитика используют
+              данные для реконструкции и метрик, кешируя активные состояния в Redis.\n",
+              "mechanics_links": ["services/backend/global-state/architecture-diagram.png"],
+              "assets": []}, {"id": "event_sourcing", "title": "Паттерн Event Sourcing",
+              "body": "Отказ от CRUD в пользу хранения последовательности событий.
+              Каждое событие отражает изменение состояния, а итоговые данные реконструируются
+              через replay. Это обеспечивает полную историю и гибкие проверки соответствия.\n",
+              "mechanics_links": ["mechanics/backend/event-sourcing-guidelines.yaml"],
+              "assets": []}, {"id": "event_store_schema", "title": "Схема Event Store",
+              "body": "Таблица `game_events` хранит идентификаторы, тип, агрегат,
+              метаданные, полезную нагрузку, контекст и статус обработки. Индексы
+              обеспечивают выборки по агрегату, типу и времени, а поля `correlation_id`
+              и `causation_id` фиксируют цепочки действий.\n```sql\nCREATE TABLE game_events
+              (\n    id BIGSERIAL PRIMARY KEY,\n    event_id UUID UNIQUE NOT NULL
+              DEFAULT gen_random_uuid(),\n    event_type VARCHAR(100) NOT NULL,\n    aggregate_type
+              VARCHAR(50) NOT NULL,\n    aggregate_id VARCHAR(200) NOT NULL,\n    event_version
+              INTEGER NOT NULL DEFAULT 1,\n    correlation_id UUID,\n    causation_id
+              UUID,\n    event_data JSONB NOT NULL,\n    metadata JSONB,\n    server_id
+              VARCHAR(100) NOT NULL,\n    player_id UUID,\n    session_id UUID,\n    event_timestamp
+              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    processed_at TIMESTAMP,\n    state_changes
+              JSONB,\n    affected_players JSONB,\n    is_processed BOOLEAN DEFAULT
+              FALSE,\n    processing_error TEXT,\n    retry_count INTEGER DEFAULT
+              0,\n    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n```\n",
+              "mechanics_links": ["services/backend/global-state/database-schema.yaml"],
+              "assets": []}, {"id": "state_store_schema", "title": "Схема Global State",
+              "body": "Таблица `global_state` содержит актуальные значения ключей
+              состояния, типы, владельцев, регион, версию и ссылку на событие, которое
+              изменило запись. Индексирование поддерживает быстрый доступ по категории,
+              ключу и владельцу.\n", "mechanics_links": ["services/backend/global-state/database-schema.yaml"],
+              "assets": []}, {"id": "snapshots", "title": "Снапшоты", "body": "Таблица
+              `state_snapshots` хранит агрегированные состояния для ускорения восстановления.
+              Снапшоты создаются каждые 1000 событий, каждый час и при смене лиги.
+              Метаданные фиксируют размер, длительность создания и последний обработанный
+              event.\n", "mechanics_links": ["services/backend/global-state/snapshot-strategy.yaml"],
+              "assets": []}, {"id": "key_hierarchy", "title": "Иерархия ключей состояния",
+              "body": "Ключи формируются по схеме `category.entity.attribute`, что
+              унифицирует доступ к данным игрока, мира и экономики. Примеры включают
+              `player.{playerId}.level`, `world.territory.watson.controller` и `economy.item.mantisBlades.price`.\n",
+              "mechanics_links": ["mechanics/world/state-keys.yaml"], "assets": []},
+              {"id": "integrations", "title": "Связанные документы", "body": "Дополнительные
+              микрофичи описывают типы событий, управление состоянием, синхронизацию
+              и операции. Они расширяют архитектуру и используют схему Event Store
+              как базу.\n", "mechanics_links": ["services/backend/global-state/index.yaml"],
+              "assets": []}]}, "appendix": {"glossary": [{"term": "Event Sourcing",
+              "definition": "Паттерн, при котором состояние системы выводится из последовательности
+              неизменяемых событий."}], "references": [{"id": "global-state-system-split",
+              "description": "Исторический документ разделения глобальной системы
+              на микрофичи."}], "decisions": []}, "implementation": {"github_issue":
+              136, "needs_task": false, "queue_reference": ["shared/trackers/queues/concept/queued.yaml"],
+              "blockers": []}, "history": [{"version": "1.0.0", "date": "2025-11-07",
+              "author": "AI Brain Manager", "changes": "Зафиксирована архитектура
+              Global State Core."}], "validation": {"checksum": "", "schema_version":
+              "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "global-state-core", "title": "Global State Core Architecture",
+              "document_type": "implementation", "category": "systems", "status":
+              "approved", "version": "1.0.0", "last_updated": "2025-11-07T06:00:00+00:00",
+              "concept_approved": true, "concept_reviewed_at": "2025-11-07T06:00:00+00:00",
+              "owners": [{"role": "ai_brain_manager", "contact": "brain@necp.game"}],
+              "tags": ["global-state", "event-sourcing", "architecture"], "topics":
+              ["backend_platform", "persistence"], "related_systems": ["state-service",
+              "analytics-service", "event-bus"], "related_documents": [{"id": "global-state-events",
+              "relation": "expands"}, {"id": "global-state-management", "relation":
+              "expands"}, {"id": "global-state-sync", "relation": "expands"}, {"id":
+              "global-state-operations", "relation": "expands"}], "source": "shared/docs/knowledge/implementation/global-state/global-state-core.md",
+              "visibility": "internal", "audience": ["backend", "platform", "analytics"],
+              "risk_level": "critical"}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\global-state\global-state-core.yaml

@@ -5,6 +5,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 // AchievementService contains business logic for achievements
 // PERFORMANCE: Structured for optimal memory layout
 type AchievementServiceLogic struct {
+	repo   *AchievementRepository
 	logger *zap.Logger
 
 	// PERFORMANCE: Object pool for achievement operations
@@ -22,8 +24,9 @@ type AchievementServiceLogic struct {
 
 // NewAchievementServiceLogic creates a new service instance
 // PERFORMANCE: Pre-allocates resources
-func NewAchievementServiceLogic() *AchievementServiceLogic {
+func NewAchievementServiceLogic(repo *AchievementRepository) *AchievementServiceLogic {
 	svc := &AchievementServiceLogic{
+		repo: repo,
 		achievementPool: sync.Pool{
 			New: func() interface{} {
 				return &Achievement{}
@@ -41,48 +44,77 @@ func NewAchievementServiceLogic() *AchievementServiceLogic {
 	return svc
 }
 
-// Achievement represents an achievement entity
-// PERFORMANCE: Optimized struct alignment (large fields first)
-type Achievement struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`        // Large field first
-	Description string    `json:"description"` // Large field second
-	IconURL     string    `json:"icon_url"`
-	Rarity      string    `json:"rarity"`
-	Points      int32     `json:"points"`      // int32 (4 bytes)
-	IsUnlocked  bool      `json:"is_unlocked"` // bool (1 byte)
-	UnlockedAt  *time.Time `json:"unlocked_at"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
-}
-
 // GetAchievements retrieves all achievements for a player
 // PERFORMANCE: Context-based timeout, optimized DB queries
-func (s *AchievementServiceLogic) GetAchievements(ctx context.Context, playerID string) ([]*Achievement, error) {
+func (s *AchievementServiceLogic) GetAchievements(ctx context.Context, playerID string, limit, offset int) ([]*Achievement, error) {
 	// PERFORMANCE: Context timeout check
 	if deadline, ok := ctx.Deadline(); ok && time.Until(deadline) < 100*time.Millisecond {
 		return nil, context.DeadlineExceeded
 	}
 
-	// TODO: Implement database query with proper indexing
-	achievements := make([]*Achievement, 0, 50) // PERFORMANCE: Pre-allocate slice
+	// Validate input parameters
+	if playerID == "" {
+		return nil, fmt.Errorf("player_id cannot be empty")
+	}
+
+	if limit <= 0 || limit > 100 {
+		limit = 50 // Default limit
+	}
+
+	if offset < 0 {
+		offset = 0
+	}
+
+	// Call repository method
+	achievements, err := s.repo.GetAchievements(ctx, playerID, limit, offset)
+	if err != nil {
+		s.logger.Error("Failed to get achievements",
+			zap.String("player_id", playerID),
+			zap.Int("limit", limit),
+			zap.Int("offset", offset),
+			zap.Error(err))
+		return nil, err
+	}
 
 	s.logger.Info("Retrieved achievements",
 		zap.String("player_id", playerID),
-		zap.Int("count", len(achievements)))
+		zap.Int("count", len(achievements)),
+		zap.Int("limit", limit),
+		zap.Int("offset", offset))
 
 	return achievements, nil
 }
 
 // GetAchievement retrieves a specific achievement
 // PERFORMANCE: Single-row query optimization
-func (s *AchievementServiceLogic) GetAchievement(ctx context.Context, achievementID string) (*Achievement, error) {
-	// PERFORMANCE: Pool allocation
-	achievement := s.achievementPool.Get().(*Achievement)
-	defer s.achievementPool.Put(achievement)
+func (s *AchievementServiceLogic) GetAchievement(ctx context.Context, achievementID, playerID string) (*Achievement, error) {
+	// PERFORMANCE: Context timeout check
+	if deadline, ok := ctx.Deadline(); ok && time.Until(deadline) < 100*time.Millisecond {
+		return nil, context.DeadlineExceeded
+	}
 
-	// TODO: Implement single achievement query
-	achievement.ID = achievementID
+	// Validate input parameters
+	if achievementID == "" {
+		return nil, fmt.Errorf("achievement_id cannot be empty")
+	}
+
+	if playerID == "" {
+		return nil, fmt.Errorf("player_id cannot be empty")
+	}
+
+	// Call repository method
+	achievement, err := s.repo.GetAchievement(ctx, achievementID, playerID)
+	if err != nil {
+		s.logger.Error("Failed to get achievement",
+			zap.String("achievement_id", achievementID),
+			zap.String("player_id", playerID),
+			zap.Error(err))
+		return nil, err
+	}
+
+	s.logger.Info("Retrieved achievement",
+		zap.String("achievement_id", achievementID),
+		zap.String("player_id", playerID))
 
 	return achievement, nil
 }
@@ -90,16 +122,31 @@ func (s *AchievementServiceLogic) GetAchievement(ctx context.Context, achievemen
 // UnlockAchievement unlocks an achievement for a player
 // PERFORMANCE: Transaction-based operation with rollback
 func (s *AchievementServiceLogic) UnlockAchievement(ctx context.Context, playerID, achievementID string) error {
-	// PERFORMANCE: Context timeout validation
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
+	// PERFORMANCE: Context timeout check
+	if deadline, ok := ctx.Deadline(); ok && time.Until(deadline) < 100*time.Millisecond {
+		return context.DeadlineExceeded
 	}
 
-	// TODO: Implement achievement unlocking with transaction
+	// Validate input parameters
+	if playerID == "" {
+		return fmt.Errorf("player_id cannot be empty")
+	}
 
-	s.logger.Info("Achievement unlocked",
+	if achievementID == "" {
+		return fmt.Errorf("achievement_id cannot be empty")
+	}
+
+	// Call repository method
+	err := s.repo.UnlockAchievement(ctx, playerID, achievementID)
+	if err != nil {
+		s.logger.Error("Failed to unlock achievement",
+			zap.String("player_id", playerID),
+			zap.String("achievement_id", achievementID),
+			zap.Error(err))
+		return err
+	}
+
+	s.logger.Info("Achievement unlocked successfully",
 		zap.String("player_id", playerID),
 		zap.String("achievement_id", achievementID))
 

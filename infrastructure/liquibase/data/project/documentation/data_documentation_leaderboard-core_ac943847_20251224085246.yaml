@@ -1,0 +1,152 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-leaderboard-core-ac943847
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '6594802922176496'
+        - column:
+            name: doc_id
+            value: implementation-leaderboard-core
+        - column:
+            name: title
+            value: Leaderboard System Core
+        - column:
+            name: document_type
+            value: implementation
+        - column:
+            name: category
+            value: backend
+        - column:
+            name: status
+            value: in-review
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-08 06:45:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: ''
+        - column:
+            name: owners
+            value: '[{"role": "backend_leaderboard_owner", "contact": "backend.leaderboards@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - leaderboards
+            - rankings
+            - realtime
+        - column:
+            name: topics
+            value:
+            - redis
+            - seasonal-leagues
+            - scoring
+        - column:
+            name: related_systems
+            value:
+            - combat-service
+            - economy-service
+            - social-service
+            - notification-service
+        - column:
+            name: related_documents
+            value: '[{"id": "implementation-api-integration-map", "relation": "complements"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/implementation/backend/leaderboard/leaderboard-core.md
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - backend
+            - analytics
+            - live-ops
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "implementation-leaderboard-core", "title":
+              "Leaderboard System Core", "document_type": "implementation", "category":
+              "backend", "status": "in-review", "version": "1.0.0", "last_updated":
+              "2025-11-08T06:45:00+00:00", "concept_approved": false, "concept_reviewed_at":
+              "", "owners": [{"role": "backend_leaderboard_owner", "contact": "backend.leaderboards@necp.game"}],
+              "tags": ["leaderboards", "rankings", "realtime"], "topics": ["redis",
+              "seasonal-leagues", "scoring"], "related_systems": ["combat-service",
+              "economy-service", "social-service", "notification-service"], "related_documents":
+              [{"id": "implementation-api-integration-map", "relation": "complements"}],
+              "source": "shared/docs/knowledge/implementation/backend/leaderboard/leaderboard-core.md",
+              "visibility": "internal", "audience": ["backend", "analytics", "live-ops"],
+              "risk_level": "medium"}, "review": {"chain": [{"role": "backend_leaderboard_owner",
+              "reviewer": "", "reviewed_at": "", "status": "pending"}], "next_actions":
+              ["Зафиксировать финальные требования к seasonal reset и обновить cron
+              расписание."]}, "summary": {"problem": "Нужно описать универсальную
+              систему рейтингов для глобального, регионального и сезонного соперничества.",
+              "goal": "Предоставить архитектуру, схему данных, расчёт очков и процессы
+              синхронизации Redis ↔ PostgreSQL.", "essence": "Документ охватывает
+              типы лидербордов, schema DDL, Redis sorted sets, формулы подсчёта и
+              процедуры сезонного сброса с выдачей наград.", "key_points": ["Рейтинги
+              поддерживают глобальные, региональные, категориальные и сезонные таблицы
+              с real-time обновлением.", "Архитектура строится на Redis sorted sets
+              (горячие данные) и периодической синхронизации в PostgreSQL.", "SQL
+              схемы описывают `leaderboards`, `leaderboard_entries`, `leaderboard_snapshots`
+              с индексами и денормализацией.", "Приведены функции расчёта очков (overall
+              power, combat score) и распределение рангов.", "Seasonal reset включает
+              снапшоты, награды, архивацию и запуск нового сезона через планировщик."]},
+              "content": {"sections": [{"id": "overview", "title": "Назначение и возможности",
+              "body": "Система покрывает глобальные/региональные/категориальные/сезонные
+              рейтинги, поддерживает WebSocket обновления и\nвыдаёт награды топ игрокам.
+              Основной pipeline: событие → обновление статистики → пересчёт очков
+              → обновление рейтинга.\n", "mechanics_links": [], "assets": []}, {"id":
+              "architecture", "title": "Архитектура и хранение", "body": "Описан поток
+              от игровых действий до обновления Redis sorted set, батчевой записи
+              в PostgreSQL и пуша клиентам.\nКлючи Redis формируются как `leaderboard:{code}:{scope}`,
+              доступны операции топ-100, ранк игрока, диапазоны.\n", "mechanics_links":
+              [], "assets": []}, {"id": "data-model", "title": "Схема данных", "body":
+              "Приведены DDL для таблиц `leaderboards`, `leaderboard_entries`, `leaderboard_snapshots`
+              с индексами, полями season,\nreward и денормализованными данными игрока
+              ради производительности.\n", "mechanics_links": [], "assets": []}, {"id":
+              "scoring", "title": "Расчёт очков", "body": "Пример функции `calculate_overall_power`
+              учитывает уровень, экипировку, навыки, достижения, капитал, репутацию
+              и PvP рейтинг.\nДля боевого рейтинга используются убийства, точность,
+              KDA и нанесённый урон.\n", "mechanics_links": [], "assets": []}, {"id":
+              "seasons", "title": "Сезонность и награды", "body": "Seasonal reset
+              выполняется шедулером: создаёт финальный снапшот, распределяет награды,
+              архивирует записи, сбрасывает\nрейтинги и стартует новый сезон. Описаны
+              tier наград (Diamond, Platinum, Gold, Silver, Bronze).\n", "mechanics_links":
+              [], "assets": []}]}, "appendix": {"glossary": [], "references": [],
+              "decisions": []}, "implementation": {"github_issue": 136, "needs_task":
+              false, "queue_reference": ["shared/trackers/queues/concept/queued.yaml"],
+              "blockers": []}, "history": [{"version": "1.0.0", "date": "2025-11-08",
+              "author": "backend_leaderboard_owner", "changes": "Описаны архитектура,
+              схемы БД, Redis операции и сезонные процессы лидербордов."}], "validation":
+              {"checksum": "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "implementation-leaderboard-core", "title": "Leaderboard
+              System Core", "document_type": "implementation", "category": "backend",
+              "status": "in-review", "version": "1.0.0", "last_updated": "2025-11-08T06:45:00+00:00",
+              "concept_approved": false, "concept_reviewed_at": "", "owners": [{"role":
+              "backend_leaderboard_owner", "contact": "backend.leaderboards@necp.game"}],
+              "tags": ["leaderboards", "rankings", "realtime"], "topics": ["redis",
+              "seasonal-leagues", "scoring"], "related_systems": ["combat-service",
+              "economy-service", "social-service", "notification-service"], "related_documents":
+              [{"id": "implementation-api-integration-map", "relation": "complements"}],
+              "source": "shared/docs/knowledge/implementation/backend/leaderboard/leaderboard-core.md",
+              "visibility": "internal", "audience": ["backend", "analytics", "live-ops"],
+              "risk_level": "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\backend\leaderboard\leaderboard-core.yaml

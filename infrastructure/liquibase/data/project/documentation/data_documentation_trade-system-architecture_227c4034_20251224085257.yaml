@@ -1,0 +1,354 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-trade-system-architecture-227c4034
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-546725279984080'
+        - column:
+            name: doc_id
+            value: trade-system-architecture
+        - column:
+            name: title
+            value: Архитектура системы P2P торговли
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-30 19:35:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - trade
+            - backend
+            - economy
+            - security
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - economy-service-go
+            - inventory-service-go
+            - movement-service-go
+            - social-service-go
+        - column:
+            name: related_documents
+            value: '[{"id": "trade-system", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "trade-system-architecture", "title": "Архитектура
+              системы P2P торговли", "document_type": "architecture", "category":
+              "systems", "status": "draft", "version": "1.1.0", "last_updated": "2025-11-30T19:35:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "trade", "backend", "economy", "security"],
+              "related_systems": ["economy-service-go", "inventory-service-go", "movement-service-go",
+              "social-service-go"], "related_documents": [{"id": "trade-system", "relation":
+              "extends"}], "github_issue": 131, "visibility": "internal", "audience":
+              ["architect", "backend", "api-designer"]}, "summary": {"problem": "Требуется
+              спроектировать полную техническую архитектуру системы P2P торговли\nдля
+              обеспечения безопасного обмена предметами и валютой между игроками\nс
+              защитой от мошенничества и аудитом всех операций.\n", "goal": "Создать
+              архитектурную схему системы торговли с определением:\n- Компонентов
+              системы (микросервисы, модули)\n- API endpoints (высокоуровнево)\n-
+              Потоков данных и интеграций\n- Антифрод механизмов\n- Технического задания
+              для реализации\n", "essence": "Безопасная система P2P торговли с двойным
+              подтверждением, проверкой владения предметами,\nконтролем расстояния,
+              таймаутами и полным аудитом всех операций.\n"}, "architecture": {"overview":
+              "Система P2P торговли состоит из пяти основных компонентов:\n1. Trade
+              Session Manager - управление торговыми сессиями\n2. Item Validator -
+              проверка владения и доступности предметов\n3. Trade Confirmation Handler
+              - обработка подтверждений обмена\n4. Anti-Fraud System - защита от мошенничества\n5.
+              Trade Audit Logger - аудит всех операций\n", "components": [{"name":
+              "Trade Session Manager", "location": "economy-service-go (модуль trade)",
+              "responsibility": "- Создание и управление торговыми сессиями\n- Управление
+              участниками торговли (инициатор, получатель)\n- Отслеживание статуса
+              сессии (created, active, confirmed, completed, cancelled)\n- Управление
+              таймаутами (5 минут по умолчанию)\n- Проверка расстояния между игроками\n-
+              Синхронизация состояния через realtime-gateway\n", "port": "8086 (economy-service-go)",
+              "endpoints": ["POST /api/v1/economy/trade/sessions - создание торговой
+              сессии", "GET /api/v1/economy/trade/sessions/{session_id} - получение
+              сессии", "PUT /api/v1/economy/trade/sessions/{session_id}/offer - добавление
+              предложения", "PUT /api/v1/economy/trade/sessions/{session_id}/confirm
+              - подтверждение обмена", "POST /api/v1/economy/trade/sessions/{session_id}/execute
+              - выполнение обмена", "DELETE /api/v1/economy/trade/sessions/{session_id}
+              - отмена сессии"]}, {"name": "Item Validator", "location": "economy-service-go
+              (модуль trade-validation)", "responsibility": "- Проверка владения предметами
+              участниками\n- Валидация доступности предметов для торговли (bind-on-pickup,
+              locked)\n- Проверка наличия предметов в инвентаре\n- Блокировка предметов
+              во время торговли\n- Проверка валюты и её наличия\n", "integration":
+              "Интегрируется с inventory-service для проверки владения\nИспользует
+              circuit breaker для защиты от недоступности сервисов\n", "endpoints":
+              ["POST /api/v1/economy/trade/validate-items - валидация предметов",
+              "POST /api/v1/economy/trade/validate-currency - валидация валюты"]},
+              {"name": "Trade Confirmation Handler", "location": "economy-service-go
+              (модуль trade-confirmation)", "responsibility": "- Обработка подтверждений
+              от обеих сторон\n- Управление состоянием подтверждений (pending, confirmed,
+              rejected)\n- Блокировка предложений после подтверждения\n- Проверка
+              двойного подтверждения перед выполнением\n- Уведомление участников о
+              статусе подтверждения\n", "endpoints": ["POST /api/v1/economy/trade/sessions/{session_id}/confirm
+              - подтверждение", "GET /api/v1/economy/trade/sessions/{session_id}/confirmation-status
+              - статус подтверждений"]}, {"name": "Anti-Fraud System", "location":
+              "economy-service-go (модуль trade-security)", "responsibility": "- Проверка
+              расстояния между игроками (максимум для торговли)\n- Проверка онлайн
+              статуса участников\n- Ограничение количества активных торговых сессий\n-
+              Обнаружение подозрительных паттернов\n- Rate limiting для предотвращения
+              спама\n- Валидация предметов на дубликаты и читы\n", "security_checks":
+              "- Максимальное расстояние для торговли: 10 метров\n- Максимум активных
+              сессий на игрока: 3\n- Минимальный интервал между сессиями: 30 секунд\n-
+              Проверка на дубликаты предметов\n", "endpoints": ["POST /api/v1/economy/trade/validate-distance
+              - проверка расстояния", "POST /api/v1/economy/trade/check-fraud - проверка
+              на мошенничество"]}, {"name": "Trade Audit Logger", "location": "economy-service-go
+              (модуль trade-audit)", "responsibility": "- Логирование всех торговых
+              операций\n- Сохранение истории торговли\n- Аудит для расследований\n-
+              Статистика торговли\n- Экспорт данных для анализа\n", "endpoints": ["GET
+              /api/v1/economy/trade/history/{account_id} - история торговли", "GET
+              /api/v1/economy/trade/sessions/{session_id}/audit - аудит сессии"]}],
+              "data_flow": {"trade_initiation": "1. Инициатор запрашивает создание
+              торговой сессии с получателем\n2. Trade Session Manager проверяет онлайн
+              статус получателя\n3. Anti-Fraud System проверяет расстояние между игроками\n4.
+              Проверяется количество активных сессий у обоих участников\n5. Создаётся
+              сессия с таймаутом 5 минут\n6. Trade Audit Logger записывает событие
+              создания\n7. Realtime Gateway уведомляет получателя о запросе\n", "trade_offer":
+              "1. Участник добавляет предметы/валюту в предложение\n2. Item Validator
+              проверяет владение и доступность предметов\n3. Предметы блокируются
+              в инвентаре\n4. Обновляется состояние сессии\n5. Realtime Gateway синхронизирует
+              состояние с другим участником\n6. Trade Audit Logger записывает изменение
+              предложения\n", "trade_confirmation": "1. Участник подтверждает обмен\n2.
+              Trade Confirmation Handler обновляет статус подтверждения\n3. Проверяется
+              наличие подтверждения от обеих сторон\n4. При двойном подтверждении
+              запускается выполнение обмена\n5. Realtime Gateway уведомляет участников
+              о подтверждении\n", "trade_execution": "1. Trade Session Manager проверяет
+              двойное подтверждение\n2. Item Validator финальная проверка владения
+              предметами\n3. Выполняется атомарный обмен предметов и валюты\n4. Интеграция
+              с inventory-service для перемещения предметов\n5. Trade Audit Logger
+              записывает завершённую сделку\n6. Публикуются события trade:completed\n7.
+              Realtime Gateway уведомляет участников о завершении\n"}, "integrations":
+              {"with_inventory_service": "- Проверка владения предметами\n- Блокировка
+              предметов во время торговли\n- Перемещение предметов после обмена\n-
+              Использование circuit breaker для защиты\n", "with_movement_service":
+              "- Получение позиций игроков\n- Проверка расстояния между участниками\n-
+              Валидация возможности торговли\n", "with_social_service": "- Проверка
+              онлайн статуса игроков\n- Уведомления о торговых запросах\n- Интеграция
+              с системой друзей (опционально)\n", "with_realtime_gateway": "- Realtime
+              синхронизация состояния торговли\n- Push уведомления о событиях\n- Синхронизация
+              предложений в реальном времени\n"}, "data_consistency": {"strategy":
+              "Strong Consistency (ACID транзакции) для критичных операций", "mechanisms":
+              ["ACID транзакции для создания и выполнения торговых сессий", "Оптимистичные
+              блокировки (versioning) для предотвращения конфликтов", "Валидация перед
+              выполнением обмена", "Синхронизация с другими сервисами через Event
+              Bus", "Outbox Pattern для гарантированной доставки событий", "Saga Pattern
+              для распределенных операций (создание сессии, выполнение обмена, обновление
+              инвентаря)"]}, "data_synchronization": {"event_sourcing": "Все изменения
+              состояния торговых сессий (создание, добавление предложений, подтверждения,
+              выполнение)\nзаписываются как события в Event Store. Это обеспечивает
+              полный аудит,\nвозможность восстановления состояния и \"time travel\"
+              для отладки.\nПримеры событий: TradeSessionCreatedEvent, TradeOfferAddedEvent,
+              TradeConfirmedEvent, TradeCompletedEvent.\n", "cqrs_pattern": "Разделение
+              команд (создание сессии, добавление предложений, подтверждение, выполнение
+              обмена)\nи запросов (получение сессии, история торговли) для оптимизации
+              производительности\nи масштабируемости. Read-модели могут быть кэшированы
+              в Redis для быстрых запросов.\n", "saga_pattern": "Для распределенных
+              транзакций, таких как выполнение обмена (проверка владения,\nблокировка
+              предметов, перемещение предметов, обновление инвентаря), используется\nSaga
+              Pattern для обеспечения атомарности операций между Economy Service\nи
+              Inventory Service.\n", "outbox_pattern": "Для гарантированной доставки
+              событий в Event Bus используется Outbox Pattern,\nкоторый записывает
+              события в транзакционную таблицу перед публикацией.\n"}, "tickrate_specification":
+              {"trade_operations": {"tickrate": "Event-based (on-demand)", "network_load":
+              "- Создание сессии: event-based, ~0.1-0.3 events/sec на игрока\n- Добавление
+              предложений: event-based, ~0.2-0.5 events/sec на сессию\n- Подтверждения:
+              event-based, ~0.1-0.2 events/sec на сессию\n- Выполнение обмена: event-based,
+              ~0.1-0.2 events/sec на сессию\n- Синхронизация состояния: event-based,
+              ~0.2-0.5 updates/sec на сессию\n- Общий трафик: ~0.5-1 KB/sec на сессию\n",
+              "latency_requirements": "< 50-200ms для операций с торговлей", "sync_strategy":
+              "Strong Consistency (ACID транзакции) для создания сессий и выполнения
+              обмена"}, "realtime_sync": {"tickrate": "Event-based (on-demand) + 1-5
+              Hz для обновления состояния", "network_load": "- Обновление предложений:
+              event-based, ~0.2-0.5 events/sec на сессию\n- Статус подтверждений:
+              event-based, ~0.1-0.2 events/sec на сессию\n- Общий трафик: ~0.2-0.5
+              KB/sec на сессию\n", "latency_requirements": "< 30-100ms для синхронизации
+              состояния", "sync_strategy": "Eventual Consistency для обновлений состояния"}},
+              "database_schema": {"tables": [{"name": "trade_sessions", "description":
+              "Торговые сессии", "fields": [{"id": "UUID (PK)"}, {"initiator_id":
+              "UUID (FK accounts)"}, {"recipient_id": "UUID (FK accounts)"}, {"status":
+              "ENUM (created, active, confirmed, completed, cancelled, expired)"},
+              {"initiator_offer": "JSONB (предметы и валюта инициатора)"}, {"recipient_offer":
+              "JSONB (предметы и валюта получателя)"}, {"initiator_confirmed": "BOOLEAN"},
+              {"recipient_confirmed": "BOOLEAN"}, {"location": "JSONB (координаты
+              создания)"}, {"distance": "FLOAT (расстояние между игроками)"}, {"expires_at":
+              "TIMESTAMP"}, {"created_at": "TIMESTAMP"}, {"completed_at": "TIMESTAMP
+              (nullable)"}], "indexes": ["initiator_id, status", "recipient_id, status",
+              "status, expires_at"]}, {"name": "trade_history", "description": "История
+              завершённых торговых операций", "fields": [{"id": "UUID (PK)"}, {"session_id":
+              "UUID (FK trade_sessions)"}, {"initiator_id": "UUID (FK accounts)"},
+              {"recipient_id": "UUID (FK accounts)"}, {"initiator_items": "JSONB (предметы,
+              отданные инициатором)"}, {"recipient_items": "JSONB (предметы, отданные
+              получателем)"}, {"initiator_currency": "JSONB (валюта инициатора)"},
+              {"recipient_currency": "JSONB (валюта получателя)"}, {"location": "JSONB
+              (координаты обмена)"}, {"distance": "FLOAT"}, {"completed_at": "TIMESTAMP"},
+              {"fraud_flags": "JSONB (флаги подозрительности)"}], "indexes": ["initiator_id,
+              completed_at", "recipient_id, completed_at", "completed_at"]}, {"name":
+              "trade_blocks", "description": "Блокировки предметов во время торговли",
+              "fields": [{"id": "UUID (PK)"}, {"session_id": "UUID (FK trade_sessions)"},
+              {"account_id": "UUID (FK accounts)"}, {"item_id": "UUID (FK items)"},
+              {"item_instance_id": "UUID (nullable)"}, {"blocked_at": "TIMESTAMP"},
+              {"released_at": "TIMESTAMP (nullable)"}], "indexes": ["session_id",
+              "account_id, item_id", "released_at (для очистки)"]}]}}, "technical_specification":
+              {"backend_requirements": [{"Реализация модулей в economy-service-go":
+              ["trade (управление сессиями)", "trade-validation (валидация предметов)",
+              "trade-confirmation (подтверждения)", "trade-security (антифрод)", "trade-audit
+              (аудит)"]}, "Интеграция с inventory-service для проверки владения",
+              "Интеграция с movement-service для проверки расстояния", "Реализация
+              circuit breaker для защиты от недоступности сервисов", "Атомарные транзакции
+              для выполнения обмена"], "security_requirements": ["Все проверки на
+              сервере (валидация владения, расстояния)", "Атомарность операций обмена",
+              "Защита от дубликатов предметов", "Rate limiting для предотвращения
+              спама", "Полный аудит всех операций", "Обнаружение подозрительных паттернов"],
+              "performance_requirements": ["Создание сессии < 100ms", "Добавление
+              предложения < 50ms", "Подтверждение < 50ms", "Выполнение обмена < 200ms",
+              "Поддержка до 1000 одновременных торговых сессий", "Кэширование активных
+              сессий"], "scalability_requirements": ["Горизонтальное масштабирование
+              через economy-service", "Распределение нагрузки на торговые сессии",
+              "Оптимизация запросов к БД (batch, индексы)", "Кэширование активных
+              сессий в памяти (Redis)"]}, "subtasks": [{"id": "trade-session-module",
+              "title": "Реализация модуля Trade Session Manager", "description": "Создание
+              модуля управления торговыми сессиями\nCRUD операции для сессий\nУправление
+              таймаутами\n", "priority": "high", "estimated_time": "3-4 дня"}, {"id":
+              "item-validator", "title": "Реализация Item Validator", "description":
+              "Проверка владения предметами\nВалидация доступности для торговли\nБлокировка
+              предметов\n", "priority": "high", "estimated_time": "2-3 дня"}, {"id":
+              "confirmation-handler", "title": "Реализация Trade Confirmation Handler",
+              "description": "Обработка подтверждений\nУправление состоянием подтверждений\nПроверка
+              двойного подтверждения\n", "priority": "high", "estimated_time": "2-3
+              дня"}, {"id": "anti-fraud-system", "title": "Реализация Anti-Fraud System",
+              "description": "Проверка расстояния\nПроверка онлайн статуса\nОбнаружение
+              подозрительных паттернов\nRate limiting\n", "priority": "high", "estimated_time":
+              "3-4 дня"}, {"id": "audit-logger", "title": "Реализация Trade Audit
+              Logger", "description": "Логирование операций\nСохранение истории\nЭкспорт
+              данных\n", "priority": "medium", "estimated_time": "2-3 дня"}, {"id":
+              "realtime-integration", "title": "Интеграция с Realtime Gateway", "description":
+              "Синхронизация состояния торговли\nPush уведомления\nОптимизация трафика\n",
+              "priority": "high", "estimated_time": "2-3 дня"}, {"id": "database-optimization",
+              "title": "Оптимизация БД и запросов", "description": "Создание индексов\nОптимизация
+              запросов\nКэширование активных сессий\n", "priority": "medium", "estimated_time":
+              "1-2 дня"}, {"id": "api-endpoints", "title": "Реализация REST API endpoints",
+              "description": "Создание всех endpoints для торговли\nИнтеграция с существующим
+              API economy-service\n", "priority": "high", "estimated_time": "2-3 дня"},
+              {"id": "integration-testing", "title": "Интеграционное тестирование",
+              "description": "Тесты торговых сессий\nТесты антифрод механизмов\nТесты
+              интеграций с другими сервисами\n", "priority": "high", "estimated_time":
+              "2-3 дня"}], "diagrams": {"component_diagram": "```mermaid\ngraph TB\n    subgraph
+              \"Economy Service\"\n        TSM[Trade Session Manager]\n        IV[Item
+              Validator]\n        TCH[Trade Confirmation Handler]\n        AFS[Anti-Fraud
+              System]\n        TAL[Trade Audit Logger]\n    end\n\n    subgraph \"Database\"\n        DB[(PostgreSQL<br/>trade_sessions<br/>trade_history<br/>trade_blocks)]\n    end\n\n    subgraph
+              \"External Services\"\n        IS[Inventory Service]\n        MS[Movement
+              Service]\n        SS[Social Service]\n        RG[Realtime Gateway]\n    end\n\n    subgraph
+              \"Client\"\n        CL[UE5 Client]\n    end\n\n    CL -->|API requests|
+              TSM\n    TSM --> TCH\n    TSM --> IV\n    TSM --> AFS\n    TSM -->|store|
+              DB\n    TCH -->|store| DB\n    TAL -->|store| DB\n    IV -->|validate|
+              IS\n    AFS -->|check distance| MS\n    AFS -->|check online| SS\n    TSM
+              -->|sync state| RG\n    RG -->|push events| CL\n```\n", "data_flow_diagram":
+              "```mermaid\nsequenceDiagram\n    participant I as Initiator\n    participant
+              TSM as Trade Session Manager\n    participant IV as Item Validator\n    participant
+              AFS as Anti-Fraud System\n    participant R as Recipient\n    participant
+              IS as Inventory Service\n\n    I->>TSM: Create trade session\n    TSM->>AFS:
+              Check distance & online\n    AFS->>TSM: Validation result\n    TSM->>TSM:
+              Create session\n    TSM->>R: Notify trade request\n\n    I->>TSM: Add
+              offer (items)\n    TSM->>IV: Validate items\n    IV->>IS: Check ownership\n    IS->>IV:
+              Ownership confirmed\n    IV->>TSM: Validation result\n    TSM->>TSM:
+              Block items\n    TSM->>R: Sync offer\n\n    R->>TSM: Confirm trade\n    I->>TSM:
+              Confirm trade\n    TSM->>TSM: Check both confirmed\n    TSM->>IS: Execute
+              trade\n    IS->>TSM: Trade completed\n    TSM->>I: Notify completion\n    TSM->>R:
+              Notify completion\n```\n", "trade_flow": "```mermaid\ngraph LR\n    subgraph
+              \"Trade Phases\"\n        P1[Initiation<br/>Create session]\n        P2[Offering<br/>Add
+              items/currency]\n        P3[Confirmation<br/>Both confirm]\n        P4[Execution<br/>Exchange
+              items]\n    end\n\n    subgraph \"Validations\"\n        V1[Distance
+              Check]\n        V2[Online Check]\n        V3[Ownership Check]\n        V4[Item
+              Availability]\n    end\n\n    P1 --> V1\n    P1 --> V2\n    P1 --> P2\n    P2
+              --> V3\n    P2 --> V4\n    P2 --> P3\n    P3 -->|both confirmed| P4\n    P4
+              -->|complete| End\n```\n"}, "decisions": [{"id": "adr-trade-architecture",
+              "summary": "Выбрана модульная архитектура внутри economy-service-go
+              для обеспечения\nтесной интеграции с inventory и минимизации задержек
+              при проверках.\n"}, {"id": "adr-server-side-validation", "summary":
+              "Все проверки (владение, расстояние, онлайн статус) выполняются на сервере\nдля
+              защиты от читов и обеспечения безопасности торговли.\n"}, {"id": "adr-double-confirmation",
+              "summary": "Система двойного подтверждения обеспечивает согласие обеих
+              сторон перед\nвыполнением обмена и предотвращает случайные сделки.\n"},
+              {"id": "adr-atomic-exchange", "summary": "Атомарные транзакции гарантируют,
+              что обмен выполняется полностью или\nне выполняется вообще, предотвращая
+              потерю предметов.\n"}, {"id": "adr-comprehensive-audit", "summary":
+              "Полный аудит всех торговых операций необходим для расследований мошенничества\nи
+              обеспечения прозрачности системы.\n"}], "validation": {"architecture_complete":
+              true, "components_defined": true, "microservices_identified": true,
+              "api_endpoints_described": true, "technical_specification_ready": true,
+              "subtasks_defined": true}, "next_steps": ["Передача задачи агенту API
+              Designer для создания OpenAPI спецификации", "Детализация API endpoints",
+              "Создание request/response схем"], "history": [{"version": "1.1.0",
+              "date": "2025-11-30", "author": "Architect Agent", "changes": "Добавлена
+              детальная синхронизация данных:\n- Event Sourcing для всех изменений
+              состояния торговых сессий\n- CQRS Pattern для разделения команд и запросов\n-
+              Saga Pattern для распределенных операций (выполнение обмена, обновление
+              инвентаря)\n- Outbox Pattern для гарантированной доставки событий\n-
+              Обновлена секция data_consistency с механизмами синхронизации\n- Добавлена
+              спецификация тикрейта для торговых операций и realtime синхронизации\n"},
+              {"version": "1.0.0", "date": "2025-11-22", "author": "Architect Agent",
+              "changes": "Создана полная архитектура системы P2P торговли:\n- Определены
+              компоненты (Session Manager, Item Validator, Confirmation Handler, Anti-Fraud
+              System, Audit Logger)\n- Описаны API endpoints (высокоуровнево)\n- Спроектированы
+              потоки данных\n- Определена структура БД\n- Спроектированы антифрод
+              механизмы\n- Создано техническое задание\n- Разбито на подзадачи\n"}]}'
+        - column:
+            name: metadata
+            value: '{"id": "trade-system-architecture", "title": "Архитектура системы
+              P2P торговли", "document_type": "architecture", "category": "systems",
+              "status": "draft", "version": "1.1.0", "last_updated": "2025-11-30T19:35:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "trade", "backend", "economy", "security"],
+              "related_systems": ["economy-service-go", "inventory-service-go", "movement-service-go",
+              "social-service-go"], "related_documents": [{"id": "trade-system", "relation":
+              "extends"}], "github_issue": 131, "visibility": "internal", "audience":
+              ["architect", "backend", "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\trade-system-architecture.yaml

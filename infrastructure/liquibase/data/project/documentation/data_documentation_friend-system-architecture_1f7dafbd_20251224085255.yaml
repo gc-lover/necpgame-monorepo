@@ -1,0 +1,329 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-friend-system-architecture-1f7dafbd
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '4096868491372429'
+        - column:
+            name: doc_id
+            value: friend-system-architecture
+        - column:
+            name: title
+            value: Архитектура системы друзей (Friend System)
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-30 19:50:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - friend
+            - backend
+            - social
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - social-service-go
+            - character-service-go
+            - session-service-go
+            - notification-service-go
+        - column:
+            name: related_documents
+            value: '[{"id": "friend-system", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "friend-system-architecture", "title": "Архитектура
+              системы друзей (Friend System)", "document_type": "architecture", "category":
+              "systems", "status": "draft", "version": "1.1.0", "last_updated": "2025-11-30T19:50:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "friend", "backend", "social"], "related_systems":
+              ["social-service-go", "character-service-go", "session-service-go",
+              "notification-service-go"], "related_documents": [{"id": "friend-system",
+              "relation": "extends"}], "github_issue": 152, "visibility": "internal",
+              "audience": ["architect", "backend", "api-designer"]}, "summary": {"problem":
+              "Требуется спроектировать полную техническую архитектуру системы друзей\nдля
+              управления запросами на дружбу, блокировками, онлайн-статусом и\nпоследними
+              контактами с событийным обновлением статуса.\n", "goal": "Создать архитектурную
+              схему системы друзей с определением:\n- Компонентов системы (микросервисы,
+              модули)\n- API endpoints (высокоуровнево)\n- Потоков данных и интеграций\n-
+              Системы запросов на дружбу\n- Системы блокировок\n- Системы онлайн-статуса\n-
+              Технического задания для реализации\n", "essence": "Социальная система
+              управления друзьями с поддержкой запросов, блокировок,\nонлайн-статуса
+              и последних контактов с событийным обновлением.\n"}, "architecture":
+              {"overview": "Система друзей состоит из пяти основных компонентов:\n1.
+              Friend Manager - управление друзьями\n2. Friend Request Handler - обработка
+              запросов на дружбу\n3. Block List Manager - управление блокировками\n4.
+              Online Status Tracker - отслеживание онлайн-статуса\n5. Recent Contacts
+              Manager - управление последними контактами\n", "components": [{"name":
+              "Friend Manager", "location": "social-service-go (модуль friends)",
+              "responsibility": "- Управление списком друзей\n- Получение списка друзей\n-
+              Удаление друзей\n- Получение информации о друзьях\n- Интеграция с другими
+              модулями\n", "port": "8084 (social-service-go)", "endpoints": ["GET
+              /api/v1/social/friends - список друзей", "GET /api/v1/social/friends/{friend_id}
+              - информация о друге", "DELETE /api/v1/social/friends/{friend_id} -
+              удаление друга", "GET /api/v1/social/friends/online - онлайн друзья",
+              "GET /api/v1/social/friends/count - количество друзей"]}, {"name": "Friend
+              Request Handler", "location": "social-service-go (модуль friend-requests)",
+              "responsibility": "- Обработка запросов на дружбу\n- Отправка запросов\n-
+              Принятие/отклонение запросов\n- Управление входящими/исходящими запросами\n-
+              Уведомления о запросах\n", "request_states": "- PENDING: ожидает ответа\n-
+              ACCEPTED: принят\n- DECLINED: отклонён\n- CANCELLED: отменён\n", "endpoints":
+              ["POST /api/v1/social/friends/requests - отправка запроса", "GET /api/v1/social/friends/requests/incoming
+              - входящие запросы", "GET /api/v1/social/friends/requests/outgoing -
+              исходящие запросы", "POST /api/v1/social/friends/requests/{request_id}/accept
+              - принятие запроса", "POST /api/v1/social/friends/requests/{request_id}/decline
+              - отклонение запроса", "DELETE /api/v1/social/friends/requests/{request_id}
+              - отмена запроса"]}, {"name": "Block List Manager", "location": "social-service-go
+              (модуль blocks)", "responsibility": "- Управление блокировками\n- Блокировка/разблокировка
+              игроков\n- Проверка блокировок\n- Предотвращение взаимодействий с заблокированными\n",
+              "block_features": "- Блокировка игрока\n- Разблокировка игрока\n- Проверка
+              блокировок перед действиями\n- Скрытие заблокированных в списках\n",
+              "endpoints": ["POST /api/v1/social/friends/blocks - блокировка игрока",
+              "DELETE /api/v1/social/friends/blocks/{blocked_id} - разблокировка",
+              "GET /api/v1/social/friends/blocks - список заблокированных", "GET /api/v1/social/friends/blocks/check/{player_id}
+              - проверка блокировки"]}, {"name": "Online Status Tracker", "location":
+              "social-service-go (модуль friend-status)", "responsibility": "- Отслеживание
+              онлайн-статуса друзей\n- Событийное обновление статуса\n- Кэширование
+              статусов\n- Уведомления об изменении статуса\n", "status_events": "-
+              session:created - игрок зашёл в игру\n- session:ended - игрок вышел
+              из игры\n- friend:online - друг зашёл в игру\n- friend:offline - друг
+              вышел из игры\n", "endpoints": ["GET /api/v1/social/friends/{friend_id}/status
+              - статус друга", "GET /api/v1/social/friends/status/batch - статусы
+              нескольких друзей"]}, {"name": "Recent Contacts Manager", "location":
+              "social-service-go (модуль recent-contacts)", "responsibility": "- Управление
+              последними контактами\n- Отслеживание взаимодействий\n- Сортировка по
+              активности\n- Ограничение количества контактов\n", "contact_tracking":
+              "- Взаимодействия с игроками\n- Время последнего взаимодействия\n- Частота
+              взаимодействий\n- Автоматическое добавление в контакты\n", "endpoints":
+              ["GET /api/v1/social/friends/recent - последние контакты", "POST /api/v1/social/friends/recent/{player_id}
+              - добавление в контакты"]}], "data_flow": {"friend_request": "1. Игрок
+              отправляет запрос на дружбу\n2. Friend Request Handler проверяет блокировки\n3.
+              Проверяется, не являются ли уже друзьями\n4. Создаётся запрос в БД\n5.
+              Notification Service уведомляет получателя\n6. Realtime Gateway отправляет
+              push уведомление\n7. Событие friend:request-sent публикуется\n", "friend_acceptance":
+              "1. Игрок принимает запрос на дружбу\n2. Friend Request Handler обновляет
+              статус запроса\n3. Friend Manager создаёт запись о дружбе\n4. Online
+              Status Tracker начинает отслеживать статус\n5. Notification Service
+              уведомляет инициатора\n6. Realtime Gateway синхронизирует изменения\n7.
+              Событие friend:request-accepted публикуется\n", "online_status_update":
+              "1. Игрок заходит/выходит из игры\n2. Session Service публикует событие
+              session:created/ended\n3. Online Status Tracker получает событие\n4.
+              Обновляется статус в кэше\n5. Друзья игрока уведомляются об изменении\n6.
+              Realtime Gateway отправляет push уведомления\n7. События friend:online/friend:offline
+              публикуются\n"}, "integrations": {"with_character_service": "- Получение
+              данных персонажей\n- Профили друзей\n- Статистика друзей\n", "with_session_service":
+              "- Получение событий о входе/выходе\n- Обновление онлайн-статуса\n-
+              Интеграция с сессиями\n", "with_notification_service": "- Уведомления
+              о запросах на дружбу\n- Уведомления о принятии запросов\n- Уведомления
+              об изменении статуса\n", "with_social_service": "- Интеграция с другими
+              социальными системами\n- Общие социальные функции\n- История взаимодействий\n",
+              "with_realtime_gateway": "- Push уведомления о запросах\n- Обновления
+              онлайн-статуса в реальном времени\n- Синхронизация списка друзей\n"},
+              "data_consistency": {"strategy": "Strong Consistency (ACID транзакции)
+              для критичных операций", "mechanisms": ["ACID транзакции для создания
+              дружеских связей и блокировок", "Оптимистичные блокировки (versioning)
+              для предотвращения конфликтов", "Валидация перед созданием дружеской
+              связи", "Синхронизация с другими сервисами через Event Bus", "Outbox
+              Pattern для гарантированной доставки событий", "Saga Pattern для распределенных
+              операций (создание дружеской связи, обновление статуса)"]}, "data_synchronization":
+              {"event_sourcing": "Все изменения состояния системы друзей (отправка
+              запроса, принятие запроса, блокировка)\nзаписываются как события в Event
+              Store. Это обеспечивает полный аудит,\nвозможность восстановления состояния
+              и \"time travel\" для отладки.\nПримеры событий: FriendRequestSentEvent,
+              FriendRequestAcceptedEvent, FriendBlockedEvent, FriendOnlineEvent.\n",
+              "cqrs_pattern": "Разделение команд (отправка запроса, принятие запроса,
+              блокировка) и запросов\n(получение списка друзей, получение статуса
+              друга, проверка блокировки) для оптимизации производительности\nи масштабируемости.
+              Read-модели могут быть кэшированы в Redis для быстрых запросов.\n",
+              "saga_pattern": "Для распределенных транзакций, таких как создание дружеской
+              связи (создание запроса,\nуведомление получателя, обновление статуса)
+              или обновление онлайн-статуса (получение события от Session Service,\nобновление
+              статуса, уведомление друзей), используется Saga Pattern для обеспечения\nатомарности
+              операций между Social Service и Session Service.\n", "outbox_pattern":
+              "Для гарантированной доставки событий в Event Bus используется Outbox
+              Pattern,\nкоторый записывает события в транзакционную таблицу перед
+              публикацией.\n"}, "tickrate_specification": {"friend_operations": {"tickrate":
+              "Event-based (on-demand)", "network_load": "- Отправка запроса на дружбу:
+              event-based, ~0.1-0.2 events/sec на игрока\n- Принятие/отклонение запроса:
+              event-based, ~0.1-0.2 events/sec на игрока\n- Получение списка друзей:
+              event-based, ~0.1-0.5 requests/sec на игрока\n- Блокировка/разблокировка:
+              event-based, ~0.01-0.05 events/sec на игрока\n- Общий трафик: ~0.2-0.5
+              KB/sec на игрока\n", "latency_requirements": "< 50-200ms для операций
+              с друзьями", "sync_strategy": "Strong Consistency (ACID транзакции)
+              для создания дружеских связей и блокировок"}, "online_status_updates":
+              {"tickrate": "Event-based (on-demand) + 1-5 Hz для обновления статуса",
+              "network_load": "- Обновление онлайн-статуса: event-based, ~0.1-0.3
+              events/sec на игрока\n- Получение статуса друга: event-based, ~0.1-0.5
+              requests/sec на игрока\n- Batch получение статусов: event-based, ~0.1-0.2
+              requests/sec на игрока\n- Общий трафик: ~0.1-0.3 KB/sec на игрока\n",
+              "latency_requirements": "< 30-100ms для обновления статуса", "sync_strategy":
+              "Eventual Consistency для онлайн-статуса (кэш Redis)"}, "realtime_notifications":
+              {"tickrate": "Event-based (on-demand)", "network_load": "- Уведомления
+              о запросах на дружбу: event-based, ~0.1-0.2 events/sec на игрока\n-
+              Уведомления об изменении статуса друга: event-based, ~0.1-0.3 events/sec
+              на игрока\n- Общий трафик: ~0.1-0.3 KB/sec на игрока\n", "latency_requirements":
+              "< 30-100ms для уведомлений", "sync_strategy": "Eventual Consistency
+              для уведомлений"}}, "database_schema": {"tables": [{"name": "friendships",
+              "description": "Дружеские связи", "fields": [{"id": "UUID (PK)"}, {"character_a_id":
+              "UUID (FK characters)"}, {"character_b_id": "UUID (FK characters)"},
+              {"status": "ENUM (PENDING, ACCEPTED, BLOCKED)"}, {"initiator_id": "UUID
+              (FK characters)"}, {"created_at": "TIMESTAMP"}, {"accepted_at": "TIMESTAMP
+              (nullable)"}], "constraints": "- character_a_id < character_b_id (предотвращение
+              дубликатов)\n- UNIQUE(character_a_id, character_b_id)\n", "indexes":
+              ["character_a_id, status", "character_b_id, status", "status, created_at"]},
+              {"name": "friend_blocks", "description": "Блокировки игроков", "fields":
+              [{"id": "UUID (PK)"}, {"blocker_id": "UUID (FK characters)"}, {"blocked_id":
+              "UUID (FK characters)"}, {"reason": "VARCHAR(255) (nullable)"}, {"created_at":
+              "TIMESTAMP"}], "constraints": "- UNIQUE(blocker_id, blocked_id)\n",
+              "indexes": ["blocker_id", "blocked_id"]}, {"name": "recent_contacts",
+              "description": "Последние контакты", "fields": [{"id": "UUID (PK)"},
+              {"player_id": "UUID (FK characters)"}, {"contact_id": "UUID (FK characters)"},
+              {"last_interaction_at": "TIMESTAMP"}, {"interaction_count": {"INTEGER
+              (default": "1)"}}, {"updated_at": "TIMESTAMP"}], "constraints": "- UNIQUE(player_id,
+              contact_id)\n", "indexes": ["player_id, last_interaction_at", "player_id,
+              interaction_count"]}]}}, "technical_specification": {"backend_requirements":
+              [{"Реализация модулей в social-service-go": ["friends (управление друзьями)",
+              "friend-requests (запросы на дружбу)", "blocks (блокировки)", "friend-status
+              (онлайн-статус)", "recent-contacts (последние контакты)"]}, "Интеграция
+              с session-service для статуса", "Оптимизация запросов к БД (индексы,
+              кэширование)"], "realtime_requirements": ["Обновления онлайн-статуса
+              через WebSocket", "Push уведомления о запросах на дружбу", "Синхронизация
+              списка друзей в реальном времени"], "performance_requirements": ["Отправка
+              запроса < 50ms", "Принятие запроса < 50ms", "Получение списка друзей
+              < 100ms", "Обновление статуса < 30ms", "Поддержка до 1000 друзей на
+              игрока", "Поддержка до 100K активных дружеских связей"], "scalability_requirements":
+              ["Горизонтальное масштабирование через social-service", "Распределение
+              нагрузки на дружеские связи", "Оптимизация запросов к БД (batch, индексы)",
+              "Кэширование онлайн-статусов в Redis"]}, "subtasks": [{"id": "friend-manager-module",
+              "title": "Реализация модуля Friend Manager", "description": "Управление
+              друзьями\nCRUD операции\nПолучение списка друзей\n", "priority": "high",
+              "estimated_time": "2-3 дня"}, {"id": "friend-request-handler-implementation",
+              "title": "Реализация Friend Request Handler", "description": "Обработка
+              запросов на дружбу\nПринятие/отклонение запросов\nУведомления\n", "priority":
+              "high", "estimated_time": "3-4 дня"}, {"id": "block-list-manager-development",
+              "title": "Реализация Block List Manager", "description": "Управление
+              блокировками\nБлокировка/разблокировка\nПроверка блокировок\n", "priority":
+              "high", "estimated_time": "2-3 дня"}, {"id": "online-status-tracker-implementation",
+              "title": "Реализация Online Status Tracker", "description": "Отслеживание
+              онлайн-статуса\nСобытийное обновление\nКэширование статусов\n", "priority":
+              "high", "estimated_time": "3-4 дня"}, {"id": "recent-contacts-manager",
+              "title": "Реализация Recent Contacts Manager", "description": "Управление
+              последними контактами\nОтслеживание взаимодействий\nСортировка по активности\n",
+              "priority": "medium", "estimated_time": "2-3 дня"}, {"id": "database-optimization",
+              "title": "Оптимизация БД и запросов", "description": "Создание индексов\nОптимизация
+              запросов\nКэширование статусов\n", "priority": "medium", "estimated_time":
+              "1-2 дня"}, {"id": "api-endpoints", "title": "Реализация REST API endpoints",
+              "description": "Создание всех endpoints для друзей\nИнтеграция с существующим
+              API social-service\n", "priority": "high", "estimated_time": "2-3 дня"},
+              {"id": "integration-testing", "title": "Интеграционное тестирование",
+              "description": "Тесты управления друзьями\nТесты запросов на дружбу\nТесты
+              блокировок\nТесты онлайн-статуса\nТесты интеграций\n", "priority": "high",
+              "estimated_time": "2-3 дня"}], "diagrams": {"component_diagram": "```mermaid\ngraph
+              TB\n    subgraph \"Social Service\"\n        FM[Friend Manager]\n        FRH[Friend
+              Request Handler]\n        BLM[Block List Manager]\n        OST[Online
+              Status Tracker]\n        RCM[Recent Contacts Manager]\n    end\n\n    subgraph
+              \"Database\"\n        DB[(PostgreSQL<br/>friendships<br/>friend_blocks<br/>recent_contacts)]\n    end\n\n    subgraph
+              \"External Services\"\n        CS[Character Service]\n        SS[Session
+              Service]\n        NS[Notification Service]\n        RG[Realtime Gateway]\n    end\n\n    subgraph
+              \"Client\"\n        CL[UE5 Client]\n    end\n\n    CL -->|API requests|
+              FM\n    FM --> FRH\n    FM --> BLM\n    FM --> OST\n    FM --> RCM\n    FM
+              -->|store| DB\n    FRH -->|store| DB\n    BLM -->|store| DB\n    OST
+              -->|events| SS\n    FRH -->|notify| NS\n    OST -->|notify| NS\n    FM
+              -->|sync state| RG\n    FM -->|player data| CS\n    RG -->|push events|
+              CL\n```\n", "data_flow_diagram": "```mermaid\nsequenceDiagram\n    participant
+              P1 as Player 1\n    participant FRH as Friend Request Handler\n    participant
+              FM as Friend Manager\n    participant OST as Online Status Tracker\n    participant
+              SS as Session Service\n    participant P2 as Player 2\n\n    P1->>FRH:
+              Send friend request\n    FRH->>FRH: Create request\n    FRH->>P2: Notify\n    P2->>FRH:
+              Accept request\n    FRH->>FM: Create friendship\n    FM->>OST: Start
+              tracking\n    SS->>OST: Player online\n    OST->>P1: Notify friend online\n```\n"},
+              "decisions": [{"id": "adr-friend-architecture", "summary": "Выбрана
+              модульная архитектура внутри social-service-go для обеспечения\nтесной
+              интеграции с другими социальными системами.\n"}, {"id": "adr-friend-requests",
+              "summary": "Система запросов на дружбу с уведомлениями обеспечивает
+              удобное\nуправление дружескими связями.\n"}, {"id": "adr-block-system",
+              "summary": "Система блокировок обеспечивает защиту игроков от нежелательных\nвзаимодействий
+              и предотвращает отправку запросов заблокированным.\n"}, {"id": "adr-online-status",
+              "summary": "Событийное обновление онлайн-статуса обеспечивает актуальность
+              данных\nи повышает социальную вовлечённость.\n"}, {"id": "adr-recent-contacts",
+              "summary": "Система последних контактов упрощает поиск и взаимодействие
+              с\nнедавно встреченными игроками.\n"}], "validation": {"architecture_complete":
+              true, "components_defined": true, "microservices_identified": true,
+              "api_endpoints_described": true, "technical_specification_ready": true,
+              "subtasks_defined": true}, "next_steps": ["Передача задачи агенту API
+              Designer для создания OpenAPI спецификации", "Детализация API endpoints",
+              "Создание request/response схем", "Определение правил блокировок"],
+              "history": [{"version": "1.1.0", "date": "2025-11-30", "author": "Architect
+              Agent", "changes": "Добавлена детальная синхронизация данных:\n- Event
+              Sourcing для всех изменений состояния системы друзей\n- CQRS Pattern
+              для разделения команд и запросов\n- Saga Pattern для распределенных
+              операций (создание дружеской связи, обновление статуса)\n- Outbox Pattern
+              для гарантированной доставки событий\n- Обновлена секция data_consistency
+              с механизмами синхронизации\n- Добавлена спецификация тикрейта для операций
+              с друзьями, обновления онлайн-статуса и realtime уведомлений\n"}, {"version":
+              "1.0.0", "date": "2025-11-22", "author": "Architect Agent", "changes":
+              "Создана полная архитектура системы друзей:\n- Определены компоненты
+              (Friend Manager, Friend Request Handler, Block List Manager, Online
+              Status Tracker, Recent Contacts Manager)\n- Описаны API endpoints (высокоуровнево)\n-
+              Спроектированы потоки данных\n- Определена структура БД (friendships,
+              friend_blocks, recent_contacts)\n- Спроектирована система запросов на
+              дружбу\n- Спроектирована система блокировок\n- Спроектирована система
+              онлайн-статуса\n- Создано техническое задание\n- Разбито на подзадачи\n"}]}'
+        - column:
+            name: metadata
+            value: '{"id": "friend-system-architecture", "title": "Архитектура системы
+              друзей (Friend System)", "document_type": "architecture", "category":
+              "systems", "status": "draft", "version": "1.1.0", "last_updated": "2025-11-30T19:50:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "friend", "backend", "social"], "related_systems":
+              ["social-service-go", "character-service-go", "session-service-go",
+              "notification-service-go"], "related_documents": [{"id": "friend-system",
+              "relation": "extends"}], "github_issue": 152, "visibility": "internal",
+              "audience": ["architect", "backend", "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\friend-system-architecture.yaml

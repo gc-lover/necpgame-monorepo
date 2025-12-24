@@ -1,0 +1,150 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-global-state-management-60ce6b7e
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-236856641830526'
+        - column:
+            name: doc_id
+            value: implementation-global-state-management
+        - column:
+            name: title
+            value: Global State Management — Управление состоянием
+        - column:
+            name: document_type
+            value: implementation
+        - column:
+            name: category
+            value: global-state
+        - column:
+            name: status
+            value: approved
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-07 06:00:00+00:00
+        - column:
+            name: concept_approved
+            value: true
+        - column:
+            name: concept_reviewed_at
+            value: 2025-11-07 06:00:00+00:00
+        - column:
+            name: owners
+            value: '[{"role": "concept_director", "contact": "concept@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - global-state
+            - event-sourcing
+            - backend
+        - column:
+            name: topics
+            value:
+            - state-management
+            - event-processing
+        - column:
+            name: related_systems
+            value:
+            - global-state-service
+            - quest-service
+            - analytics-pipeline
+        - column:
+            name: related_documents
+            value: '[{"id": "implementation-global-state-events", "relation": "complements"},
+              {"id": "implementation-global-state-operations", "relation": "references"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/implementation/global-state/global-state-management.md
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - concept
+            - backend
+            - analytics
+        - column:
+            name: risk_level
+            value: high
+        - column:
+            name: content
+            value: '{"metadata": {"id": "implementation-global-state-management",
+              "title": "Global State Management — Управление состоянием", "document_type":
+              "implementation", "category": "global-state", "status": "approved",
+              "version": "1.0.0", "last_updated": "2025-11-07T06:00:00+00:00", "concept_approved":
+              true, "concept_reviewed_at": "2025-11-07T06:00:00+00:00", "owners":
+              [{"role": "concept_director", "contact": "concept@necp.game"}], "tags":
+              ["global-state", "event-sourcing", "backend"], "topics": ["state-management",
+              "event-processing"], "related_systems": ["global-state-service", "quest-service",
+              "analytics-pipeline"], "related_documents": [{"id": "implementation-global-state-events",
+              "relation": "complements"}, {"id": "implementation-global-state-operations",
+              "relation": "references"}], "source": "shared/docs/knowledge/implementation/global-state/global-state-management.md",
+              "visibility": "internal", "audience": ["concept", "backend", "analytics"],
+              "risk_level": "high"}, "review": {"chain": [{"role": "concept_director",
+              "reviewer": "", "reviewed_at": "", "status": "pending"}], "next_actions":
+              []}, "summary": {"problem": "Логика обработки глобальных событий и управления
+              состоянием оставалась в Markdown и не проходила схемную проверку.",
+              "goal": "Перенести микрофичу Global State Management в YAML, описав
+              пайплайн обработки, менеджер состояния, реконструкцию и интеграцию с
+              Event Bus.", "essence": "Документ фиксирует 10-этапный Event Processing
+              Pipeline, контракт GlobalStateManager, механизмы time travel и state
+              reconstruction.", "key_points": ["Event Processing Pipeline описывает
+              путь события от валидации до аналитики.", "GlobalStateManager покрывает
+              кэширование, обновление, пакетные операции и публикацию StateChangedEvent.",
+              "Time travel и state reconstruction базируются на snapshots и повторном
+              применении событий из Event Store."]}, "content": {"sections": [{"id":
+              "event_pipeline", "title": "Пайплайн обработки событий", "body": "События
+              проходят десять шагов: прием, валидация, авторизация, обогащение, запись
+              в Event Store,\nпубликация в шину, обработка подписчиками, обновление
+              состояния, уведомления и аналитика.\nПример QuestEventHandler показывает
+              применение изменений к репутации, флагам, предметам и публикацию follow-up
+              событий.\n", "mechanics_links": ["mechanics/combat/combat-system-expansion-summary.yaml"],
+              "assets": []}, {"id": "state_manager", "title": "GlobalStateManager",
+              "body": "Сервис реализует чтение ключей и категорий, обновление по одному
+              и пакетами, работает с PostgreSQL и Redis,\nинвалидирует кэш и публикует
+              StateChangedEvent через Event Bus.\n", "mechanics_links": [], "assets":
+              []}, {"id": "time_travel", "title": "Time Travel и реконструкция", "body":
+              "getStateAtTime и reconstructState используют snapshots и реплей событий
+              для восстановления состояния,\nподдерживая миграции, отладку и аудит.\n",
+              "mechanics_links": ["implementation/global-state/global-state-sync.yaml"],
+              "assets": []}, {"id": "event_bus", "title": "Event Bus и подписчики",
+              "body": "Kafka/RabbitMQ/Redis маршрутизируют события по доменным topics.
+              Подписчики обновляют state, рассылают уведомления,\nзаписывают аналитику
+              и инвалидацию кэша.\n", "mechanics_links": ["implementation-global-state/global-state-events.yaml"],
+              "assets": []}, {"id": "api_contracts", "title": "API контракты", "body":
+              "REST эндпоинты позволяют читать категории состояния и создавать события,
+              обеспечивая интеграцию с другими сервисами.\n", "mechanics_links": [],
+              "assets": []}]}, "appendix": {"glossary": [], "references": [], "decisions":
+              []}, "implementation": {"needs_task": false, "github_issue": 53, "queue_reference":
+              ["shared/trackers/queues/concept/queued.yaml"], "blockers": []}, "history":
+              [{"version": "1.0.0", "date": "2025-11-07", "author": "ai_brain_manager",
+              "changes": "Описан пайплайн обработки событий, менеджер состояния и
+              поддержка time travel."}], "validation": {"checksum": "", "schema_version":
+              "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "implementation-global-state-management", "title": "Global
+              State Management — Управление состоянием", "document_type": "implementation",
+              "category": "global-state", "status": "approved", "version": "1.0.0",
+              "last_updated": "2025-11-07T06:00:00+00:00", "concept_approved": true,
+              "concept_reviewed_at": "2025-11-07T06:00:00+00:00", "owners": [{"role":
+              "concept_director", "contact": "concept@necp.game"}], "tags": ["global-state",
+              "event-sourcing", "backend"], "topics": ["state-management", "event-processing"],
+              "related_systems": ["global-state-service", "quest-service", "analytics-pipeline"],
+              "related_documents": [{"id": "implementation-global-state-events", "relation":
+              "complements"}, {"id": "implementation-global-state-operations", "relation":
+              "references"}], "source": "shared/docs/knowledge/implementation/global-state/global-state-management.md",
+              "visibility": "internal", "audience": ["concept", "backend", "analytics"],
+              "risk_level": "high"}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\global-state\global-state-management.yaml

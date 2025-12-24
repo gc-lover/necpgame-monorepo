@@ -1,0 +1,161 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-difficulty-rating-system-architecture-fbec3cfa
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '6636008974005876'
+        - column:
+            name: doc_id
+            value: difficulty-rating-system-architecture
+        - column:
+            name: title
+            value: Архитектура системы рейтинга сложности
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-12-XXT00:00:00Z
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - gameplay
+            - difficulty-rating
+            - dynamic-difficulty
+            - matchmaking
+            - hardcore
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - gameplay-service
+            - matchmaking-service
+            - analytics-service
+        - column:
+            name: related_documents
+            value: '[{"id": "difficulty-rating-idea", "relation": "implements"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - matchmaking
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "difficulty-rating-system-architecture", "title":
+              "Архитектура системы рейтинга сложности", "document_type": "architecture",
+              "category": "systems", "status": "draft", "version": "1.0.0", "last_updated":
+              "2025-12-XXT00:00:00Z", "owners": [{"role": "architect", "contact":
+              "architect@necp.game"}], "tags": ["architecture", "gameplay", "difficulty-rating",
+              "dynamic-difficulty", "matchmaking", "hardcore"], "related_systems":
+              ["gameplay-service", "matchmaking-service", "analytics-service"], "related_documents":
+              [{"id": "difficulty-rating-idea", "relation": "implements"}], "github_issue":
+              1505, "visibility": "internal", "audience": ["architect", "backend",
+              "matchmaking", "api-designer"]}, "summary": {"problem": "Игроки часто
+              выбирают неподходящую сложность контента, что приводит к фрустрации\nили
+              скуке. Не хватает системы, которая бы автоматически подстраивала сложность\nпод
+              уровень игрока.\n", "goal": "Создать архитектуру рейтинга сложности,
+              которая:\n- Автоматически определяет подходящую сложность для игрока\n-
+              Подстраивает сложность контента под команду\n- Предоставляет рекомендации
+              по сложности\n- Интегрируется с системой матчмейкинга\n", "essence":
+              "Система рейтинга сложности анализирует навыки игроков и автоматически
+              подстраивает\nсложность контента. Система учитывает историю прохождения
+              и предпочтения игроков.\n"}, "architecture": {"overview": "Система рейтинга
+              сложности состоит из следующих компонентов:\n1. Player Skill Rater -
+              оценка навыков игрока\n2. Content Difficulty Rater - оценка сложности
+              контента\n3. Difficulty Adjuster - автоматическая подстройка сложности\n4.
+              Recommendation Engine - рекомендации по сложности\n5. Rating Telemetry
+              Collector - сбор телеметрии рейтингов\n", "microservices": [{"name":
+              "gameplay-service", "port": 8083, "responsibility": "Обработка рейтинга
+              сложности:\n- Оценка навыков игроков\n- Оценка сложности контента\n-
+              Автоматическая подстройка\n- Рекомендации\n", "components": [{"player-skill-rater":
+              "оценка навыков"}, {"content-difficulty-rater": "оценка сложности"},
+              {"difficulty-adjuster": "автоматическая подстройка"}, {"recommendation-engine":
+              "рекомендации"}, {"rating-telemetry-collector": "сбор телеметрии"}],
+              "endpoints": ["GET /api/v1/gameplay/difficulty-rating/player/{playerId}
+              - рейтинг игрока", "GET /api/v1/gameplay/difficulty-rating/content/{contentId}
+              - рейтинг контента", "GET /api/v1/gameplay/difficulty-rating/recommendations/{playerId}
+              - рекомендации", "POST /api/v1/gameplay/difficulty-rating/adjust - подстройка
+              сложности"], "websocket_channels": ["wss://api.necp.game/v1/gameplay/difficulty-rating/{playerId}
+              - события рейтинга"], "events_published": [{"gameplay.difficulty-rating.updated":
+              "обновление рейтинга"}, {"gameplay.difficulty-rating.recommendation":
+              "рекомендация сложности"}]}], "data_flows": {"skill_rating_flow": "1.
+              Player Skill Rater анализирует историю прохождения игрока\n2. Player
+              Skill Rater рассчитывает рейтинг навыков\n3. Player Skill Rater обновляет
+              рейтинг в БД\n4. Gameplay Service публикует событие gameplay.difficulty-rating.updated\n5.
+              Recommendation Engine использует рейтинг для рекомендаций\n", "difficulty_adjustment_flow":
+              "1. Игрок входит в контент с командой\n2. Difficulty Adjuster получает
+              рейтинги всех игроков\n3. Difficulty Adjuster рассчитывает средний рейтинг
+              команды\n4. Difficulty Adjuster подстраивает сложность контента\n5.
+              Gameplay Service применяет модификаторы сложности\n"}, "database_structure":
+              {"tables": [{"name": "player_skill_ratings", "description": "Рейтинги
+              навыков игроков", "columns": [{"id": "UUID PRIMARY KEY"}, {"player_id":
+              "UUID FOREIGN KEY"}, {"skill_rating": "DECIMAL(10,2)"}, {"completion_rate":
+              "DECIMAL(5,2)"}, {"average_time": "INTEGER"}, {"average_deaths": "DECIMAL(5,2)"},
+              {"updated_at": "TIMESTAMP"}]}, {"name": "content_difficulty_ratings",
+              "description": "Рейтинги сложности контента", "columns": [{"id": "UUID
+              PRIMARY KEY"}, {"content_id": "UUID FOREIGN KEY"}, {"difficulty_rating":
+              "DECIMAL(10,2)"}, {"completion_rate": "DECIMAL(5,2)"}, {"average_time":
+              "INTEGER"}, {"average_deaths": "DECIMAL(5,2)"}, {"updated_at": "TIMESTAMP"}]}]},
+              "integrations": {"matchmaking_service": "- Подбор игроков по рейтингу\n-
+              Балансировка команд\n", "analytics_service": "- Анализ данных о рейтингах\n-
+              Оптимизация алгоритмов\n"}, "technical_tasks": {"phases": {"phase_1":
+              {"name": "Player Skill Rater и Content Difficulty Rater", "tasks": ["Реализация
+              Player Skill Rater", "Реализация Content Difficulty Rater", "Оценка
+              навыков игроков", "Оценка сложности контента", "Интеграция с Analytics
+              Service"], "estimated_effort": "4 days"}, "phase_2": {"name": "Difficulty
+              Adjuster и Recommendation Engine", "tasks": ["Реализация Difficulty
+              Adjuster", "Реализация Recommendation Engine", "Автоматическая подстройка
+              сложности", "Рекомендации по сложности", "Интеграция с Matchmaking Service"],
+              "estimated_effort": "4 days"}}}}}'
+        - column:
+            name: metadata
+            value: '{"id": "difficulty-rating-system-architecture", "title": "Архитектура
+              системы рейтинга сложности", "document_type": "architecture", "category":
+              "systems", "status": "draft", "version": "1.0.0", "last_updated": "2025-12-XXT00:00:00Z",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "gameplay", "difficulty-rating", "dynamic-difficulty",
+              "matchmaking", "hardcore"], "related_systems": ["gameplay-service",
+              "matchmaking-service", "analytics-service"], "related_documents": [{"id":
+              "difficulty-rating-idea", "relation": "implements"}], "github_issue":
+              1505, "visibility": "internal", "audience": ["architect", "backend",
+              "matchmaking", "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\difficulty-rating-system-architecture.yaml

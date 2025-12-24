@@ -1,0 +1,159 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-auction-database-fc920be8
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '4291772763185849'
+        - column:
+            name: doc_id
+            value: auction-house-database
+        - column:
+            name: title
+            value: Аукционный дом — база данных и интерфейсы
+        - column:
+            name: document_type
+            value: mechanics
+        - column:
+            name: category
+            value: economy
+        - column:
+            name: status
+            value: approved
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-09 20:05:00+00:00
+        - column:
+            name: concept_approved
+            value: true
+        - column:
+            name: concept_reviewed_at
+            value: 2025-11-09 20:05:00+00:00
+        - column:
+            name: owners
+            value: '[{"role": "concept_director", "contact": "concept@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - auction-house
+            - database
+            - economy
+        - column:
+            name: topics
+            value:
+            - trading-platform
+            - data-modeling
+        - column:
+            name: related_systems
+            value:
+            - economy-service
+            - analytics-service
+        - column:
+            name: related_documents
+            value: '[{"id": "auction-house-mechanics", "relation": "complements"},
+              {"id": "auction-house-operations", "relation": "complements"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/mechanics/economy/auction-house/auction-database.md
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - concept
+            - economy
+            - backend
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "auction-house-database", "title": "Аукционный
+              дом — база данных и интерфейсы", "document_type": "mechanics", "category":
+              "economy", "status": "approved", "version": "1.0.0", "last_updated":
+              "2025-11-09T20:05:00+00:00", "concept_approved": true, "concept_reviewed_at":
+              "2025-11-09T20:05:00+00:00", "owners": [{"role": "concept_director",
+              "contact": "concept@necp.game"}], "tags": ["auction-house", "database",
+              "economy"], "topics": ["trading-platform", "data-modeling"], "related_systems":
+              ["economy-service", "analytics-service"], "related_documents": [{"id":
+              "auction-house-mechanics", "relation": "complements"}, {"id": "auction-house-operations",
+              "relation": "complements"}], "source": "shared/docs/knowledge/mechanics/economy/auction-house/auction-database.md",
+              "visibility": "internal", "audience": ["concept", "economy", "backend"],
+              "risk_level": "medium"}, "review": {"chain": [{"role": "economy_lead",
+              "reviewer": "", "reviewed_at": "2025-11-09T20:05:00+00:00", "status":
+              "approved"}], "next_actions": []}, "summary": {"problem": "Схемы хранилищ
+              и интерфейсы аукционного дома находились в Markdown и требовали структурированного
+              описания для автоматизации экономики.", "goal": "Зафиксировать структуру
+              таблиц, индексов, пользовательских сценариев и связи с другими микрофичами
+              аукциона.", "essence": "Документ определяет реляционные объекты аукционного
+              дома, индексацию для быстрых выборок и ключевые элементы пользовательского
+              интерфейса.", "key_points": ["Таблица `auctions` хранит состояние лотов,
+              параметры цены, тайминги и историю продажи.", "Таблица `auction_bids`
+              обеспечивает журнал ставок с каскадным удалением и индексацией по лоту
+              и игроку.", "Индексы по статусу, времени истечения и идентификатору
+              предмета сокращают стоимость запросов в активном каталоге.", "Интерфейсы
+              включают поиск, сортировку и быстрые действия (ставка/выкуп) в едином
+              экране."]}, "content": {"sections": [{"id": "schema_auctions", "title":
+              "Структура таблицы auctions", "body": "Основные поля: идентификаторы
+              продавца и предмета, количество, стартовая цена, текущая ставка,\nbuyout,
+              идентификатор лидирующего игрока, количество ставок, длительность, время
+              истечения и статус\n(`active`, `sold`, `expired`, `cancelled`). Для
+              завершённых лотов фиксируются цена продажи, метод\n(`won`, `buyout`)
+              и временная отметка `sold_at`. Каскадные связи с таблицей игроков гарантируют\nочистку
+              незавершённых лотов при удалении персонажа.\n", "mechanics_links": ["mechanics/economy/auction-house/auction-operations.yaml"]},
+              {"id": "schema_bids", "title": "Структура таблицы auction_bids", "body":
+              "Записи ставок содержат ссылку на лот, игрока, размер ставки и временную
+              метку. Индексы\n`auction_id, created_at DESC` и `bidder_id` ускоряют
+              историю ставок и персональную аналитику.\nКаскад с удалением аукциона
+              очищает историю автоматически.\n", "mechanics_links": ["mechanics/economy/auction-house/auction-mechanics.yaml"]},
+              {"id": "indexing", "title": "Индексация и производительность", "body":
+              "Индекс по статусу позволяет быстро фильтровать активные лоты. Частичный
+              индекс по `expires_at`\n(для `active`) поддерживает cron-задачи обработки
+              истёкших лотов. Индекс по `item_id` ускоряет\nподбор аналогичных товаров.
+              Совокупность индексов обеспечивает масштабируемость каталога\nпри высоком
+              количестве активных аукционов.\n", "mechanics_links": ["mechanics/economy/auction-house/auction-operations.yaml"]},
+              {"id": "data_flow", "title": "Поток данных и состояния", "body": "Лоты
+              создаются в статусе `active`, получают обновления при ставках и завершаются
+              в статусах\n`sold`, `expired` или `cancelled`. Поля `current_bid`, `current_bidder_id`,
+              `bid_count` обновляются\nтранзакционно, а возврат средств предыдущему
+              лидеру фиксируется в бизнес-логике.\n", "mechanics_links": ["mechanics/economy/auction-house/auction-mechanics.yaml"]},
+              {"id": "ui_ux", "title": "Пользовательские интерфейсы", "body": "Экран
+              включает поиск, фильтры и сортировки (ending soon, price, rarity), карточки
+              лотов с\nбыстрыми действиями, вкладки «My Auctions» и «My Bids». Компоненты
+              интерфейса синхронизируются\nс API и отражают таймеры, buyout и количество
+              ставок.\n", "mechanics_links": ["mechanics/economy/auction-house/auction-operations.yaml"]},
+              {"id": "integration", "title": "Интеграции и аналитика", "body": "База
+              служит источником для аналитических счетчиков (`auctions.active`, `auctions.bids.daily`),\nсинхронизации
+              с налоговыми и кошельковыми сервисами, а также аудита продаж.\n", "mechanics_links":
+              ["mechanics/economy/auction-house/auction-operations.yaml"]}]}, "appendix":
+              {"glossary": [], "references": [], "decisions": []}, "implementation":
+              {"needs_task": false, "github_issue": 82, "queue_reference": ["shared/trackers/queues/concept/queued.yaml"],
+              "blockers": []}, "history": [{"version": "1.0.0", "date": "2025-11-07",
+              "author": "brain_manager", "changes": "Определены таблицы аукционного
+              дома, индексация, UI-компоненты и связи с сервисами."}], "validation":
+              {"checksum": "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "auction-house-database", "title": "Аукционный дом — база
+              данных и интерфейсы", "document_type": "mechanics", "category": "economy",
+              "status": "approved", "version": "1.0.0", "last_updated": "2025-11-09T20:05:00+00:00",
+              "concept_approved": true, "concept_reviewed_at": "2025-11-09T20:05:00+00:00",
+              "owners": [{"role": "concept_director", "contact": "concept@necp.game"}],
+              "tags": ["auction-house", "database", "economy"], "topics": ["trading-platform",
+              "data-modeling"], "related_systems": ["economy-service", "analytics-service"],
+              "related_documents": [{"id": "auction-house-mechanics", "relation":
+              "complements"}, {"id": "auction-house-operations", "relation": "complements"}],
+              "source": "shared/docs/knowledge/mechanics/economy/auction-house/auction-database.md",
+              "visibility": "internal", "audience": ["concept", "economy", "backend"],
+              "risk_level": "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\mechanics\economy\auction-house\auction-database.yaml

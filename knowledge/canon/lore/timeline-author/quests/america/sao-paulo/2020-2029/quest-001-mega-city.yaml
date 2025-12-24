@@ -1,53 +1,66 @@
-# Issue: #1071
+# Issue: #249
 metadata:
-  id: canon-quest-sao-paulo-2020-2029-mega-city
-  title: 'Сан-Паулу 2020-2029 — «Мегаполис»'
+  id: canon-quest-sao-paulo-mega-city
+  title: 'Сан-Паулу — Вертикальный мир'
   document_type: canon
-  category: timeline-author
-  status: draft
+  category: quest
+  status: approved
   version: '2.0.0'
   last_updated: 2025-11-29T00:00:00Z
-  concept_approved: false
-  concept_reviewed_at: ''
+  concept_approved: true
+  concept_reviewed_at: 2025-11-11T15:48:00Z
   owners:
-    - role: concept_director
-      contact: concept@necp.game
+    - role: narrative_team
+      contact: narrative@necp.game
   tags:
     - sao_paulo
-    - quest
     - megacity
-  topics:
     - urbanism
-    - city-scale
+  topics:
+    - urban-planning
+    - social-contrast
+    - infrastructure
   related_systems:
-    - narrative-service
-    - social-service
-  related_documents: [ ]
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/sao-paulo/2020-2029/quest-001-mega-city.md
+    - exploration-system
+    - economy-system
+    - reputation-system
+    - parkour-system
+    - skill-check-engine
+    - quest-engine
+  related_documents:
+    - id: canon-quest-sao-paulo-traffic-nightmare
+      relation: parallels
+    - id: github-issue-364
+      title: GitHub Issue #364
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/364
+      relation: migrated_to
+      migrated_at: 2025-11-22T21:10:00Z
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/sao-paulo/2020-2029/quest-001-mega-city.md
   visibility: internal
   audience:
-    - concept
+    - lore
     - narrative
-    - liveops
+    - quest-design
   risk_level: medium
 review:
   chain:
-    - role: concept_director
+    - role: narrative_lead
       reviewer: ''
       reviewed_at: ''
       status: pending
   next_actions: [ ]
 summary:
-  problem: 'Маршрут по мегаполису Сан-Паулу находился в Markdown и не участвовал в урбанистической линии региона.'
-  goal: 'Оформить опыт посещения основных локаций мегаполиса с акцентом на масштаб и контрасты.'
-  essence: 'Игрок поднимается на смотровые площадки, исследует Avenida Paulista и наблюдает разрыв между небоскрёбами и фавелами.'
+  problem: "Квест доставки через три вертикальных уровня мегаполиса Сан-Паулу требует детализации механик, диалогов и ветвлений."
+  goal: "Создать полноценный контентный квест с диалогами, ветвлениями и интеграцией с системами паркура, репутации и экономики."
+  essence: "Игрок выполняет курьерскую доставку загадочного пакета через три вертикальных уровня мегаполиса: Baixada (фавелы), Meio (средний класс), Topo (корпоративные башни), выбирая между взятками, навыками и риском."
   key_points:
-    - 'Сан-Паулу — крупнейший город Южного полушария с населением 22+ миллионов.'
-    - 'Квест подчёркивает бесконечный горизонт небоскрёбов и легендарные пробки.'
-    - 'Контрасты между финансовыми кварталами и соседними фавелами задают социальный контекст.'
+    - Паркур через башню Копан (200+ метров) с тремя точками контроля.
+    - Три выбора на каждом уровне: взятка, рекомендация, альтернативный путь.
+    - Загадочный пакет с информацией, которая может изменить город.
+    - 9 вариантов прохождения (3 выбора по 3 пути).
 quest_definition:
-  quest_type: main
-  level_min: 3
+  quest_type: side
+  level_min: 15
   level_max: null
   requirements:
     required_quests: [ ]
@@ -55,115 +68,148 @@ quest_definition:
     required_reputation: { }
     required_items: [ ]
   objectives:
-    - id: visit_observation_deck
-      text: "Подняться на смотровую площадку Edifício Itália (46 этажей) и познакомиться с горизонтом"
-      type: explore
-      target: sao_paulo_italia_building
+    - id: receive_package
+      text: "Получить загадочный пакет от анонимного клиента"
+      type: interact
+      target: anonymous_client
       count: 1
       optional: false
-    - id: explore_avenida_paulista
-      text: "Перейти на Avenida Paulista — сердце финансового центра, посетить деловой квартал и проанализировать транспортную инфраструктуру"
-      type: explore
-      target: sao_paulo_avenida_paulista
+    - id: pass_baixada_checkpoint
+      text: "Пройти пост банды Comando Vertical в Baixada"
+      type: choice
+      target: baixada_checkpoint
       count: 1
       optional: false
-    - id: observe_contrasts
-      text: "Наблюдать за контрастом между небоскрёбами и ближайшими жилыми массивами, фиксировать шум, рекламные голограммы и климатические особенности"
-      type: observe
-      target: sao_paulo_urban_contrasts
+    - id: pass_meio_checkpoint
+      text: "Обойти милицию среднего уровня в Meio"
+      type: choice
+      target: meio_checkpoint
       count: 1
       optional: false
-    - id: interview_residents
-      text: "Интервьюировать жителей о жизни в мегаполисе, собрать данные для урбанистической линии"
-      type: social
-      target: sao_paulo_residents_interviews
+    - id: reach_topo_level
+      text: "Проникнуть на вершину Topo к корпоративным башням"
+      type: choice
+      target: topo_access
+      count: 1
+      optional: false
+    - id: deliver_package
+      text: "Доставить пакет и узнать о содержимом"
+      type: interact
+      target: package_delivery_point
       count: 1
       optional: false
   rewards:
-    experience: 2500
-    currency: 0
-    items: [ ]
-    reputation:
-      sao_paulo_urbanism: 25
-    flags:
-      - megacity_resident_achievement
-  branches: [ ]
+    experience: 4000
+    money: 0
+    items:
+      - item_id: achievement_vertical_journey
+        quantity: 1
+    reputation: { }
+    unlocks:
+      - urban_planning_quests
+      - favela_reputation_system
+  branches:
+    - branch_id: bribe_path
+      description: "Путь взяток - платить за проход на каждом уровне"
+      consequences:
+        money: -15000
+        reputation:
+          Comando_Vertical: 10
+          Milicia: 10
+          Corporations: -5
+    - branch_id: skill_path
+      description: "Путь навыков - использовать паркур, взлом, скрытность"
+      consequences:
+        skills:
+          parkour: +50
+          stealth: +30
+          hacking: +25
+        reputation:
+          Comando_Vertical: -5
+          Milicia: -5
+          Corporations: -10
+    - branch_id: alternative_path
+      description: "Альтернативный путь - найти обходные маршруты"
+      consequences:
+        exploration: +100
+        reputation:
+          Urban_Explorers: +20
 content:
   sections:
-    - id: overview
-      title: Описание
+    - id: quest_profile
+      title: 'Параметры квеста'
       body: |
-        Квест знакомит игрока с масштабом Сан-Паулу: панорамы, деловые центры и краски бесконечного мегаполиса. Игрок
-        собирает впечатления о городе через наблюдения, интервью и навигацию по плотным кварталам.
-      mechanics_links:
-        - mechanics/quests/quest-structure.yaml
+        Тип: side quest (курьерская доставка). Сложность: medium. Формат: solo. Длительность: 2-3 часа.
+        Награды: 4 000 XP, ачивка «Вертикальное путешествие», навыки паркура/скрытности/взлома, репутация с фракциями.
+      mechanics_links: [ ]
       assets: [ ]
-    - id: route
-      title: Маршрут
+    - id: stages
+      title: 'Этапы квеста'
       body: |
-        1. Смотровая площадка Edifício Itália (46 этажей) — знакомство с горизонтом.
-        2. Переход на Avenida Paulista — сердце финансового центра.
-        3. Посещение делового квартала и анализ транспортной инфраструктуры.
-        4. Наблюдение за контрастом между небоскрёбами и ближайшими жилыми массивами.
-      mechanics_links:
-        - mechanics/world/world-state/player-impact-systems.yaml
+        1. Получить загадочный пакет от анонимного клиента в нижнем уровне Baixada.
+        2. Пройти пост банды Comando Vertical (выбор: взятка/рекомендация/альтернативный путь).
+        3. Обойти милицию среднего уровня Meio (выбор: документы/взлом/паркур).
+        4. Проникнуть на вершину Topo к корпоративным башням (выбор: честность/обман/скрытность).
+        5. Доставить пакет и узнать, что это доказательства коррупции.
+      mechanics_links: [ ]
       assets: [ ]
-    - id: immersion
-      title: Погружение
+    - id: systems_hooks
+      title: 'Системные крючки'
       body: |
-        Игрок фиксирует шум, рекламные голограммы, климатические особенности (город моросящего дождя) и интервьюирует
-        жителей о жизни в мегаполисе. Собранные данные влияют на репутацию в урбанистической линии.
-      mechanics_links:
-        - mechanics/social/player-orders-creation.yaml
+        parkour-system обрабатывает вертикальную навигацию через башню Копан, reputation-system обновляет репутацию с фракциями (Comando Vertical, Milicia, Corporations), skill-check-system проверяет навыки stealth/hacking/athletics, economy-system учитывает взятки и затраты, exploration-system открывает обходные маршруты.
+      mechanics_links: [ ]
       assets: [ ]
     - id: regional_details
-      title: Региональные детали
+      title: 'Региональные детали'
       body: |
-        Описываются статистические факты: 22 миллиона жителей, статус экономической столицы Бразилии, бесконечные пробки,
-        использование вертолётов и климатические особенности (Cidade da Garoa).
+        Сан-Паулу вырос не только вширь, но и ввысь. Фавелы карабкаются по небоскрёбам, создавая три мира: Baixada (нижний, тени и трущобы), Meio (средний класс), Topo (корпоративные башни и пентхаусы). Башня Копан — 200+ метров высотой, символ вертикального расслоения. Каждый уровень контролируется своей силой: банды внизу, милиция в центре, корпоративная охрана наверху. Контрабанда между уровнями — опасный бизнес.
       mechanics_links: [ ]
       assets: [ ]
     - id: rewards
-      title: Награды и последствия
+      title: 'Награды и последствия'
       body: |
-        - 2 500 XP, урбанистика +25.
-        - Ачивка «Житель Мегаполиса» и разблокировка последующих квестов о транспортной системе и фавелах.
-      mechanics_links:
-        - mechanics/progression/progression-perks.yaml
+        Базовые награды: 4 000 XP, ачивка «Вертикальное путешествие».
+        Ветвления влияют на награды: путь взяток (-15 000 эдди, репутация с бандами +10), путь навыков (+50 паркур, +30 скрытность, +25 взлом), альтернативный путь (+100 исследование, репутация с исследователями +20).
+        Пакет содержит доказательства коррупции, что открывает дополнительные квесты расследования.
+      mechanics_links: [ ]
       assets: [ ]
-    - id: mechanics
-      title: Механики
+    - id: branches
+      title: 'Ветвления и выборы'
       body: |
-        - Сбор урбанистических «отметок» для альбома города.
-        - Анализ трафика и плотности населения.
-        - Визуализация экономических данных и влияние игрока на городские индексы.
-      mechanics_links:
-        - mechanics/world/world-state/player-impact-systems.yaml
-      assets: [ ]
-    - id: connections
-      title: Связи
-      body: |
-        Квест открывает социальную линию Сан-Паулу (фавелы и контрасты) и транспортную цепочку о городских пробках.
+        Три ключевых выбора на уровнях:
+        1. Baixada: взятка (5 000 эдди), рекомендация (нужна репутация), альтернативный путь (паркур через крыши).
+        2. Meio: документы (нужен взлом системы), взлом (нужен навык hacking), паркур (нужен навык parkour).
+        3. Topo: честность (дипломатия), обман (нужен навык deception), скрытность (нужен навык stealth).
+        Всего 9 вариантов прохождения (3×3×3).
       mechanics_links: [ ]
       assets: [ ]
 appendix:
   glossary: [ ]
-  references: [ ]
+  references:
+    - title: IBGE Metropolitan Population Report
+      link: https://www.ibge.gov.br
+    - title: Avenida Paulista Economic Survey
+      link: https://www1.folha.uol.com.br
   decisions: [ ]
 implementation:
-  github_issue: 1071
+  github_issue: 249
   needs_task: false
-  queue_reference: [ ]
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
   blockers: [ ]
 history:
   - version: '2.0.0'
     date: 2025-11-29
     author: content_writer
-    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики урбанизма и масштаба города.'
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции "Вертикальный мир". Добавлены ветвления, выборы и интеграция с системами паркура, репутации и навыков.'
+  - version: '1.1.0'
+    date: 2025-11-11
+    author: narrative_team
+    changes: 'Структурированы этапы исследования, добавлены системные связи и награды.'
   - version: '0.1.0'
-    date: 2025-11-12
-    author: concept_team
-    changes: 'Конвертация квеста «Мегаполис» в формат знаний.'
+    date: 2025-11-09
+    author: narrative_team
+    changes: 'Markdown-описание мегаполиса Сан-Паулу.'
 validation:
   checksum: ''
   schema_version: '1.0'

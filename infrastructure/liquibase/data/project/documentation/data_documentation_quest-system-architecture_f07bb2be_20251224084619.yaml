@@ -1,0 +1,291 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-quest-system-architecture-f07bb2be
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '7065347804756325'
+        - column:
+            name: doc_id
+            value: quest-system-architecture
+        - column:
+            name: title
+            value: Архитектура системы квестов
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-23 12:00:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - quests
+            - gameplay
+            - narrative
+            - branching
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - gameplay-service
+            - character-service
+            - economy-service
+            - social-service
+            - narrative-service
+            - event-service
+        - column:
+            name: related_documents
+            value: '[{"id": "quest-system", "relation": "implements"}, {"id": "quest-engine-backend",
+              "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - gameplay
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "quest-system-architecture", "title": "Архитектура
+              системы квестов", "document_type": "architecture", "category": "systems",
+              "status": "draft", "version": "1.0.0", "last_updated": "2025-11-23T12:00:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "quests", "gameplay", "narrative", "branching"],
+              "related_systems": ["gameplay-service", "character-service", "economy-service",
+              "social-service", "narrative-service", "event-service"], "related_documents":
+              [{"id": "quest-system", "relation": "implements"}, {"id": "quest-engine-backend",
+              "relation": "extends"}], "github_issue": 103, "visibility": "internal",
+              "audience": ["architect", "backend", "gameplay", "api-designer"]}, "summary":
+              {"problem": "Требуется спроектировать архитектуру системы квестов, поддерживающую:\n-
+              10 типов квестов (main, side, daily, weekly, faction, guild, dynamic,
+              event, social, player-created)\n- Ветвление и необратимые последствия\n-
+              Интеграцию с фракциями, лигами и экономикой\n- Динамические награды
+              и проверки навыков\n- Пользовательские квесты через доски фиксеров\n-
+              Интеграцию с диалогами, романсами и боевой системой\n", "goal": "Создать
+              архитектурную схему системы квестов с определением:\n- Микросервисов
+              для обработки квестов\n- Компонентов для ветвления и диалогов\n- Интеграций
+              с другими системами\n- API endpoints (высокоуровнево)\n- Структуры БД
+              для хранения квестов\n- Технического задания для реализации\n", "essence":
+              "Гибридная система квестов с поддержкой статических и динамических квестов,\nветвления,
+              интеграции с фракциями и лигами, пользовательских квестов.\n"}, "architecture":
+              {"overview": "Система квестов состоит из следующих компонентов:\n1.
+              Quest Engine - основной движок обработки квестов и state machine\n2.
+              Quest Content Manager - управление контентом квестов\n3. Dialogue System
+              - система диалогов и ветвления\n4. Quest Branch Manager - управление
+              ветвлением и последствиями\n5. Quest Reward Calculator - расчет динамических
+              наград\n6. Skill Check Engine - обработка проверок навыков\n7. Player
+              Quest Board - система пользовательских квестов\n8. Quest Analytics -
+              аналитика и логирование\n9. Quest Event Publisher - публикация событий
+              квестов\n", "microservices": [{"name": "quest-engine", "location": "gameplay-service
+              (модуль quest-engine)", "responsibility": "Основной движок обработки
+              квестов:\n- Управление state machine квестов\n- Обработка старта, прогресса
+              и завершения квестов\n- Управление инстансами квестов для игроков\n-
+              Координация с другими компонентами\n- Публикация событий квестов\n",
+              "endpoints": ["POST /api/v1/gameplay/quests/start - старт квеста", "POST
+              /api/v1/gameplay/quests/{questId}/complete-objective - завершение цели",
+              "POST /api/v1/gameplay/quests/{questId}/complete - завершение квеста",
+              "POST /api/v1/gameplay/quests/{questId}/fail - провал квеста", "POST
+              /api/v1/gameplay/quests/{questId}/abandon - отказ от квеста", "GET /api/v1/gameplay/quests/active
+              - активные квесты игрока", "GET /api/v1/gameplay/quests/{questId}/state
+              - состояние квеста", "GET /api/v1/gameplay/quests/available - доступные
+              квесты", "POST /api/v1/gameplay/quests/{questId}/update-progress - обновление
+              прогресса"]}, {"name": "quest-content-manager", "location": "gameplay-service
+              (модуль quest-content)", "responsibility": "Управление контентом квестов:\n-
+              Загрузка и кэширование определений квестов\n- Управление версиями квестов\n-
+              Фильтрация доступных квестов по условиям\n- Поддержка локализации\n-
+              Интеграция с контент-системой\n", "endpoints": ["GET /api/v1/gameplay/quests/content/{questId}
+              - получение контента квеста", "GET /api/v1/gameplay/quests/content/list
+              - список всех квестов", "GET /api/v1/gameplay/quests/content/filter
+              - фильтрация квестов", "POST /api/v1/gameplay/quests/content/reload
+              - перезагрузка контента"]}, {"name": "dialogue-system", "location":
+              "gameplay-service (модуль dialogue)", "responsibility": "Система диалогов
+              и ветвления:\n- Управление диалоговыми деревьями\n- Обработка выборов
+              игрока\n- Ветвление диалогов на основе условий\n- Интеграция с NPC системой\n-
+              Сохранение состояния диалогов\n", "endpoints": ["GET /api/v1/gameplay/dialogues/{dialogueId}
+              - получение диалога", "POST /api/v1/gameplay/dialogues/{dialogueId}/select
+              - выбор опции", "GET /api/v1/gameplay/dialogues/{dialogueId}/state -
+              состояние диалога", "POST /api/v1/gameplay/dialogues/{dialogueId}/start
+              - старт диалога"]}, {"name": "quest-branch-manager", "location": "gameplay-service
+              (модуль quest-branch)", "responsibility": "Управление ветвлением и последствиями:\n-
+              Отслеживание выборов игрока\n- Применение последствий выборов\n- Блокировка/разблокировка
+              контента\n- Управление необратимыми последствиями\n- Интеграция с системой
+              репутации\n", "endpoints": ["POST /api/v1/gameplay/quests/branches/apply-choice
+              - применение выбора", "GET /api/v1/gameplay/quests/branches/{branchId}/consequences
+              - последствия ветки", "GET /api/v1/gameplay/quests/branches/player-choices
+              - выборы игрока", "POST /api/v1/gameplay/quests/branches/unlock - разблокировка
+              ветки"]}, {"name": "quest-reward-calculator", "location": "gameplay-service
+              (модуль quest-rewards)", "responsibility": "Расчет динамических наград:\n-
+              Расчет наград на основе экономики\n- Учет стиля прохождения (стелс,
+              агрессия)\n- Интеграция с системой лиг\n- Расчет репутации и прогресса\n-
+              Выдача наград через economy-service\n", "endpoints": ["POST /api/v1/gameplay/quests/rewards/calculate
+              - расчет наград", "POST /api/v1/gameplay/quests/rewards/distribute -
+              выдача наград", "GET /api/v1/gameplay/quests/rewards/preview - предпросмотр
+              наград"]}, {"name": "skill-check-engine", "location": "gameplay-service
+              (модуль skill-check)", "responsibility": "Обработка проверок навыков:\n-
+              Проверка навыков игрока (0.0-1.0 шкала)\n- Учет модификаторов (импланты,
+              укрытия, погода)\n- Групповые проверки с ассистами\n- Логирование результатов
+              для аналитики\n- Интеграция с progression-service\n", "endpoints": ["POST
+              /api/v1/gameplay/skill-checks/execute - выполнение проверки", "GET /api/v1/gameplay/skill-checks/{checkId}/result
+              - результат проверки", "POST /api/v1/gameplay/skill-checks/group - групповая
+              проверка"]}, {"name": "player-quest-board", "location": "social-service
+              (модуль quest-board)", "responsibility": "Система пользовательских квестов:\n-
+              Создание квестов игроками\n- Модерация квестов\n- Рейтинг и популярность
+              квестов\n- Интеграция с досками фиксеров\n- Превращение популярных квестов
+              в канон\n", "endpoints": ["POST /api/v1/social/quest-board/create -
+              создание квеста", "GET /api/v1/social/quest-board/list - список квестов",
+              "POST /api/v1/social/quest-board/{questId}/accept - принятие квеста",
+              "POST /api/v1/social/quest-board/{questId}/rate - оценка квеста", "GET
+              /api/v1/social/quest-board/popular - популярные квесты"]}, {"name":
+              "quest-analytics", "location": "analytics-service (модуль quest-analytics)",
+              "responsibility": "Аналитика и логирование квестов:\n- Логирование прохождений
+              квестов\n- Статистика выборов игроков\n- Анализ баланса наград\n- Отслеживание
+              популярности квестов\n- Метрики для балансировки\n", "endpoints": ["POST
+              /api/v1/analytics/quests/log - логирование события", "GET /api/v1/analytics/quests/stats
+              - статистика квестов", "GET /api/v1/analytics/quests/choices - статистика
+              выборов"]}, {"name": "quest-event-publisher", "location": "gameplay-service
+              (модуль quest-events)", "responsibility": "Публикация событий квестов:\n-
+              Публикация событий в event bus\n- Подписка на события других систем\n-
+              Синхронизация состояния между сервисами\n- Интеграция с realtime-gateway
+              для уведомлений\n", "events_published": ["quest:started - квест начат",
+              "quest:objective-completed - цель выполнена", "quest:completed - квест
+              завершен", "quest:failed - квест провален", "quest:abandoned - квест
+              брошен", "quest:choice-made - сделан выбор", "quest:branch-unlocked
+              - ветка разблокирована"], "events_subscribed": ["combat:enemy-killed
+              - убийство врага", "inventory:item-collected - сбор предмета", "social:reputation-changed
+              - изменение репутации", "economy:transaction-completed - завершение
+              транзакции"]}], "data_flows": {"quest_start_flow": "1. Клиент отправляет
+              POST /api/v1/gameplay/quests/start\n2. Quest Engine проверяет требования
+              квеста через character-service\n3. Quest Content Manager загружает определение
+              квеста\n4. Quest Engine создает инстанс квеста в БД\n5. Quest Branch
+              Manager проверяет доступность веток\n6. Quest Engine публикует событие
+              quest:started\n7. Realtime Gateway отправляет уведомление клиенту\n8.
+              Quest Analytics логирует старт квеста\n", "quest_progress_flow": "1.
+              Игрок выполняет действие (убийство врага, сбор предмета)\n2. Соответствующий
+              сервис публикует событие (combat:enemy-killed)\n3. Quest Event Publisher
+              получает событие\n4. Quest Engine проверяет активные квесты игрока\n5.
+              Quest Engine обновляет прогресс цели\n6. Если цель выполнена, публикуется
+              quest:objective-completed\n7. Если все цели выполнены, запускается quest_complete_flow\n",
+              "quest_complete_flow": "1. Quest Engine определяет завершение всех целей\n2.
+              Quest Reward Calculator рассчитывает награды\n3. Quest Engine обращается
+              к economy-service для выдачи наград\n4. Quest Branch Manager применяет
+              последствия выборов\n5. Quest Engine обновляет состояние квеста на \"completed\"\n6.
+              Quest Engine публикует событие quest:completed\n7. Quest Analytics логирует
+              завершение\n8. Realtime Gateway отправляет уведомление с наградами\n",
+              "dialogue_flow": "1. Игрок инициирует диалог с NPC\n2. Dialogue System
+              загружает диалоговое дерево\n3. Dialogue System проверяет условия для
+              опций\n4. Клиент получает доступные опции\n5. Игрок выбирает опцию\n6.
+              Dialogue System обрабатывает выбор\n7. Если есть skill check, Skill
+              Check Engine выполняет проверку\n8. Dialogue System переходит к следующему
+              узлу\n9. Quest Branch Manager применяет последствия выбора\n10. Состояние
+              диалога сохраняется в БД\n", "player_quest_creation_flow": "1. Игрок
+              создает квест через POST /api/v1/social/quest-board/create\n2. Player
+              Quest Board валидирует квест\n3. Квест отправляется на модерацию\n4.
+              После модерации квест публикуется на доске\n5. Другие игроки могут принимать
+              квест\n6. При принятии создается инстанс через Quest Engine\n7. При
+              достижении популярности квест может стать каноном\n"}, "database_structure":
+              {"tables": [{"name": "quest_definitions", "description": "Определения
+              квестов (контент)", "columns": [{"id": "UUID PRIMARY KEY"}, {"quest_type":
+              "ENUM (main, side, daily, weekly, faction, guild, dynamic, event, social,
+              player_created)"}, {"title": "VARCHAR(255)"}, {"description": "TEXT"},
+              {"level_min": "INTEGER"}, {"level_max": "INTEGER"}, {"requirements":
+              "JSONB (требования для старта)"}, {"objectives": "JSONB (цели квеста)"},
+              {"rewards": "JSONB (базовые награды)"}, {"branches": "JSONB (ветвление)"},
+              {"dialogue_id": "UUID (ссылка на диалог)"}, {"version": "INTEGER"},
+              {"created_at": "TIMESTAMP"}, {"updated_at": "TIMESTAMP"}]}, {"name":
+              "quest_instances", "description": "Инстансы квестов для игроков", "columns":
+              [{"id": "UUID PRIMARY KEY"}, {"player_id": "UUID FOREIGN KEY"}, {"quest_definition_id":
+              "UUID FOREIGN KEY"}, {"status": "ENUM (active, completed, failed, abandoned)"},
+              {"current_objectives": "JSONB (текущий прогресс целей)"}, {"choices_made":
+              "JSONB (выборы игрока)"}, {"started_at": "TIMESTAMP"}, {"completed_at":
+              "TIMESTAMP"}, {"rewards_received": "JSONB (полученные награды)"}]},
+              {"name": "dialogue_definitions", "description": "Определения диалогов",
+              "columns": [{"id": "UUID PRIMARY KEY"}, {"quest_id": "UUID FOREIGN KEY
+              (nullable)"}, {"npc_id": "UUID FOREIGN KEY"}, {"tree": "JSONB (диалоговое
+              дерево)"}, {"conditions": "JSONB (условия для опций)"}, {"version":
+              "INTEGER"}, {"created_at": "TIMESTAMP"}]}, {"name": "dialogue_states",
+              "description": "Состояния диалогов для игроков", "columns": [{"id":
+              "UUID PRIMARY KEY"}, {"player_id": "UUID FOREIGN KEY"}, {"dialogue_id":
+              "UUID FOREIGN KEY"}, {"current_node_id": "VARCHAR(255)"}, {"visited_nodes":
+              "JSONB"}, {"choices_history": "JSONB"}, {"last_interaction": "TIMESTAMP"}]},
+              {"name": "quest_branches", "description": "Ветки квестов и последствия",
+              "columns": [{"id": "UUID PRIMARY KEY"}, {"quest_id": "UUID FOREIGN KEY"},
+              {"branch_id": "VARCHAR(255)"}, {"parent_branch_id": "VARCHAR(255) (nullable)"},
+              {"unlock_conditions": "JSONB"}, {"consequences": "JSONB (последствия
+              выбора)"}, {"locked_content": "JSONB (контент, который блокируется)"},
+              {"unlocked_content": "JSONB (контент, который разблокируется)"}]}, {"name":
+              "player_quest_choices", "description": "Выборы игроков в квестах", "columns":
+              [{"id": "UUID PRIMARY KEY"}, {"player_id": "UUID FOREIGN KEY"}, {"quest_id":
+              "UUID FOREIGN KEY"}, {"branch_id": "VARCHAR(255)"}, {"choice_id": "VARCHAR(255)"},
+              {"timestamp": "TIMESTAMP"}, {"consequences_applied": "BOOLEAN"}]}, {"name":
+              "skill_check_results", "description": "Результаты проверок навыков",
+              "columns": [{"id": "UUID PRIMARY KEY"}, {"player_id": "UUID FOREIGN
+              KEY"}, {"quest_id": "UUID FOREIGN KEY (nullable)"}, {"dialogue_id":
+              "UUID FOREIGN KEY (nullable)"}, {"skill_type": "VARCHAR(100)"}, {"base_value":
+              "DECIMAL(3,2)"}, {"modifiers": "JSONB"}, {"final_value": "DECIMAL(3,2)"},
+              {"success": "BOOLEAN"}, {"timestamp": "TIMESTAMP"}]}, {"name": "player_quest_board",
+              "description": "Пользовательские квесты", "columns": [{"id": "UUID PRIMARY
+              KEY"}, {"creator_id": "UUID FOREIGN KEY"}, {"title": "VARCHAR(255)"},
+              {"description": "TEXT"}, {"objectives": "JSONB"}, {"rewards": "JSONB"},
+              {"status": "ENUM (pending, approved, rejected, published)"}, {"rating":
+              "DECIMAL(3,2)"}, {"completion_count": "INTEGER"}, {"created_at": "TIMESTAMP"},
+              {"published_at": "TIMESTAMP (nullable)"}]}, {"name": "quest_analytics",
+              "description": "Аналитика квестов", "columns": [{"id": "UUID PRIMARY
+              KEY"}, {"quest_id": "UUID FOREIGN KEY"}, {"player_id": "UUID FOREIGN
+              KEY"}, {"event_type": "VARCHAR(100)"}, {"event_data": "JSONB"}, {"timestamp":
+              "TIMESTAMP"}]}]}, "integrations": {"character_service": "- Проверка
+              требований квеста (уровень, класс, фракция)\n- Получение данных персонажа
+              для skill checks\n- Обновление прогресса персонажа\n", "economy_service":
+              "- Выдача наград (валюта, предметы)\n- Расчет динамических наград на
+              основе экономики\n- Интеграция с системой торговли\n", "social_service":
+              "- Интеграция с системой репутации\n- Управление пользовательскими квестами\n-
+              Интеграция с кланами и фракциями\n"}}}'
+        - column:
+            name: metadata
+            value: '{"id": "quest-system-architecture", "title": "Архитектура системы
+              квестов", "document_type": "architecture", "category": "systems", "status":
+              "draft", "version": "1.0.0", "last_updated": "2025-11-23T12:00:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "quests", "gameplay", "narrative", "branching"],
+              "related_systems": ["gameplay-service", "character-service", "economy-service",
+              "social-service", "narrative-service", "event-service"], "related_documents":
+              [{"id": "quest-system", "relation": "implements"}, {"id": "quest-engine-backend",
+              "relation": "extends"}], "github_issue": 103, "visibility": "internal",
+              "audience": ["architect", "backend", "gameplay", "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\quest-system-architecture.yaml

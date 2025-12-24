@@ -1,0 +1,167 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-combat-synesthetic-buffs-0f4773fe
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-408753212061118'
+        - column:
+            name: doc_id
+            value: combat-synesthetic-buffs
+        - column:
+            name: title
+            value: 'Комбо-механика: «Синестетические баффы» (ритм → точность/отдача)'
+        - column:
+            name: document_type
+            value: mechanics
+        - column:
+            name: category
+            value: combat
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 0.1.0
+        - column:
+            name: last_updated
+            value: 2025-12-12 00:00:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: ''
+        - column:
+            name: owners
+            value: '[{"role": "game_balance", "contact": "balance@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - rhythm
+            - accuracy
+            - recoil
+            - risk_reward
+        - column:
+            name: topics
+            value:
+            - combat_effects
+            - aim_handling
+        - column:
+            name: related_systems
+            value:
+            - gameplay-service
+            - combat-service
+            - realtime-service
+        - column:
+            name: related_documents
+            value: '[{"id": "combat-shooter-core", "relation": "interacts_with"},
+              {"id": "combat-shooting-advanced", "relation": "complements"}, {"id":
+              "combat-ux-guidelines", "relation": "references"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - combat
+            - gameplay
+            - analytics
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "combat-synesthetic-buffs", "title": "Комбо-механика:
+              «Синестетические баффы» (ритм → точность/отдача)", "document_type":
+              "mechanics", "category": "combat", "status": "draft", "version": "0.1.0",
+              "last_updated": "2025-12-12T00:00:00+00:00", "concept_approved": false,
+              "concept_reviewed_at": "", "owners": [{"role": "game_balance", "contact":
+              "balance@necp.game"}], "tags": ["rhythm", "accuracy", "recoil", "risk_reward"],
+              "topics": ["combat_effects", "aim_handling"], "related_systems": ["gameplay-service",
+              "combat-service", "realtime-service"], "related_documents": [{"id":
+              "combat-shooter-core", "relation": "interacts_with"}, {"id": "combat-shooting-advanced",
+              "relation": "complements"}, {"id": "combat-ux-guidelines", "relation":
+              "references"}], "source": "", "visibility": "internal", "audience":
+              ["combat", "gameplay", "analytics"], "risk_level": "medium"}, "review":
+              {"chain": [{"role": "game_balance_lead", "reviewer": "", "reviewed_at":
+              "", "status": "pending"}], "next_actions": []}, "summary": {"problem":
+              "Нужна ритм-механика, дающая бонус к точности/отдаче за игру «в такт»,
+              с ясными окнами, уровнями сложности и защитой от макросов.", "goal":
+              "Определить окна допуска, длительность баффа, стакаемость, штрафы за
+              промах, UX-индикацию и телеметрию.", "essence": "Игрок попадает в тайминг
+              аудио/визуального паттерна; точные входы дают краткосрочные бонусы к
+              контролю оружия, сбои рождают лёгкий дебафф. Есть три сложности паттернов
+              с разной наградой и защитой от автоматизации.", "key_points": ["Окна
+              ритма (easy/med/hard) с разными бонусами и штрафами.", "Стек или продление
+              баффа при сериях попаданий в такт.", {"Анти-макрос": "стохастический
+              дрейф паттерна, проверка вариативности входов."}]}, "content": {"sections":
+              [{"id": "rhythm_tiers", "title": "Слои сложности и окна", "body": "Три
+              паттерна (BPM привязаны к оружейному профилю):\n- Easy: окно ±120 мс,
+              длительность паттерна 6 тактов. Бонус: -6% отдача, -6% разброс. Штраф
+              при фейле: +4% разброс на 1.5 с.\n- Medium: окно ±80 мс, 8 тактов. Бонус:
+              -9% отдача, -8% разброс. Штраф: +6% разброс и +4% вертикальная отдача
+              на 2 с.\n- Hard: окно ±55 мс, 10 тактов. Бонус: -12% отдача, -10% разброс,
+              +4% устойчивость при ADS. Штраф: «дезсинк» +8% разброс и -6% устойчивость
+              на 2.5 с.\nДопуск по пингу: окно = base_window + clamp(ping - 50, 0,
+              60) * 0.3 мс (смягчает высокий пинг).\n"}, {"id": "buff_logic", "title":
+              "Длительность, стакаемость и кулдауны", "body": "Бафф выдаётся при попадании
+              в >=3 такта за паттерн. Базовая длительность баффа: 6 с, обновляется
+              при новом успешном паттерне.\nСтек: до 3 уровней; каждый уровень даёт
+              +20% к силе бонуса (cap после 3).\nКулдаун на повторный паттерн после
+              фейла: 4 с (easy), 5 с (med), 6 с (hard).\nСовместимость: не стакается
+              с «Сандевистан» accuracy бонусами; берётся наименьший штраф, если наложены.\n"},
+              {"id": "fail_states", "title": "Штрафы за промах по ритму", "body":
+              "Miss_count отслеживает фейлы в окне паттерна. При 2+ подряд фейлах
+              — «рассинхрон»: -5% устойчивость, +8% спред на 3 с, сброс стека.\nСлучайный
+              дрейф паттерна (±25 мс на такт) отключается при активном штрафе, чтобы
+              не усиливать наказание.\n"}, {"id": "anti_macro", "title": "Анти-абуз/макросы",
+              "body": "- Перемешивание паттерна: каждые 2–3 такта добавляется микро-сдвиг
+              ±10–30 мс (равномерное распределение).\n- Проверка вариативности ввода:
+              если stddev интервалов <8 мс на 12+ тактах, бафф отключается на 20 с
+              и логируется.\n- Input diversity: требуется хотя бы одно действие перемещения
+              или смены стойки между паттернами; иначе паттерн не засчитывается.\n-
+              Сервера PvP: ограничение hard-паттернов до 2 активных серий подряд,
+              затем форс-перерыв 10 с.\n"}, {"id": "ux_accessibility", "title": "UX
+              и доступность", "body": "HUD: кольцевой метроном + аудио-клик; интенсивность
+              регулируется. Цветовая слепота: альтернативные формы/вибрация.\nАудио
+              можно заменить на тактильные вспышки. Индикатор окна «зелёная зона»
+              равен текущему допускаемому окну.\nПредупреждение о штрафе показывается
+              0.5 с до окончания окна при высокой латентности.\n"}, {"id": "telemetry",
+              "title": "Телеметрия", "body": "Логировать в combat-service:\n- `synesthetic.success_rate`,
+              `synesthetic.avg_window_hit_ms`.\n- `synesthetic.bonus_uptime`, `synesthetic.stack_peak`,
+              `synesthetic.dps_delta`.\n- `synesthetic.fail_streaks`, `desync_events`.\n-
+              Анти-макрос: `pattern_variance`, случаи отключения.\n"}]}, "appendix":
+              {"glossary": [{"term": "window_hit", "definition": "Абсолютное отклонение
+              входа игрока от целевого такта."}], "formulas": [{"name": "adjusted_window",
+              "expression": "window = base_window + 0.3 * clamp(ping - 50, 0, 60)",
+              "notes": "смягчает высокую задержку, не превышая +18 мс добавки."}]},
+              "implementation": {"needs_task": false, "github_issue": 1664, "queue_reference":
+              [], "blockers": []}, "history": [{"version": "0.1.0", "date": "2025-12-12",
+              "author": "game_balance_team", "changes": "Базовая математика ритм-баффов
+              с окнами, бонусами, штрафами и анти-макрос защитой."}], "validation":
+              {"checksum": "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "combat-synesthetic-buffs", "title": "Комбо-механика: «Синестетические
+              баффы» (ритм → точность/отдача)", "document_type": "mechanics", "category":
+              "combat", "status": "draft", "version": "0.1.0", "last_updated": "2025-12-12T00:00:00+00:00",
+              "concept_approved": false, "concept_reviewed_at": "", "owners": [{"role":
+              "game_balance", "contact": "balance@necp.game"}], "tags": ["rhythm",
+              "accuracy", "recoil", "risk_reward"], "topics": ["combat_effects", "aim_handling"],
+              "related_systems": ["gameplay-service", "combat-service", "realtime-service"],
+              "related_documents": [{"id": "combat-shooter-core", "relation": "interacts_with"},
+              {"id": "combat-shooting-advanced", "relation": "complements"}, {"id":
+              "combat-ux-guidelines", "relation": "references"}], "source": "", "visibility":
+              "internal", "audience": ["combat", "gameplay", "analytics"], "risk_level":
+              "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\mechanics\combat\combat-synesthetic-buffs.yaml

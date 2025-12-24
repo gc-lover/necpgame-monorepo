@@ -1,0 +1,189 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-support-ticket-data-flows-db7e59f4
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-523671603215054'
+        - column:
+            name: doc_id
+            value: support-ticket-data-flows
+        - column:
+            name: title
+            value: Архитектура системы тикетов поддержки - Потоки данных и синхронизация
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-30 20:35:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[]'
+        - column:
+            name: tags
+            value: []
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value: []
+        - column:
+            name: related_documents
+            value: '[{"id": "support-ticket-core", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: ''
+        - column:
+            name: audience
+            value: []
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "support-ticket-data-flows", "title": "Архитектура
+              системы тикетов поддержки - Потоки данных и синхронизация", "document_type":
+              "architecture", "category": "systems", "status": "draft", "version":
+              "1.1.0", "last_updated": "2025-11-30T20:35:00+00:00", "github_issue":
+              334, "related_documents": [{"id": "support-ticket-core", "relation":
+              "extends"}]}, "data_flows": {"ticket_creation_flow": "1. Игрок создает
+              тикет через API\n2. Ticket Creator валидирует данные тикета\n3. Auto
+              Categorization Engine определяет категорию\n4. Priority Assignment Engine
+              назначает приоритет\n5. Support Ticket Manager сохраняет тикет в БД\n6.
+              Agent Queue Manager добавляет тикет в очередь\n7. Support Ticket Manager
+              публикует событие support.ticket.created\n8. Notification Service отправляет
+              уведомление игроку\n9. SLA Monitor начинает отслеживание SLA\n", "ticket_assignment_flow":
+              "1. Agent Queue Manager выбирает тикет из очереди\n2. Agent Queue Manager
+              выбирает агента по стратегии\n3. Agent Queue Manager проверяет лимиты
+              агента\n4. Support Ticket Manager назначает агента тикету\n5. Support
+              Ticket Manager обновляет статус на \"assigned\"\n6. Support Ticket Manager
+              публикует событие support.ticket.assigned\n7. Notification Service отправляет
+              уведомление агенту\n8. Notification Service отправляет уведомление игроку\n9.
+              SLA Monitor обновляет метрики\n", "ticket_response_flow": "1. Агент
+              или игрок добавляет ответ через API\n2. Ticket Response Manager валидирует
+              ответ\n3. Ticket Response Manager сохраняет ответ в БД\n4. Ticket Status
+              Manager обновляет статус тикета\n5. Support Ticket Manager публикует
+              событие support.ticket.response-added\n6. Notification Service отправляет
+              уведомление получателю\n7. SLA Monitor обновляет метрики ответа\n8.
+              Realtime Gateway отправляет обновление клиентам\n", "sla_monitoring_flow":
+              "1. SLA Monitor периодически проверяет активные тикеты\n2. SLA Monitor
+              вычисляет метрики для каждого тикета\n3. SLA Monitor сравнивает метрики
+              с порогами\n4. При достижении warning порога - отправляет предупреждение\n5.
+              При достижении breach порога - эскалирует тикет\n6. Support Ticket Manager
+              публикует событие support.ticket.sla-warning или support.ticket.sla-breach\n7.
+              Notification Service отправляет уведомления\n8. Analytics Service собирает
+              метрики SLA\n"}, "data_consistency": {"strategy": "Strong Consistency
+              (ACID транзакции) для критичных операций (создание тикета, назначение
+              агента, изменение статуса)", "mechanisms": ["ACID транзакции для создания
+              тикетов, назначения агентов и изменения статусов", "Оптимистичные блокировки
+              (versioning) для предотвращения конфликтов при обновлении тикетов",
+              "Валидация перед созданием тикета и назначением агента", "Синхронизация
+              с другими сервисами через Event Bus", "Outbox Pattern для гарантированной
+              доставки событий", "Saga Pattern для распределенных операций (создание
+              тикета, назначение агента, изменение статуса, мониторинг SLA)"]}, "data_synchronization":
+              {"event_sourcing": "Все изменения состояния тикетов (создание, обновление,
+              назначение агента, изменение статуса, добавление ответа)\nзаписываются
+              как события в Event Store.\nЭто обеспечивает полный аудит, возможность
+              восстановления состояния и \"time travel\" для отладки.\nПримеры событий:
+              TicketCreatedEvent, TicketAssignedEvent, TicketStatusChangedEvent, TicketResponseAddedEvent.\n",
+              "cqrs_pattern": "Разделение команд (создание тикетов, назначение агентов,
+              изменение статусов) и запросов\n(получение списка тикетов, получение
+              очереди агентов, получение статистики) для оптимизации производительности\nи
+              масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых
+              запросов.\n", "saga_pattern": "Для распределенных транзакций, таких
+              как создание тикета (создание, автокатегоризация, назначение приоритета,\nдобавление
+              в очередь, уведомление игрока) или назначение агента (выбор агента,
+              проверка лимитов, назначение,\nобновление статуса, уведомления), используется
+              Saga Pattern\nдля обеспечения атомарности операций между Support Service,
+              Notification Service и Analytics Service.\n", "outbox_pattern": "Для
+              гарантированной доставки событий в Event Bus используется Outbox Pattern,\nкоторый
+              записывает события в транзакционную таблицу перед публикацией.\n"},
+              "tickrate_specification": {"ticket_operations": {"tickrate": "Event-based
+              (on-demand)", "network_load": "- Создание тикета: event-based, ~0.01-0.1
+              events/sec на игрока\n- Получение списка тикетов: event-based, ~0.01-0.05
+              requests/sec на игрока\n- Получение информации о тикете: event-based,
+              ~0.01-0.02 requests/sec на игрока\n- Общий трафик: ~0.1-0.3 KB/sec на
+              игрока для операций тикетов\n", "latency_requirements": "< 200-300ms
+              для создания тикета, < 30-100ms для получения списка", "sync_strategy":
+              "Strong Consistency (ACID транзакции) для создания тикетов, Eventual
+              Consistency для получения списка"}, "assignment_operations": {"tickrate":
+              "Event-based (on-demand при назначении) + 1-5 Hz для обновления очереди",
+              "network_load": "- Назначение агента: event-based, ~0.01-0.1 events/sec\n-
+              Получение очереди агентов: event-based, ~0.01-0.05 requests/sec на агента\n-
+              Обновление очереди: 1-5 Hz, ~0.01-0.05 events/sec\n- Общий трафик: ~0.1-0.3
+              KB/sec для операций назначения\n", "latency_requirements": "< 200-300ms
+              для назначения агента, < 30-100ms для получения очереди", "sync_strategy":
+              "Strong Consistency (ACID транзакции) для назначения агентов"}, "response_operations":
+              {"tickrate": "Event-based (on-demand при добавлении ответа) + 1-5 Hz
+              для обновления статуса", "network_load": "- Добавление ответа: event-based,
+              ~0.01-0.1 events/sec на тикет\n- Получение списка ответов: event-based,
+              ~0.01-0.02 requests/sec на тикет\n- Обновление статуса: 1-5 Hz, ~0.01-0.05
+              events/sec\n- Общий трафик: ~0.2-0.5 KB/sec для операций ответов\n",
+              "latency_requirements": "< 200-300ms для добавления ответа, < 30-100ms
+              для получения списка", "sync_strategy": "Strong Consistency (ACID транзакции)
+              для добавления ответов"}, "sla_monitoring_operations": {"tickrate":
+              "Event-based (on-demand при проверке) + 1-10 Hz для периодического мониторинга",
+              "network_load": "- Проверка SLA: 1-10 Hz, ~0.01-0.1 events/sec\n- Получение
+              информации о SLA: event-based, ~0.001-0.01 requests/sec на тикет\n-
+              Обновление метрик: 1-10 Hz, ~0.01-0.05 events/sec\n- Общий трафик: ~0.1-0.3
+              KB/sec для операций мониторинга SLA\n", "latency_requirements": "< 50-100ms
+              для проверки SLA, < 30-100ms для получения информации", "sync_strategy":
+              "Eventual Consistency для мониторинга SLA (батчинг метрик)"}, "categorization_operations":
+              {"tickrate": "Event-based (on-demand при создании тикета)", "network_load":
+              "- Автокатегоризация: event-based, ~0.01-0.1 events/sec\n- Определение
+              категории: event-based, ~0.01-0.1 events/sec\n- Общий трафик: ~0.1-0.3
+              KB/sec для операций категоризации\n", "latency_requirements": "< 100-200ms
+              для автокатегоризации", "sync_strategy": "Eventual Consistency для категоризации
+              (кэширование результатов)"}, "priority_operations": {"tickrate": "Event-based
+              (on-demand при создании тикета)", "network_load": "- Назначение приоритета:
+              event-based, ~0.01-0.1 events/sec\n- Изменение приоритета: event-based,
+              ~0.001-0.01 events/sec\n- Общий трафик: ~0.1-0.3 KB/sec для операций
+              приоритетов\n", "latency_requirements": "< 100-200ms для назначения
+              приоритета", "sync_strategy": "Strong Consistency (ACID транзакции)
+              для изменения приоритетов"}, "stats_operations": {"tickrate": "Event-based
+              (on-demand при запросе) + 1-5 Hz для обновления статистики", "network_load":
+              "- Получение статистики: event-based, ~0.001-0.01 requests/sec на агента\n-
+              Обновление статистики: 1-5 Hz, ~0.01-0.05 events/sec\n- Общий трафик:
+              ~0.1-0.3 KB/sec для операций статистики\n", "latency_requirements":
+              "< 30-100ms для получения статистики, < 50-100ms для обновления", "sync_strategy":
+              "Eventual Consistency для статистики (кэширование в Redis)"}, "event_handling":
+              {"tickrate": "Event-based (on-demand)", "network_load": "- Публикация
+              событий тикетов: event-based, ~0.1-0.5 events/sec\n- Подписка на события:
+              event-based, ~0.05-0.2 events/sec\n- Общий трафик: ~0.2-0.7 KB/sec для
+              событий\n", "latency_requirements": "< 100-300ms для публикации событий",
+              "sync_strategy": "Eventual Consistency для событий (через Event Bus)"}}}'
+        - column:
+            name: metadata
+            value: '{"id": "support-ticket-data-flows", "title": "Архитектура системы
+              тикетов поддержки - Потоки данных и синхронизация", "document_type":
+              "architecture", "category": "systems", "status": "draft", "version":
+              "1.1.0", "last_updated": "2025-11-30T20:35:00+00:00", "github_issue":
+              334, "related_documents": [{"id": "support-ticket-core", "relation":
+              "extends"}]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\support-ticket-data-flows.yaml

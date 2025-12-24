@@ -104,12 +104,12 @@ mcp_github_update_project_item({
 
 **Оптимизированные скрипты (ТОЛЬКО PYTHON!):**
 
-- `python scripts/validate-domains-openapi.py` - валидация enterprise-grade доменов
-- `python scripts/generate-all-domains-go.py` - генерация enterprise-grade сервисов
-- `python scripts/batch-optimize-openapi-struct-alignment.py` - оптимизация структур OpenAPI
-- `python scripts/reorder-liquibase-columns.py` - оптимизация колонок БД
-- `python scripts/validate-backend-optimizations.sh` - проверка enterprise-grade оптимизаций
-- `python scripts/update-github-fields.py --item-id {id} --type {TYPE} --check {0|1}` - управление полями GitHub
+- `python scripts/validate-domains-openapi.py --domain {domain}` - валидация OpenAPI домена перед генерацией
+- `python scripts/generate-all-domains-go.py --parallel 3 --memory-pool` - параллельная генерация всех enterprise-grade сервисов
+- `python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{domain}/main.yaml` - оптимизация struct alignment для performance
+- `python scripts/reorder-liquibase-columns.py infrastructure/liquibase/migrations/{file}.sql` - оптимизация порядка колонок БД
+- `python scripts/validate-all-migrations.py` - валидация всех enterprise-grade миграций
+- `python scripts/update-github-fields.py --item-id {id} --type {TYPE} --check {0|1}` - управление полями GitHub Project
 
 **КРИТИЧНО:** Forbidden создавать новые .sh/.ps1/.bat скрипты!
 

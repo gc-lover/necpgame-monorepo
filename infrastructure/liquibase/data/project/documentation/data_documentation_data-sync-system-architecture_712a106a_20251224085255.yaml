@@ -1,0 +1,184 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-data-sync-system-architecture-712a106a
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '8576218832143407'
+        - column:
+            name: doc_id
+            value: architecture-data-sync-system
+        - column:
+            name: title
+            value: Data Synchronization System Architecture
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: implementation
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-12-02 18:20:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - data-sync
+            - consistency
+            - event-sourcing
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - all-services
+        - column:
+            name: related_documents
+            value: '[{"id": "data-synchronization-consistency-guide", "relation":
+              "implements"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architects
+            - backend
+            - database
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "architecture-data-sync-system", "title":
+              "Data Synchronization System Architecture", "document_type": "architecture",
+              "category": "implementation", "status": "draft", "version": "1.0.0",
+              "last_updated": "2025-12-02T18:20:00+00:00", "owners": [{"role": "architect"}],
+              "tags": ["architecture", "data-sync", "consistency", "event-sourcing"],
+              "related_systems": ["all-services"], "related_documents": [{"id": "data-synchronization-consistency-guide",
+              "relation": "implements"}], "visibility": "internal", "audience": ["architects",
+              "backend", "database"]}, "summary": {"problem": "Необходима архитектура
+              синхронизации данных между микросервисами.", "goal": "Спроектировать
+              систему синхронизации с Event Sourcing, CQRS, Saga.", "essence": "Архитектура
+              описывает Event Bus, Outbox Pattern, Saga Orchestration."}, "content":
+              {"sections": [{"id": "system-overview", "title": "Обзор системы", "body":
+              "Data Synchronization System обеспечивает:\n- Синхронизацию между микросервисами\n-
+              Консистентность критичных данных\n- Event-driven интеграцию\n- Распределенные
+              транзакции\n- Разрешение конфликтов\n\nПринципы:\n- Server-authoritative
+              (сервер - источник истины)\n- Event-driven architecture\n- Strong Consistency
+              для критичных данных\n- Eventual Consistency для некритичных\n- Saga
+              Pattern для распределенных транзакций\n"}, {"id": "components", "title":
+              "Компоненты", "body": "## Event Bus (Kafka)\n**Ответственность:** Шина
+              событий\n**Технология:** Apache Kafka\n**Топики:**\n- character.* (персонажи)\n-
+              inventory.* (инвентарь)\n- combat.* (бой)\n- economy.* (экономика)\n-
+              quest.* (квесты)\n\n## Outbox Processor\n**Ответственность:** Гарантированная
+              доставка событий\n**Технология:** Go, PostgreSQL\n**Функции:**\n- Чтение
+              outbox таблиц\n- Публикация событий в Kafka\n- Удаление обработанных
+              событий\n- Retry механизм\n\n## Saga Orchestrator\n**Ответственность:**
+              Координация распределенных транзакций\n**Технология:** Go, Redis\n**Функции:**\n-
+              Создание saga инстансов\n- Управление шагами saga\n- Компенсирующие
+              транзакции\n- Мониторинг состояния\n\n## Conflict Resolver\n**Ответственность:**
+              Разрешение конфликтов\n**Технология:** Go\n**Стратегии:**\n- Last-Write-Wins\n-
+              Version-based\n- Custom business logic\n\n## State Sync Manager\n**Ответственность:**
+              Синхронизация клиент-сервер\n**Технология:** WebSocket/UDP\n**Функции:**\n-
+              Client-side prediction\n- Server reconciliation\n- Lag compensation\n"},
+              {"id": "event-bus-architecture", "title": "Event Bus Architecture",
+              "body": "## Kafka Configuration\n\nBrokers: 5 nodes\nPartitions: 20
+              per topic\nReplication: 3\nRetention: 7 days\n\n## Topic Structure\n\n{domain}.{entity}.{action}\n\nExamples:\n-
+              character.created\n- character.leveledup\n- inventory.item.added\n-
+              inventory.item.removed\n- combat.session.started\n- combat.action.executed\n-
+              economy.trade.completed\n- quest.progress.updated\n\n## Event Schema\n\n```json\n{\n  \"event_id\":
+              \"uuid\",\n  \"event_type\": \"character.leveledup\",\n  \"timestamp\":
+              \"2025-12-02T18:00:00Z\",\n  \"correlation_id\": \"saga-123\",\n  \"causation_id\":
+              \"event-abc\",\n  \"payload\": {\n    \"character_id\": \"uuid\",\n    \"old_level\":
+              10,\n    \"new_level\": 11\n  },\n  \"metadata\": {\n    \"source_service\":
+              \"character-service\",\n    \"version\": \"1.0\"\n  }\n}\n```\n\n##
+              Consumer Groups\n\n- analytics-consumer (все события)\n- quest-consumer
+              (character.*, combat.*, economy.*)\n- achievement-consumer (character.*,
+              combat.*)\n- notification-consumer (все события)\n"}, {"id": "outbox-pattern",
+              "title": "Outbox Pattern", "body": "## Database Schema\n\n```sql\nCREATE
+              TABLE outbox_events (\n  id BIGSERIAL PRIMARY KEY,\n  event_id UUID
+              UNIQUE NOT NULL,\n  event_type VARCHAR(100) NOT NULL,\n  aggregate_id
+              UUID NOT NULL,\n  payload JSONB NOT NULL,\n  metadata JSONB,\n  created_at
+              TIMESTAMP NOT NULL DEFAULT NOW(),\n  processed_at TIMESTAMP,\n  retry_count
+              INT DEFAULT 0,\n  error_message TEXT\n);\n\nCREATE INDEX idx_outbox_unprocessed\nON
+              outbox_events(created_at)\nWHERE processed_at IS NULL;\n```\n\n## Outbox
+              Processor Flow\n\n1. Poll outbox_events WHERE processed_at IS NULL\n2.
+              Publish event to Kafka\n3. If success: UPDATE processed_at\n4. If error:
+              INCREMENT retry_count, log error\n5. Max retries: 10\n6. Cleanup processed
+              events (>24h)\n\n## Service Integration\n\nEach service has:\n- outbox_events
+              table\n- Outbox processor worker\n- Atomic write (data + event)\n"},
+              {"id": "saga-pattern", "title": "Saga Pattern", "body": "## Saga Instance
+              Schema\n\n```sql\nCREATE TABLE saga_instances (\n  id UUID PRIMARY KEY,\n  saga_type
+              VARCHAR(100) NOT NULL,\n  status VARCHAR(20) NOT NULL,\n  current_step
+              INT NOT NULL,\n  payload JSONB NOT NULL,\n  compensation_stack JSONB,\n  created_at
+              TIMESTAMP NOT NULL,\n  updated_at TIMESTAMP NOT NULL,\n  completed_at
+              TIMESTAMP,\n  error_message TEXT\n);\n```\n\n## Example: Item Purchase
+              Saga\n\nSteps:\n1. Reserve inventory slot\n2. Check character money\n3.
+              Deduct money\n4. Add item to inventory\n5. Publish completion event\n\nCompensation
+              (if error):\n1. Remove item from inventory\n2. Refund money\n3. Release
+              inventory slot\n\n## Orchestrator API\n\n- POST /saga/start\n- GET /saga/{id}/status\n-
+              POST /saga/{id}/compensate\n"}, {"id": "consistency-strategies", "title":
+              "Стратегии консистентности", "body": "## Strong Consistency\n\nДанные:\n-
+              Деньги (eurodollars, cryptos)\n- Инвентарь (items, slots)\n- Персонаж
+              (level, stats)\n- Квесты (progress, rewards)\n\nРеализация:\n- ACID
+              транзакции\n- Serializable isolation\n- Pessimistic locking\n- Synchronous
+              operations\n\n## Eventual Consistency\n\nДанные:\n- Статистика (kills,
+              deaths)\n- Логи (combat_logs, activity_logs)\n- Аналитика (dashboards)\n-
+              Кэши (Redis)\n\nРеализация:\n- Async replication\n- Event Sourcing\n-
+              CQRS\n- Background jobs\n"}, {"id": "conflict-resolution", "title":
+              "Разрешение конфликтов", "body": "## Last-Write-Wins\n\nПрименение:
+              Некритичные данные\n\n```go\nif event.Timestamp > currentState.LastUpdate
+              {\n  currentState = event.Payload\n}\n```\n\n## Version-based\n\nПрименение:
+              Критичные данные\n\n```go\nif event.Version == currentState.Version
+              + 1 {\n  apply(event)\n  currentState.Version++\n} else {\n  conflict()\n}\n```\n\n##
+              Custom Business Logic\n\nПрименение: Сложные сценарии\n\nExample: Inventory
+              merge\n- Both players added items\n- Merge both changes\n- Resolve slot
+              conflicts\n"}]}, "appendix": {"decisions": [{"id": "sync-001", "decision":
+              "Kafka как Event Bus", "rationale": "Высокая пропускная способность,
+              гарантии доставки"}, {"id": "sync-002", "decision": "Outbox Pattern
+              для событий", "rationale": "Гарантия атомарности данные + события"},
+              {"id": "sync-003", "decision": "Saga Pattern для распределенных транзакций",
+              "rationale": "Гибкость, масштабируемость, compensations"}]}, "implementation":
+              {"github_issue": 1521, "needs_task": true, "next_steps": ["Database:
+              Миграции для outbox_events, saga_instances", "Backend: Реализовать Outbox
+              Processor", "Backend: Реализовать Saga Orchestrator", "Backend: Реализовать
+              Conflict Resolver"]}, "history": [{"version": "1.0.0", "date": "2025-12-02",
+              "author": "architect", "changes": "Создана архитектура системы синхронизации"}]}'
+        - column:
+            name: metadata
+            value: '{"id": "architecture-data-sync-system", "title": "Data Synchronization
+              System Architecture", "document_type": "architecture", "category": "implementation",
+              "status": "draft", "version": "1.0.0", "last_updated": "2025-12-02T18:20:00+00:00",
+              "owners": [{"role": "architect"}], "tags": ["architecture", "data-sync",
+              "consistency", "event-sourcing"], "related_systems": ["all-services"],
+              "related_documents": [{"id": "data-synchronization-consistency-guide",
+              "relation": "implements"}], "visibility": "internal", "audience": ["architects",
+              "backend", "database"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\data-sync-system-architecture.yaml

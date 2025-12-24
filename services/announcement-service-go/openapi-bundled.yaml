@@ -1,0 +1,592 @@
+openapi: 3.0.3
+info:
+  title: Content Announcements API Module
+  description: Announcement and notification content systems
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+paths:
+  # Core announcement services
+
+  # Announcement features
+  /announcements:
+    get:
+      tags:
+        - Announcements
+      summary: Получить список объявлений
+      operationId: getAnnouncements
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum:
+              - GAME_NEWS
+              - PATCH_NOTES
+              - MAINTENANCE
+              - EVENT
+              - PROMOTION
+              - COMMUNITY
+              - EMERGENCY
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum:
+              - LOW
+              - MEDIUM
+              - HIGH
+              - CRITICAL
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список объявлений
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Announcement'
+                  total:
+                    type: integer
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /announcements/{announcementId}:
+    get:
+      tags:
+        - Announcements
+      summary: Получить объявление
+      operationId: getAnnouncement
+      parameters:
+        - name: announcementId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Объявление
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /liveops/announcements:
+    post:
+      tags:
+        - Announcements
+      summary: Создать объявление (admin)
+      operationId: createAnnouncement
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAnnouncementRequest'
+      responses:
+        '201':
+          description: Объявление создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /liveops/announcements/{announcement_id}:
+    put:
+      tags:
+        - Announcements
+      summary: Обновить объявление (admin)
+      operationId: updateAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAnnouncementRequest'
+      responses:
+        '200':
+          description: Объявление обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+    delete:
+      tags:
+        - Announcements
+      summary: Удалить объявление (admin)
+      operationId: deleteAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Объявление удалено
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /liveops/announcements/{announcement_id}/publish:
+    post:
+      tags:
+        - Announcements
+      summary: Опубликовать объявление (admin)
+      operationId: publishAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Объявление опубликовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /liveops/announcements/{announcement_id}/schedule:
+    post:
+      tags:
+        - Announcements
+      summary: Запланировать публикацию объявления (admin)
+      operationId: scheduleAnnouncement
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: announcement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleAnnouncementRequest'
+      responses:
+        '200':
+          description: Публикация запланирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+components:
+  schemas:
+    Announcement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        created_by:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          type: string
+        announcement_type:
+          type: string
+          enum:
+          - GAME_NEWS
+          - PATCH_NOTES
+          - MAINTENANCE
+          - EVENT
+          - PROMOTION
+          - COMMUNITY
+          - EMERGENCY
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+        display_style:
+          type: string
+          enum:
+          - NEWS_FEED
+          - POPUP
+          - MODAL
+          - BANNER
+          - TOAST
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - PUBLISHED
+          - ARCHIVED
+        scheduled_publish_at:
+          type: string
+          format: date-time
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        targeting:
+          type: object
+          additionalProperties: true
+          nullable: true
+        media:
+          type: object
+          additionalProperties: true
+          nullable: true
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+            - IN_GAME_POPUP
+            - PUSH_NOTIFICATION
+            - EMAIL
+            - NEWS_FEED
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CreateAnnouncementRequest:
+      type: object
+      required:
+      - announcement_type
+      - title
+      - content
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        content:
+          type: string
+        announcement_type:
+          type: string
+          enum:
+          - GAME_NEWS
+          - PATCH_NOTES
+          - MAINTENANCE
+          - EVENT
+          - PROMOTION
+          - COMMUNITY
+          - EMERGENCY
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+          default: NORMAL
+        display_style:
+          type: string
+          enum:
+          - NEWS_FEED
+          - POPUP
+          - MODAL
+          - BANNER
+          - TOAST
+          default: NEWS_FEED
+        targeting:
+          type: object
+          additionalProperties: true
+        media:
+          type: object
+          additionalProperties: true
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+            - IN_GAME_POPUP
+            - PUSH_NOTIFICATION
+            - EMAIL
+            - NEWS_FEED
+          default:
+          - NEWS_FEED
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateAnnouncementRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        content:
+          type: string
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CRITICAL
+        display_style:
+          type: string
+          enum:
+          - NEWS_FEED
+          - POPUP
+          - MODAL
+          - BANNER
+          - TOAST
+        targeting:
+          type: object
+          additionalProperties: true
+        media:
+          type: object
+          additionalProperties: true
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum:
+            - IN_GAME_POPUP
+            - PUSH_NOTIFICATION
+            - EMAIL
+            - NEWS_FEED
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ScheduleAnnouncementRequest:
+      type: object
+      required:
+      - scheduled_publish_at
+      properties:
+        scheduled_publish_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

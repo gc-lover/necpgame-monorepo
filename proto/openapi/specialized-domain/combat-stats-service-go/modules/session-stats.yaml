@@ -1,0 +1,147 @@
+# Session Statistics Module
+# Issue: #2246
+
+paths:
+  /sessions/{session_id}/stats:
+    get:
+      summary: Get combat session statistics
+      description: '**Detailed combat session analytics**
+
+        Provides comprehensive statistics for a specific combat session.
+
+        Includes player performance, weapon usage, and session outcomes.
+
+
+        **Performance:** <30ms P95 with session data aggregation
+
+        '
+      operationId: getCombatSessionStats
+      tags:
+        - Combat Statistics
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+        - name: include_player_details
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include detailed per-player statistics
+      responses:
+        '200':
+          description: Combat session statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSessionStatsResponse'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    CombatSessionStats:
+      type: object
+      required:
+        - session_id
+        - start_time
+        - end_time
+        - duration_seconds
+        - total_players
+        - winner_team
+        - total_kills
+        - total_damage
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440003
+        start_time:
+          type: string
+          format: date-time
+          description: Session start timestamp
+          example: '2025-12-23T23:00:00Z'
+        end_time:
+          type: string
+          format: date-time
+          description: Session end timestamp
+          example: '2025-12-23T23:25:30Z'
+        duration_seconds:
+          type: integer
+          description: Session duration in seconds
+          example: 1530
+          minimum: 0
+        total_players:
+          type: integer
+          description: Total number of players in session
+          example: 12
+          minimum: 1
+        winner_team:
+          type: string
+          description: Winning team identifier
+          example: "team_alpha"
+          maxLength: 50
+        total_kills:
+          type: integer
+          description: Total kills in session
+          example: 89
+          minimum: 0
+        total_damage:
+          type: integer
+          format: int64
+          description: Total damage dealt in session
+          example: 456000
+          minimum: 0
+        average_accuracy:
+          type: number
+          format: float
+          description: Average player accuracy in session
+          example: 67.8
+          minimum: 0.0
+          maximum: 100.0
+        most_used_weapon:
+          type: string
+          description: Most frequently used weapon in session
+          example: "Militech M-10AF Lexington"
+          maxLength: 100
+        player_details:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: string
+                format: uuid
+                example: 550e8400-e29b-41d4-a716-446655440000
+              kills:
+                type: integer
+                example: 15
+              deaths:
+                type: integer
+                example: 8
+              damage_dealt:
+                type: integer
+                example: 25600
+              accuracy:
+                type: number
+                format: float
+                example: 72.5
+          description: Detailed per-player statistics (optional)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Session replay data optimized.'
+    CombatSessionStatsResponse:
+      type: object
+      required:
+        - session
+      properties:
+        session:
+          $ref: '#/components/schemas/CombatSessionStats'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

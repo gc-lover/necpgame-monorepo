@@ -298,3 +298,5 @@ MQS = 0.4 * rating_balance + 0.2 * role_distribution +
 
 **См. [Part 2](./matchmaking-system-architecture-part2.md) для рейтинговой системы и операций**
 
+
+

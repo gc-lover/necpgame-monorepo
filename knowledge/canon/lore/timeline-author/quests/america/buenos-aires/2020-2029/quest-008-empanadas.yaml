@@ -1,39 +1,39 @@
-# Issue: #1200
+# Issue: #326
 metadata:
-  id: quest-buenos-aires-2029-empanadas
-  title: 'Буэнос-Айрес 2020-2029 — Эмпанадас'
+  id: quest-buenos-aires-2029-008-empanadas
+  title: Буэнос-Айрес — гастротур по эмпанадас
   document_type: canon
-  category: timeline-quest
+  category: quest
   status: draft
   version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
-  concept_approved: false
+  last_updated: 2025-12-06T11:10:00Z
+  concept_approved: true
   concept_reviewed_at: ''
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
     - buenos-aires
-    - cuisine
-    - social
+    - empanadas
+    - culinary-tour
   topics:
-    - author-events
-    - city-life
+    - city_storylines
+    - food_culture
   related_systems:
     - narrative-service
+    - economy-service
+    - social-service
   related_documents:
-    - id: timeline-author-quests-index
+    - id: quest-system
       relation: references
-    - id: github-issue-1200
-      title: GitHub Issue #1200
-      link: https://github.com/gc-lover/necpgame-monorepo/issues/1200
-      relation: migrated_to
-      migrated_at: 2025-11-23T03:35:00Z
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/buenos-aires/2020-2029/quest-008-empanadas.md
+    - id: buenos-aires-culinary-guide
+      relation: complements
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/buenos-aires/2020-2029/quest-008-empanadas.md
   visibility: internal
   audience:
     - concept
     - narrative
+    - liveops
   risk_level: low
 review:
   chain:
@@ -43,13 +43,13 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: Кулинарный квест об аргентинских эмпанадас существовал только в Markdown.
-  goal: Описать мастер-класс по выбору начинок и приготовлению эмпанадас в формат знаний.
-  essence: Игрок исследует национальное блюдо, пробует разные варианты и учится распознавать региональные узоры repulgue.
+  problem: Базовое описание эмпанадас не раскрывает гастрономические выборы и их влияние на экономику районов.
+  goal: Сформировать квестовый маршрут по эмпанадериям, учитывая типы начинок, способы приготовления и социальные бонусы.
+  essence: Игрок посещает лучшие лавки города, дегустирует начинки и помогает владельцам продвигать аутентичные рецепты.
   key_points:
-    - Эмпанадас подаются печёными или жареными с различными начинками: carne, pollo, jamón y queso, humita.
-    - Узор repulgue служит маркером начинок и региональной идентичности.
-    - Квест награждает баффом здоровья и ачивкой мастера эмпанадас.
+    - Квест знакомит с региональными вариациями и техникой repulgue.
+    - Игрок выбирает между печёными и жареными версиями, влияя на статусы баффов и экономику заведений.
+    - Успешная дегустация открывает гастрономические события Буэнос-Айреса.
 quest_definition:
   quest_type: side
   level_min: 1
@@ -60,95 +60,82 @@ quest_definition:
     required_reputation: { }
     required_items: [ ]
   objectives:
-    - id: find_empanaderia
-      text: "Найти локальную эмпанадерию или стрит-фуд точку"
-      type: explore
-      target: empanaderia_location
-      count: 1
-      optional: false
-    - id: study_fillings
-      text: "Изучить ассортимент классических начинок: carne, pollo, jamón y queso, humita"
-      type: investigate
-      target: empanada_fillings
-      count: 1
-      optional: false
-    - id: choose_cooking_method
-      text: "Определить, заказывать ли печёные или жареные варианты"
+    - id: get_recommendations
+      text: "Получить рекомендации местных жителей и выбрать стартовую эмпанадерию"
       type: interact
-      target: empanada_cooking_method
-      count: 1
-      optional: false
-    - id: taste_and_discuss
-      text: "Продегустировать и обсудить вкусовые отличия"
-      type: consume
-      target: empanada_tasting
+      target: empanaderia_selection
       count: 1
       optional: false
     - id: learn_repulgue
-      text: "Узнать, как по repulgue определить начинку и регион"
-      type: research
-      target: repulgue_patterns
+      text: "Пройти мастер-класс по технике repulgue и подготовить дегустационный набор"
+      type: interact
+      target: repulgue_workshop
+      count: 1
+      optional: false
+    - id: choose_format
+      text: "Выбрать печёный или жареный формат, влияющий на бафф и отношение гурманов"
+      type: choice
+      target: empanada_format
+      count: 1
+      optional: false
+    - id: conduct_tasting
+      text: "Провести дегустацию для NPC и собрать отзывы, открывая дополнительные рецепты"
+      type: interact
+      target: npc_tasting_session
       count: 1
       optional: false
   rewards:
     experience: 600
-    currency: -8
-    items:
-      - id: health_buff_empanadas
-        name: "Бафф здоровья: +20% HP на 6 часов"
-        quantity: 1
-      - id: empanada_master_achievement
-        name: "Ачивка: «Эмпанада Мастер»"
-        quantity: 1
-    reputation: { }
-    flags:
-      - empanada_master_achievement
+    money: -8
+    items: [ ]
+    reputation:
+      culinary: 15
+    unlocks:
+      achievements:
+        - "Эмпанада мастер"
+      flags: [ ]
   branches: [ ]
 content:
   sections:
     - id: overview
       title: Описание
       body: |
-        Квест ведёт в традиционную эмпанадерию Буэнос-Айреса. Участник выбирает варианты начинки, сравнивает способы
-        приготовления и знакомится с семейными историями, связанными с блюдом.
+        Гастротур по эмпанадас ведёт игрока через знаковые эмпанадерии. Игрок изучает историю блюда, знакомится с локальными поварами и
+        решает, какие рецепты продвигать, формируя репутацию гурмана и экономический вклад в район.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+      assets: [ ]
+    - id: filling_variations
+      title: Региональные отсылки
+      body: |
+        Empanadas — национальное блюдо Аргентины. Классические начинки: carne, pollo, jamón y queso, humita. Каждая провинция имеет
+        собственный узор repulgue, по которому распознают начинку. Формат подачи (печёные или жареные) влияет на вкусовые характеристики и
+        восприятие NPC.
       mechanics_links: [ ]
       assets: [ ]
-    - id: stages
-      title: Этапы
+    - id: quest_flow
+      title: Этапы квеста
       body: |
-        1. Найти локальную эмпанадерию или стрит-фуд точку.
-        2. Изучить ассортимент классических начинок: carne, pollo, jamón y queso, humita.
-        3. Определить, заказывать ли печёные или жареные варианты.
-        4. Продегустировать и обсудить вкусовые отличия.
-        5. Узнать, как по repulgue определить начинку и регион.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: regional_details
-      title: Региональные детали
-      body: |
-        Repulgue — характерный узор на краю теста, отличающий региональные рецепты. Эмпанадас присутствуют на семейных
-        праздниках и считаются национальным блюдом Аргентины.
-      mechanics_links: [ ]
+        1. Получить рекомендации местных жителей и выбрать стартовую эмпанадерию.
+        2. Пройти мастер-класс по технике repulgue и подготовить дегустационный набор.
+        3. Выбрать печёный или жареный формат, влияющий на бафф и отношение гурманов.
+        4. Провести дегустацию для NPC и собрать отзывы, открывая дополнительные рецепты.
+      mechanics_links:
+        - mechanics/quests/quest-structure.yaml
       assets: [ ]
     - id: rewards
-      title: Награды
+      title: Награды и эффекты
       body: |
-        - Опыт: 600 XP
-        - Расходы: 8 единиц валюты
-        - Бафф здоровья: +20% HP на 6 часов
-        - Ачивка: «Эмпанада Мастер»
-      mechanics_links: [ ]
+        Завершение квеста приносит 600 XP, временный бафф «Nutrition Boost» (+20% HP на 6 часов) и ачивку «Эмпанада мастер». Расходы на дегустацию
+        составляют 8 единиц валюты, но увеличивают доход эмпанадерии и открывают скидки для будущих посетителей.
+      mechanics_links:
+        - mechanics/progression/rewards-catalog.yaml
       assets: [ ]
-    - id: mechanics
-      title: Механики
+    - id: integration
+      title: Интеграции
       body: |
-        Сценарий фокусируется на кулинарном исследовании, социальном взаимодействии и выборе вариантов приготовления.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: connections
-      title: Связи
-      body: |
-        Входит в кулинарную линию Буэнос-Айреса и может сочетаться с заданиями про мате или уличные фестивали.
+        economy-service отслеживает рост популярности выбранных рецептов, social-service фиксирует отношение гурманских клубов, а narrative-service
+        раскрывает дополнительные гастрономические события города.
       mechanics_links: [ ]
       assets: [ ]
 appendix:
@@ -162,14 +149,9 @@ implementation:
   blockers: [ ]
 history:
   - version: '2.0.0'
-    date: 2025-11-29
-    author: content_writer
-    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики кулинарного исследования и социального взаимодействия.'
-  - version: '1.0.0'
-    date: 2025-11-12
+    date: 2025-11-11
     author: concept_team
-    changes: Конвертирован квест об эмпанадас в формат знаний.
+    changes: Оформлен квест «Гастротур по эмпанадас» в формате YAML и описаны экономические эффекты.
 validation:
   checksum: ''
   schema_version: '1.0'
-

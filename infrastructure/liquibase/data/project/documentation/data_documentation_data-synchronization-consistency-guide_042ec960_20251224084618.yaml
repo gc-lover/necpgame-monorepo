@@ -1,0 +1,248 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-data-synchronization-consistency-guide-042ec960
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '9061091133168575'
+        - column:
+            name: doc_id
+            value: data-synchronization-consistency-guide
+        - column:
+            name: title
+            value: Руководство по синхронизации данных и консистентности для MMORPG
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-29 12:30:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - data-synchronization
+            - consistency
+            - database
+            - microservices
+            - mmorpg
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - character-service-go
+            - inventory-service-go
+            - world-service-go
+            - realtime-gateway-go
+        - column:
+            name: related_documents
+            value: '[{"id": "hybrid-network-system-architecture", "relation": "extends"},
+              {"id": "realtime-server-system-architecture", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - database
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "data-synchronization-consistency-guide",
+              "title": "Руководство по синхронизации данных и консистентности для
+              MMORPG", "document_type": "architecture", "category": "systems", "status":
+              "draft", "version": "1.0.0", "last_updated": "2025-11-29T12:30:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "data-synchronization", "consistency", "database",
+              "microservices", "mmorpg"], "related_systems": ["character-service-go",
+              "inventory-service-go", "world-service-go", "realtime-gateway-go"],
+              "related_documents": [{"id": "hybrid-network-system-architecture", "relation":
+              "extends"}, {"id": "realtime-server-system-architecture", "relation":
+              "extends"}], "visibility": "internal", "audience": ["architect", "backend",
+              "database"]}, "summary": {"problem": "Требуется обеспечить качественную
+              синхронизацию данных между различными слоями\n(клиент, сервер, база
+              данных) и механиками игры (инвентарь, персонаж, квесты, боевая система),\nа
+              также достичь консистентности данных в распределенной микросервисной
+              архитектуре.\n", "goal": "Создать руководство по проектированию синхронизации
+              данных и обеспечению консистентности\nдля MMORPG с множеством механик
+              и микросервисов.\n", "essence": "Комплексный подход к синхронизации
+              данных между слоями и механиками с использованием\nсобытийной архитектуры,
+              транзакций, паттернов распределенных систем и стратегий консистентности.\n"},
+              "content": {"sections": [{"id": "synchronization_between_layers", "title":
+              "Синхронизация между слоями и механиками", "body": "## Архитектурные
+              принципы\n\n### 1. Клиент-серверная модель с авторитетным сервером\n\n**Принцип:**
+              Сервер является единственным источником истины (Single Source of Truth)\n\n**Реализация:**\n-
+              Все критичные игровые данные хранятся и обрабатываются на сервере\n-
+              Клиент получает обновления состояния от сервера\n- Клиентское предсказание
+              используется только для UX, но не влияет на финальное состояние\n- Сервер
+              валидирует все действия клиента перед применением\n\n**Применение:**\n-
+              Позиции персонажей\n- Инвентарь и предметы\n- Боевая система (урон,
+              здоровье)\n- Экономика (деньги, торговля)\n- Прогресс (опыт, уровни,
+              квесты)\n\n### 2. Событийная архитектура (Event-Driven Architecture)\n\n**Принцип:**
+              Механики взаимодействуют через события, а не прямые вызовы\n\n**Преимущества:**\n-
+              Слабая связанность между механиками\n- Легкое добавление новых механик\n-
+              Масштабируемость\n- Возможность отката изменений\n\n**Реализация:**\n-
+              Event Bus (Kafka, RabbitMQ, или внутренний)\n- События: `ItemAdded`,
+              `CharacterLevelUp`, `QuestCompleted`, `CombatDamageDealt`\n- Подписчики
+              на события обрабатывают их асинхронно\n- События сохраняются для аудита
+              и отката\n\n**Пример:**\n```\nCharacterService → Event: CharacterLevelUp\n↓\nInventoryService
+              (подписчик) → Разблокировка слотов инвентаря\nQuestService (подписчик)
+              → Проверка квестов на уровень\nAchievementService (подписчик) → Проверка
+              достижений\n```\n\n### 3. Приоритетная синхронизация\n\n**Принцип:**
+              Механики могут изменяться параллельно, если не влияют друг на друга\n\n**Реализация:**\n-
+              Определение зависимостей между механиками\n- Параллельная обработка
+              независимых операций\n- Последовательная обработка зависимых операций\n-
+              Использование транзакций для атомарности\n\n**Пример:**\n- Параллельно:
+              обновление позиции персонажа + отправка сообщения в чат\n- Последовательно:
+              покупка предмета → обновление инвентаря → списание денег\n\n### 4. Метки
+              времени и согласование на сервере\n\n**Принцип:** Все действия имеют
+              временные метки для корректной обработки\n\n**Реализация:**\n- Каждое
+              действие клиента содержит timestamp\n- Сервер обрабатывает действия
+              с учетом временных меток\n- Пересчет состояния при получении запоздалых
+              действий\n- Использование Vector Clocks для распределенных систем\n\n**Применение:**\n-
+              Боевая система (урон, лечение)\n- Торговля (покупка/продажа)\n- Квесты
+              (взаимодействие с NPC)\n\n### 5. Интерполяция и экстраполяция\n\n**Принцип:**
+              Сглаживание движений для компенсации сетевых задержек\n\n**Реализация:**\n-
+              Интерполяция: сглаживание между известными состояниями\n- Экстраполяция:
+              прогнозирование будущих состояний\n- Коррекция при получении актуального
+              состояния от сервера\n\n**Применение:**\n- Движение персонажей\n- Анимации\n-
+              Физика объектов\n"}, {"id": "database_consistency", "title": "Консистентность
+              данных в базах данных", "body": "## Модели консистентности\n\n### 1.
+              Строгая консистентность (Strong Consistency)\n\n**Применение:** Критичные
+              данные, где недопустимы временные несоответствия\n\n**Использование:**\n-
+              Финансовые операции (деньги, торговля)\n- Инвентарь (предметы, слоты)\n-
+              Персонаж (статы, уровни)\n- Квесты (прогресс, награды)\n\n**Реализация:**\n-
+              ACID транзакции (PostgreSQL)\n- Блокировки (pessimistic/optimistic locking)\n-
+              Ссылочная целостность (foreign keys)\n- Уровни изоляции транзакций\n\n###
+              2. Конечная консистентность (Eventual Consistency)\n\n**Применение:**
+              Некритичные данные, где допустимы временные несоответствия\n\n**Использование:**\n-
+              Статистика игроков\n- Логи активности\n- Аналитика\n- Кэшируемые данные\n\n**Реализация:**\n-
+              Асинхронная репликация\n- Event Sourcing\n- CQRS (Command Query Responsibility
+              Segregation)\n- Message queues для синхронизации\n\n### 3. Теорема CAP
+              и выбор стратегии\n\n**CAP:** Consistency, Availability, Partition tolerance\n\n**Для
+              MMORPG:**\n- **CP (Consistency + Partition tolerance):** Критичные данные
+              (инвентарь, деньги)\n- **AP (Availability + Partition tolerance):**
+              Некритичные данные (статистика, логи)\n\n**Реализация:**\n- Разные стратегии
+              для разных типов данных\n- Мониторинг консистентности\n- Механизмы разрешения
+              конфликтов\n\n## Паттерны обеспечения консистентности\n\n### 1. ACID
+              транзакции\n\n**Применение:** Операции, требующие атомарности\n\n**Примеры:**\n-
+              Покупка предмета: списание денег + добавление в инвентарь\n- Улучшение
+              предмета: удаление материалов + обновление предмета\n- Завершение квеста:
+              обновление прогресса + выдача наград\n\n**Реализация:**\n```go\ntx,
+              err := db.BeginTx(ctx, &sql.TxOptions{\n    Isolation: sql.LevelSerializable,\n})\n//
+              ... операции ...\nif err != nil {\n    tx.Rollback()\n    return err\n}\ntx.Commit()\n```\n\n###
+              2. Saga Pattern (для распределенных транзакций)\n\n**Применение:** Операции,
+              затрагивающие несколько микросервисов\n\n**Типы:**\n- **Choreography:**
+              Каждый сервис знает, что делать дальше\n- **Orchestration:** Центральный
+              координатор управляет процессом\n\n**Пример:**\n```\nПокупка предмета
+              в магазине:\n1. InventoryService: резервирование слота\n2. CharacterService:
+              проверка денег\n3. CharacterService: списание денег\n4. InventoryService:
+              добавление предмета\n5. Если ошибка на любом шаге → компенсирующие транзакции\n```\n\n###
+              3. Event Sourcing\n\n**Применение:** Аудит, откат изменений, восстановление
+              состояния\n\n**Реализация:**\n- Все изменения сохраняются как события\n-
+              Состояние вычисляется из событий\n- Снимки состояния для производительности\n-
+              Возможность отката к любому моменту времени\n\n**Пример:**\n```\nEvents:\n-
+              CharacterCreated\n- ItemAdded (item_id: 123)\n- ItemRemoved (item_id:
+              123)\n- MoneyAdded (amount: 1000)\n\nCurrent State = Apply(Events)\n```\n\n###
+              4. CQRS (Command Query Responsibility Segregation)\n\n**Применение:**
+              Разделение операций чтения и записи\n\n**Преимущества:**\n- Оптимизация
+              для чтения и записи отдельно\n- Масштабирование независимо\n- Разные
+              модели данных для чтения/записи\n\n**Реализация:**\n- Command Side:
+              обработка команд (изменение данных)\n- Query Side: оптимизированные
+              представления для чтения\n- Синхронизация через события\n\n### 5. Блокировки
+              и изоляция\n\n**Типы блокировок:**\n- **Pessimistic Locking:** Блокировка
+              на время транзакции\n- **Optimistic Locking:** Проверка версии перед
+              обновлением\n\n**Уровни изоляции:**\n- **Read Uncommitted:** Минимальная
+              изоляция\n- **Read Committed:** Стандартный уровень (PostgreSQL по умолчанию)\n-
+              **Repeatable Read:** Гарантирует повторяемость чтения\n- **Serializable:**
+              Максимальная изоляция (для критичных операций)\n\n**Применение:**\n-
+              Pessimistic: торговля, аукционы\n- Optimistic: обновление статистики,
+              логи\n"}, {"id": "synchronization_patterns", "title": "Паттерны синхронизации
+              между механиками", "body": "## Паттерны взаимодействия\n\n### 1. Event
+              Bus Pattern\n\n**Описание:** Централизованная шина событий для обмена
+              сообщениями\n\n**Реализация:**\n- Kafka, RabbitMQ, или внутренний Event
+              Bus\n- Публикация событий от механик\n- Подписка механик на интересующие
+              события\n- Гарантия доставки (at-least-once или exactly-once)\n\n**Пример:**\n```\nCombatService
+              → Event: DamageDealt\n↓\nCharacterService → Обновление здоровья\nAchievementService
+              → Проверка достижений\nQuestService → Проверка квестов на урон\n```\n\n###
+              2. Outbox Pattern\n\n**Описание:** Гарантированная доставка событий
+              из транзакций\n\n**Проблема:** Как гарантировать отправку события при
+              успешной транзакции?\n\n**Решение:**\n1. Запись события в таблицу Outbox
+              в той же транзакции\n2. Отдельный процесс читает Outbox и отправляет
+              события\n3. После успешной отправки событие удаляется из Outbox\n\n**Реализация:**\n```sql\nBEGIN;\nUPDATE
+              inventory SET ...;\nINSERT INTO outbox (event_type, payload) VALUES
+              (...);\nCOMMIT;\n```\n\n### 3. Two-Phase Commit (2PC)\n\n**Описание:**
+              Координация транзакций между несколькими БД\n\n**Применение:** Критичные
+              операции, затрагивающие несколько сервисов\n\n**Этапы:**\n1. **Prepare:**
+              Все участники готовы к коммиту\n2. **Commit:** Все участники коммитят
+              транзакцию\n\n**Недостатки:** Высокая задержка, блокировки\n\n**Альтернатива:**
+              Saga Pattern (предпочтительнее для микросервисов)\n\n### 4. Idempotency
+              Pattern\n\n**Описание:** Операции должны быть идемпотентными\n\n**Применение:**
+              Защита от дублирования операций\n\n**Реализация:**\n- Уникальные ID
+              для операций\n- Проверка выполнения операции перед повторным выполнением\n-
+              Кэширование результатов идемпотентных операций\n\n**Пример:**\n```\nOperation
+              ID: uuid-v4\nЕсли операция уже выполнена → возврат результата\nЕсли
+              нет → выполнение операции\n```\n\n### 5. Circuit Breaker Pattern\n\n**Описание:**
+              Защита от каскадных сбоев\n\n**Применение:** При сбое одного сервиса
+              не должны падать другие\n\n**Состояния:**\n- **Closed:** Нормальная
+              работа\n- **Open:** Сервис недоступен, возврат ошибки\n- **Half-Open:**
+              Проверка восстановления сервиса\n"}, {"id": "implementation_recommendations",
+              "title": "Рекомендации по реализации", "body": "## Архитектурные решения\n\n###
+              1. Разделение на слои\n\n**Трехслойная архитектура:**\n- **Data Layer:**
+              База данных, репозитории\n- **Business Logic Layer:** Сервисы, механики\n-
+              **Presentation Layer:** API, WebSocket handlers\n\n**Преимущества:**\n-
+              Четкое разделение ответственности\n- Легкое тестирование\n- Возможность
+              замены слоев\n\n### 2. Микросервисная архитектура\n\n**Принципы:**\n-
+              Каждый сервис отвечает за свою доменную область\n- Независимое развертывание\n-
+              Слабая связанность через события\n\n**Сервисы:**\n- `character-service-go`:
+              Персонажи, статы, уровни\n- `inventory-service-go`: Инвентарь, предметы\n-
+              `quest-service-go`: Квесты, прогресс\n- `combat-service-go`: Боевая
+              система\n- `economy-service-go`: Экономика, торговля\n\n### 3. Event-Driven
+              Communication\n"}]}}'
+        - column:
+            name: metadata
+            value: '{"id": "data-synchronization-consistency-guide", "title": "Руководство
+              по синхронизации данных и консистентности для MMORPG", "document_type":
+              "architecture", "category": "systems", "status": "draft", "version":
+              "1.0.0", "last_updated": "2025-11-29T12:30:00+00:00", "owners": [{"role":
+              "architect", "contact": "architect@necp.game"}], "tags": ["architecture",
+              "data-synchronization", "consistency", "database", "microservices",
+              "mmorpg"], "related_systems": ["character-service-go", "inventory-service-go",
+              "world-service-go", "realtime-gateway-go"], "related_documents": [{"id":
+              "hybrid-network-system-architecture", "relation": "extends"}, {"id":
+              "realtime-server-system-architecture", "relation": "extends"}], "visibility":
+              "internal", "audience": ["architect", "backend", "database"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\data-synchronization-consistency-guide.yaml

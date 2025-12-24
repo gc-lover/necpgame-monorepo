@@ -1,0 +1,302 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-trade-p2p-system-architecture-59a2c56f
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '7534529687320091'
+        - column:
+            name: doc_id
+            value: architecture-trade-p2p-system
+        - column:
+            name: title
+            value: P2P Trade System Architecture
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: implementation
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-12-02 17:12:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - economy
+            - trade
+            - p2p
+            - architecture
+        - column:
+            name: topics
+            value:
+            - p2p-trading
+            - anti-fraud
+            - security
+        - column:
+            name: related_systems
+            value:
+            - economy-service
+            - inventory-service
+            - character-service
+            - world-service
+            - security-service
+        - column:
+            name: related_documents
+            value: '[{"id": "trade-system", "relation": "implements"}, {"id": "economy-trading",
+              "relation": "references"}]'
+        - column:
+            name: source
+            value: knowledge/implementation/architecture/trade-p2p-system-architecture.yaml
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architects
+            - backend
+            - economy
+        - column:
+            name: risk_level
+            value: high
+        - column:
+            name: content
+            value: '{"metadata": {"id": "architecture-trade-p2p-system", "title":
+              "P2P Trade System Architecture", "document_type": "architecture", "category":
+              "implementation", "status": "draft", "version": "1.0.0", "last_updated":
+              "2025-12-02T17:12:00+00:00", "concept_approved": false, "owners": [{"role":
+              "architect", "contact": "architect@necp.game"}], "tags": ["economy",
+              "trade", "p2p", "architecture"], "topics": ["p2p-trading", "anti-fraud",
+              "security"], "related_systems": ["economy-service", "inventory-service",
+              "character-service", "world-service", "security-service"], "related_documents":
+              [{"id": "trade-system", "relation": "implements"}, {"id": "economy-trading",
+              "relation": "references"}], "source": "knowledge/implementation/architecture/trade-p2p-system-architecture.yaml",
+              "visibility": "internal", "audience": ["architects", "backend", "economy"],
+              "risk_level": "high"}, "review": {"chain": [{"role": "architect", "reviewer":
+              "", "reviewed_at": "", "status": "pending"}], "next_actions": ["Review
+              by Backend Team", "Review by Security Team", "Database Engineer handoff"]},
+              "summary": {"problem": "Необходима безопасная архитектура P2P торговли
+              с антифрод механизмами.", "goal": "Спроектировать архитектуру системы
+              прямого обмена между игроками.", "essence": "Архитектура описывает компоненты,
+              API, потоки данных, антифрод и БД для P2P торговли.", "key_points":
+              ["Двухстороннее окно обмена с подтверждением", "Антифрод механизмы (расстояние,
+              владение, таймауты)", "Audit trail для всех сделок", "Circuit breaker
+              для устойчивости", "Event-driven интеграция"]}, "content": {"sections":
+              [{"id": "system-overview", "title": "Обзор системы", "body": "P2P Trade
+              System управляет прямым обменом между игроками:\n- Создание торговых
+              сессий между двумя игроками\n- Управление предложениями (предметы +
+              валюта)\n- Двухстороннее подтверждение\n- Блокировка предметов во время
+              торговли\n- Атомарная передача предметов и валюты\n- Audit trail для
+              всех сделок\n- Антифрод механизмы\n\nПринципы:\n- Безопасность превыше
+              всего\n- Двойное подтверждение обязательно\n- Атомарные транзакции (все
+              или ничего)\n- Полный audit trail\n- Circuit breaker для устойчивости\n-
+              Event-driven архитектура\n"}, {"id": "components", "title": "Компоненты",
+              "body": "## economy-service (Trade Module)\n**Ответственность:** Управление
+              P2P торговыми сессиями\n**Технологии:** Go, PostgreSQL, Redis, Kafka\n**Порт:**
+              8085\n**API:** `/api/v1/economy/trade/*`\n\nКомпоненты:\n- TradeSessionManager
+              - управление сессиями\n- TradeValidator - валидация предложений\n- FraudDetector
+              - обнаружение мошенничества\n- AtomicTransfer - атомарная передача\n-
+              AuditLogger - логирование сделок\n\n## inventory-service\n**Ответственность:**
+              Управление инвентарем\n**Интеграция:** Блокировка/разблокировка предметов\n**API:**
+              \n- `POST /inventory/lock` - блокировка предметов\n- `POST /inventory/unlock`
+              - разблокировка\n- `POST /inventory/transfer` - передача предметов\n\n##
+              character-service\n**Ответственность:** Данные персонажей\n**Интеграция:**
+              Проверка онлайн статуса, позиции\n**API:** \n- `GET /characters/{id}/online-status`\n-
+              `GET /characters/{id}/position`\n\n## world-service\n**Ответственность:**
+              Игровой мир, зоны\n**Интеграция:** Проверка расстояния между игроками\n**API:**
+              `POST /world/check-distance`\n\n## security-service\n**Ответственность:**
+              Антифрод детекция\n**Интеграция:** Анализ паттернов торговли\n**API:**
+              `POST /security/validate-trade`\n"}, {"id": "api-endpoints", "title":
+              "API Endpoints", "body": "## Trade Session Management\n\nPOST /api/v1/economy/trade/initiate\n-
+              Инициировать торговлю\n- Request: target_player_id\n- Response: trade_session_id\n-
+              Validation: \n  * Оба онлайн\n  * Расстояние <10m\n  * Нет активных
+              трейдов\n- Events: trade.session.created\n\nGET /api/v1/economy/trade/sessions/{session_id}\n-
+              Получить состояние торговли\n- Response: offers, confirmations, status\n\nDELETE
+              /api/v1/economy/trade/sessions/{session_id}\n- Отменить торговлю\n-
+              Events: trade.session.cancelled\n\n## Trade Offers\n\nPOST /api/v1/economy/trade/sessions/{session_id}/offer\n-
+              Добавить предложение\n- Request: \n  * items: [{item_id, quantity}]\n  *
+              currency: {eurodollars, cryptos}\n- Validation:\n  * Владение предметами\n  *
+              Предметы не bind-on-pickup\n  * Предметы не заблокированы\n- Actions:
+              Блокировка предметов в inventory\n- Events: trade.offer.updated\n\nPUT
+              /api/v1/economy/trade/sessions/{session_id}/offer\n- Изменить предложение
+              (сброс подтверждений)\n- Actions: Разблокировка старых + блокировка
+              новых\n- Events: trade.offer.updated\n\nDELETE /api/v1/economy/trade/sessions/{session_id}/offer\n-
+              Удалить предложение\n- Actions: Разблокировка предметов\n- Events: trade.offer.removed\n\n##
+              Trade Confirmation\n\nPOST /api/v1/economy/trade/sessions/{session_id}/confirm\n-
+              Подтвердить предложение\n- Validation: Оба предложения заполнены\n-
+              Lock: Блокировка изменений предложений\n- Events: trade.confirmation.received\n\nPOST
+              /api/v1/economy/trade/sessions/{session_id}/complete\n- Завершить торговлю
+              (двойное подтверждение)\n- Validation: Оба подтвердили\n- Actions: \n  *
+              Атомарная передача предметов\n  * Передача валюты\n  * Разблокировка
+              предметов\n  * Запись в audit trail\n- Events: trade.session.completed\n\n##
+              Trade History\n\nGET /api/v1/economy/trade/history\n- История торговли
+              игрока\n- Query: player_id, limit, offset\n- Response: Array of completed
+              trades\n\nGET /api/v1/economy/trade/sessions/{session_id}/audit\n- Полный
+              audit trail сделки\n- Response: Все события торговой сессии\n"}, {"id":
+              "database", "title": "База данных", "body": "## PostgreSQL\n\n### trade_sessions\n```sql\nCREATE
+              TABLE trade_sessions (\n  id UUID PRIMARY KEY,\n  initiator_id UUID
+              NOT NULL,\n  target_id UUID NOT NULL,\n  zone_id VARCHAR(100),\n\n  status
+              VARCHAR(20) NOT NULL,  -- pending, offering, confirmed, completed, cancelled,
+              expired\n\n  initiator_offer JSONB,  -- {items: [], currency: {}}\n  target_offer
+              JSONB,\n\n  initiator_confirmed BOOLEAN DEFAULT false,\n  target_confirmed
+              BOOLEAN DEFAULT false,\n\n  completed_at TIMESTAMP,\n  cancelled_at
+              TIMESTAMP,\n  cancelled_by UUID,\n  cancel_reason VARCHAR(200),\n\n  created_at
+              TIMESTAMP NOT NULL DEFAULT NOW(),\n  expires_at TIMESTAMP NOT NULL,  --
+              created_at + 5 minutes\n\n  CONSTRAINT valid_status CHECK (status IN
+              (\n    ''pending'', ''offering'', ''confirmed'', ''completed'', ''cancelled'',
+              ''expired''\n  ))\n);\n\nCREATE INDEX idx_trade_sessions_initiator ON
+              trade_sessions(initiator_id, created_at DESC);\nCREATE INDEX idx_trade_sessions_target
+              ON trade_sessions(target_id, created_at DESC);\nCREATE INDEX idx_trade_sessions_status
+              ON trade_sessions(status);\nCREATE INDEX idx_trade_sessions_expires
+              ON trade_sessions(expires_at);\n```\n\n### trade_history\n```sql\nCREATE
+              TABLE trade_history (\n  id UUID PRIMARY KEY,\n  session_id UUID NOT
+              NULL REFERENCES trade_sessions(id),\n\n  player1_id UUID NOT NULL,\n  player2_id
+              UUID NOT NULL,\n\n  player1_items JSONB,  -- [{item_id, quantity, name}]\n  player1_currency
+              JSONB,  -- {eurodollars, cryptos}\n\n  player2_items JSONB,\n  player2_currency
+              JSONB,\n\n  zone_id VARCHAR(100),\n  completed_at TIMESTAMP NOT NULL
+              DEFAULT NOW(),\n\n  -- Anti-fraud metadata\n  player1_ip VARCHAR(45),\n  player2_ip
+              VARCHAR(45),\n  suspicious_flag BOOLEAN DEFAULT false,\n  suspicious_reason
+              TEXT\n);\n\nCREATE INDEX idx_trade_history_player1 ON trade_history(player1_id,
+              completed_at DESC);\nCREATE INDEX idx_trade_history_player2 ON trade_history(player2_id,
+              completed_at DESC);\nCREATE INDEX idx_trade_history_session ON trade_history(session_id);\nCREATE
+              INDEX idx_trade_history_suspicious ON trade_history(suspicious_flag)
+              WHERE suspicious_flag = true;\n```\n\n### trade_events\n```sql\nCREATE
+              TABLE trade_events (\n  id BIGSERIAL PRIMARY KEY,\n  session_id UUID
+              NOT NULL REFERENCES trade_sessions(id),\n\n  event_type VARCHAR(50)
+              NOT NULL,  -- offer_added, offer_updated, confirmed, completed, cancelled\n  actor_id
+              UUID NOT NULL,\n  event_data JSONB,\n\n  timestamp TIMESTAMP NOT NULL
+              DEFAULT NOW()\n);\n\nCREATE INDEX idx_trade_events_session ON trade_events(session_id,
+              timestamp);\n```\n\n## Redis\n\nactive_trade:{player_id} (String, TTL
+              300s)\n- session_id (для предотвращения множественных трейдов)\n\ntrade_session:{session_id}
+              (Hash, TTL 300s)\n- status, initiator_id, target_id, expires_at\n\nlocked_items:{player_id}
+              (Set, TTL 300s)\n- Set of item_ids (для блокировки предметов)\n"}, {"id":
+              "data-flows", "title": "Потоки данных", "body": "## 1. Инициация торговли\n\n1.
+              Client A → Economy: POST /trade/initiate {target: B}\n2. Economy → Character:
+              GET /A/online-status, GET /B/online-status\n3. Economy → Character:
+              GET /A/position, GET /B/position\n4. Economy → World: POST /check-distance
+              {A, B}\n5. World → Economy: distance < 10m [OK]\n6. Economy → Redis:
+              CHECK active_trade:A, active_trade:B\n7. Economy → PostgreSQL: INSERT
+              trade_sessions\n8. Economy → Redis: SETEX active_trade:A, active_trade:B\n9.
+              Economy → Kafka: Publish trade.session.created\n10. Economy → Client
+              A, B: Session ID + WebSocket notification\n\nTiming: <100ms\n\n## 2.
+              Добавление предложения\n\n1. Client A → Economy: POST /sessions/{id}/offer
+              {items, currency}\n2. Economy → Inventory: POST /inventory/validate-ownership
+              {A, items}\n3. Inventory → Economy: Ownership [OK]\n4. Economy → Security:
+              POST /security/validate-trade {A, items}\n5. Security → Economy: No
+              fraud detected [OK]\n6. Economy → Inventory: POST /inventory/lock {A,
+              items}\n7. Inventory → Economy: Items locked [OK]\n8. Economy → Redis:
+              SADD locked_items:A {item_ids}\n9. Economy → PostgreSQL: UPDATE trade_sessions
+              SET initiator_offer\n10. Economy → Kafka: Publish trade.offer.updated\n11.
+              Economy → Client B: WebSocket notification\n\nTiming: <150ms\n\n## 3.
+              Подтверждение и завершение\n\n1. Client A → Economy: POST /sessions/{id}/confirm\n2.
+              Economy → PostgreSQL: UPDATE initiator_confirmed = true\n3. Economy
+              → Kafka: Publish trade.confirmation.received\n\n(Client B confirms)\n\n4.
+              Client B → Economy: POST /sessions/{id}/complete\n5. Economy → Security:
+              POST /security/final-validation\n6. Economy → PostgreSQL: BEGIN TRANSACTION\n7.
+              Economy → Inventory: POST /inventory/transfer {A→B, items_A}\n8. Economy
+              → Inventory: POST /inventory/transfer {B→A, items_B}\n9. Economy → Economy:
+              Transfer currency A↔B\n10. Economy → PostgreSQL: \n    - UPDATE trade_sessions
+              (status=completed)\n    - INSERT trade_history\n11. Economy → PostgreSQL:
+              COMMIT TRANSACTION\n12. Economy → Redis: DEL active_trade:A, active_trade:B,
+              locked_items:*\n13. Economy → Kafka: Publish trade.session.completed\n14.
+              Economy → Client A, B: Trade completed notification\n\nTiming: <200ms\nRollback:
+              При любой ошибке - ROLLBACK + разблокировка\n"}, {"id": "anti-fraud",
+              "title": "Антифрод механизмы", "body": "## Distance Check\n- Игроки
+              должны быть в пределах 10 метров\n- Проверка при инициации\n- Проверка
+              перед завершением\n- Auto-cancel при отдалении >15m\n\n## Ownership
+              Verification\n- Проверка владения всеми предметами\n- Проверка, что
+              предметы не bind-on-pickup\n- Проверка, что предметы не заблокированы
+              в другой сделке\n\n## Timeout Protection\n- Сессия истекает через 5
+              минут\n- Auto-cancel при истечении\n- Background job для очистки expired
+              сессий\n\n## Rate Limiting\n- Максимум 10 трейдов в час на игрока\n-
+              Максимум 3 активных сессии одновременно\n\n## Pattern Detection\n- Детекция
+              одинаковых IP (возможная мультиаккаунтность)\n- Детекция rapid trading
+              (bot behavior)\n- Детекция suspicious item flows (RMT)\n- Флаг в trade_history
+              для расследования\n\n## Circuit Breaker\n- Timeout для inventory-service:
+              3 секунды\n- Fallback: Cancel trade при недоступности\n- Retry: Exponential
+              backoff (3 попытки)\n"}, {"id": "event-sourcing", "title": "Event Sourcing",
+              "body": "## Kafka Topics\n\n### trade.session.created\n```json\n{\n  \"event_id\":
+              \"uuid\",\n  \"event_type\": \"trade.session.created\",\n  \"timestamp\":
+              \"2025-12-02T17:00:00Z\",\n  \"session_id\": \"uuid\",\n  \"initiator_id\":
+              \"uuid\",\n  \"target_id\": \"uuid\",\n  \"zone_id\": \"night_city_downtown\"\n}\n```\n\n###
+              trade.offer.updated\n```json\n{\n  \"event_id\": \"uuid\",\n  \"event_type\":
+              \"trade.offer.updated\",\n  \"timestamp\": \"2025-12-02T17:00:30Z\",\n  \"session_id\":
+              \"uuid\",\n  \"player_id\": \"uuid\",\n  \"offer\": {\n    \"items\":
+              [{\"item_id\": \"uuid\", \"quantity\": 1}],\n    \"currency\": {\"eurodollars\":
+              1000}\n  }\n}\n```\n\n### trade.session.completed\n```json\n{\n  \"event_id\":
+              \"uuid\",\n  \"event_type\": \"trade.session.completed\",\n  \"timestamp\":
+              \"2025-12-02T17:02:00Z\",\n  \"session_id\": \"uuid\",\n  \"player1_id\":
+              \"uuid\",\n  \"player2_id\": \"uuid\",\n  \"player1_items\": [...],\n  \"player2_items\":
+              [...],\n  \"suspicious_flag\": false\n}\n```\n\n### trade.session.cancelled\n```json\n{\n  \"event_id\":
+              \"uuid\",\n  \"event_type\": \"trade.session.cancelled\",\n  \"timestamp\":
+              \"2025-12-02T17:01:00Z\",\n  \"session_id\": \"uuid\",\n  \"cancelled_by\":
+              \"uuid\",\n  \"reason\": \"user_cancelled\"\n}\n```\n\n## Event Consumers\n-
+              **Analytics Service:** Слушает trade.* для экономической аналитики\n-
+              **Security Service:** Слушает trade.* для детекции fraud patterns\n-
+              **Quest Service:** Слушает trade.session.completed для квестов\n"},
+              {"id": "security", "title": "Безопасность", "body": "## Atomicity\n-
+              Все передачи в одной PostgreSQL транзакции\n- Rollback при любой ошибке\n-
+              Разблокировка предметов при rollback\n\n## Idempotency\n- Unique constraint
+              на trade_history (session_id)\n- Проверка статуса перед каждой операцией\n-
+              Защита от double-completion\n\n## Locking Strategy\n- Pessimistic locking
+              для trade_sessions (SELECT FOR UPDATE)\n- Item locking через inventory-service\n-
+              Redis для distributed locking\n\n## Audit Trail\n- Все события в trade_events\n-
+              Полная история в trade_history\n- IP адреса для fraud investigation\n"},
+              {"id": "monitoring", "title": "Мониторинг", "body": "## Metrics (Prometheus)\n-
+              `trade_sessions_total` (counter)\n- `trade_sessions_active` (gauge)\n-
+              `trade_sessions_completed` (counter)\n- `trade_sessions_cancelled` (counter)\n-
+              `trade_sessions_expired` (counter)\n- `trade_fraud_detected` (counter)\n-
+              `trade_api_latency_seconds` (histogram)\n\n## Alerts\n- High fraud rate
+              (>5% of trades)\n- High cancellation rate (>30%)\n- Slow transfers (p99
+              >500ms)\n- Circuit breaker open\n"}]}, "appendix": {"glossary": [{"term":
+              "Trade Session", "definition": "Инстанс торговли между двумя игроками"},
+              {"term": "Audit Trail", "definition": "Полная история всех действий
+              в сделке"}], "decisions": [{"id": "arch-001", "decision": "Атомарные
+              транзакции для передачи", "rationale": "Гарантия consistency"}, {"id":
+              "arch-002", "decision": "5-минутный timeout", "rationale": "Баланс между
+              удобством и производительностью"}, {"id": "arch-003", "decision": "Distance
+              check <10m", "rationale": "Предотвращение удаленной торговли с ботами"}]},
+              "implementation": {"github_issue": 131, "needs_task": true, "next_steps":
+              ["Database: Миграции для trade_sessions, trade_history, trade_events",
+              "API Designer: OpenAPI спецификация", "Backend: Реализация Trade Module
+              в economy-service", "Security: Интеграция fraud detection"], "blockers":
+              []}, "history": [{"version": "1.0.0", "date": "2025-12-02", "author":
+              "architect", "changes": "Создана архитектура P2P торговли"}], "validation":
+              {"checksum": "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "architecture-trade-p2p-system", "title": "P2P Trade System
+              Architecture", "document_type": "architecture", "category": "implementation",
+              "status": "draft", "version": "1.0.0", "last_updated": "2025-12-02T17:12:00+00:00",
+              "concept_approved": false, "owners": [{"role": "architect", "contact":
+              "architect@necp.game"}], "tags": ["economy", "trade", "p2p", "architecture"],
+              "topics": ["p2p-trading", "anti-fraud", "security"], "related_systems":
+              ["economy-service", "inventory-service", "character-service", "world-service",
+              "security-service"], "related_documents": [{"id": "trade-system", "relation":
+              "implements"}, {"id": "economy-trading", "relation": "references"}],
+              "source": "knowledge/implementation/architecture/trade-p2p-system-architecture.yaml",
+              "visibility": "internal", "audience": ["architects", "backend", "economy"],
+              "risk_level": "high"}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\trade-p2p-system-architecture.yaml

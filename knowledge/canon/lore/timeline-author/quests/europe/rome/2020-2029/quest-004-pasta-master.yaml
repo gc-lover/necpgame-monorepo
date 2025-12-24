@@ -1,12 +1,12 @@
 # Issue: #606
 metadata:
-  id: canon-quest-rome-2029-004-pasta-master
-  title: 'Рим: мастер классической пасты'
+  id: quest-rome-2029-004-pasta-master
+  title: "Рим: мастер-паста от nonna"
   document_type: canon
-  category: quests
+  category: quest
   status: draft
-  version: '2.1.0'
-  last_updated: 2025-12-01T00:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-06T11:50:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
@@ -14,23 +14,20 @@ metadata:
       contact: concept@necp.game
   tags:
     - rome
-    - pasta
-    - culinary
+    - cuisine
+    - tradition
   topics:
-    - craftsmanship
-    - food-culture
+    - city-lore
   related_systems:
-    - narrative-service
-    - quest-service
-  related_documents:
-    - id: canon-region-europe-2020-2093
-      relation: references
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/europe/rome/2020-2029/quest-004-pasta-master.md
+    - social-mechanics
+    - economy-service
+    - progression-service
+  related_documents: [ ]
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/europe/rome/2020-2029/quest-004-pasta-master.md
   visibility: internal
   audience:
     - concept
     - narrative
-    - liveops
   risk_level: low
 review:
   chain:
@@ -40,119 +37,90 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: В культурной линии Рима отсутствовал интерактивный кулинарный мастер-класс.
-  goal: Позволить игроку обучиться у местной nonna приготовлению четырёх классических паст.
-  essence: Герой замешивает тесто, готовит соусы и получает благословение наставницы, открывая новые кулинарные рецепты.
+  problem: Черновик обучающего квеста не включал механики готовки и экономический эффект от семейных рецептов.
+  goal: Структурировать мастер-класс у римской nonna с пошаговыми проверками и возможностью монетизации рецептов.
+  essence: Игрок изучает четыре классические пасты, управляет ресурсами кухни и выбирает, делиться ли секретами семьи.
   key_points:
-    - Подчёркнуты традиции семейной кухни и выражение «la nonna sa tutto».
-    - Игрок готовит Carbonara, Amatriciana, Cacio e Pepe и Gricia без кухонных машин.
-    - Награды включают рост навыка, титул «Мастер пасты» и доступ к баффам еды.
+    - Пошаговые мини-игры по замесу теста и приготовлению соусов.
+    - Выбор стратегии: сохранить традицию или вывести рецепт на глобальный рынок.
+    - Квест усиливает гастрономическую ветку Рима и даёт долговременный бафф.
 quest_definition:
   quest_type: side
-  level_min: 3
-  level_max: null
+  level_min: 5
+  level_max: 20
   requirements:
-    required_quests: [ ]
-    required_flags: [ ]
-    required_reputation: { }
-    required_items: [ ]
+    - type: location
+      value: rome
   objectives:
-    - id: find_roma_nonna
-      text: "Найти римскую nonna, согласную обучать чужаков семейным рецептам"
-      type: interact
-      target: rome_culinary_district
-      count: 1
-      optional: false
-    - id: knead_dough
-      text: "Замесить тесто из муки и яиц, следуя наставлениям «piano, piano»"
-      type: craft
-      target: pasta_dough_preparation
-      count: 1
-      optional: false
-    - id: roll_pasta_sheets
-      text: "Раскатать листы вручную и сформировать разные виды пасты"
-      type: craft
-      target: pasta_shaping
-      count: 4
-      optional: false
-    - id: prepare_sauces
-      text: "Приготовить четыре классические римские соуса: Carbonara, Amatriciana, Cacio e Pepe и Gricia"
-      type: craft
-      target: sauce_preparation
-      count: 4
-      optional: false
-    - id: serve_dishes
-      text: "Сервировать блюда и получить благословение наставницы и семейную книгу рецептов"
-      type: interact
-      target: nonna_blessing
-      count: 1
-      optional: false
+    - id: prepare_ingredients
+      type: collect
+      description: Подготовить ингредиенты с учетом ограниченных поставок
+      required: true
+    - id: make_pasta
+      type: complete
+      description: Приготовить четыре классические пасты (Carbonara, Amatriciana, Cacio e Pepe, Gricia)
+      required: true
+    - id: choose_strategy
+      type: choose
+      description: Выбрать стратегию для рецептов
+      required: true
   rewards:
     experience: 2500
-    currency: 0
-    items:
-      - item_id: pasta_master_title
-        quantity: 1
-        name: "Титул «Мастер пасты»"
-      - item_id: family_recipe_book
-        quantity: 1
-        name: "Семейная книга рецептов"
+    money:
+      type: eddies
+      value: -10
     reputation:
-      rome_culinary_circle: 10
-    flags:
-      - pasta_master_unlocked
-  branches: [ ]
+      culinary: 15
+    unlocks:
+      achievements:
+        - id: pasta_maestro
+          name: Pasta Maestro
+      flags:
+        - roman_culinary_heritage_unlocked
+        - gourmet_faction_recipes_unlocked
+  branches:
+    - id: keep_tradition
+      name: Сохранить традицию
+      description: Оставить рецепты в семье
+    - id: sell_masterclass
+      name: Продать мастер-класс
+      description: Продать эксклюзивный мастер-класс туристическому агентству
+    - id: create_video
+      name: Записать видеокурс
+      description: Записать видеокурс и запускать сезонные ивенты
 content:
   sections:
     - id: overview
-      title: Обзор квеста
+      title: Кратко
       body: |
-        Квест ROME-2029-004 знакомит игрока с мастерской традиционной пасты. Нужно найти наставницу, пройти обучение и
-        приготовить четыре блюда, соблюдая технику ручного раскатывания.
+        - Квестовый ID: `ROME-2029-004`
+        - Формат: гастрономический мастер-класс, сложность средняя, solo, длительность 2–4 часа.
+        - Локация: домашняя траттория в районе Трастевере.
       mechanics_links:
         - mechanics/quests/quest-system.yaml
-      assets: [ ]
-    - id: stages
-      title: Последовательность этапов
+    - id: workshop
+      title: Мастерская nonna
       body: |
-        1. Найти римскую nonna, согласную обучать чужаков семейным рецептам.
-        2. Замесить тесто из муки и яиц, следуя наставлениям «piano, piano».
-        3. Раскатать листы вручную и сформировать разные виды пасты.
-        4. Приготовить четыре классические римские соуса и сервировать блюда.
-        5. Получить благословение наставницы и семейную книгу рецептов.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: regional_context
-      title: Региональные детали
+        1. Подготовить ингредиенты с учётом ограниченных поставок.
+        2. Замешивать тесто вручную, проходя серию проверок на тайминг.
+        3. Приготовить Carbonara, Amatriciana, Cacio e Pepe и Gricia под контролем наставницы.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+    - id: choices
+      title: Решения игрока
       body: |
-        - Обстановка домашней кухни с деревянным столом, присыпанным мукой.
-        - Использование сезонных ингредиентов и истории происхождения каждого блюда.
-        - Традиция передавать рецепты устно от старшего поколения.
+        - Оставить рецепты в семье и получить доверие локальной общины.
+        - Продать эксклюзивный мастер-класс туристическому агентству (рост economy-service).
+        - Записать видеокурс и запускать сезонные ивенты через progression-service.
       mechanics_links: [ ]
-      assets: [ ]
     - id: rewards
-      title: Награды и эффекты
+      title: Награды
       body: |
-        - 2 500 XP.
-        - Рост навыка «Кулинария» на +20.
-        - Титул «Мастер пасты».
-        - Открытие набора блюд, дающих временные баффы.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: mechanics
-      title: Задействованные механики
-      body: |
-        - Мини-игры по замесу теста и контролю температуры.
-        - Система крафта кулинарных рецептов и долгосрочных баффов.
-        - Социальные взаимодействия и проверка доверия NPC-наставницы.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: connections
-      title: Связи
-      body: |
-        Квест поддерживает гастрономическую арку Рима и открывает цепочку кулинарных событий по всей Италии.
-      mechanics_links: [ ]
-      assets: [ ]
+        - 2500 XP, расходы 10 кредитов на ингредиенты.
+        - Бафф «Pasta Maestro» (эффективность кулинарных баффов +20% на 48 часов).
+        - Доступ к линии «Roman Culinary Heritage» и рецептам для фракции гурманов.
+      mechanics_links:
+        - mechanics/progression/progression-skills.yaml
 appendix:
   glossary: [ ]
   references: [ ]
@@ -163,18 +131,14 @@ implementation:
   queue_reference: [ ]
   blockers: [ ]
 history:
-  - version: '2.1.0'
-    date: 2025-12-01
-    author: content_writer
-    changes: 'Добавлен Issue в начало файла. Исправлена структура items (id -> item_id). Структура quest_definition соответствует архитектуре системы квестов (currency, flags, правильная структура rewards).'
-  - version: '2.0.0'
-    date: 2025-11-29
-    author: content_writer
-    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики ремесла и кулинарной культуры.'
   - version: '0.1.0'
-    date: 2025-11-13
+    date: 2025-11-11
     author: concept_team
-    changes: Добавлен YAML-квест мастер-класса пасты.
+    changes: "Оформлен мастер-класс по римской пасте в формат знаний."
+  - version: '2.0.0'
+    date: 2025-12-06
+    author: content_writer
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Обновлен github_issue на 606.'
 validation:
   checksum: ''
   schema_version: '1.0'

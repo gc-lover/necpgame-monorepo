@@ -1,0 +1,190 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-voice-lobby-data-flows-04011abf
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-667952424730038'
+        - column:
+            name: doc_id
+            value: voice-lobby-data-flows
+        - column:
+            name: title
+            value: Архитектура системы голосовых лобби - Потоки данных и синхронизация
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-30 20:40:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[]'
+        - column:
+            name: tags
+            value: []
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value: []
+        - column:
+            name: related_documents
+            value: '[{"id": "voice-lobby-core", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: ''
+        - column:
+            name: audience
+            value: []
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "voice-lobby-data-flows", "title": "Архитектура
+              системы голосовых лобби - Потоки данных и синхронизация", "document_type":
+              "architecture", "category": "systems", "status": "draft", "version":
+              "1.1.0", "last_updated": "2025-11-30T20:40:00+00:00", "github_issue":
+              338, "related_documents": [{"id": "voice-lobby-core", "relation": "extends"}]},
+              "data_flows": {"lobby_creation_flow": "1. Игрок создает лобби через
+              API\n2. Voice Lobby Manager валидирует данные лобби\n3. Voice Lobby
+              Manager проверяет лимиты игрока\n4. Voice Provider Integrator создает
+              голосовую комнату\n5. Voice Lobby Manager сохраняет лобби в БД\n6. Lobby
+              Directory Manager добавляет лобби в каталог\n7. Voice Lobby Manager
+              публикует событие voice-lobby.created\n8. Realtime Gateway отправляет
+              обновление клиентам\n", "lobby_join_flow": "1. Игрок присоединяется
+              к лобби через API\n2. Voice Lobby Manager проверяет доступность лобби\n3.
+              Permissions Engine проверяет права доступа\n4. Voice Lobby Manager проверяет
+              лимиты участников\n5. Voice Provider Integrator добавляет игрока в голосовую
+              комнату\n6. Voice Lobby Manager добавляет участника в БД\n7. Voice Lobby
+              Manager публикует событие voice-lobby.joined\n8. Realtime Gateway отправляет
+              обновление всем участникам\n", "party_finder_flow": "1. Игрок начинает
+              поиск группы через API\n2. Party Finder Engine сохраняет критерии поиска\n3.
+              Party Finder Engine добавляет игрока в очередь поиска\n4. Lobby Matchmaker
+              периодически проверяет совпадения\n5. Lobby Matchmaker находит подходящее
+              лобби\n6. Party Finder Engine присоединяет игрока к лобби\n7. Voice
+              Lobby Manager публикует событие party-finder.found\n8. Realtime Gateway
+              отправляет обновление игроку\n", "subchannel_management_flow": "1. Лидер
+              создает подканал через API\n2. Subchannel Controller валидирует данные
+              подканала\n3. Subchannel Controller проверяет лимиты подканалов\n4.
+              Voice Provider Integrator создает подканал в голосовом провайдере\n5.
+              Subchannel Controller сохраняет подканал в БД\n6. Voice Lobby Manager
+              публикует событие voice-lobby.subchannel-created\n7. Realtime Gateway
+              отправляет обновление всем участникам\n"}, "data_consistency": {"strategy":
+              "Strong Consistency (ACID транзакции) для критичных операций (создание
+              лобби, присоединение, управление подканалами)", "mechanisms": ["ACID
+              транзакции для создания лобби, присоединения к лобби и управления подканалами",
+              "Оптимистичные блокировки (versioning) для предотвращения конфликтов
+              при обновлении лобби", "Валидация перед созданием лобби и присоединением",
+              "Синхронизация с другими сервисами через Event Bus", "Outbox Pattern
+              для гарантированной доставки событий", "Saga Pattern для распределенных
+              операций (создание лобби, присоединение, управление подканалами, Party
+              Finder)"]}, "data_synchronization": {"event_sourcing": "Все изменения
+              состояния лобби (создание, обновление, присоединение, выход, создание
+              подканала, перемещение)\nзаписываются как события в Event Store.\nЭто
+              обеспечивает полный аудит, возможность восстановления состояния и \"time
+              travel\" для отладки.\nПримеры событий: VoiceLobbyCreatedEvent, VoiceLobbyJoinedEvent,
+              VoiceLobbySubchannelCreatedEvent.\n", "cqrs_pattern": "Разделение команд
+              (создание лобби, присоединение, управление подканалами) и запросов\n(получение
+              списка лобби, получение участников, получение подканалов) для оптимизации
+              производительности\nи масштабируемости. Read-модели могут быть кэшированы
+              в Redis для быстрых запросов.\n", "saga_pattern": "Для распределенных
+              транзакций, таких как создание лобби (создание, интеграция с голосовым
+              провайдером,\nдобавление в каталог, уведомление участников) или присоединение
+              к лобби (проверка прав, добавление участника,\nинтеграция с голосовым
+              провайдером, уведомление участников), используется Saga Pattern\nдля
+              обеспечения атомарности операций между Voice Lobby Service, Voice Service,
+              Party Service и Realtime Gateway.\n", "outbox_pattern": "Для гарантированной
+              доставки событий в Event Bus используется Outbox Pattern,\nкоторый записывает
+              события в транзакционную таблицу перед публикацией.\n"}, "tickrate_specification":
+              {"lobby_operations": {"tickrate": "Event-based (on-demand)", "network_load":
+              "- Создание лобби: event-based, ~0.01-0.1 events/sec\n- Получение списка
+              лобби: event-based, ~0.01-0.05 requests/sec на игрока\n- Получение информации
+              о лобби: event-based, ~0.01-0.02 requests/sec на игрока\n- Общий трафик:
+              ~0.1-0.3 KB/sec на игрока для операций лобби\n", "latency_requirements":
+              "< 200-300ms для создания лобби, < 30-100ms для получения списка", "sync_strategy":
+              "Strong Consistency (ACID транзакции) для создания лобби, Eventual Consistency
+              для получения списка"}, "join_leave_operations": {"tickrate": "Event-based
+              (on-demand при присоединении/выходе) + 1-5 Hz для обновления участников",
+              "network_load": "- Присоединение к лобби: event-based, ~0.01-0.1 events/sec
+              на игрока\n- Выход из лобби: event-based, ~0.01-0.05 events/sec на игрока\n-
+              Обновление участников: 1-5 Hz, ~0.01-0.05 events/sec на лобби\n- Общий
+              трафик: ~0.2-0.5 KB/sec для операций присоединения/выхода\n", "latency_requirements":
+              "< 200-300ms для присоединения к лобби, < 100-200ms для выхода", "sync_strategy":
+              "Strong Consistency (ACID транзакции) для присоединения/выхода"}, "subchannel_operations":
+              {"tickrate": "Event-based (on-demand при создании/перемещении) + 1-5
+              Hz для обновления подканалов", "network_load": "- Создание подканала:
+              event-based, ~0.001-0.01 events/sec на лобби\n- Перемещение в подканал:
+              event-based, ~0.01-0.05 events/sec на игрока\n- Получение списка подканалов:
+              event-based, ~0.01-0.02 requests/sec на игрока\n- Обновление подканалов:
+              1-5 Hz, ~0.01-0.05 events/sec на лобби\n- Общий трафик: ~0.1-0.3 KB/sec
+              для операций подканалов\n", "latency_requirements": "< 200-300ms для
+              создания подканала, < 100-200ms для перемещения", "sync_strategy": "Strong
+              Consistency (ACID транзакции) для создания подканалов, Eventual Consistency
+              для перемещения"}, "party_finder_operations": {"tickrate": "Event-based
+              (on-demand при поиске) + 1-10 Hz для проверки совпадений", "network_load":
+              "- Начало поиска: event-based, ~0.01-0.1 events/sec на игрока\n- Проверка
+              совпадений: 1-10 Hz, ~0.01-0.1 events/sec\n- Отмена поиска: event-based,
+              ~0.001-0.01 events/sec на игрока\n- Общий трафик: ~0.1-0.3 KB/sec для
+              операций Party Finder\n", "latency_requirements": "< 200-300ms для начала
+              поиска, < 50-100ms для проверки совпадений", "sync_strategy": "Eventual
+              Consistency для Party Finder (кэширование результатов поиска)"}, "permissions_operations":
+              {"tickrate": "Event-based (on-demand при изменении прав)", "network_load":
+              "- Изменение прав: event-based, ~0.001-0.01 events/sec на лобби\n- Получение
+              прав: event-based, ~0.001-0.01 requests/sec на игрока\n- Общий трафик:
+              ~0.1-0.3 KB/sec для операций прав\n", "latency_requirements": "< 100-200ms
+              для изменения прав, < 30-100ms для получения прав", "sync_strategy":
+              "Strong Consistency (ACID транзакции) для изменения прав"}, "voice_provider_operations":
+              {"tickrate": "Event-based (on-demand при создании/обновлении комнаты)
+              + 20-60 Hz для синхронизации состояния", "network_load": "- Создание
+              голосовой комнаты: event-based, ~0.01-0.1 events/sec\n- Обновление состояния:
+              20-60 Hz, ~0.1-0.5 events/sec на лобби\n- Общий трафик: ~0.5-2 KB/sec
+              для операций голосового провайдера\n", "latency_requirements": "< 200-500ms
+              для создания комнаты, < 50-100ms для обновления состояния", "sync_strategy":
+              "Eventual Consistency для голосового провайдера (синхронизация через
+              WebRTC)"}, "stats_operations": {"tickrate": "Event-based (on-demand
+              при запросе) + 1-5 Hz для обновления статистики", "network_load": "-
+              Получение статистики: event-based, ~0.001-0.01 requests/sec на игрока\n-
+              Обновление статистики: 1-5 Hz, ~0.01-0.05 events/sec\n- Общий трафик:
+              ~0.1-0.3 KB/sec для операций статистики\n", "latency_requirements":
+              "< 30-100ms для получения статистики, < 50-100ms для обновления", "sync_strategy":
+              "Eventual Consistency для статистики (кэширование в Redis)"}, "event_handling":
+              {"tickrate": "Event-based (on-demand)", "network_load": "- Публикация
+              событий лобби: event-based, ~0.1-0.5 events/sec\n- Подписка на события:
+              event-based, ~0.05-0.2 events/sec\n- Общий трафик: ~0.2-0.7 KB/sec для
+              событий\n", "latency_requirements": "< 100-300ms для публикации событий",
+              "sync_strategy": "Eventual Consistency для событий (через Event Bus)"}}}'
+        - column:
+            name: metadata
+            value: '{"id": "voice-lobby-data-flows", "title": "Архитектура системы
+              голосовых лобби - Потоки данных и синхронизация", "document_type": "architecture",
+              "category": "systems", "status": "draft", "version": "1.1.0", "last_updated":
+              "2025-11-30T20:40:00+00:00", "github_issue": 338, "related_documents":
+              [{"id": "voice-lobby-core", "relation": "extends"}]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\voice-lobby-data-flows.yaml

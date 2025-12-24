@@ -1,13 +1,13 @@
-# Issue: #1181
+# Issue: #333
 metadata:
-  id: quest-dallas-2029-fort-worth-stockyards
-  title: 'Даллас 2020-2029 — Fort Worth Stockyards'
+  id: quest-dallas-2029-009-fort-worth-stockyards
+  title: Даллас — скотные дворы Форт-Уорта
   document_type: canon
-  category: timeline-quest
+  category: quest
   status: draft
   version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
-  concept_approved: true
+  last_updated: 2025-12-06T10:55:00Z
+  concept_approved: false
   concept_reviewed_at: ''
   owners:
     - role: concept_director
@@ -15,25 +15,31 @@ metadata:
   tags:
     - dallas
     - fort-worth
-    - cowboy-heritage
+    - western
   topics:
-    - author-events
-    - heritage
+    - city_storylines
+    - cultural_heritage
   related_systems:
-    - gameplay-service
-    - quest-service
-    - character-service
+    - narrative-service
+    - event-service
     - economy-service
-    - social-service
   related_documents:
-    - id: timeline-author-quests-index
+    - id: master-timeline
       relation: references
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/dallas/2020-2029/quest-009-fort-worth-stockyards.md
+    - id: quest-system
+      relation: aligns
+    - id: github-issue-333
+      title: GitHub Issue #333
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/333
+      relation: migrated_to
+      migrated_at: 2025-11-22T19:45:00Z
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/dallas/2020-2029/quest-009-fort-worth-stockyards.md
   visibility: internal
   audience:
     - concept
     - narrative
-  risk_level: medium
+    - liveops
+  risk_level: low
 review:
   chain:
     - role: concept_director
@@ -42,16 +48,16 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: Квест о скотных дворах Форт-Уорта был доступен только в Markdown и не был формализован.
-  goal: Задокументировать поездку в Fort Worth Stockyards и ритуал дневного cattle drive.
-  essence: Игрок наблюдает за лонгхорнами, посещает родео и салуны, погружаясь в атмосферу Старого Запада.
+  problem: Текст перечислял активности Stockyards без связи с фракциями и бонусами за участие в ковбойских традициях.
+  goal: Превратить поездку в Форт-Уорт в сценарий выбора между ковбойскими и туристическими интересами, влияющий на экономику региона.
+  essence: Игрок присутствует на ежедневном cattle drive, помогает организаторам родео и решает, развивать ли ковбойскую линию или коммерциализировать событие.
   key_points:
-    - Ежедневные прогоны скота дважды в день формируют ядро события.
-    - Реальные ковбои и лонгхорны создают аутентичный опыт.
-    - Квест укрепляет понимание исторического наследия «Where the West Begins».
+    - Подчёркнут мост между историей Старого Запада и современной экономикой.
+    - Решения игрока открывают ветки родео, торговли и культурных концертов.
+    - Квест интегрирован с транспортной системой Далласа и фермерскими фракциями.
 quest_definition:
   quest_type: side
-  level_min: 5
+  level_min: 12
   level_max: null
   requirements:
     required_quests: [ ]
@@ -59,104 +65,81 @@ quest_definition:
     required_reputation: { }
     required_items: [ ]
   objectives:
-    - id: travel_fort_worth
-      text: "Добраться из Далласа в Fort Worth и познакомиться с историей площадки"
-      type: interact
+    - id: plan_trip
+      text: "Спланировать поездку в Форт-Уорт и настроить транспортную логистику"
+      type: travel
       target: fort_worth_stockyards
       count: 1
       optional: false
-    - id: explore_museum_shops
-      text: "Осмотреть музей и торговые ряды, подготовиться к прогону скота"
-      type: explore
-      target: stockyards_museum
-      count: 1
-      optional: false
-    - id: watch_cattle_drive
-      text: "Наблюдать cattle drive в 11:30 и 16:00, взаимодействовать с ковбоями"
-      type: interact
-      target: cattle_drive
-      count: 2
-      optional: false
-    - id: visit_rodeo_arena
-      text: "Посетить родео-арену и выполнить побочные активности (стрельба, танцы, фотозоны)"
-      type: interact
-      target: rodeo_arena_activities
+    - id: explore_museums
+      text: "Пройти маршрут по музеям и амбарам, собирая артефакты ковбойской истории"
+      type: travel
+      target: stockyards_museums
       count: 3
       optional: false
-    - id: complete_saloon
-      text: "Завершить визит в салуне, получив бонус репутации у ковбойских фракций"
-      type: interact
-      target: stockyards_saloon
+    - id: participate_cattle_drive
+      text: "Участвовать в cattle drive, выбирая роль: погонщик или координатор туристов"
+      type: dialogue
+      target: cattle_drive_organizer
+      count: 1
+      optional: false
+    - id: make_decision
+      text: "Принять решение — инвестировать в аутентичное родео или продавать VIP-пакеты для туристов"
+      type: dialogue
+      target: investment_choice_npc
       count: 1
       optional: false
   rewards:
     experience: 1500
     money: -25
-    items:
-      - item_id: achievement_old_west_cowboy
-        quantity: 1
-    reputation: { }
+    reputation:
+      culture: 20
+    items: [ ]
     unlocks:
-      - cowboy_heritage_quests
-      - old_west_access
-  branches:
-    - branch_id: true_old_west
-      description: "Стать истинным ковбоем Старого Запада"
-      consequences:
-        skills:
-          culture: +30
-        reputation:
-          Cowboy_Factions: +30
-          Old_West_Community: +25
-        unlocks:
-          - exclusive_stockyards_access
+      achievements:
+        - "Ковбой Старого Запада"
+      flags: [ ]
+  branches: [ ]
 content:
   sections:
     - id: overview
       title: Описание
       body: |
-        Квест отправляет игрока в Fort Worth Stockyards, чтобы пережить аутентичный день на скотных дворах с участием
-        ковбоев, лонгхорнов и атмосферой Старого Запада.
+        Игрок прибывает в Fort Worth Stockyards, где лонгхорны проходят по главной улице дважды в день. Сочетание музея, родео
+        и салунов создаёт сцену выбора между сохранением традиции и её коммерциализацией. Финальная часть квеста определяет
+        отношение фракций ковбоев к действиям игрока.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+      assets: [ ]
+    - id: regional_highlights
+      title: Региональные отсылки
+      body: |
+        История Stockyards с 1866 года, ежедневный cattle drive, техасские лонгхорны и лозунг «Where the West Begins» подчёркнуты
+        как ключевые символы региона.
       mechanics_links: [ ]
       assets: [ ]
-    - id: stages
-      title: Этапы
+    - id: quest_flow
+      title: Этапы квеста
       body: |
-        1. Добраться из Далласа в Fort Worth и познакомиться с историей площадки.
-        2. Осмотреть музей и торговые ряды, подготовиться к прогону скота.
-        3. Наблюдать cattle drive в 11:30 и 16:00, взаимодействовать с ковбоями.
-        4. Посетить родео-арену и выполнить побочные активности (стрельба, танцы, фотозоны).
-        5. Завершить визит в салуне, получив бонус репутации у ковбойских фракций.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: regional_details
-      title: Региональные детали
-      body: |
-        Fort Worth Stockyards существуют с 1866 года и сохранили ковбойскую инфраструктуру. Длиннорогие быки (лонгхорны)
-        и костюмированные ковбои поддерживают аутентичность места. Девиз «Where the West Begins» подчёркивает переход от
-        городского к фронтирному укладу.
-      mechanics_links: [ ]
+        1. Спланировать поездку в Форт-Уорт и настроить транспортную логистику.
+        2. Пройти маршрут по музеям и амбарам, собирая артефакты ковбойской истории.
+        3. Участвовать в cattle drive, выбирая роль: погонщик или координатор туристов.
+        4. Принять решение — инвестировать в аутентичное родео или продавать VIP-пакеты для туристов.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
       assets: [ ]
     - id: rewards
-      title: Награды
+      title: Награды и эффекты
       body: |
-        - Опыт: 1 500 XP
-        - Расходы: 25 единиц валюты
-        - Культурный атрибут: +20
-        - Ачивка: «Ковбой Старого Запада»
+        Квест начисляет 1500 опыта, требует 25 единиц валюты и повышает культурный показатель на 20. Ачивка «Ковбой Старого
+        Запада» открывает поставщиков экипировки и новые контракты с фермерами.
       mechanics_links: [ ]
       assets: [ ]
-    - id: mechanics
-      title: Механики
+    - id: integration
+      title: Интеграции и последствия
       body: |
-        Сценарий комбинирует историческую реконструкцию, социальные взаимодействия и событийные активности, влияющие на
-        фракционную репутацию ковбоев.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: connections
-      title: Связи
-      body: |
-        Дополняет ковбойскую линию Далласа и может продолжаться сюжетами о ranch-экономике и торговых караванах.
+        Event-service регистрирует cattle drive как расписание событий, economy-service отслеживает доходы от туризма, а
+        narrative-service развивает линию ковбойских фракций и их влияние на Даллас.
       mechanics_links: [ ]
       assets: [ ]
 appendix:
@@ -169,14 +152,14 @@ implementation:
   queue_reference: [ ]
   blockers: [ ]
 history:
-  - version: '2.0.0'
-    date: 2025-11-29
-    author: content_writer
-    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики исторического квеста, ковбойского наследия и Старого Запада.'
-  - version: '1.0.0'
-    date: 2025-11-12
+  - version: '0.1.0'
+    date: 2025-11-11
     author: concept_team
-    changes: Конвертирован квест Fort Worth Stockyards в формат знаний.
+    changes: Структурирован квест «Скотные дворы Форт-Уорта» с культурно-экономическими решениями.
+  - version: '2.0.0'
+    date: 2025-12-06
+    author: content_writer
+    changes: 'Добавлен quest_definition с полной структурой квеста согласно архитектуре системы квестов.'
 validation:
   checksum: ''
   schema_version: '1.0'

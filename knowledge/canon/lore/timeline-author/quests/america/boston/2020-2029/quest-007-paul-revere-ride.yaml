@@ -1,42 +1,42 @@
-# Issue: #1206
+# Issue: #310
 metadata:
-  id: quest-boston-2029-paul-revere-ride
-  title: 'Бостон 2020-2029 — Поездка Пола Ревира'
+  id: quest-007-paul-revere-ride
+  title: "Бостон — Поездка Пола Ревира"
   document_type: canon
-  category: timeline-quest
+  category: quest
   status: draft
   version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
-  concept_approved: true
+  last_updated: 2025-12-06T11:00:00Z
+  concept_approved: false
   concept_reviewed_at: ''
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
     - boston
-    - history
     - revolution
-  topics:
-    - author-events
     - heritage
+  topics:
+    - timeline_author
+    - regional_quests
   related_systems:
-    - gameplay-service
-    - quest-service
-    - character-service
-    - economy-service
+    - quest-engine
+    - heritage-service
+    - events-service
   related_documents:
-    - id: timeline-author-quests-index
-      relation: references
-    - id: github-issue-1206
-      title: GitHub Issue #1206
-      link: https://github.com/gc-lover/necpgame-monorepo/issues/1206
+    - id: questline-boston-revolution
+      relation: collection
+    - id: github-issue-310
+      title: GitHub Issue #310
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/310
       relation: migrated_to
-      migrated_at: 2025-11-23T03:30:00Z
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/boston/2020-2029/quest-007-paul-revere-ride.md
+      migrated_at: 2025-11-22T19:40:00Z
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/boston/2020-2029/quest-007-paul-revere-ride.md
   visibility: internal
   audience:
     - concept
     - narrative
+    - events
   risk_level: medium
 review:
   chain:
@@ -46,16 +46,16 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: Исторический квест о маршруте Пола Ревира не был оформлен в схеме знаний.
-  goal: Зафиксировать ключевые точки поездки и её значение для революционной линии Бостона.
-  essence: Игрок повторяет ночной маршрут 18 апреля 1775 года, предупреждая колонистов о наступлении британцев.
+  problem: Исторический маршрут Пола Ревира описан без ветвлений и событийного сопровождения.
+  goal: Реализовать интерактивную реконструкцию ночной поездки с алармами «One if by land, two if by sea».
+  essence: Игроки следуют пути Ревира, активируют сигналы, предупреждают поселения и ускоряют мобилизацию ополчения.
   key_points:
-    - Охватывает дом Пола Ревира, церковь Old North и города Лексингтон и Конкорд.
-    - Освещает сигнал «One if by land, two if by sea» и начало Войны за независимость.
-    - Награждает историческими бонусами и ачивкой «Всадник Свободы».
+    - Сцены в Paul Revere House и Old North Church с выбором сигналов фонарей.
+    - Ветвления маршрутов к Lexington и Concord с проверками скрытности и выносливости.
+    - Системы наследия и событий получают данные для годовщин революции.
 quest_definition:
-  quest_type: main
-  level_min: 8
+  quest_type: side
+  level_min: 10
   level_max: null
   requirements:
     required_quests: [ ]
@@ -63,103 +63,81 @@ quest_definition:
     required_reputation: { }
     required_items: [ ]
   objectives:
-    - id: visit_revere_house
-      text: "Посетить дом Пола Ревира в North End"
+    - id: prepare_signal
+      text: "Обеспечить сигнал «One if by land, two if by sea» в Old North Church"
       type: interact
-      target: paul_revere_house
-      count: 1
-      optional: false
-    - id: explore_old_north_church
-      text: "Исследовать церковь Old North и легенду о сигналах фонарями"
-      type: explore
       target: old_north_church
       count: 1
       optional: false
-    - id: follow_route
-      text: "Проследовать по маршруту Бостон → Лексингтон → Конкорд"
-      type: explore
-      target: midnight_ride_route
-      count: 3
-      optional: false
-    - id: study_events_april_18
-      text: "Изучить события ночи 18 апреля 1775 года и предупреждение колонистов"
-      type: investigate
-      target: april_18_1775_events
+    - id: cross_charlestown
+      text: "Переправиться через Boston → Charlestown, избегая обнаружения патрулями"
+      type: travel
+      target: charlestown_ferry
       count: 1
       optional: false
-    - id: complete_battle_sites
-      text: "Завершить квест в местах первых сражений революции"
+    - id: ride_lexington
+      text: "Проехать Charlestown → Lexington, управляя выносливостью лошади"
+      type: travel
+      target: lexington_road
+      count: 1
+      optional: false
+    - id: warn_militia
+      text: "Предупредить ополчение в Lexington и Concord"
+      type: dialogue
+      target: militia_npc
+      count: 2
+      optional: false
+    - id: hide_supplies
+      text: "Спрятать боеприпасы от британских патрулей"
       type: interact
-      target: lexington_concord_battles
+      target: supply_cache
       count: 1
-      optional: false
+      optional: true
   rewards:
     experience: 3000
-    money: 0
-    items:
-      - item_id: achievement_freedom_rider
-        quantity: 1
-    reputation: { }
+    money:
+      type: eddies
+      value: 0
+    reputation:
+      history: 25
     unlocks:
-      - revolutionary_quests
-      - historical_routes_access
-  branches:
-    - branch_id: complete_midnight_ride
-      description: "Завершить полную реконструкцию поездки"
-      consequences:
-        skills:
-          history: +30
-          exploration: +20
-        reputation:
-          Revolutionary_Heritage: +30
-        unlocks:
-          - advanced_revolutionary_quests
+      achievements:
+        - id: freedom_rider
+          name: Всадник Свободы
+      flags: [ ]
+  branches: [ ]
 content:
   sections:
-    - id: overview
-      title: Описание
+    - id: prologue
+      title: Пролог и подготовка
       body: |
-        Квест реконструирует легендарную «полуночную поездку» Пола Ревира. Игрок посещает ключевые точки маршрута и
-        получает знания об одном из символов Американской революции.
-      mechanics_links: [ ]
+        Игрок встречает NPC-резидентов North End, собирает информацию о британском движении и выбирает напарников. Перед стартом нужно обеспечить сигнал «One if by land, two if by sea» в Old North Church.
+      mechanics_links:
+        - mechanics/quests/quest-structure.yaml
       assets: [ ]
-    - id: stages
-      title: Этапы
+    - id: midnight_ride
+      title: Ночная поездка
       body: |
-        1. Посетить дом Пола Ревира в North End.
-        2. Исследовать церковь Old North и легенду о сигналах фонарями.
-        3. Проследовать по маршруту Бостон → Лексингтон → Конкорд.
-        4. Изучить события ночи 18 апреля 1775 года и предупреждение колонистов.
-        5. Завершить квест в местах первых сражений революции.
-      mechanics_links: [ ]
+        - Этап Boston → Charlestown: паром или мост, проверка на обнаружение патрулями.
+        - Charlestown → Lexington: управление выносливостью лошади и динамические события с курьерами.
+        - Lexington → Concord: плавающие задачи предупредить ополчение и спрятать боеприпасы.
+      mechanics_links:
+        - mechanics/gameplay/travel-events.yaml
       assets: [ ]
-    - id: regional_details
-      title: Региональные детали
+    - id: outcomes
+      title: Исходы и последствия
       body: |
-        Фраза «One if by land, two if by sea» стала символом оповещения. Поездка на коне в ночь перед битвами в Лексингтоне
-        и Конкорде считается началом революции и почитается как легенда.
-      mechanics_links: [ ]
+        Успех активирует сценарий «Minute Men Ready», ускоряя появление союзных отрядов в революционной кампании. Провалы увеличивают британский патрульный прессинг и открывают миссии по спасению связистов.
+      mechanics_links:
+        - mechanics/social/social-reputation.yaml
       assets: [ ]
     - id: rewards
-      title: Награды
+      title: Награды и аналитика
       body: |
-        - Опыт: 3 000 XP
-        - Исторический атрибут: +25
-        - Ачивка: «Всадник Свободы»
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: mechanics
-      title: Механики
-      body: |
-        Сценарий подчеркивает исторический контент, исследование и образовательную составляющую периода 2020–2029.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: connections
-      title: Связи
-      body: |
-        Принадлежит революционной линии Бостона и может быть связан с квестами Lexington & Concord, а также другими
-        историческими эпизодами города.
-      mechanics_links: [ ]
+        - 3 000 XP, показатель «История» +25, титул «Всадник Свободы».
+        - heritage-service фиксирует процент предупреждённых поселений, events-service планирует годовщины с экспедициями.
+      mechanics_links:
+        - mechanics/progression/rewards-catalog.yaml
       assets: [ ]
 appendix:
   glossary: [ ]
@@ -168,17 +146,18 @@ appendix:
 implementation:
   github_issue: 1206
   needs_task: false
-  queue_reference: [ ]
+  queue_reference:
+    - shared/trackers/queues/vision/review.yaml#quest-boston-2029-007
   blockers: [ ]
 history:
+  - version: '0.1.0'
+    date: 2025-11-09
+    author: concept_director
+    changes: Создан квест реконструкции поездки Пола Ревира.
   - version: '2.0.0'
-    date: 2025-11-29
+    date: 2025-12-06
     author: content_writer
-    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики исторического квеста, реконструкции поездки и революционного маршрута.'
-  - version: '1.0.0'
-    date: 2025-11-12
-    author: concept_team
-    changes: Конвертирован квест о поездке Пола Ревира в структурированный формат.
+    changes: 'Добавлен quest_definition с полной структурой квеста согласно архитектуре системы квестов.'
 validation:
   checksum: ''
   schema_version: '1.0'

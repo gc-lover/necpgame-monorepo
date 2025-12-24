@@ -1,0 +1,287 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-quest-engine-architecture-361b497d
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-297906642854164'
+        - column:
+            name: doc_id
+            value: quest-engine-architecture
+        - column:
+            name: title
+            value: Архитектура движка квестов (Quest Engine)
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-30 19:55:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - quest
+            - backend
+            - gameplay
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - gameplay-service-go
+            - character-service-go
+            - economy-service-go
+            - social-service-go
+            - narrative-coherence-system
+        - column:
+            name: related_documents
+            value: '[{"id": "quest-engine-backend", "relation": "extends"}, {"id":
+              "narrative-coherence-system-architecture", "relation": "references"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "quest-engine-architecture", "title": "Архитектура
+              движка квестов (Quest Engine)", "document_type": "architecture", "category":
+              "systems", "status": "draft", "version": "1.1.0", "last_updated": "2025-11-30T19:55:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "quest", "backend", "gameplay"], "related_systems":
+              ["gameplay-service-go", "character-service-go", "economy-service-go",
+              "social-service-go", "narrative-coherence-system"], "related_documents":
+              [{"id": "quest-engine-backend", "relation": "extends"}, {"id": "narrative-coherence-system-architecture",
+              "relation": "references"}], "github_issue": 154, "visibility": "internal",
+              "audience": ["architect", "backend", "api-designer"]}, "summary": {"problem":
+              "Требуется спроектировать полную техническую архитектуру движка квестов\nдля
+              обработки state machine, диалогов, skill checks, ветвящихся сценариев\nи
+              интеграции с другими игровыми системами.\n", "goal": "Создать архитектурную
+              схему движка квестов с определением:\n- Компонентов системы (микросервисы,
+              модули)\n- API endpoints (высокоуровнево)\n- Потоков данных и интеграций\n-
+              Системы state machine для квестов\n- Системы диалогов\n- Системы skill
+              checks\n- Технического задания для реализации\n", "essence": "Игровой
+              движок для обработки квестов с поддержкой state machine, диалогов,\nskill
+              checks, ветвящихся сценариев и интеграции с другими системами.\n"},
+              "architecture": {"overview": "Движок квестов состоит из семи основных
+              компонентов:\n1. Quest Manager - управление квестами\n2. Quest State
+              Machine - управление состоянием квестов\n3. Dialogue Engine - обработка
+              диалогов\n4. Skill Check Processor - обработка проверок навыков\n5.
+              Quest Condition Evaluator - оценка условий квестов\n6. Quest Reward
+              Distributor - распределение наград\n7. Quest Event Handler - обработка
+              событий квестов\n", "components": [{"name": "Quest Manager", "location":
+              "gameplay-service-go (модуль quest)", "responsibility": "- Управление
+              жизненным циклом квестов\n- Создание и инициализация квестов\n- Завершение
+              и отмена квестов\n- Получение информации о квестах\n- Интеграция с другими
+              модулями\n", "port": "8083 (gameplay-service-go)", "endpoints": ["POST
+              /api/v1/gameplay/quests/start - начало квеста", "GET /api/v1/gameplay/quests/{quest_id}
+              - информация о квесте", "GET /api/v1/gameplay/quests/player/{player_id}
+              - квесты игрока", "POST /api/v1/gameplay/quests/{quest_id}/complete
+              - завершение квеста", "POST /api/v1/gameplay/quests/{quest_id}/cancel
+              - отмена квеста"]}, {"name": "Quest State Machine", "location": "gameplay-service-go
+              (модуль quest-state)", "responsibility": "- Управление состоянием квестов\n-
+              Переходы между состояниями\n- Обработка ветвлений\n- Сохранение состояния\n-
+              Восстановление состояния\n", "quest_states": "- NOT_STARTED: квест не
+              начат\n- IN_PROGRESS: квест в процессе\n- COMPLETED: квест завершён\n-
+              FAILED: квест провален\n- CANCELLED: квест отменён\n", "state_transitions":
+              "- NOT_STARTED -> IN_PROGRESS (при старте)\n- IN_PROGRESS -> COMPLETED
+              (при выполнении всех целей)\n- IN_PROGRESS -> FAILED (при провале условий)\n-
+              IN_PROGRESS -> CANCELLED (при отмене)\n", "endpoints": ["GET /api/v1/gameplay/quests/{quest_id}/state
+              - состояние квеста", "POST /api/v1/gameplay/quests/{quest_id}/state/update
+              - обновление состояния"]}, {"name": "Dialogue Engine", "location": "gameplay-service-go
+              (модуль quest-dialogue)", "responsibility": "- Обработка диалогов в
+              квестах\n- Управление ветвлениями диалогов\n- Обработка выборов игрока\n-
+              Сохранение состояния диалогов\n- Интеграция с skill checks\n", "dialogue_features":
+              "- Ветвящиеся диалоги\n- Выборы игрока\n- Условные ответы\n- Skill checks
+              в диалогах\n- Сохранение выбранных путей\n", "endpoints": ["GET /api/v1/gameplay/quests/{quest_id}/dialogue
+              - текущий диалог", "POST /api/v1/gameplay/quests/{quest_id}/dialogue/choice
+              - выбор в диалоге", "GET /api/v1/gameplay/quests/{quest_id}/dialogue/history
+              - история диалогов"]}, {"name": "Skill Check Processor", "location":
+              "gameplay-service-go (модуль quest-skill-checks)", "responsibility":
+              "- Обработка проверок навыков\n- Расчёт результатов проверок\n- Интеграция
+              с character-service\n- Обработка успешных/неуспешных проверок\n", "skill_check_types":
+              "- Attribute check: проверка атрибутов\n- Skill check: проверка навыков\n-
+              Item check: проверка предметов\n- Reputation check: проверка репутации\n",
+              "endpoints": ["POST /api/v1/gameplay/quests/{quest_id}/skill-check -
+              выполнение проверки", "GET /api/v1/gameplay/quests/{quest_id}/skill-checks
+              - история проверок"]}, {"name": "Quest Condition Evaluator", "location":
+              "gameplay-service-go (модуль quest-conditions)", "responsibility": "-
+              Оценка условий квестов\n- Проверка требований для старта\n- Проверка
+              условий для завершения\n- Проверка условий для целей\n- Интеграция с
+              другими сервисами\n", "condition_types": "- Level requirement: требование
+              уровня\n- Item requirement: требование предмета\n- Quest prerequisite:
+              требование предыдущего квеста\n- Reputation requirement: требование
+              репутации\n- Location requirement: требование местоположения\n", "endpoints":
+              ["POST /api/v1/gameplay/quests/{quest_id}/conditions/check - проверка
+              условий", "GET /api/v1/gameplay/quests/{quest_id}/requirements - требования
+              квеста"]}, {"name": "Quest Reward Distributor", "location": "gameplay-service-go
+              (модуль quest-rewards)", "responsibility": "- Распределение наград за
+              квесты\n- Выдача опыта\n- Выдача валюты\n- Выдача предметов\n- Выдача
+              репутации\n- Интеграция с economy-service и mail-service\n", "reward_types":
+              "- Experience: опыт\n- Currency: валюта\n- Items: предметы\n- Reputation:
+              репутация\n- Titles: титулы\n", "endpoints": ["POST /api/v1/gameplay/quests/{quest_id}/rewards/distribute
+              - распределение наград", "GET /api/v1/gameplay/quests/{quest_id}/rewards
+              - награды квеста"]}, {"name": "Quest Event Handler", "location": "gameplay-service-go
+              (модуль quest-events)", "responsibility": "- Обработка событий квестов\n-
+              Публикация событий в event bus\n- Подписка на события от других систем\n-
+              Обработка событий для обновления прогресса\n", "quest_events_published":
+              "- quest:started\n- quest:objective-completed\n- quest:completed\n-
+              quest:failed\n- quest:cancelled\n", "quest_events_consumed": "- combat:enemy-killed\n-
+              inventory:item-added\n- social:reputation-changed\n- character:level-up\n",
+              "endpoints": ["GET /api/v1/gameplay/quests/{quest_id}/events - события
+              квеста"]}], "data_flow": {"quest_start": "1. Игрок запрашивает начало
+              квеста\n2. Quest Manager проверяет требования через Quest Condition
+              Evaluator\n3. Если требования выполнены - создаётся инстанс квеста\n4.
+              Quest State Machine инициализирует состояние (NOT_STARTED -> IN_PROGRESS)\n5.
+              Dialogue Engine инициализирует диалог (если есть)\n6. Quest Event Handler
+              публикует quest:started\n7. Notification Service уведомляет игрока\n8.
+              Realtime Gateway синхронизирует состояние\n", "quest_progress": "1.
+              Игровое событие происходит (убийство врага, получение предмета)\n2.
+              Quest Event Handler получает событие\n3. Quest Condition Evaluator проверяет
+              условия целей\n4. Если цель выполнена - обновляется прогресс\n5. Quest
+              State Machine обновляет состояние\n6. Если все цели выполнены - квест
+              готов к завершению\n7. Realtime Gateway синхронизирует обновления\n",
+              "quest_completion": "1. Игрок завершает квест\n2. Quest Manager проверяет
+              все условия\n3. Quest Reward Distributor распределяет награды\n4. Economy
+              Service получает валюту/предметы\n5. Mail Service отправляет награды
+              (если нужно)\n6. Quest State Machine обновляет состояние (IN_PROGRESS
+              -> COMPLETED)\n7. Quest Event Handler публикует quest:completed\n8.
+              Narrative Coherence System обновляет world state\n9. Realtime Gateway
+              уведомляет игрока\n"}, "integrations": {"with_character_service": "-
+              Получение данных персонажа для проверок\n- Проверка уровня, атрибутов,
+              навыков\n- Обновление опыта и уровня\n", "with_economy_service": "-
+              Выдача валюты за квесты\n- Выдача предметов через inventory\n- Интеграция
+              с экономической системой\n", "with_social_service": "- Проверка репутации\n-
+              Обновление репутации за квесты\n- Интеграция с социальными системами\n",
+              "with_mail_service": "- Отправка наград через почту\n- Уведомления о
+              завершении квестов\n", "with_narrative_coherence_system": "- Обновление
+              world state при завершении квестов\n- Активация зависимых квестов\n-
+              Интеграция с системой сюжета\n", "with_notification_service": "- Уведомления
+              о начале квестов\n- Уведомления о прогрессе\n- Уведомления о завершении\n",
+              "with_realtime_gateway": "- Синхронизация состояния квестов\n- Обновления
+              прогресса в реальном времени\n- Уведомления о событиях\n"}, "data_consistency":
+              {"strategy": "Strong Consistency (ACID транзакции) для критичных операций",
+              "mechanisms": ["ACID транзакции для начала квеста, обновления прогресса
+              и завершения квеста", "Оптимистичные блокировки (versioning) для предотвращения
+              конфликтов", "Валидация перед началом квеста и завершением", "Синхронизация
+              с другими сервисами через Event Bus", "Outbox Pattern для гарантированной
+              доставки событий", "Saga Pattern для распределенных операций (начало
+              квеста, завершение квеста с наградами, обновление world state)"]}, "data_synchronization":
+              {"event_sourcing": "Все изменения состояния квестов (начало квеста,
+              обновление прогресса, завершение квеста)\nзаписываются как события в
+              Event Store. Это обеспечивает полный аудит,\nвозможность восстановления
+              состояния и \"time travel\" для отладки.\nПримеры событий: QuestStartedEvent,
+              QuestObjectiveCompletedEvent, QuestCompletedEvent, QuestFailedEvent.\n",
+              "cqrs_pattern": "Разделение команд (начало квеста, обновление прогресса,
+              завершение квеста) и запросов\n(получение информации о квесте, получение
+              списка квестов, получение прогресса) для оптимизации производительности\nи
+              масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых
+              запросов.\n", "saga_pattern": "Для распределенных транзакций, таких
+              как начало квеста (проверка требований, создание инстанса,\nинициализация
+              state machine) или завершение квеста (проверка условий, распределение
+              наград,\nобновление world state), используется Saga Pattern для обеспечения
+              атомарности операций\nмежду Gameplay Service, Character Service, Economy
+              Service и Narrative Coherence System.\n", "outbox_pattern": "Для гарантированной
+              доставки событий в Event Bus используется Outbox Pattern,\nкоторый записывает
+              события в транзакционную таблицу перед публикацией.\n"}, "tickrate_specification":
+              {"quest_operations": {"tickrate": "Event-based (on-demand)", "network_load":
+              "- Начало квеста: event-based, ~0.1-0.3 events/sec на игрока\n- Обновление
+              прогресса: event-based, ~0.1-0.5 events/sec на игрока\n- Завершение
+              квеста: event-based, ~0.1-0.2 events/sec на игрока\n- Получение информации
+              о квесте: event-based, ~0.1-0.5 requests/sec на игрока\n- Общий трафик:
+              ~0.3-0.8 KB/sec на игрока\n", "latency_requirements": "< 50-200ms для
+              операций с квестами", "sync_strategy": "Strong Consistency (ACID транзакции)
+              для начала квеста, обновления прогресса и завершения"}, "dialogue_operations":
+              {"tickrate": "Event-based (on-demand)", "network_load": "- Получение
+              диалога: event-based, ~0.1-0.3 requests/sec на игрока\n- Выбор в диалоге:
+              event-based, ~0.1-0.2 events/sec на игрока\n- Обновление состояния диалога:
+              event-based, ~0.1-0.2 events/sec на игрока\n- Общий трафик: ~0.2-0.4
+              KB/sec на игрока\n", "latency_requirements": "< 50-150ms для операций
+              с диалогами", "sync_strategy": "Strong Consistency (ACID транзакции)
+              для выбора в диалоге"}, "skill_check_operations": {"tickrate": "Event-based
+              (on-demand)", "network_load": "- Выполнение skill check: event-based,
+              ~0.1-0.2 events/sec на игрока\n- Получение результатов: event-based,
+              ~0.1-0.2 requests/sec на игрока\n- Общий трафик: ~0.1-0.2 KB/sec на
+              игрока\n", "latency_requirements": "< 50-100ms для выполнения skill
+              check", "sync_strategy": "Strong Consistency (ACID транзакции) для выполнения
+              skill check"}, "realtime_updates": {"tickrate": "Event-based (on-demand)
+              + 1-5 Hz для синхронизации состояния", "network_load": "- Синхронизация
+              состояния квеста: 1-5 Hz, ~0.1-0.3 KB/sec на игрока\n- Уведомления о
+              событиях: event-based, ~0.1-0.2 events/sec на игрока\n- Общий трафик:
+              ~0.2-0.4 KB/sec на игрока\n", "latency_requirements": "< 30-100ms для
+              синхронизации состояния", "sync_strategy": "Eventual Consistency для
+              синхронизации состояния"}}, "database_schema": {"tables": [{"name":
+              "quest_instances", "description": "Инстансы квестов игроков", "fields":
+              [{"id": "UUID (PK)"}, {"quest_id": "UUID (FK quest_definitions)"}, {"player_id":
+              "UUID (FK accounts)"}, {"state": "ENUM (NOT_STARTED, IN_PROGRESS, COMPLETED,
+              FAILED, CANCELLED)"}, {"current_objective": "INTEGER"}, {"progress_data":
+              "JSONB"}, {"started_at": "TIMESTAMP"}, {"completed_at": "TIMESTAMP (nullable)"},
+              {"updated_at": "TIMESTAMP"}], "indexes": ["player_id, state", "quest_id,
+              player_id", "state, started_at"]}, {"name": "quest_definitions", "description":
+              "Определения квестов", "fields": [{"id": "UUID (PK)"}, {"name": "VARCHAR(255)"},
+              {"description": "TEXT"}, {"type": "ENUM (main, side, daily, event)"},
+              {"requirements": "JSONB"}, {"objectives": "JSONB"}, {"rewards": "JSONB"},
+              {"dialogue_tree": "JSONB"}, {"is_active": "BOOLEAN"}, {"created_at":
+              "TIMESTAMP"}, {"updated_at": "TIMESTAMP"}], "indexes": ["type, is_active",
+              "is_active"]}, {"name": "dialogue_state", "description": "Состояние
+              диалогов в квестах", "fields": [{"id": "UUID (PK)"}, {"quest_instance_id":
+              "UUID (FK quest_instances)"}, {"current_node_id": "VARCHAR(100)"}, {"visited_nodes":
+              "VARCHAR(100)[]"}, {"choices_made": "JSONB"}, {"skill_check_results":
+              "JSONB"}, {"updated_at": "TIMESTAMP"}], "indexes": ["quest_instance_id"]},
+              {"name": "skill_check_results", "description": "Результаты проверок
+              навыков", "fields": [{"id": "UUID (PK)"}, {"quest_instance_id": "UUID
+              (FK quest_instances)"}, {"check_type": "ENUM (attribute, skill, item,
+              reputation)"}, {"check_target": "VARCHAR(100)"}, {"required_value":
+              "INTEGER"}, {"actual_value": "INTEGER"}, {"passed": "BOOLEAN"}, {"checked_at":
+              "TIMESTAMP"}], "indexes": ["quest_instance_id", "check_type, passed"]},
+              {"name": "quest_objective_progress", "description": "Прогресс по целям
+              квестов", "fields": [{"id": "UUID (PK)"}]}]}}}'
+        - column:
+            name: metadata
+            value: '{"id": "quest-engine-architecture", "title": "Архитектура движка
+              квестов (Quest Engine)", "document_type": "architecture", "category":
+              "systems", "status": "draft", "version": "1.1.0", "last_updated": "2025-11-30T19:55:00+00:00",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "quest", "backend", "gameplay"], "related_systems":
+              ["gameplay-service-go", "character-service-go", "economy-service-go",
+              "social-service-go", "narrative-coherence-system"], "related_documents":
+              [{"id": "quest-engine-backend", "relation": "extends"}, {"id": "narrative-coherence-system-architecture",
+              "relation": "references"}], "github_issue": 154, "visibility": "internal",
+              "audience": ["architect", "backend", "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\quest-engine-architecture.yaml

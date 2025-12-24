@@ -1,36 +1,39 @@
 # Issue: #630
 metadata:
-  id: canon-quest-madrid-2029-008-churros-chocolate
-  title: 'Мадрид: чуррос с шоколадом'
+  id: canon-quest-madrid-churros-chocolate
+  title: 'Мадрид 2020-2029 — Чуррос с шоколадом'
   document_type: canon
-  category: quests
+  category: quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-23T12:00:00Z
+  version: '2.0.0'
+  last_updated: 2025-12-06T12:50:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
-    - role: concept_director
-      contact: concept@necp.game
+    - role: narrative_lead
+      contact: narrative@necp.game
   tags:
     - madrid
-    - churros
+    - cuisine
     - breakfast
   topics:
-    - gastronomic-experience
-    - slice-of-life
+    - gastronomy
+    - lifestyle
   related_systems:
     - narrative-service
-    - quest-service
+    - food-system
+    - social-system
   related_documents:
-    - id: canon-region-europe-2020-2093
+    - id: canon-lore-timeline-author-index
       relation: references
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/europe/madrid/2020-2029/quest-008-churros-chocolate.md
+    - id: canon-quest-madrid-culinary-index
+      relation: complements
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/europe/madrid/2020-2029/quest-008-churros-chocolate.md
   visibility: internal
   audience:
-    - concept
     - narrative
-    - liveops
+    - gameplay
+    - vision
   risk_level: low
 review:
   chain:
@@ -40,111 +43,85 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: Нужно было отразить культовый мадридский завтрак и атмосферу Chocolatería San Ginés.
-  goal: Создать короткий квест, где игрок пробует чуррос с густым шоколадом и узнаёт традицию ночных посетителей.
-  essence: Игрок заказывает порцию чуррос, макает их в горячий шоколад и получает энерго-бафф.
+  problem: Кулинарный опыт с чуррос и горячим шоколадом не был структурирован в YAML.
+  goal: Задокументировать традиционный завтрак Мадрида в формате знаний с маршрутом и игровыми эффектами.
+  essence: |
+    Игрок посещает легендарную Chocolatería San Ginés, заказывает чуррос и густой шоколад, макует хрустящее тесто и понимает, почему
+    это блюдо популярно утром и после ночных фиест.
   key_points:
-    - Подчеркивается легендарная chocolatería 1894 года.
-    - Описаны вкусовые детали и контекст ночной жизни.
-    - Награды дают энергию и ачивку «Чуррос-Гурман».
+    - Описаны ключевые шаги: поиск чуррерии, заказ, дегустация и культурный контекст.
+    - Уточнены характеристики блюда: жареное тесто, густой шоколад, сахарная посыпка.
+    - Награды дают бафф к энергии, достижение «Чуррос-Гурман» и отражают небольшие расходы.
 quest_definition:
-  quest_type: side
-  level_min: 1
-  level_max: null
+  quest_type: social
+  level_min: 3
+  level_max: 50
   requirements:
-    required_quests: [ ]
-    required_flags: [ ]
-    required_reputation: { }
-    required_items: [ ]
+    completed_quests: [ ]
+    flags: [ ]
   objectives:
-    - id: find_chocolateria
-      text: "Найти Chocolatería San Ginés или аналогичную чуррерию"
-      type: visit
-      target: chocolateria_san_gines
-      count: 1
-      optional: false
-    - id: order_churros
-      text: "Заказать порцию чуррос и кружку густого горячего шоколада"
-      type: pay
-      target: churros_order
-      count: 1
-      optional: false
-    - id: watch_preparation
-      text: "Наблюдать, как чуррос жарятся в масле и посыпаются сахаром"
-      type: cutscene
-      target: churros_preparation
-      count: 1
-      optional: false
+    - id: find_churreria
+      type: location
+      description: "Найти чуррерию, например Chocolatería San Ginés, и занять столик"
+      required: true
+    - id: order_food
+      type: interaction
+      description: "Заказать порцию чуррос и чашку густого горячего шоколада"
+      required: true
     - id: taste_churros
-      text: "Макнуть чуррос в шоколад, оценить вкус и записать заметки"
-      type: interact
-      target: churros_tasting
-      count: 1
-      optional: false
-    - id: talk_locals
-      text: "Поговорить с местными о традициях ночных закусок"
-      type: talk
-      target: local_patrons
-      count: 2
-      optional: false
+      type: interaction
+      description: "Пробовать хрустящие палочки, макать их в шоколад и добавлять сахар"
+      required: true
+    - id: learn_history
+      type: interaction
+      description: "Общаться с посетителями и изучать историю заведения с 1894 года"
+      required: true
+    - id: complete_visit
+      type: interaction
+      description: "Завершить посещение, отмечая эффект бодрости и возвращение к дневным делам"
+      required: true
   rewards:
     experience: 500
-    money: -10
-    items:
-      - item_id: achievement_churros_gourmet
-        quantity: 1
+    money:
+      type: eddies
+      value: -10
     reputation: { }
-    unlocks: [ ]
+    unlocks:
+      achievements:
+        - id: churros_gourmet
+          name: Чуррос-Гурман
+      flags: [ ]
   branches: [ ]
 content:
   sections:
-    - id: overview
-      title: Обзор квеста
+    - id: quest_overview
+      title: Описание
       body: |
-        Квест MADRID-2029-008 знакомит игрока с традицией «churros con chocolate». Нужно посетить знаменитую чуррерию и
-        попробовать десерт после ночной фиесты или ранним утром.
-      mechanics_links:
-        - mechanics/quests/quest-system.yaml
-      assets: [ ]
-    - id: stages
-      title: Последовательность этапов
-      body: |
-        1. Найти Chocolatería San Ginés или аналогичную чуррерию.
-        2. Заказать порцию чуррос и кружку густого горячего шоколада.
-        3. Наблюдать, как чуррос жарятся в масле и посыпаются сахаром.
-        4. Макнуть чуррос в шоколад, оценить вкус и записать заметки.
-        5. Поговорить с местными о традициях ночных закусок.
+        Квест показывает повседневную гастрономию Мадрида: традиционные чуррос с шоколадом как утреннюю рутину жителей и
+        туристов.
       mechanics_links: [ ]
       assets: [ ]
-    - id: regional_context
+    - id: quest_flow
+      title: Этапы дегустации
+      body: |
+        1. Найти чуррерию, например Chocolatería San Ginés, и занять столик.
+        2. Заказать порцию чуррос и чашку густого горячего шоколада.
+        3. Пробовать хрустящие палочки, макать их в шоколад и добавлять сахар.
+        4. Общаться с посетителями и изучать историю заведения с 1894 года.
+        5. Завершить посещение, отмечая эффект бодрости и возвращение к дневным делам.
+      mechanics_links: [ ]
+      assets: [ ]
+    - id: regional_details
       title: Региональные детали
       body: |
-        - Чуррос — хрустящие полоски теста, подаваемые с сахаром.
-        - Шоколад густой, почти как пудинг, подается в керамических чашках.
-        - Сан-Хинес — легендарное заведение, популярное и днём, и после ночных клубов.
+        Описаны жареные чуррос, густой шоколад, сахарная посыпка и позиционирование San Ginés как культурной точки Мадрида.
       mechanics_links: [ ]
       assets: [ ]
     - id: rewards
       title: Награды и эффекты
       body: |
-        - 500 XP.
-        - Валюта: -10.
-        - Бафф «Сладкий заряд»: +15% энергии на 4 часа.
-        - Ачивка «Чуррос-Гурман».
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: mechanics
-      title: Задействованные механики
-      body: |
-        - Кулинарные сцены и дегустация.
-        - Социальные взаимодействия с ночной аудиторией.
-        - Система краткосрочных баффов от еды.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: connections
-      title: Связи
-      body: |
-        Квест расширяет гастрономическую арку Мадрида и связывает её с завтраками Барселоны и Лиссабона.
+        Квест выдаёт 500 XP, требует 10 едди и даёт бафф +15% энергии на четыре часа. Игрок получает достижение «Чуррос-Гурман»,
+        продвигая кулинарную ветку города.
       mechanics_links: [ ]
       assets: [ ]
 appendix:
@@ -154,17 +131,18 @@ appendix:
 implementation:
   github_issue: 630
   needs_task: false
-  queue_reference: [ ]
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#canon-quest-madrid-churros-chocolate
   blockers: [ ]
 history:
   - version: '0.1.0'
-    date: 2025-11-13
-    author: concept_team
-    changes: Создан YAML-квест дегустации чуррос с шоколадом.
-  - version: '1.0.0'
-    date: 2025-11-23
+    date: 2025-11-11
+    author: narrative_auto_converter
+    changes: Конвертация квеста «Чуррос с шоколадом» в структуру знаний.
+  - version: '2.0.0'
+    date: 2025-12-06
     author: content_writer
-    changes: Добавлена структура квеста с objectives, rewards и branches согласно архитектуре системы квестов.
+    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Обновлен github_issue на 630.'
 validation:
   checksum: ''
   schema_version: '1.0'

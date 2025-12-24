@@ -1,0 +1,166 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-restricted-modes-system-architecture-09b70542
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '8600252723628518'
+        - column:
+            name: doc_id
+            value: restricted-modes-system-architecture
+        - column:
+            name: title
+            value: Архитектура системы режимов с ограничениями
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-12-XXT00:00:00Z
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - gameplay
+            - restricted-modes
+            - hardcore
+            - permadeath
+            - challenge
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - gameplay-service
+            - character-service
+            - achievement-service
+        - column:
+            name: related_documents
+            value: '[{"id": "restricted-modes-idea", "relation": "implements"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - gameplay
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "restricted-modes-system-architecture", "title":
+              "Архитектура системы режимов с ограничениями", "document_type": "architecture",
+              "category": "systems", "status": "draft", "version": "1.0.0", "last_updated":
+              "2025-12-XXT00:00:00Z", "owners": [{"role": "architect", "contact":
+              "architect@necp.game"}], "tags": ["architecture", "gameplay", "restricted-modes",
+              "hardcore", "permadeath", "challenge"], "related_systems": ["gameplay-service",
+              "character-service", "achievement-service"], "related_documents": [{"id":
+              "restricted-modes-idea", "relation": "implements"}], "github_issue":
+              1502, "visibility": "internal", "audience": ["architect", "backend",
+              "gameplay", "api-designer"]}, "summary": {"problem": "Не хватает экстремальных
+              режимов сложности для игроков, ищущих максимальный вызов.\nРежимы с
+              ограничениями могут предоставить уникальный опыт для хардкорных игроков.\n",
+              "goal": "Создать архитектуру режимов с ограничениями, которая:\n- Предоставляет
+              экстремальные вызовы для игроков\n- Добавляет уникальные ограничения
+              и механики\n- Награждает игроков за успешное прохождение\n- Интегрируется
+              с системой достижений\n", "essence": "Система режимов с ограничениями
+              предоставляет экстремальные вызовы через различные\nтипы ограничений:
+              перманентная смерть, ограниченные ресурсы, одиночное прохождение\nи
+              прохождение без смертей.\n"}, "architecture": {"overview": "Система
+              режимов с ограничениями состоит из следующих компонентов:\n1. Restricted
+              Mode Manager - управление режимами с ограничениями\n2. Permadeath Handler
+              - обработка перманентной смерти\n3. Resource Limiter - ограничение ресурсов\n4.
+              Solo Challenge Controller - управление одиночными испытаниями\n5. No-Death
+              Tracker - отслеживание прохождения без смертей\n", "microservices":
+              [{"name": "gameplay-service", "port": 8083, "responsibility": "Обработка
+              режимов с ограничениями:\n- Управление режимами\n- Отслеживание ограничений\n-
+              Применение механик режимов\n", "components": [{"restricted-mode-manager":
+              "управление режимами"}, {"permadeath-handler": "обработка перманентной
+              смерти"}, {"resource-limiter": "ограничение ресурсов"}, {"solo-challenge-controller":
+              "управление одиночными испытаниями"}, {"no-death-tracker": "отслеживание
+              без смертей"}], "endpoints": ["POST /api/v1/gameplay/restricted-modes/select
+              - выбор режима", "GET /api/v1/gameplay/restricted-modes/available -
+              доступные режимы", "GET /api/v1/gameplay/restricted-modes/status - статус
+              режима", "POST /api/v1/gameplay/restricted-modes/ironman/create - создание
+              Ironman персонажа"], "websocket_channels": ["wss://api.necp.game/v1/gameplay/restricted-modes/{modeId}
+              - события режима"], "events_published": [{"gameplay.restricted-mode.activated":
+              "активация режима"}, {"gameplay.restricted-mode.failed": "провал режима"},
+              {"gameplay.restricted-mode.completed": "завершение режима"}, {"gameplay.restricted-mode.permadeath":
+              "перманентная смерть"}]}], "data_flows": {"restricted_mode_activation_flow":
+              "1. Игрок выбирает режим с ограничениями\n2. Restricted Mode Manager
+              проверяет требования\n3. Restricted Mode Manager активирует режим\n4.
+              В зависимости от режима активируются соответствующие контроллеры\n5.
+              Gameplay Service публикует событие gameplay.restricted-mode.activated\n6.
+              Realtime Gateway отправляет информацию о режиме клиентам\n", "permadeath_flow":
+              "1. Игрок умирает в Ironman Mode\n2. Permadeath Handler обрабатывает
+              смерть\n3. Permadeath Handler удаляет персонажа\n4. Permadeath Handler
+              сохраняет достижения Ironman\n5. Character Service удаляет персонажа\n6.
+              Gameplay Service публикует событие gameplay.restricted-mode.permadeath\n"},
+              "database_structure": {"tables": [{"name": "restricted_mode_sessions",
+              "description": "Сессии режимов с ограничениями", "columns": [{"id":
+              "UUID PRIMARY KEY"}, {"character_id": "UUID FOREIGN KEY"}, {"mode_type":
+              "ENUM (ironman, hardcore, solo, nodeath)"}, {"status": "ENUM (active,
+              completed, failed)"}, {"restrictions": "JSONB"}, {"started_at": "TIMESTAMP"},
+              {"completed_at": "TIMESTAMP (nullable)"}]}, {"name": "ironman_characters",
+              "description": "Ironman персонажи", "columns": [{"id": "UUID PRIMARY
+              KEY"}, {"character_id": "UUID FOREIGN KEY"}, {"created_at": "TIMESTAMP"},
+              {"died_at": "TIMESTAMP (nullable)"}, {"achievements": "JSONB"}]}]},
+              "integrations": {"character_service": "- Хранение статуса режимов\n-
+              Обработка смертей\n- Удаление персонажей (Ironman)\n", "achievement_service":
+              "- Отслеживание достижений\n- Выдача титулов\n- Уведомления о достижениях\n"},
+              "technical_tasks": {"phases": {"phase_1": {"name": "Restricted Mode
+              Manager и Permadeath Handler", "tasks": ["Реализация Restricted Mode
+              Manager", "Реализация Permadeath Handler", "Управление режимами", "Обработка
+              перманентной смерти", "Интеграция с Character Service"], "estimated_effort":
+              "4 days"}, "phase_2": {"name": "Resource Limiter и Solo Challenge Controller",
+              "tasks": ["Реализация Resource Limiter", "Реализация Solo Challenge
+              Controller", "Ограничение ресурсов", "Управление одиночными испытаниями",
+              "Интеграция с Gameplay Service"], "estimated_effort": "3 days"}, "phase_3":
+              {"name": "No-Death Tracker", "tasks": ["Реализация No-Death Tracker",
+              "Отслеживание прохождения без смертей", "Интеграция с Achievement Service"],
+              "estimated_effort": "2 days"}}}}}'
+        - column:
+            name: metadata
+            value: '{"id": "restricted-modes-system-architecture", "title": "Архитектура
+              системы режимов с ограничениями", "document_type": "architecture", "category":
+              "systems", "status": "draft", "version": "1.0.0", "last_updated": "2025-12-XXT00:00:00Z",
+              "owners": [{"role": "architect", "contact": "architect@necp.game"}],
+              "tags": ["architecture", "gameplay", "restricted-modes", "hardcore",
+              "permadeath", "challenge"], "related_systems": ["gameplay-service",
+              "character-service", "achievement-service"], "related_documents": [{"id":
+              "restricted-modes-idea", "relation": "implements"}], "github_issue":
+              1502, "visibility": "internal", "audience": ["architect", "backend",
+              "gameplay", "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\restricted-modes-system-architecture.yaml

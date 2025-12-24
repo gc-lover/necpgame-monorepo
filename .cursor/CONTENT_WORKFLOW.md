@@ -95,9 +95,11 @@ Issue: #{number}
 
 #### Сценарий C: Таблицы есть + >10 квестов (массовый импорт через миграции)
 
-- **Действие:** Генерация SQL миграций через оптимизированные скрипты
-- **Скрипты:** `scripts/generate-content-migrations.sh` (Bash) или `scripts/generate-content-migrations.ps1` (
-  PowerShell)
+- **Действие:** Генерация SQL миграций через оптимизированные Python скрипты
+- **Скрипты:**
+  - `python scripts/validate-domains-openapi.py --domain specialized-domain` - валидация API домена квестов
+  - `python scripts/generate-all-domains-go.py --domains specialized-domain` - генерация API для импорта квестов
+  - `python scripts/validate-all-migrations.py` - валидация сгенерированных миграций
 - **Формат:** 1 файл YAML = 1 миграция (с версией из `metadata.version`)
 - **Миграции в enterprise-grade структуре:**
     - Квесты: `infrastructure/liquibase/migrations/data/quests/V*__data_quest_*.sql` (→ `specialized-domain`)

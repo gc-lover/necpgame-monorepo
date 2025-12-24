@@ -1,37 +1,44 @@
-# Issue: #1180
+# Issue: #333
 metadata:
-  id: quest-dallas-2029-reunion-tower
-  title: 'Даллас 2020-2029 — Башня Reunion Tower'
+  id: quest-dallas-2029-008-reunion-tower
+  title: Даллас — башня Reunion Tower
   document_type: canon
-  category: timeline-quest
+  category: quest
   status: draft
   version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
-  concept_approved: true
+  last_updated: 2025-12-06T10:55:00Z
+  concept_approved: false
   concept_reviewed_at: ''
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
     - dallas
-    - skyline
-    - observation-deck
+    - landmark
+    - tourism
   topics:
-    - author-events
-    - city-life
+    - city_storylines
+    - urban_landmarks
   related_systems:
-    - gameplay-service
-    - quest-service
-    - character-service
-    - economy-service
+    - narrative-service
+    - exploration-service
+    - social-service
   related_documents:
-    - id: timeline-author-quests-index
+    - id: master-timeline
       relation: references
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/dallas/2020-2029/quest-008-reunion-tower.md
+    - id: quest-system
+      relation: aligns
+    - id: github-issue-333
+      title: GitHub Issue #333
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/333
+      relation: migrated_to
+      migrated_at: 2025-11-22T19:45:00Z
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/dallas/2020-2029/quest-008-reunion-tower.md
   visibility: internal
   audience:
     - concept
     - narrative
+    - liveops
   risk_level: low
 review:
   chain:
@@ -41,16 +48,16 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: Описание смотровой площадки Reunion Tower хранилось в Markdown и не было структурировано.
-  goal: Представить подъём на башню как туристический квест с панорамами и интерактивными элементами.
-  essence: Игрок поднимается на GeO-Deck, исследует 360° виды и при желании посещает вращающийся ресторан.
+  problem: Исходный текст не показывал, как смотровая площадка и ресторан влияют на экономику и социальные сцены города.
+  goal: Связать посещение Reunion Tower с системой туристических баффов и архитектурными событиями.
+  essence: Игрок поднимается на GeO-Deck, анализирует skyline в AR-режиме и выбирает, инвестировать ли в архитектурные экскурсии или частные мероприятия.
   key_points:
-    - Лифт за 68 секунд доставляет на высоту 171 м.
-    - На площадке доступны бинокли, интерактивные экраны и образовательные материалы.
-    - Башня является визуальным символом города и влияет на репутацию в архитектурной линии.
+    - Башня используется как интерфейс для скрытых архитектурных историй города.
+    - Решения игрока влияют на поток туристов и доступ к приватным событиям.
+    - Появляется ветка с повторяемыми заданиями по ночным фотосессиям.
 quest_definition:
   quest_type: side
-  level_min: 3
+  level_min: 6
   level_max: null
   requirements:
     required_quests: [ ]
@@ -58,103 +65,81 @@ quest_definition:
     required_reputation: { }
     required_items: [ ]
   objectives:
-    - id: arrive_tower
-      text: "Прибыть к башне и пройти контроль безопасности"
+    - id: get_elevator_access
+      text: "Получить доступ на лифт и собрать данные о времени подъёма"
       type: interact
-      target: reunion_tower
+      target: reunion_tower_elevator
       count: 1
       optional: false
-    - id: ride_elevator
-      text: "Совершить 68-секундный подъём на лифте к GeO-Deck"
+    - id: use_binoculars
+      text: "Использовать интерактивные бинокли, чтобы отметить ключевые районы для архитектурной линии"
       type: interact
-      target: tower_elevator
+      target: interactive_binoculars
+      count: 3
+      optional: false
+    - id: choose_event
+      text: "Выбрать: запустить ночное световое шоу или организовать частную вечеринку"
+      type: dialogue
+      target: event_planner_npc
       count: 1
       optional: false
-    - id: use_interactive_screens
-      text: "Использовать интерактивные экраны и бинокли для изучения ключевых объектов"
+    - id: update_map
+      text: "Спуститься и обновить карту туристических маршрутов города"
       type: interact
-      target: observation_deck
+      target: tourist_map_station
       count: 1
       optional: false
-    - id: take_panoramic_photos
-      text: "Сделать панорамные снимки города, открыть дополнительные точки интереса"
-      type: interact
-      target: panoramic_photos
-      count: 1
-      optional: false
-    - id: optional_restaurant
-      text: "При желании посетить вращающийся ресторан и получить бонусные диалоги"
-      type: interact
-      target: revolving_restaurant
-      count: 1
-      optional: true
   rewards:
     experience: 1000
     money: -20
-    items:
-      - item_id: achievement_ball_conqueror
-        quantity: 1
-    reputation: { }
+    reputation:
+      aesthetic: 15
+    items: [ ]
     unlocks:
-      - architectural_quests
-      - skyline_exploration
-  branches:
-    - branch_id: full_experience
-      description: "Полный опыт посещения башни с рестораном"
-      consequences:
-        skills:
-          aesthetics: +20
-        reputation:
-          Dallas_Tourism: +15
-        unlocks:
-          - exclusive_tower_access
+      achievements:
+        - "Покоритель шара"
+      flags: [ ]
+  branches: [ ]
 content:
   sections:
     - id: overview
       title: Описание
       body: |
-        Квест отправляет игрока на башню Reunion Tower в центре Далласа, чтобы получить панорамный обзор и собрать данные
-        о городском горизонте для дальнейших миссий.
+        Квест начинается у основания Reunion Tower, где игрок взаимодействует с AR-гидом. За 68 секунд лифт доставляет на
+        GeO-Deck, а интерактивные панели раскрывают историю строительства. Игрок фиксирует панорамы, выбирает планы инвестиций
+        и решает, участвовать ли в вращающемся ужине.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+      assets: [ ]
+    - id: regional_highlights
+      title: Региональные отсылки
+      body: |
+        Подчёркнут 171-метровый силуэт башни, прозвище «The Ball», 360-градусный обзор и вращающийся ресторан. Интерфейсы
+        поясняют роль постройки в формировании skyline Далласа.
       mechanics_links: [ ]
       assets: [ ]
-    - id: stages
-      title: Этапы
+    - id: quest_flow
+      title: Этапы квеста
       body: |
-        1. Прибыть к башне и пройти контроль безопасности.
-        2. Совершить 68-секундный подъём на лифте к GeO-Deck.
-        3. Использовать интерактивные экраны и бинокли для изучения ключевых объектов.
-        4. Сделать панорамные снимки города, открыть дополнительные точки интереса.
-        5. При желании посетить вращающийся ресторан и получить бонусные диалоги.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: regional_details
-      title: Региональные детали
-      body: |
-        Reunion Tower высотой 171 метр — одна из знаковых построек Далласа. Шарообразная конструкция с LED-подсветкой
-        получила прозвище «The Ball» и часто используется как навигационная точка в городе.
-      mechanics_links: [ ]
+        1. Получить доступ на лифт и собрать данные о времени подъёма.
+        2. Использовать интерактивные бинокли, чтобы отметить ключевые районы для архитектурной линии.
+        3. Выбрать: запустить ночное световое шоу или организовать частную вечеринку.
+        4. Спуститься и обновить карту туристических маршрутов города.
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
       assets: [ ]
     - id: rewards
-      title: Награды
+      title: Награды и эффекты
       body: |
-        - Опыт: 1 000 XP
-        - Расходы: 20 единиц валюты
-        - Атрибут «Эстетика»: +15
-        - Ачивка: «Покоритель Шара»
+        Квест даёт 1000 опыта, требует 20 единиц валюты и повышает эстетический показатель на 15. Ачивка «Покоритель шара»
+        открывает цепочку ночных экскурсий и скидки для фракции архитекторов.
       mechanics_links: [ ]
       assets: [ ]
-    - id: mechanics
-      title: Механики
+    - id: integration
+      title: Интеграции и последствия
       body: |
-        Квест комбинирует туристическую механику и сбор визуальных данных, улучшает ориентирование в городе и открывает
-        новые ветки для архитектурных сюжетов.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: connections
-      title: Связи
-      body: |
-        Входит в архитектурную линию Далласа, а также дополняет квесты, связанные с городской инфраструктурой и ночной
-        подсветкой.
+        Exploration-service обновляет маршруты и баффы обзора, narrative-service добавляет события о городской панораме,
+        а social-service сохраняет репутацию в клубе архитекторов.
       mechanics_links: [ ]
       assets: [ ]
 appendix:
@@ -167,14 +152,14 @@ implementation:
   queue_reference: [ ]
   blockers: [ ]
 history:
-  - version: '2.0.0'
-    date: 2025-11-29
-    author: content_writer
-    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики туристического квеста, архитектурного исследования и панорамных видов.'
-  - version: '1.0.0'
-    date: 2025-11-12
+  - version: '0.1.0'
+    date: 2025-11-11
     author: concept_team
-    changes: Конвертирован квест о башне Reunion Tower в формат знаний.
+    changes: Структурирован квест «Башня Reunion Tower» с туристическими и архитектурными интеграциями.
+  - version: '2.0.0'
+    date: 2025-12-06
+    author: content_writer
+    changes: 'Добавлен quest_definition с полной структурой квеста согласно архитектуре системы квестов.'
 validation:
   checksum: ''
   schema_version: '1.0'

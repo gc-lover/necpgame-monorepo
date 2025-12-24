@@ -1,0 +1,199 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-TECH-STACK-160ca36b
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-264134051892763'
+        - column:
+            name: doc_id
+            value: implementation-tech-stack-2025
+        - column:
+            name: title
+            value: Technology Stack — NECPGAME (MMORPG Looter-Shooter, Cyberpunk)
+        - column:
+            name: document_type
+            value: implementation
+        - column:
+            name: category
+            value: architecture
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 0.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-16 00:00:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "platform_guild", "contact": "platform@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - tech-stack
+            - mmo
+            - shooter
+            - realtime
+        - column:
+            name: topics
+            value:
+            - implementation
+            - backend
+            - client
+            - devops
+        - column:
+            name: related_systems
+            value:
+            - gameplay-service
+            - economy-service
+            - social-service
+            - combat-sim
+            - matchmaking
+        - column:
+            name: related_documents
+            value: '[{"id": "implementation-database-schema-mvp", "relation": "references"},
+              {"id": "implementation-database-migrations-mvp", "relation": "references"},
+              {"id": "API-TECH-DOC-SUMMARY-COMPACT", "relation": "complements"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - backend
+            - client
+            - devops
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "implementation-tech-stack-2025", "title":
+              "Technology Stack — NECPGAME (MMORPG Looter-Shooter, Cyberpunk)", "document_type":
+              "implementation", "category": "architecture", "status": "draft", "version":
+              "0.1.0", "last_updated": "2025-11-16T00:00:00+00:00", "owners": [{"role":
+              "platform_guild", "contact": "platform@necp.game"}], "tags": ["tech-stack",
+              "mmo", "shooter", "realtime"], "topics": ["implementation", "backend",
+              "client", "devops"], "related_systems": ["gameplay-service", "economy-service",
+              "social-service", "combat-sim", "matchmaking"], "related_documents":
+              [{"id": "implementation-database-schema-mvp", "relation": "references"},
+              {"id": "implementation-database-migrations-mvp", "relation": "references"},
+              {"id": "API-TECH-DOC-SUMMARY-COMPACT", "relation": "complements"}],
+              "visibility": "internal", "audience": ["backend", "client", "devops"],
+              "risk_level": "medium"}, "summary": {"problem": "Нужен согласованный
+              стек технологий для ММОРПГ с лутер‑шутер петлёй и киберпанк‑сеттингом.",
+              "goal": "Зафиксировать детальный стек с версиями, альтернативами и отложенными
+              решениями для MVP и технодемки.", "essence": "Документ определяет ядро
+              стека по бэкенду, realtime, клиенту, данным, наблюдаемости и безопасности."},
+              "content": {"sections": [{"id": "product-context", "title": "Контекст
+              продукта", "body": "Игра — ММОРПГ с элементами лутинг‑шутера в киберпанк‑городе.
+              Основные петли: добыча и апгрейд оружия,\nконтракты/рейды, прогрессия
+              фракций/районов, социальные и романтические взаимодействия. PC first.\nДля
+              боёв и инстансов используется UDP/QUIC‑шлюз, для лобби и социальных
+              систем — WebSocket.\n", "mechanics_links": ["knowledge/implementation/database/schema.yaml",
+              "knowledge/implementation/database/romance-database-schema.sql"], "assets":
+              []}, {"id": "backend", "title": "Бэкенд", "body": "Язык и фреймворки:\n-
+              Java 21\n- Spring Boot 3.3.x, Spring Cloud 2024.x\n- gRPC + Protobuf
+              3.21+\nСервисы:\n- Gateway/API, Auth, Gameplay, World-State, Combat-Sim,
+              Inventory/Loot, Economy/Trade, Social/Chat/Party, Romance/Relationships,
+              Matchmaking, Notifications.\nХранилища:\n- PostgreSQL 15 (схемы mvp_core/mvp_meta,
+              JSONB, партиционирование, soft-delete).\n- Redis 7 Cluster (кэш, сессии,
+              билеты матчмейкинга, rate limiting).\n- Apache Kafka 3.7 + Schema Registry
+              (события, outbox).\n- ClickHouse 23.x (телеметрия, аналитика).\n- OpenSearch
+              2.12 (поиск/фиды).\n- S3/MinIO (медиа, логи, реплеи).\nСетевые взаимодействия:\n-
+              Межсервисно: gRPC, мTLS, retries/backoff, idempotency keys.\n- Асинхронно:
+              Kafka, transactional outbox (таблица mvp_meta.outbox).\nКонфигурация:\n-
+              Spring Cloud Config, флаги Unleash/Flagsmith.\nМиграции:\n- Liquibase
+              (V1_0..V1_5).\n", "mechanics_links": ["knowledge/implementation/database/migrations.yaml"],
+              "assets": []}, {"id": "realtime", "title": "Realtime и синхронизация",
+              "body": "Протоколы:\n- QUIC/UDP для боёв и инстансов (Armeria QUIC -
+              высокий уровень абстракции).\n- WebSocket (бинарный Protobuf) для лобби/чат/социальных
+              систем.\nФорматы:\n- Protobuf для сериализации, строгая эволюция схем,
+              back/forward compatibility.\nСинхронизация:\n- Snapshot + delta‑updates,
+              интерес‑менеджмент (AOI), input‑replay.\n- Тики: 20–30 TPS для MMO‑мира,
+              60+ TPS для инстансового Combat‑Sim.\nMatchmaking:\n- Open Match, быстрые
+              локальные очереди в Redis рядом с Combat‑Sim.\n", "mechanics_links":
+              [], "assets": []}, {"id": "client", "title": "Клиент (PC first)", "body":
+              "Движок:\n- Unreal Engine 5.4 (Nanite, Lumen).\nСетевой слой:\n- Плагин
+              QUIC (MsQuic/Quiche) для боёв, WebSocket для лобби.\nСериализация:\n-
+              Protobuf (protobuf‑cpp 21.x).\nQoS:\n- RTT/packet loss пробы, адаптивная
+              частота апдейтов и размер пачек.\n", "mechanics_links": [], "assets":
+              []}, {"id": "devops", "title": "DevOps и инфраструктура", "body": "Оркестрация:\n-
+              Kubernetes 1.30, Helm, ArgoCD.\nCI/CD:\n- GitHub Actions, артефакты
+              в GHCR, канареечные релизы.\nСеть и периметр:\n- Envoy 1.31 (HTTP/3,
+              gRPC, rate limits, authz), Cloudflare CDN/Edge.\nIaC:\n- Terraform.\n",
+              "mechanics_links": [], "assets": []}, {"id": "data-observability", "title":
+              "Данные и наблюдаемость", "body": "Наблюдаемость:\n- OpenTelemetry 1.33,
+              Prometheus, Grafana, Loki, Tempo/Jaeger.\nТестирование:\n- Testcontainers,
+              Gatling/k6.\nКонтракты:\n- OpenAPI/gRPC proto‑контракты с версионированием.\n",
+              "mechanics_links": [], "assets": []}, {"id": "security-fairplay", "title":
+              "Безопасность и честность", "body": "Авторизация:\n- Keycloak 24 (OIDC),
+              короткоживущие токены для gateway, мTLS межсервисно.\nАнтичит:\n- Клиентский
+              EAC/Battleye на этапе после технодемки.\n- Серверные эвристики: сигнатуры
+              команд, лимиты, детект аномалий.\nШифрование:\n- TLS/QUIC, секреты через
+              Kubernetes Secrets/External Secrets.\n", "mechanics_links": [], "assets":
+              []}, {"id": "domain-mapping", "title": "Соответствие доменам БД", "body":
+              "Экономика и крафт:\n- Таблицы weapon_profile, ballistics_metric, crafting_blueprint,
+              crafting_job.\nКонтракты и PvE:\n- order, order_phase, order_application,
+              order_review.\nМир и районы:\n- world_district_state.\nСоциальные системы
+              и романтика:\n- romance_events, npc_romance_profiles, relationships,
+              relationship_event_history, relationship_conflicts,\n  relationship_milestones,
+              chemistry_scores, cultural_contexts, romance_notifications.\n", "mechanics_links":
+              ["knowledge/implementation/database/schema.yaml", "knowledge/implementation/database/romance-database-schema.sql"],
+              "assets": []}, {"id": "decisions-deferred", "title": "Отложенные решения",
+              "body": "Логи/реплеи:\n- Хранение в S3/MinIO, опционально архивирование
+              в Glacier‑класс. Решение принять после первых нагрузочных тестов.\nМасштабирование
+              БД:\n- Вертикально + партиционирование на MVP, шардирование — после
+              валидации DAU/CCU.\nАнтичит:\n- Выбор провайдера к релизу технодемки.\nРежимы
+              PvP:\n- Правила и нужный TPS для крупных режимов уточнить после прототипа
+              Combat‑Sim.\n", "mechanics_links": [], "assets": []}, {"id": "mvp-vs-tech-demo",
+              "title": "Уровни — MVP и технодемка", "body": "Технодемка:\n- QUIC‑шлюз
+              для инстансов, базовый matchmaking, минимальный Combat‑Sim 60+ TPS.\n-
+              Inventory/Loot + простая экономика, базовый крафт, WebSocket‑лобби/чат.\n-
+              Наблюдаемость и логирование в ClickHouse, базовый античит‑мониторинг.\nMVP:\n-
+              Полный набор сервисов, outbox→Kafka, сиды справочников, прогрессия фракций/районов.\n-
+              Расширенные индексы/партиции, масштабирование Redis Cluster, OpenSearch
+              фиды.\n- Социальные системы и романтика по полной схеме, нотификации
+              и культурные модификаторы.\n", "mechanics_links": ["knowledge/implementation/database/mvp-initial-data.yaml"],
+              "assets": []}]}, "appendix": {"glossary": [], "references": [{"title":
+              "Schema Overview", "link": "./database/schema.yaml"}, {"title": "Romance
+              DB", "link": "./database/romance-database-schema.sql"}, {"title": "Migration
+              Plan", "link": "./database/migrations.yaml"}], "decisions": []}, "implementation":
+              {"github_issue": 136, "needs_task": false, "queue_reference": [], "blockers":
+              []}, "history": [{"version": "0.1.0", "date": "2025-11-16", "author":
+              "platform_team", "changes": "Черновик стека зафиксирован с вариантами
+              для MVP и технодемки."}], "validation": {"checksum": "", "schema_version":
+              "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "implementation-tech-stack-2025", "title": "Technology
+              Stack — NECPGAME (MMORPG Looter-Shooter, Cyberpunk)", "document_type":
+              "implementation", "category": "architecture", "status": "draft", "version":
+              "0.1.0", "last_updated": "2025-11-16T00:00:00+00:00", "owners": [{"role":
+              "platform_guild", "contact": "platform@necp.game"}], "tags": ["tech-stack",
+              "mmo", "shooter", "realtime"], "topics": ["implementation", "backend",
+              "client", "devops"], "related_systems": ["gameplay-service", "economy-service",
+              "social-service", "combat-sim", "matchmaking"], "related_documents":
+              [{"id": "implementation-database-schema-mvp", "relation": "references"},
+              {"id": "implementation-database-migrations-mvp", "relation": "references"},
+              {"id": "API-TECH-DOC-SUMMARY-COMPACT", "relation": "complements"}],
+              "visibility": "internal", "audience": ["backend", "client", "devops"],
+              "risk_level": "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\TECH-STACK.yaml

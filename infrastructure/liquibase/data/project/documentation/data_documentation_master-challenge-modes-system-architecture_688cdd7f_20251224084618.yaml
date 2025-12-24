@@ -1,0 +1,192 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-master-challenge-modes-system-architecture-688cdd7f
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '3868368764238607'
+        - column:
+            name: doc_id
+            value: master-challenge-modes-system-architecture
+        - column:
+            name: title
+            value: Архитектура системы мастер-режимов и Challenge modes
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-12-XXT00:00:00Z
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - gameplay
+            - difficulty
+            - master-modes
+            - challenge-modes
+            - hardcore
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - gameplay-service
+            - progression-service
+            - achievement-service
+            - leaderboard-service
+        - column:
+            name: related_documents
+            value: '[{"id": "master-challenge-modes-idea", "relation": "implements"},
+              {"id": "combat-ai-enemies-architecture", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - gameplay
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "master-challenge-modes-system-architecture",
+              "title": "Архитектура системы мастер-режимов и Challenge modes", "document_type":
+              "architecture", "category": "systems", "status": "draft", "version":
+              "1.0.0", "last_updated": "2025-12-XXT00:00:00Z", "owners": [{"role":
+              "architect", "contact": "architect@necp.game"}], "tags": ["architecture",
+              "gameplay", "difficulty", "master-modes", "challenge-modes", "hardcore"],
+              "related_systems": ["gameplay-service", "progression-service", "achievement-service",
+              "leaderboard-service"], "related_documents": [{"id": "master-challenge-modes-idea",
+              "relation": "implements"}, {"id": "combat-ai-enemies-architecture",
+              "relation": "extends"}], "github_issue": 1496, "visibility": "internal",
+              "audience": ["architect", "backend", "gameplay", "api-designer"]}, "summary":
+              {"problem": "Текущая система сложности не предоставляет достаточно вызовов
+              для опытных игроков.\nНе хватает фиксированных режимов повышенной сложности
+              с уникальными наградами.\n", "goal": "Создать архитектуру мастер-режимов,
+              которая:\n- Предоставляет фиксированные уровни повышенной сложности\n-
+              Добавляет уникальные ограничения и механики\n- Награждает игроков уникальными
+              достижениями и предметами\n- Интегрируется с системой достижений и лидербордов\n",
+              "essence": "Система мастер-режимов добавляет три уровня сложности (Master,
+              Grandmaster, Legendary)\nс фиксированными усилениями врагов, ограничениями
+              и уникальными наградами.\n"}, "architecture": {"overview": "Система
+              мастер-режимов состоит из следующих компонентов:\n1. Difficulty Mode
+              Manager - управление режимами сложности\n2. Restriction Controller -
+              управление ограничениями (время, респавн, чекпоинты)\n3. Difficulty
+              Modifier Engine - применение модификаторов сложности\n4. Achievement
+              Tracker - отслеживание достижений режимов\n5. Reward Calculator - расчёт
+              наград по режимам\n", "microservices": [{"name": "gameplay-service",
+              "port": 8083, "responsibility": "Обработка мастер-режимов:\n- Управление
+              режимами сложности\n- Применение модификаторов\n- Отслеживание ограничений\n",
+              "components": [{"difficulty-mode-manager": "управление режимами"}, {"restriction-controller":
+              "управление ограничениями"}, {"difficulty-modifier-engine": "применение
+              модификаторов"}, {"achievement-tracker": "отслеживание достижений"},
+              {"reward-calculator": "расчёт наград"}], "endpoints": ["POST /api/v1/gameplay/instances/{instanceId}/difficulty
+              - выбор режима", "GET /api/v1/gameplay/content/{contentId}/difficulty-modes
+              - доступные режимы", "GET /api/v1/gameplay/difficulty-modes/stats -
+              статистика режимов", "GET /api/v1/gameplay/difficulty-modes/{mode}/requirements
+              - требования режима"], "websocket_channels": ["wss://api.necp.game/v1/gameplay/instances/{instanceId}/difficulty
+              - события режима"], "events_published": [{"gameplay.difficulty.mode.selected":
+              "выбор режима"}, {"gameplay.difficulty.completion": "завершение контента"},
+              {"gameplay.difficulty.restriction.warning": "предупреждение об ограничении"},
+              {"gameplay.difficulty.telemetry": "телеметрия режимов"}]}], "data_flows":
+              {"difficulty_selection_flow": "1. Игрок выбирает режим сложности при
+              входе в контент\n2. Difficulty Mode Manager проверяет требования для
+              режима\n3. Difficulty Mode Manager применяет режим к инстансу\n4. Difficulty
+              Modifier Engine применяет модификаторы (HP, урон, механики)\n5. Restriction
+              Controller активирует ограничения (время, респавн, чекпоинты)\n6. Gameplay
+              Service публикует событие gameplay.difficulty.mode.selected\n7. Realtime
+              Gateway отправляет информацию о режиме клиентам\n", "restriction_tracking_flow":
+              "1. Restriction Controller отслеживает ограничения в реальном времени\n2.
+              При приближении к лимиту Restriction Controller отправляет предупреждение\n3.
+              При превышении лимита Restriction Controller завершает контент неудачей\n4.
+              Gameplay Service публикует событие gameplay.difficulty.restriction.warning\n5.
+              Realtime Gateway отправляет предупреждение клиентам\n", "completion_flow":
+              "1. При завершении контента Difficulty Mode Manager проверяет режим\n2.
+              Reward Calculator рассчитывает награды на основе режима\n3. Achievement
+              Tracker проверяет достижения для режима\n4. Progression Service начисляет
+              награды\n5. Achievement Service выдает достижения и титулы\n6. Leaderboard
+              Service обновляет рейтинги\n7. Gameplay Service публикует событие gameplay.difficulty.completion\n"},
+              "database_structure": {"tables": [{"name": "difficulty_modes", "description":
+              "Режимы сложности", "columns": [{"id": "UUID PRIMARY KEY"}, {"name":
+              "VARCHAR(100)"}, {"level": "ENUM (master, grandmaster, legendary)"},
+              {"hp_modifier": "DECIMAL(5,2)"}, {"damage_modifier": "DECIMAL(5,2)"},
+              {"time_limit_multiplier": "DECIMAL(5,2)"}, {"respawn_limit": "INTEGER"},
+              {"checkpoint_limit": "INTEGER"}, {"reward_modifier": "DECIMAL(5,2)"},
+              {"created_at": "TIMESTAMP"}]}, {"name": "content_difficulty_modes",
+              "description": "Доступные режимы для контента", "columns": [{"id": "UUID
+              PRIMARY KEY"}, {"content_id": "UUID FOREIGN KEY"}, {"difficulty_mode_id":
+              "UUID FOREIGN KEY"}, {"requirements": "JSONB"}, {"created_at": "TIMESTAMP"}]},
+              {"name": "instance_difficulty_sessions", "description": "Сессии с режимами
+              сложности", "columns": [{"id": "UUID PRIMARY KEY"}, {"instance_id":
+              "UUID FOREIGN KEY"}, {"difficulty_mode_id": "UUID FOREIGN KEY"}, {"time_remaining":
+              "INTEGER"}, {"respawns_remaining": "INTEGER"}, {"checkpoints_used":
+              "INTEGER"}, {"started_at": "TIMESTAMP"}, {"completed_at": "TIMESTAMP
+              (nullable)"}, {"status": "ENUM (in_progress, completed, failed)"}]},
+              {"name": "difficulty_telemetry", "description": "Телеметрия режимов",
+              "columns": [{"id": "UUID PRIMARY KEY"}, {"instance_id": "UUID FOREIGN
+              KEY"}, {"difficulty_mode_id": "UUID FOREIGN KEY"}, {"completion_time":
+              "INTEGER"}, {"success": "BOOLEAN"}, {"deaths_count": "INTEGER"}, {"player_count":
+              "INTEGER"}, {"timestamp": "TIMESTAMP"}]}]}, "integrations": {"progression_service":
+              "- Проверка требований для доступа к режимам\n- Начисление наград\n-
+              Обновление прогресса\n", "achievement_service": "- Отслеживание достижений
+              режимов\n- Выдача титулов\n- Уведомления о достижениях\n", "leaderboard_service":
+              "- Рейтинги по режимам сложности\n- Сезонные лидерборды\n- Рекорды по
+              времени\n"}, "technical_tasks": {"phases": {"phase_1": {"name": "Difficulty
+              Mode Manager и Modifier Engine", "tasks": ["Реализация Difficulty Mode
+              Manager", "Реализация Difficulty Modifier Engine", "Управление режимами
+              сложности", "Применение модификаторов", "Интеграция с Combat Service"],
+              "estimated_effort": "4 days"}, "phase_2": {"name": "Restriction Controller",
+              "tasks": ["Реализация Restriction Controller", "Отслеживание ограничений
+              времени", "Отслеживание ограничений респавна", "Управление чекпоинтами",
+              "Интеграция с Gameplay Service"], "estimated_effort": "3 days"}, "phase_3":
+              {"name": "Achievement Tracker и Reward Calculator", "tasks": ["Реализация
+              Achievement Tracker", "Реализация Reward Calculator", "Интеграция с
+              Achievement Service", "Интеграция с Progression Service"], "estimated_effort":
+              "3 days"}}}}}'
+        - column:
+            name: metadata
+            value: '{"id": "master-challenge-modes-system-architecture", "title":
+              "Архитектура системы мастер-режимов и Challenge modes", "document_type":
+              "architecture", "category": "systems", "status": "draft", "version":
+              "1.0.0", "last_updated": "2025-12-XXT00:00:00Z", "owners": [{"role":
+              "architect", "contact": "architect@necp.game"}], "tags": ["architecture",
+              "gameplay", "difficulty", "master-modes", "challenge-modes", "hardcore"],
+              "related_systems": ["gameplay-service", "progression-service", "achievement-service",
+              "leaderboard-service"], "related_documents": [{"id": "master-challenge-modes-idea",
+              "relation": "implements"}, {"id": "combat-ai-enemies-architecture",
+              "relation": "extends"}], "github_issue": 1496, "visibility": "internal",
+              "audience": ["architect", "backend", "gameplay", "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\master-challenge-modes-system-architecture.yaml

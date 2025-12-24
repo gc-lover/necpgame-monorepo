@@ -1,0 +1,152 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-performance-part2-application-b36e1f57
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '5905017256793806'
+        - column:
+            name: doc_id
+            value: narrative-coherence-performance-part2-application
+        - column:
+            name: title
+            value: Performance Tuning — Part 2 (Application)
+        - column:
+            name: document_type
+            value: canon
+        - column:
+            name: category
+            value: narrative-coherence
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-07 00:53:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: ''
+        - column:
+            name: owners
+            value: '[{"role": "concept_director", "contact": "concept@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - performance
+            - application
+            - caching
+        - column:
+            name: topics
+            value:
+            - service-optimization
+            - quest-runtime
+        - column:
+            name: related_systems
+            value:
+            - quest-service
+            - cache-layer
+            - analytics-service
+        - column:
+            name: related_documents
+            value: '[{"id": "narrative-coherence-performance-part1-database", "relation":
+              "references"}, {"id": "narrative-coherence-performance-part3-advanced",
+              "relation": "continues"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part2-application.md
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - backend
+            - platform
+            - concept
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "narrative-coherence-performance-part2-application",
+              "title": "Performance Tuning — Part 2 (Application)", "document_type":
+              "canon", "category": "narrative-coherence", "status": "draft", "version":
+              "1.0.0", "last_updated": "2025-11-07T00:53:00+00:00", "concept_approved":
+              false, "concept_reviewed_at": "", "owners": [{"role": "concept_director",
+              "contact": "concept@necp.game"}], "tags": ["performance", "application",
+              "caching"], "topics": ["service-optimization", "quest-runtime"], "related_systems":
+              ["quest-service", "cache-layer", "analytics-service"], "related_documents":
+              [{"id": "narrative-coherence-performance-part1-database", "relation":
+              "references"}, {"id": "narrative-coherence-performance-part3-advanced",
+              "relation": "continues"}], "source": "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part2-application.md",
+              "visibility": "internal", "audience": ["backend", "platform", "concept"],
+              "risk_level": "medium"}, "review": {"chain": [{"role": "concept_director",
+              "reviewer": "", "reviewed_at": "", "status": "pending"}], "next_actions":
+              []}, "summary": {"problem": "Квестовые сервисы испытывают задержки из-за
+              отсутствия системного кеширования и оптимизации запросов.", "goal":
+              "Зафиксировать практики кэширования, оптимизации запросов и асинхронной
+              обработки для удержания SLA после внедрения БД-настроек.", "essence":
+              "Руководство описывает использование Redis, проекций и асинхронных воркеров
+              для стабильного отклика приложений.", "key_points": ["Redis-кеши с чёткими
+              TTL для графов квестов и мировых состояний.", "Использование проекций
+              и батч-загрузок вместо «толстых» запросов.", "Асинхронные операции для
+              аудита и вторичного обновления."]}, "content": {"sections": [{"id":
+              "introduction", "title": "Введение", "body": "Вторая часть цикла Performance
+              Tuning фокусируется на приложениях, взаимодействующих с квестовой БД.\nЦель
+              — минимизировать задержки через слой кеширования и оптимизацию запросов
+              после базовых операций с данными.\n", "mechanics_links": [], "assets":
+              []}, {"id": "caching", "title": "Кеширование", "body": "Используйте
+              Redis для хранения часто запрашиваемых структур:\n\n```\n@Cacheable(value
+              = \"questGraph\", key = \"#questId\")\npublic Quest getQuest(String
+              questId) {\n    return questRepository.findById(questId).orElseThrow();\n}\n```\n\nTTL:\n-
+              questGraph — 24 часа.\n- worldState — 5 минут.\n", "mechanics_links":
+              ["services/backend/cache/redis-config.yaml"], "assets": []}, {"id":
+              "query-optimization", "title": "Оптимизация запросов", "body": "Предпочитайте
+              проекции и батч-загрузки вместо полного чтения сущностей:\n\n```\n@Query(\"SELECT
+              new QuestSummary(q.id, q.name) FROM Quest q\")\nList<QuestSummary> findSummaries();\n```\n\n```\nList<Quest>
+              quests = questRepository.findAllById(questIds);\n```\n", "mechanics_links":
+              ["services/backend/quest/query-guidelines.yaml"], "assets": []}, {"id":
+              "async-processing", "title": "Асинхронная обработка", "body": "Побочные
+              процессы, такие как аудит и уведомления, следует выполнять асинхронно:\n\n```\n@Async\npublic
+              CompletableFuture<Void> savePlayerChoice(...) {\n    // Audit trail
+              async\n}\n```\n", "mechanics_links": ["services/backend/common/async-patterns.yaml"],
+              "assets": []}, {"id": "navigation", "title": "Навигация по серии", "body":
+              "После внедрения подходов приложения переходите к Part 3 (Advanced),
+              где описаны распределённые сценарии и мониторинг.\n", "mechanics_links":
+              [], "assets": []}]}, "appendix": {"glossary": [], "references": [{"type":
+              "internal", "value": "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part1-database.md"},
+              {"type": "internal", "value": "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part3-advanced.md"}],
+              "decisions": []}, "implementation": {"github_issue": 109, "needs_task":
+              false, "queue_reference": [], "blockers": []}, "history": [{"version":
+              "1.0.0", "date": "2025-11-07", "author": "concept_director", "changes":
+              "Конвертировано руководство Performance Tuning Part 2 из Markdown в
+              YAML и закреплены практики оптимизации приложения."}], "validation":
+              {"checksum": "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "narrative-coherence-performance-part2-application", "title":
+              "Performance Tuning — Part 2 (Application)", "document_type": "canon",
+              "category": "narrative-coherence", "status": "draft", "version": "1.0.0",
+              "last_updated": "2025-11-07T00:53:00+00:00", "concept_approved": false,
+              "concept_reviewed_at": "", "owners": [{"role": "concept_director", "contact":
+              "concept@necp.game"}], "tags": ["performance", "application", "caching"],
+              "topics": ["service-optimization", "quest-runtime"], "related_systems":
+              ["quest-service", "cache-layer", "analytics-service"], "related_documents":
+              [{"id": "narrative-coherence-performance-part1-database", "relation":
+              "references"}, {"id": "narrative-coherence-performance-part3-advanced",
+              "relation": "continues"}], "source": "shared/docs/knowledge/canon/narrative/narrative-coherence/phase6-documentation/dev-guides/performance-part2-application.md",
+              "visibility": "internal", "audience": ["backend", "platform", "concept"],
+              "risk_level": "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\canon\narrative\narrative-coherence\phase6-documentation\dev-guides\performance-part2-application.yaml

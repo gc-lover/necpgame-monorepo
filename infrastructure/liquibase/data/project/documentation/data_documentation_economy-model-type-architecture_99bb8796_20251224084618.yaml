@@ -1,0 +1,171 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-economy-model-type-architecture-99bb8796
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '4450789405384242'
+        - column:
+            name: doc_id
+            value: architecture-economy-model-type
+        - column:
+            name: title
+            value: Economy Model Type System Architecture
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: implementation
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-12-02 20:35:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect"}]'
+        - column:
+            name: tags
+            value:
+            - economy
+            - markets
+            - governance
+            - architecture
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - economy-core-service
+            - economy-trading-service
+            - social-service
+        - column:
+            name: related_documents
+            value: '[{"id": "economy-type", "relation": "implements"}, {"id": "economy-model-type-database-schema",
+              "relation": "implements"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: ''
+        - column:
+            name: audience
+            value: []
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "architecture-economy-model-type", "title":
+              "Economy Model Type System Architecture", "document_type": "architecture",
+              "category": "implementation", "status": "draft", "version": "1.0.0",
+              "last_updated": "2025-12-02T20:35:00+00:00", "owners": [{"role": "architect"}],
+              "tags": ["economy", "markets", "governance", "architecture"], "related_systems":
+              ["economy-core-service", "economy-trading-service", "social-service"],
+              "related_documents": [{"id": "economy-type", "relation": "implements"},
+              {"id": "economy-model-type-database-schema", "relation": "implements"}]},
+              "summary": {"problem": "Необходима архитектура для гибридной экономической
+              модели с глобальными, региональными и фракционными рынками.", "goal":
+              "Спроектировать систему управления экономической моделью с конфигурацией
+              рынков, правил доступа и ценообразования.", "essence": "Event-driven
+              система управления экономической моделью с гибридным контролем (игроки,
+              NPC, фракции)."}, "content": {"sections": [{"id": "system-overview",
+              "title": "Обзор", "body": "Economy Model Type System:\n- Гибридная экономическая
+              модель (player-driven, NPC-driven, hybrid)\n- Глобальные, региональные
+              и фракционные рынки\n- Правила доступа к рынкам (репутация, союзы, уровень,
+              квесты)\n- Гибридное ценообразование (базовые ставки + динамика спроса/предложения)\n-
+              Правила управления экономикой (контроль цен, предложения, налогов, доступа)\n-
+              Интеграция с economy-core-service и economy-trading-service\n"}, {"id":
+              "components", "title": "Компоненты", "body": "## economy-core-service
+              (расширение)\n**Port:** 8080 (существующий)\n**API:** `/api/v1/economy/model/*`\n\nКомпоненты:\n-
+              EconomyModelManager - управление конфигурацией экономической модели\n-
+              MarketTypeManager - управление типами рынков\n- MarketAccessManager
+              - управление правилами доступа\n- PricingModelManager - управление конфигурацией
+              ценообразования\n- GovernanceRulesManager - управление правилами управления
+              экономикой\n\n## Интеграции\n- **Economy Trading Service:** Использование
+              правил доступа и ценообразования\n- **Social Service:** Проверка репутации
+              и союзов для доступа к рынкам\n- **Quest Service:** Проверка завершенных
+              квестов для доступа\n- **Event Bus (Kafka):** События изменения конфигурации
+              модели\n"}, {"id": "api-endpoints", "title": "API Endpoints", "body":
+              "GET /api/v1/economy/model/config\n- Получить текущую конфигурацию экономической
+              модели\n- Response: EconomyModelConfig\n\nPUT /api/v1/economy/model/config\n-
+              Обновить конфигурацию экономической модели (admin only)\n- Request:
+              EconomyModelConfig\n- Response: EconomyModelConfig\n\nGET /api/v1/economy/model/markets\n-
+              Получить список рынков\n- Query: region_id, faction_id, market_type,
+              is_global\n- Response: Array of MarketType\n\nGET /api/v1/economy/model/markets/{marketId}/access-rules\n-
+              Получить правила доступа к рынку\n- Response: Array of MarketAccessRule\n\nGET
+              /api/v1/economy/model/markets/{marketId}/pricing-config\n- Получить
+              конфигурацию ценообразования\n- Query: item_category, item_tier\n- Response:
+              Array of PricingModelConfig\n\nGET /api/v1/economy/model/governance-rules\n-
+              Получить правила управления экономикой\n- Query: entity_type, entity_id,
+              rule_type, rule_scope\n- Response: Array of EconomyGovernanceRule\n\nPOST
+              /api/v1/economy/model/governance-rules\n- Создать правило управления
+              (admin only)\n- Request: EconomyGovernanceRule\n- Response: EconomyGovernanceRule\n"},
+              {"id": "database", "title": "База данных", "body": "## Таблицы (из миграции
+              V1_76)\n\n### economy_model_config\n- Конфигурация экономической модели\n-
+              Типы: player_driven, npc_driven, hybrid\n- Параметры: price_volatility_factor,
+              demand_supply_impact\n\n### market_types\n- Типы рынков (global, regional,
+              faction)\n- Параметры: base_tax_rate, player_tax_rate, npc_tax_rate\n-
+              Связи: region_id, faction_id\n\n### market_access_rules\n- Правила доступа
+              к рынкам\n- Типы доступа: reputation, level, quest, alliance\n- Требования:
+              requirement_value, requirement_item_id, requirement_quest_id\n\n###
+              pricing_model_config\n- Конфигурация ценообразования\n- Контроль: player_control,
+              npc_control, hybrid\n- Факторы: demand_impact_factor, supply_impact_factor,
+              event_impact_factor\n\n### economy_governance_rules\n- Правила управления
+              экономикой\n- Типы сущностей: faction, region, global\n- Типы правил:
+              price_control, supply_control, tax_control, access_control\n- Приоритеты
+              и временные рамки\n"}, {"id": "performance-requirements", "title": "Performance
+              Requirements", "body": "**Load:**\n- Peak: 1,000 req/sec (market access
+              checks)\n- Concurrent: 10,000 users\n- P99 latency: <50ms\n\n**Data
+              Model (optimized):**\n\n### EconomyModelConfig Entity\nFields ordered
+              by size (struct alignment):\n1. id (uuid) - 16 bytes\n2. name (string)
+              - 16 bytes\n3. description (string) - 16 bytes\n4. price_volatility_factor
+              (decimal) - 8 bytes\n5. demand_supply_impact (decimal) - 8 bytes\n6.
+              base_supply_npc_controlled (bool) - 1 byte\n7. strategic_markets_player_controlled
+              (bool) - 1 byte\n8. regional_modifiers_faction_controlled (bool) - 1
+              byte\n9. rare_items_player_only (bool) - 1 byte\n10. is_active (bool)
+              - 1 byte\n\nExpected struct size: ~72 bytes\nMemory for 1k configs:
+              ~72 KB\n\n**Hot Path Endpoints:**\n- GET /api/v1/economy/model/markets/{marketId}/access-rules
+              → 500 RPS (CRITICAL)\n- GET /api/v1/economy/model/markets/{marketId}/pricing-config
+              → 300 RPS (CRITICAL)\n\nBackend optimizations required: Level 1 (Standard)\n-
+              DB connection pooling (25 connections)\n- Query caching (5min TTL)\n-
+              Batch operations for access checks\n"}, {"id": "integration-points",
+              "title": "Integration Points", "body": "## Economy Trading Service\n-
+              Использование правил доступа при проверке доступа к рынку\n- Использование
+              конфигурации ценообразования при расчете цен\n- События изменения цен
+              → обновление динамики спроса/предложения\n\n## Social Service\n- Проверка
+              репутации игрока для доступа к фракционным рынкам\n- Проверка союзов
+              для доступа к союзным рынкам\n\n## Quest Service\n- Проверка завершенных
+              квестов для доступа к рынкам\n\n## Event Bus (Kafka)\n- События изменения
+              конфигурации модели\n- События изменения правил доступа\n- События изменения
+              правил управления\n"}]}}'
+        - column:
+            name: metadata
+            value: '{"id": "architecture-economy-model-type", "title": "Economy Model
+              Type System Architecture", "document_type": "architecture", "category":
+              "implementation", "status": "draft", "version": "1.0.0", "last_updated":
+              "2025-12-02T20:35:00+00:00", "owners": [{"role": "architect"}], "tags":
+              ["economy", "markets", "governance", "architecture"], "related_systems":
+              ["economy-core-service", "economy-trading-service", "social-service"],
+              "related_documents": [{"id": "economy-type", "relation": "implements"},
+              {"id": "economy-model-type-database-schema", "relation": "implements"}]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\economy-model-type-architecture.yaml

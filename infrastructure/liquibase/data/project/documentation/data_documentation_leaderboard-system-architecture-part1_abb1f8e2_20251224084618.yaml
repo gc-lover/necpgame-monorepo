@@ -1,0 +1,254 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-leaderboard-system-architecture-part1-abb1f8e2
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-574007305676546'
+        - column:
+            name: doc_id
+            value: leaderboard-system-architecture
+        - column:
+            name: title
+            value: Архитектура системы лидербордов (Leaderboard System)
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-30 19:00:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - leaderboard
+            - backend
+            - world
+            - rankings
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - world-service-go
+            - social-service-go
+            - character-service-go
+            - achievement-service-go
+            - gameplay-service-go
+        - column:
+            name: related_documents
+            value: '[{"id": "backend-leaderboard-system", "relation": "extends"},
+              {"id": "implementation-leaderboard-core", "relation": "references"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"<!-- Issue": null, "metadata": {"id": "leaderboard-system-architecture",
+              "title": "Архитектура системы лидербордов (Leaderboard System)", "document_type":
+              "architecture", "category": "systems", "status": "draft", "version":
+              "1.1.0", "last_updated": "2025-11-30T19:00:00+00:00", "owners": [{"role":
+              "architect", "contact": "architect@necp.game"}], "tags": ["architecture",
+              "leaderboard", "backend", "world", "rankings"], "related_systems": ["world-service-go",
+              "social-service-go", "character-service-go", "achievement-service-go",
+              "gameplay-service-go"], "related_documents": [{"id": "backend-leaderboard-system",
+              "relation": "extends"}, {"id": "implementation-leaderboard-core", "relation":
+              "references"}], "github_issue": 140, "visibility": "internal", "audience":
+              ["architect", "backend", "api-designer"]}, "summary": {"problem": "Требуется
+              спроектировать полную техническую архитектуру системы лидербордов\nдля
+              управления глобальными, сезонными, дружественными и гильдийными рейтингами\nс
+              поддержкой real-time обновлений и высокой производительности.\n", "goal":
+              "Создать архитектурную схему системы лидербордов с определением:\n-
+              Компонентов системы (микросервисы, модули)\n- API endpoints (высокоуровнево)\n-
+              Потоков данных и интеграций\n- Стратегии кэширования (Redis)\n- Системы
+              обновления рейтингов\n- Технического задания для реализации\n", "essence":
+              "Система лидербордов управляет различными типами рейтингов (глобальные,
+              сезонные,\nдружественные, гильдийные) с использованием Redis для hot
+              data и PostgreSQL для\nперсистентного хранения, обеспечивая real-time
+              обновления и сезонные сбросы.\n"}, "architecture": {"overview": "Система
+              лидербордов состоит из пяти основных компонентов:\n1. Leaderboard Manager
+              - управление рейтингами и типами лидербордов\n2. Score Calculator -
+              расчёт очков и метрик\n3. Ranking Engine - обновление позиций и рангов\n4.
+              Season Manager - управление сезонами и сбросами\n5. Cache Manager -
+              управление кэшированием в Redis\n", "components": [{"name": "Leaderboard
+              Manager", "location": "world-service-go (модуль leaderboard)", "responsibility":
+              "- Управление типами лидербордов (global, class, seasonal, friend, guild)\n-
+              Создание и конфигурация лидербордов\n- Получение рейтингов и позиций
+              игроков\n- Управление областями видимости (scope)\n- Интеграция с другими
+              сервисами\n", "port": "8085 (world-service-go)", "endpoints": ["GET
+              /api/v1/world/leaderboards - список лидербордов", "GET /api/v1/world/leaderboards/{leaderboard_id}
+              - получение лидерборда", "GET /api/v1/world/leaderboards/{leaderboard_id}/top
+              - топ игроков", "GET /api/v1/world/leaderboards/{leaderboard_id}/rank/{player_id}
+              - позиция игрока", "GET /api/v1/world/leaderboards/{leaderboard_id}/around/{player_id}
+              - соседи игрока"]}, {"name": "Score Calculator", "location": "world-service-go
+              (модуль leaderboard-scoring)", "responsibility": "- Расчёт очков для
+              различных метрик\n- Функции расчёта overall power, combat score\n- Учёт
+              уровня, экипировки, навыков, достижений\n- Обработка различных типов
+              метрик\n", "scoring_functions": "- calculate_overall_power: уровень,
+              экипировка, навыки, достижения, капитал, репутация, PvP рейтинг\n- calculate_combat_score:
+              убийства, точность, KDA, нанесённый урон\n- calculate_economic_score:
+              капитал, торговля, доходы\n- calculate_social_score: репутация, гильдия,
+              друзья\n", "integration": "Интегрируется с character-service для данных
+              персонажа\nИнтегрируется с achievement-service для достижений\nИнтегрируется
+              с economy-service для экономических метрик\n"}, {"name": "Ranking Engine",
+              "location": "world-service-go (модуль leaderboard-ranking)", "responsibility":
+              "- Обновление позиций игроков в рейтингах\n- Синхронизация Redis ↔ PostgreSQL\n-
+              Батчевая обработка обновлений\n- Определение рангов и тиров\n- Обработка
+              изменений позиций\n", "update_strategies": "- real-time: немедленное
+              обновление для критических событий\n- hourly: периодическое обновление
+              для стандартных метрик\n- daily: ежедневное обновление для агрегированных
+              метрик\n- weekly: еженедельное обновление для долгосрочных метрик\n",
+              "integration": "Использует Redis sorted sets для hot data\nСинхронизирует
+              с PostgreSQL для персистентности\nПубликует события об изменениях позиций\n"},
+              {"name": "Season Manager", "location": "world-service-go (модуль leaderboard-seasons)",
+              "responsibility": "- Управление сезонами лидербордов\n- Сезонные сбросы
+              и архивация\n- Распределение наград за сезон\n- Создание снапшотов\n-
+              Запуск новых сезонов\n", "season_flow": "1. Создание финального снапшота\n2.
+              Распределение наград по тирам (Diamond, Platinum, Gold, Silver, Bronze)\n3.
+              Архивация данных сезона\n4. Сброс рейтингов\n5. Запуск нового сезона\n",
+              "endpoints": ["GET /api/v1/world/leaderboards/seasons - список сезонов",
+              "GET /api/v1/world/leaderboards/seasons/{season_id} - данные сезона",
+              "POST /api/v1/world/leaderboards/seasons/{season_id}/reset - сброс сезона",
+              "GET /api/v1/world/leaderboards/seasons/{season_id}/rewards - награды
+              сезона"]}, {"name": "Cache Manager", "location": "world-service-go (модуль
+              leaderboard-cache)", "responsibility": "- Управление кэшированием в
+              Redis\n- Операции с Redis sorted sets\n- Инвалидация кэша\n- Оптимизация
+              запросов\n- Синхронизация с PostgreSQL\n", "redis_operations": "- ZADD:
+              добавление/обновление позиции\n- ZRANGE: получение топ игроков\n- ZRANK:
+              получение позиции игрока\n- ZREVRANGE: получение обратного рейтинга\n-
+              ZREMRANGEBYRANK: очистка старых позиций\n", "redis_keys": "- leaderboard:{code}:{scope}
+              - основной рейтинг\n- leaderboard:{code}:{scope}:season:{season_id}
+              - сезонный рейтинг\n- leaderboard:{code}:{scope}:friends:{player_id}
+              - дружественный рейтинг\n- leaderboard:{code}:{scope}:guild:{guild_id}
+              - гильдийный рейтинг\n"}], "leaderboard_types": [{"type": "global",
+              "description": "Глобальные рейтинги всех игроков", "scope": "server",
+              "update_frequency": "real-time / hourly", "examples": ["Overall Power",
+              "Combat Score", "Economic Score", "Social Score"]}, {"type": "class",
+              "description": "Рейтинги по классам персонажей", "scope": "class", "update_frequency":
+              "hourly", "examples": ["Netrunner Rankings", "Solo Rankings", "Techie
+              Rankings"]}, {"type": "seasonal", "description": "Сезонные рейтинги
+              с периодическими сбросами", "scope": "season", "update_frequency": "real-time",
+              "examples": ["Season 1 Combat", "Season 1 Overall"], "reset_frequency":
+              "monthly / quarterly"}, {"type": "friend", "description": "Рейтинги
+              среди друзей игрока", "scope": "friends", "update_frequency": "real-time",
+              "examples": ["Friends Overall Power", "Friends Combat Score"]}, {"type":
+              "guild", "description": "Рейтинги гильдий", "scope": "guild", "update_frequency":
+              "daily", "examples": ["Guild Power", "Guild Activity"]}], "data_flow":
+              {"score_update": "1. Игровое событие происходит (комбат, достижение,
+              экономическая операция)\n2. Event Bus получает событие\n3. Score Calculator
+              рассчитывает новые очки\n4. Ranking Engine обновляет позицию в Redis\n5.
+              Cache Manager синхронизирует изменения\n6. Realtime Gateway уведомляет
+              клиентов об изменениях\n7. Периодическая синхронизация с PostgreSQL\n",
+              "leaderboard_query": "1. Клиент запрашивает лидерборд\n2. Leaderboard
+              Manager проверяет кэш Redis\n3. Если данные в кэше - возвращает из Redis\n4.
+              Если нет - загружает из PostgreSQL и кэширует\n5. Возвращает данные
+              клиенту\n", "season_reset": "1. Season Manager запускает процесс сброса\n2.
+              Создаётся финальный снапшот текущего сезона\n3. Распределяются награды
+              по тирам\n4. Данные архивируются в PostgreSQL\n5. Очищается Redis кэш\n6.
+              Запускается новый сезон\n"}, "integrations": {"with_character_service":
+              "- Получение данных персонажа для расчёта очков\n- Уровень, экипировка,
+              навыки\n- Статистика персонажа\n", "with_achievement_service": "- Получение
+              достижений для расчёта очков\n- Учёт достижений в overall power\n- Интеграция
+              с системой титулов\n", "with_economy_service": "- Получение экономических
+              метрик\n- Капитал, доходы, торговля\n- Экономический рейтинг\n", "with_social_service":
+              "- Получение списка друзей для friend leaderboards\n- Данные гильдий
+              для guild leaderboards\n- Социальные метрики\n", "with_gameplay_service":
+              "- Получение боевых метрик\n- Убийства, точность, KDA\n- Боевой рейтинг\n",
+              "with_realtime_gateway": "- Push уведомления об изменениях позиций\n-
+              Real-time обновления лидербордов\n- Синхронизация состояния\n"}, "database_schema":
+              {"tables": [{"name": "leaderboards", "description": "Определения лидербордов",
+              "fields": [{"id": "UUID (PK)"}, {"code": "VARCHAR(100) (unique) - код
+              лидерборда"}, {"name": "VARCHAR(255) - название"}, {"type": "ENUM (global,
+              class, seasonal, friend, guild)"}, {"scope": "VARCHAR(100) - область
+              видимости"}, {"metric_type": "VARCHAR(100) - тип метрики"}, {"update_frequency":
+              "ENUM (realtime, hourly, daily, weekly)"}, {"is_active": "BOOLEAN"},
+              {"season_id": "UUID (FK, nullable) - для сезонных лидербордов"}, {"created_at":
+              "TIMESTAMP"}, {"updated_at": "TIMESTAMP"}], "indexes": ["code, type",
+              "type, is_active", "season_id"]}, {"name": "leaderboard_entries", "description":
+              "Записи в лидербордах", "fields": [{"id": "UUID (PK)"}, {"leaderboard_id":
+              "UUID (FK leaderboards)"}, {"player_id": "UUID (FK accounts)"}, {"score":
+              "DECIMAL(20,2) - очки игрока"}, {"rank": "INTEGER - текущая позиция"},
+              {"previous_rank": "INTEGER - предыдущая позиция"}, {"tier": "ENUM (diamond,
+              platinum, gold, silver, bronze)"}, {"metadata": "JSONB - дополнительные
+              данные (денормализованные)"}, {"season_id": "UUID (FK, nullable)"},
+              {"updated_at": "TIMESTAMP"}], "indexes": ["leaderboard_id, rank", "player_id,
+              leaderboard_id", "leaderboard_id, score (desc)", "season_id, rank"]},
+              {"name": "leaderboard_snapshots", "description": "Снапшоты лидербордов
+              (для сезонов)", "fields": [{"id": "UUID (PK)"}, {"leaderboard_id": "UUID
+              (FK leaderboards)"}, {"season_id": "UUID (FK)"}, {"snapshot_data": "JSONB
+              - полные данные рейтинга"}, {"created_at": "TIMESTAMP"}], "indexes":
+              ["leaderboard_id, season_id", "season_id"]}, {"name": "leaderboard_seasons",
+              "description": "Сезоны лидербордов", "fields": [{"id": "UUID (PK)"},
+              {"name": "VARCHAR(255)"}, {"start_date": "TIMESTAMP"}, {"end_date":
+              "TIMESTAMP"}, {"status": "ENUM (active, ended, archived)"}, {"rewards_distributed":
+              "BOOLEAN"}, {"created_at": "TIMESTAMP"}], "indexes": ["status, end_date",
+              "start_date, end_date"]}, {"name": "leaderboard_rewards", "description":
+              "Награды за позиции в лидербордах", "fields": [{"id": "UUID (PK)"},
+              {"leaderboard_id": "UUID (FK leaderboards)"}, {"season_id": "UUID (FK
+              leaderboard_seasons, nullable)"}, {"tier": "ENUM (diamond, platinum,
+              gold, silver, bronze)"}, {"rank_min": "INTEGER - минимальная позиция
+              для тира"}, {"rank_max": "INTEGER - максимальная позиция для тира"},
+              {"rewards": "JSONB - награды (валюта, предметы, титулы)"}, {"created_at":
+              "TIMESTAMP"}], "indexes": ["leaderboard_id, tier", "season_id, tier"]}]},
+              "redis_schema": {"sorted_sets": "- Ключ: leaderboard:{code}:{scope}\n  Значение:
+              sorted set с player_id как member и score как score\n  Операции: ZADD,
+              ZRANGE, ZRANK, ZREVRANGE\n\n- Ключ: leaderboard:{code}:{scope}:season:{season_id}\n  Значение:
+              sorted set для сезонного рейтинга\n  TTL: до конца сезона\n\n- Ключ:
+              leaderboard:{code}:{scope}:friends:{player_id}\n  Значение: sorted set
+              для дружественного рейтинга\n  TTL: 1 час (обновляется при запросе)\n\n-
+              Ключ: leaderboard:{code}:{scope}:guild:{guild_id}\n  Значение: sorted
+              set для гильдийного рейтинга\n  TTL: 24 часа\n"}}, "technical_specification":
+              {"backend_requirements": [{"Реализация модулей в world-service-go":
+              ["leaderboard (управление лидербордами)", "leaderboard-scoring (расчёт
+              очков)"]}]}}'
+        - column:
+            name: metadata
+            value: '{"id": "leaderboard-system-architecture", "title": "Архитектура
+              системы лидербордов (Leaderboard System)", "document_type": "architecture",
+              "category": "systems", "status": "draft", "version": "1.1.0", "last_updated":
+              "2025-11-30T19:00:00+00:00", "owners": [{"role": "architect", "contact":
+              "architect@necp.game"}], "tags": ["architecture", "leaderboard", "backend",
+              "world", "rankings"], "related_systems": ["world-service-go", "social-service-go",
+              "character-service-go", "achievement-service-go", "gameplay-service-go"],
+              "related_documents": [{"id": "backend-leaderboard-system", "relation":
+              "extends"}, {"id": "implementation-leaderboard-core", "relation": "references"}],
+              "github_issue": 140, "visibility": "internal", "audience": ["architect",
+              "backend", "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\leaderboard-system-architecture-part1.yaml

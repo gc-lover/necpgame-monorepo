@@ -1,41 +1,40 @@
-# Issue: #1110
+# Issue: #51
 metadata:
-  id: quest-miami-2029-speedboat-race
-  title: 'Майами 2020-2029 — Гонки на спидботах'
+  id: canon-quest-miami-speedboat-race
+  title: 'Майами — Гонки на спидботах'
   document_type: canon
-  category: timeline-quest
+  category: quest
   status: draft
-  version: '1.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-12T00:00:00Z
   concept_approved: true
-  concept_reviewed_at: ''
+  concept_reviewed_at: 2025-11-06T15:05:00Z
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
     - miami
     - speedboat
-    - adrenaline
-  topics:
     - racing
-    - high_risk_events
+  topics:
+    - water-sports
+    - illicit-competition
   related_systems:
-    - narrative-service
-    - liveops-service
-    - gameplay-service
-    - quest-service
-    - character-service
-    - economy-service
-    - social-service
+    - vehicle-system
+    - reputation-system
   related_documents:
-    - id: timeline-author-quests-index
-      relation: references
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/miami/2020-2029/quest-008-speedboat-race.md
+    - id: github-issue-350
+      title: GitHub Issue #350
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/350
+      relation: migrated_to
+      migrated_at: 2025-11-22T20:30:00Z
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/miami/2020-2029/quest-008-speedboat-race.md
   visibility: internal
   audience:
     - concept
     - narrative
-  risk_level: high
+    - gameplay
+  risk_level: medium
 review:
   chain:
     - role: concept_director
@@ -44,16 +43,16 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: Морской ветке Майами не хватало экшен-квеста с подпольными гонками и высоким риском.
-  goal: Провести игрока через подготовку к спидбот-турниру и показать культуру Biscayne Bay.
-  essence: Персонаж регистрируется в гонке, тюнингует лодку, преодолевает 10 кругов и соперников среди неоновых огней.
+  problem: 'Сценарий спидбот-гонок в Biscayne Bay находился в Markdown и не участвовал в проверке знаний.'
+  goal: 'Оформить квест водной гонки в YAML с этапами, препятствиями и призами.'
+  essence: 'Игрок модернизирует спидбот и участвует в нелегальной гонке по Biscayne Bay, соревнуясь за легендарное судно.'
   key_points:
-    - Biscayne Bay и cigarette boats создают фирменный стиль Майами.
-    - Упор делается на тюнинг, реакцию и управление волнами.
-    - Победа приносит крупный приз и легендарный спидбот.
+    - 'Регистрация и апгрейды лодки требуют вступительного взноса 5,000 €$.'
+    - 'Пять этапов гонки включают десять кругов с опасными волнами и трафиком.'
+    - 'Победитель получает 50,000 €$ и легендарный speedboat, остальные — опыт и репутацию.'
 quest_definition:
   quest_type: side
-  level_min: 8
+  level_min: 15
   level_max: null
   requirements:
     required_quests: [ ]
@@ -61,98 +60,95 @@ quest_definition:
     required_reputation: { }
     required_items: [ ]
   objectives:
-    - id: tune_speedboat
-      text: "Тюнинговать спидбот для гонки"
+    - id: register_race
+      text: "Зарегистрироваться на ночную гонку и внести вступительный взнос 5,000 €$"
       type: interact
-      target: speedboat_tuning_shop
+      target: race_registration
       count: 1
       optional: false
-    - id: join_race
-      text: "Принять участие в подпольной гонке на спидботах в Biscayne Bay"
+    - id: upgrade_boat
+      text: "Модернизировать лодку: усиленный двигатель, стабилизаторы, дополнительное топливо"
       type: interact
-      target: speedboat_race_event
+      target: boat_upgrade_station
       count: 1
       optional: false
-    - id: avoid_police
-      text: "Избежать полицейского рейда во время гонки"
-      type: interact
-      target: police_raid_avoidance
-      count: 1
+    - id: complete_race
+      text: "Пройти 10 кругов гонки, избегая волн и столкновений"
+      type: minigame
+      target: speedboat_race_track
+      count: 10
       optional: false
-    - id: win_race
-      text: "Выиграть гонку или завершить её успешно"
-      type: interact
-      target: race_finish
+    - id: finish_race
+      text: "Финишировать у South Beach и пройти проверку на победителя"
+      type: travel
+      target: south_beach_finish
       count: 1
       optional: false
   rewards:
-    xp: 2000
-    currency: 5000
-    attributes:
-      driving: 20
-      courage: 15
-    achievements:
-      - id: speedboat_legend
-        name: "Speedboat Legend"
-    reputation: { }
+    experience: 2000
+    money: 50000
+    reputation:
+      water_sports: 20
     items:
-      - id: legendary_speedboat
-        name: "Легендарный спидбот"
-        count: 1
-  branches:
-    - condition: "Победа в гонке"
-      outcome: "Полное вознаграждение и легендарный спидбот"
-      next_quests: [ ]
-    - condition: "Финиш без победы"
-      outcome: "Уменьшенное вознаграждение, нет спидбота"
-      next_quests: [ ]
+      - legendary_speedboat
+    unlocks:
+      achievements:
+        - "Спидбот-чемпион Biscayne Bay"
+      flags: [ ]
+  branches: [ ]
 content:
   sections:
     - id: overview
-      title: Описание
+      title: 'Обзор'
       body: |
-        Квест переносит игрока в ночной Biscayne Bay, где подпольные гонки на спидботах сочетают неон, музыку и риск полицейских
-        рейдов.
+        Biscayne Bay — культовое место для speedboat-культуры Майами. Гонка собирает богатых thrill-seeker'ов и криминальных дилеров, вдохновлённых Miami Vice.
       mechanics_links: [ ]
       assets: [ ]
-    - id: stages
-      title: Этапы
+    - id: flow
+      title: 'Ход события'
       body: |
-        1. Оплатить вступительный взнос и получить доступ к гаражу тюнинга.
-        2. Настроить speedboat: двигатель, стабилизаторы, навигацию и антирадар.
-        3. Пройти десять кругов по Biscayne Bay, маневрируя между соперниками и волнорезами.
-        4. Удерживать максимальную скорость на поворотах и отражать агрессивные приёмы противников.
-        5. Финишировать у South Beach и решить, принимать ли участие в последующих подпольных сериях.
-      mechanics_links: [ ]
+        1. Внести взнос и зарегистрироваться на ночную гонку.
+        2. Настроить лодку: усиленный двигатель, стабилизаторы, доп. топливо.
+        3. Выйти на старт и пройти 10 кругов, избегая волн и столкновений.
+        4. Использовать ускорители и трюки для обхода соперников.
+        5. Финишировать у South Beach и пройти проверку на победителя.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+        - mechanics/world/vehicle-races.yaml
       assets: [ ]
     - id: regional_details
-      title: Региональные детали
+      title: 'Региональные детали'
       body: |
-        - Biscayne Bay окружён небоскрёбами даунтауна и ночными клубами South Beach.
-        - Cigarette boats исторически связаны с контрабандой и сериалом «Miami Vice».
-        - Подпольные гонки формируют репутацию в криминальных и элитных яхтенных клубах.
-      mechanics_links: [ ]
+        - Узкие «cigarette boats» с ревущими моторами.
+        - Солёные брызги и ночной skyline Майами.
+        - Вертолёты СМИ фиксируют гонку.
+        - Пляжные фанаты приветствуют победителей.
+      mechanics_links:
+        - mechanics/world/vehicle-races.yaml
       assets: [ ]
     - id: rewards
-      title: Награды
+      title: 'Награды'
       body: |
-        - Победа: 50 000 еддис и легендарный спидбот.
-        - Участие: 2 000 XP.
-        - Дополнительные бонусы за трюки и чистые круги.
-      mechanics_links: [ ]
+        Победа: 50,000 €$, легендарный speedboat.
+        Участие: 2,000 опыта, репутация среди морских гонщиков.
+      mechanics_links:
+        - mechanics/world/reputation-system.yaml
+        - mechanics/economy/rewards.yaml
       assets: [ ]
     - id: mechanics
-      title: Механики
+      title: 'Механики'
       body: |
-        - Гонки на воде с физикой волн и влиянием погодных условий.
-        - Тюнинг транспорта и управление рисками поломки.
-        - Опциональный мультиплеер и рейтинги подпольных клубов.
-      mechanics_links: [ ]
+        - Водная гонка с физикой волн и обгонов.
+        - Риск аварий и поломки двигателя.
+        - Оценка стиля вождения для дополнительных бонусов.
+      mechanics_links:
+        - mechanics/world/vehicle-races.yaml
+        - mechanics/quests/quest-system.yaml
       assets: [ ]
-    - id: connections
-      title: Связи
+    - id: links
+      title: 'Связи'
       body: |
-        Квест ведёт к линиям контрабанды, криминальных кланов и элитных клубов владельцев лодок Майами.
+        Связано с морской линией Майами, включая квесты Drug Run и South Beach nightlife.
       mechanics_links: [ ]
       assets: [ ]
 appendix:
@@ -160,16 +156,24 @@ appendix:
   references: [ ]
   decisions: [ ]
 implementation:
-  github_issue: 1110
   needs_task: false
-  queue_reference: [ ]
+  github_issue: 51
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
   blockers: [ ]
 history:
+  - version: '2.1.0'
+    date: 2025-12-12
+    author: content_team
+    changes: "Добавлены ссылки на механики гонок, наград и репутации; обновлена дата."
+  - version: '2.0.0'
+    date: 2025-12-06
+    author: content_writer
+    changes: 'Добавлен quest_definition с полной структурой квеста согласно архитектуре системы квестов.'
   - version: '1.0.0'
-    date: 2025-11-12
-    author: concept_team
-    changes: Конвертирован квест «Гонки на спидботах» в формат знаний.
+    date: 2025-11-06
+    author: narrative_team
+    changes: 'Описан квест speedboat-гонки по Biscayne Bay.'
 validation:
   checksum: ''
   schema_version: '1.0'
-

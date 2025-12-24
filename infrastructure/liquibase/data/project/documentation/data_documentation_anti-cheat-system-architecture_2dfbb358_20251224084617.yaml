@@ -1,0 +1,288 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-anti-cheat-system-architecture-2dfbb358
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '5450200056843360'
+        - column:
+            name: doc_id
+            value: anti-cheat-system-architecture
+        - column:
+            name: title
+            value: Архитектура системы античита (Anti-Cheat System)
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-30 20:10:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[{"role": "architect", "contact": "architect@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - architecture
+            - anti-cheat
+            - backend
+            - security
+            - realtime
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value:
+            - realtime-gateway-go
+            - session-service-go
+            - gameplay-service-go
+        - column:
+            name: related_documents
+            value: '[{"id": "backend-anti-cheat-compact", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - architect
+            - backend
+            - api-designer
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "anti-cheat-system-architecture", "title":
+              "Архитектура системы античита (Anti-Cheat System)", "document_type":
+              "architecture", "category": "systems", "status": "draft", "version":
+              "1.1.0", "last_updated": "2025-11-30T20:10:00+00:00", "owners": [{"role":
+              "architect", "contact": "architect@necp.game"}], "tags": ["architecture",
+              "anti-cheat", "backend", "security", "realtime"], "related_systems":
+              ["realtime-gateway-go", "session-service-go", "gameplay-service-go"],
+              "related_documents": [{"id": "backend-anti-cheat-compact", "relation":
+              "extends"}], "github_issue": 203, "visibility": "internal", "audience":
+              ["architect", "backend", "api-designer"]}, "summary": {"problem": "Требуется
+              спроектировать полную техническую архитектуру системы античита\nдля
+              обнаружения и предотвращения читерства через серверные проверки скорости,\nпозиции,
+              частоты действий и reconciliation.\n", "goal": "Создать архитектурную
+              схему системы античита с определением:\n- Компонентов системы (микросервисы,
+              модули)\n- API endpoints (высокоуровнево)\n- Потоков данных и интеграций\n-
+              Системы обнаружения speed hack\n- Системы валидации позиции\n- Системы
+              контроля частоты действий\n- Системы reconciliation\n- Технического
+              задания для реализации\n", "essence": "Игровая система античита для
+              обнаружения и предотвращения читерства через\nсерверные проверки и reconciliation
+              с клиентом.\n"}, "architecture": {"overview": "Система античита состоит
+              из семи основных компонентов:\n1. Speed Hack Detector - обнаружение
+              speed hack\n2. Position Validator - валидация позиции\n3. Action Rate
+              Limiter - контроль частоты действий\n4. Reconciliation Engine - reconciliation
+              клиент-сервер\n5. Violation Logger - логирование нарушений\n6. Anti-Cheat
+              Monitor - мониторинг нарушений\n7. Penalty Manager - управление наказаниями\n",
+              "components": [{"name": "Speed Hack Detector", "location": "realtime-gateway-go
+              (модуль anti-cheat)", "responsibility": "- Обнаружение speed hack\n-
+              Расчёт скорости движения\n- Проверка максимальной скорости\n- Обнаружение
+              аномалий скорости\n- Логирование нарушений\n", "detection_logic": "-
+              Расчёт скорости: distance / time\n- Проверка максимальной скорости (с
+              учётом навыков, баффов)\n- Порог отклонения: 10% от максимальной скорости\n-
+              Учёт лагов и reconciliation\n", "thresholds": "- Максимальная скорость:
+              зависит от класса и навыков\n- Порог отклонения: 10%\n- Количество нарушений
+              для триггера: 3 за 10 секунд\n", "endpoints": ["POST /api/v1/anti-cheat/speed/validate
+              - валидация скорости", "GET /api/v1/anti-cheat/speed/violations/{player_id}
+              - нарушения скорости"]}, {"name": "Position Validator", "location":
+              "realtime-gateway-go (модуль anti-cheat)", "responsibility": "- Валидация
+              позиции игрока\n- Проверка телепортации\n- Проверка прохождения через
+              стены\n- Проверка коллизий\n- Логирование нарушений\n", "validation_logic":
+              "- Проверка расстояния между позициями\n- Проверка прохождения через
+              препятствия\n- Проверка коллизий с объектами\n- Учёт лагов и reconciliation\n",
+              "thresholds": "- Максимальное расстояние за тик: зависит от скорости\n-
+              Порог телепортации: 50 метров\n- Количество нарушений для триггера:
+              2 за 5 секунд\n", "endpoints": ["POST /api/v1/anti-cheat/position/validate
+              - валидация позиции", "GET /api/v1/anti-cheat/position/violations/{player_id}
+              - нарушения позиции"]}, {"name": "Action Rate Limiter", "location":
+              "realtime-gateway-go (модуль anti-cheat)", "responsibility": "- Контроль
+              частоты действий\n- Обнаружение макросов\n- Обнаружение автоматических
+              действий\n- Rate limiting действий\n- Логирование нарушений\n", "action_types":
+              "- Атака: максимально 10 в секунду\n- Использование навыков: максимально
+              5 в секунду\n- Взаимодействие: максимально 20 в секунду\n- Движение:
+              без ограничений (контролируется speed hack detector)\n", "detection_logic":
+              "- Подсчёт действий за интервал времени\n- Проверка паттернов (идеальная
+              периодичность)\n- Обнаружение человеческих паттернов vs макросов\n",
+              "thresholds": "- Максимальная частота атак: 10/сек\n- Максимальная частота
+              навыков: 5/сек\n- Максимальная частота взаимодействий: 20/сек\n- Порог
+              идеальной периодичности: 95%\n", "endpoints": ["POST /api/v1/anti-cheat/action-rate/validate
+              - валидация частоты действий", "GET /api/v1/anti-cheat/action-rate/violations/{player_id}
+              - нарушения частоты"]}, {"name": "Reconciliation Engine", "location":
+              "realtime-gateway-go (модуль anti-cheat-reconciliation)", "responsibility":
+              "- Reconciliation клиент-сервер\n- Компенсация лагов\n- Сверка состояния\n-
+              Разрешение конфликтов\n- Снижение ложных срабатываний\n", "reconciliation_logic":
+              "- Сравнение клиентского и серверного состояния\n- Учёт лагов сети\n-
+              Компенсация задержек\n- Разрешение конфликтов в пользу сервера\n- Уведомление
+              клиента о расхождениях\n", "reconciliation_window": "- Окно reconciliation:
+              500ms\n- Максимальное расхождение: 10%\n- Автоматическая коррекция при
+              малых расхождениях\n", "endpoints": ["POST /api/v1/anti-cheat/reconciliation/compare
+              - сравнение состояний", "POST /api/v1/anti-cheat/reconciliation/resolve
+              - разрешение конфликтов"]}, {"name": "Violation Logger", "location":
+              "realtime-gateway-go (модуль anti-cheat-logging)", "responsibility":
+              "- Логирование нарушений\n- Хранение истории нарушений\n- Агрегация
+              нарушений\n- Генерация отчётов\n- Интеграция с мониторингом\n", "violation_types":
+              "- SPEED_HACK: нарушение скорости\n- POSITION_HACK: нарушение позиции\n-
+              ACTION_RATE_HACK: нарушение частоты действий\n- RECONCILIATION_FAILURE:
+              неудачная reconciliation\n", "logging_format": "- Timestamp\n- Player
+              ID\n- Violation type\n- Violation data (JSON)\n- Server state snapshot\n-
+              Client state snapshot\n", "endpoints": ["POST /api/v1/anti-cheat/violations/log
+              - логирование нарушения", "GET /api/v1/anti-cheat/violations/{player_id}
+              - история нарушений"]}, {"name": "Anti-Cheat Monitor", "location": "realtime-gateway-go
+              (модуль anti-cheat-monitoring)", "responsibility": "- Мониторинг нарушений\n-
+              Агрегация метрик\n- Триггеры для эскалации\n- Интеграция с observability\n-
+              Генерация алертов\n", "monitoring_metrics": "- Количество нарушений
+              по типам\n- Частота нарушений на игрока\n- Топ нарушителей\n- Тренды
+              нарушений\n", "escalation_triggers": "- 3+ нарушения за 10 секунд: временная
+              блокировка\n- 10+ нарушений за час: расследование\n- 50+ нарушений за
+              день: постоянная блокировка\n", "endpoints": ["GET /api/v1/anti-cheat/monitoring/stats
+              - статистика нарушений", "GET /api/v1/anti-cheat/monitoring/alerts -
+              активные алерты"]}, {"name": "Penalty Manager", "location": "realtime-gateway-go
+              (модуль anti-cheat-penalties)", "responsibility": "- Управление наказаниями\n-
+              Выдача временных блокировок\n- Выдача постоянных блокировок\n- Интеграция
+              с session service\n- Уведомления игроков\n", "penalty_types": "- WARNING:
+              предупреждение\n- TEMPORARY_BAN: временная блокировка (1 час - 7 дней)\n-
+              PERMANENT_BAN: постоянная блокировка\n- ROLLBACK: откат действий\n",
+              "penalty_logic": "- Автоматические наказания на основе нарушений\n-
+              Ручные наказания администраторами\n- Эскалация наказаний при повторных
+              нарушениях\n", "endpoints": ["POST /api/v1/anti-cheat/penalties/apply
+              - применение наказания", "GET /api/v1/anti-cheat/penalties/{player_id}
+              - наказания игрока", "POST /api/v1/anti-cheat/penalties/revoke - отмена
+              наказания"]}], "data_flow": {"speed_validation": "1. Клиент отправляет
+              данные о движении\n2. Realtime Gateway получает данные\n3. Speed Hack
+              Detector рассчитывает скорость\n4. Проверяется максимальная скорость\n5.
+              Если нарушение - логируется в Violation Logger\n6. Anti-Cheat Monitor
+              агрегирует нарушения\n7. Если триггер сработал - Penalty Manager применяет
+              наказание\n8. Session Service блокирует сессию (если нужно)\n9. Notification
+              Service уведомляет игрока\n", "position_validation": "1. Клиент отправляет
+              позицию\n2. Realtime Gateway получает данные\n3. Position Validator
+              проверяет позицию\n4. Проверяется расстояние и коллизии\n5. Если нарушение
+              - логируется в Violation Logger\n6. Reconciliation Engine пытается разрешить
+              конфликт\n7. Если reconciliation неудачна - применяется наказание\n",
+              "action_rate_validation": "1. Клиент отправляет действие\n2. Realtime
+              Gateway получает данные\n3. Action Rate Limiter проверяет частоту\n4.
+              Проверяется паттерн действий\n5. Если нарушение - логируется в Violation
+              Logger\n6. Anti-Cheat Monitor агрегирует нарушения\n7. Если триггер
+              сработал - применяется наказание\n", "reconciliation": "1. Клиент отправляет
+              состояние\n2. Reconciliation Engine сравнивает с серверным состоянием\n3.
+              Если расхождение в пределах окна - компенсируется\n4. Если расхождение
+              большое - логируется как нарушение\n5. Серверное состояние применяется
+              к клиенту\n6. Клиент получает уведомление о коррекции\n"}, "integrations":
+              {"with_realtime_gateway": "- Получение данных от клиентов\n- Валидация
+              в реальном времени\n- Отправка коррекций клиентам\n", "with_session_service":
+              "- Блокировка сессий при нарушениях\n- Получение информации о сессиях\n-
+              Управление доступом\n", "with_gameplay_service": "- Получение данных
+              о боевых действиях\n- Валидация боевых действий\n- Откат боевых действий
+              при нарушениях\n", "with_notification_service": "- Уведомления о нарушениях\n-
+              Уведомления о наказаниях\n- Уведомления администраторам\n", "with_observability":
+              "- Отправка метрик в Prometheus\n- Логирование в Loki\n- Трейсинг в
+              Tempo\n"}, "data_consistency": {"strategy": "Strong Consistency (ACID
+              транзакции) для критичных операций", "mechanisms": ["ACID транзакции
+              для логирования нарушений и применения наказаний", "Оптимистичные блокировки
+              (versioning) для предотвращения конфликтов", "Валидация перед применением
+              наказаний", "Синхронизация с другими сервисами через Event Bus", "Outbox
+              Pattern для гарантированной доставки событий", "Saga Pattern для распределенных
+              операций (применение наказания, блокировка сессии, уведомление игрока)"]},
+              "data_synchronization": {"event_sourcing": "Все изменения состояния
+              античита (обнаружение нарушения, применение наказания, отмена наказания)\nзаписываются
+              как события в Event Store. Это обеспечивает полный аудит,\nвозможность
+              восстановления состояния и \"time travel\" для отладки.\nПримеры событий:
+              ViolationDetectedEvent, PenaltyAppliedEvent, PenaltyRevokedEvent, ReconciliationFailedEvent.\n",
+              "cqrs_pattern": "Разделение команд (логирование нарушения, применение
+              наказания) и запросов\n(получение истории нарушений, получение статистики,
+              получение наказаний) для оптимизации производительности\nи масштабируемости.
+              Read-модели могут быть кэшированы в Redis для быстрых запросов.\n",
+              "saga_pattern": "Для распределенных транзакций, таких как применение
+              наказания (логирование нарушения,\nприменение наказания, блокировка
+              сессии, уведомление игрока) или отмена наказания\n(отмена наказания,
+              разблокировка сессии, уведомление игрока), используется Saga Pattern\nдля
+              обеспечения атомарности операций между Anti-Cheat Service, Session Service
+              и Notification Service.\n", "outbox_pattern": "Для гарантированной доставки
+              событий в Event Bus используется Outbox Pattern,\nкоторый записывает
+              события в транзакционную таблицу перед публикацией.\n"}, "tickrate_specification":
+              {"validation_operations": {"tickrate": "20-128 Hz (в зависимости от
+              типа активности)", "network_load": "- Валидация скорости: 20-128 Hz,
+              ~0.5-2 KB/sec на игрока\n- Валидация позиции: 20-128 Hz, ~0.5-2 KB/sec
+              на игрока\n- Валидация частоты действий: event-based, ~0.1-0.5 KB/sec
+              на игрока\n- Общий трафик: ~1-4 KB/sec на игрока\n", "latency_requirements":
+              "< 5-10ms для валидации (критично для realtime)", "sync_strategy": "Strong
+              Consistency (ACID транзакции) для логирования нарушений"}, "reconciliation_operations":
+              {"tickrate": "1-5 Hz для reconciliation", "network_load": "- Reconciliation
+              запросы: 1-5 Hz, ~0.2-0.5 KB/sec на игрока\n- Коррекция состояния: event-based,
+              ~0.1-0.3 KB/sec на игрока\n- Общий трафик: ~0.3-0.8 KB/sec на игрока\n",
+              "latency_requirements": "< 10-50ms для reconciliation", "sync_strategy":
+              "Eventual Consistency для reconciliation (компенсация лагов)"}, "violation_logging":
+              {"tickrate": "Event-based (on-demand)", "network_load": "- Логирование
+              нарушений: event-based, ~0.01-0.05 events/sec на игрока\n- Получение
+              истории нарушений: event-based, ~0.01-0.02 requests/sec на игрока\n-
+              Общий трафик: ~0.1-0.2 KB/sec на игрока\n", "latency_requirements":
+              "< 50-200ms для логирования нарушений", "sync_strategy": "Strong Consistency
+              (ACID транзакции) для логирования нарушений"}, "penalty_operations":
+              {"tickrate": "Event-based (on-demand)", "network_load": "- Применение
+              наказания: event-based, ~0.001-0.01 events/sec на игрока\n- Получение
+              наказаний: event-based, ~0.01-0.02 requests/sec на игрока\n- Общий трафик:
+              ~0.1-0.2 KB/sec на игрока\n", "latency_requirements": "< 100-300ms для
+              применения наказания", "sync_strategy": "Strong Consistency (ACID транзакции)
+              для применения наказаний"}}, "database_schema": {"tables": [{"name":
+              "anti_cheat_violations", "description": "Нарушения античита", "fields":
+              [{"id": "UUID (PK)"}, {"player_id": "UUID (FK accounts)"}, {"violation_type":
+              "ENUM (SPEED_HACK, POSITION_HACK, ACTION_RATE_HACK, RECONCILIATION_FAILURE)"},
+              {"violation_data": "JSONB"}, {"server_state": "JSONB"}, {"client_state":
+              "JSONB"}, {"severity": "ENUM (LOW, MEDIUM, HIGH, CRITICAL)"}, {"created_at":
+              "TIMESTAMP"}], "indexes": ["player_id, created_at", "violation_type,
+              created_at", "severity, created_at"]}, {"name": "anti_cheat_penalties",
+              "description": "Наказания за нарушения", "fields": [{"id": "UUID (PK)"},
+              {"player_id": "UUID (FK accounts)"}, {"penalty_type": "ENUM (WARNING,
+              TEMPORARY_BAN, PERMANENT_BAN, ROLLBACK)"}, {"reason": "TEXT"}, {"duration_seconds":
+              "INTEGER (nullable)"}, {"applied_by": "UUID (FK accounts, nullable)"},
+              {"is_active": {"BOOLEAN (default": "true)"}}, {"expires_at": "TIMESTAMP
+              (nullable)"}, {"created_at": "TIMESTAMP"}], "indexes": ["player_id,
+              is_active", "penalty_type, is_active", "expires_at"]}, {"name": "anti_cheat_player_stats",
+              "description": "Статистика нарушений игроков", "fields": [{"id": "UUID
+              (PK)"}, {"player_id": "UUID (FK accounts, unique)"}, {"total_violations":
+              {"INTEGER (default": "0)"}}, {"speed_hack_count": {"INTEGER (default":
+              "0)"}}, {"position_hack_count": {"INTEGER (default": "0)"}}, {"action_rate_hack_count":
+              {"INTEGER (default": "0)"}}, {"reconciliation_failure_count": {"INTEGER
+              (default": "0)"}}, {"last_violation_at": "TIMESTAMP (nullable)"}, {"updated_at":
+              "TIMESTAMP"}], "indexes": ["player_id (unique)", "total_violations"]}]}}}'
+        - column:
+            name: metadata
+            value: '{"id": "anti-cheat-system-architecture", "title": "Архитектура
+              системы античита (Anti-Cheat System)", "document_type": "architecture",
+              "category": "systems", "status": "draft", "version": "1.1.0", "last_updated":
+              "2025-11-30T20:10:00+00:00", "owners": [{"role": "architect", "contact":
+              "architect@necp.game"}], "tags": ["architecture", "anti-cheat", "backend",
+              "security", "realtime"], "related_systems": ["realtime-gateway-go",
+              "session-service-go", "gameplay-service-go"], "related_documents": [{"id":
+              "backend-anti-cheat-compact", "relation": "extends"}], "github_issue":
+              203, "visibility": "internal", "audience": ["architect", "backend",
+              "api-designer"]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\anti-cheat-system-architecture.yaml

@@ -1,0 +1,156 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-part2-advanced-loot-c146c307
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-149139535798958'
+        - column:
+            name: doc_id
+            value: implementation-backend-loot-system-part2
+        - column:
+            name: title
+            value: 'Loot System — Part 2: Advanced Loot'
+        - column:
+            name: document_type
+            value: implementation
+        - column:
+            name: category
+            value: backend
+        - column:
+            name: status
+            value: approved
+        - column:
+            name: version
+            value: 1.0.1
+        - column:
+            name: last_updated
+            value: 2025-11-13 00:00:00+00:00
+        - column:
+            name: concept_approved
+            value: true
+        - column:
+            name: concept_reviewed_at
+            value: 2025-11-07 02:19:00+00:00
+        - column:
+            name: owners
+            value: '[{"role": "backend_lead", "contact": "backend@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - loot-system
+            - backend
+            - java
+        - column:
+            name: topics
+            value:
+            - loot-rolls
+            - smart-loot
+            - boss-rewards
+        - column:
+            name: related_systems
+            value:
+            - loot-service
+            - inventory-service
+            - party-service
+        - column:
+            name: related_documents
+            value: '[{"id": "implementation-backend-loot-system-part1", "relation":
+              "precedes"}, {"id": "implementation-backend-inventory-system", "relation":
+              "references"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/implementation/backend/loot-system/part2-advanced-loot.md
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - backend
+            - gameplay
+            - systems
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "implementation-backend-loot-system-part2",
+              "title": "Loot System — Part 2: Advanced Loot", "document_type": "implementation",
+              "category": "backend", "status": "approved", "version": "1.0.1", "last_updated":
+              "2025-11-13T00:00:00+00:00", "concept_approved": true, "concept_reviewed_at":
+              "2025-11-07T02:19:00+00:00", "owners": [{"role": "backend_lead", "contact":
+              "backend@necp.game"}], "tags": ["loot-system", "backend", "java"], "topics":
+              ["loot-rolls", "smart-loot", "boss-rewards"], "related_systems": ["loot-service",
+              "inventory-service", "party-service"], "related_documents": [{"id":
+              "implementation-backend-loot-system-part1", "relation": "precedes"},
+              {"id": "implementation-backend-inventory-system", "relation": "references"}],
+              "source": "shared/docs/knowledge/implementation/backend/loot-system/part2-advanced-loot.md",
+              "visibility": "internal", "audience": ["backend", "gameplay", "systems"],
+              "risk_level": "medium"}, "review": {"chain": [{"role": "backend_architect",
+              "reviewer": "", "reviewed_at": "", "status": "pending"}], "next_actions":
+              []}, "summary": {"problem": "Нужно формализовать продвинутые механики
+              лута: roll-систему, smart loot и гарантии боссов.", "goal": "Задать
+              схемы БД, алгоритмы распределения, API и меры защиты от дубликатов.",
+              "essence": "Документ описывает реализацию roll-таблиц, умного лута,
+              гарантированных наград боссов и оптимизации сервиса.", "key_points":
+              ["SQL-схемы для loot_rolls и связанные индексы.", "Алгоритмы Smart Loot
+              и Bad Luck Protection на Java.", "Гарантированные награды боссов и party/solo
+              сценарии.", "REST API и фоновые задачи оптимизации."]}, "content": {"sections":
+              [{"id": "roll-schema", "title": "Roll Tables Schema", "body": "Приведена
+              SQL-схема таблицы `loot_rolls` с полями для контекста партии, результатов
+              бросков, статусов и таймеров.\nИндексы покрывают дропы, партии и истечения,
+              что поддерживает своевременную очистку и высокую производительность.\n",
+              "mechanics_links": ["implementation/backend/loot-system/part1-loot-generation.yaml"],
+              "assets": []}, {"id": "smart-loot", "title": "Smart Loot Algorithm",
+              "body": "Java-сервис `SmartLootService` анализирует класс и специализацию
+              персонажа, повышая релевантность предметов.\nАлгоритм позволяет добавлять
+              дополнительные экземпляры, изменять количество и подстраивать набор
+              лута под\nпотребности класса.\n", "mechanics_links": ["mechanics/gameplay/classes/class-archetypes.yaml"],
+              "assets": []}, {"id": "boss-loot", "title": "Guaranteed Boss Loot",
+              "body": "Метод `createBossLoot` обеспечивает гарантированные награды
+              для всех участников партии и создаёт общий лут с\nroll-системой. Поддерживаются
+              solo и party сценарии, публикация достижений и журналирование.\n", "mechanics_links":
+              ["mechanics/world/dungeons/dungeon-bosses-catalog.yaml"], "assets":
+              []}, {"id": "duplicate-protection", "title": "Anti-Duplicate System",
+              "body": "`LootDuplicateChecker` проверяет наличие легендарных предметов
+              и активирует Bad Luck Protection, гарантируя\nлегендарный дроп раз в
+              7 дней. Механизм анализирует инвентарь и банк персонажа.\n", "mechanics_links":
+              ["implementation/backend/loot-system/part1-loot-generation.yaml"], "assets":
+              []}, {"id": "api", "title": "API Endpoints", "body": "REST-контуры охватывают
+              управление дропами (`GET /loot/drops/nearby`, `POST /loot/pickup`, `GET
+              /loot/history`),\nработу с roll''ами (`POST /loot/rolls/{rollId}/submit`,
+              `GET /loot/rolls/active`) и настройки Auto-Loot.\n", "mechanics_links":
+              ["implementation/backend/loot-system/part2-advanced-loot.yaml"], "assets":
+              []}, {"id": "performance", "title": "Оптимизация", "body": "Периодический
+              job очищает просроченные дропы, а кеширование таблиц лута снижает нагрузку.
+              Эти меры поддерживают\nстабильную работу сервиса и быстрые ответы API.\n",
+              "mechanics_links": ["implementation/backend/loot-system/part2-advanced-loot.yaml"],
+              "assets": []}]}, "appendix": {"glossary": [], "references": [], "decisions":
+              []}, "implementation": {"github_issue": 136, "needs_task": false, "queue_reference":
+              ["shared/trackers/queues/concept/queued.yaml"], "blockers": []}, "history":
+              [{"version": "1.0.1", "date": "2025-11-13", "author": "backend_team",
+              "changes": "Конвертация \"Loot System — Part 2\" из MD в YAML."}], "validation":
+              {"checksum": "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "implementation-backend-loot-system-part2", "title": "Loot
+              System — Part 2: Advanced Loot", "document_type": "implementation",
+              "category": "backend", "status": "approved", "version": "1.0.1", "last_updated":
+              "2025-11-13T00:00:00+00:00", "concept_approved": true, "concept_reviewed_at":
+              "2025-11-07T02:19:00+00:00", "owners": [{"role": "backend_lead", "contact":
+              "backend@necp.game"}], "tags": ["loot-system", "backend", "java"], "topics":
+              ["loot-rolls", "smart-loot", "boss-rewards"], "related_systems": ["loot-service",
+              "inventory-service", "party-service"], "related_documents": [{"id":
+              "implementation-backend-loot-system-part1", "relation": "precedes"},
+              {"id": "implementation-backend-inventory-system", "relation": "references"}],
+              "source": "shared/docs/knowledge/implementation/backend/loot-system/part2-advanced-loot.md",
+              "visibility": "internal", "audience": ["backend", "gameplay", "systems"],
+              "risk_level": "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\backend\loot-system\part2-advanced-loot.yaml

@@ -1,0 +1,178 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-cosmetic-data-flows-6629e373
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '5037661772602846'
+        - column:
+            name: doc_id
+            value: cosmetic-data-flows
+        - column:
+            name: title
+            value: Архитектура системы косметики - Потоки данных и синхронизация
+        - column:
+            name: document_type
+            value: architecture
+        - column:
+            name: category
+            value: systems
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 1.1.0
+        - column:
+            name: last_updated
+            value: 2025-11-30 20:50:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: null
+        - column:
+            name: owners
+            value: '[]'
+        - column:
+            name: tags
+            value: []
+        - column:
+            name: topics
+            value: []
+        - column:
+            name: related_systems
+            value: []
+        - column:
+            name: related_documents
+            value: '[{"id": "cosmetic-core", "relation": "extends"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: ''
+        - column:
+            name: audience
+            value: []
+        - column:
+            name: risk_level
+            value: ''
+        - column:
+            name: content
+            value: '{"metadata": {"id": "cosmetic-data-flows", "title": "Архитектура
+              системы косметики - Потоки данных и синхронизация", "document_type":
+              "architecture", "category": "systems", "status": "draft", "version":
+              "1.1.0", "last_updated": "2025-11-30T20:50:00+00:00", "github_issue":
+              315, "related_documents": [{"id": "cosmetic-core", "relation": "extends"}]},
+              "data_flows": {"purchase_flow": "1. Игрок запрашивает покупку косметики\n2.
+              Cosmetic Purchase Manager проверяет владение\n3. Cosmetic Purchase Manager
+              проверяет доступность\n4. Economy Service проверяет баланс\n5. Economy
+              Service списывает валюту\n6. Cosmetic Ownership Manager выдает владение\n7.
+              Cosmetic Service публикует событие cosmetic.purchased\n8. Realtime Gateway
+              отправляет обновление клиенту\n", "equip_flow": "1. Игрок запрашивает
+              экипировку косметики\n2. Cosmetic Equip Manager проверяет владение\n3.
+              Cosmetic Equip Manager проверяет слот\n4. Cosmetic Equip Manager снимает
+              текущую косметику (если есть)\n5. Cosmetic Equip Manager применяет косметику\n6.
+              Cosmetic Service публикует событие cosmetic.equipped\n7. Realtime Gateway
+              отправляет обновление клиенту\n", "shop_rotation_flow": "1. Триггер
+              ротации магазина (ежедневно/еженедельно)\n2. Cosmetic Shop Manager выбирает
+              предметы для ротации\n3. Cosmetic Shop Manager балансирует редкости\n4.
+              Cosmetic Shop Manager проверяет эксклюзивность\n5. Cosmetic Shop Manager
+              сохраняет ротацию в БД\n6. Cosmetic Service публикует событие cosmetic.shop-rotated\n7.
+              Notification Service отправляет уведомления игрокам\n8. Realtime Gateway
+              отправляет обновление клиентам\n"}, "data_consistency": {"strategy":
+              "Strong Consistency (ACID транзакции) для критичных операций (покупка,
+              экипировка)", "mechanisms": ["ACID транзакции для покупки косметики,
+              экипировки и ротации магазина", "Оптимистичные блокировки (versioning)
+              для предотвращения конфликтов при обновлении экипировки", "Валидация
+              перед покупкой косметики и экипировкой", "Синхронизация с другими сервисами
+              через Event Bus", "Outbox Pattern для гарантированной доставки событий",
+              "Saga Pattern для распределенных операций (покупка косметики, экипировка,
+              ротация магазина)"]}, "data_synchronization": {"event_sourcing": "Все
+              изменения состояния косметики (покупка, экипировка, снятие, ротация
+              магазина,\nразблокировка редкости) записываются как события в Event
+              Store.\nЭто обеспечивает полный аудит, возможность восстановления состояния
+              и \"time travel\" для отладки.\nПримеры событий: CosmeticPurchasedEvent,
+              CosmeticEquippedEvent, CosmeticUnequippedEvent, ShopRotatedEvent, RarityUnlockedEvent.\n",
+              "cqrs_pattern": "Разделение команд (покупка косметики, экипировка, ротация
+              магазина) и запросов\n(получение каталога, получение списка косметики,
+              получение экипированной косметики) для оптимизации производительности\nи
+              масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых
+              запросов.\n", "saga_pattern": "Для распределенных транзакций, таких
+              как покупка косметики (проверка баланса, списание валюты,\nвыдача владения,
+              уведомление игрока) или экипировка косметики (проверка владения, снятие
+              текущей,\nприменение новой, обновление статистики, уведомление игрока),
+              используется Saga Pattern\nдля обеспечения атомарности операций между
+              Cosmetic Service, Economy Service, Character Service и Notification
+              Service.\n", "outbox_pattern": "Для гарантированной доставки событий
+              в Event Bus используется Outbox Pattern,\nкоторый записывает события
+              в транзакционную таблицу перед публикацией.\n"}, "tickrate_specification":
+              {"catalog_operations": {"tickrate": "Event-based (on-demand)", "network_load":
+              "- Получение каталога: event-based, ~0.01-0.05 requests/sec на игрока\n-
+              Получение информации о косметике: event-based, ~0.01-0.02 requests/sec
+              на игрока\n- Общий трафик: ~0.1-0.3 KB/sec на игрока для операций каталога\n",
+              "latency_requirements": "< 30-100ms для получения каталога, < 20-50ms
+              для получения информации", "sync_strategy": "Eventual Consistency для
+              каталога (кэширование в Redis)"}, "shop_operations": {"tickrate": "Event-based
+              (on-demand) + cron-triggered для ротации (ежедневно/еженедельно)", "network_load":
+              "- Получение магазина: event-based, ~0.01-0.05 requests/sec на игрока\n-
+              Получение информации о ротации: event-based, ~0.001-0.01 requests/sec
+              на игрока\n- Ротация магазина: cron-triggered, ~0.001-0.01 events/sec\n-
+              Общий трафик: ~0.1-0.3 KB/sec на игрока для операций магазина\n", "latency_requirements":
+              "< 30-100ms для получения магазина, < 50-200ms для ротации", "sync_strategy":
+              "Strong Consistency (ACID транзакции) для ротации, Eventual Consistency
+              для получения магазина"}, "purchase_operations": {"tickrate": "Event-based
+              (on-demand)", "network_load": "- Покупка косметики: event-based, ~0.001-0.01
+              events/sec на игрока\n- Проверка владения: event-based, ~0.01-0.05 requests/sec
+              на игрока\n- Общий трафик: ~0.2-0.5 KB/sec на игрока для операций покупки\n",
+              "latency_requirements": "< 200-300ms для покупки косметики, < 30-100ms
+              для проверки владения", "sync_strategy": "Strong Consistency (ACID транзакции)
+              для покупки косметики"}, "equip_operations": {"tickrate": "Event-based
+              (on-demand)", "network_load": "- Экипировка косметики: event-based,
+              ~0.01-0.05 events/sec на игрока\n- Снятие косметики: event-based, ~0.01-0.05
+              events/sec на игрока\n- Получение экипированной косметики: event-based,
+              ~0.01-0.05 requests/sec на игрока\n- Общий трафик: ~0.2-0.5 KB/sec на
+              игрока для операций экипировки\n", "latency_requirements": "< 100-200ms
+              для экипировки/снятия косметики, < 30-100ms для получения экипированной",
+              "sync_strategy": "Strong Consistency (ACID транзакции) для экипировки
+              косметики"}, "preview_operations": {"tickrate": "Event-based (on-demand)",
+              "network_load": "- Предпросмотр косметики: event-based, ~0.01-0.05 requests/sec
+              на игрока\n- 3D предпросмотр: event-based, ~0.01-0.02 requests/sec на
+              игрока\n- Общий трафик: ~0.2-0.5 KB/sec на игрока для операций предпросмотра\n",
+              "latency_requirements": "< 100-200ms для предпросмотра, < 200-300ms
+              для 3D предпросмотра", "sync_strategy": "Eventual Consistency для предпросмотра
+              (кэширование)"}, "rarity_operations": {"tickrate": "Event-based (on-demand)",
+              "network_load": "- Получение списка редкостей: event-based, ~0.001-0.01
+              requests/sec на игрока\n- Разблокировка редкости: event-based, ~0.001-0.01
+              events/sec на игрока\n- Общий трафик: ~0.1-0.3 KB/sec на игрока для
+              операций редкостей\n", "latency_requirements": "< 30-100ms для получения
+              списка, < 50-150ms для разблокировки", "sync_strategy": "Strong Consistency
+              (ACID транзакции) для разблокировки редкости"}, "stats_operations":
+              {"tickrate": "Event-based (on-demand при изменении) + 1-5 Hz для обновления
+              статистики", "network_load": "- Получение статистики: event-based, ~0.01-0.02
+              requests/sec на игрока\n- Обновление статистики: 1-5 Hz, ~0.01-0.05
+              events/sec на игрока\n- Общий трафик: ~0.1-0.3 KB/sec на игрока для
+              операций статистики\n", "latency_requirements": "< 30-100ms для получения
+              статистики, < 50-100ms для обновления", "sync_strategy": "Eventual Consistency
+              для статистики (кэширование в Redis)"}, "event_handling": {"tickrate":
+              "Event-based (on-demand)", "network_load": "- Публикация событий косметики:
+              event-based, ~0.1-0.5 events/sec\n- Подписка на события: event-based,
+              ~0.05-0.2 events/sec\n- Общий трафик: ~0.2-0.7 KB/sec для событий\n",
+              "latency_requirements": "< 100-300ms для публикации событий", "sync_strategy":
+              "Eventual Consistency для событий (через Event Bus)"}}}'
+        - column:
+            name: metadata
+            value: '{"id": "cosmetic-data-flows", "title": "Архитектура системы косметики
+              - Потоки данных и синхронизация", "document_type": "architecture", "category":
+              "systems", "status": "draft", "version": "1.1.0", "last_updated": "2025-11-30T20:50:00+00:00",
+              "github_issue": 315, "related_documents": [{"id": "cosmetic-core", "relation":
+              "extends"}]}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\architecture\cosmetic-data-flows.yaml

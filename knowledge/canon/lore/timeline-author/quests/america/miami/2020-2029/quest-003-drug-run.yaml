@@ -1,184 +1,121 @@
-# Issue: #1105
+# Issue: #207
 metadata:
-  id: canon-quest-miami-drug-run-2020-2029
-  title: 'Майами: наркоперевозка'
+  id: canon-quest-miami-drug-run
+  title: 'Майами — Наркоперевозка'
   document_type: canon
-  category: quests
-  status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  category: quest
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-11-06T13:05:00Z
   concept_approved: true
-  concept_reviewed_at: ''
+  concept_reviewed_at: 2025-11-06T13:05:00Z
   owners:
-    - role: concept_director
-      contact: concept@necp.game
+    - role: narrative_team
+      contact: narrative@necp.game
   tags:
     - miami
-    - crime
-    - quest
-  topics:
     - smuggling
-    - choices
-    - quests
+    - crime
+  topics:
+    - regional-content
+    - organized-crime
   related_systems:
-    - narrative-service
-    - gameplay-service
-    - quest-service
-    - character-service
-    - economy-service
-    - security-service
-    - infiltration-service
+    - quest-system
+    - vehicle-system
+    - morality-system
   related_documents:
-    - id: canon-lore-regions-america-2020-2093
-      relation: complements
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/miami/2020-2029/quest-003-drug-run.md
-  visibility: restricted
+    - id: canon-detailed-events-2020-2030
+      relation: references
+    - id: github-issue-348
+      title: GitHub Issue #348
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/348
+      relation: migrated_to
+      migrated_at: 2025-11-22T20:30:00Z
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/miami/2020-2029/quest-003-drug-run.md
+  visibility: internal
   audience:
-    - concept
+    - lore
     - narrative
-    - live-ops
+    - quest-design
   risk_level: high
 review:
   chain:
-    - role: concept_director
+    - role: narrative_lead
       reviewer: ''
       reviewed_at: ''
       status: pending
   next_actions: [ ]
 summary:
-  problem: Криминальная линия Майами требовала высокорискового квеста про морской контрабандный маршрут.
-  goal: Дать игроку выбор между лояльностью картелю, сотрудничеством с DEA или личной наживой.
-  essence: Команда выполняет опасный рейс на скоростной лодке, решая судьбу груза.
+  problem: "Криминальный квест про морскую контрабанду Майами находился в Markdown и не был привязан к системам."
+  goal: "Перевести сцену контрабандного рейса в YAML с ветками выбора и интеграцией транспортных механик."
+  essence: "Игрок принимает заказ картеля, прорывается на скоростном катере к побережью Майами и решает судьбу груза между картелем и DEA."
   key_points:
-    - Отсылка к истории «Cocaine Cowboys» и культуре 1980-х.
-    - Адреналиновая гонка от береговой охраны в ночном океане.
-    - Моральный выбор формирует репутацию и последствия.
-quest_definition:
-  quest_type: side
-  level_min: 7
-  level_max: null
-  requirements:
-    required_quests: [ ]
-    required_flags: [ ]
-    required_reputation: { }
-    required_items: [ ]
-  objectives:
-    - id: negotiate_with_cartel
-      text: "Вести переговоры с картелем о транспортировке груза"
-      type: interact
-      target: cartel_contact
-      count: 1
-      optional: false
-    - id: prepare_speedboat
-      text: "Подготовить скоростную лодку к рейсу"
-      type: interact
-      target: speedboat_preparation
-      count: 1
-      optional: false
-    - id: race_to_miami
-      text: "Провести груз через Багамы в Майами, избегая береговой охраны"
-      type: interact
-      target: drug_run_race
-      count: 1
-      optional: false
-    - id: make_moral_choice
-      text: "Принять решение о судьбе груза и отношения к заказчикам"
-      type: choice
-      target: moral_choice_point
-      count: 1
-      optional: false
-  rewards:
-    xp: 1500
-    currency: 2000
-    attributes:
-      stealth: 10
-      courage: 10
-    achievements:
-      - id: cocaine_cowboys
-        name: "Cocaine Cowboys"
-    reputation:
-      cartels: 10
-      law_enforcement: -5
-    items: [ ]
-  branches:
-    - condition: "Передать груз картелю"
-      outcome: "Получить полное вознаграждение, увеличение репутации с картелями"
-      next_quests: [ ]
-    - condition: "Предать картель"
-      outcome: "Уменьшенное вознаграждение, враждебность картелей, повышение репутации с властями"
-      next_quests: [ ]
+    - Квест-id MIAMI-2029-003, основной криминальный сценарий Майами.
+    - Три исхода: доставка картелю, передача DEA или присвоение груза.
+    - Награды влияют на репутацию и розыск у фракций.
 content:
   sections:
-    - id: overview
-      title: Обзор квеста
+    - id: quest_profile
+      title: 'Параметры квеста'
       body: |
-        Картель предлагает героям провести груз через Багамы в Майами. Задача включает переговоры, подготовку
-        скоростной лодки, гонку и выбор отношения к заказчикам.
-      mechanics_links:
-        - mechanics/quests/quest-system.yaml
-      assets: [ ]
-    - id: stages
-      title: Последовательность этапов
-      body: |
-        1. Получить контракт и инструкции от картеля.
-        2. Встретиться с контактами в Багамах и загрузить контейнеры.
-        3. Пройти океанский участок, уклоняясь от Coast Guard.
-        4. Достигнуть Майами и выбрать финальную стратегию.
-        5. Разрешить последствия выбора (награждение, розыск, защита).
+        Тип: main, сложность: extreme, формат: группа 2-4 игроков, длительность: 4+ часов.
+        Награды по веткам: 
+          • Доставка — 15,000 XP, 500,000 едди, репутация картеля +20.
+          • Передача DEA — 10,000 XP, 200,000 едди, защита DEA.
+          • Присвоение — 5,000 XP, 1,000,000 едди, розыск картеля.
       mechanics_links: [ ]
       assets: [ ]
-    - id: choices
-      title: Ключевые выборы
+    - id: stages
+      title: 'Этапы'
       body: |
-        - Доставить груз картелю: высокий доход и репутация, но риск ареста.
-        - Сдать груз DEA: умеренная награда, защита от преследования.
-        - Украсть груз: максимум денег, но вечная вражда картеля.
+        1. Встретиться с представителем картеля и подписать контракт на перевозку.
+        2. Провести загрузку контейнеров на скоростной катер на Багамах.
+        3. Выполнить ночной переход Багамы → Майами, обходя патрули Coast Guard.
+        4. Уклониться от вертолётов и катеров береговой охраны с использованием дымовых завес и манёвров.
+        5. Доставить груз на тайный причал или выбрать альтернативный исход.
+      mechanics_links: [ ]
+      assets: [ ]
+    - id: branches
+      title: 'Варианты развязки'
+      body: |
+        • Выполнить заказ картеля и получить доверие криминальной сети.
+        • Предать картель DEA, активировав защиту свидетеля и денежную награду.
+        • Оставить груз себе, что запускает цепочку охоты картеля.
       mechanics_links: [ ]
       assets: [ ]
     - id: regional_context
-      title: Региональные детали
+      title: 'Региональный контекст'
       body: |
-        - Майами 1980-х известен наркотрафиком и быстрыми лодками.
-        - Coast Guard патрулирует маршруты из Карибского бассейна.
-        - Квест использует атмосферу фильмов «Scarface» и хроник «Miami Drug War».
+        Майами десятилетиями служит воротами наркотрафика; скоростные катера и вертолёты Coast Guard — часть городской легенды.
+        Отсылки к "Cocaine Cowboys" и кинематографу 1980-х поддерживают атмосферу.
       mechanics_links: [ ]
       assets: [ ]
-    - id: rewards
-      title: Награды и эффекты
+    - id: systems_hooks
+      title: 'Связи и механики'
       body: |
-        - Финальные награды зависят от выбора: от 5 000 до 15 000 XP, до 1 000 000 едди.
-        - Репутация с картелями, DEA или криминальный розыск.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: mechanics
-      title: Задействованные механики
-      body: |
-        - Морские гонки и избегание преследования.
-        - Интерактивные переговоры и принятие решений.
-        - Сетевой кооператив (до четырёх игроков).
-      mechanics_links:
-        - mechanics/social/player-orders-creation.yaml
-      assets: [ ]
-    - id: connections
-      title: Связи и продолжения
-      body: |
-        Квест открывает цепочку криминальных историй Майами, миссии картелей и ответных операций DEA.
+        Квест задействует системы морского транспорта, скрытности и моральных выборов.
+        Ветви открывают дополнительные цепочки: работа на картель, сотрудничество с DEA или бегство от обоих.
       mechanics_links: [ ]
       assets: [ ]
 appendix:
   glossary: [ ]
-  references: [ ]
+  references:
+    - title: Cocaine Cowboys
+      link: https://en.wikipedia.org/wiki/Cocaine_Cowboys
+    - title: Coast Guard Fast Response
+      link: https://www.uscg.mil/
   decisions: [ ]
 implementation:
-  github_issue: 1105
+  github_issue: 348
   needs_task: false
-  queue_reference: [ ]
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
   blockers: [ ]
 history:
-  - version: '2.0.0'
-    date: 2025-11-12
-    author: concept_team
-    changes: 'Создан YAML-квест «Наркоперевозка» с выбором картель/DEA/личная выгода.'
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: narrative_team
+    changes: 'Конвертирован квест морской контрабанды Майами в YAML.'
 validation:
   checksum: ''
   schema_version: '1.0'

@@ -1,38 +1,36 @@
+# Issue: #1098
 metadata:
-  id: canon-quest-montreal-2020-2029-winter-cold
+  id: canon-quest-montreal-winter-cold
   title: 'Монреаль 2020-2029 — Зимний холод'
   document_type: canon
-  category: timeline-quest
+  category: quest
   status: draft
   version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  last_updated: 2025-12-06T11:20:00Z
   concept_approved: true
   concept_reviewed_at: ''
   owners:
-    - role: concept_director
-      contact: concept@necp.game
+    - role: narrative_lead
+      contact: narrative@necp.game
   tags:
     - montreal
-    - winter
+    - climate
     - survival
   topics:
-    - climate
-    - resilience
+    - environment
+    - lifestyle
   related_systems:
     - narrative-service
+    - survival-system
   related_documents:
-    - id: timeline-author-quests-index
+    - id: canon-lore-timeline-author-index
       relation: references
-    - id: github-issue-1098
-      title: GitHub Issue #1098
-      link: https://github.com/gc-lover/necpgame-monorepo/issues/1098
-      relation: migrated_to
-      migrated_at: 2025-11-23T02:45:00Z
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/montreal/2020-2029/quest-008-winter-cold.md
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/montreal/2020-2029/quest-008-winter-cold.md
   visibility: internal
   audience:
-    - concept
     - narrative
+    - gameplay
+    - survival
   risk_level: medium
 review:
   chain:
@@ -42,16 +40,18 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: Климатическая линия Монреаля не раскрывала экстремальные условия зимы и влияние холода на жителей.
-  goal: Смоделировать опыт пребывания при температурах до -40°C и зафиксировать механики выживания.
-  essence: Игрок сталкивается с морозом, наблюдает эффект обморожения и изучает, как горожане используют RÉSO для защиты.
+  problem: Сценарий переживания монреальской зимы был в Markdown и не интегрировался в пайплайны знаний.
+  goal: Зафиксировать зимние риски и механики выживания в YAML, подчеркнув экстремальные температуры и роль RÉSO.
+  essence: |
+    Игрок выходит на улицы Монреаля при -30 °C, сталкивается с обжигающим ветром, снегом по пояс, возвращается в подземный RÉSO и
+    адаптирует экипировку и стратегии выживания.
   key_points:
-    - Температуры зимой опускаются до -30°C, при ветре ощущаются как -40°C.
-    - Снегопады парализуют город и заставляют жителей уходить под землю.
-    - Квест знакомит с физиологическими последствиями холода и тактиками выживания.
+    - Подробно описаны этапы выхода наружу, воздействие холода и использование подземных маршрутов.
+    - Уточнены температуры до -40 °C с ветром, замерзание дыхания и необходимость быстрой эвакуации.
+    - Награды усиливают выносливость, а дебафф отражает усталость при длительном воздействии холода.
 quest_definition:
   quest_type: side
-  level_min: 5
+  level_min: 2
   level_max: null
   requirements:
     required_quests: [ ]
@@ -59,103 +59,76 @@ quest_definition:
     required_reputation: { }
     required_items: [ ]
   objectives:
-    - id: equip_for_cold
-      text: "Экипироваться для прогулки при температуре -30°C"
+    - id: check_equipment_exit
+      text: "Проверить экипировку и выйти на улицу при -30 °C"
       type: interact
-      target: winter_equipment
+      target: winter_equipment_check
       count: 1
       optional: false
-    - id: check_physiological_indicators
-      text: "Проверить физиологические показатели: дыхание, промерзание ресниц, онемение конечностей"
-      type: investigate
-      target: cold_physiological_effects
-      count: 3
-      optional: false
-    - id: survive_snowstorm
-      text: "Переждать снежную бурю с нулевой видимостью и найти ближайший вход в RÉSO"
+    - id: survive_wind_effect
+      text: "Пережить воздействие ветра, образующего эффект -40 °C, и наблюдать мгновенное обмерзание"
       type: interact
-      target: snowstorm_survival
+      target: wind_chill_experience
       count: 1
       optional: false
-    - id: organize_underground_movement
-      text: "Организовать перемещение под землёй и связаться с жителями для обмена опытом"
+    - id: find_shelter_snowstorm
+      text: "Попасть в снежную бурю с нулевой видимостью и найти укрытие"
       type: interact
-      target: reso_winter_movement
-      count: 5
+      target: snowstorm_shelter
+      count: 1
       optional: false
-    - id: document_survival_recommendations
-      text: "Зафиксировать рекомендации по выживанию для будущих миссий"
+    - id: descend_reso_recover
+      text: "Спуститься в RÉSO и восстановить ресурсы"
       type: interact
-      target: survival_recommendations
+      target: reso_recovery
+      count: 1
+      optional: false
+    - id: analyze_experience_plan
+      text: "Проанализировать полученный опыт и подготовить план на будущее"
+      type: interact
+      target: winter_survival_planning
       count: 1
       optional: false
   rewards:
     experience: 2500
     money: 0
-    items:
-      - item_id: achievement_canadian_winter_survivor
-        quantity: 1
+    items: [ ]
     reputation: { }
     unlocks:
-      - survival_quests
-      - winter_access
-  branches:
-    - branch_id: winter_survival_expert
-      description: "Стать экспертом выживания в канадской зиме"
-      consequences:
-        skills:
-          survival: +35
-          endurance: +30
-        reputation:
-          Montreal_Residents: +25
-        unlocks:
-          - exclusive_survival_access
+      achievements:
+        - "Выживший в канадской зиме"
+      flags: [ ]
+  branches: [ ]
 content:
   sections:
-    - id: overview
+    - id: quest_overview
       title: Описание
       body: |
-        Квест бросает игрока в середину монреальской зимы. Нужно подготовиться к выходу на улицу, отследить воздействие
-        холода на организм и использовать городскую инфраструктуру для сохранения тепла.
+        Квест демонстрирует монреальскую зиму как испытание: экстремальные температуры, снежные бури и зависимость от подземной
+        инфраструктуры.
       mechanics_links: [ ]
       assets: [ ]
-    - id: stages
-      title: Этапы
+    - id: quest_flow
+      title: Этапы выживания
       body: |
-        1. Экипироваться для прогулки при температуре -30°C.
-        2. Проверить физиологические показатели: дыхание, промерзание ресниц, онемение конечностей.
-        3. Переждать снежную бурю с нулевой видимостью, найти ближайший вход в RÉSO.
-        4. Организовать перемещение под землёй и связаться с жителями для обмена опытом.
-        5. Зафиксировать рекомендации по выживанию для будущих миссий.
+        1. Проверить экипировку и выйти на улицу при -30 °C.
+        2. Пережить воздействие ветра, образующего эффект -40 °C, и наблюдать мгновенное обмерзание.
+        3. Попасть в снежную бурю с нулевой видимостью и найти укрытие.
+        4. Спуститься в RÉSO и восстановить ресурсы.
+        5. Проанализировать полученный опыт и подготовить план на будущее.
       mechanics_links: [ ]
       assets: [ ]
     - id: regional_details
       title: Региональные детали
       body: |
-        Монреаль регулярно переживает температуры -30°C и ниже. Сильный ветер создаёт эффект -40°C. Снегопады достигают
-        уровня по пояс. RÉSO служит основным убежищем и транспортной артерией зимой.
+        Уточнены средние температуры января, влияние ветра, объём осадков и роль подземной сети RÉSO как спасения от холода.
       mechanics_links: [ ]
       assets: [ ]
     - id: rewards
-      title: Награды
+      title: Награды и эффекты
       body: |
-        - Опыт: 2 500 XP
-        - Атрибут «Выносливость»: +25
-        - Дебафф: -30% Stamina при воздействии холода
-        - Ачивка: «Выживший в канадской зиме»
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: mechanics
-      title: Механики
-      body: |
-        Квест включает климатические и физиологические механики, влияющие на расход выносливости и необходимость поиска
-        укрытий в RÉSO.
-      mechanics_links: [ ]
-      assets: [ ]
-    - id: connections
-      title: Связи
-      body: |
-        Связан с климатической линией Монреаля, инфраструктурой RÉSO и сюжетами об адаптации к экстремальной погоде.
+        Квест выдаёт 2 500 XP, не требует затрат, добавляет +25 к выносливости и накладывает временный дебафф -30% Stamina при
+        повторном воздействии холода. Игрок получает достижение «Выживший в канадской зиме».
       mechanics_links: [ ]
       assets: [ ]
 appendix:
@@ -165,17 +138,14 @@ appendix:
 implementation:
   github_issue: 1098
   needs_task: false
-  queue_reference: [ ]
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml#canon-quest-montreal-winter-cold
   blockers: [ ]
 history:
   - version: '2.0.0'
-    date: 2025-11-29
-    author: content_writer
-    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики климатического квеста, выживания и физиологических эффектов холода.'
-  - version: '1.0.0'
-    date: 2025-11-12
-    author: concept_team
-    changes: Конвертирован квест «Зимний холод» в формат знаний.
+    date: 2025-11-11
+    author: narrative_auto_converter
+    changes: Конвертация квеста «Зимний холод» в структуру знаний.
 validation:
   checksum: ''
   schema_version: '1.0'

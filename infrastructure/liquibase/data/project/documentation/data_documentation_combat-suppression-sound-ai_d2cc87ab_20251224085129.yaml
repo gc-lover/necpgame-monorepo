@@ -1,0 +1,161 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-combat-suppression-sound-ai-d2cc87ab
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-100737656795171'
+        - column:
+            name: doc_id
+            value: combat-suppression-sound-ai
+        - column:
+            name: title
+            value: 'Супрессия и звук: влияние на точность/скорость и AI'
+        - column:
+            name: document_type
+            value: mechanics
+        - column:
+            name: category
+            value: combat
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 0.1.0
+        - column:
+            name: last_updated
+            value: 2025-12-12 00:00:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: ''
+        - column:
+            name: owners
+            value: '[{"role": "game_balance", "contact": "balance@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - suppression
+            - audio
+            - ai
+            - accuracy
+        - column:
+            name: topics
+            value:
+            - combat_effects
+            - ai_behavior
+        - column:
+            name: related_systems
+            value:
+            - gameplay-service
+            - combat-service
+            - ai-service
+            - audio-service
+        - column:
+            name: related_documents
+            value: '[{"id": "combat-shooter-core", "relation": "interacts_with"},
+              {"id": "combat-ux-guidelines", "relation": "references"}, {"id": "combat-hacking-combat-integration",
+              "relation": "complements"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - combat
+            - gameplay
+            - analytics
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "combat-suppression-sound-ai", "title": "Супрессия
+              и звук: влияние на точность/скорость и AI", "document_type": "mechanics",
+              "category": "combat", "status": "draft", "version": "0.1.0", "last_updated":
+              "2025-12-12T00:00:00+00:00", "concept_approved": false, "concept_reviewed_at":
+              "", "owners": [{"role": "game_balance", "contact": "balance@necp.game"}],
+              "tags": ["suppression", "audio", "ai", "accuracy"], "topics": ["combat_effects",
+              "ai_behavior"], "related_systems": ["gameplay-service", "combat-service",
+              "ai-service", "audio-service"], "related_documents": [{"id": "combat-shooter-core",
+              "relation": "interacts_with"}, {"id": "combat-ux-guidelines", "relation":
+              "references"}, {"id": "combat-hacking-combat-integration", "relation":
+              "complements"}], "source": "", "visibility": "internal", "audience":
+              ["combat", "gameplay", "analytics"], "risk_level": "medium"}, "review":
+              {"chain": [{"role": "game_balance_lead", "reviewer": "", "reviewed_at":
+              "", "status": "pending"}], "next_actions": []}, "summary": {"problem":
+              "Требуются параметры супрессии, связка со звуком и реакцией AI.", "goal":
+              "Определить радиус/шкалу супрессии, штрафы, длительность, учёт звука
+              (окклюзия/направление) и поведение AI.", "essence": "Супрессия снижает
+              точность/скорость и заставляет AI сменить поведение (укрытие/фланг).
+              Звук выстрелов модифицирует радиус и вероятность реакции через окклюзию
+              и направление.", "key_points": ["Численные пороги супрессии, таймеры
+              decay.", "Модификаторы от громкости/окклюзии.", {"AI-фазы": "укрытие
+              → фланг/контратака."}]}, "content": {"sections": [{"id": "suppression_model",
+              "title": "Модель супрессии", "body": "Супрессия на цель начисляется
+              при близких пулях/взрывах. Метрика: suppression_points.\nРадиус базовый:
+              8 м (пули), 12 м (взрывы). Громкие калибры/авто-огонь дают +20% радиуса.\nОкклюзия:
+              твёрдые стены снижают очки на 60%, мягкие покрытия (-30%), открытое
+              пространство 0%.\nНачисление: 1.8 очка за пули <1.5 м, 0.9 очка за 1.5–3
+              м, 0.4 за 3–6 м; взрыв — 4 очка в радиусе 5 м, 2 очка в 5–10 м.\nDecay:
+              -1 очко/с (в бою), -2 очка/с (вне боя) после 1 с без новых событий.\n"},
+              {"id": "suppression_effects", "title": "Штрафы от супрессии", "body":
+              "Уровни (по suppression_points, кап 6):\n- Low (2–3): разброс +6%, скорость
+              перемещения -4%.\n- Mid (4–5): разброс +10%, скорость -7%, реген стамины
+              -10%.\n- High (6): разброс +14%, скорость -10%, реген стамины -15%,
+              шанс дрожания при ADS 20%.\nДлительность штрафов: сохраняются 2 с после
+              падения уровня ниже порога.\n"}, {"id": "audio_link", "title": "Звук,
+              окклюзия и направление", "body": "Звук выстрелов формирует зону обнаружения:
+              radius_audio = base_radius * loudness_mod.\nloudness_mod: пистолет 0.8,
+              штурмовая 1.0, ДШК/LMG 1.25, взрыв 1.5.\nНаправление: если цель смотрит
+              от источника >120°, suppression_points *1.1 (пугающий эффект).\nОкклюзия
+              аудио: стены -50% radius_audio, окна/решётки -25%.\n"}, {"id": "ai_behavior",
+              "title": "Реакция AI", "body": "При достижении Mid: AI ищет укрытие
+              в 1.5 с, снижает агрессию (burst size -20%).\nПри High: переключение
+              в режим фланга или дым/глушилки; push запрещён 4 с.\nВзрывная супрессия:
+              AI размазывается (рассредоточение) с вероятностью 60%.\nПосле decay
+              до Low: AI может контратаковать, если численность >=2 и есть фланговый
+              маршрут.\n"}, {"id": "cooldowns_limits", "title": "Ограничения и капы",
+              "body": "Кап suppression_points = 6. Обновление состояния не чаще 4
+              Гц для сетевой стабильности.\nPvP: штрафы к скорости не превышают -10%,
+              разброс не выше +14%.\nPvE: штрафы полные, но элитные AI получают -30%
+              входящей супрессии.\n"}, {"id": "telemetry", "title": "Телеметрия",
+              "body": "Логировать:\n- `suppression.events` (пули/взрывы), `suppression_points_peak`.\n-
+              `suppression.level_time` (low/mid/high), `movement_penalty_avg`.\n-
+              `ai.suppression_reactions` (cover, flank, disperse).\n- PvP: `suppression.pvp_slowdown`,
+              `ads_jitter_events`.\n"}]}, "appendix": {"glossary": [{"term": "suppression_points",
+              "definition": "Очки подавления, определяющие уровень штрафов."}], "formulas":
+              [{"name": "radius_audio", "expression": "radius_audio = base_radius
+              * loudness_mod * (1 - occlusion)", "notes": "occlusion 0..0.6 в зависимости
+              от материалов."}]}, "implementation": {"needs_task": false, "github_issue":
+              1766, "queue_reference": [], "blockers": []}, "history": [{"version":
+              "0.1.0", "date": "2025-12-12", "author": "game_balance_team", "changes":
+              "Определена модель супрессии, аудио-модификаторы и реакция AI."}], "validation":
+              {"checksum": "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "combat-suppression-sound-ai", "title": "Супрессия и звук:
+              влияние на точность/скорость и AI", "document_type": "mechanics", "category":
+              "combat", "status": "draft", "version": "0.1.0", "last_updated": "2025-12-12T00:00:00+00:00",
+              "concept_approved": false, "concept_reviewed_at": "", "owners": [{"role":
+              "game_balance", "contact": "balance@necp.game"}], "tags": ["suppression",
+              "audio", "ai", "accuracy"], "topics": ["combat_effects", "ai_behavior"],
+              "related_systems": ["gameplay-service", "combat-service", "ai-service",
+              "audio-service"], "related_documents": [{"id": "combat-shooter-core",
+              "relation": "interacts_with"}, {"id": "combat-ux-guidelines", "relation":
+              "references"}, {"id": "combat-hacking-combat-integration", "relation":
+              "complements"}], "source": "", "visibility": "internal", "audience":
+              ["combat", "gameplay", "analytics"], "risk_level": "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\mechanics\combat\combat-suppression-sound-ai.yaml

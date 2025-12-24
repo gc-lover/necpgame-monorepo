@@ -1,43 +1,34 @@
-# Issue: #1113
+# Issue: #51
 metadata:
-  id: canon-quest-mexico-city-zocalo-square-2020-2029
-  title: 'Мехико: площадь Сокало'
+  id: canon-quest-mexico-zocalo-square
+  title: 'Мехико — Площадь Сокало'
   document_type: canon
-  category: quests
+  category: quest
   status: draft
-  version: '2.0.0'
-  last_updated: 2025-11-29T00:00:00Z
+  version: '2.1.0'
+  last_updated: 2025-12-12T00:00:00Z
   concept_approved: true
-  concept_reviewed_at: ''
+  concept_reviewed_at: 2025-11-06T15:00:00Z
   owners:
     - role: concept_director
       contact: concept@necp.game
   tags:
     - mexico-city
     - heritage
-    - quest
+    - zocalo
   topics:
-    - culture
+    - cultural-tourism
     - history
-    - quests
   related_systems:
-    - narrative-service
-    - quest-service
-    - world-simulation
-    - culture-service
-    - tourism-service
-    - gameplay-service
-    - character-service
-    - economy-service
-  related_documents:
-    - id: canon-lore-regions-america-2020-2093
-      relation: references
-  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/mexico-city/2020-2029/quest-001-zocalo-square.md
+    - event-service
+    - reputation-system
+  related_documents: [ ]
+  source: shared/docs/knowledge/canon/lore/_03-lore/timeline-author/quests/america/mexico-city/2020-2029/quest-001-zocalo-square.md
   visibility: internal
   audience:
     - concept
     - narrative
-    - live-ops
+    - gameplay
   risk_level: low
 review:
   chain:
@@ -47,26 +38,16 @@ review:
       status: pending
   next_actions: [ ]
 summary:
-  problem: Историческая ветка Мехико не имела структурированного квеста о главной площади Зокало и её символах.
-  goal: Познакомить игрока с колониальным ядром города, ацтекским наследием и церемонией подъёма флага.
-  essence: Игрок посещает Zócalo, изучает окрестные памятники и наблюдает патриотический ритуал.
+  problem: 'Тур по центральной площади Мехико был в Markdown и не участвовал в проверке знаний.'
+  goal: 'Описать посещение Zócalo в YAML с историческими акцентами и церемонией флага.'
+  essence: 'Игрок посещает сердце Мехико, наблюдает поднятие гигантского флага и изучает наследие ацтеков и колониальной эпохи.'
   key_points:
-    - Площадь объединяет Национальный дворец, собор и руины Templo Mayor.
-    - Гигантский флаг формирует эмоциональный центр квеста.
-    - Квест подчёркивает непрерывность истории от ацтеков до современности.
-content:
-  sections:
-    - id: overview
-      title: Обзор квеста
-      body: |
-        Игрок прибывает на площадь Конституции (Zócalo), знакомится с историческими зданиями и церемониями, которые делают
-        её сердцем Мехико.
-      mechanics_links:
-        - mechanics/quests/quest-system.yaml
-      assets: [ ]
+    - 'Zócalo — вторая по величине площадь мира и символ мексиканской идентичности.'
+    - 'Квест подчёркивает соседство Templo Mayor, собора и Национального дворца.'
+    - 'Награда даёт культурный бонус и ачивку «Хозяин Сокало».'
 quest_definition:
   quest_type: side
-  level_min: 2
+  level_min: 1
   level_max: null
   requirements:
     required_quests: [ ]
@@ -74,117 +55,131 @@ quest_definition:
     required_reputation: { }
     required_items: [ ]
   objectives:
-    - id: examine_zocalo_flag
-      text: "Осмотреть площадь и гигантский флаг Мексики"
-      type: interact
-      target: zocalo_square_flag
+    - id: arrive_at_zocalo
+      text: "Прибыть на площадь Сокало и оценить масштаб пространства"
+      type: travel
+      target: zocalo_square
       count: 1
       optional: false
-    - id: visit_historic_buildings
-      text: "Посетить собор Metropolitana, Национальный дворец и смотровую платформу Templo Mayor"
-      type: explore
-      target: zocalo_historic_buildings
+    - id: observe_flag
+      text: "Рассмотреть гигантский мексиканский флаг в центре площади"
+      type: interact
+      target: mexican_flag
+      count: 1
+      optional: false
+    - id: visit_landmarks
+      text: "Посетить Собор Метрополитана, Национальный дворец и руины Templo Mayor"
+      type: travel
+      target: zocalo_landmarks
       count: 3
       optional: false
-    - id: attend_flag_ceremony
-      text: "Присутствовать на церемонии подъёма/спуска флага и взаимодействовать с почётным караулом"
+    - id: attend_ceremony
+      text: "Присутствовать на церемонии поднятия или спуска флага"
       type: interact
       target: flag_ceremony
       count: 1
-      optional: false
-    - id: collect_audio_guide
-      text: "Собрать аудиогид по истории ацтеков и колониального периода"
-      type: investigate
-      target: zocalo_audio_guide
-      count: 1
-      optional: false
-    - id: complete_cultural_journal
-      text: "Зафиксировать впечатления в журнале культуры города"
+      optional: true
+    - id: receive_materials
+      text: "Получить экскурсионные материалы о Теночтитлане и современной Мексике"
       type: interact
-      target: cultural_journal_entry
+      target: tourist_center
       count: 1
       optional: false
   rewards:
     experience: 800
     money: 0
-    items:
-      - item_id: achievement_zocalo_master
-        quantity: 1
-    reputation: { }
+    reputation:
+      mexico_city_culture: 15
+    items: [ ]
     unlocks:
-      - heritage_quests
-      - zocalo_access
-  branches:
-    - branch_id: heritage_enthusiast
-      description: "Стать энтузиастом исторического наследия Zócalo"
-      consequences:
-        skills:
-          culture: +20
-          history: +15
-        reputation:
-          Tourism_Industry: +20
-        unlocks:
-          - exclusive_heritage_access
-    - id: stages
-      title: Последовательность этапов
+      achievements:
+        - "Хозяин Сокало"
+      flags: [ ]
+  branches: [ ]
+content:
+  sections:
+    - id: overview
+      title: 'Обзор'
       body: |
-        1. Осмотреть площадь и гигантский флаг Мексики.
-        2. Посетить собор Metropolitana, Национальный дворец и смотровую платформу Templo Mayor.
-        3. Присутствовать на церемонии подъёма/спуска флага и взаимодействовать с почётным караулом.
-        4. Собрать аудиогид по истории ацтеков и колониального периода.
-        5. Зафиксировать впечатления в журнале культуры города.
-      mechanics_links: [ ]
+        Площадь Сокало — эпицентр истории Мехико, где встречаются ацтекское прошлое и современное государство.
+        Квест фокусируется на созерцании и изучении культурного контекста.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+        - mechanics/world/culture-tours.yaml
       assets: [ ]
-    - id: regional_context
-      title: Региональные детали
+    - id: flow
+      title: 'Ход события'
       body: |
-        - Zócalo — вторая по величине площадь мира, построенная на месте центра Теночтитлана.
-        - Огромный флаг размером 50×28 м меняется в ходе ежедневных церемоний.
-        - Под площадью сохранились остатки ацтекского храма Templo Mayor.
-      mechanics_links: [ ]
+        1. Прибыть на площадь и оценить масштаб пространства.
+        2. Рассмотреть гигантский мексиканский флаг в центре.
+        3. Посетить Собор Метрополитана, Национальный дворец и руины Templo Mayor.
+        4. Присутствовать на церемонии поднятия или спуска флага.
+        5. Получить экскурсионные материалы о Теночтитлане и современной Мексике.
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+        - mechanics/world/culture-tours.yaml
+      assets: [ ]
+    - id: regional_details
+      title: 'Региональные детали'
+      body: |
+        - Огромная площадь с шумом городской жизни.
+        - Флаг 50×28 м, развевающийся над собравшимися.
+        - Остатки ацтекских строений под стеклянными настилами.
+        - Уличные музыканты и продавцы сувениров.
+      mechanics_links:
+        - mechanics/world/culture-tours.yaml
       assets: [ ]
     - id: rewards
-      title: Награды и эффекты
+      title: 'Награды'
       body: |
-        - 800 XP.
-        - Финансовый баланс: 0.
-        - Культурный бонус +15.
-        - Достижение «Хозяин Сокало».
-      mechanics_links: [ ]
+        - 800 опыта.
+        - 0 €$ расходов.
+        - +15 культурного рейтинга в Мехико.
+        - Ачивка «Хозяин Сокало».
+      mechanics_links:
+        - mechanics/world/reputation-system.yaml
+        - mechanics/economy/rewards.yaml
       assets: [ ]
     - id: mechanics
-      title: Задействованные механики
+      title: 'Механики'
       body: |
-        - Туристические активности и исторические справки.
-        - Патриотические события с NPC и анимациями флага.
-        - Исследование многоуровневых культурных слоёв города.
+        - Туристический квест с историческими справками.
+        - Патриотические события с NPC.
+        - Возможность открыть дополнительный контент про ацтеков.
       mechanics_links:
-        - mechanics/social/player-orders-creation.yaml
+        - mechanics/quests/quest-system.yaml
+        - mechanics/world/culture-tours.yaml
       assets: [ ]
-    - id: connections
-      title: Связи и продолжения
+    - id: links
+      title: 'Связи'
       body: |
-        Квест открывает линии о колониальном Мехико, ацтекских руинах и современных протестных движениях на площади.
-      mechanics_links: [ ]
+        Связано с исторической линией Мехико и квестами о наследии ацтеков.
+      mechanics_links:
+        - mechanics/world/culture-tours.yaml
       assets: [ ]
 appendix:
   glossary: [ ]
   references: [ ]
   decisions: [ ]
 implementation:
-  github_issue: 1113
   needs_task: false
-  queue_reference: [ ]
+  github_issue: 51
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
   blockers: [ ]
 history:
+  - version: '2.1.0'
+    date: 2025-12-12
+    author: content_team
+    changes: "Добавлены ссылки на культурные и репутационные механики; обновлена дата."
   - version: '2.0.0'
-    date: 2025-11-29
+    date: 2025-12-06
     author: content_writer
-    changes: 'Добавлена полная структура quest_definition с objectives, rewards и branches. Детализирован контент согласно концепции. Добавлены механики исторического квеста, патриотических церемоний и культурного наследия.'
-  - version: '0.1.0'
-    date: 2025-11-12
-    author: concept_team
-    changes: 'Создан YAML-квест «Площадь Сокало» с историческим и патриотическим акцентами.'
+    changes: 'Добавлен quest_definition с полной структурой квеста согласно архитектуре системы квестов.'
+  - version: '1.0.0'
+    date: 2025-11-06
+    author: narrative_team
+    changes: 'Оформлен квест Zócalo Square в структуре знаний.'
 validation:
   checksum: ''
   schema_version: '1.0'

@@ -19,6 +19,21 @@ type AchievementRepository struct {
 	logger *zap.Logger
 }
 
+// Achievement represents an achievement entity
+// PERFORMANCE: Optimized struct alignment (large fields first)
+type Achievement struct {
+	ID          string    `json:"id" db:"id"`
+	Name        string    `json:"name" db:"name"`        // Large field first
+	Description string    `json:"description" db:"description"` // Large field second
+	IconURL     string    `json:"icon_url" db:"icon_url"`
+	Rarity      string    `json:"rarity" db:"rarity"`
+	Points      int32     `json:"points" db:"points"`      // int32 (4 bytes)
+	IsUnlocked  bool      `json:"is_unlocked" db:"is_unlocked"` // bool (1 byte)
+	UnlockedAt  *time.Time `json:"unlocked_at" db:"unlocked_at"`
+	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
+}
+
 // NewAchievementRepository creates a new repository instance
 // PERFORMANCE: Initializes connection pool
 func NewAchievementRepository(dbURL string) (*AchievementRepository, error) {
@@ -56,22 +71,25 @@ func NewAchievementRepository(dbURL string) (*AchievementRepository, error) {
 
 // GetAchievements retrieves achievements for a player
 // PERFORMANCE: Optimized query with proper indexing
-func (r *AchievementRepository) GetAchievements(ctx context.Context, playerID string) ([]*Achievement, error) {
+func (r *AchievementRepository) GetAchievements(ctx context.Context, playerID string, limit, offset int) ([]*Achievement, error) {
 	// PERFORMANCE: Context timeout check
 	if deadline, ok := ctx.Deadline(); ok && time.Until(deadline) < 100*time.Millisecond {
 		return nil, context.DeadlineExceeded
 	}
 
-	// PERFORMANCE: Optimized query with proper indexing hints
+	// PERFORMANCE: Optimized query with LIMIT/OFFSET for pagination
 	query := `
 		SELECT id, name, description, icon_url, rarity, points, is_unlocked, unlocked_at, created_at, updated_at
 		FROM gameplay.achievements
 		WHERE player_id = $1
-		ORDER BY created_at DESC`
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3`
 
-	rows, err := r.db.Query(ctx, query, playerID)
+	rows, err := r.db.Query(ctx, query, playerID, limit, offset)
 	if err != nil {
-		r.logger.Error("Failed to query achievements", zap.Error(err))
+		r.logger.Error("Failed to query achievements",
+			zap.String("player_id", playerID),
+			zap.Error(err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -98,12 +116,22 @@ func (r *AchievementRepository) GetAchievements(ctx context.Context, playerID st
 		achievements = append(achievements, achievement)
 	}
 
+	if err := rows.Err(); err != nil {
+		r.logger.Error("Error iterating over achievement rows", zap.Error(err))
+		return nil, err
+	}
+
 	return achievements, nil
 }
 
 // GetAchievement retrieves a specific achievement
 // PERFORMANCE: Single-row query with prepared statement
 func (r *AchievementRepository) GetAchievement(ctx context.Context, achievementID, playerID string) (*Achievement, error) {
+	// PERFORMANCE: Context timeout check
+	if deadline, ok := ctx.Deadline(); ok && time.Until(deadline) < 100*time.Millisecond {
+		return nil, context.DeadlineExceeded
+	}
+
 	achievement := &Achievement{}
 
 	// PERFORMANCE: Optimized single-row query
@@ -126,6 +154,12 @@ func (r *AchievementRepository) GetAchievement(ctx context.Context, achievementI
 	)
 
 	if err != nil {
+		if err == sql.ErrNoRows {
+			r.logger.Info("Achievement not found",
+				zap.String("achievement_id", achievementID),
+				zap.String("player_id", playerID))
+			return nil, err
+		}
 		r.logger.Error("Failed to get achievement",
 			zap.String("achievement_id", achievementID),
 			zap.String("player_id", playerID),
@@ -139,25 +173,67 @@ func (r *AchievementRepository) GetAchievement(ctx context.Context, achievementI
 // UnlockAchievement unlocks an achievement
 // PERFORMANCE: Uses prepared statement with transaction
 func (r *AchievementRepository) UnlockAchievement(ctx context.Context, playerID, achievementID string) error {
+	// PERFORMANCE: Context timeout check
+	if deadline, ok := ctx.Deadline(); ok && time.Until(deadline) < 100*time.Millisecond {
+		return context.DeadlineExceeded
+	}
+
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
+		r.logger.Error("Failed to begin transaction", zap.Error(err))
 		return err
 	}
 	defer tx.Rollback(ctx)
 
 	now := time.Now()
-	result, err := tx.Exec(ctx, "unlock_achievement", achievementID, playerID, now)
+
+	// Check if achievement is already unlocked
+	checkQuery := `
+		SELECT is_unlocked FROM gameplay.achievements
+		WHERE id = $1 AND player_id = $2`
+
+	var isUnlocked bool
+	err = tx.QueryRow(ctx, checkQuery, achievementID, playerID).Scan(&isUnlocked)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			r.logger.Warn("Achievement not found",
+				zap.String("achievement_id", achievementID),
+				zap.String("player_id", playerID))
+			return sql.ErrNoRows
+		}
+		r.logger.Error("Failed to check achievement status", zap.Error(err))
+		return err
+	}
+
+	if isUnlocked {
+		r.logger.Info("Achievement already unlocked",
+			zap.String("achievement_id", achievementID),
+			zap.String("player_id", playerID))
+		return nil // Already unlocked, not an error
+	}
+
+	// Unlock the achievement
+	updateQuery := `
+		UPDATE gameplay.achievements
+		SET is_unlocked = true, unlocked_at = $3, updated_at = $3
+		WHERE id = $1 AND player_id = $2`
+
+	result, err := tx.Exec(ctx, updateQuery, achievementID, playerID, now)
 	if err != nil {
 		r.logger.Error("Failed to unlock achievement", zap.Error(err))
 		return err
 	}
 
 	if rowsAffected := result.RowsAffected(); rowsAffected == 0 {
-		r.logger.Warn("Achievement already unlocked or not found",
+		r.logger.Warn("Achievement not found during unlock",
 			zap.String("achievement_id", achievementID),
 			zap.String("player_id", playerID))
 		return sql.ErrNoRows
 	}
+
+	r.logger.Info("Achievement unlocked successfully",
+		zap.String("achievement_id", achievementID),
+		zap.String("player_id", playerID))
 
 	return tx.Commit(ctx)
 }

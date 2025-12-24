@@ -1,0 +1,155 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-clan-war-system-c46625e4
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-646600650855604'
+        - column:
+            name: doc_id
+            value: backend-clan-war-system
+        - column:
+            name: title
+            value: Clan War System — Система клановых войн
+        - column:
+            name: document_type
+            value: implementation
+        - column:
+            name: category
+            value: backend
+        - column:
+            name: status
+            value: approved
+        - column:
+            name: version
+            value: 1.0.0
+        - column:
+            name: last_updated
+            value: 2025-11-07 02:34:00+00:00
+        - column:
+            name: concept_approved
+            value: true
+        - column:
+            name: concept_reviewed_at
+            value: 2025-11-07 02:34:00+00:00
+        - column:
+            name: owners
+            value: '[{"role": "pvp_lead", "contact": "pvp@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - clan-war
+            - territories
+            - pvp
+        - column:
+            name: topics
+            value:
+            - large-scale-pvp
+            - territory-control
+        - column:
+            name: related_systems
+            value:
+            - guild-service
+            - territory-service
+            - event-service
+        - column:
+            name: related_documents
+            value: '[{"id": "backend-chat-channels", "relation": "references"}, {"id":
+              "backend-chat-moderation", "relation": "references"}]'
+        - column:
+            name: source
+            value: shared/docs/knowledge/implementation/backend/clan-war/clan-war-system.md
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - backend
+            - gameplay
+            - live-ops
+        - column:
+            name: risk_level
+            value: high
+        - column:
+            name: content
+            value: '{"metadata": {"id": "backend-clan-war-system", "title": "Clan
+              War System — Система клановых войн", "document_type": "implementation",
+              "category": "backend", "status": "approved", "version": "1.0.0", "last_updated":
+              "2025-11-07T02:34:00+00:00", "concept_approved": true, "concept_reviewed_at":
+              "2025-11-07T02:34:00+00:00", "owners": [{"role": "pvp_lead", "contact":
+              "pvp@necp.game"}], "tags": ["clan-war", "territories", "pvp"], "topics":
+              ["large-scale-pvp", "territory-control"], "related_systems": ["guild-service",
+              "territory-service", "event-service"], "related_documents": [{"id":
+              "backend-chat-channels", "relation": "references"}, {"id": "backend-chat-moderation",
+              "relation": "references"}], "source": "shared/docs/knowledge/implementation/backend/clan-war/clan-war-system.md",
+              "visibility": "internal", "audience": ["backend", "gameplay", "live-ops"],
+              "risk_level": "high"}, "review": {"chain": [{"role": "pvp_lead", "reviewer":
+              "", "reviewed_at": "2025-11-07T02:34:00+00:00", "status": "approved"}],
+              "next_actions": []}, "summary": {"problem": "Требовалось зафиксировать
+              механику клановых войн, тайминги и управление территориями для endgame
+              PvP.", "goal": "Стандартизировать фазы войны, схему данных, расчёт очков
+              и наград, а также API для событий войны.", "essence": "Документ описывает
+              жизненный цикл войны (подготовка, активная фаза, завершение), базы данных
+              `clan_wars`, `war_battles`, `territories` и ключевые сервисные операции.",
+              "key_points": ["Война включает 24 часа подготовки, 7 дней активных боёв
+              и немедленную фазу подведения итогов.", "Таблицы `clan_wars`, `war_battles`
+              и `territories` управляют участниками, сражениями и владением ресурсами.",
+              "Сервисы объявляют войну, запускают битвы за территорию, рассчитывают
+              очки и распределяют награды."]}, "content": {"sections": [{"id": "overview",
+              "title": "Архитектура войны", "body": "Поток клановой войны начинается
+              с объявления, включает подготовку, активную фазу и завершение с передачей
+              территорий.\nНа протяжении войны отслеживаются Territory battles, Siege
+              события и kill-score.\n", "mechanics_links": [], "assets": []}, {"id":
+              "phases", "title": "Фазы войны", "body": "Фаза подготовки (24 ч) позволяет
+              объявить войну, собрать союзников и ресурсы. Активная фаза (7 дней)
+              содержит ежедневные\nTerritory battles, Siege события и open world PvP.
+              Фаза завершения рассчитывает очки, определяет победителя и выдаёт награды.\n",
+              "mechanics_links": [], "assets": []}, {"id": "data_model", "title":
+              "Схемы данных", "body": "`clan_wars` хранит кланы, союзников, статус,
+              фазы, очки и победителя. `war_battles` описывает битвы, тип, участников
+              и очки.\n`territories` фиксирует владение, ресурсы, защиту и сложность
+              осады.\n", "mechanics_links": [], "assets": []}, {"id": "declare_war",
+              "title": "Объявление войны", "body": "ClanWarService проверяет размер
+              кланов, cooldown и текущее состояние перед созданием записи войны, планирует
+              начало войны\nи уведомляет обе стороны. Союзники фиксируются в записи.\n",
+              "mechanics_links": [], "assets": []}, {"id": "territory_battles", "title":
+              "Бои за территорию", "body": "Battles создаются и запускаются для спорных
+              территорий, уведомляют участников и открывают PvP-зону. Убийства начисляют\nочки
+              сторонам, а сервис следит за активными событиями.\n", "mechanics_links":
+              [], "assets": []}, {"id": "war_resolution", "title": "Завершение войны
+              и награды", "body": "После подсчёта очков определяется победитель, территория
+              при необходимости передаётся и выдаются награды победителю и\nутешительные
+              призы проигравшим. Событие войны логируется и рассылаются уведомления.\n",
+              "mechanics_links": [], "assets": []}, {"id": "api", "title": "API и
+              интеграции", "body": "API покрывает объявление войны, запуск битв, расчёт
+              наград и управление территориями. Сервисы взаимодействуют с guild-service,\nterritory-service
+              и событийному сервису для расписания событий.\n", "mechanics_links":
+              [], "assets": []}]}, "appendix": {"glossary": [], "references": [],
+              "decisions": []}, "implementation": {"needs_task": false, "github_issue":
+              79, "queue_reference": ["shared/trackers/queues/concept/queued.yaml#backend-clan-war-system"],
+              "blockers": []}, "history": [{"version": "1.0.0", "date": "2025-11-07",
+              "author": "ai_brain_manager", "changes": "Описаны фазы клановой войны,
+              схемы данных, сценарии битв и распределение наград."}], "validation":
+              {"checksum": "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "backend-clan-war-system", "title": "Clan War System —
+              Система клановых войн", "document_type": "implementation", "category":
+              "backend", "status": "approved", "version": "1.0.0", "last_updated":
+              "2025-11-07T02:34:00+00:00", "concept_approved": true, "concept_reviewed_at":
+              "2025-11-07T02:34:00+00:00", "owners": [{"role": "pvp_lead", "contact":
+              "pvp@necp.game"}], "tags": ["clan-war", "territories", "pvp"], "topics":
+              ["large-scale-pvp", "territory-control"], "related_systems": ["guild-service",
+              "territory-service", "event-service"], "related_documents": [{"id":
+              "backend-chat-channels", "relation": "references"}, {"id": "backend-chat-moderation",
+              "relation": "references"}], "source": "shared/docs/knowledge/implementation/backend/clan-war/clan-war-system.md",
+              "visibility": "internal", "audience": ["backend", "gameplay", "live-ops"],
+              "risk_level": "high"}'
+        - column:
+            name: source_file
+            value: knowledge\implementation\backend\clan-war\clan-war-system.yaml

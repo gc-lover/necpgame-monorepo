@@ -1,0 +1,182 @@
+databaseChangeLog:
+- changeSet:
+    id: documentation-economy-biochain-nanostim-loot-risk-b86a5ac4
+    author: content-migration-generator
+    changes:
+    - insert:
+        tableName: project.documentation
+        columns:
+        - column:
+            name: id
+            value: '-291489292332071'
+        - column:
+            name: doc_id
+            value: economy-biochain-nanostim-loot-risk
+        - column:
+            name: title
+            value: 'Риск/награда: «Биочейн-фарма» наностим лут-телеметрии'
+        - column:
+            name: document_type
+            value: mechanics
+        - column:
+            name: category
+            value: economy
+        - column:
+            name: status
+            value: draft
+        - column:
+            name: version
+            value: 0.1.0
+        - column:
+            name: last_updated
+            value: 2025-12-12 00:00:00+00:00
+        - column:
+            name: concept_approved
+            value: false
+        - column:
+            name: concept_reviewed_at
+            value: ''
+        - column:
+            name: owners
+            value: '[{"role": "game_balance", "contact": "balance@necp.game"}]'
+        - column:
+            name: tags
+            value:
+            - loot
+            - risk_reward
+            - stim
+            - telemetry
+        - column:
+            name: topics
+            value:
+            - economy_rewards
+            - combat_effects
+        - column:
+            name: related_systems
+            value:
+            - gameplay-service
+            - combat-service
+            - loot-service
+        - column:
+            name: related_documents
+            value: '[{"id": "mechanics/economy/economy-logistics", "relation": "references"},
+              {"id": "mechanics/combat/combat-shooter-core", "relation": "interacts_with"},
+              {"id": "mechanics/implementation/combat-loot-normalization", "relation":
+              "complements"}]'
+        - column:
+            name: source
+            value: ''
+        - column:
+            name: visibility
+            value: internal
+        - column:
+            name: audience
+            value:
+            - game_balance
+            - economy
+            - analytics
+        - column:
+            name: risk_level
+            value: medium
+        - column:
+            name: content
+            value: '{"metadata": {"id": "economy-biochain-nanostim-loot-risk", "title":
+              "Риск/награда: «Биочейн-фарма» наностим лут-телеметрии", "document_type":
+              "mechanics", "category": "economy", "status": "draft", "version": "0.1.0",
+              "last_updated": "2025-12-12T00:00:00+00:00", "concept_approved": false,
+              "concept_reviewed_at": "", "owners": [{"role": "game_balance", "contact":
+              "balance@necp.game"}], "tags": ["loot", "risk_reward", "stim", "telemetry"],
+              "topics": ["economy_rewards", "combat_effects"], "related_systems":
+              ["gameplay-service", "combat-service", "loot-service"], "related_documents":
+              [{"id": "mechanics/economy/economy-logistics", "relation": "references"},
+              {"id": "mechanics/combat/combat-shooter-core", "relation": "interacts_with"},
+              {"id": "mechanics/implementation/combat-loot-normalization", "relation":
+              "complements"}], "source": "", "visibility": "internal", "audience":
+              ["game_balance", "economy", "analytics"], "risk_level": "medium"}, "review":
+              {"chain": [{"role": "game_balance_lead", "reviewer": "", "reviewed_at":
+              "", "status": "pending"}], "next_actions": []}, "summary": {"problem":
+              "Нужен риск/награда стим, который накапливает лут-мультипликатор через
+              телеметрию убийств, но повышает шанс мутаций и дебаффов.", "goal": "Задать
+              стек, кривую роста редкости, формулу риска мутаций, перечень побочек,
+              опцию сброса стима и анти-абуз ограничения.", "essence": "Игрок держит
+              активный наностим, копя «живые данные» с убитых дронов/киборгов; чем
+              выше стек, тем выше шанс редких дропов, но растёт вероятность мутаций
+              и штрафов. Игрок может сбросить стим частично, конвертируя прогресс
+              в добычу, либо рисковать дальше.", "key_points": ["Пороговые значения
+              стека, кап и скоринг для редкости.", "Вероятности мутаций и их эффекты/длительность.",
+              "Кнопка сброса с частичной потерей бонуса.", "Анти-спам и кулдауны,
+              чтобы ограничить абуз."]}, "content": {"sections": [{"id": "stim_basics",
+              "title": "Параметры стима", "body": "Тип: активируемый наностим (slot:
+              boost). Требуется >35% стамины и отсутствие тяжёлых ранений.\nБазовые
+              параметры:\n- Длительность базовая: 240 с окна накопления; при истечении
+              — авто-сброс (50% потери бонуса).\n- Время между активациями: 60 с глобальный
+              КД (не стартует, если есть активный мутационный дебафф).\n- Стек: +1
+              за каждый килл дрона/киборга, который имеет телеметрию; максимум 15
+              стеков.\n- Время жизни стека: 20 с; обновляется на каждый килл (rolling
+              window). При полном истечении окна теряется 2 стека.\n- Очистка («vent»):
+              ручной сброс с 2 с каналом; сохраняет 70% текущего бонуса, сбрасывает
+              стек и риск.\n"}, {"id": "loot_growth", "title": "Кривая роста лута",
+              "body": "Целевой бонус: качество лута (редкость) и шанс доп. телеметрии-кейсов.\nФормула
+              редкости: `loot_mult = 1 + clamp(0.08*stack - 0.0015*stack^2, 0, 0.6)`.\nДоп.
+              шанс кейса: `case_chance = 0.03 * stack` capped at 35%.\nРазделение
+              по типу контента:\n- PvE: применяются оба множителя.\n- PvP: только
+              cosmetics/credits: `loot_mult_pvp = 1 + 0.04*stack` capped at 20%.\nПонижающий
+              коэффициент при повторных забегах: -10% к loot_mult за каждую активацию
+              стима в течение 30 мин (stackable до -30%).\n"}, {"id": "mutation_risk",
+              "title": "Риск мутаций и штрафы", "body": "Вероятность срабатывания
+              мутации при каждом новом стеке после 5-го:\n`p_mutation = clamp(0.04
+              * (stack - 4) + 0.12 * exp((stack - 10)/5), 0, 0.55)`.\nПри срабатывании
+              выбирается мутация по весам:\n- «Серое зрение»: -12% точность, -15%
+              дальность обнаружения. Длительность 25 с. Вес 30.\n- «Тремор»: +10%
+              разброс, +12% расход стамины на спринт. Длительность 20 с. Вес 35.\n-
+              «HUD-глитчи»: задержка обновления HUD на 300–500 мс, шум в маркерах.
+              Длительность 18 с. Вес 25.\n- «Нервный всплеск»: -8% урон на 10 с, затем
+              +8% урон на 8 с (колебания). Вес 10.\nСтраховка: если мутация случилась
+              дважды за 120 с, дальнейшие мутации блокируются 90 с.\n"}, {"id": "risk_management",
+              "title": "Управление риском и сброс", "body": "Кнопка «vent»: 2 с канал,
+              игрок уязвим (armor -10%). Сохраняет 70% накопленного loot_mult, обнуляет
+              stack и риск.\nАвто-vent: при HP <30% или стамине <20% срабатывает авто-сброс
+              с сохранением 50% бонуса.\nПри vent накладывается «fatigue» дебафф на
+              12 с: -10% реген стамины, -8% скорость.\n"}, {"id": "anti_abuse", "title":
+              "Анти-абуз и кулдауны", "body": "- Стим нельзя активировать в безопасных
+              зонах и на аренах без телеметрии.\n- Киллы summon/low-tier дронов с
+              рейтингом ниже игрока на 3+ уровней не дают стек.\n- AFK защита: если
+              нет перемещений/стрельбы 15 с, стек сгорает на 1 каждые 5 с.\n- Death
+              penalty: при смерти под стимом бонус теряется, следующий запуск получает
+              -15% loot_mult (1 попытка смягчения).\n"}, {"id": "analytics", "title":
+              "Метрики и телеметрия", "body": "Логировать:\n- `biochain_stim.activations`,
+              `unique_users`, `duration_avg`.\n- `biochain_stim.stack_peak`, `stack_time_to_peak`,
+              `loot_mult_avg`.\n- `biochain_stim.mutation_rate`, `mutations_per_activation`,
+              распределение по типам мутаций.\n- `biochain_stim.vent_uses`, `auto_vent_rate`,
+              потерянный бонус.\n- Outcome: `profit_vs_baseline` (доп. редкость/кейсы),
+              `deaths_under_stim`, `pvp_usage_rate`.\n"}]}, "appendix": {"glossary":
+              [{"term": "vent", "definition": "Ручной сброс стима с частичной фиксацией
+              бонуса и обнулением стека/риска."}], "formulas": [{"name": "loot_mult",
+              "expression": "loot_mult = 1 + clamp(0.08*stack - 0.0015*stack^2, 0,
+              0.6)", "notes": "Стек кап 15; применимо для PvE. PvP использует ослабленный
+              множитель."}, {"name": "mutation_probability", "expression": "p_mutation
+              = clamp(0.04*(stack-4) + 0.12*exp((stack-10)/5), 0, 0.55)", "notes":
+              "Применяется при добавлении нового стека, начиная с 5-го."}]}, "implementation":
+              {"needs_task": false, "github_issue": 1661, "queue_reference": [], "blockers":
+              []}, "history": [{"version": "0.1.0", "date": "2025-12-12", "author":
+              "game_balance_team", "changes": "Черновая математика наностима «Биочейн-фарма»
+              с кривыми лута, риском мутаций и телеметрией."}], "validation": {"checksum":
+              "", "schema_version": "1.0"}}'
+        - column:
+            name: metadata
+            value: '{"id": "economy-biochain-nanostim-loot-risk", "title": "Риск/награда:
+              «Биочейн-фарма» наностим лут-телеметрии", "document_type": "mechanics",
+              "category": "economy", "status": "draft", "version": "0.1.0", "last_updated":
+              "2025-12-12T00:00:00+00:00", "concept_approved": false, "concept_reviewed_at":
+              "", "owners": [{"role": "game_balance", "contact": "balance@necp.game"}],
+              "tags": ["loot", "risk_reward", "stim", "telemetry"], "topics": ["economy_rewards",
+              "combat_effects"], "related_systems": ["gameplay-service", "combat-service",
+              "loot-service"], "related_documents": [{"id": "mechanics/economy/economy-logistics",
+              "relation": "references"}, {"id": "mechanics/combat/combat-shooter-core",
+              "relation": "interacts_with"}, {"id": "mechanics/implementation/combat-loot-normalization",
+              "relation": "complements"}], "source": "", "visibility": "internal",
+              "audience": ["game_balance", "economy", "analytics"], "risk_level":
+              "medium"}'
+        - column:
+            name: source_file
+            value: knowledge\mechanics\economy\economy-biochain-nanostim-loot-risk.yaml

@@ -17,16 +17,14 @@ import (
 // PERFORMANCE: Reusable handler with dependency injection
 type AchievementHandler struct {
 	service   *AchievementServiceLogic
-	repo      *AchievementRepository
 	logger    *zap.Logger
 }
 
 // NewAchievementHandler creates a new handler instance
 // PERFORMANCE: Pre-allocates resources
-func NewAchievementHandler(svc *AchievementServiceLogic, repo *AchievementRepository) *AchievementHandler {
+func NewAchievementHandler(svc *AchievementServiceLogic) *AchievementHandler {
 	handler := &AchievementHandler{
 		service: svc,
-		repo:    repo,
 	}
 
 	// PERFORMANCE: Initialize structured logger
@@ -42,32 +40,158 @@ func NewAchievementHandler(svc *AchievementServiceLogic, repo *AchievementReposi
 // AchievementGetAchievements handles GET /api/v1/achievement/achievements
 // PERFORMANCE: Optimized for high-throughput achievement listing
 func (h *AchievementHandler) AchievementGetAchievements(ctx context.Context, params api.AchievementGetAchievementsParams) (api.AchievementGetAchievementsRes, error) {
-	// TODO: Implement achievements listing
+	playerID := params.PlayerID
+	if playerID == "" {
+		return &api.AchievementGetAchievementsBadRequest{
+			Error:   "player_id is required",
+			Status:  400,
+			Service: "achievement-service",
+		}, nil
+	}
+
+	limit := 50  // default
+	offset := 0 // default
+
+	if params.Limit != nil && *params.Limit > 0 && *params.Limit <= 100 {
+		limit = *params.Limit
+	}
+
+	if params.Offset != nil && *params.Offset >= 0 {
+		offset = *params.Offset
+	}
+
+	achievements, err := h.service.GetAchievements(ctx, playerID, limit, offset)
+	if err != nil {
+		h.logger.Error("Failed to get achievements", zap.Error(err))
+		return &api.AchievementGetAchievementsInternalServerError{
+			Error:   "Failed to retrieve achievements",
+			Status:  500,
+			Service: "achievement-service",
+		}, nil
+	}
+
+	// Convert to API response format
+	apiAchievements := make([]api.Achievement, 0, len(achievements))
+	for _, achievement := range achievements {
+		apiAchievement := api.Achievement{
+			Id:          api.NewOptString(achievement.ID),
+			Name:        api.NewOptString(achievement.Name),
+			Description: api.NewOptString(achievement.Description),
+			Rarity:      api.NewOptString(achievement.Rarity),
+			Points:      api.NewOptInt32(achievement.Points),
+			IsUnlocked:  api.NewOptBool(achievement.IsUnlocked),
+		}
+
+		if achievement.IconURL != "" {
+			apiAchievement.IconUrl = api.NewOptString(achievement.IconURL)
+		}
+
+		if achievement.UnlockedAt != nil {
+			apiAchievement.UnlockedAt = api.NewOptDateTime(*achievement.UnlockedAt)
+		}
+
+		apiAchievement.CreatedAt = api.NewOptDateTime(achievement.CreatedAt)
+		apiAchievement.UpdatedAt = api.NewOptDateTime(achievement.UpdatedAt)
+
+		apiAchievements = append(apiAchievements, apiAchievement)
+	}
+
 	return &api.AchievementListResponse{
-		Achievements: []api.Achievement{},
-		Count:        0,
+		Achievements: apiAchievements,
+		Count:        api.NewOptInt(len(apiAchievements)),
 	}, nil
 }
 
 // AchievementGetAchievement handles GET /api/v1/achievement/achievements/{achievementId}
 // PERFORMANCE: Optimized for single achievement retrieval
 func (h *AchievementHandler) AchievementGetAchievement(ctx context.Context, params api.AchievementGetAchievementParams) (api.AchievementGetAchievementRes, error) {
-	// TODO: Implement achievement retrieval
-	return &api.AchievementGetAchievementNotFound{
-		Error:   "Not implemented",
-		Status:  501,
-		Service: "achievement-service",
+	achievementID := params.AchievementId
+
+	if achievementID == "" {
+		return &api.AchievementGetAchievementBadRequest{
+			Error:   "achievement_id is required",
+			Status:  400,
+			Service: "achievement-service",
+		}, nil
+	}
+
+	// TODO: Extract player_id from JWT token or context
+	// For now, use a mock player_id - this needs to be implemented properly
+	playerID := "mock-player-id" // This should come from authentication
+
+	achievement, err := h.service.GetAchievement(ctx, achievementID, playerID)
+	if err != nil {
+		h.logger.Error("Failed to get achievement", zap.Error(err))
+		return &api.AchievementGetAchievementInternalServerError{
+			Error:   "Failed to retrieve achievement",
+			Status:  500,
+			Service: "achievement-service",
+		}, nil
+	}
+
+	if achievement == nil {
+		return &api.AchievementGetAchievementNotFound{
+			Error:   "Achievement not found",
+			Status:  404,
+			Service: "achievement-service",
+		}, nil
+	}
+
+	// Convert to API response format
+	apiAchievement := api.Achievement{
+		Id:          api.NewOptString(achievement.ID),
+		Name:        api.NewOptString(achievement.Name),
+		Description: api.NewOptString(achievement.Description),
+		Rarity:      api.NewOptString(achievement.Rarity),
+		Points:      api.NewOptInt32(achievement.Points),
+		IsUnlocked:  api.NewOptBool(achievement.IsUnlocked),
+	}
+
+	if achievement.IconURL != "" {
+		apiAchievement.IconUrl = api.NewOptString(achievement.IconURL)
+	}
+
+	if achievement.UnlockedAt != nil {
+		apiAchievement.UnlockedAt = api.NewOptDateTime(*achievement.UnlockedAt)
+	}
+
+	apiAchievement.CreatedAt = api.NewOptDateTime(achievement.CreatedAt)
+	apiAchievement.UpdatedAt = api.NewOptDateTime(achievement.UpdatedAt)
+
+	return &api.AchievementGetAchievementOK{
+		Achievement: apiAchievement,
 	}, nil
 }
 
 // AchievementUnlockAchievement handles POST /api/v1/achievement/achievements/{achievementId}/unlock
 // PERFORMANCE: Optimized for achievement unlocking operations
 func (h *AchievementHandler) AchievementUnlockAchievement(ctx context.Context, params api.AchievementUnlockAchievementParams) (api.AchievementUnlockAchievementRes, error) {
-	// TODO: Implement achievement unlocking
-	return &api.AchievementUnlockAchievementBadRequest{
-		Error:   "Not implemented",
-		Status:  501,
-		Service: "achievement-service",
+	achievementID := params.AchievementId
+
+	if achievementID == "" {
+		return &api.AchievementUnlockAchievementBadRequest{
+			Error:   "achievement_id is required",
+			Status:  400,
+			Service: "achievement-service",
+		}, nil
+	}
+
+	// TODO: Extract player_id from JWT token or context
+	// For now, use a mock player_id - this needs to be implemented properly
+	playerID := "mock-player-id" // This should come from authentication
+
+	err := h.service.UnlockAchievement(ctx, playerID, achievementID)
+	if err != nil {
+		h.logger.Error("Failed to unlock achievement", zap.Error(err))
+		return &api.AchievementUnlockAchievementInternalServerError{
+			Error:   "Failed to unlock achievement",
+			Status:  500,
+			Service: "achievement-service",
+		}, nil
+	}
+
+	return &api.AchievementUnlockAchievementOK{
+		Message: api.NewOptString("Achievement unlocked successfully"),
 	}, nil
 }
 
