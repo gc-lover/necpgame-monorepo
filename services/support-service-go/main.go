@@ -26,7 +26,7 @@ func main() {
 	logger := log.New(os.Stdout, "[support-service-go] ", log.LstdFlags)
 
 	// PERFORMANCE: Context with timeout for initialization
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// PERFORMANCE: Initialize service with memory pooling
