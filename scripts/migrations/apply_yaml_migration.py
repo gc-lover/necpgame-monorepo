@@ -46,15 +46,28 @@ def apply_yaml_migration(yaml_file_path):
 
                             # Build INSERT statement
                             columns = [col['column']['name'] for col in insert_data['columns']]
-                            values = [col['column']['value'] for col in insert_data['columns']]
+                            raw_values = [col['column']['value'] for col in insert_data['columns']]
 
-                            placeholders = ', '.join(['%s'] * len(values))
+                            # Process special values
+                            processed_values = []
+                            placeholders = []
+
+                            for value in raw_values:
+                                if isinstance(value, str) and value == 'gen_random_uuid()':
+                                    # Special case: generate UUID
+                                    placeholders.append('gen_random_uuid()')
+                                    processed_values.append(None)  # Not used for parameterized query
+                                else:
+                                    placeholders.append('%s')
+                                    processed_values.append(value)
+
+                            placeholders_str = ', '.join(placeholders)
                             columns_str = ', '.join(columns)
 
-                            sql = f"INSERT INTO {table_name} ({columns_str}) VALUES ({placeholders})"
+                            sql = f"INSERT INTO {table_name} ({columns_str}) VALUES ({placeholders_str})"
 
                             print(f"Executing: INSERT INTO {table_name}")
-                            cursor.execute(sql, values)
+                            cursor.execute(sql, [v for v in processed_values if v is not None])
 
         conn.commit()
         print(f"[OK] Successfully applied YAML migration: {yaml_file_path}")

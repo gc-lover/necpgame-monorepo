@@ -21,6 +21,7 @@ type Server struct {
 	db             *pgxpool.Pool
 	logger         *zap.Logger
 	tokenAuth      interface{} // JWT auth interface
+	startTime      time.Time   // Service start time for uptime tracking
 
 	// PERFORMANCE: Memory pools for zero allocations in hot paths
 	propertyPool    sync.Pool
@@ -35,6 +36,7 @@ func NewServer(db *pgxpool.Pool, logger *zap.Logger, tokenAuth interface{}) *Ser
 		db:        db,
 		logger:    logger,
 		tokenAuth: tokenAuth,
+		startTime: time.Now(), // Initialize start time for uptime tracking
 	}
 
 	// Initialize memory pools for hot path objects
@@ -71,12 +73,14 @@ func (s *Server) HousingServiceHealthCheck(ctx context.Context) (*api.HousingSer
 	// Get connection stats
 	stats := s.db.Stat()
 
+	uptime := int(time.Since(s.startTime).Seconds())
+
 	return &api.HousingServiceHealthCheckOK{
 		Response: api.HousingServiceHealthCheckOKApplicationJSON{
 			Status:           "healthy",
 			Timestamp:        api.NewOptString(time.Now().Format(time.RFC3339)),
 			Version:          api.NewOptString("1.0.0"),
-			UptimeSeconds:    api.NewOptInt(0), // TODO: Implement uptime tracking
+			UptimeSeconds:    api.NewOptInt(uptime), // Calculate uptime since service start
 			ActiveConnections: api.NewOptInt(int(stats.TotalConns())),
 		},
 	}, nil
@@ -88,13 +92,49 @@ func (s *Server) GetAvailableApartments(ctx context.Context) (*api.GetAvailableA
 	ctx, cancel := context.WithTimeout(ctx, 300*time.Millisecond)
 	defer cancel()
 
-	// TODO: Implement database query with proper filtering and pagination
-	// For now, return mock apartments data
-	apartmentTypes := s.getMockApartmentTypes()
+	// Query apartment types from database with basic filtering
+	rows, err := s.db.Query(ctx, `
+		SELECT type, price, furniture_slots, description, features
+		FROM gameplay.apartment_types
+		WHERE price >= $1 AND price <= $2
+		ORDER BY price ASC
+		LIMIT $3 OFFSET $4
+	`, 0, 2000000, 50, 0) // Basic pagination: min_price=0, max_price=2M, limit=50, offset=0
+
+	if err != nil {
+		s.logger.Error("Failed to query apartment types", zap.Error(err))
+		return nil, fmt.Errorf("database query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var apartments []api.ApartmentType
+	for rows.Next() {
+		var apartmentType api.ApartmentType
+		var features []byte
+		err := rows.Scan(&apartmentType.Type, &apartmentType.Price, &apartmentType.FurnitureSlots,
+			&apartmentType.Description, &features)
+		if err != nil {
+			s.logger.Error("Failed to scan apartment type", zap.Error(err))
+			continue
+		}
+
+		// Parse JSONB features
+		if err := json.Unmarshal(features, &apartmentType.Features); err != nil {
+			s.logger.Warn("Failed to parse apartment features", zap.Error(err))
+			apartmentType.Features = []string{} // Default to empty array
+		}
+
+		apartments = append(apartments, apartmentType)
+	}
+
+	if err := rows.Err(); err != nil {
+		s.logger.Error("Rows iteration error", zap.Error(err))
+		return nil, fmt.Errorf("rows iteration failed: %w", err)
+	}
 
 	return &api.GetAvailableApartmentsOK{
 		Response: api.GetAvailableApartmentsOKApplicationJSON{
-			Apartments: apartmentTypes,
+			Apartments: apartments,
 		},
 	}, nil
 }
@@ -557,12 +597,76 @@ func (s *Server) getMockApartments(limit, offset int) []api.Property {
 }
 
 func (s *Server) processApartmentPurchase(playerID, apartmentID uuid.UUID, currencyAmount int) apartmentPurchaseResult {
-	// Simulate purchase validation and processing
-	// In real implementation, check player balance, apartment availability, etc.
+	// Check if apartment is available (not owned by anyone)
+	var existingOwnerID uuid.UUID
+	err := s.db.QueryRow(context.Background(), `
+		SELECT owner_id FROM gameplay.apartments
+		WHERE id = $1
+	`, apartmentID).Scan(&existingOwnerID)
+
+	if err == nil {
+		// Apartment is already owned
+		return apartmentPurchaseResult{
+			Success: false,
+			Error:   "Apartment is already owned",
+		}
+	} else if err != pgx.ErrNoRows {
+		// Database error
+		s.logger.Error("Failed to check apartment ownership", zap.Error(err))
+		return apartmentPurchaseResult{
+			Success: false,
+			Error:   "Database error",
+		}
+	}
+
+	// Get apartment type and price
+	var apartmentType string
+	var price int
+	err = s.db.QueryRow(context.Background(), `
+		SELECT at.type, at.price
+		FROM gameplay.apartments a
+		JOIN gameplay.apartment_types at ON a.apartment_type_id = at.type
+		WHERE a.id = $1
+	`, apartmentID).Scan(&apartmentType, &price)
+
+	if err != nil {
+		s.logger.Error("Failed to get apartment details", zap.Error(err))
+		return apartmentPurchaseResult{
+			Success: false,
+			Error:   "Apartment not found",
+		}
+	}
+
+	// Check if provided currency amount matches apartment price
+	if currencyAmount != price {
+		return apartmentPurchaseResult{
+			Success: false,
+			Error:   "Incorrect purchase amount",
+		}
+	}
+
+	// TODO: Check player balance from economy service
+	// For now, assume sufficient funds
+
+	// Create ownership record
+	_, err = s.db.Exec(context.Background(), `
+		UPDATE gameplay.apartments
+		SET owner_id = $1, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2
+	`, playerID, apartmentID)
+
+	if err != nil {
+		s.logger.Error("Failed to update apartment ownership", zap.Error(err))
+		return apartmentPurchaseResult{
+			Success: false,
+			Error:   "Failed to process purchase",
+		}
+	}
+
 	return apartmentPurchaseResult{
-		Success:         true,
-		PurchaseID:      uuid.New(),
-		NewBalance:      1000000 - currencyAmount, // Mock new balance
+		Success:          true,
+		PurchaseID:       uuid.New(),
+		NewBalance:       1000000 - currencyAmount, // TODO: Get actual balance from economy service
 		OwnershipGranted: true,
 	}
 }
