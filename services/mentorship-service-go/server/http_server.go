@@ -19,10 +19,27 @@ type Handler struct {
 	logger  *zap.Logger
 }
 
+// Config holds database and performance configuration
+type Config struct {
+	DatabaseURL        string
+	MaxDBConnections   int
+	MinDBConnections   int
+	DBConnMaxLifetime  time.Duration
+	DBConnMaxIdleTime  time.Duration
+}
+
 // NewHandler creates a new handler with performance optimizations
 func NewHandler(logger *zap.Logger) *Handler {
 	return &Handler{
 		service: NewMentorshipService(logger),
+		logger:  logger,
+	}
+}
+
+// NewHandlerWithConfig creates a new handler with database configuration
+func NewHandlerWithConfig(logger *zap.Logger, cfg Config) *Handler {
+	return &Handler{
+		service: NewMentorshipServiceWithConfig(logger, cfg),
 		logger:  logger,
 	}
 }

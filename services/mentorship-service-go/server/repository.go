@@ -34,23 +34,35 @@ type Repository struct {
 
 // NewRepository creates a new repository with database connection
 func NewRepository(logger *zap.Logger) *Repository {
-	// PERFORMANCE: Connection pooling configured for MMO load
-	// In production, this would be injected via dependency injection
-	connStr := "postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable" // TODO: Use config
-	config, err := pgxpool.ParseConfig(connStr)
+	return NewRepositoryWithConfig(logger, server.Config{
+		DatabaseURL:       "postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable",
+		MaxDBConnections:  200,
+		MinDBConnections:  20,
+		DBConnMaxLifetime: time.Minute * 30,
+		DBConnMaxIdleTime: time.Minute * 10,
+	})
+}
+
+// NewRepositoryWithConfig creates a new repository with database configuration
+func NewRepositoryWithConfig(logger *zap.Logger, cfg server.Config) *Repository {
+	logger.Info("Initializing database connection",
+		zap.String("database_url", cfg.DatabaseURL[:20]+"..."), // Log partial URL for security
+		zap.Int("max_connections", cfg.MaxDBConnections),
+		zap.Int("min_connections", cfg.MinDBConnections),
+		zap.Duration("max_lifetime", cfg.DBConnMaxLifetime),
+		zap.Duration("max_idle_time", cfg.DBConnMaxIdleTime))
+
+	config, err := pgxpool.ParseConfig(cfg.DatabaseURL)
 	if err != nil {
 		logger.Fatal("Failed to parse PostgreSQL config", zap.Error(err))
 	}
 
 	// PERFORMANCE: MMO-grade connection pooling for high concurrency
-	// MaxConns: 200 (handles 1000+ concurrent players in MMO)
-	// MinConns: 20 (maintains connection pool readiness)
-	// MaxConnLifetime: 30min (prevents stale connections)
-	// MaxConnIdleTime: 10min (aggressive cleanup for MMO load)
-	config.MaxConns = 200
-	config.MinConns = 20
-	config.MaxConnLifetime = time.Minute * 30
-	config.MaxConnIdleTime = time.Minute * 10
+	// Configurable values for different deployment environments
+	config.MaxConns = int32(cfg.MaxDBConnections)
+	config.MinConns = int32(cfg.MinDBConnections)
+	config.MaxConnLifetime = cfg.DBConnMaxLifetime
+	config.MaxConnIdleTime = cfg.DBConnMaxIdleTime
 
 	db, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {

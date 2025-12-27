@@ -36,6 +36,17 @@ func NewMentorshipService(logger *zap.Logger) *MentorshipService {
 	}
 }
 
+// NewMentorshipServiceWithConfig creates a service with database configuration
+func NewMentorshipServiceWithConfig(logger *zap.Logger, cfg server.Config) *MentorshipService {
+	return &MentorshipService{
+		repo:      NewRepositoryWithConfig(logger, cfg),
+		cache:     NewCache(logger),
+		validator: NewValidator(logger),
+		metrics:   NewMetrics(logger),
+		logger:    logger,
+	}
+}
+
 // CreateMentorshipContract creates a new mentorship contract
 func (s *MentorshipService) CreateMentorshipContract(ctx context.Context, req *api.CreateMentorshipContractRequest) (*api.MentorshipContract, error) {
 	s.metrics.RecordRequest("CreateMentorshipContract")
