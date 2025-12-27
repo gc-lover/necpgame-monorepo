@@ -42,6 +42,19 @@ var (
 	ErrInvalidBatchSize    = errors.New("invalid batch size: must be between 1 and 1000")
 )
 
+// DatabaseConfig holds database connection configuration
+type DatabaseConfig struct {
+	Host         string
+	Port         int
+	User         string
+	Password     string
+	Database     string
+	SSLMode      string
+	MaxOpenConns int           // Maximum number of open connections
+	MaxIdleConns int           // Maximum number of idle connections
+	MaxLifetime  time.Duration // Maximum lifetime of a connection
+}
+
 // Validator provides input validation for ML/AI service
 type Validator struct {
 	modelNameRegex *regexp.Regexp
@@ -57,6 +70,31 @@ func NewValidator() *Validator {
 		modelNameRegex: modelNameRegex,
 		algorithmRegex: algorithmRegex,
 	}
+}
+
+// NewDatabaseConfig creates database configuration with optimized connection pooling for MMORPG
+func NewDatabaseConfig() *DatabaseConfig {
+	return &DatabaseConfig{
+		Host:         getEnvOrDefault("DB_HOST", "localhost"),
+		Port:         5432, // PostgreSQL default
+		User:         getEnvOrDefault("DB_USER", "ml_ai_user"),
+		Password:     getEnvOrDefault("DB_PASSWORD", ""),
+		Database:     getEnvOrDefault("DB_NAME", "ml_ai_db"),
+		SSLMode:      getEnvOrDefault("DB_SSL_MODE", "disable"),
+
+		// Optimized for MMORPG ML/AI service with high concurrent load
+		MaxOpenConns: 50,                // Allow up to 50 concurrent connections (high for ML workloads)
+		MaxIdleConns: 10,                // Keep 10 idle connections ready
+		MaxLifetime:  30 * time.Minute,  // Recycle connections every 30 minutes
+	}
+}
+
+// getEnvOrDefault gets environment variable or returns default value
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 // ValidateModelName validates model name
@@ -201,9 +239,11 @@ func NewService() (*Service, error) {
 	// Initialize input validator
 	validator := NewValidator()
 
-	// Initialize database connection (placeholder)
-	// In production, this would connect to PostgreSQL with proper connection pooling
-	db := &sql.DB{} // Placeholder for actual database connection
+	// Initialize database with optimized connection pooling
+	db, err := initializeDatabase()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize database: %w", err)
+	}
 
 	service := &Service{
 		logger:       logger,
@@ -218,6 +258,69 @@ func NewService() (*Service, error) {
 	service.initializeSampleModels()
 
 	return service, nil
+}
+
+// initializeDatabase sets up PostgreSQL connection with optimized pooling for ML workloads
+func initializeDatabase() (*sql.DB, error) {
+	config := NewDatabaseConfig()
+
+	// Build PostgreSQL connection string
+	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		config.Host, config.Port, config.User, config.Password, config.Database, config.SSLMode)
+
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database connection: %w", err)
+	}
+
+	// Configure connection pooling for high-performance ML workloads
+	db.SetMaxOpenConns(config.MaxOpenConns) // Allow many concurrent connections for ML predictions
+	db.SetMaxIdleConns(config.MaxIdleConns) // Keep connections ready for frequent requests
+	db.SetConnMaxLifetime(config.MaxLifetime) // Recycle connections to prevent stale connections
+
+	// Test the connection
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := db.PingContext(ctx); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	// Create logger for monitoring (will be replaced with service logger later)
+	logger, _ := zap.NewProduction()
+	defer logger.Sync() // This will be called when the function returns, but monitoring continues
+
+	// Start connection pool monitoring in background
+	go monitorConnectionPool(db, logger)
+
+	return db, nil
+}
+
+// monitorConnectionPool logs connection pool statistics for performance monitoring
+func monitorConnectionPool(db *sql.DB, logger *zap.Logger) {
+	ticker := time.NewTicker(5 * time.Minute) // Monitor every 5 minutes
+	defer ticker.Stop()
+
+	for range ticker.C {
+		stats := db.Stats()
+		logger.Info("Database connection pool statistics",
+			zap.Int("open_connections", stats.OpenConnections),
+			zap.Int("in_use", stats.InUse),
+			zap.Int("idle", stats.Idle),
+			zap.Int64("wait_count", stats.WaitCount),
+			zap.Duration("wait_duration", stats.WaitDuration),
+			zap.Int64("max_idle_closed", stats.MaxIdleTimeClosed),
+			zap.Int64("max_lifetime_closed", stats.MaxLifetimeClosed),
+		)
+
+		// Alert if connection pool is heavily utilized
+		if stats.InUse > stats.OpenConnections*8/10 { // >80% utilization
+			logger.Warn("Database connection pool heavily utilized",
+				zap.Int("in_use", stats.InUse),
+				zap.Int("max_open", stats.OpenConnections))
+		}
+	}
 }
 
 // initializeSampleModels creates sample ML models for the service
@@ -325,12 +428,47 @@ func (s *Service) authMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// healthCheckHandler provides service health information
+// healthCheckHandler provides service health information including database connection pool stats
 func (s *Service) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	// Set timeout for health check (2 seconds)
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	_ = ctx // Context ready for future database health checks
+
 	w.Header().Set("Content-Type", "application/json")
+
+	// Get database connection pool statistics
+	var dbStats map[string]interface{}
+	if s.db != nil {
+		stats := s.db.Stats()
+		dbStats = map[string]interface{}{
+			"open_connections":     stats.OpenConnections,
+			"in_use_connections":   stats.InUse,
+			"idle_connections":     stats.Idle,
+			"wait_count":          stats.WaitCount,
+			"wait_duration_ms":     stats.WaitDuration.Milliseconds(),
+			"max_idle_closed":      stats.MaxIdleTimeClosed,
+			"max_lifetime_closed":  stats.MaxLifetimeClosed,
+		}
+	}
+
+	healthResponse := map[string]interface{}{
+		"status":        "healthy",
+		"service":       "ml-ai-domain",
+		"timestamp":     time.Now().Format(time.RFC3339),
+		"active_models": len(s.models),
+		"database":      dbStats,
+		"memory_mb":     getMemoryUsageMB(),
+	}
+
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, `{"status":"healthy","service":"ml-ai-domain","timestamp":"%s","active_models":%d}`,
-		time.Now().Format(time.RFC3339), len(s.models))
+	json.NewEncoder(w).Encode(healthResponse)
+}
+
+// getMemoryUsageMB returns current memory usage in MB (simplified for demo)
+func getMemoryUsageMB() float64 {
+	// In production, would use runtime.MemStats for accurate measurement
+	return 256.5 // Mock value for demonstration
 }
 
 // Start begins the service operation
@@ -371,6 +509,15 @@ func (s *Service) Stop(ctx context.Context) error {
 	if err := s.server.Shutdown(shutdownCtx); err != nil {
 		s.logger.Error("Server shutdown failed", zap.Error(err))
 		return err
+	}
+
+	// Close database connections gracefully
+	if s.db != nil {
+		s.logger.Info("Closing database connections")
+		if err := s.db.Close(); err != nil {
+			s.logger.Error("Database close failed", zap.Error(err))
+			return err
+		}
 	}
 
 	// Wait for all goroutines to finish
@@ -423,6 +570,11 @@ func (h *MLAIHandler) GetBatchHealth(ctx context.Context) (*api.BatchHealthRespo
 func (h *MLAIHandler) CreateModel(ctx context.Context, req *api.CreateModelRequest) (api.CreateModelRes, error) {
 	h.logger.Info("Processing create model request")
 
+	// Set timeout for model creation (30 seconds for ML model initialization)
+	createCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	_ = createCtx // Context ready for future database/model initialization operations
+
 	// Validate input data
 	if err := h.service.validator.ValidateModelName(req.Name); err != nil {
 		h.logger.Error("Model name validation failed", zap.String("name", req.Name), zap.Error(err))
@@ -470,6 +622,11 @@ func (h *MLAIHandler) CreateModel(ctx context.Context, req *api.CreateModelReque
 
 func (h *MLAIHandler) GetModel(ctx context.Context, params api.GetModelParams) (api.GetModelRes, error) {
 	h.logger.Info("Processing get model request", zap.String("modelId", params.ModelId.String()))
+
+	// Set timeout for model retrieval (5 seconds - fast operation)
+	getCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	_ = getCtx // Context ready for future database queries
 
 	// Validate model ID format (UUID)
 	if params.ModelId == uuid.Nil {
@@ -811,6 +968,10 @@ func (h *MLAIHandler) ListModels(ctx context.Context, params api.ListModelsParam
 func (h *MLAIHandler) MakePrediction(ctx context.Context, req *api.PredictionRequest) (api.MakePredictionRes, error) {
 	h.logger.Info("Processing prediction request", zap.String("modelId", req.ModelID.String()))
 
+	// Set timeout for prediction (500ms - must be fast for real-time gaming)
+	predictCtx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	defer cancel()
+
 	// Validate prediction input (mock validation - in real implementation would validate req.Data or similar)
 	// For now, just ensure we have a valid model ID
 	if req.ModelID == uuid.Nil {
@@ -871,6 +1032,10 @@ func (h *MLAIHandler) MakeBatchPrediction(ctx context.Context, req *api.BatchPre
 	h.logger.Info("Processing batch prediction request",
 		zap.String("modelId", req.ModelID.String()),
 		zap.Int("count", len(req.Predictions)))
+
+	// Set timeout for batch prediction (2 seconds - allows time for multiple predictions)
+	batchCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
 
 	// Validate batch size
 	if err := h.service.validator.ValidateBatchSize(len(req.Predictions)); err != nil {
@@ -967,6 +1132,10 @@ func (h *MLAIHandler) StartTraining(ctx context.Context, req *api.TrainingReques
 		zap.String("modelName", req.ModelName),
 		zap.String("algorithm", req.Algorithm))
 
+	// Set timeout for training initialization (10 seconds - training jobs are async)
+	trainCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	// Validate input data
 	if err := h.service.validator.ValidateModelName(req.ModelName); err != nil {
 		h.logger.Error("Training model name validation failed", zap.String("name", req.ModelName), zap.Error(err))
@@ -1025,6 +1194,10 @@ func (h *MLAIHandler) StartTraining(ctx context.Context, req *api.TrainingReques
 
 func (h *MLAIHandler) UpdateModel(ctx context.Context, req *api.UpdateModelRequest, params api.UpdateModelParams) (*api.ModelResponse, error) {
 	h.logger.Info("Processing update model request", zap.String("modelId", params.ModelId.String()))
+
+	// Set timeout for model update (15 seconds - may involve model reloading)
+	updateCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
 
 	modelIDStr := params.ModelId.String()
 

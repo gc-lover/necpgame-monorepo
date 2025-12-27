@@ -24,11 +24,8 @@ func NewValidator() *Validator {
 }
 
 func (v *Validator) ValidateParticipationRequest(req *api.ParticipateRequest) error {
-	if req.PlayerId.IsSet() && req.PlayerId.Value == "" {
+	if req.PlayerId.String() == "" {
 		return fmt.Errorf("player ID cannot be empty")
-	}
-	if req.EventId.IsSet() && req.EventId.Value == "" {
-		return fmt.Errorf("event ID cannot be empty")
 	}
 	return nil
 }

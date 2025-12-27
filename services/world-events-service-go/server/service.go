@@ -46,9 +46,11 @@ func (s *Service) ParticipateInEvent(ctx context.Context, playerID, eventID stri
 	}
 
 	// Check participant limits
-	if event.MaxParticipants != nil && event.CurrentParticipants != nil {
-		if event.CurrentParticipants.Value >= event.MaxParticipants.Value {
-			return fmt.Errorf("event participant limit reached")
+	if maxP, ok := event.MaxParticipants.Get(); ok {
+		if currP, ok2 := event.CurrentParticipants.Get(); ok2 {
+			if currP >= maxP {
+				return fmt.Errorf("event participant limit reached")
+			}
 		}
 	}
 
@@ -167,23 +169,33 @@ func (s *Service) CreateWorldEvent(ctx context.Context, req *api.CreateEventRequ
 
 	// Calculate end time if duration is provided
 	var endTime *time.Time
-	if req.Duration > 0 {
-		et := req.StartTime.Add(time.Duration(req.Duration) * time.Minute)
+	if duration, ok := req.Duration.Get(); ok && duration > 0 {
+		et := req.StartTime.Add(time.Duration(duration) * time.Minute)
 		endTime = &et
 	}
 
 	// Create event object
 	event := &api.WorldEvent{
-		ID:          eventID,
-		Name:        req.Title,
-		Description: api.NewOptString(req.Description),
-		Type:        req.Type,
-		Scale:       req.Scale,
-		Frequency:   api.WorldEventFrequencyONE_TIME,
-		Status:      api.WorldEventStatusPLANNED,
-		StartTime:   req.StartTime,
-		EndTime:     endTime,
-		Duration:    req.Duration,
+		ID:        eventID,
+		Name:      req.Name,
+		Type:      api.WorldEventType(req.Type),
+		Region:    req.Region,
+		Status:    api.WorldEventStatusANNOUNCED,
+		StartTime: req.StartTime,
+		Objectives: req.Objectives,
+		Rewards:   req.Rewards,
+	}
+
+	if desc, ok := req.Description.Get(); ok {
+		event.Description = api.NewOptString(desc)
+	}
+
+	if maxP, ok := req.MaxParticipants.Get(); ok {
+		event.MaxParticipants = api.NewOptInt(maxP)
+	}
+
+	if endTime != nil {
+		event.EndTime = api.NewOptDateTime(*endTime)
 	}
 
 	// Save to database

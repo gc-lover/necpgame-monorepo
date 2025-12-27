@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/google/uuid"
 
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-service-go/pkg/api"
 )

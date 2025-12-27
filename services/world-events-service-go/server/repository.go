@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/lib/pq"
 
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-service-go/pkg/api"
@@ -28,10 +27,9 @@ func NewRepository(db *sql.DB) *Repository {
 // PERFORMANCE: Uses optimized query with index on (status, start_time)
 func (r *Repository) GetActiveEvents(ctx context.Context) ([]api.WorldEvent, error) {
 	query := `
-		SELECT id, title, description, type, scale, frequency, status,
-		       start_time, end_time, duration, target_regions, target_factions,
-		       prerequisites, cooldown_duration, max_concurrent, version,
-		       created_at, updated_at
+		SELECT id, name, description, type, region, status,
+		       start_time, end_time, objectives, rewards,
+		       max_participants, current_participants, difficulty
 		FROM world_events.world_events
 		WHERE status = 'ACTIVE'
 		ORDER BY start_time DESC
@@ -46,23 +44,34 @@ func (r *Repository) GetActiveEvents(ctx context.Context) ([]api.WorldEvent, err
 	var events []api.WorldEvent
 	for rows.Next() {
 		var event api.WorldEvent
-		var targetRegions []string
-		var targetFactions []uuid.UUID
-		var prerequisites []uuid.UUID
+		var description sql.NullString
+		var maxParticipants sql.NullInt64
+		var currentParticipants sql.NullInt64
+		var objectives []string
+		var rewards []string
 
 		err := rows.Scan(
-			&event.ID, &event.Name, &event.Description, &event.Type, &event.Scale, &event.Frequency, &event.Status,
-			&event.StartTime, &event.EndTime, &event.Duration, pq.Array(&targetRegions), pq.Array(&targetFactions),
-			pq.Array(&prerequisites), &event.CooldownDuration, &event.MaxParticipants, &event.Version,
-			&event.CreatedAt, &event.UpdatedAt,
+			&event.ID, &event.Name, &description, &event.Type, &event.Region, &event.Status,
+			&event.StartTime, &event.EndTime, pq.Array(&objectives), pq.Array(&rewards),
+			&maxParticipants, &currentParticipants, &event.Difficulty,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan event: %w", err)
 		}
 
-		// Convert arrays to proper format
-		event.TargetRegions = targetRegions
-		// Note: Factions and prerequisites would need conversion if used
+		// Handle nullable fields
+		if description.Valid {
+			event.Description = api.NewOptString(description.String)
+		}
+		if maxParticipants.Valid {
+			event.MaxParticipants = api.NewOptInt(int(maxParticipants.Int64))
+		}
+		if currentParticipants.Valid {
+			event.CurrentParticipants = api.NewOptInt(int(currentParticipants.Int64))
+		}
+
+		event.Objectives = objectives
+		event.Rewards = rewards
 
 		events = append(events, event)
 	}
@@ -78,24 +87,24 @@ func (r *Repository) GetActiveEvents(ctx context.Context) ([]api.WorldEvent, err
 // PERFORMANCE: Uses primary key index
 func (r *Repository) GetEventDetails(ctx context.Context, eventID string) (*api.WorldEvent, error) {
 	query := `
-		SELECT id, title, description, type, scale, frequency, status,
-		       start_time, end_time, duration, target_regions, target_factions,
-		       prerequisites, cooldown_duration, max_concurrent, version,
-		       created_at, updated_at
+		SELECT id, name, description, type, region, status,
+		       start_time, end_time, objectives, rewards,
+		       max_participants, current_participants, difficulty
 		FROM world_events.world_events
 		WHERE id = $1
 	`
 
 	var event api.WorldEvent
-	var targetRegions []string
-	var targetFactions []uuid.UUID
-	var prerequisites []uuid.UUID
+	var description sql.NullString
+	var maxParticipants sql.NullInt64
+	var currentParticipants sql.NullInt64
+	var objectives []string
+	var rewards []string
 
 	err := r.db.QueryRowContext(ctx, query, eventID).Scan(
-		&event.ID, &event.Name, &event.Description, &event.Type, &event.Scale, &event.Frequency, &event.Status,
-		&event.StartTime, &event.EndTime, &event.Duration, pq.Array(&targetRegions), pq.Array(&targetFactions),
-		pq.Array(&prerequisites), &event.CooldownDuration, &event.MaxParticipants, &event.Version,
-		&event.CreatedAt, &event.UpdatedAt,
+		&event.ID, &event.Name, &description, &event.Type, &event.Region, &event.Status,
+		&event.StartTime, &event.EndTime, pq.Array(&objectives), pq.Array(&rewards),
+		&maxParticipants, &currentParticipants, &event.Difficulty,
 	)
 
 	if err != nil {
@@ -105,7 +114,20 @@ func (r *Repository) GetEventDetails(ctx context.Context, eventID string) (*api.
 		return nil, fmt.Errorf("failed to query event details: %w", err)
 	}
 
-	event.TargetRegions = targetRegions
+	// Handle nullable fields
+	if description.Valid {
+		event.Description = api.NewOptString(description.String)
+	}
+	if maxParticipants.Valid {
+		event.MaxParticipants = api.NewOptInt(int(maxParticipants.Int64))
+	}
+	if currentParticipants.Valid {
+		event.CurrentParticipants = api.NewOptInt(int(currentParticipants.Int64))
+	}
+
+	event.Objectives = objectives
+	event.Rewards = rewards
+
 	return &event, nil
 }
 
@@ -122,11 +144,12 @@ func (r *Repository) GetPlayerEventStatus(ctx context.Context, playerID, eventID
 
 	var status api.PlayerEventStatusResponse
 	var participationData map[string]interface{}
-	var leftAt sql.NullTime
+	var joinedAt time.Time
+	var score sql.NullInt64
 
 	err := r.db.QueryRowContext(ctx, query, eventID, playerID).Scan(
-		&status.EventId, &status.PlayerId, &status.ParticipationType,
-		&participationData, &status.JoinedAt, &leftAt,
+		&status.EventId, &status.PlayerId, &participationData,
+		&joinedAt, &score,
 	)
 
 	if err != nil {
@@ -136,17 +159,19 @@ func (r *Repository) GetPlayerEventStatus(ctx context.Context, playerID, eventID
 		return nil, fmt.Errorf("failed to query player status: %w", err)
 	}
 
-	if leftAt.Valid {
-		status.LeftAt = &leftAt.Time
+	status.JoinedAt = api.NewOptDateTime(joinedAt)
+	if score.Valid {
+		status.Score = api.NewOptInt(int(score.Int64))
 	}
 
 	// Set default status
-	status.Status = api.PlayerEventStatusACTIVE
+	status.Status = api.PlayerEventStatusResponseStatusPARTICIPATING
 
 	// Calculate progress (placeholder logic)
-	status.Progress = 0.5
-	status.ObjectivesCompleted = api.NewOptInt(2)
-	status.TotalObjectives = api.NewOptInt(4)
+	status.Progress = api.NewOptFloat32(0.5)
+
+	// Set achievements (placeholder)
+	status.Achievements = []string{"first_participation"}
 
 	return &status, nil
 }
@@ -162,19 +187,31 @@ func (r *Repository) CreateEvent(ctx context.Context, event *api.WorldEvent) err
 
 	query := `
 		INSERT INTO world_events.world_events (
-			id, title, description, type, scale, frequency, status,
-			start_time, end_time, duration, target_regions, target_factions,
-			prerequisites, cooldown_duration, max_concurrent, version,
-			created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+			id, name, description, type, region, status,
+			start_time, end_time, objectives, rewards,
+			max_participants, current_participants, difficulty
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 	`
 
-	now := time.Now()
+	var description interface{} = nil
+	if d, ok := event.Description.Get(); ok {
+		description = d
+	}
+
+	var maxParticipants interface{} = nil
+	if mp, ok := event.MaxParticipants.Get(); ok {
+		maxParticipants = mp
+	}
+
+	var currentParticipants interface{} = nil
+	if cp, ok := event.CurrentParticipants.Get(); ok {
+		currentParticipants = cp
+	}
+
 	_, err = tx.ExecContext(ctx, query,
-		event.ID, event.Name, event.Description, event.Type, event.Scale, event.Frequency, event.Status,
-		event.StartTime, event.EndTime, event.Duration, pq.Array(event.TargetRegions),
-		pq.Array([]uuid.UUID{}), pq.Array([]uuid.UUID{}), event.CooldownDuration,
-		event.MaxParticipants, 1, now, now,
+		event.ID, event.Name, description, event.Type, event.Region, event.Status,
+		event.StartTime, event.EndTime, pq.Array(event.Objectives), pq.Array(event.Rewards),
+		maxParticipants, currentParticipants, event.Difficulty,
 	)
 
 	if err != nil {
