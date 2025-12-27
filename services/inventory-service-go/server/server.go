@@ -198,7 +198,7 @@ func (s *Server) UpdateExample(ctx context.Context, req *oas.UpdateExampleReques
 
 	if err != nil {
 		s.logger.Error("Failed to update example", zap.Error(err))
-		return &oas.ErrorHeaders{}, fmt.Errorf("failed to update example: %w", err)
+		return &oas.UpdateExampleBadRequest{}, fmt.Errorf("failed to update example: %w", err)
 	}
 
 	headers := oas.ExampleUpdatedHeaders{
@@ -292,9 +292,21 @@ func (s *Server) ExampleDomainHealthWebSocket(ctx context.Context, params oas.Ex
 }
 
 // GetPlayerEquipment - get player equipment (placeholder implementation)
-func (s *Server) GetPlayerEquipment(ctx context.Context, params oas.GetPlayerEquipmentParams) (oas.GetPlayerEquipmentRes, error) {
+func (s *Server) GetPlayerEquipment(ctx context.Context) (oas.GetPlayerEquipmentRes, error) {
 	// Placeholder implementation - would fetch player equipment from database
-	return &oas.GetPlayerEquipmentBadRequest{}, nil
+	return &oas.Error{}, nil
+}
+
+// ModifyEquipment - modify player equipment (placeholder implementation)
+func (s *Server) ModifyEquipment(ctx context.Context, req *oas.ModifyEquipmentReq) (oas.ModifyEquipmentRes, error) {
+	// Placeholder implementation - would modify player equipment
+	return &oas.ModifyEquipmentBadRequest{}, nil
+}
+
+// UseItem - use an item (placeholder implementation)
+func (s *Server) UseItem(ctx context.Context, req oas.OptUseItemReq, params oas.UseItemParams) (oas.UseItemRes, error) {
+	// Placeholder implementation - would use an item
+	return &oas.UseItemBadRequest{}, nil
 }
 
 // Implement SecurityHandler interface
