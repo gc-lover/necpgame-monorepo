@@ -343,7 +343,7 @@ func decodeResetServiceHealthCheckResponse(resp *http.Response) (res ResetServic
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response HealthResponse
+			var response HealthResponseOK
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
@@ -369,7 +369,7 @@ func decodeResetServiceHealthCheckResponse(resp *http.Response) (res ResetServic
 			}(); err != nil {
 				return res, errors.Wrap(err, "validate")
 			}
-			var wrapper HealthResponseHeaders
+			var wrapper HealthResponseOKHeaders
 			wrapper.Response = response
 			h := uri.NewHeaderDecoder(resp.Header)
 			// Parse "Cache-Control" header.

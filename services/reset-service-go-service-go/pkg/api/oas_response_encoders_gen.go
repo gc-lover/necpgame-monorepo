@@ -132,7 +132,7 @@ func encodeGetResetStatsResponse(response GetResetStatsRes, w http.ResponseWrite
 
 func encodeResetServiceHealthCheckResponse(response ResetServiceHealthCheckRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *HealthResponseHeaders:
+	case *HealthResponseOKHeaders:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		// Encoding response headers.
 		{

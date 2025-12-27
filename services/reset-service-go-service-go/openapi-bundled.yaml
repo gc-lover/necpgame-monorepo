@@ -102,7 +102,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
+                $ref: '#/components/schemas/HealthResponseOK'
         '429':
           description: Too many requests - rate limit exceeded
           headers:
@@ -394,6 +394,34 @@ components:
         **Token Claims:** - `sub`: User/Player ID - `exp`: Expiration timestamp - `iat`: Issued at timestamp - `iss`: Token issuer - `aud`: Token audience - `roles`: User roles array - `permissions`: User permissions array
         **Security Features:** - RS256 signature algorithm - Token rotation required every 24 hours - Automatic refresh tokens - Revocation support via Redis 
   schemas:
+    HealthResponseOK:
+      type: object
+      required:
+        - status
+        - timestamp
+        - domain
+      properties:
+        domain:
+          type: string
+          example: reset-service
+          maxLength: 50
+        status:
+          type: string
+          enum:
+            - healthy
+          example: healthy
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
+        version:
+          type: string
+          example: 1.0.0
+        uptime_seconds:
+          type: integer
+          minimum: 0
+          example: 3600
     HealthResponse:
       type: object
       required:

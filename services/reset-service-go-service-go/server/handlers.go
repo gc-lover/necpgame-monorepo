@@ -92,20 +92,18 @@ func NewHandler() *Handler {
 
 // ResetServiceHealthCheck implements health check endpoint
 func (h *Handler) ResetServiceHealthCheck(ctx context.Context, params api.ResetServiceHealthCheckParams) (api.ResetServiceHealthCheckRes, error) {
-	// PERFORMANCE: Get response from pool
-	resp := h.pool.Get().(*api.HealthResponse)
-	defer h.pool.Put(resp)
-
 	// Calculate uptime
 	h.uptime = int64(time.Since(h.startTime).Seconds())
 
-	// Reset response fields
-	*resp = api.HealthResponse{
-		Domain:        "reset-service",
-		Status:        api.HealthResponseStatusHealthy,
-		Version:       api.NewOptString("1.0.0"),
-		Timestamp:     time.Now(),
-		UptimeSeconds: api.NewOptInt(int(h.uptime)),
+	// Create successful health response
+	resp := &api.HealthResponseOKHeaders{
+		Response: api.HealthResponseOK{
+			Domain:        "reset-service",
+			Status:        api.HealthResponseOKStatusHealthy,
+			Version:       api.NewOptString("1.0.0"),
+			Timestamp:     time.Now(),
+			UptimeSeconds: api.NewOptInt(int(h.uptime)),
+		},
 	}
 
 	h.logger.Printf("Health check requested - uptime: %d seconds", h.uptime)

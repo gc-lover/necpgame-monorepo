@@ -52,14 +52,15 @@ func TestHealthCheckQA(t *testing.T) {
 			// Assert response
 			assert.Equal(t, tt.expectedStatus, w.Code)
 
-			var resp api.HealthResponse
+			var resp api.HealthResponseOK
 			err := json.Unmarshal(w.Body.Bytes(), &resp)
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.expectedDomain, resp.Domain)
 			assert.Equal(t, tt.expectedStatusValue, string(resp.Status))
 			assert.NotEmpty(t, resp.Version.Value)
-			assert.Greater(t, resp.UptimeSeconds.Value, 0)
+			// Note: uptime can be 0 for freshly started service in tests
+			assert.GreaterOrEqual(t, resp.UptimeSeconds.Value, 0)
 		})
 	}
 }

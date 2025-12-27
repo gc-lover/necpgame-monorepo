@@ -575,55 +575,148 @@ func (s *HealthResponse) SetActiveResets(val OptInt) {
 
 func (*HealthResponse) resetServiceHealthCheckRes() {}
 
-// HealthResponseHeaders wraps HealthResponse with response headers.
-type HealthResponseHeaders struct {
+// Ref: #/components/schemas/HealthResponseOK
+type HealthResponseOK struct {
+	Domain        string                 `json:"domain"`
+	Status        HealthResponseOKStatus `json:"status"`
+	Timestamp     time.Time              `json:"timestamp"`
+	Version       OptString              `json:"version"`
+	UptimeSeconds OptInt                 `json:"uptime_seconds"`
+}
+
+// GetDomain returns the value of Domain.
+func (s *HealthResponseOK) GetDomain() string {
+	return s.Domain
+}
+
+// GetStatus returns the value of Status.
+func (s *HealthResponseOK) GetStatus() HealthResponseOKStatus {
+	return s.Status
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *HealthResponseOK) GetTimestamp() time.Time {
+	return s.Timestamp
+}
+
+// GetVersion returns the value of Version.
+func (s *HealthResponseOK) GetVersion() OptString {
+	return s.Version
+}
+
+// GetUptimeSeconds returns the value of UptimeSeconds.
+func (s *HealthResponseOK) GetUptimeSeconds() OptInt {
+	return s.UptimeSeconds
+}
+
+// SetDomain sets the value of Domain.
+func (s *HealthResponseOK) SetDomain(val string) {
+	s.Domain = val
+}
+
+// SetStatus sets the value of Status.
+func (s *HealthResponseOK) SetStatus(val HealthResponseOKStatus) {
+	s.Status = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *HealthResponseOK) SetTimestamp(val time.Time) {
+	s.Timestamp = val
+}
+
+// SetVersion sets the value of Version.
+func (s *HealthResponseOK) SetVersion(val OptString) {
+	s.Version = val
+}
+
+// SetUptimeSeconds sets the value of UptimeSeconds.
+func (s *HealthResponseOK) SetUptimeSeconds(val OptInt) {
+	s.UptimeSeconds = val
+}
+
+// HealthResponseOKHeaders wraps HealthResponseOK with response headers.
+type HealthResponseOKHeaders struct {
 	CacheControl    OptString
 	ContentEncoding OptResetServiceHealthCheckOKContentEncoding
 	ETag            OptString
-	Response        HealthResponse
+	Response        HealthResponseOK
 }
 
 // GetCacheControl returns the value of CacheControl.
-func (s *HealthResponseHeaders) GetCacheControl() OptString {
+func (s *HealthResponseOKHeaders) GetCacheControl() OptString {
 	return s.CacheControl
 }
 
 // GetContentEncoding returns the value of ContentEncoding.
-func (s *HealthResponseHeaders) GetContentEncoding() OptResetServiceHealthCheckOKContentEncoding {
+func (s *HealthResponseOKHeaders) GetContentEncoding() OptResetServiceHealthCheckOKContentEncoding {
 	return s.ContentEncoding
 }
 
 // GetETag returns the value of ETag.
-func (s *HealthResponseHeaders) GetETag() OptString {
+func (s *HealthResponseOKHeaders) GetETag() OptString {
 	return s.ETag
 }
 
 // GetResponse returns the value of Response.
-func (s *HealthResponseHeaders) GetResponse() HealthResponse {
+func (s *HealthResponseOKHeaders) GetResponse() HealthResponseOK {
 	return s.Response
 }
 
 // SetCacheControl sets the value of CacheControl.
-func (s *HealthResponseHeaders) SetCacheControl(val OptString) {
+func (s *HealthResponseOKHeaders) SetCacheControl(val OptString) {
 	s.CacheControl = val
 }
 
 // SetContentEncoding sets the value of ContentEncoding.
-func (s *HealthResponseHeaders) SetContentEncoding(val OptResetServiceHealthCheckOKContentEncoding) {
+func (s *HealthResponseOKHeaders) SetContentEncoding(val OptResetServiceHealthCheckOKContentEncoding) {
 	s.ContentEncoding = val
 }
 
 // SetETag sets the value of ETag.
-func (s *HealthResponseHeaders) SetETag(val OptString) {
+func (s *HealthResponseOKHeaders) SetETag(val OptString) {
 	s.ETag = val
 }
 
 // SetResponse sets the value of Response.
-func (s *HealthResponseHeaders) SetResponse(val HealthResponse) {
+func (s *HealthResponseOKHeaders) SetResponse(val HealthResponseOK) {
 	s.Response = val
 }
 
-func (*HealthResponseHeaders) resetServiceHealthCheckRes() {}
+func (*HealthResponseOKHeaders) resetServiceHealthCheckRes() {}
+
+type HealthResponseOKStatus string
+
+const (
+	HealthResponseOKStatusHealthy HealthResponseOKStatus = "healthy"
+)
+
+// AllValues returns all HealthResponseOKStatus values.
+func (HealthResponseOKStatus) AllValues() []HealthResponseOKStatus {
+	return []HealthResponseOKStatus{
+		HealthResponseOKStatusHealthy,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s HealthResponseOKStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case HealthResponseOKStatusHealthy:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *HealthResponseOKStatus) UnmarshalText(data []byte) error {
+	switch HealthResponseOKStatus(data) {
+	case HealthResponseOKStatusHealthy:
+		*s = HealthResponseOKStatusHealthy
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 type HealthResponseStatus string
 
