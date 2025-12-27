@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Generate NPCs and Dialogues for Toronto Part 1 Quests
-Creates supporting NPC characters and dialogue nodes for Toronto Part 1 city quests.
+Generate NPCs and Dialogues for Toronto Part 3 Quests
+Creates supporting NPC characters and dialogue nodes for Toronto Part 3 city quests.
 """
 
 import yaml
