@@ -11,7 +11,7 @@ from pathlib import Path
 
 def batch_import_houston_quests():
     """Import all Houston quest definition files to database."""
-    quest_dir = Path("knowledge/canon/narrative/quests")
+    quest_dir = Path("../knowledge/canon/narrative/quests")
     imported_count = 0
     failed_count = 0
 
@@ -27,7 +27,7 @@ def batch_import_houston_quests():
             # Run import command
             cmd = [
                 sys.executable,
-                "scripts/import-quest-to-db.py",
+                "import-quest-to-db.py",
                 "--quest-file", str(quest_file)
             ]
 

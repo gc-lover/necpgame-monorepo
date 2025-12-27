@@ -16,8 +16,8 @@ class HoustonQuestConverter:
     """
 
     def __init__(self):
-        self.source_dir = Path("knowledge/canon/lore/timeline-author/quests/america/houston")
-        self.output_dir = Path("knowledge/canon/narrative/quests")
+        self.source_dir = Path("../knowledge/canon/lore/timeline-author/quests/america/houston")
+        self.output_dir = Path("../knowledge/canon/narrative/quests")
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def convert_all_quests(self) -> List[str]:
