@@ -70,9 +70,9 @@ func (s *Service) putChoiceResult(cr *ChoiceResult) {
 	cr.NewState = ""
 	cr.ReputationChanges = ReputationChange{}
 	cr.NextChoicePoint = ""
-	cr.Completed = false
-	cr.Rewards = nil
-	cr.NewObjectives = nil
+	cr.QuestCompleted = false
+	cr.EndingAchieved = ""
+	cr.Consequences = nil
 	s.choiceResultPool.Put(cr)
 }
 
@@ -88,7 +88,8 @@ func (s *Service) putQuestState(qs *repository.PlayerQuestState) {
 	qs.ReputationSnapshot = nil
 	qs.ChoiceHistory = nil
 	qs.StartedAt = time.Time{}
-	qs.UpdatedAt = time.Time{}
+	qs.CompletedAt = nil
+	qs.EndingAchieved = ""
 	s.questStatePool.Put(qs)
 }
 
@@ -99,10 +100,11 @@ func (s *Service) getReputation() *repository.PlayerReputation {
 func (s *Service) putReputation(rep *repository.PlayerReputation) {
 	// Reset fields before returning to pool
 	rep.PlayerID = ""
-	rep.Corporate = 0
-	rep.Street = 0
-	rep.Humanity = 0
-	rep.UpdatedAt = time.Time{}
+	rep.CorporateRep = 0
+	rep.StreetRep = 0
+	rep.HumanityScore = 0
+	rep.LastUpdated = time.Time{}
+	rep.FactionStanding = ""
 	s.reputationPool.Put(rep)
 }
 
@@ -252,7 +254,7 @@ func (s *Service) ProcessChoice(ctx context.Context, playerID, questID string, c
 	}
 
 	// Process the choice and calculate consequences
-	result, err := s.processAdvancedChoice(choice, selectedChoice, dynamicQuest)
+	result, err = s.processAdvancedChoice(choice, selectedChoice, dynamicQuest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to process choice: %w", err)
 	}
@@ -1141,16 +1143,6 @@ func max(a, b int) int {
 		return a
 	}
 	return b
-}
-
-func clamp(value, min, max int) int {
-	if value < min {
-		return min
-	}
-	if value > max {
-		return max
-	}
-	return value
 }
 
 // Cache entry with timestamp for TTL management
