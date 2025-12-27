@@ -280,28 +280,50 @@ func (r *Repository) ListMentorshipContracts(ctx context.Context, mentorID, ment
 }
 
 // UpdateMentorshipContract updates a contract
+// PERFORMANCE: Context timeout for DB operations (150ms for MMO update operations)
 func (r *Repository) UpdateMentorshipContract(ctx context.Context, contractID uuid.UUID, req *api.UpdateMentorshipContractRequest) (*api.MentorshipContract, error) {
 	r.logger.Info("Updating mentorship contract in DB", zap.String("id", contractID.String()))
 
-	// TODO: Implement proper update logic
-	contract, err := r.GetMentorshipContract(ctx, contractID)
-	if err != nil {
-		return nil, err
-	}
+	// PERFORMANCE: Add timeout for DB operations in MMO environment
+	dbCtx, cancel := context.WithTimeout(ctx, 150*time.Millisecond)
+	defer cancel()
+
+	// Build dynamic UPDATE query based on provided fields
+	query := `UPDATE mentorship_contracts SET updated_at = $1`
+	args := []interface{}{time.Now()}
+	argCount := 1
 
 	if req.Status.IsSet() {
-		contract.Status = req.Status.Value
+		argCount++
+		query += fmt.Sprintf(", status = $%d", argCount)
+		args = append(args, req.Status.Value)
 	}
+
 	if req.EndDate.IsSet() {
-		contract.EndDate = req.EndDate
+		argCount++
+		query += fmt.Sprintf(", end_date = $%d", argCount)
+		args = append(args, req.EndDate.Value)
 	}
+
 	if req.Terms != nil {
-		contract.Terms = req.Terms
+		argCount++
+		query += fmt.Sprintf(", terms = $%d", argCount)
+		args = append(args, req.Terms)
 	}
 
-	contract.UpdatedAt = api.NewOptDateTime(time.Now())
+	query += fmt.Sprintf(" WHERE id = $%d", argCount+1)
+	args = append(args, contractID)
 
-	return contract, nil
+	// Execute UPDATE query
+	_, err := r.db.Exec(dbCtx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update contract: %w", err)
+	}
+
+	r.logger.Info("Mentorship contract updated successfully", zap.String("id", contractID.String()))
+
+	// Return updated contract
+	return r.GetMentorshipContract(ctx, contractID)
 }
 
 // CreateLessonSchedule creates a lesson schedule
