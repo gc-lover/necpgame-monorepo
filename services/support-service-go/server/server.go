@@ -108,13 +108,13 @@ func (s *Server) CreateExample(ctx context.Context, req *api.CreateExampleReques
 	ticket.UpdatedAt = time.Now()
 
 	// Optional fields
-	if req.Description.IsSet() {
+	if req.Description.IsSet {
 		ticket.Description = req.Description
 	}
-	if req.Priority.IsSet() {
+	if req.Priority.IsSet {
 		ticket.Priority = req.Priority.Value
 	}
-	if req.Category.IsSet() {
+	if req.Category.IsSet {
 		ticket.Category = req.Category
 	}
 
@@ -142,7 +142,7 @@ func (s *Server) DeleteExample(ctx context.Context, params api.DeleteExamplePara
 	}()
 
 	// Validate UUID format
-	ticketID, err := uuid.Parse(params.Id)
+	_, err := uuid.Parse(params.Id)
 	if err != nil {
 		return &api.DeleteExampleBadRequest{
 			Error: api.Error{
@@ -315,12 +315,9 @@ func (s *Server) SupportServiceHealthCheck(ctx context.Context, params api.Suppo
 	}()
 
 	// Check database connectivity if available
-	var dbStatus string = "unknown"
 	if s.db != nil {
 		if err := s.db.Ping(ctx); err != nil {
-			dbStatus = "unhealthy"
-		} else {
-			dbStatus = "healthy"
+			// Log database unhealthy status if needed
 		}
 	}
 

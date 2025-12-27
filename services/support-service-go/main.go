@@ -10,11 +10,9 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"sync"
 	"syscall"
 	"time"
 
-	"support-service-go/pkg/api"
 	"support-service-go/server"
 )
 

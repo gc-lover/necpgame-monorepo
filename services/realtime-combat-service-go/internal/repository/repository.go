@@ -37,6 +37,37 @@ type CombatEvent struct {
 	Timestamp time.Time       `json:"timestamp"`
 }
 
+// CombatPlayer represents a player in a combat session
+type CombatPlayer struct {
+	ID        string    `json:"id" db:"id"`
+	SessionID string    `json:"session_id" db:"session_id"`
+	PlayerID  string    `json:"player_id" db:"player_id"`
+	Status    string    `json:"status" db:"status"` // "active", "spectating", "disconnected"
+	JoinedAt  time.Time `json:"joined_at" db:"joined_at"`
+	Position  Position  `json:"position" db:"position"`
+	Health    int       `json:"health" db:"health"`
+	MaxHealth int       `json:"max_health" db:"max_health"`
+}
+
+// Position represents player position in combat
+type Position struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+	Z float64 `json:"z"`
+}
+
+// CombatSessionState represents the current state of a combat session
+type CombatSessionState struct {
+	SessionID    string          `json:"session_id"`
+	Status       string          `json:"status"`
+	Players      []*CombatPlayer `json:"players"`
+	Events       []*CombatEvent  `json:"recent_events"`
+	StartTime    *time.Time      `json:"start_time,omitempty"`
+	Duration     int             `json:"duration_seconds"`
+	MapID        string          `json:"map_id"`
+	GameMode     string          `json:"game_mode"`
+}
+
 // CombatRepository handles database operations
 type CombatRepository struct {
 	db     *sql.DB
@@ -240,4 +271,232 @@ func (r *CombatRepository) GetCombatEvents(ctx context.Context, sessionID string
 	}
 
 	return events, nil
+}
+
+// AddPlayerToSession adds a player to a combat session
+func (r *CombatRepository) AddPlayerToSession(ctx context.Context, sessionID, playerID string) error {
+	query := `
+		INSERT INTO gameplay.combat_session_players (session_id, player_id, status, joined_at, health, max_health)
+		VALUES ($1, $2, 'active', NOW(), 100, 100)
+		ON CONFLICT (session_id, player_id) DO UPDATE SET
+			status = 'active',
+			joined_at = NOW()
+	`
+
+	_, err := r.db.ExecContext(ctx, query, sessionID, playerID)
+	if err != nil {
+		r.logger.Errorf("Failed to add player to session: %v", err)
+		return fmt.Errorf("failed to add player to session: %w", err)
+	}
+
+	// Cache player in session
+	cacheKey := fmt.Sprintf("combat:session:%s:players", sessionID)
+	r.redis.SAdd(ctx, cacheKey, playerID)
+	r.redis.Expire(ctx, cacheKey, 30*time.Minute)
+
+	return nil
+}
+
+// RemovePlayerFromSession removes a player from a combat session
+func (r *CombatRepository) RemovePlayerFromSession(ctx context.Context, sessionID, playerID string) error {
+	query := `
+		UPDATE gameplay.combat_session_players
+		SET status = 'disconnected'
+		WHERE session_id = $1 AND player_id = $2
+	`
+
+	_, err := r.db.ExecContext(ctx, query, sessionID, playerID)
+	if err != nil {
+		r.logger.Errorf("Failed to remove player from session: %v", err)
+		return fmt.Errorf("failed to remove player from session: %w", err)
+	}
+
+	// Remove from cache
+	cacheKey := fmt.Sprintf("combat:session:%s:players", sessionID)
+	r.redis.SRem(ctx, cacheKey, playerID)
+
+	return nil
+}
+
+// UpdatePlayerPosition updates a player's position in combat
+func (r *CombatRepository) UpdatePlayerPosition(ctx context.Context, sessionID, playerID string, position Position) error {
+	positionJSON, err := json.Marshal(position)
+	if err != nil {
+		return fmt.Errorf("failed to marshal position: %w", err)
+	}
+
+	query := `
+		UPDATE gameplay.combat_session_players
+		SET position = $3::jsonb
+		WHERE session_id = $1 AND player_id = $2
+	`
+
+	_, err = r.db.ExecContext(ctx, query, sessionID, playerID, positionJSON)
+	if err != nil {
+		r.logger.Errorf("Failed to update player position: %v", err)
+		return fmt.Errorf("failed to update player position: %w", err)
+	}
+
+	// Cache position
+	cacheKey := fmt.Sprintf("combat:player:%s:position", playerID)
+	r.redis.Set(ctx, cacheKey, positionJSON, 30*time.Second)
+
+	return nil
+}
+
+// GetSessionPlayers gets all players in a combat session
+func (r *CombatRepository) GetSessionPlayers(ctx context.Context, sessionID string) ([]*CombatPlayer, error) {
+	query := `
+		SELECT id, session_id, player_id, status, joined_at, position, health, max_health
+		FROM gameplay.combat_session_players
+		WHERE session_id = $1 AND status != 'disconnected'
+		ORDER BY joined_at ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, sessionID)
+	if err != nil {
+		r.logger.Errorf("Failed to get session players: %v", err)
+		return nil, fmt.Errorf("failed to get session players: %w", err)
+	}
+	defer rows.Close()
+
+	var players []*CombatPlayer
+	for rows.Next() {
+		var player CombatPlayer
+		var positionJSON []byte
+
+		err := rows.Scan(&player.ID, &player.SessionID, &player.PlayerID,
+			&player.Status, &player.JoinedAt, &positionJSON, &player.Health, &player.MaxHealth)
+		if err != nil {
+			r.logger.Errorf("Failed to scan player: %v", err)
+			continue
+		}
+
+		// Parse position
+		if err := json.Unmarshal(positionJSON, &player.Position); err != nil {
+			r.logger.Errorf("Failed to unmarshal position: %v", err)
+			// Set default position
+			player.Position = Position{X: 0, Y: 0, Z: 0}
+		}
+
+		players = append(players, &player)
+	}
+
+	return players, nil
+}
+
+// GetPlayerPosition gets a player's current position
+func (r *CombatRepository) GetPlayerPosition(ctx context.Context, playerID string) (*Position, error) {
+	// Try cache first
+	cacheKey := fmt.Sprintf("combat:player:%s:position", playerID)
+	cached, err := r.redis.Get(ctx, cacheKey).Result()
+	if err == nil {
+		var position Position
+		if err := json.Unmarshal([]byte(cached), &position); err == nil {
+			return &position, nil
+		}
+	}
+
+	// Fallback to database
+	query := `
+		SELECT position
+		FROM gameplay.combat_session_players
+		WHERE player_id = $1 AND status = 'active'
+		ORDER BY joined_at DESC
+		LIMIT 1
+	`
+
+	var positionJSON []byte
+	err = r.db.QueryRowContext(ctx, query, playerID).Scan(&positionJSON)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return &Position{X: 0, Y: 0, Z: 0}, nil // Default position
+		}
+		r.logger.Errorf("Failed to get player position: %v", err)
+		return nil, fmt.Errorf("failed to get player position: %w", err)
+	}
+
+	var position Position
+	if err := json.Unmarshal(positionJSON, &position); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal position: %w", err)
+	}
+
+	// Cache result
+	r.redis.Set(ctx, cacheKey, positionJSON, 30*time.Second)
+
+	return &position, nil
+}
+
+// GetCombatSessionState gets the complete state of a combat session
+func (r *CombatRepository) GetCombatSessionState(ctx context.Context, sessionID string) (*CombatSessionState, error) {
+	// Get session info
+	session, err := r.GetCombatSession(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get players
+	players, err := r.GetSessionPlayers(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get recent events
+	events, err := r.GetCombatEvents(ctx, sessionID, 50)
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate duration
+	duration := 0
+	if session.StartedAt != nil {
+		duration = int(time.Since(*session.StartedAt).Seconds())
+	}
+
+	state := &CombatSessionState{
+		SessionID: sessionID,
+		Status:    session.Status,
+		Players:   players,
+		Events:    events,
+		StartTime: session.StartedAt,
+		Duration:  duration,
+		MapID:     session.MapID,
+		GameMode:  session.GameMode,
+	}
+
+	return state, nil
+}
+
+// UpdatePlayerHealth updates a player's health in combat
+func (r *CombatRepository) UpdatePlayerHealth(ctx context.Context, sessionID, playerID string, health, maxHealth int) error {
+	query := `
+		UPDATE gameplay.combat_session_players
+		SET health = $3, max_health = $4
+		WHERE session_id = $1 AND player_id = $2
+	`
+
+	_, err := r.db.ExecContext(ctx, query, sessionID, playerID, health, maxHealth)
+	if err != nil {
+		r.logger.Errorf("Failed to update player health: %v", err)
+		return fmt.Errorf("failed to update player health: %w", err)
+	}
+
+	return nil
+}
+
+// StartSpectating marks a player as spectating
+func (r *CombatRepository) StartSpectating(ctx context.Context, sessionID, playerID string) error {
+	query := `
+		UPDATE gameplay.combat_session_players
+		SET status = 'spectating'
+		WHERE session_id = $1 AND player_id = $2
+	`
+
+	_, err := r.db.ExecContext(ctx, query, sessionID, playerID)
+	if err != nil {
+		r.logger.Errorf("Failed to start spectating: %v", err)
+		return fmt.Errorf("failed to start spectating: %w", err)
+	}
+
+	return nil
 }

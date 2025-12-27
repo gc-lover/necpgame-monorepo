@@ -199,20 +199,53 @@ func (h *CombatHandlers) EndCombatSession(w http.ResponseWriter, r *http.Request
 // JoinCombatSession joins a player to a combat session
 func (h *CombatHandlers) JoinCombatSession(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
-	// Implementation for joining session
-	h.respondWithJSON(w, http.StatusOK, map[string]string{
-		"message": "Joined session successfully",
+	if sessionID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing session ID")
+		return
+	}
+
+	// Extract player ID from context or header (simplified - should come from auth)
+	playerID := r.Header.Get("X-Player-ID")
+	if playerID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing player ID")
+		return
+	}
+
+	if err := h.service.JoinCombatSession(r.Context(), sessionID, playerID); err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
+		"message":   "Joined session successfully",
 		"sessionId": sessionID,
+		"playerId":  playerID,
 	})
 }
 
 // LeaveCombatSession leaves a combat session
 func (h *CombatHandlers) LeaveCombatSession(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
-	// Implementation for leaving session
-	h.respondWithJSON(w, http.StatusOK, map[string]string{
-		"message": "Left session successfully",
+	if sessionID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing session ID")
+		return
+	}
+
+	playerID := r.Header.Get("X-Player-ID")
+	if playerID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing player ID")
+		return
+	}
+
+	if err := h.service.LeaveCombatSession(r.Context(), sessionID, playerID); err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
+		"message":   "Left session successfully",
 		"sessionId": sessionID,
+		"playerId":  playerID,
 	})
 }
 

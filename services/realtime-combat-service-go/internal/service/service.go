@@ -808,3 +808,184 @@ func (s *CombatService) CleanupExpiredSynergies() {
 		delete(s.synergyEngine.activeSynergies, key)
 	}
 }
+
+// JoinCombatSession adds a player to a combat session
+func (s *CombatService) JoinCombatSession(ctx context.Context, sessionID, playerID string) error {
+	// Check if session exists and is active
+	session, err := s.repo.GetCombatSession(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+
+	if session.Status != "waiting" && session.Status != "active" {
+		return fmt.Errorf("session is not accepting players")
+	}
+
+	// Check player limit
+	players, err := s.repo.GetSessionPlayers(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+
+	if len(players) >= session.MaxPlayers {
+		return fmt.Errorf("session is full")
+	}
+
+	// Add player to session
+	if err := s.repo.AddPlayerToSession(ctx, sessionID, playerID); err != nil {
+		s.metrics.IncrementErrors()
+		return fmt.Errorf("failed to join combat session: %w", err)
+	}
+
+	s.metrics.IncrementPlayersJoined()
+	s.logger.Infof("Player %s joined combat session %s", playerID, sessionID)
+
+	return nil
+}
+
+// LeaveCombatSession removes a player from a combat session
+func (s *CombatService) LeaveCombatSession(ctx context.Context, sessionID, playerID string) error {
+	if err := s.repo.RemovePlayerFromSession(ctx, sessionID, playerID); err != nil {
+		s.metrics.IncrementErrors()
+		return fmt.Errorf("failed to leave combat session: %w", err)
+	}
+
+	s.metrics.IncrementPlayersLeft()
+	s.logger.Infof("Player %s left combat session %s", playerID, sessionID)
+
+	return nil
+}
+
+// UpdatePlayerPosition updates a player's position
+func (s *CombatService) UpdatePlayerPosition(ctx context.Context, sessionID, playerID string, position repository.Position) error {
+	if err := s.repo.UpdatePlayerPosition(ctx, sessionID, playerID, position); err != nil {
+		s.metrics.IncrementErrors()
+		return fmt.Errorf("failed to update player position: %w", err)
+	}
+
+	s.logger.Debugf("Updated position for player %s in session %s: %+v", playerID, sessionID, position)
+
+	return nil
+}
+
+// GetCombatSessionState gets the complete state of a combat session
+func (s *CombatService) GetCombatSessionState(ctx context.Context, sessionID string) (*repository.CombatSessionState, error) {
+	state, err := s.repo.GetCombatSessionState(ctx, sessionID)
+	if err != nil {
+		s.metrics.IncrementErrors()
+		return nil, fmt.Errorf("failed to get combat session state: %w", err)
+	}
+
+	return state, nil
+}
+
+// StartSpectating marks a player as spectating
+func (s *CombatService) StartSpectating(ctx context.Context, sessionID, playerID string) error {
+	// Check if player is in session
+	players, err := s.repo.GetSessionPlayers(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+
+	playerFound := false
+	for _, player := range players {
+		if player.PlayerID == playerID {
+			playerFound = true
+			break
+		}
+	}
+
+	if !playerFound {
+		return fmt.Errorf("player is not in this session")
+	}
+
+	if err := s.repo.StartSpectating(ctx, sessionID, playerID); err != nil {
+		s.metrics.IncrementErrors()
+		return fmt.Errorf("failed to start spectating: %w", err)
+	}
+
+	s.logger.Infof("Player %s started spectating in session %s", playerID, sessionID)
+
+	return nil
+}
+
+// GetPlayerCombatStats gets combat statistics for a specific player
+func (s *CombatService) GetPlayerCombatStats(ctx context.Context, playerID string) (map[string]interface{}, error) {
+	// This would aggregate stats from combat events
+	// For now, return mock data based on player activity
+	stats := map[string]interface{}{
+		"player_id":      playerID,
+		"total_sessions": 15,
+		"wins":          8,
+		"losses":        7,
+		"kills":         45,
+		"deaths":        23,
+		"damage_dealt":  12500,
+		"damage_taken":  8900,
+		"accuracy":      0.72,
+		"rank":          "Diamond",
+		"rank_points":   2450,
+		"favorite_weapon": "Neural Disruptor",
+		"playtime_hours": 127.5,
+	}
+
+	return stats, nil
+}
+
+// GetCombatSessionStats gets statistics for a combat session
+func (s *CombatService) GetCombatSessionStats(ctx context.Context, sessionID string) (map[string]interface{}, error) {
+	// Get session events
+	events, err := s.repo.GetCombatEvents(ctx, sessionID, 1000)
+	if err != nil {
+		return nil, err
+	}
+
+	// Aggregate stats from events
+	stats := map[string]interface{}{
+		"session_id":     sessionID,
+		"total_events":   len(events),
+		"damage_events":  0,
+		"kill_events":    0,
+		"action_events":  0,
+		"total_damage":   0,
+		"duration":       0,
+		"active_players": 0,
+	}
+
+	// Analyze events
+	damageTotal := 0
+	for _, event := range events {
+		switch event.Type {
+		case "damage":
+			stats["damage_events"] = stats["damage_events"].(int) + 1
+			// Parse damage amount (simplified)
+			damageTotal += 100 // Mock parsing
+		case "kill":
+			stats["kill_events"] = stats["kill_events"].(int) + 1
+		case "action":
+			stats["action_events"] = stats["action_events"].(int) + 1
+		}
+	}
+
+	stats["total_damage"] = damageTotal
+
+	// Get session info for duration
+	session, err := s.repo.GetCombatSession(ctx, sessionID)
+	if err == nil && session.StartedAt != nil {
+		stats["duration"] = int(time.Since(*session.StartedAt).Seconds())
+	}
+
+	// Get active players count
+	players, err := s.repo.GetSessionPlayers(ctx, sessionID)
+	if err == nil {
+		activeCount := 0
+		for _, player := range players {
+			if player.Status == "active" {
+				activeCount++
+			}
+		}
+		stats["active_players"] = activeCount
+	}
+
+	return stats, nil
+}
