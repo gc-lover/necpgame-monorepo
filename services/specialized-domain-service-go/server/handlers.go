@@ -28,9 +28,10 @@ var responsePool = sync.Pool{
 // Handler implements the generated API server interface
 // PERFORMANCE: Struct aligned for memory efficiency (large fields first)
 type Handler struct {
-	service *Service        // 8 bytes (pointer)
-	logger   Logger        // 8 bytes (interface)
-	pool     *sync.Pool    // 8 bytes (pointer)
+	api.UnimplementedHandler // Embed to implement all methods with defaults
+	service *Service         // 8 bytes (pointer)
+	logger   Logger         // 8 bytes (interface)
+	pool     *sync.Pool     // 8 bytes (pointer)
 	// Add padding if needed for alignment
 	_pad [0]byte
 }
@@ -93,8 +94,12 @@ func (h *Handler) ReloadQuestContent(ctx context.Context, req *api.ReloadQuestCo
 	}, nil
 }
 
-// Example stub - replace with actual implementations:
-func (h *Handler) QuestHealthCheck(ctx context.Context) error {
+// QuestHealthCheck implements health check endpoint
+func (h *Handler) QuestHealthCheck(ctx context.Context) (*api.HealthResponse, error) {
 	// TODO: Implement health check logic
-	return h.service.HealthCheck(ctx)
+	err := h.service.HealthCheck(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &api.HealthResponse{Status: "ok"}, nil
 }

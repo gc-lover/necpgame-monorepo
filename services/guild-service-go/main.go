@@ -19,9 +19,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/internal/config"
-	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/internal/handlers"
 	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/internal/repository"
-	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/internal/service"
+	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/server"
 )
 
 func main() {
@@ -74,10 +73,11 @@ func main() {
 	repo := repository.NewRepository(db, redisClient, sugar)
 
 	// Initialize service layer with business logic
-	svc := service.NewService(repo, sugar)
+	guildSvc := server.NewGuildService(logger)
+	guildSvc.UpdateRepository(repo) // Connect to database repository
 
 	// Initialize handlers
-	h := handlers.NewHandlers(svc, sugar)
+	h := server.NewHandler(logger, guildSvc)
 
 	// Create HTTP router with enterprise-grade middleware
 	r := chi.NewRouter()
