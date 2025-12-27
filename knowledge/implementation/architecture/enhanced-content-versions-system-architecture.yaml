@@ -5,7 +5,7 @@ metadata:
   category: systems
   status: draft
   version: "1.0.0"
-  last_updated: 2025-12-XXT00:00:00Z
+  last_updated: 2025-12-27T20:31:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -13,91 +13,345 @@ metadata:
     - architecture
     - gameplay
     - enhanced-content
-    - elite
-    - champion
-    - mythic-plus
-    - hardcore
+    - difficulty
+    - progression
+    - rewards
+    - content-scaling
   related_systems:
+    - content-service
     - gameplay-service
-    - world-service
     - progression-service
+    - difficulty-service
+    - reward-service
   related_documents:
-    - id: enhanced-content-idea
+    - id: enhanced-content-versions-system
       relation: implements
-    - id: combat-ai-enemies-architecture
-      relation: extends
-  github_issue: 1504
+  github_issue: 142074655
   visibility: internal
   audience:
     - architect
     - backend
+    - content
     - gameplay
     - api-designer
 
 summary:
   problem: |
-    Существующий контент становится предсказуемым после многократного прохождения.
-    Не хватает усиленных версий контента, которые бы предоставляли новые вызовы.
+    Требуется спроектировать архитектуру системы усиленных версий контента,
+    включающую:
+    - Создание улучшенных версий существующего контента
+    - Масштабирование сложности и наград
+    - Прогрессивное открытие контента
+    - Баланс между оригиналом и усиленной версией
+    - Социальные аспекты (соревнования, демонстрация)
+    - Экономические модели (премиум доступ)
+    - Аналитику вовлеченности и успеха
   goal: |
-    Создать архитектуру усиленных версий контента, которая:
-    - Предоставляет усиленные версии существующего контента
-    - Добавляет новые механики и вызовы
-    - Масштабирует сложность динамически
-    - Награждает игроков за прохождение
+    Создать архитектурную схему усиленных версий контента с определением:
+    - Механизмов усиления контента
+    - Систем баланса и прогрессии
+    - Моделей наград и мотивации
+    - Социальных интеграций
+    - Экономических аспектов
+    - Аналитики и оптимизации
+    - Масштабируемости системы
   essence: |
-    Система усиленных версий контента предоставляет три типа усилений: Elite World Bosses,
-    Champion Raids и Mythic+ Dungeons. Каждый тип имеет уникальные механики и награды.
+    Полная архитектура усиленных версий контента с механизмами масштабирования,
+    баланса и социальной интеграции для продления жизненного цикла игры.
 
 architecture:
   overview: |
-    Система усиленных версий контента состоит из следующих компонентов:
-    1. Enhanced Content Manager - управление усиленными версиями
-    2. Elite Boss Spawner - управление появлением Elite боссов
-    3. Champion Raid Manager - управление Champion рейдами
-    4. MythicPlus Scaler - масштабирование Mythic+ подземелий
-    5. Enhanced Reward Calculator - расчёт наград для усиленного контента
+    Архитектура системы усиленных версий контента состоит из следующих компонентов:
+    1. Content Amplifier - усилитель контента
+    2. Difficulty Scaler - масштабировщик сложности
+    3. Reward Multiplier - множитель наград
+    4. Progression Gate - контроллер прогрессии
+    5. Social Showcase - демонстрация достижений
+    6. Analytics Tracker - отслеживание аналитики
+    7. Balance Optimizer - оптимизатор баланса
 
   microservices:
-    - name: gameplay-service
-      port: 8083
+    - name: content-service
+      port: 8090
       responsibility: |
-        Обработка усиленного контента:
-        - Управление усиленными версиями
-        - Применение модификаторов
-        - Отслеживание прогресса
+        Обработка усиленных версий контента:
+        - Создание и управление усиленными версиями
+        - Масштабирование параметров контента
+        - Контроль доступа к усиленному контенту
+        - Интеграция с системами сложности и наград
+        - Социальная демонстрация достижений
+        - Сбор аналитики использования
+        - Оптимизация баланса версий
       components:
-        - enhanced-content-manager: управление усиленными версиями
-        - elite-boss-spawner: управление Elite боссами
-        - champion-raid-manager: управление Champion рейдами
-        - mythicplus-scaler: масштабирование Mythic+
-        - enhanced-reward-calculator: расчёт наград
+        - content-amplifier: усилитель контента
+        - difficulty-scaler: масштабировщик сложности
+        - reward-multiplier: множитель наград
+        - progression-gate: контроллер прогрессии
+        - social-showcase: демонстрация достижений
+        - analytics-tracker: аналитика
+        - balance-optimizer: оптимизатор баланса
       endpoints:
-        - GET /api/v1/gameplay/enhanced/elite-bosses/active - активные Elite боссы
-        - GET /api/v1/gameplay/enhanced/champion-raids/available - доступные Champion рейды
-        - GET /api/v1/gameplay/enhanced/mythicplus/{dungeonId}/levels - уровни Mythic+
-        - POST /api/v1/gameplay/enhanced/mythicplus/{dungeonId}/start - начало Mythic+
+        - GET /api/v1/content/enhanced - список усиленного контента
+        - GET /api/v1/content/enhanced/{contentId} - информация об усиленной версии
+        - POST /api/v1/content/enhanced/{contentId}/unlock - разблокировка версии
+        - GET /api/v1/content/enhanced/{contentId}/progress - прогресс в версии
+        - POST /api/v1/content/enhanced/{contentId}/complete - завершение версии
+        - GET /api/v1/content/enhanced/leaderboard - лидерборд версий
+        - POST /api/v1/content/enhanced/{contentId}/showcase - демонстрация достижения
+        - GET /api/v1/content/enhanced/analytics - аналитика версий
+        - POST /api/v1/content/enhanced/create - создание усиленной версии
+        - PUT /api/v1/content/enhanced/{contentId}/balance - настройка баланса
       websocket_channels:
-        - wss://api.necp.game/v1/gameplay/enhanced/elite-bosses - события Elite боссов
+        - wss://api.necp.game/v1/content/enhanced/{contentId}/live - версия в реальном времени
+        - wss://api.necp.game/v1/content/enhanced/social/live - социальные обновления
       events_published:
-        - gameplay.enhanced.elite-boss.spawned: появление Elite босса
-        - gameplay.enhanced.champion-raid.completed: завершение Champion рейда
-        - gameplay.enhanced.mythicplus.completed: завершение Mythic+
+        - content.enhanced.unlocked: версия разблокирована
+        - content.enhanced.completed: версия завершена
+        - content.enhanced.record-broken: рекорд побит
+        - content.enhanced.showcased: достижение продемонстрировано
+        - content.enhanced.progress-updated: прогресс обновлен
+        - content.enhanced.balance-adjusted: баланс скорректирован
+        - content.enhanced.content-amplified: контент усилен
+
+  enhancement_types:
+    difficulty_enhancements:
+      - name: elite_mode
+        description: "Элитный режим с повышенной сложностью"
+        modifiers: ["enemy_health +100%", "enemy_damage +50%", "player_health -25%"]
+        unlock_requirements: "Complete base version on Hard difficulty"
+        reward_multiplier: "3.0x"
+
+      - name: nightmare_mode
+        description: "Кошмарный режим максимальной сложности"
+        modifiers: ["enemy_count +200%", "special_abilities_enabled", "time_pressure"]
+        unlock_requirements: "Complete Elite mode with S-rank"
+        reward_multiplier: "5.0x"
+
+      - name: hardcore_mode
+        description: "Хардкор режим с перманентными последствиями"
+        modifiers: ["permadeath_enabled", "limited_saves", "increased_consequences"]
+        unlock_requirements: "Reach level 50 in base game"
+        reward_multiplier: "4.0x"
+
+    content_enhancements:
+      - name: extended_edition
+        description: "Расширенная версия с дополнительным контентом"
+        additions: ["bonus_levels", "alternate_storylines", "hidden_secrets"]
+        unlock_requirements: "100% completion of base version"
+        reward_multiplier: "2.5x"
+
+      - name: master_challenge
+        description: "Мастер-челлендж с комбинированными испытаниями"
+        additions: ["combo_objectives", "speed_requirements", "no_damage_runs"]
+        unlock_requirements: "Complete all Elite modes"
+        reward_multiplier: "6.0x"
+
+      - name: infinite_mode
+        description: "Бесконечный режим с прогрессирующей сложностью"
+        additions: ["endless_scaling", "survival_elements", "adaptive_ai"]
+        unlock_requirements: "Complete Nightmare mode"
+        reward_multiplier: "Variable (increases over time)"
+
+  scaling_mechanisms:
+    parameter_scaling:
+      - name: health_scaling
+        base_formula: "health = base_health * (1 + difficulty_modifier)"
+        elite_modifier: "2.0"
+        nightmare_modifier: "4.0"
+        balance_checks: ["combat_duration", "healing_efficiency"]
+
+      - name: damage_scaling
+        base_formula: "damage = base_damage * (1 + scaling_factor)"
+        elite_modifier: "1.5"
+        nightmare_modifier: "3.0"
+        balance_checks: ["damage_per_second", "burst_potential"]
+
+      - name: resource_scaling
+        base_formula: "resources = base_resources * (1 - scarcity_modifier)"
+        elite_modifier: "0.5"
+        nightmare_modifier: "0.25"
+        balance_checks: ["resource_economy", "survival_pressure"]
+
+    dynamic_adjustments:
+      - name: adaptive_difficulty
+        mechanism: "Real-time difficulty adjustment based on player performance"
+        triggers: ["death_frequency", "completion_time", "skill_demonstration"]
+        adjustments: ["enemy_placement", "resource_distribution", "checkpoint_frequency"]
+
+      - name: content_modulation
+        mechanism: "Dynamic content changes based on player choices"
+        triggers: ["playstyle_detection", "engagement_patterns", "frustration_indicators"]
+        adjustments: ["encounter_variety", "puzzle_complexity", "narrative_branches"]
+
+  progression_system:
+    unlock_mechanisms:
+      - name: achievement_based
+        requirements: ["specific_achievements", "performance_thresholds", "completion_criteria"]
+        examples: ["Beat base game without taking damage", "Complete on higher difficulty"]
+        validation: "Server-side verification"
+
+      - name: progression_based
+        requirements: ["character_level", "skill_mastery", "content_completion"]
+        examples: ["Reach level 25", "Master specific abilities", "100% exploration"]
+        validation: "Database cross-reference"
+
+      - name: social_based
+        requirements: ["community_contribution", "peer_recognition", "competitive_ranking"]
+        examples: ["Top leaderboard position", "Content creation", "Guild achievements"]
+        validation: "Community verification"
+
+    mastery_tiers:
+      - name: enhanced
+        requirements: "Complete base version on any difficulty"
+        benefits: ["cosmetic_unlocks", "title_awards", "basic_multipliers"]
+
+      - name: superior
+        requirements: "Complete Elite mode"
+        benefits: ["rare_cosmetics", "stat_bonuses", "advanced_multipliers"]
+
+      - name: transcendent
+        requirements: "Complete Nightmare mode"
+        benefits: ["legendary_cosmetics", "permanent_buffs", "exclusive_content"]
+
+      - name: ultimate
+        requirements: "Complete Master Challenge"
+        benefits: ["mythical_cosmetics", "game_modifying_abilities", "creator_tools"]
+
+  reward_system:
+    multiplier_system:
+      - name: base_multiplier
+        application: "Applied to all rewards in enhanced versions"
+        calculation: "1.5x for Elite, 3.0x for Nightmare, 5.0x for Master"
+        stacking: "Multiplicative with other modifiers"
+
+      - name: performance_multiplier
+        application: "Bonus based on performance metrics"
+        calculation: "Speed bonus, accuracy bonus, style bonus"
+        maximum: "2.0x additional multiplier"
+
+      - name: rarity_multiplier
+        application: "Increased chance for rare rewards"
+        calculation: "Linear scaling with difficulty tier"
+        guaranteed: "At least one rare drop per completion"
+
+    exclusive_rewards:
+      - name: enhanced_cosmetics
+        types: ["character_skins", "weapon_skins", "effect_overlays"]
+        exclusivity: "Only available in enhanced versions"
+        showcase: "Social features for display"
+
+      - name: enhanced_abilities
+        types: ["permanent_buffs", "new_skills", "ability_upgrades"]
+        persistence: "Carried over to base game"
+        balance: "Careful power scaling"
+
+      - name: enhanced_currency
+        types: ["premium_currency", "special_tokens", "seasonal_points"]
+        usage: ["cosmetic_purchases", "exclusive_content", "status_symbols"]
+        conversion: "Limited exchange rates"
+
+  social_integration:
+    showcase_system:
+      - name: achievement_gallery
+        features: ["screenshot_sharing", "replay_recording", "highlight_creation"]
+        privacy: ["public", "friends_only", "private"]
+        monetization: ["view_counts", "appreciation_system"]
+
+      - name: leaderboard_integration
+        features: ["global_rankings", "friend_comparisons", "tier_systems"]
+        categories: ["completion_time", "score_achievement", "style_rating"]
+        rewards: ["rank_titles", "exclusive_badges", "community_status"]
+
+      - name: community_challenges
+        features: ["guild_competitions", "peer_challenges", "community_events"]
+        coordination: ["scheduled_events", "open_invitations", "random_matchmaking"]
+        rewards: ["group_achievements", "shared_rewards", "social_bonuses"]
+
+    streaming_integration:
+      - name: live_broadcasting
+        features: ["real-time_overlay", "viewer_interaction", "donation_integration"]
+        audience: ["spectator_mode", "commentary_tracks", "challenge_suggestions"]
+        benefits: ["increased_visibility", "community_engagement", "monetization"]
+
+      - name: content_creation
+        features: ["replay_tools", "editing_suite", "sharing_platforms"]
+        monetization: ["ad_revenue", "patreon_integration", "exclusive_content"]
+        community: ["tutorial_creation", "strategy_guides", "entertainment_content"]
+
+  analytics_system:
+    engagement_tracking:
+      - name: completion_analytics
+        metrics: ["completion_rates", "average_times", "abandonment_points"]
+        insights: ["difficulty_balance", "content_engagement", "player_frustration"]
+
+      - name: performance_analytics
+        metrics: ["skill_demonstration", "improvement_rates", "consistency_scores"]
+        insights: ["content_suitability", "progression_effectiveness", "reward_value"]
+
+      - name: social_analytics
+        metrics: ["sharing_rates", "community_participation", "competitive_activity"]
+        insights: ["social_features_success", "viral_potential", "retention_impact"]
+
+    optimization_engine:
+      - name: dynamic_balancing
+        triggers: ["low_completion_rates", "high_frustration", "unbalanced_rewards"]
+        actions: ["difficulty_adjustments", "reward_rebalancing", "content_modifications"]
+
+      - name: content_recommendations
+        algorithm: "Player preference learning"
+        suggestions: ["similar_difficulty", "progressive_challenges", "personalized_scaling"]
+        delivery: ["post-completion_suggestions", "difficulty_warnings", "progression_guidance"]
+
+  economic_model:
+    access_control:
+      - name: free_unlocks
+        mechanism: "Achievement and progression-based access"
+        examples: ["Complete base content", "Reach specific milestones"]
+        conversion: "Natural progression to enhanced content"
+
+      - name: premium_unlocks
+        mechanism: "Paid access to enhanced versions"
+        examples: ["Direct purchase", "Battle pass inclusion", "Seasonal subscriptions"]
+        pricing: ["Tiered_pricing", "bundle_offers", "loyalty_discounts"]
+
+      - name: earned_unlocks
+        mechanism: "Community contribution and competition rewards"
+        examples: ["Tournament_wins", "content_creation", "peer_recognition"]
+        sustainability: ["Ongoing_engagement", "community_investment"]
+
+    monetization_streams:
+      - name: direct_sales
+        products: ["individual_enhanced_versions", "content_packs", "seasonal_bundles"]
+        pricing: ["one-time_purchase", "subscription_model", "battle_pass_system"]
+
+      - name: cosmetic_market
+        products: ["exclusive_skins", "animated_effects", "personalization_options"]
+        pricing: ["premium_currency", "real_money", "earned_tokens"]
+
+      - name: competitive_rewards
+        products: ["tournament_prizes", "ranking_rewards", "achievement_badges"]
+        pricing: ["earned_through_play", "prestige_system", "community_voting"]
 
   data_flows:
-    elite_boss_spawn_flow: |
-      1. Elite Boss Spawner проверяет условия появления
-      2. Elite Boss Spawner создает Elite версию босса
-      3. Enhanced Content Manager применяет усиления (+200% HP, +100% урон)
-      4. Enhanced Content Manager добавляет новые механики
-      5. World Service публикует событие gameplay.enhanced.elite-boss.spawned
-      6. Realtime Gateway отправляет уведомление игрокам
+    content_enhancement_flow: |
+      1. Content Amplifier получает базовый контент
+      2. Difficulty Scaler применяет модификаторы сложности
+      3. Balance Optimizer проверяет баланс параметров
+      4. Reward Multiplier рассчитывает награды
+      5. Progression Gate контролирует доступ
+      6. Content Service сохраняет усиленную версию
+      7. Analytics Tracker начинает сбор данных
+      8. Social Showcase готовит демонстрационные функции
 
-    mythicplus_scaling_flow: |
-      1. Игрок выбирает уровень Mythic+
-      2. MythicPlus Scaler рассчитывает модификаторы для уровня
-      3. MythicPlus Scaler применяет модификаторы (+8% HP, +5% урон за уровень)
-      4. Enhanced Content Manager активирует усиленные механики
-      5. Gameplay Service запускает подземелье с модификаторами
+    player_progression_flow: |
+      1. Игрок запрашивает доступ к усиленной версии
+      2. Progression Gate проверяет требования разблокировки
+      3. Content Amplifier загружает персонализированную версию
+      4. Difficulty Scaler адаптирует под уровень игрока
+      5. По ходу прохождения Analytics Tracker собирает метрики
+      6. Reward Multiplier рассчитывает финальные награды
+      7. Social Showcase предлагает демонстрацию достижения
+      8. Content Service публикует событие content.enhanced.completed
 
   database_structure:
     tables:
@@ -105,63 +359,109 @@ architecture:
         description: Усиленные версии контента
         columns:
           - id: UUID PRIMARY KEY
-          - content_id: UUID FOREIGN KEY
-          - version_type: ENUM (elite, champion, mythicplus)
-          - hp_modifier: DECIMAL(5,2)
-          - damage_modifier: DECIMAL(5,2)
-          - mechanics: JSONB
-          - rewards: JSONB
+          - base_content_id: UUID FOREIGN KEY
+          - version_name: VARCHAR(255)
+          - enhancement_type: VARCHAR(50)
+          - difficulty_modifier: DECIMAL(3,2)
+          - reward_multiplier: DECIMAL(3,2)
+          - unlock_requirements: JSONB
+          - scaling_parameters: JSONB
+          - is_active: BOOLEAN
           - created_at: TIMESTAMP
 
-      - name: elite_boss_spawns
-        description: Появления Elite боссов
+      - name: player_content_progress
+        description: Прогресс игрока в контенте
         columns:
           - id: UUID PRIMARY KEY
-          - boss_id: UUID FOREIGN KEY
-          - spawn_time: TIMESTAMP
-          - despawn_time: TIMESTAMP
-          - defeated: BOOLEAN
-          - defeated_by: UUID FOREIGN KEY (nullable)
+          - player_id: UUID FOREIGN KEY
+          - content_version_id: UUID FOREIGN KEY
+          - unlock_status: VARCHAR(50)
+          - completion_status: VARCHAR(50)
+          - best_score: DECIMAL(10,2)
+          - best_time: INTEGER
+          - attempts_count: INTEGER
+          - last_played: TIMESTAMP
 
-      - name: mythicplus_sessions
-        description: Сессии Mythic+ подземелий
+      - name: enhanced_rewards
+        description: Награды усиленных версий
         columns:
           - id: UUID PRIMARY KEY
-          - dungeon_id: UUID FOREIGN KEY
-          - mythicplus_level: INTEGER
-          - completion_time: INTEGER (nullable)
-          - success: BOOLEAN
-          - started_at: TIMESTAMP
-          - completed_at: TIMESTAMP (nullable)
+          - content_version_id: UUID FOREIGN KEY
+          - reward_type: VARCHAR(50)
+          - reward_data: JSONB
+          - drop_chance: DECIMAL(5,2)
+          - performance_requirement: DECIMAL(5,2)
+          - is_guaranteed: BOOLEAN
+          - valid_until: TIMESTAMP
 
-  integrations:
-    world_service: |
-      - Управление появлением Elite боссов
-      - Интеграция с событиями мира
+      - name: content_scaling_rules
+        description: Правила масштабирования контента
+        columns:
+          - id: UUID PRIMARY KEY
+          - content_type: VARCHAR(50)
+          - parameter_name: VARCHAR(100)
+          - scaling_formula: TEXT
+          - min_value: DECIMAL(10,2)
+          - max_value: DECIMAL(10,2)
+          - balance_weight: DECIMAL(3,2)
 
-    progression_service: |
-      - Начисление наград
-      - Обновление прогресса
+      - name: showcase_achievements
+        description: Достижения для демонстрации
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - content_version_id: UUID FOREIGN KEY
+          - achievement_type: VARCHAR(50)
+          - achievement_data: JSONB
+          - showcase_settings: JSONB
+          - view_count: INTEGER
+          - created_at: TIMESTAMP
 
-  technical_tasks:
-    phases:
-      phase_1:
-        name: Enhanced Content Manager и Elite Boss Spawner
-        tasks:
-          - Реализация Enhanced Content Manager
-          - Реализация Elite Boss Spawner
-          - Управление усиленными версиями
-          - Появление Elite боссов
-          - Интеграция с World Service
-        estimated_effort: 4 days
+      - name: content_analytics
+        description: Аналитика контента
+        columns:
+          - id: UUID PRIMARY KEY
+          - content_version_id: UUID FOREIGN KEY
+          - metric_type: VARCHAR(50)
+          - metric_value: DECIMAL(10,2)
+          - time_period: VARCHAR(50)
+          - player_segment: VARCHAR(50)
+          - collected_at: TIMESTAMP
 
-      phase_2:
-        name: Champion Raid Manager и MythicPlus Scaler
-        tasks:
-          - Реализация Champion Raid Manager
-          - Реализация MythicPlus Scaler
-          - Управление Champion рейдами
-          - Масштабирование Mythic+
-          - Интеграция с Combat Service
-        estimated_effort: 4 days
+      - name: balance_optimization
+        description: Оптимизация баланса
+        columns:
+          - id: UUID PRIMARY KEY
+          - content_version_id: UUID FOREIGN KEY
+          - parameter_adjusted: VARCHAR(100)
+          - old_value: DECIMAL(10,2)
+          - new_value: DECIMAL(10,2)
+          - optimization_reason: TEXT
+          - performance_impact: DECIMAL(5,2)
+          - applied_at: TIMESTAMP
 
+  success_metrics:
+    engagement_metrics:
+      - completion_rate: "Процент завершенных усиленных версий"
+      - average_completion_time: "Среднее время прохождения"
+      - replay_value: "Частота повторных прохождений"
+      - social_sharing: "Уровень демонстрации достижений"
+
+    balance_metrics:
+      - difficulty_satisfaction: "Удовлетворенность уровнем сложности"
+      - reward_fairness: "Справедливость системы наград"
+      - progression_smoothness: "Плавность прогрессии"
+      - content_relevance: "Релевантность усилений"
+
+  scaling_considerations:
+    content_scaling:
+      - version_proliferation: "Управление сотнями версий контента"
+      - procedural_enhancement: "Автоматическое усиление контента"
+      - player_customization: "Персонализированные версии"
+
+    performance_scaling:
+      - concurrent_sessions: "Поддержка тысяч одновременных сессий"
+      - real_time_adaptation: "Адаптация в реальном времени"
+      - analytics_processing: "Обработка больших объемов данных"
+
+# Issue: #142074655
