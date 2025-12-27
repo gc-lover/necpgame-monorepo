@@ -1863,7 +1863,7 @@ Recommended actions:
             "model_saved": validation_results.get('accuracy', 0) > 0.7
         }
 
-        self._output_results(result, output_format)
+        self._output_results(result, f"ml_training_{scope}", output_format)
 
     def _collect_github_training_data(self, scope: str) -> List[Dict[str, Any]]:
         """Collect training data from GitHub Projects items."""
