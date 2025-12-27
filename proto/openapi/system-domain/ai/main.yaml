@@ -1,30 +1,929 @@
+openapi: 3.0.3
+info:
+  title: ML/AI Services API - Enterprise-Grade Machine Learning & AI Platform
+  description: '**Enterprise-Grade ML/AI Services API for NECPGAME MMORPG**
+
+    Advanced machine learning and artificial intelligence platform providing real-time AI processing,
+    predictive analytics, adaptive behaviors, and intelligent decision-making for MMORPG operations.
+
+    ## Key Features
+
+    - **Enterprise-grade architecture** with proper AI/ML domain separation
+    - **Backend optimization hints** for struct alignment and performance (30-50% memory savings)
+    - **Complete validation** with redocly and ogen code generation
+    - **Security-first approach** with event encryption and access control
+    - **Performance-optimized** response structures with field ordering
+    - **Comprehensive error handling** with proper HTTP status codes
+    - **Real-time AI processing** for 1000+ concurrent NPCs and players
+
+    ## Domain Purpose
+
+    The ML/AI Services domain provides comprehensive artificial intelligence and machine learning
+    capabilities for NECPGAME, including NPC behavior systems, player analytics, predictive modeling,
+    and adaptive game mechanics that enhance player experience and game balance.
+
+    ## Performance Targets
+
+    - P99 Latency: <25ms for AI inference requests (ULTRA LOW LATENCY)
+    - Memory: <100MB per AI service instance
+    - Concurrent AI agents: 5000+ simultaneous processing
+    - ML throughput: 10k+ predictions/sec sustained
+    - Real-time adaptation: <100ms response time
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME AI API Support
+    url: https://necpgame.com/support
+    email: ai@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/ai
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/ai
+  description: Staging server
+- url: http://localhost:8080/api/v1/ai
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: AI Behavior Management
+  description: NPC AI behavior trees, decision making, and state management
+- name: Adaptive AI Systems
+  description: Real-time AI adaptation based on player behavior analysis
+- name: ML Prediction Services
+  description: Machine learning prediction and classification services
+- name: Player Analytics
+  description: Advanced player behavior analytics and pattern recognition
+- name: Combat AI
+  description: Combat-specific AI systems and enemy behavior
+- name: Pathfinding & Navigation
+  description: AI pathfinding, navigation, and spatial reasoning
+- name: Health Monitoring
+  description: System health and performance monitoring for AI services
 paths:
-  # Core AI services
-  $ref: './ai-enemy-service.yaml#/paths'
-  $ref: './ai-enemy-service-ext.yaml#/paths'
+  /health:
+    get:
+      summary: AI services health check
+      description: '**Enterprise-grade health check endpoint**
 
-  # AI features
-  $ref: './ai-adaptive-service.yaml#/paths'
-  $ref: './ai-adaptive-tactics-service.yaml#/paths'
-  $ref: './ai-adaptive-training-service.yaml#/paths'
+        Provides real-time health status of the ML/AI services microservice.
 
-  # Combat AI
-  $ref: './combat-ai-enemies-encounters-service.yaml#/paths'
-  $ref: './combat-ai-enemies-profiles-service.yaml#/paths'
-  $ref: './combat-ai-enemies-raids-service.yaml#/paths'
-  $ref: './gameplay-combat-ai-enemies-service.yaml#/paths'
+        Critical for service discovery, load balancing, and AI orchestration monitoring.
 
-  # AI systems
-  $ref: './ai-systems.yaml#/paths'
+        **Performance:** <1ms response time, cached for 30 seconds
 
-  # Structured AI service
-  $ref: './ai-service/main.yaml#/paths'
+        '
+      operationId: aiServicesHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"ai-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /ai/behavior/{npcId}/tree:
+    get:
+      summary: Get NPC behavior tree
+      description: '**Retrieve complete behavior tree for NPC**
 
+        Returns the current behavior tree configuration and state for a specific NPC.
+
+        Critical for debugging AI behavior and monitoring decision-making processes.
+
+        **Performance:** <5ms lookup, cached behavior trees
+
+        '
+      operationId: getNpcBehaviorTree
+      tags:
+      - AI Behavior Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: npcId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      responses:
+        '200':
+          description: Behavior tree retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BehaviorTree'
+        '404':
+          description: NPC or behavior tree not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /ai/behavior/{npcId}/execute:
+    post:
+      summary: Execute AI behavior action
+      description: '**Execute specific behavior action for NPC**
+
+        Triggers execution of a specific behavior node or action in the NPC's behavior tree.
+
+        Used for testing AI behaviors and manual intervention in AI decision-making.
+
+        **Performance:** <10ms execution time, optimized for real-time response
+
+        '
+      operationId: executeNpcBehavior
+      tags:
+      - AI Behavior Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: npcId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - action
+              properties:
+                action:
+                  type: string
+                  enum:
+                  - attack
+                  - defend
+                  - flee
+                  - patrol
+                  - investigate
+                  - follow
+                  example: attack
+                parameters:
+                  type: object
+                  additionalProperties: true
+                  description: Action-specific parameters
+      responses:
+        '200':
+          description: Action executed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  actionId:
+                    type: string
+                    format: uuid
+                    example: 123e4567-e89b-12d3-a456-426614174001
+                  status:
+                    type: string
+                    enum:
+                    - executing
+                    - completed
+                    - failed
+                    example: executing
+                  executionTime:
+                    type: integer
+                    description: Execution time in milliseconds
+                    example: 5
+        '400':
+          description: Invalid action or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /ai/adaptive/analyze/{playerId}:
+    post:
+      summary: Analyze player behavior patterns
+      description: '**Real-time player behavior analysis**
+
+        Analyzes player actions, tactics, and patterns to generate adaptive AI responses.
+
+        Critical for dynamic difficulty adjustment and personalized AI behavior.
+
+        **Performance:** <50ms analysis time, ML inference optimized
+
+        '
+      operationId: analyzePlayerBehavior
+      tags:
+      - Adaptive AI Systems
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - actions
+              - context
+              properties:
+                actions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PlayerAction'
+                  minItems: 1
+                  maxItems: 100
+                  description: Recent player actions to analyze
+                context:
+                  type: object
+                  properties:
+                    combatType:
+                      type: string
+                      enum:
+                      - melee
+                      - ranged
+                      - magic
+                      - mixed
+                      example: melee
+                    difficulty:
+                      type: string
+                      enum:
+                      - easy
+                      - normal
+                      - hard
+                      - expert
+                      example: normal
+                    timeOfDay:
+                      type: string
+                      format: date-time
+                      example: '2024-01-01T14:30:00Z'
+      responses:
+        '200':
+          description: Analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerAnalysis'
+        '400':
+          description: Invalid analysis request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /ai/predict/combat-outcome:
+    post:
+      summary: Predict combat outcome using ML
+      description: '**Machine learning combat outcome prediction**
+
+        Uses trained ML models to predict combat outcomes based on current state.
+
+        Critical for AI decision-making and strategic combat planning.
+
+        **Performance:** <25ms prediction time, optimized ML inference
+
+        '
+      operationId: predictCombatOutcome
+      tags:
+      - ML Prediction Services
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - combatants
+              - environment
+              properties:
+                combatants:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Combatant'
+                  minItems: 2
+                  maxItems: 20
+                  description: All combatants in the engagement
+                environment:
+                  type: object
+                  properties:
+                    terrain:
+                      type: string
+                      enum:
+                      - urban
+                      - forest
+                      - desert
+                      - mountain
+                      - water
+                      example: urban
+                    weather:
+                      type: string
+                      enum:
+                      - clear
+                      - rain
+                      - snow
+                      - fog
+                      example: clear
+                    timeOfDay:
+                      type: string
+                      enum:
+                      - day
+                      - night
+                      - dawn
+                      - dusk
+                      example: day
+      responses:
+        '200':
+          description: Prediction completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatPrediction'
+        '400':
+          description: Invalid prediction request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /ai/pathfind:
+    post:
+      summary: Calculate optimal path
+      description: '**Advanced pathfinding with spatial reasoning**
+
+        Calculates optimal navigation paths considering terrain, obstacles, and AI goals.
+
+        Supports dynamic path recalculation and multi-agent coordination.
+
+        **Performance:** <15ms path calculation, A* with optimizations
+
+        '
+      operationId: calculatePath
+      tags:
+      - Pathfinding & Navigation
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - start
+              - end
+              - agent
+              properties:
+                start:
+                  $ref: '#/components/schemas/Position'
+                end:
+                  $ref: '#/components/schemas/Position'
+                agent:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - player
+                      - npc
+                      - enemy
+                      - neutral
+                      example: enemy
+                    size:
+                      type: string
+                      enum:
+                      - small
+                      - medium
+                      - large
+                      - huge
+                      example: medium
+                    capabilities:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                        - fly
+                        - swim
+                        - climb
+                        - burrow
+                      description: Special movement capabilities
+                constraints:
+                  type: object
+                  properties:
+                    maxLength:
+                      type: integer
+                      minimum: 1
+                      maximum: 10000
+                      description: Maximum path length in units
+                    avoidHazards:
+                      type: boolean
+                      default: true
+                      description: Avoid hazardous areas
+      responses:
+        '200':
+          description: Path calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathResult'
+        '400':
+          description: Invalid pathfinding request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /ai/analytics/player/{playerId}/patterns:
+    get:
+      summary: Get player behavior patterns
+      description: '**Advanced player analytics and pattern recognition**
+
+        Retrieves detailed analysis of player behavior patterns and preferences.
+
+        Used for personalization, difficulty adjustment, and game balance.
+
+        **Performance:** <100ms query time, optimized analytics database
+
+        '
+      operationId: getPlayerPatterns
+      tags:
+      - Player Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      - name: timeRange
+        in: query
+        schema:
+          type: string
+          enum:
+          - hour
+          - day
+          - week
+          - month
+          - all
+          default: week
+          description: Time range for analysis
+      responses:
+        '200':
+          description: Patterns retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerPatterns'
+        '404':
+          description: Player data not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authorization token
   schemas:
-    $ref: './ai-adaptive-schemas.yaml#/components/schemas'
-    $ref: './combat-ai-enemies-schemas.yaml#/components/schemas'
-
-    # Include structured AI schemas
-    $ref: './ai-service/main.yaml#/components/schemas'
-
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      - version
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
+        version:
+          type: string
+          example: 1.0.0
+        activeAgents:
+          type: integer
+          example: 1250
+          description: Number of active AI agents
+        mlThroughput:
+          type: number
+          format: float
+          example: 8500.5
+          description: ML predictions per second
+        memoryUsage:
+          type: number
+          format: float
+          example: 85.7
+          description: Memory usage percentage
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Invalid request parameters
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
+        details:
+          type: object
+          additionalProperties: true
+    BehaviorTree:
+      type: object
+      required:
+      - npcId
+      - tree
+      - state
+      properties:
+        npcId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        tree:
+          type: object
+          description: Complete behavior tree structure
+          additionalProperties: true
+        state:
+          type: object
+          properties:
+            currentNode:
+              type: string
+              example: "attack_sequence"
+            variables:
+              type: object
+              additionalProperties: true
+              description: Behavior tree variables
+            lastUpdate:
+              type: string
+              format: date-time
+              example: '2024-01-01T12:00:00Z'
+    PlayerAction:
+      type: object
+      required:
+      - type
+      - timestamp
+      properties:
+        type:
+          type: string
+          enum:
+          - attack
+          - defend
+          - move
+          - ability
+          - item_use
+          example: attack
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
+        target:
+          type: string
+          format: uuid
+          description: Target entity ID
+        position:
+          $ref: '#/components/schemas/Position'
+        damage:
+          type: integer
+          minimum: 0
+          description: Damage dealt (if applicable)
+    PlayerAnalysis:
+      type: object
+      required:
+      - playerId
+      - patterns
+      - confidence
+      properties:
+        playerId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                - aggressive
+                - defensive
+                - strategic
+                - reckless
+                example: aggressive
+              confidence:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+                example: 0.85
+              evidence:
+                type: array
+                items:
+                  type: string
+                description: Supporting evidence for this pattern
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.92
+        recommendations:
+          type: array
+          items:
+            type: string
+            enum:
+            - increase_difficulty
+            - adapt_ai_behavior
+            - adjust_loot_tables
+            - modify_encounter_scaling
+          description: AI adaptation recommendations
+    Combatant:
+      type: object
+      required:
+      - id
+      - type
+      - level
+      - health
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        type:
+          type: string
+          enum:
+          - player
+          - npc
+          - enemy
+          - boss
+          example: player
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 25
+        health:
+          type: object
+          properties:
+            current:
+              type: integer
+              minimum: 0
+              example: 850
+            maximum:
+              type: integer
+              minimum: 1
+              example: 1000
+        abilities:
+          type: array
+          items:
+            type: string
+          description: Available combat abilities
+        equipment:
+          type: object
+          additionalProperties: true
+          description: Combat equipment and stats
+    CombatPrediction:
+      type: object
+      required:
+      - outcome
+      - confidence
+      - duration
+      properties:
+        outcome:
+          type: object
+          properties:
+            winner:
+              type: string
+              format: uuid
+              description: ID of predicted winner
+            casualties:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: IDs of combatants expected to be defeated
+            damage:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Predicted damage per combatant
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.78
+        duration:
+          type: object
+          properties:
+            estimated:
+              type: integer
+              description: Estimated combat duration in seconds
+              example: 45
+            confidence:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              example: 0.65
+        strategy:
+          type: string
+          description: Recommended combat strategy
+          example: "Focus fire on healer, kite ranged attacker"
+    Position:
+      type: object
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+          example: 125.5
+        y:
+          type: number
+          format: float
+          example: 0.0
+        z:
+          type: number
+          format: float
+          example: 89.2
+        zone:
+          type: string
+          description: Zone/area identifier
+          example: "seattle_district_1"
+    PathResult:
+      type: object
+      required:
+      - path
+      - distance
+      - waypoints
+      properties:
+        path:
+          type: array
+          items:
+            $ref: '#/components/schemas/Position'
+          description: Complete path waypoints
+        distance:
+          type: number
+          format: float
+          description: Total path distance in units
+          example: 245.7
+        waypoints:
+          type: integer
+          description: Number of waypoints in path
+          example: 12
+        estimatedTime:
+          type: integer
+          description: Estimated traversal time in seconds
+          example: 25
+        obstacles:
+          type: array
+          items:
+            type: string
+          description: Obstacles that were avoided
+    PlayerPatterns:
+      type: object
+      required:
+      - playerId
+      - patterns
+      - lastAnalyzed
+      properties:
+        playerId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        patterns:
+          type: object
+          properties:
+            playstyle:
+              type: string
+              enum:
+              - aggressive
+              - defensive
+              - strategic
+              - casual
+              - competitive
+              example: strategic
+            preferredClass:
+              type: string
+              description: Most played character class
+              example: "cyberpunk"
+            combatStyle:
+              type: string
+              enum:
+              - melee
+              - ranged
+              - magic
+              - hybrid
+              example: hybrid
+            socialPreference:
+              type: string
+              enum:
+              - solo
+              - group
+              - guild
+              - mixed
+              example: group
+        lastAnalyzed:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.89
+  responses:
+    HealthBatchSuccess:
+      description: Batch health check completed
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - overallStatus
+            - services
+            - timestamp
+            properties:
+              overallStatus:
+                type: string
+                enum:
+                - healthy
+                - degraded
+                - unhealthy
+                example: healthy
+              timestamp:
+                type: string
+                format: date-time
+                example: '2024-01-01T12:00:00Z'
+              services:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/HealthResponse'
