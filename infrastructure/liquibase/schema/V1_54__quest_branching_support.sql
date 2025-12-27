@@ -13,7 +13,7 @@ ADD COLUMN IF NOT EXISTS branching_logic JSONB;
 COMMENT ON COLUMN gameplay.quest_definitions.branching_logic IS 'JSON structure for quest branching logic - contains nodes, transitions, and choice definitions';
 
 -- Add branching_state column to player_quest_progress (assuming this table exists)
--- If table doesn't exist, this will be handled by separate migration
+-- If table does not exist, this will be handled by separate migration
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'gameplay' AND table_name = 'player_quest_progress') THEN

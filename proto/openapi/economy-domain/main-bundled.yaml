@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Economy domain API
-  description: "Consolidated economy domain API for NECPGAME. This domain consolidates all economy functionality."
+  description: Consolidated economy domain API for NECPGAME. This domain consolidates all economy functionality.
   version: 1.0.0
   license:
     name: MIT
@@ -36,31 +36,110 @@ paths:
             format: uuid
           description: Character UUID
       responses:
-        "200":
+        '200':
           description: Character inventory retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CharacterInventory"
-        "400":
+                type: object
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Character inventory data.'
+                properties: &ref_2
+                  characterId:
+                    type: string
+                    format: uuid
+                    description: Character UUID
+                    example: 123e4567-e89b-12d3-a456-426614174000
+                  items:
+                    type: array
+                    description: List of items in character inventory
+                    items:
+                      type: object
+                      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Individual inventory item.'
+                      properties: &ref_10
+                        itemId:
+                          type: string
+                          format: uuid
+                          description: Item UUID
+                          example: 456e7890-e89b-12d3-a456-426614174001
+                        itemType:
+                          type: string
+                          description: Type of item
+                          enum:
+                            - weapon
+                            - armor
+                            - consumable
+                            - material
+                            - cosmetic
+                          example: weapon
+                        name:
+                          type: string
+                          description: Item name
+                          example: Cybernetic Blade
+                        quantity:
+                          type: integer
+                          description: Item quantity
+                          minimum: 1
+                          example: 1
+                        rarity:
+                          type: string
+                          description: Item rarity
+                          enum:
+                            - common
+                            - uncommon
+                            - rare
+                            - epic
+                            - legendary
+                          example: rare
+                  credits:
+                    type: integer
+                    description: Character credits balance
+                    minimum: 0
+                    example: 15000
+                  lastUpdated:
+                    type: string
+                    format: date-time
+                    description: Last inventory update timestamp
+                    example: '2024-01-15T10:30:00Z'
+        '400':
           description: Bad request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                type: object
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+                properties: &ref_0
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  domain:
+                    type: string
+                    example: economy-domain
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    maxLength: 255
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+        '404':
           description: Character not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                type: object
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+                properties: *ref_0
+        '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-  # TODO: Add crafting recipes endpoint after fixing schema issues
+                type: object
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+                properties: *ref_0
   /api/v1/economy/overview:
     get:
       summary: Get economy overview
@@ -83,18 +162,99 @@ paths:
             default: true
           description: Include currency exchange rates
       responses:
-        "200":
+        '200':
           description: Economy overview retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EconomyOverview"
-        "500":
+                type: object
+                required: &ref_3
+                  - timestamp
+                  - market_stats
+                properties: &ref_4
+                  timestamp:
+                    type: string
+                    format: date-time
+                    description: Overview generation timestamp
+                  market_stats:
+                    type: object
+                    required: &ref_5
+                      - total_active_trades
+                      - total_market_volume
+                    properties: &ref_6
+                      total_active_trades:
+                        type: integer
+                        minimum: 0
+                        description: Total number of active trades
+                      total_market_volume:
+                        type: number
+                        minimum: 0
+                        description: Total market volume
+                      average_trade_price:
+                        type: number
+                        minimum: 0
+                        description: Average trade price
+                      active_sellers:
+                        type: integer
+                        minimum: 0
+                        description: Number of active sellers
+                      active_buyers:
+                        type: integer
+                        minimum: 0
+                        description: Number of active buyers
+                      top_traded_items:
+                        type: array
+                        items:
+                          type: object
+                          required: &ref_8
+                            - item_id
+                            - name
+                            - trade_count
+                            - total_volume
+                          properties: &ref_9
+                            item_id:
+                              type: string
+                              format: uuid
+                              description: Item identifier
+                            name:
+                              type: string
+                              description: Item name
+                            trade_count:
+                              type: integer
+                              minimum: 0
+                              description: Number of trades
+                            total_volume:
+                              type: number
+                              minimum: 0
+                              description: Total trade volume
+                          description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+                        description: Top traded items
+                    description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+                  currency_rates:
+                    type: object
+                    properties: &ref_7
+                      base_currency:
+                        type: string
+                        description: Base currency code
+                      rates:
+                        type: object
+                        additionalProperties:
+                          type: number
+                        description: Currency exchange rates
+                    description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+                  last_updated:
+                    type: string
+                    format: date-time
+                    description: Last data update timestamp
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+        '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                type: object
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+                properties: *ref_0
   /api/v1/economy/currencies:
     get:
       summary: Get available currencies
@@ -102,7 +262,7 @@ paths:
       tags:
         - Economy domain
       responses:
-        "200":
+        '200':
           description: Currencies retrieved successfully
           content:
             application/json:
@@ -110,12 +270,14 @@ paths:
                 type: array
                 items:
                   type: object
-        "500":
+        '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                type: object
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+                properties: *ref_0
   /api/v1/economy/health:
     get:
       summary: Health check
@@ -123,12 +285,26 @@ paths:
       tags:
         - Economy domain
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
+                type: object
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+                properties: &ref_1
+                  status:
+                    type: string
+                    example: healthy
+                    maxLength: 255
+                  domain:
+                    type: string
+                    example: economy-domain
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    maxLength: 255
 components:
   securitySchemes:
     BearerAuth:
@@ -158,182 +334,42 @@ components:
   schemas:
     HealthResponse:
       type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-      properties:
-        status:
-          type: string
-          example: healthy
-          maxLength: 255
-        domain:
-          type: string
-          example: economy-domain
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          maxLength: 255
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      properties: *ref_1
     CharacterInventory:
       type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Character inventory data."
-      properties:
-        characterId:
-          type: string
-          format: uuid
-          description: Character UUID
-          example: "123e4567-e89b-12d3-a456-426614174000"
-        items:
-          type: array
-          description: List of items in character inventory
-          items:
-            $ref: "#/components/schemas/InventoryItem"
-        credits:
-          type: integer
-          description: Character credits balance
-          minimum: 0
-          example: 15000
-        lastUpdated:
-          type: string
-          format: date-time
-          description: Last inventory update timestamp
-          example: "2024-01-15T10:30:00Z"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Character inventory data.'
+      properties: *ref_2
     EconomyOverview:
       type: object
-      required:
-        - timestamp
-        - market_stats
-      properties:
-        timestamp:
-          type: string
-          format: date-time
-          description: Overview generation timestamp
-        market_stats:
-          $ref: "#/components/schemas/MarketStats"
-        currency_rates:
-          $ref: "#/components/schemas/CurrencyRates"
-        last_updated:
-          type: string
-          format: date-time
-          description: Last data update timestamp
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      required: *ref_3
+      properties: *ref_4
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MarketStats:
       type: object
-      required:
-        - total_active_trades
-        - total_market_volume
-      properties:
-        total_active_trades:
-          type: integer
-          minimum: 0
-          description: Total number of active trades
-        total_market_volume:
-          type: number
-          minimum: 0
-          description: Total market volume
-        average_trade_price:
-          type: number
-          minimum: 0
-          description: Average trade price
-        active_sellers:
-          type: integer
-          minimum: 0
-          description: Number of active sellers
-        active_buyers:
-          type: integer
-          minimum: 0
-          description: Number of active buyers
-        top_traded_items:
-          type: array
-          items:
-            $ref: "#/components/schemas/TopTradedItem"
-          description: Top traded items
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      required: *ref_5
+      properties: *ref_6
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CurrencyRates:
       type: object
-      properties:
-        base_currency:
-          type: string
-          description: Base currency code
-        rates:
-          type: object
-          additionalProperties:
-            type: number
-          description: Currency exchange rates
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      properties: *ref_7
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TopTradedItem:
       type: object
-      required:
-        - item_id
-        - name
-        - trade_count
-        - total_volume
-      properties:
-        item_id:
-          type: string
-          format: uuid
-          description: Item identifier
-        name:
-          type: string
-          description: Item name
-        trade_count:
-          type: integer
-          minimum: 0
-          description: Number of trades
-        total_volume:
-          type: number
-          minimum: 0
-          description: Total trade volume
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      required: *ref_8
+      properties: *ref_9
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     InventoryItem:
       type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Individual inventory item."
-      properties:
-        itemId:
-          type: string
-          format: uuid
-          description: Item UUID
-          example: "456e7890-e89b-12d3-a456-426614174001"
-        itemType:
-          type: string
-          description: Type of item
-          enum: [weapon, armor, consumable, material, cosmetic]
-          example: weapon
-        name:
-          type: string
-          description: Item name
-          example: "Cybernetic Blade"
-        quantity:
-          type: integer
-          description: Item quantity
-          minimum: 1
-          example: 1
-        rarity:
-          type: string
-          description: Item rarity
-          enum: [common, uncommon, rare, epic, legendary]
-          example: rare
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Individual inventory item.'
+      properties: *ref_10
     Error:
       type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-      properties:
-        message:
-          type: string
-          example: Internal server error
-          maxLength: 1000
-        domain:
-          type: string
-          example: economy-domain
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          maxLength: 255
-        code:
-          type: integer
-          example: 500
-          format: int32
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      properties: *ref_0
     WebSocketHealthMessage:
       type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
         - type
         - message_timestamp
@@ -350,74 +386,65 @@ components:
           format: date-time
           description: Timestamp of the health message
         health:
-          $ref: "#/components/schemas/HealthResponse"
-  # Trading System Integration - enterprise-grade market management
+          type: object
+          description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+          properties: *ref_1
   /api/v1/trading/health:
-    $ref: "./trading/main.yaml#/paths/~1api~1v1~1trading~1health"
+    $ref: ./trading/main.yaml#/paths/~1api~1v1~1trading~1health
   /api/v1/trading/markets:
-    $ref: "./trading/main.yaml#/paths/~1api~1v1~1trading~1markets"
-
-  # Auctions System Integration - enterprise-grade auction house management
+    $ref: ./trading/main.yaml#/paths/~1api~1v1~1trading~1markets
   /api/v1/economy/auction-house/auctions:
-    $ref: "./auctions/economy-auction-house.yaml#/paths/~1economy~1auction-house~1auctions"
-
-  # Analytics System Integration - enterprise-grade economic analytics and reporting
+    $ref: ./auctions/economy-auction-house.yaml#/paths/~1economy~1auction-house~1auctions
   /api/v1/economy/analytics/health:
-    $ref: "./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1health"
+    $ref: ./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1health
   /api/v1/economy/analytics/market/trends:
-    $ref: "./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1market~1trends"
+    $ref: ./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1market~1trends
   /api/v1/economy/analytics/trade/volume:
-    $ref: "./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1trade~1volume"
+    $ref: ./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1trade~1volume
   /api/v1/economy/analytics/forecast:
-    $ref: "./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1forecast"
+    $ref: ./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1forecast
   /api/v1/economy/analytics/dashboard:
-    $ref: "./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1dashboard"
+    $ref: ./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1dashboard
   /api/v1/economy/analytics/performance:
-    $ref: "./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1performance"
-
-  # Logistics System Integration - enterprise-grade transportation and cargo management
+    $ref: ./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1performance
   /api/v1/economy/logistics/shipments/quote:
-    $ref: "./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1quote"
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1quote
   /api/v1/economy/logistics/shipments:
-    $ref: "./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments"
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments
   /api/v1/economy/logistics/shipments/{shipment_id}:
-    $ref: "./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1{shipment_id}"
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1{shipment_id}
   /api/v1/economy/logistics/shipments/{shipment_id}/schedule:
-    $ref: "./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1{shipment_id}~1schedule"
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1{shipment_id}~1schedule
   /api/v1/economy/logistics/shipments/{shipment_id}/start:
-    $ref: "./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1{shipment_id}~1start"
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1{shipment_id}~1start
   /api/v1/economy/logistics/shipments/{shipment_id}/complete:
-    $ref: "./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1{shipment_id}~1complete"
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1{shipment_id}~1complete
   /api/v1/economy/logistics/risks/assess:
-    $ref: "./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1risks~1assess"
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1risks~1assess
   /api/v1/economy/logistics/insurance/quote:
-    $ref: "./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1insurance~1quote"
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1insurance~1quote
   /api/v1/economy/logistics/escorts/quote:
-    $ref: "./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1escorts~1quote"
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1escorts~1quote
   /api/v1/economy/logistics/tracking/{shipment_id}:
-    $ref: "./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1tracking~1{shipment_id}"
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1tracking~1{shipment_id}
   /api/v1/economy/logistics/tracking/{shipment_id}/history:
-    $ref: "./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1tracking~1{shipment_id}~1history"
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1tracking~1{shipment_id}~1history
   /api/v1/economy/logistics/incidents/{shipment_id}:
-    $ref: "./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1incidents~1{shipment_id}"
-
-  # Production System Integration - enterprise-grade manufacturing and production chain management
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1incidents~1{shipment_id}
   /api/v1/economy/production/health:
-    $ref: "./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1health"
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1health
   /api/v1/economy/production/facilities:
-    $ref: "./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1facilities"
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1facilities
   /api/v1/economy/production/facilities/{facility_id}:
-    $ref: "./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1facilities~1{facility_id}"
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1facilities~1{facility_id}
   /api/v1/economy/production/supply-chains:
-    $ref: "./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1supply-chains"
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1supply-chains
   /api/v1/economy/production/manufacturing/orders:
-    $ref: "./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1manufacturing~1orders"
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1manufacturing~1orders
   /api/v1/economy/production/optimization/resource:
-    $ref: "./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1optimization~1resource"
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1optimization~1resource
   /api/v1/economy/production/planning/capacity:
-    $ref: "./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1planning~1capacity"
-
-  # Resources Catalog System Integration - comprehensive resource management
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1planning~1capacity
   /api/v1/economy/resources/catalog:
     $ref: ./economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1catalog
   /api/v1/economy/resources/catalog/{resource_id}:
@@ -438,8 +465,6 @@ components:
     $ref: ./economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1search
   /api/v1/economy/resources/analytics:
     $ref: ./economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1analytics
-
-  # Production Chains System Integration - comprehensive manufacturing and crafting
   /api/v1/economy/production/recipes:
     $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1recipes
   /api/v1/economy/production/recipes/{recipe_id}:
@@ -470,8 +495,6 @@ components:
     $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1analytics
   /api/v1/economy/production/analytics/profitability:
     $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1analytics~1profitability
-
-  # Analytics System Integration - comprehensive market analytics and charts
   /api/v1/economy/analytics/charts/{asset_id}:
     $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1charts~1{asset_id}
   /api/v1/economy/analytics/charts/comparison:
@@ -494,13 +517,12 @@ components:
     $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1alerts~1{alert_id}
   /api/v1/economy/analytics/market/summary:
     $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1market~1summary
-
   /api/v1/economy-domain/health/batch:
-    post:
+    post: null
     summary: Batch health check for multiple domains
-    description: "Performance optimization: Check multiple domain health in single request"
+    description: 'Performance optimization: Check multiple domain health in single request'
     responses:
-      "200":
+      '200':
         description: Batch health results
         content:
           application/json:
@@ -510,16 +532,16 @@ components:
                 results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/HealthResponse"
+                    $ref: '#/components/schemas/HealthResponse'
                 processingTime:
                   type: integer
                   description: Total processing time
   /api/v1/economy-domain/health/ws:
-    get:
+    get: null
     summary: Real-time health monitoring WebSocket
     description: Real-time health updates without polling
     responses:
-      "101":
+      '101':
         description: WebSocket connection established
       type: object
       required:
@@ -534,7 +556,7 @@ components:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/InventoryItem"
+            $ref: '#/components/schemas/InventoryItem'
           description: List of inventory items
         total_items:
           type: integer
@@ -544,7 +566,7 @@ components:
           type: string
           format: date-time
           description: Last inventory update timestamp
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     InventoryItem:
       type: object
       required:
@@ -567,11 +589,21 @@ components:
           description: Item quantity
         item_type:
           type: string
-          enum: [weapon, armor, consumable, material, currency]
+          enum:
+            - weapon
+            - armor
+            - consumable
+            - material
+            - currency
           description: Type of item
         rarity:
           type: string
-          enum: [common, uncommon, rare, epic, legendary]
+          enum:
+            - common
+            - uncommon
+            - rare
+            - epic
+            - legendary
           description: Item rarity
         value:
           type: integer
@@ -585,7 +617,7 @@ components:
           type: string
           format: date-time
           description: Item last update timestamp
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CurrencyList:
       type: object
       required:
@@ -595,13 +627,13 @@ components:
         currencies:
           type: array
           items:
-            $ref: "#/components/schemas/Currency"
+            $ref: '#/components/schemas/Currency'
           description: List of available currencies
         total_count:
           type: integer
           minimum: 0
           description: Total number of currencies
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Currency:
       type: object
       required:
@@ -642,7 +674,7 @@ components:
           type: string
           format: date-time
           description: Currency last update timestamp
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CraftingRecipeList:
       type: object
       required:
@@ -652,7 +684,7 @@ components:
         recipes:
           type: array
           items:
-            $ref: "#/components/schemas/CraftingRecipe"
+            $ref: '#/components/schemas/CraftingRecipe'
           description: List of crafting recipes
         total_count:
           type: integer
@@ -661,7 +693,7 @@ components:
         has_more:
           type: boolean
           description: Whether there are more recipes available
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CraftingRecipe:
       type: object
       required:
@@ -693,7 +725,7 @@ components:
         ingredients:
           type: array
           items:
-            $ref: "#/components/schemas/RecipeIngredient"
+            $ref: '#/components/schemas/RecipeIngredient'
           description: Required ingredients
         crafting_time:
           type: integer
@@ -704,7 +736,11 @@ components:
           description: Required crafting skill
         difficulty:
           type: string
-          enum: [beginner, intermediate, advanced, expert]
+          enum:
+            - beginner
+            - intermediate
+            - advanced
+            - expert
           description: Recipe difficulty
         success_rate:
           type: number
@@ -715,7 +751,7 @@ components:
           type: string
           format: date-time
           description: Recipe creation timestamp
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RecipeIngredient:
       type: object
       required:
@@ -733,4 +769,4 @@ components:
         name:
           type: string
           description: Ingredient name (for display)
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
