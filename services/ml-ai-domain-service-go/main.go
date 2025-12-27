@@ -478,12 +478,21 @@ func (h *MLAIHandler) CreateModel(ctx context.Context, req *api.CreateModelReque
 func (h *MLAIHandler) GetModel(ctx context.Context, params api.GetModelParams) (api.GetModelRes, error) {
 	h.logger.Info("Processing get model request", zap.String("modelId", params.ModelId.String()))
 
+	// Validate model ID format (UUID)
+	if params.ModelId == uuid.Nil {
+		h.logger.Error("Invalid model ID format", zap.String("modelId", params.ModelId.String()))
+		return &api.Error{
+			Message: "Invalid model ID format",
+		}, nil
+	}
+
 	modelIDStr := params.ModelId.String()
 	h.service.mu.RLock()
 	model, exists := h.service.models[modelIDStr]
 	h.service.mu.RUnlock()
 
 	if !exists {
+		h.logger.Warn("Model retrieval requested for non-existent model", zap.String("modelId", modelIDStr))
 		return &api.Error{
 			Message: "Model not found",
 		}, nil
@@ -516,11 +525,29 @@ func (h *MLAIHandler) GetModel(ctx context.Context, params api.GetModelParams) (
 func (h *MLAIHandler) DeleteModel(ctx context.Context, params api.DeleteModelParams) error {
 	h.logger.Info("Processing delete model request", zap.String("modelId", params.ModelId.String()))
 
+	// Validate model ID format (UUID)
+	if params.ModelId == uuid.Nil {
+		h.logger.Error("Invalid model ID format for deletion", zap.String("modelId", params.ModelId.String()))
+		return fmt.Errorf("invalid model ID format")
+	}
+
 	modelIDStr := params.ModelId.String()
+
+	// Check if model exists before deletion
+	h.service.mu.RLock()
+	_, exists := h.service.models[modelIDStr]
+	h.service.mu.RUnlock()
+
+	if !exists {
+		h.logger.Warn("Delete requested for non-existent model", zap.String("modelId", modelIDStr))
+		return ErrModelNotFound
+	}
+
 	h.service.mu.Lock()
 	delete(h.service.models, modelIDStr)
 	h.service.mu.Unlock()
 
+	h.logger.Info("Model deleted successfully", zap.String("modelId", modelIDStr))
 	return nil
 }
 

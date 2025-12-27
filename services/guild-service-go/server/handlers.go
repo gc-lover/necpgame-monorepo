@@ -54,12 +54,36 @@ var (
 
 // Handler implements the generated API interface
 type Handler struct {
-	// TODO: Add dependencies (service, logger, etc.)
+	logger  *zap.Logger
+	service GuildServiceInterface
+}
+
+// GuildServiceInterface defines the business logic interface
+type GuildServiceInterface interface {
+	CreateGuild(ctx context.Context, name, description string, leaderID uuid.UUID) (*Guild, error)
+	GetGuild(ctx context.Context, id uuid.UUID) (*Guild, error)
+	ListGuilds(ctx context.Context, limit, offset int) ([]*Guild, error)
+	UpdateGuild(ctx context.Context, id uuid.UUID, name, description string) error
+	DeleteGuild(ctx context.Context, id uuid.UUID) error
+
+	AddMember(ctx context.Context, guildID, userID uuid.UUID, role string) error
+	RemoveMember(ctx context.Context, guildID, userID uuid.UUID) error
+	UpdateMemberRole(ctx context.Context, guildID, userID uuid.UUID, role string) error
+	ListMembers(ctx context.Context, guildID uuid.UUID) ([]*GuildMember, error)
+
+	CreateAnnouncement(ctx context.Context, guildID uuid.UUID, title, content string, authorID uuid.UUID) error
+	ListAnnouncements(ctx context.Context, guildID uuid.UUID, limit, offset int) ([]*GuildAnnouncement, error)
+	GetPlayerGuilds(ctx context.Context, playerID uuid.UUID) ([]*Guild, error)
+	JoinGuild(ctx context.Context, guildID, playerID uuid.UUID) error
+	LeaveGuild(ctx context.Context, guildID, playerID uuid.UUID) error
 }
 
 // NewHandler creates a new handler instance
-func NewHandler() *Handler {
-	return &Handler{}
+func NewHandler(logger *zap.Logger, service GuildServiceInterface) *Handler {
+	return &Handler{
+		logger:  logger,
+		service: service,
+	}
 }
 
 // GetHealth implements health check endpoint
