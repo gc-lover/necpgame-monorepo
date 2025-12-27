@@ -717,6 +717,73 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /admin/import:
+    post:
+      summary: Import achievements from YAML data
+      description: '**Enterprise-grade achievement import endpoint**
+
+        Imports achievement definitions from external YAML sources.
+
+        Supports bulk import with validation and conflict resolution.
+
+        Critical for content management and achievement system updates.
+
+
+        **Performance:** <100ms per achievement for bulk imports
+
+        **Business rules:** Achievement validation, duplicate handling, category consistency
+
+        '
+      operationId: importAchievements
+      tags:
+      - Achievement Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AchievementImportRequest'
+      responses:
+        '200':
+          description: Achievements imported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementImportResponse'
+        '400':
+          description: Invalid request - malformed achievement data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation failed - achievement requirements not met
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Validation failed"
+                  details:
+                    type: array
+                    items:
+                      type: string
+                    example: ["achievement 1: name is required", "achievement 2: invalid category"]
+        '429':
+          description: Too many imports - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /examples/{example_id}:
     get:
       summary: Get specific example by ID
@@ -1668,4 +1735,158 @@ components:
           minimum: 1
           description: Quantity of reward granted
           example: 1000
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AchievementImportRequest:
+      type: object
+      required:
+      - achievements
+      properties:
+        achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Achievement'
+          description: List of achievements to import
+          minItems: 1
+          maxItems: 100
+        dry_run:
+          type: boolean
+          description: If true, validate achievements without importing
+          default: false
+          example: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AchievementImportResponse:
+      type: object
+      required:
+      - total
+      - imported
+      - failed
+      properties:
+        total:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Total number of achievements processed
+          example: 10
+        imported:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of achievements successfully imported
+          example: 8
+        failed:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of achievements that failed to import
+          example: 2
+        validated:
+          type: boolean
+          description: Whether this was a validation-only dry run
+          example: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Achievement:
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - category
+      - rarity
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique achievement identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Achievement display name
+          example: First Blood
+        description:
+          type: string
+          maxLength: 500
+          description: Achievement description
+          example: Win your first combat encounter
+        category:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - social
+          - collection
+          - progression
+          - seasonal
+          - hidden
+          description: Achievement category
+          example: combat
+        icon_url:
+          type: string
+          description: Achievement icon URL
+          example: /icons/combat/first_blood.png
+        points:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Achievement point value
+          example: 10
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          description: Achievement rarity tier
+          example: common
+        is_hidden:
+          type: boolean
+          description: Whether achievement is hidden until unlocked
+          default: false
+          example: false
+        requirements:
+          type: array
+          description: Achievement unlock requirements
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                - quest_start
+                - quest_complete
+                - objective_complete
+                - stat_reach
+                - item_collect
+                example: quest_complete
+              quest_id:
+                type: string
+                description: Quest identifier for quest-related requirements
+                example: "canon-quest-vatican-hack-rome-2077-2080"
+        rewards:
+          type: array
+          description: Achievement rewards
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                - title
+                - currency
+                - cosmetic
+                - reputation
+                example: currency
+              name:
+                type: string
+                description: Reward display name
+                example: "Eddies"
+              amount:
+                type: integer
+                format: int32
+                minimum: 1
+                description: Reward quantity
+                example: 1000
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

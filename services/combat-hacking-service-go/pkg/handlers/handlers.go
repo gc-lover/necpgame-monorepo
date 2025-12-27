@@ -133,5 +133,318 @@ func (h *Handlers) ActivateGlitchDoubles(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(response)
 }
 
-// Issue: #143875347, #143875814
+// Enemy hacking handlers
+func (h *Handlers) ScanEnemyCyberware(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.EnemyScanRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode enemy scan request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.PlayerID == "" || req.TargetID == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.ScanEnemy(req)
+	if err != nil {
+		h.logger.Printf("Failed to scan enemy: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+func (h *Handlers) ExecuteEnemyHack(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.EnemyHackRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode enemy hack request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.PlayerID == "" || req.TargetID == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	if req.SkillLevel < 1 || req.SkillLevel > 3 {
+		http.Error(w, "Invalid skill level", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.HackEnemy(req)
+	if err != nil {
+		h.logger.Printf("Failed to hack enemy: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// Device hacking handlers
+func (h *Handlers) ScanDevice(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.DeviceScanRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode device scan request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.PlayerID == "" || req.DeviceID == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.ScanDevice(req)
+	if err != nil {
+		h.logger.Printf("Failed to scan device: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+func (h *Handlers) HackDevice(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.DeviceHackRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode device hack request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.PlayerID == "" || req.DeviceID == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	if req.SkillLevel < 1 || req.SkillLevel > 3 {
+		http.Error(w, "Invalid skill level", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.HackDevice(req)
+	if err != nil {
+		h.logger.Printf("Failed to hack device: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// Network hacking handlers
+func (h *Handlers) InfiltrateNetwork(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.NetworkInfiltrationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode network infiltration request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.PlayerID == "" || req.NetworkID == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	if req.SkillLevel < 1 || req.SkillLevel > 3 {
+		http.Error(w, "Invalid skill level", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.InfiltrateNetwork(req)
+	if err != nil {
+		h.logger.Printf("Failed to infiltrate network: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+func (h *Handlers) ExtractNetworkData(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.DataExtractionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode data extraction request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.PlayerID == "" || req.NetworkID == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.ExtractData(req)
+	if err != nil {
+		h.logger.Printf("Failed to extract data: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// Combat support handler
+func (h *Handlers) RequestCombatSupport(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.CombatSupportRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode combat support request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.PlayerID == "" {
+		http.Error(w, "Missing player ID", http.StatusBadRequest)
+		return
+	}
+
+	if req.SkillLevel < 1 || req.SkillLevel > 3 {
+		http.Error(w, "Invalid skill level", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.RequestCombatSupport(req)
+	if err != nil {
+		h.logger.Printf("Failed to request combat support: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// Anti-cheat validation handler
+func (h *Handlers) ValidateHackingAttempt(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.HackingValidationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode validation request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.PlayerID == "" || req.ActionType == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.ValidateHackingAttempt(req)
+	if err != nil {
+		h.logger.Printf("Failed to validate hacking attempt: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// Active hacks management handlers
+func (h *Handlers) GetActiveHacks(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	playerID := r.URL.Query().Get("player_id")
+	if playerID == "" {
+		// Try to get from path parameter
+		playerID = r.PathValue("player_id")
+		if playerID == "" {
+			http.Error(w, "Missing player_id parameter", http.StatusBadRequest)
+			return
+		}
+	}
+
+	result, err := h.repo.GetActiveHacks(playerID)
+	if err != nil {
+		h.logger.Printf("Failed to get active hacks: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+func (h *Handlers) CancelActiveHack(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	hackID := r.PathValue("hack_id")
+	if hackID == "" {
+		http.Error(w, "Missing hack_id parameter", http.StatusBadRequest)
+		return
+	}
+
+	err := h.repo.CancelActiveHack(hackID)
+	if err != nil {
+		h.logger.Printf("Failed to cancel hack: %v", err)
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	response := map[string]string{
+		"status": "cancelled",
+		"hack_id": hackID,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+// Issue: #143875347, #143875814, #143875915, #143875916, #143875917, #143875918, #143875919, #143875920
 
