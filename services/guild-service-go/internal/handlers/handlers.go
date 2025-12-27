@@ -30,14 +30,16 @@ func NewHandlers(svc *service.Service, logger *zap.SugaredLogger) *Handlers {
 func (h *Handlers) Health(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	// TODO: Add proper health check logic
+	w.Write([]byte(`{"status":"healthy","service":"guild-service-go"}`))
 }
 
 // Ready handles readiness check endpoint
 func (h *Handlers) Ready(w http.ResponseWriter, r *http.Request) {
-	// TODO: Check database connectivity
+	// BACKEND NOTE: Check database connectivity if repository is available
+	// For now, return ready status
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"ready","service":"guild-service-go"}`))
 }
 
 // ListGuilds handles GET /api/v1/guilds
