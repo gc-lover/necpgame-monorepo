@@ -95,22 +95,42 @@ func (s *Service) ProcessChoice(ctx context.Context, playerID, questID string, c
 		return nil, fmt.Errorf("failed to get quest definition: %w", err)
 	}
 
-	// Parse choice points from quest definition
-	var choicePoints map[string]interface{}
-	if err := json.Unmarshal(questDef.ChoicePoints, &choicePoints); err != nil {
-		return nil, fmt.Errorf("failed to parse choice points: %w", err)
+	// Convert to new model for advanced processing
+	dynamicQuest, err := s.convertToDynamicQuest(questDef)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert quest: %w", err)
 	}
 
-	// Validate choice exists
-	choiceData, exists := choicePoints[choice.ChoicePoint]
-	if !exists {
+	// Find the current choice point
+	var currentChoicePoint *models.ChoicePoint
+	for _, cp := range dynamicQuest.ChoicePoints {
+		if cp.ID == choice.ChoicePoint {
+			currentChoicePoint = &cp
+			break
+		}
+	}
+
+	if currentChoicePoint == nil {
 		return nil, fmt.Errorf("invalid choice point: %s", choice.ChoicePoint)
 	}
 
+	// Find the selected choice
+	var selectedChoice *models.Choice
+	for _, ch := range currentChoicePoint.Choices {
+		if ch.ID == choice.ChoiceValue {
+			selectedChoice = &ch
+			break
+		}
+	}
+
+	if selectedChoice == nil {
+		return nil, fmt.Errorf("invalid choice value: %s", choice.ChoiceValue)
+	}
+
 	// Process the choice and calculate consequences
-	result, err := s.calculateChoiceResult(choice, choiceData.(map[string]interface{}))
+	result, err := s.processAdvancedChoice(choice, selectedChoice, dynamicQuest)
 	if err != nil {
-		return nil, fmt.Errorf("failed to calculate choice result: %w", err)
+		return nil, fmt.Errorf("failed to process choice: %w", err)
 	}
 
 	// Update player reputation

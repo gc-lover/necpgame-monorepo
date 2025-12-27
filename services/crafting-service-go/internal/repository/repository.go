@@ -301,7 +301,7 @@ func (r *CraftingRepository) GetCraftingStations(ctx context.Context, stationTyp
 	var stations []*CraftingStation
 	for rows.Next() {
 		var station CraftingStation
-		var bookedBy pq.NullString
+		var bookedBy sql.NullString
 
 		err := rows.Scan(
 			&station.ID, &station.Type, &station.Location,
