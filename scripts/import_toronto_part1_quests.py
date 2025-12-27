@@ -109,8 +109,8 @@ def main():
 
     quests = []
 
-    # Process only first 5 quest files (Part 1)
-    quest_files = sorted([f for f in input_dir.glob('quest-*.yaml')])[:5]
+    # Process next 5 quest files (Part 3: files 11-15)
+    quest_files = sorted([f for f in input_dir.glob('quest-*.yaml')])[10:15]
 
     for quest_file in quest_files:
         print(f"Processing {quest_file.name}")
