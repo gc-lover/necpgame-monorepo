@@ -5,7 +5,6 @@ package npchiringimpact
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"time"
 

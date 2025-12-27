@@ -1,0 +1,1060 @@
+# Issue: #140894831
+openapi: 3.0.3
+info:
+  title: Social Mentorship World Impact Service API
+  description: |
+    API для системы наставничества с учетом влияния на игровой мир в MMOFPS RPG.
+
+    **Основные возможности:**
+    - Отслеживание прогресса наставничества и его влияния на персонажей
+    - Расчет эффективности наставничества для развития навыков
+    - Анализ социальных связей, образованных через наставничество
+    - Экономическое влияние распространения знаний и навыков
+    - Политические последствия укрепления альянсов через наставничество
+    - Развитие сообществ и фракций через передачу опыта
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1/social/mentorship-impact
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/social/mentorship-impact
+    description: Продакшен сервер
+
+tags:
+  - name: Mentorship Impact
+    description: Влияние наставничества на игровой мир
+
+paths:
+  /mentorship/{contract_id}/world-impact:
+    get:
+      tags:
+        - Mentorship Impact
+      summary: Получить влияние конкретного контракта наставничества на мир
+      description: |
+        Возвращает детальный анализ влияния конкретного контракта наставничества на различные аспекты игрового мира.
+        Включает развитие персонажей, социальные связи и экономические эффекты.
+      operationId: getMentorshipContractWorldImpact
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Влияние контракта наставничества на мир
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MentorshipContractWorldImpact"
+        "404":
+          $ref: "../../common-schemas.yaml#/components/responses/NotFound"
+
+  /mentorship/world-impacts:
+    get:
+      tags:
+        - Mentorship Impact
+      summary: Получить общее влияние наставничества на мир
+      description: |
+        Возвращает агрегированное влияние всех активных контрактов наставничества на игровой мир.
+        Полезно для понимания текущего состояния развития сообщества.
+      operationId: getWorldImpactsFromMentorship
+      parameters:
+        - name: region_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+            description: ID региона для фильтрации (опционально)
+        - name: time_period
+          in: query
+          schema:
+            type: string
+            enum: [week, month, quarter, year]
+            default: month
+            description: Период времени для анализа
+        - name: impact_type
+          in: query
+          schema:
+            type: string
+            enum: [skill_development, social_bonds, economic_growth, political_stability]
+            description: Тип влияния для фильтрации
+      responses:
+        "200":
+          description: Общее влияние наставничества на мир
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorldMentorshipImpactsSummary"
+
+  /mentorship/impact-prediction:
+    post:
+      tags:
+        - Mentorship Impact
+      summary: Предсказать влияние контракта наставничества на мир
+      description: |
+        Рассчитывает прогнозируемое влияние контракта наставничества перед его заключением.
+        Помогает участникам понять долгосрочные последствия своих решений.
+      operationId: predictMentorshipImpact
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MentorshipImpactPredictionRequest"
+      responses:
+        "200":
+          description: Предсказанное влияние наставничества
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MentorshipImpactPrediction"
+        "400":
+          $ref: "../../common-schemas.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "../../common-schemas.yaml#/components/responses/Unauthorized"
+
+  /mentorship/skill-development-analysis:
+    get:
+      tags:
+        - Mentorship Impact
+      summary: Анализ развития навыков через наставничество
+      description: |
+        Детальный анализ того, как наставничество влияет на развитие навыков учеников и мастеров.
+        Включает эффективность обучения, скорость прогресса и качество передаваемых знаний.
+      operationId: getSkillDevelopmentAnalysis
+      parameters:
+        - name: mentor_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+            description: ID наставника для анализа
+        - name: student_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+            description: ID ученика для анализа
+        - name: skill_category
+          in: query
+          schema:
+            type: string
+            enum: [combat, hacking, social, crafting, leadership, survival]
+            description: Категория навыков для анализа
+        - name: time_period
+          in: query
+          schema:
+            type: string
+            enum: [month, quarter, year]
+            default: quarter
+      responses:
+        "200":
+          description: Анализ развития навыков
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillDevelopmentAnalysis"
+
+  /mentorship/social-network-analysis:
+    get:
+      tags:
+        - Mentorship Impact
+      summary: Анализ социальной сети наставничества
+      description: |
+        Анализ сети социальных связей, образованных через отношения наставничества.
+        Показывает, как наставничество укрепляет сообщество и создает альянсы.
+      operationId: getSocialNetworkAnalysis
+      parameters:
+        - name: region_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+            description: ID региона для анализа
+        - name: network_depth
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+            default: 3
+            description: Глубина анализа сети (1-5 уровней связей)
+        - name: include_inactive
+          in: query
+          schema:
+            type: boolean
+            default: false
+            description: Включать завершенные контракты
+      responses:
+        "200":
+          description: Анализ социальной сети
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialNetworkAnalysis"
+
+  /mentorship/knowledge-transfer-efficiency:
+    get:
+      tags:
+        - Mentorship Impact
+      summary: Эффективность передачи знаний
+      description: |
+        Оценивает эффективность передачи знаний в системе наставничества.
+        Анализирует, насколько успешно навыки и опыт передаются от наставников к ученикам.
+      operationId: getKnowledgeTransferEfficiency
+      parameters:
+        - name: contract_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+            description: ID конкретного контракта (опционально)
+        - name: mentor_expertise_level
+          in: query
+          schema:
+            type: string
+            enum: [novice, intermediate, expert, master]
+            description: Уровень экспертизы наставника
+        - name: assessment_period
+          in: query
+          schema:
+            type: string
+            enum: [initial, midterm, final]
+            default: final
+            description: Период оценки эффективности
+      responses:
+        "200":
+          description: Эффективность передачи знаний
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KnowledgeTransferEfficiency"
+
+  /mentorship/community-development:
+    get:
+      tags:
+        - Mentorship Impact
+      summary: Развитие сообществ через наставничество
+      description: |
+        Анализ того, как наставничество способствует развитию локальных сообществ.
+        Включает экономический рост, социальную сплоченность и культурное развитие.
+      operationId: getCommunityDevelopmentImpact
+      parameters:
+        - name: region_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: development_aspect
+          in: query
+          schema:
+            type: string
+            enum: [economic, social, cultural, educational]
+            description: Аспект развития для анализа
+        - name: time_frame
+          in: query
+          schema:
+            type: string
+            enum: [short_term, medium_term, long_term]
+            default: medium_term
+      responses:
+        "200":
+          description: Развитие сообществ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommunityDevelopmentImpact"
+
+  /mentorship/legacy-effects:
+    post:
+      tags:
+        - Mentorship Impact
+      summary: Рассчитать эффекты наследия наставничества
+      description: |
+        Анализирует долгосрочные эффекты завершенных контрактов наставничества.
+        Показывает, как переданные знания продолжают влиять на мир после завершения контрактов.
+      operationId: calculateMentorshipLegacyEffects
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LegacyEffectsRequest"
+      responses:
+        "200":
+          description: Эффекты наследия наставничества
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MentorshipLegacyEffects"
+        "400":
+          $ref: "../../common-schemas.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "../../common-schemas.yaml#/components/responses/Unauthorized"
+
+components:
+  schemas:
+    MentorshipContractWorldImpact:
+      type: object
+      description: Влияние контракта наставничества на игровой мир
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        mentor_id:
+          type: string
+          format: uuid
+        student_id:
+          type: string
+          format: uuid
+        skill_development_impact:
+          $ref: "#/components/schemas/SkillDevelopmentImpact"
+        social_impact:
+          $ref: "#/components/schemas/MentorshipSocialImpact"
+        economic_impact:
+          $ref: "#/components/schemas/MentorshipEconomicImpact"
+        community_development:
+          $ref: "#/components/schemas/MentorshipCommunityDevelopment"
+        knowledge_legacy:
+          $ref: "#/components/schemas/KnowledgeLegacy"
+        timestamp:
+          type: string
+          format: date-time
+
+    SkillDevelopmentImpact:
+      type: object
+      description: Влияние на развитие навыков
+      properties:
+        skills_improved:
+          type: array
+          description: Навыки, в которых произошел прогресс
+          items:
+            type: object
+            properties:
+              skill_name:
+                type: string
+              improvement_level:
+                type: integer
+                minimum: 0
+                maximum: 100
+              time_to_improve:
+                type: integer
+                description: Время на улучшение (часы)
+        mentor_skill_growth:
+          type: object
+          description: Рост навыков наставника
+          properties:
+            teaching_proficiency:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Мастерство преподавания (%)
+            leadership_development:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Развитие лидерских качеств (%)
+        student_learning_efficiency:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Эффективность обучения ученика (%)
+
+    MentorshipSocialImpact:
+      type: object
+      description: Социальное влияние наставничества
+      properties:
+        relationship_strength:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Прочность отношений между наставником и учеником (%)
+        network_expansion:
+          type: object
+          description: Расширение социальной сети
+          properties:
+            new_connections:
+              type: integer
+              description: Количество новых социальных связей
+            network_clusters:
+              type: integer
+              description: Количество кластеров в сети
+        reputation_effects:
+          type: array
+          description: Эффекты на репутацию
+          items:
+            type: object
+            properties:
+              character_id:
+                type: string
+                format: uuid
+              reputation_change:
+                type: integer
+              reason:
+                type: string
+        community_cohesion:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Сплоченность сообщества (%)
+
+    MentorshipEconomicImpact:
+      type: object
+      description: Экономическое влияние наставничества
+      properties:
+        knowledge_value:
+          type: object
+          description: Экономическая ценность передаваемых знаний
+          properties:
+            skill_market_value:
+              type: integer
+              description: Рыночная стоимость навыков
+            opportunity_cost_savings:
+              type: integer
+              description: Экономия на издержках обучения
+        productivity_gains:
+          type: object
+          description: Прирост производительности
+          properties:
+            student_productivity_boost:
+              type: number
+              minimum: 0
+              maximum: 500
+              description: Увеличение производительности ученика (%)
+            mentor_productivity_boost:
+              type: number
+              minimum: 0
+              maximum: 200
+              description: Увеличение производительности наставника (%)
+        market_effects:
+          type: object
+          description: Влияние на рынок
+          properties:
+            service_quality_improvement:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Улучшение качества услуг (%)
+            competitive_advantage:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Конкурентное преимущество (%)
+
+    MentorshipCommunityDevelopment:
+      type: object
+      description: Развитие сообщества через наставничество
+      properties:
+        educational_advancement:
+          type: object
+          description: Образовательный прогресс
+          properties:
+            literacy_rate_increase:
+              type: number
+              minimum: 0
+              maximum: 50
+              description: Увеличение уровня грамотности (%)
+            skill_diversity_growth:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Рост разнообразия навыков (%)
+        cultural_enrichment:
+          type: object
+          description: Культурное обогащение
+          properties:
+            tradition_preservation:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Сохранение традиций (%)
+            innovation_stimulation:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Стимуляция инноваций (%)
+        social_capital:
+          type: object
+          description: Социальный капитал
+          properties:
+            trust_network_density:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Плотность сети доверия (%)
+            cooperation_level:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Уровень сотрудничества (%)
+
+    KnowledgeLegacy:
+      type: object
+      description: Наследие знаний от наставничества
+      properties:
+        knowledge_persistence:
+          type: object
+          description: Сохраняемость знаний
+          properties:
+            retention_rate:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Уровень сохранения знаний (%)
+            knowledge_decay_rate:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Скорость забывания знаний (%)
+        knowledge_diffusion:
+          type: object
+          description: Распространение знаний
+          properties:
+            secondary_transmissions:
+              type: integer
+              description: Количество вторичных передач знаний
+            community_knowledge_pool:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Общий пул знаний сообщества (%)
+        long_term_value:
+          type: object
+          description: Долгосрочная ценность
+          properties:
+            generational_impact:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Влияние на поколения (%)
+            cultural_evolution:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Эволюция культуры (%)
+
+    WorldMentorshipImpactsSummary:
+      type: object
+      description: Суммарное влияние наставничества на мир
+      properties:
+        total_active_contracts:
+          type: integer
+          description: Количество активных контрактов
+        total_completed_contracts:
+          type: integer
+          description: Количество завершенных контрактов
+        regions_with_mentorship:
+          type: integer
+          description: Регионы с активным наставничеством
+        skill_development_summary:
+          $ref: "#/components/schemas/SkillDevelopmentImpact"
+        social_summary:
+          $ref: "#/components/schemas/MentorshipSocialImpact"
+        economic_summary:
+          $ref: "#/components/schemas/MentorshipEconomicImpact"
+        community_summary:
+          $ref: "#/components/schemas/MentorshipCommunityDevelopment"
+        knowledge_legacy_summary:
+          $ref: "#/components/schemas/KnowledgeLegacy"
+        top_mentors:
+          type: array
+          description: Лучшие наставники
+          items:
+            type: object
+            properties:
+              mentor_id:
+                type: string
+                format: uuid
+              mentor_name:
+                type: string
+              impact_score:
+                type: number
+                description: Общий уровень влияния
+              students_trained:
+                type: integer
+        mentorship_effectiveness_index:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Индекс эффективности наставничества (%)
+
+    MentorshipImpactPredictionRequest:
+      type: object
+      description: Запрос на предсказание влияния наставничества
+      required:
+        - mentor_id
+        - student_id
+        - contract_duration_months
+        - focus_areas
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        student_id:
+          type: string
+          format: uuid
+        contract_duration_months:
+          type: integer
+          minimum: 1
+          maximum: 24
+        focus_areas:
+          type: array
+          description: Области фокуса обучения
+          items:
+            type: string
+            enum: [combat, hacking, social_engineering, crafting, leadership, survival]
+        expected_commitment_level:
+          type: string
+          enum: [low, medium, high, intensive]
+          default: medium
+        special_circumstances:
+          type: array
+          description: Особые обстоятельства
+          items:
+            type: string
+            enum: [cultural_exchange, faction_alliance, emergency_training, legacy_preservation]
+
+    MentorshipImpactPrediction:
+      type: object
+      description: Предсказанное влияние наставничества
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        student_id:
+          type: string
+          format: uuid
+        predicted_impacts:
+          type: object
+          description: Предсказанные влияния по категориям
+          properties:
+            skill_development_projection:
+              $ref: "#/components/schemas/SkillDevelopmentImpact"
+            relationship_building_potential:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Потенциал построения отношений (%)
+            community_impact_forecast:
+              $ref: "#/components/schemas/MentorshipCommunityDevelopment"
+            long_term_legacy_estimate:
+              $ref: "#/components/schemas/KnowledgeLegacy"
+        success_probability:
+          type: object
+          description: Вероятность успеха
+          properties:
+            overall_success_rate:
+              type: number
+              minimum: 0
+              maximum: 100
+            skill_transfer_efficiency:
+              type: number
+              minimum: 0
+              maximum: 100
+            relationship_sustainability:
+              type: number
+              minimum: 0
+              maximum: 100
+        risk_assessment:
+          type: object
+          description: Оценка рисков
+          properties:
+            mentor_burnout_risk:
+              type: number
+              minimum: 0
+              maximum: 100
+            student_overwhelm_risk:
+              type: number
+              minimum: 0
+              maximum: 100
+            relationship_failure_risk:
+              type: number
+              minimum: 0
+              maximum: 100
+        optimization_recommendations:
+          type: array
+          description: Рекомендации по оптимизации
+          items:
+            type: string
+
+    SkillDevelopmentAnalysis:
+      type: object
+      description: Детальный анализ развития навыков
+      properties:
+        analysis_period:
+          type: string
+        skill_category:
+          type: string
+        development_metrics:
+          type: object
+          description: Метрики развития
+          properties:
+            average_improvement_rate:
+              type: number
+              description: Средняя скорость улучшения навыков
+            peak_performance_achieved:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Достигнутый пик производительности (%)
+            skill_retention_rate:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Уровень сохранения навыков (%)
+        mentor_effectiveness:
+          type: object
+          description: Эффективность наставника
+          properties:
+            teaching_quality_score:
+              type: number
+              minimum: 0
+              maximum: 100
+            student_satisfaction:
+              type: number
+              minimum: 0
+              maximum: 5
+            skill_transfer_rate:
+              type: number
+              minimum: 0
+              maximum: 100
+        learning_patterns:
+          type: object
+          description: Паттерны обучения
+          properties:
+            optimal_learning_pace:
+              type: string
+              enum: [slow, moderate, fast, intensive]
+            preferred_teaching_methods:
+              type: array
+              items:
+                type: string
+            knowledge_absorption_rate:
+              type: number
+              minimum: 0
+              maximum: 100
+
+    SocialNetworkAnalysis:
+      type: object
+      description: Анализ социальной сети наставничества
+      properties:
+        region_id:
+          type: string
+          format: uuid
+        network_depth:
+          type: integer
+        network_statistics:
+          type: object
+          description: Статистика сети
+          properties:
+            total_nodes:
+              type: integer
+              description: Общее количество узлов (людей)
+            total_connections:
+              type: integer
+              description: Общее количество связей
+            average_degree:
+              type: number
+              description: Средняя степень связности
+            clustering_coefficient:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Коэффициент кластеризации
+        mentorship_clusters:
+          type: array
+          description: Кластеры наставничества
+          items:
+            type: object
+            properties:
+              cluster_id:
+                type: string
+                format: uuid
+              cluster_size:
+                type: integer
+              dominant_skill:
+                type: string
+              cohesion_level:
+                type: number
+                minimum: 0
+                maximum: 100
+        influence_paths:
+          type: array
+          description: Пути влияния в сети
+          items:
+            type: object
+            properties:
+              path_id:
+                type: string
+                format: uuid
+              start_character:
+                type: string
+                format: uuid
+              end_character:
+                type: string
+                format: uuid
+              influence_strength:
+                type: number
+                minimum: 0
+                maximum: 100
+              transmission_chain:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+
+    KnowledgeTransferEfficiency:
+      type: object
+      description: Эффективность передачи знаний
+      properties:
+        contract_id:
+          type: string
+          format: uuid
+        mentor_expertise_level:
+          type: string
+        assessment_period:
+          type: string
+        efficiency_metrics:
+          type: object
+          description: Метрики эффективности
+          properties:
+            knowledge_retention_rate:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Уровень сохранения знаний (%)
+            skill_application_rate:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Уровень применения навыков (%)
+            learning_velocity:
+              type: number
+              description: Скорость обучения (единиц навыка в час)
+            understanding_depth:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Глубина понимания (%)
+        transfer_mechanisms:
+          type: object
+          description: Механизмы передачи
+          properties:
+            direct_instruction:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Прямая инструкция (%)
+            experiential_learning:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Опытное обучение (%)
+            peer_learning:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Обучение у сверстников (%)
+        barriers_and_solutions:
+          type: object
+          description: Барьеры и решения
+          properties:
+            identified_barriers:
+              type: array
+              items:
+                type: string
+            proposed_solutions:
+              type: array
+              items:
+                type: string
+            expected_improvements:
+              type: object
+              additionalProperties:
+                type: number
+
+    CommunityDevelopmentImpact:
+      type: object
+      description: Влияние на развитие сообщества
+      properties:
+        region_id:
+          type: string
+          format: uuid
+        development_aspect:
+          type: string
+        time_frame:
+          type: string
+        development_indicators:
+          type: object
+          description: Индикаторы развития
+          properties:
+            education_index:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Индекс образования (%)
+            skill_diversity_index:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Индекс разнообразия навыков (%)
+            social_cohesion_index:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Индекс социальной сплоченности (%)
+            economic_opportunity_index:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Индекс экономических возможностей (%)
+        mentorship_contribution:
+          type: object
+          description: Вклад наставничества
+          properties:
+            direct_participants:
+              type: integer
+              description: Прямые участники
+            indirect_beneficiaries:
+              type: integer
+              description: Косвенные beneficiants
+            knowledge_spillover_effects:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Эффекты распространения знаний (%)
+        future_projections:
+          type: object
+          description: Будущие проекции
+          properties:
+            projected_growth_rate:
+              type: number
+              description: Прогнозируемый темп роста (%)
+            sustainability_index:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Индекс устойчивости (%)
+            scaling_potential:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Потенциал масштабирования (%)
+
+    LegacyEffectsRequest:
+      type: object
+      description: Запрос на расчет эффектов наследия
+      required:
+        - contract_ids
+        - analysis_depth
+      properties:
+        contract_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        analysis_depth:
+          type: string
+          enum: [shallow, moderate, deep]
+          default: moderate
+        include_indirect_effects:
+          type: boolean
+          default: true
+          description: Включать косвенные эффекты
+        time_horizon:
+          type: string
+          enum: [short_term, medium_term, long_term]
+          default: long_term
+
+    MentorshipLegacyEffects:
+      type: object
+      description: Эффекты наследия наставничества
+      properties:
+        contract_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        analysis_depth:
+          type: string
+        total_legacy_score:
+          type: number
+          minimum: 0
+          maximum: 1000
+          description: Общий балл наследия
+        legacy_components:
+          type: object
+          description: Компоненты наследия
+          properties:
+            knowledge_preservation:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Сохранение знаний (%)
+            skill_proliferation:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Распространение навыков (%)
+            relationship_durability:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Долговечность отношений (%)
+            cultural_impact:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Культурное влияние (%)
+        indirect_effects:
+          type: object
+          description: Косвенные эффекты
+          properties:
+            network_expansion:
+              type: integer
+              description: Расширение сети
+            innovation_stimulation:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Стимуляция инноваций (%)
+            community_resilience:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Устойчивость сообщества (%)
+        future_influence_projections:
+          type: object
+          description: Проекции будущего влияния
+          properties:
+            projected_duration_years:
+              type: number
+              description: Прогнозируемая длительность влияния (годы)
+            influence_decay_rate:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Скорость затухания влияния (%)
+            renewal_potential:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Потенциал возобновления (%)
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
