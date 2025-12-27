@@ -260,6 +260,29 @@ func (s *MentorshipService) DiscoverMentees(ctx context.Context, skillTrack api.
 	return mentees, nil
 }
 
+// GetAcademies retrieves academies with filtering
+func (s *MentorshipService) GetAcademies(ctx context.Context, academyType api.OptString, limit api.OptInt) ([]*api.Academy, int, error) {
+	s.metrics.RecordRequest("GetAcademies")
+	s.logger.Info("Getting academies", zap.String("academy_type", academyType.Value), zap.Int("limit", limit.Value))
+
+	// Parse limit with default
+	actualLimit := 20
+	if limit.IsSet() && limit.Value > 0 {
+		actualLimit = limit.Value
+		if actualLimit > 100 { // Prevent excessive queries
+			actualLimit = 100
+		}
+	}
+
+	// TODO: Implement repository method for getting academies
+	// For now, return empty list (table doesn't exist yet)
+	academies := []*api.Academy{}
+	total := 0
+
+	s.metrics.RecordSuccess("GetAcademies")
+	return academies, total, nil
+}
+
 // CreateAcademy creates a new academy
 func (s *MentorshipService) CreateAcademy(ctx context.Context, req *api.CreateAcademyRequest) (*api.Academy, error) {
 	s.metrics.RecordRequest("CreateAcademy")
@@ -294,4 +317,25 @@ func (s *MentorshipService) GetMentorReputation(ctx context.Context, mentorID uu
 	}
 
 	return reputation, nil
+}
+
+// GetReputationLeaderboard retrieves top mentors by reputation
+func (s *MentorshipService) GetReputationLeaderboard(ctx context.Context, limit int) ([]*api.MentorReputationEntry, error) {
+	s.metrics.RecordRequest("GetReputationLeaderboard")
+	s.logger.Info("Getting reputation leaderboard", zap.Int("limit", limit))
+
+	// Validate limit
+	if limit <= 0 {
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	// TODO: Implement repository method for reputation leaderboard
+	// For now, return empty list (requires complex aggregation query)
+	leaderboard := []*api.MentorReputationEntry{}
+
+	s.metrics.RecordSuccess("GetReputationLeaderboard")
+	return leaderboard, nil
 }

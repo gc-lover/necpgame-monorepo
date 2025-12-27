@@ -190,7 +190,13 @@ func (h *Handler) DiscoverMentors(ctx context.Context, params api.DiscoverMentor
 
 	mentors, err := h.service.DiscoverMentors(ctx, params.SkillTrack, params.MentorshipType, params.MinReputation, limit)
 	if err != nil {
-		return api.DiscoverMentorsOK{}, nil // TODO: Proper error handling
+		h.logger.Error("Failed to discover mentors",
+			zap.String("skill_track", params.SkillTrack.Value),
+			zap.String("mentorship_type", params.MentorshipType.Value),
+			zap.Float64("min_reputation", params.MinReputation.Value),
+			zap.Int("limit", limit),
+			zap.Error(err))
+		return nil, err
 	}
 
 	return api.DiscoverMentorsOK{
@@ -211,7 +217,11 @@ func (h *Handler) DiscoverMentees(ctx context.Context, params api.DiscoverMentee
 
 	mentees, err := h.service.DiscoverMentees(ctx, params.SkillTrack, limit)
 	if err != nil {
-		return api.DiscoverMenteesOK{}, nil // TODO: Proper error handling
+		h.logger.Error("Failed to discover mentees",
+			zap.String("skill_track", params.SkillTrack.Value),
+			zap.Int("limit", limit),
+			zap.Error(err))
+		return nil, err
 	}
 
 	return api.DiscoverMenteesOK{
@@ -223,13 +233,21 @@ func (h *Handler) DiscoverMentees(ctx context.Context, params api.DiscoverMentee
 
 // GetAcademies implements getAcademies
 func (h *Handler) GetAcademies(ctx context.Context, params api.GetAcademiesParams) (api.GetAcademiesRes, error) {
-	h.logger.Info("GetAcademies called")
+	h.logger.Info("GetAcademies called", zap.String("academy_type", params.AcademyType.Value), zap.Int("limit", params.Limit.Value))
 
-	// TODO: Implement
+	academies, total, err := h.service.GetAcademies(ctx, params.AcademyType, params.Limit)
+	if err != nil {
+		h.logger.Error("Failed to get academies",
+			zap.String("academy_type", params.AcademyType.Value),
+			zap.Int("limit", params.Limit.Value),
+			zap.Error(err))
+		return nil, err
+	}
+
 	return api.GetAcademiesOK{
 		Data: api.AcademiesListResponse{
-			Academies: []*api.Academy{},
-			Total:     api.NewOptInt(0),
+			Academies: academies,
+			Total:     api.NewOptInt(total),
 		},
 	}, nil
 }
@@ -240,7 +258,11 @@ func (h *Handler) CreateAcademy(ctx context.Context, req *api.CreateAcademyReque
 
 	academy, err := h.service.CreateAcademy(ctx, req)
 	if err != nil {
-		return api.CreateAcademyCreated{}, nil // TODO: Proper error handling
+		h.logger.Error("Failed to create academy",
+			zap.String("name", req.Name),
+			zap.String("academy_type", req.AcademyType),
+			zap.Error(err))
+		return nil, err
 	}
 
 	return api.CreateAcademyCreated{Data: *academy}, nil
@@ -252,7 +274,10 @@ func (h *Handler) GetMentorReputation(ctx context.Context, params api.GetMentorR
 
 	reputation, err := h.service.GetMentorReputation(ctx, params.MentorID)
 	if err != nil {
-		return api.GetMentorReputationOK{}, nil // TODO: Proper error handling
+		h.logger.Error("Failed to get mentor reputation",
+			zap.String("mentor_id", params.MentorID.String()),
+			zap.Error(err))
+		return nil, err
 	}
 
 	return api.GetMentorReputationOK{Data: *reputation}, nil
@@ -260,12 +285,27 @@ func (h *Handler) GetMentorReputation(ctx context.Context, params api.GetMentorR
 
 // GetReputationLeaderboard implements getReputationLeaderboard
 func (h *Handler) GetReputationLeaderboard(ctx context.Context, params api.GetReputationLeaderboardParams) (api.GetReputationLeaderboardRes, error) {
-	h.logger.Info("GetReputationLeaderboard called")
+	h.logger.Info("GetReputationLeaderboard called", zap.Int("limit", params.Limit.Value))
 
-	// TODO: Implement
+	limit := 10 // default
+	if params.Limit.IsSet() && params.Limit.Value > 0 {
+		limit = params.Limit.Value
+		if limit > 100 {
+			limit = 100
+		}
+	}
+
+	leaderboard, err := h.service.GetReputationLeaderboard(ctx, limit)
+	if err != nil {
+		h.logger.Error("Failed to get reputation leaderboard",
+			zap.Int("limit", limit),
+			zap.Error(err))
+		return nil, err
+	}
+
 	return api.GetReputationLeaderboardOK{
 		Data: api.ReputationLeaderboardResponse{
-			Leaderboard: []*api.MentorReputationEntry{},
+			Leaderboard: leaderboard,
 		},
 	}, nil
 }
