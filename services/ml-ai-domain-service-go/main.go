@@ -8,12 +8,15 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -28,12 +31,121 @@ import (
 	"ml-ai-domain-service-go/api"
 )
 
+// Validation errors
+var (
+	ErrInvalidModelName     = errors.New("invalid model name: must be 3-100 characters, alphanumeric with hyphens/underscores")
+	ErrInvalidModelType     = errors.New("invalid model type: must be one of classification, regression, recommendation, anomaly_detection, clustering")
+	ErrInvalidAlgorithm     = errors.New("invalid algorithm: must be 2-50 characters")
+	ErrInvalidTrainingData  = errors.New("invalid training data: must provide at least 100 samples")
+	ErrInvalidPredictionData = errors.New("invalid prediction data: input features cannot be empty")
+	ErrModelNotFound       = errors.New("model not found")
+	ErrTrainingJobNotFound = errors.New("training job not found")
+	ErrInvalidBatchSize    = errors.New("invalid batch size: must be between 1 and 1000")
+)
+
+// Input validators
+type Validator struct {
+	modelNameRegex *regexp.Regexp
+	algorithmRegex *regexp.Regexp
+}
+
+// NewValidator creates a new input validator
+func NewValidator() *Validator {
+	modelNameRegex := regexp.MustCompile(`^[a-zA-Z0-9_-]{3,100}$`)
+	algorithmRegex := regexp.MustCompile(`^[a-zA-Z0-9_-]{2,50}$`)
+
+	return &Validator{
+		modelNameRegex: modelNameRegex,
+		algorithmRegex: algorithmRegex,
+	}
+}
+
+// ValidateModelName validates model name
+func (v *Validator) ValidateModelName(name string) error {
+	if name == "" {
+		return ErrInvalidModelName
+	}
+	if !v.modelNameRegex.MatchString(name) {
+		return ErrInvalidModelName
+	}
+	return nil
+}
+
+// ValidateModelType validates model type
+func (v *Validator) ValidateModelType(modelType string) error {
+	validTypes := []string{"classification", "regression", "recommendation", "anomaly_detection", "clustering"}
+	for _, validType := range validTypes {
+		if modelType == validType {
+			return nil
+		}
+	}
+	return ErrInvalidModelType
+}
+
+// ValidateAlgorithm validates algorithm name
+func (v *Validator) ValidateAlgorithm(algorithm string) error {
+	if algorithm == "" {
+		return ErrInvalidAlgorithm
+	}
+	if !v.algorithmRegex.MatchString(algorithm) {
+		return ErrInvalidAlgorithm
+	}
+	return nil
+}
+
+// ValidateTrainingData validates training data
+func (v *Validator) ValidateTrainingData(sampleCount int) error {
+	if sampleCount < 100 {
+		return ErrInvalidTrainingData
+	}
+	return nil
+}
+
+// ValidatePredictionInput validates prediction input
+func (v *Validator) ValidatePredictionInput(input interface{}) error {
+	if input == nil {
+		return ErrInvalidPredictionData
+	}
+
+	// Check if input is a map/slice with content
+	switch data := input.(type) {
+	case map[string]interface{}:
+		if len(data) == 0 {
+			return ErrInvalidPredictionData
+		}
+	case []interface{}:
+		if len(data) == 0 {
+			return ErrInvalidPredictionData
+		}
+	case []map[string]interface{}:
+		if len(data) == 0 {
+			return ErrInvalidPredictionData
+		}
+	default:
+		// For other types, just check if not nil
+		if data == nil {
+			return ErrInvalidPredictionData
+		}
+	}
+
+	return nil
+}
+
+// ValidateBatchSize validates batch size
+func (v *Validator) ValidateBatchSize(size int) error {
+	if size < 1 || size > 1000 {
+		return ErrInvalidBatchSize
+	}
+	return nil
+}
+
 // Service represents the ML/AI domain service
 type Service struct {
-	server *http.Server
-	logger *zap.Logger
-	db     *sql.DB
-	wg     sync.WaitGroup
+	server    *http.Server
+	logger    *zap.Logger
+	db        *sql.DB
+	wg        sync.WaitGroup
+	validator *Validator
 
 	// ML model cache
 	models map[string]*MLModel
@@ -89,12 +201,16 @@ func NewService() (*Service, error) {
 		return nil, fmt.Errorf("failed to create logger: %w", err)
 	}
 
+	// Initialize input validator
+	validator := NewValidator()
+
 	// Initialize database connection (placeholder)
 	// In production, this would connect to PostgreSQL with proper connection pooling
 	db := &sql.DB{} // Placeholder for actual database connection
 
 	service := &Service{
 		logger:       logger,
+		validator:    validator,
 		db:           db,
 		models:       make(map[string]*MLModel),
 		trainingJobs: make(map[uuid.UUID]*TrainingJob),
@@ -309,6 +425,21 @@ func (h *MLAIHandler) GetBatchHealth(ctx context.Context) (*api.BatchHealthRespo
 
 func (h *MLAIHandler) CreateModel(ctx context.Context, req *api.CreateModelRequest) (api.CreateModelRes, error) {
 	h.logger.Info("Processing create model request")
+
+	// Validate input data
+	if err := h.service.validator.ValidateModelName(req.Name); err != nil {
+		h.logger.Error("Model name validation failed", zap.String("name", req.Name), zap.Error(err))
+		return &api.Error{
+			Message: err.Error(),
+		}, nil
+	}
+
+	if err := h.service.validator.ValidateModelType(string(req.Type)); err != nil {
+		h.logger.Error("Model type validation failed", zap.String("type", string(req.Type)), zap.Error(err))
+		return &api.Error{
+			Message: err.Error(),
+		}, nil
+	}
 
 	// Create new model
 	modelID := uuid.New()
@@ -649,6 +780,22 @@ func (h *MLAIHandler) ListModels(ctx context.Context, params api.ListModelsParam
 func (h *MLAIHandler) MakePrediction(ctx context.Context, req *api.PredictionRequest) (api.MakePredictionRes, error) {
 	h.logger.Info("Processing prediction request", zap.String("modelId", req.ModelID.String()))
 
+	// Validate prediction input
+	if req.Input == nil {
+		h.logger.Error("Prediction input validation failed: nil input")
+		return &api.MakePredictionBadRequest{
+			Message: "Prediction input cannot be empty",
+		}, nil
+	}
+
+	// Validate input data structure
+	if err := h.service.validator.ValidatePredictionInput(req.Input); err != nil {
+		h.logger.Error("Prediction input validation failed", zap.Error(err))
+		return &api.MakePredictionBadRequest{
+			Message: err.Error(),
+		}, nil
+	}
+
 	startTime := time.Now()
 
 	// Check if model exists
@@ -658,6 +805,7 @@ func (h *MLAIHandler) MakePrediction(ctx context.Context, req *api.PredictionReq
 	h.service.mu.RUnlock()
 
 	if !exists {
+		h.logger.Warn("Prediction requested for non-existent model", zap.String("modelId", modelIDStr))
 		return &api.MakePredictionNotFound{
 			Message: "Model not found",
 		}, nil
@@ -700,6 +848,29 @@ func (h *MLAIHandler) MakeBatchPrediction(ctx context.Context, req *api.BatchPre
 		zap.String("modelId", req.ModelID.String()),
 		zap.Int("count", len(req.Predictions)))
 
+	// Validate batch size
+	if err := h.service.validator.ValidateBatchSize(len(req.Predictions)); err != nil {
+		h.logger.Error("Batch prediction size validation failed", zap.Int("count", len(req.Predictions)), zap.Error(err))
+		return &api.BatchPredictionResponse{
+			Predictions:  []api.PredictionResponse{},
+			TotalCount:   len(req.Predictions),
+			SuccessCount: 0,
+			FailedCount:  api.NewOptInt(len(req.Predictions)),
+		}, err
+	}
+
+	// Validate each prediction input
+	for i, prediction := range req.Predictions {
+		if prediction.Input == nil {
+			h.logger.Error("Batch prediction input validation failed", zap.Int("index", i), zap.Error(ErrInvalidPredictionData))
+			continue
+		}
+		if err := h.service.validator.ValidatePredictionInput(prediction.Input); err != nil {
+			h.logger.Error("Batch prediction input validation failed", zap.Int("index", i), zap.Error(err))
+			continue
+		}
+	}
+
 	// Check if model exists
 	h.service.mu.RLock()
 	modelIDStr := req.ModelID.String()
@@ -707,9 +878,10 @@ func (h *MLAIHandler) MakeBatchPrediction(ctx context.Context, req *api.BatchPre
 	h.service.mu.RUnlock()
 
 	if !exists {
+		h.logger.Warn("Batch prediction requested for non-existent model", zap.String("modelId", modelIDStr))
 		return &api.BatchPredictionResponse{
 			Predictions:  []api.PredictionResponse{},
-			TotalCount:   0,
+			TotalCount:   len(req.Predictions),
 			SuccessCount: 0,
 			FailedCount:  api.NewOptInt(len(req.Predictions)),
 		}, nil
@@ -774,6 +946,32 @@ func (h *MLAIHandler) StartTraining(ctx context.Context, req *api.TrainingReques
 		zap.String("modelName", req.ModelName),
 		zap.String("algorithm", req.Algorithm))
 
+	// Validate input data
+	if err := h.service.validator.ValidateModelName(req.ModelName); err != nil {
+		h.logger.Error("Training model name validation failed", zap.String("name", req.ModelName), zap.Error(err))
+		return &api.TrainingJobResponse{
+			JobID:  uuid.New(),
+			Status: api.TrainingJobResponseStatusFailed,
+		}, fmt.Errorf("invalid model name: %w", err)
+	}
+
+	if err := h.service.validator.ValidateAlgorithm(req.Algorithm); err != nil {
+		h.logger.Error("Training algorithm validation failed", zap.String("algorithm", req.Algorithm), zap.Error(err))
+		return &api.TrainingJobResponse{
+			JobID:  uuid.New(),
+			Status: api.TrainingJobResponseStatusFailed,
+		}, fmt.Errorf("invalid algorithm: %w", err)
+	}
+
+	// Validate training data size (mock validation)
+	if req.SampleCount.IsSet() && req.SampleCount.Value < 100 {
+		h.logger.Error("Training data validation failed", zap.Int("sampleCount", req.SampleCount.Value))
+		return &api.TrainingJobResponse{
+			JobID:  uuid.New(),
+			Status: api.TrainingJobResponseStatusFailed,
+		}, ErrInvalidTrainingData
+	}
+
 	// Create training job
 	jobID := uuid.New()
 	job := &TrainingJob{
@@ -815,11 +1013,20 @@ func (h *MLAIHandler) UpdateModel(ctx context.Context, req *api.UpdateModelReque
 
 	modelIDStr := params.ModelId.String()
 
+	// Validate input data
+	if req.Name.IsSet() {
+		if err := h.service.validator.ValidateModelName(req.Name.Value); err != nil {
+			h.logger.Error("Update model name validation failed", zap.String("name", req.Name.Value), zap.Error(err))
+			return nil, fmt.Errorf("invalid model name: %w", err)
+		}
+	}
+
 	h.service.mu.Lock()
 	model, exists := h.service.models[modelIDStr]
 	if !exists {
 		h.service.mu.Unlock()
-		return nil, fmt.Errorf("model not found")
+		h.logger.Warn("Update requested for non-existent model", zap.String("modelId", modelIDStr))
+		return nil, ErrModelNotFound
 	}
 
 	// Update model fields

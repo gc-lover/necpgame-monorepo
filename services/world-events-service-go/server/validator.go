@@ -10,15 +10,26 @@ import (
 )
 
 type Validator struct {
-	// TODO: Add validation rules
+	maxParticipants int
+	maxEventDuration int
+	allowedRegions   []string
 }
 
 func NewValidator() *Validator {
-	return &Validator{}
+	return &Validator{
+		maxParticipants: 1000, // MMO-scale event capacity
+		maxEventDuration: 24,  // Hours
+		allowedRegions:   []string{"EUROPE", "ASIA", "AMERICA", "AFRICA", "AUSTRALIA"},
+	}
 }
 
 func (v *Validator) ValidateParticipationRequest(req *api.ParticipateRequest) error {
-	// TODO: Implement validation logic
+	if req.PlayerId.IsSet() && req.PlayerId.Value == "" {
+		return fmt.Errorf("player ID cannot be empty")
+	}
+	if req.EventId.IsSet() && req.EventId.Value == "" {
+		return fmt.Errorf("event ID cannot be empty")
+	}
 	return nil
 }
 
