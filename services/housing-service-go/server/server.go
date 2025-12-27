@@ -473,13 +473,121 @@ func (s *Server) GetFurnitureCatalog(ctx context.Context, params api.GetFurnitur
 		}
 	}
 
-	// TODO: Query furniture catalog from database
-	// For now, return mock catalog data
-	catalog := s.getMockFurnitureCatalog(limit, (page-1)*limit)
+	// Query furniture catalog from database with pagination and filtering
+	offset := (page - 1) * limit
+
+	// Build dynamic query based on filters
+	query := `
+		SELECT id, name, type, description, price, rarity, space_required, category, image_url
+		FROM gameplay.furniture_items
+		WHERE 1=1`
+
+	args := []interface{}{}
+	argCount := 0
+
+	// Add type filter if provided
+	if params.Type.IsSet() {
+		if t, ok := params.Type.Get(); ok && t != "" {
+			argCount++
+			query += fmt.Sprintf(" AND type = $%d", argCount)
+			args = append(args, t)
+		}
+	}
+
+	// Add category filter if provided
+	if params.Category.IsSet() {
+		if c, ok := params.Category.Get(); ok && c != "" {
+			argCount++
+			query += fmt.Sprintf(" AND category = $%d", argCount)
+			args = append(args, c)
+		}
+	}
+
+	// Add price range filter if provided
+	if params.MinPrice.IsSet() {
+		if minP, ok := params.MinPrice.Get(); ok {
+			argCount++
+			query += fmt.Sprintf(" AND price >= $%d", argCount)
+			args = append(args, minP)
+		}
+	}
+
+	if params.MaxPrice.IsSet() {
+		if maxP, ok := params.MaxPrice.Get(); ok {
+			argCount++
+			query += fmt.Sprintf(" AND price <= $%d", argCount)
+			args = append(args, maxP)
+		}
+	}
+
+	// Add sorting
+	sortBy := "price"
+	if params.SortBy.IsSet() {
+		if sb, ok := params.SortBy.Get(); ok {
+			switch sb {
+			case "price", "name", "rarity":
+				sortBy = sb
+			}
+		}
+	}
+
+	sortOrder := "ASC"
+	if params.SortOrder.IsSet() {
+		if so, ok := params.SortOrder.Get(); ok && strings.ToUpper(so) == "DESC" {
+			sortOrder = "DESC"
+		}
+	}
+
+	query += fmt.Sprintf(" ORDER BY %s %s LIMIT %d OFFSET %d", sortBy, sortOrder, limit, offset)
+
+	// Get total count for pagination
+	countQuery := strings.Replace(query, "SELECT id, name, type, description, price, rarity, space_required, category, image_url", "SELECT COUNT(*)", 1)
+	countQuery = strings.Replace(countQuery, fmt.Sprintf(" ORDER BY %s %s LIMIT %d OFFSET %d", sortBy, sortOrder, limit, offset), "", 1)
+
+	var totalCount int
+	err := s.db.QueryRow(ctx, countQuery, args...).Scan(&totalCount)
+	if err != nil {
+		s.logger.Error("Failed to get furniture catalog count", zap.Error(err))
+		return nil, fmt.Errorf("database query failed: %w", err)
+	}
+
+	// Execute main query
+	rows, err := s.db.Query(ctx, query, args...)
+	if err != nil {
+		s.logger.Error("Failed to query furniture catalog", zap.Error(err))
+		return nil, fmt.Errorf("database query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var items []api.FurnitureCatalogItem
+	for rows.Next() {
+		var item api.FurnitureCatalogItem
+		var imageURL *string
+
+		err := rows.Scan(
+			&item.FurnitureID, &item.Name, &item.Type, &item.Description,
+			&item.Price, &item.Rarity, &item.SpaceRequired, &item.Category, &imageURL)
+
+		if err != nil {
+			s.logger.Error("Failed to scan furniture catalog item", zap.Error(err))
+			continue
+		}
+
+		if imageURL != nil {
+			item.ImageURL = api.NewOptString(*imageURL)
+		}
+
+		items = append(items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		s.logger.Error("Rows iteration error", zap.Error(err))
+		return nil, fmt.Errorf("rows iteration failed: %w", err)
+	}
 
 	return &api.FurnitureCatalogResponse{
-		Items:      catalog,
-		TotalCount: len(catalog),
+		Items:      items,
+		TotalCount: totalCount,
 		Page:       api.NewOptInt(page),
 		Limit:      api.NewOptInt(limit),
 	}, nil
@@ -1106,10 +1214,65 @@ func (s *Server) getMockFurnitureCatalog(limit, offset int) []api.FurnitureCatal
 }
 
 func (s *Server) processFurniturePurchase(playerID, furnitureID uuid.UUID, quantity, currencyAmount int) furniturePurchaseResult {
+	// Get furniture details and validate price
+	var price int
+	var name string
+	err := s.db.QueryRow(context.Background(), `
+		SELECT price, name FROM gameplay.furniture_items WHERE id = $1
+	`, furnitureID).Scan(&price, &name)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return furniturePurchaseResult{
+				Success: false,
+				Error:   "Furniture item not found",
+			}
+		}
+		s.logger.Error("Failed to get furniture details", zap.Error(err))
+		return furniturePurchaseResult{
+			Success: false,
+			Error:   "Database error",
+		}
+	}
+
+	// Validate quantity and total price
+	if quantity < 1 || quantity > 100 {
+		return furniturePurchaseResult{
+			Success: false,
+			Error:   "Invalid quantity (1-100 allowed)",
+		}
+	}
+
+	totalPrice := price * quantity
+	if currencyAmount != totalPrice {
+		return furniturePurchaseResult{
+			Success: false,
+			Error:   fmt.Sprintf("Incorrect payment amount. Expected: %d, Received: %d", totalPrice, currencyAmount),
+		}
+	}
+
+	// TODO: Check player balance from economy service
+	// For now, assume sufficient funds
+
+	// Generate purchase ID
+	purchaseID := uuid.New()
+
+	// TODO: Create inventory records for purchased furniture
+	// This would typically involve inserting into a player_inventory table
+	// For now, we'll just simulate success
+
+	s.logger.Info("Furniture purchase processed",
+		zap.String("player_id", playerID.String()),
+		zap.String("furniture_id", furnitureID.String()),
+		zap.String("furniture_name", name),
+		zap.Int("quantity", quantity),
+		zap.Int("total_price", totalPrice),
+		zap.String("purchase_id", purchaseID.String()))
+
 	return furniturePurchaseResult{
 		Success:    true,
-		PurchaseID: uuid.New(),
-		NewBalance: 1000000 - currencyAmount, // Mock new balance
+		PurchaseID: purchaseID,
+		NewBalance: 1000000 - totalPrice, // TODO: Get actual balance from economy service
 	}
 }
 

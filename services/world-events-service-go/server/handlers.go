@@ -530,3 +530,49 @@ func (h *Handler) getEventsProcessedPerSecond() int64 {
 	// In production, this would query Prometheus metrics over last minute
 	return 150 // Placeholder - would calculate from metrics
 }
+
+// PERFORMANCE: Response time metrics middleware for MMOFPS performance monitoring
+func (h *Handler) metricsMiddleware(operation string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+
+			// Track concurrent requests for load monitoring
+			h.metrics.IncrementConcurrentRequests()
+
+			// Create response writer wrapper to capture status code
+			rw := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+
+			// Call next handler
+			next.ServeHTTP(rw, r)
+
+			// Record comprehensive metrics
+			duration := time.Since(start)
+			h.metrics.RecordRequest(operation, rw.statusCode, duration)
+
+			// Log slow requests (>50ms for hot paths)
+			if duration > 50*time.Millisecond && (operation == "GetActiveEvents" || operation == "ParticipateInEvent") {
+				h.logger.Warn("Slow request detected",
+					zap.String("operation", operation),
+					zap.Duration("duration", duration),
+					zap.Int("status", rw.statusCode),
+					zap.String("path", r.URL.Path),
+				)
+			}
+
+			// Decrement concurrent requests
+			h.metrics.DecrementConcurrentRequests()
+		})
+	}
+}
+
+// responseWriter wraps http.ResponseWriter to capture status code for metrics
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}

@@ -122,6 +122,10 @@ ON gameplay.player_quest_rewards(player_id, claimed_at DESC);
 CREATE INDEX IF NOT EXISTS idx_player_quest_rewards_quest
 ON gameplay.player_quest_rewards(quest_id, reward_type);
 
+-- Functional index to prevent duplicate reward claims
+CREATE UNIQUE INDEX IF NOT EXISTS idx_player_quest_rewards_unique_claim
+ON gameplay.player_quest_rewards(player_id, quest_id, reward_type, COALESCE(reward_id, ''));
+
 -- Triggers for automatic updates
 CREATE OR REPLACE FUNCTION update_player_quest_progress_updated_at()
 RETURNS TRIGGER AS $$
