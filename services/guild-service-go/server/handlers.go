@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 // PERFORMANCE: Global timeouts for MMOFPS response requirements
@@ -63,7 +64,7 @@ func NewHandler() *Handler {
 
 // GetHealth implements health check endpoint
 // PERFORMANCE: <1ms target, no database calls, cached data only
-func (h *Handler) GetHealth(ctx context.Context) (api.GetHealthRes, error) {
+func (h *Handler) GetHealth(ctx context.Context) (*api.HealthResponse, error) {
 	// PERFORMANCE: Strict timeout for health checks
 	ctx, cancel := context.WithTimeout(ctx, healthTimeout)
 	defer cancel()
@@ -104,7 +105,7 @@ func (h *Handler) ListGuilds(ctx context.Context, params api.ListGuildsParams) (
 
 // CreateGuild implements POST /api/v1/guilds
 // PERFORMANCE: <10ms P95, validation and creation
-func (h *Handler) CreateGuild(ctx context.Context, req *api.CreateGuildRequest) (api.CreateGuildRes, error) {
+func (h *Handler) CreateGuild(ctx context.Context, req *api.CreateGuildReq) (api.CreateGuildRes, error) {
 	// PERFORMANCE: Strict timeout for guild creation
 	ctx, cancel := context.WithTimeout(ctx, guildOpsTimeout)
 	defer cancel()
@@ -133,18 +134,45 @@ func (h *Handler) GetGuild(ctx context.Context, params api.GetGuildParams) (api.
 	defer guildResponsePool.Put(resp)
 
 	// Placeholder response
-	return &api.GetGuildOK{Body: *resp}, nil
+	// Mock guild data - will be replaced with DB query
+	guildID := params.GuildId
+	guild := api.Guild{
+		GuildID:  guildID,
+		Name:     "Test Guild",
+		LeaderID: uuid.MustParse("660e8400-e29b-41d4-a716-446655440000"),
+	}
+
+	return &api.GetGuildOK{
+		Guild: guild,
+	}, nil
 }
 
 // UpdateGuild implements PUT /api/v1/guilds/{guildId}
 // PERFORMANCE: <10ms P95, validation and update
-func (h *Handler) UpdateGuild(ctx context.Context, req *api.UpdateGuildRequest, params api.UpdateGuildParams) (api.UpdateGuildRes, error) {
+func (h *Handler) UpdateGuild(ctx context.Context, req *api.UpdateGuildReq, params api.UpdateGuildParams) (api.UpdateGuildRes, error) {
 	// PERFORMANCE: Strict timeout for guild updates
 	ctx, cancel := context.WithTimeout(ctx, guildOpsTimeout)
 	defer cancel()
 
-	// TODO: Implement guild update logic
-	return &api.UpdateGuildOK{}, nil
+	// Extract user ID from context
+	userID := getUserIDFromContext(ctx)
+	if userID == "" {
+		return &api.UpdateGuildUnauthorized{
+			Message: "Unauthorized",
+			Code:    401,
+		}, nil
+	}
+
+	// Mock update - will be replaced with DB update
+	guild := api.Guild{
+		GuildID:  params.GuildId,
+		Name:     req.Name,
+		LeaderID: uuid.MustParse(userID),
+	}
+
+	return &api.UpdateGuildOK{
+		Guild: guild,
+	}, nil
 }
 
 // DeleteGuild implements DELETE /api/v1/guilds/{guildId}
