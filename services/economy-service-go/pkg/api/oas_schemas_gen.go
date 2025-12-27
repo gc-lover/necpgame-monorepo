@@ -251,6 +251,11 @@ func (s *Error) SetCode(val int32) {
 	s.Code = val
 }
 
+// Error implements error interface
+func (s *Error) Error() string {
+	return s.Message
+}
+
 func (*Error) getActiveTradesRes()             {}
 func (*Error) getMarketOverviewRes()           {}
 func (*Error) getPlayerTransactionHistoryRes() {}

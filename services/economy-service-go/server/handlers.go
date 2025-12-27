@@ -117,7 +117,7 @@ func (h *EconomyHandler) CreateTradeListing(w http.ResponseWriter, r *http.Reque
 	// BACKEND NOTE: Transaction for trade creation with validation
 	tx, err := h.dbPool.Begin(ctx)
 	if err != nil {
-		return nil, &api.Error{Message: "Transaction failed", Code: api.NewOptString("TRANSACTION_ERROR")}
+		return nil, &api.Error{Message: "Transaction failed", Code: 500}
 	}
 	defer tx.Rollback(ctx)
 
