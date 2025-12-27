@@ -245,21 +245,74 @@ type MLAIHandler struct {
 // This is a minimal implementation - in production, these would contain
 // comprehensive ML/AI business logic
 
-// Note: The actual interface doesn't have GetMlModels method
-// Only implementing methods that exist in the generated interface
+func (h *MLAIHandler) GetHealth(ctx context.Context) (*api.HealthResponse, error) {
+	h.logger.Info("Processing health check request")
 
-func (h *MLAIHandler) GetMlModelsId(ctx context.Context, params api.GetMlModelsIdParams) (*api.ModelResponse, error) {
-	h.logger.Info("Processing get model details request", zap.String("modelId", params.Id))
+	return &api.HealthResponse{
+		Status:    api.NewOptString("healthy"),
+		Timestamp: api.NewOptDateTime(time.Now()),
+	}, nil
+}
+
+func (h *MLAIHandler) GetBatchHealth(ctx context.Context) (*api.BatchHealthResponse, error) {
+	h.logger.Info("Processing batch health check request")
 
 	h.service.mu.RLock()
-	model, exists := h.service.models[params.Id]
+	modelCount := len(h.service.models)
+	h.service.mu.RUnlock()
+
+	return &api.BatchHealthResponse{
+		Status:       api.NewOptString("healthy"),
+		Service:      api.NewOptString("ml-ai-domain"),
+		ModelsCount:  api.NewOptInt(modelCount),
+		Timestamp:    api.NewOptDateTime(time.Now()),
+	}, nil
+}
+
+func (h *MLAIHandler) CreateModel(ctx context.Context, req *api.CreateModelRequest) (api.CreateModelRes, error) {
+	h.logger.Info("Processing create model request")
+
+	// Create new model
+	modelID := fmt.Sprintf("model_%d", time.Now().Unix())
+	model := &MLModel{
+		ID:          modelID,
+		Name:        req.Name.Value,
+		Type:        req.Type.Value,
+		Version:     "1.0.0",
+		Status:      "training",
+		Accuracy:    0.0,
+		LastUpdated: time.Now(),
+		Metadata:    make(map[string]interface{}),
+	}
+
+	h.service.mu.Lock()
+	h.service.models[modelID] = model
+	h.service.mu.Unlock()
+
+	return &api.ModelResponse{
+		Id:          api.NewOptString(modelID),
+		Name:        api.NewOptString(model.Name),
+		Type:        api.NewOptString(model.Type),
+		Version:     api.NewOptString(model.Version),
+		Status:      api.NewOptString(model.Status),
+		Accuracy:    api.NewOptFloat64(model.Accuracy),
+		Description: api.NewOptString(fmt.Sprintf("New %s model", model.Type)),
+		CreatedAt:   api.NewOptDateTime(model.LastUpdated),
+		UpdatedAt:   api.NewOptDateTime(model.LastUpdated),
+	}, nil
+}
+
+func (h *MLAIHandler) GetModel(ctx context.Context, params api.GetModelParams) (api.GetModelRes, error) {
+	h.logger.Info("Processing get model request", zap.String("modelId", params.ModelId))
+
+	h.service.mu.RLock()
+	model, exists := h.service.models[params.ModelId]
 	h.service.mu.RUnlock()
 
 	if !exists {
-		return nil, &api.NotFoundError{Message: "Model not found"}
+		return &api.ErrorResponse{Message: api.NewOptString("Model not found")}, nil
 	}
 
-	// Convert metadata to JSON string
 	metadataJSON, _ := json.Marshal(model.Metadata)
 
 	return &api.ModelResponse{
@@ -269,122 +322,69 @@ func (h *MLAIHandler) GetMlModelsId(ctx context.Context, params api.GetMlModelsI
 		Version:     api.NewOptString(model.Version),
 		Status:      api.NewOptString(model.Status),
 		Accuracy:    api.NewOptFloat64(model.Accuracy),
-		Description: api.NewOptString(fmt.Sprintf("%s model for %s predictions", model.Type, model.Name)),
+		Description: api.NewOptString(fmt.Sprintf("%s model for predictions", model.Type)),
 		Metadata:    api.NewOptString(string(metadataJSON)),
 		CreatedAt:   api.NewOptDateTime(model.LastUpdated.Add(-24 * time.Hour)),
 		UpdatedAt:   api.NewOptDateTime(model.LastUpdated),
 	}, nil
 }
 
-func (h *MLAIHandler) PostMlPredict(ctx context.Context, req *api.PredictionRequest) (*api.PredictionResponse, error) {
-	h.logger.Info("Processing prediction request", zap.String("modelId", req.ModelId))
+func (h *MLAIHandler) DeleteModel(ctx context.Context, params api.DeleteModelParams) error {
+	h.logger.Info("Processing delete model request", zap.String("modelId", params.ModelId))
 
-	h.service.mu.RLock()
-	model, exists := h.service.models[req.ModelId]
-	h.service.mu.RUnlock()
-
-	if !exists {
-		return nil, &api.NotFoundError{Message: "Model not found"}
-	}
-
-	// Simulate ML prediction based on model type
-	var predictionResult map[string]interface{}
-
-	switch model.Type {
-	case "classification":
-		// Player behavior classification
-		behaviors := []string{"casual", "regular", "hardcore", "whale"}
-		predictionResult = map[string]interface{}{
-			"predicted_class": behaviors[rand.Intn(len(behaviors))],
-			"confidence":      rand.Float64() * 0.3 + 0.7, // 0.7-1.0
-			"probabilities": map[string]float64{
-				"casual":   rand.Float64(),
-				"regular":  rand.Float64(),
-				"hardcore": rand.Float64(),
-				"whale":    rand.Float64(),
-			},
-		}
-	case "recommendation":
-		// Item recommendations
-		predictionResult = map[string]interface{}{
-			"recommended_items": []string{
-				"cybernetic_implant_v2",
-				"neural_enhancer",
-				"combat_drug_pack",
-				"premium_weapon_skin",
-			},
-			"confidence_score": rand.Float64() * 0.2 + 0.8, // 0.8-1.0
-			"personalization_factor": rand.Float64(),
-		}
-	case "anomaly_detection":
-		// Fraud detection
-		isAnomaly := rand.Float64() < 0.05 // 5% anomaly rate
-		predictionResult = map[string]interface{}{
-			"is_anomaly":      isAnomaly,
-			"anomaly_score":   rand.Float64(),
-			"confidence":      rand.Float64() * 0.1 + 0.9, // 0.9-1.0
-			"risk_level":      []string{"low", "medium", "high"}[rand.Intn(3)],
-		}
-	default:
-		predictionResult = map[string]interface{}{
-			"result":     "prediction_generated",
-			"timestamp":  time.Now().Format(time.RFC3339),
-			"model_used": model.Name,
-		}
-	}
-
-	resultJSON, _ := json.Marshal(predictionResult)
-
-	return &api.PredictionResponse{
-		PredictionId: api.NewOptString(fmt.Sprintf("pred_%d", time.Now().Unix())),
-		ModelId:      api.NewOptString(req.ModelId),
-		Result:       api.NewOptString(string(resultJSON)),
-		Confidence:   api.NewOptFloat64(rand.Float64() * 0.2 + 0.8),
-		ProcessingTimeMs: api.NewOptFloat64(float64(rand.Intn(50) + 10)), // 10-60ms
-		Timestamp:    api.NewOptDateTime(time.Now()),
-	}, nil
-}
-
-func (h *MLAIHandler) PostMlTrain(ctx context.Context, req *api.TrainingRequest) (*api.TrainingResponse, error) {
-	h.logger.Info("Processing training request", zap.String("modelId", req.ModelId))
-
-	// Simulate model training (would be async in production)
-	trainingID := fmt.Sprintf("train_%d", time.Now().Unix())
-
-	// Update model status to training
 	h.service.mu.Lock()
-	if model, exists := h.service.models[req.ModelId]; exists {
-		model.Status = "training"
-		model.LastUpdated = time.Now()
-	}
+	delete(h.service.models, params.ModelId)
 	h.service.mu.Unlock()
 
-	// Simulate training completion after delay
-	go func() {
-		time.Sleep(5 * time.Second) // Simulate training time
-		h.service.mu.Lock()
-		if model, exists := h.service.models[req.ModelId]; exists {
-			model.Status = "active"
-			model.LastUpdated = time.Now()
-			model.Accuracy = rand.Float64() * 0.1 + model.Accuracy // Slight improvement
-			if model.Accuracy > 1.0 {
-				model.Accuracy = 1.0
-			}
-		}
-		h.service.mu.Unlock()
-	}()
+	return nil
+}
 
-	return &api.TrainingResponse{
-		TrainingId:    api.NewOptString(trainingID),
-		ModelId:       api.NewOptString(req.ModelId),
-		Status:        api.NewOptString("started"),
-		EstimatedTime: api.NewOptInt(300), // 5 minutes
-		StartTime:     api.NewOptDateTime(time.Now()),
+func (h *MLAIHandler) GetModelAnalytics(ctx context.Context, params api.GetModelAnalyticsParams) (*api.ModelAnalyticsResponse, error) {
+	h.logger.Info("Processing model analytics request")
+
+	h.service.mu.RLock()
+	modelCount := len(h.service.models)
+	activeModels := 0
+	totalAccuracy := 0.0
+
+	for _, model := range h.service.models {
+		if model.Status == "active" {
+			activeModels++
+			totalAccuracy += model.Accuracy
+		}
+	}
+	h.service.mu.RUnlock()
+
+	avgAccuracy := 0.0
+	if activeModels > 0 {
+		avgAccuracy = totalAccuracy / float64(activeModels)
+	}
+
+	return &api.ModelAnalyticsResponse{
+		TimeRange:       api.NewOptString(params.TimeRange),
+		TotalModels:     api.NewOptInt(modelCount),
+		ActiveModels:    api.NewOptInt(activeModels),
+		AverageAccuracy: api.NewOptFloat64(avgAccuracy),
+		Timestamp:       api.NewOptDateTime(time.Now()),
 	}, nil
 }
 
-func (h *MLAIHandler) GetMlTrainId(ctx context.Context, params api.GetMlTrainIdParams) (*api.TrainingStatusResponse, error) {
-	h.logger.Info("Processing training status request", zap.String("trainingId", params.Id))
+func (h *MLAIHandler) GetPredictionAnalytics(ctx context.Context, params api.GetPredictionAnalyticsParams) (*api.PredictionAnalyticsResponse, error) {
+	h.logger.Info("Processing prediction analytics request")
+
+	// Generate mock prediction analytics
+	return &api.PredictionAnalyticsResponse{
+		TimeRange:           api.NewOptString(params.TimeRange),
+		TotalPredictions:    api.NewOptInt(125000),
+		AverageLatency:      api.NewOptFloat64(35.2),
+		SuccessRate:         api.NewOptFloat64(0.987),
+		MostUsedModel:       api.NewOptString("player-behavior-predictor"),
+		Timestamp:           api.NewOptDateTime(time.Now()),
+	}, nil
+}
+
+func (h *MLAIHandler) GetTrainingStatus(ctx context.Context, params api.GetTrainingStatusParams) (*api.TrainingStatusResponse, error) {
+	h.logger.Info("Processing training status request", zap.String("jobId", params.JobId))
 
 	// Simulate training status
 	status := []string{"running", "completed", "failed"}[rand.Intn(3)]
@@ -400,91 +400,24 @@ func (h *MLAIHandler) GetMlTrainId(ctx context.Context, params api.GetMlTrainIdP
 		accuracy = &a
 	}
 
-	return &api.TrainingStatusResponse{
-		TrainingId: api.NewOptString(params.Id),
-		Status:     api.NewOptString(status),
-		Progress:   api.NewOptFloat64Ptr(progress),
-		Accuracy:   api.NewOptFloat64Ptr(accuracy),
-		StartTime:  api.NewOptDateTime(time.Now().Add(-5 * time.Minute)),
-		EndTime:    api.NewOptDateTimePtr(func() *time.Time {
-			if status != "running" {
-				t := time.Now()
-				return &t
-			}
-			return nil
-		}()),
-	}, nil
-}
+	response := &api.TrainingStatusResponse{
+		JobId:     api.NewOptString(params.JobId),
+		Status:    api.NewOptString(status),
+		StartTime: api.NewOptDateTime(time.Now().Add(-10 * time.Minute)),
+	}
 
-func (h *MLAIHandler) GetMlAnalytics(ctx context.Context, params api.GetMlAnalyticsParams) (*api.AnalyticsResponse, error) {
-	h.logger.Info("Processing analytics request")
+	if progress != nil {
+		response.Progress.SetTo(*progress)
+	}
+	if accuracy != nil {
+		response.Accuracy.SetTo(*accuracy)
+	}
+	if status != "running" {
+		endTime := time.Now()
+		response.EndTime.SetTo(endTime)
+	}
 
-	// Generate comprehensive ML analytics
-	return &api.AnalyticsResponse{
-		TimeRange: api.NewOptString(params.TimeRange),
-		Metrics: []api.Metric{
-			{
-				Name:        api.NewOptString("total_predictions"),
-				Value:       api.NewOptFloat64(125000.0),
-				Unit:        api.NewOptString("count"),
-				Description: api.NewOptString("Total ML predictions served"),
-			},
-			{
-				Name:        api.NewOptString("average_latency"),
-				Value:       api.NewOptFloat64(35.2),
-				Unit:        api.NewOptString("ms"),
-				Description: api.NewOptString("Average prediction latency"),
-			},
-			{
-				Name:        api.NewOptString("model_accuracy"),
-				Value:       api.NewOptFloat64(0.89),
-				Unit:        api.NewOptString("percentage"),
-				Description: api.NewOptString("Average model accuracy across all models"),
-			},
-			{
-				Name:        api.NewOptString("active_models"),
-				Value:       api.NewOptFloat64(float64(len(h.service.models))),
-				Unit:        api.NewOptString("count"),
-				Description: api.NewOptString("Number of active ML models"),
-			},
-		},
-		Timestamp: api.NewOptDateTime(time.Now()),
-	}, nil
-}
-
-func (h *MLAIHandler) PostMlFeedback(ctx context.Context, req *api.FeedbackRequest) (*api.FeedbackResponse, error) {
-	h.logger.Info("Processing feedback request", zap.String("predictionId", req.PredictionId))
-
-	// Process feedback for model improvement
-	return &api.FeedbackResponse{
-		FeedbackId:   api.NewOptString(fmt.Sprintf("fb_%d", time.Now().Unix())),
-		PredictionId: api.NewOptString(req.PredictionId),
-		Status:       api.NewOptString("accepted"),
-		Message:      api.NewOptString("Feedback received and will be used for model improvement"),
-		Timestamp:    api.NewOptDateTime(time.Now()),
-	}, nil
-}
-
-// Stub implementations for remaining interface methods
-// In production, these would be fully implemented
-
-func (h *MLAIHandler) DeleteMlModelsId(ctx context.Context, params api.DeleteMlModelsIdParams) (*api.DeleteResponse, error) {
-	return &api.DeleteResponse{Message: api.NewOptString("Model deletion not implemented")}, nil
-}
-
-func (h *MLAIHandler) GetMlHealth(ctx context.Context) (*api.HealthResponse, error) {
-	return &api.HealthResponse{
-		Status:    api.NewOptString("healthy"),
-		Timestamp: api.NewOptDateTime(time.Now()),
-	}, nil
-}
-
-func (h *MLAIHandler) PostMlModels(ctx context.Context, req *api.CreateModelRequest) (*api.ModelResponse, error) {
-	return &api.ModelResponse{Id: api.NewOptString("new-model-id")}, nil
-}
-
-func (h *MLAIHandler) PutMlModelsId(ctx context.Context, params api.PutMlModelsIdParams, req *api.UpdateModelRequest) (*api.ModelResponse, error) {
-	return &api.ModelResponse{Id: api.NewOptString(params.Id)}, nil
+	return response, nil
 }
 
 func main() {
