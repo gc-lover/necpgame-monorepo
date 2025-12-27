@@ -14,11 +14,22 @@ import (
 	"admin-service-go/server/internal/models"
 )
 
+// AdminServiceInterface defines the interface for admin service operations
+// Used for dependency injection and testing
+type AdminServiceInterface interface {
+	GetSystemHealth(ctx context.Context) (*models.SystemHealth, error)
+	GetActiveAdminSessions(ctx context.Context) ([]*models.AdminSession, error)
+	GetAdminAuditLog(ctx context.Context, limit, offset int) ([]*models.AdminAction, error)
+	BanUser(ctx context.Context, adminID, userID uuid.UUID, reason string, duration time.Duration) error
+	UnbanUser(ctx context.Context, adminID, userID uuid.UUID, reason string) error
+	Close() error
+}
+
 // AdminService handles enterprise-grade administrative operations
 // Memory-optimized with object pooling and structured concurrency
 type AdminService struct {
 	logger       *zap.Logger
-	db           *pgxpool.Pool
+	repo         AdminRepositoryInterface // Use interface for testability
 	adminUsers   map[string]*models.AdminUser // sessionID -> admin user
 	mu           sync.RWMutex
 	jwtSecret    string
@@ -54,9 +65,12 @@ func NewAdminService(logger *zap.Logger, redisURL, dbURL, jwtSecret string) (*Ad
 		return nil, err
 	}
 
+	// Create repository instance
+	repo := NewAdminRepository(db, logger)
+
 	svc := &AdminService{
 		logger:     logger,
-		db:         db,
+		repo:       repo, // Use repository interface
 		jwtSecret:  jwtSecret,
 		adminUsers: make(map[string]*models.AdminUser),
 
@@ -86,6 +100,33 @@ func NewAdminService(logger *zap.Logger, redisURL, dbURL, jwtSecret string) (*Ad
 	return svc, nil
 }
 
+// NewAdminServiceWithRepo creates a new admin service instance with custom repository (for testing)
+func NewAdminServiceWithRepo(logger *zap.Logger, repo AdminRepositoryInterface, jwtSecret string) *AdminService {
+	return &AdminService{
+		logger:     logger,
+		repo:       repo,
+		jwtSecret:  jwtSecret,
+		adminUsers: make(map[string]*models.AdminUser),
+
+		// Initialize object pools for memory optimization
+		userPool: sync.Pool{
+			New: func() interface{} {
+				return &models.AdminUser{}
+			},
+		},
+		sessionPool: sync.Pool{
+			New: func() interface{} {
+				return &models.AdminSession{}
+			},
+		},
+		actionPool: sync.Pool{
+			New: func() interface{} {
+				return &models.AdminAction{}
+			},
+		},
+	}
+}
+
 // Close gracefully closes database connections and cleans up resources
 func (s *AdminService) Close() error {
 	s.mu.Lock()
@@ -96,9 +137,9 @@ func (s *AdminService) Close() error {
 	// Clear admin user sessions
 	s.adminUsers = nil
 
-	// Close database pool
-	if s.db != nil {
-		s.db.Close()
+	// Close database pool if we have a concrete repository
+	if repo, ok := s.repo.(*AdminRepository); ok && repo.db != nil {
+		repo.db.Close()
 	}
 
 	return nil
@@ -180,21 +221,30 @@ func (s *AdminService) GetSystemHealth(ctx context.Context) (*models.SystemHealt
 		Alerts:      []models.SystemAlert{},
 	}
 
-	// Check database connectivity
-	if err := s.db.Ping(ctx); err != nil {
-		health.Database = "disconnected"
-		health.Status = "degraded"
-		health.Alerts = append(health.Alerts, models.SystemAlert{
-			Level:       "error",
-			Message:     "Database connection failed",
-			Timestamp:   time.Now(),
-			Service:     "database",
-		})
+	// Check database connectivity and get metrics
+	if repo, ok := s.repo.(*AdminRepository); ok {
+		if err := repo.db.Ping(ctx); err != nil {
+			health.Database = "disconnected"
+			health.Status = "degraded"
+			health.Alerts = append(health.Alerts, models.SystemAlert{
+				Level:       "error",
+				Message:     "Database connection failed",
+				Timestamp:   time.Now(),
+				Service:     "database",
+			})
+		}
+
+		// Get system metrics
+		metrics, err := s.repo.GetSystemMetrics(ctx)
+		if err != nil {
+			s.logger.Warn("Failed to get system metrics", zap.Error(err))
+		} else {
+			health.Metrics = *metrics
+		}
 	}
 
 	// TODO: Add Redis connectivity check
 	// TODO: Add service dependency checks
-	// TODO: Add system metrics collection
 
 	return health, nil
 }
@@ -220,22 +270,12 @@ func (s *AdminService) GetActiveAdminSessions(ctx context.Context) ([]*models.Ad
 
 // GetAdminAuditLog returns paginated admin action audit log
 func (s *AdminService) GetAdminAuditLog(ctx context.Context, limit, offset int) ([]*models.AdminAction, error) {
-	// TODO: Implement database query for admin audit log
-	// Return mock data for now
-	actions := []*models.AdminAction{
-		{
-			ID:        uuid.New(),
-			AdminID:   uuid.New(),
-			Action:    "user_ban",
-			Resource:  "users",
-			Timestamp: time.Now().Add(-1 * time.Hour),
-			IPAddress: "127.0.0.1",
-			UserAgent: "Admin Panel v1.0",
-			Metadata:  json.RawMessage(`{"reason": "spam", "duration": "7d"}`),
-		},
+	filter := &models.AuditLogFilter{
+		Limit:  limit,
+		Offset: offset,
 	}
 
-	return actions, nil
+	return s.repo.GetAdminActions(ctx, filter)
 }
 
 // BanUser bans a user account with audit logging
@@ -250,7 +290,11 @@ func (s *AdminService) BanUser(ctx context.Context, adminID, userID uuid.UUID, r
 		return models.ErrInsufficientPermissions
 	}
 
-	// TODO: Implement user banning logic in database
+	// Ban user in database
+	err = s.repo.BanUser(ctx, userID, reason, duration, adminID)
+	if err != nil {
+		return fmt.Errorf("failed to ban user: %w", err)
+	}
 
 	// Log admin action
 	action := &models.AdminAction{
@@ -281,7 +325,11 @@ func (s *AdminService) UnbanUser(ctx context.Context, adminID, userID uuid.UUID,
 		return models.ErrInsufficientPermissions
 	}
 
-	// TODO: Implement user unbanning logic
+	// Unban user in database
+	err = s.repo.UnbanUser(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to unban user: %w", err)
+	}
 
 	// Log action
 	action := &models.AdminAction{

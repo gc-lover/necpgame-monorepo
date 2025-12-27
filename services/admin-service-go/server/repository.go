@@ -14,6 +14,20 @@ import (
 	"admin-service-go/server/internal/models"
 )
 
+// AdminRepositoryInterface defines the interface for admin repository operations
+// Used for dependency injection and testing
+type AdminRepositoryInterface interface {
+	CreateAdminAction(ctx context.Context, action *models.AdminAction) error
+	GetAdminActions(ctx context.Context, filter *models.AuditLogFilter) ([]*models.AdminAction, error)
+	BanUser(ctx context.Context, userID uuid.UUID, reason string, duration time.Duration, adminID uuid.UUID) error
+	UnbanUser(ctx context.Context, userID uuid.UUID) error
+	GetUserDetails(ctx context.Context, userID uuid.UUID) (*models.UserDetails, error)
+	GetSystemMetrics(ctx context.Context) (*models.SystemMetrics, error)
+	IsUserBanned(ctx context.Context, userID uuid.UUID) (bool, error)
+	GetContentModerationQueue(ctx context.Context, limit, offset int) ([]*models.ContentItem, error)
+	ModerateContent(ctx context.Context, contentID uuid.UUID, action string, moderatorID uuid.UUID, reason string) error
+}
+
 // AdminRepository handles database operations for admin service
 // Optimized for admin query patterns with connection pooling
 type AdminRepository struct {

@@ -78,3 +78,4 @@ ENV GIN_MODE=release \
 ENTRYPOINT ["/housing-service"]
 
 
+

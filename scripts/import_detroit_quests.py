@@ -11,159 +11,118 @@ from pathlib import Path
 from datetime import datetime
 import hashlib
 
-def parse_quest_content(content):
-    """Parse quest content from YAML file"""
-    sections = content.get('content', {}).get('sections', [])
+def parse_detroit_quest(yaml_file):
+    """Parse individual Detroit quest from YAML file"""
+    try:
+        with open(yaml_file, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
 
-    detroit_quests = []
-    for section in sections:
-        quest_id = section.get('id', '')
-        if 'detroit' in quest_id.lower():
-            title = section.get('title', '')
-            body = section.get('body', '')
+        metadata = data.get('metadata', {})
+        quest_def = data.get('quest_definition', {})
 
-            # Parse quest information from body
-            lines = body.split('\n')
+        # Extract quest information
+        quest_id = metadata.get('id', '')
+        title = metadata.get('title', '')
+        description = data.get('summary', {}).get('essence', '')
 
-            # Extract metadata
-            city = "Detroit, Michigan, USA"
-            period = ""
-            level_range = ""
-            quest_type = ""
-            synopsis = ""
-            rewards = []
-            objectives = []
+        # Get level requirements
+        level_min = quest_def.get('level_min', 1)
+        level_max = quest_def.get('level_max', None)
 
-            for line in lines:
-                line = line.strip()
-                if line.startswith('**Период:**'):
-                    period = line.replace('**Период:**', '').strip()
-                elif line.startswith('**Уровень:**'):
-                    level_range = line.replace('**Уровень:**', '').strip()
-                elif line.startswith('**Тип:**'):
-                    quest_type = line.replace('**Тип:**', '').strip()
-                elif line.startswith('**Синопсис:**'):
-                    synopsis = line.replace('**Синопсис:**', '').strip()
-                elif line.startswith('**Награды:**'):
-                    # Parse rewards section
-                    rewards_text = ""
-                    idx = lines.index(line) + 1
-                    while idx < len(lines) and not lines[idx].startswith('**'):
-                        rewards_text += lines[idx] + '\n'
-                        idx += 1
-                    rewards = parse_rewards(rewards_text)
-                elif line.startswith('**Основная петля:**'):
-                    # Parse objectives section
-                    objectives_text = ""
-                    idx = lines.index(line) + 1
-                    while idx < len(lines) and not lines[idx].startswith('**'):
-                        objectives_text += lines[idx] + '\n'
-                        idx += 1
-                    objectives = parse_objectives(objectives_text)
+        # Parse objectives
+        objectives = []
+        for obj in quest_def.get('objectives', []):
+            objectives.append({
+                'id': obj.get('id', ''),
+                'type': obj.get('type', 'main'),
+                'description': obj.get('text', ''),
+                'target': obj.get('target', ''),
+                'count': obj.get('count', 1),
+                'optional': obj.get('optional', False)
+            })
 
-            # Parse level range
-            level_min = 10
-            level_max = 25
-            if '-' in level_range:
-                parts = level_range.split('-')
-                try:
-                    level_min = int(parts[0])
-                    level_max = int(parts[1])
-                except:
-                    pass
+        # Parse rewards
+        rewards_data = quest_def.get('rewards', {})
+        rewards = []
 
-            quest_data = {
-                'id': str(uuid.uuid4()),
-                'quest_id': quest_id.replace('WQ-AMERICA-', '').replace('-', '_').lower(),
-                'title': title,
-                'description': synopsis,
-                'status': 'active',
-                'level_min': level_min,
-                'level_max': level_max,
-                'rewards': rewards,
-                'objectives': objectives,
-                'metadata': {
-                    'city': city,
-                    'period': period,
-                    'type': quest_type,
-                    'source_file': 'america-cities-2020-2029.yaml',
-                    'imported_at': datetime.now().isoformat(),
-                    'version': '1.0.0'
-                }
-            }
+        # Experience reward
+        if 'experience' in rewards_data:
+            rewards.append({
+                'type': 'experience',
+                'amount': rewards_data['experience'],
+                'description': 'Опыт за выполнение квеста'
+            })
 
-            detroit_quests.append(quest_data)
+        # Money reward
+        if 'money' in rewards_data:
+            rewards.append({
+                'type': 'currency',
+                'amount': rewards_data['money'],
+                'currency': 'eddies',
+                'description': 'Вознаграждение в эдди'
+            })
 
-    return detroit_quests
-
-def parse_rewards(rewards_text):
-    """Parse rewards from text"""
-    rewards = []
-
-    # Default rewards
-    rewards.append({
-        'type': 'experience',
-        'amount': 1500,
-        'description': 'Опыт за выполнение квеста'
-    })
-
-    rewards.append({
-        'type': 'currency',
-        'amount': 500,
-        'currency': 'eddies',
-        'description': 'Вознаграждение в эдди'
-    })
-
-    # Try to parse specific rewards from text
-    lines = rewards_text.strip().split('\n')
-    for line in lines:
-        if 'ED' in line or 'eddies' in line.lower():
-            try:
-                # Extract ED amount
-                if 'ED' in line:
-                    parts = line.split('ED')
-                    amount = int(parts[0].strip())
-                    rewards.append({
-                        'type': 'currency',
-                        'amount': amount,
-                        'currency': 'eddies',
-                        'description': 'Вознаграждение в эдди'
-                    })
-            except:
-                pass
-
-    return rewards
-
-def parse_objectives(objectives_text):
-    """Parse objectives from text"""
-    objectives = []
-
-    lines = objectives_text.strip().split('\n')
-    for line in lines:
-        line = line.strip()
-        if line and not line.startswith('**'):
-            # Remove numbering
-            line = line.lstrip('0123456789. ')
-            if line.startswith('**'):
-                # Bold text - objective type
-                objective_type = line.replace('**', '').strip()
-                objectives.append({
-                    'type': objective_type.lower().replace(' ', '_'),
-                    'description': objective_type,
-                    'required': True
+        # Reputation rewards
+        if 'reputation' in rewards_data:
+            for rep_type, amount in rewards_data['reputation'].items():
+                rewards.append({
+                    'type': 'reputation',
+                    'reputation_type': rep_type,
+                    'amount': amount,
+                    'description': f'Репутация: {rep_type}'
                 })
 
-    if not objectives:
-        # Default objectives
-        objectives = [
-            {
-                'type': 'main_quest',
-                'description': 'Выполнить основную задачу квеста',
-                'required': True
-            }
-        ]
+        # Item rewards
+        if 'items' in rewards_data and rewards_data['items']:
+            for item in rewards_data['items']:
+                rewards.append({
+                    'type': 'item',
+                    'item_id': item,
+                    'description': f'Предмет: {item}'
+                })
 
-    return objectives
+        # Default rewards if none specified
+        if not rewards:
+            rewards = [
+                {
+                    'type': 'experience',
+                    'amount': 1200,
+                    'description': 'Опыт за выполнение квеста'
+                },
+                {
+                    'type': 'currency',
+                    'amount': 500,
+                    'currency': 'eddies',
+                    'description': 'Вознаграждение в эдди'
+                }
+            ]
+
+        quest_data = {
+            'id': str(uuid.uuid4()),
+            'quest_id': quest_id,
+            'title': title,
+            'description': description,
+            'status': 'active',
+            'level_min': level_min,
+            'level_max': level_max,
+            'rewards': rewards,
+            'objectives': objectives,
+            'metadata': {
+                'city': 'Detroit, Michigan, USA',
+                'period': '2020-2029',
+                'type': quest_def.get('quest_type', 'side'),
+                'source_file': str(yaml_file),
+                'imported_at': datetime.now().isoformat(),
+                'version': metadata.get('version', '2.0.0'),
+                'tags': metadata.get('tags', [])
+            }
+        }
+
+        return quest_data
+
+    except Exception as e:
+        print(f"Error parsing {yaml_file}: {e}")
+        return None
 
 def create_liquibase_yaml(quests, output_file):
     """Create Liquibase YAML file for quest import"""
@@ -171,6 +130,10 @@ def create_liquibase_yaml(quests, output_file):
     changesets = []
 
     for quest in quests:
+        if not quest:
+            continue
+
+        # Create unique changeset ID
         changeset_id = f"quests-detroit-{quest['quest_id']}-{hashlib.md5(str(quest).encode()).hexdigest()[:8]}"
 
         changeset = {
@@ -182,14 +145,15 @@ def create_liquibase_yaml(quests, output_file):
                         'tableName': 'gameplay.quest_definitions',
                         'columns': [
                             {'column': {'name': 'id', 'value': quest['id']}},
+                            {'column': {'name': 'quest_id', 'value': quest['quest_id']}},
                             {'column': {'name': 'title', 'value': quest['title']}},
                             {'column': {'name': 'description', 'value': quest['description']}},
                             {'column': {'name': 'status', 'value': quest['status']}},
                             {'column': {'name': 'level_min', 'value': quest['level_min']}},
                             {'column': {'name': 'level_max', 'value': quest['level_max']}},
-                            {'column': {'name': 'rewards', 'value': json.dumps(quest['rewards'])}},
-                            {'column': {'name': 'objectives', 'value': json.dumps(quest['objectives'])}},
-                            {'column': {'name': 'metadata', 'value': json.dumps(quest['metadata'])}}
+                            {'column': {'name': 'rewards', 'value': json.dumps(quest['rewards'], ensure_ascii=False)}},
+                            {'column': {'name': 'objectives', 'value': json.dumps(quest['objectives'], ensure_ascii=False)}},
+                            {'column': {'name': 'metadata', 'value': json.dumps(quest['metadata'], ensure_ascii=False)}}
                         ]
                     }
                 }
@@ -202,37 +166,42 @@ def create_liquibase_yaml(quests, output_file):
         'databaseChangeLog': changesets
     }
 
+    # Ensure output directory exists
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
     with open(output_file, 'w', encoding='utf-8') as f:
         yaml.dump(liquibase_data, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
 
     print(f"Created Liquibase YAML file: {output_file}")
-    print(f"Imported {len(quests)} Detroit quests")
+    print(f"Imported {len(changesets)} Detroit quests")
 
 def main():
     """Main function"""
-    # Input file
-    input_file = Path('knowledge/content/quests/world/america/america-cities-2020-2029.yaml')
+    # Input directory with Detroit quests
+    input_dir = Path('knowledge/canon/lore/timeline-author/quests/america/detroit/2020-2029')
 
-    # Output file
+    # Output file for Liquibase migration
     output_file = Path('infrastructure/liquibase/data/gameplay/quests/data_quests_detroit_2020_2029_import.yaml')
 
-    # Ensure output directory exists
-    output_file.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Reading Detroit quest files from: {input_dir}")
 
-    print(f"Reading quest data from: {input_file}")
+    # Find all YAML files in the directory
+    yaml_files = list(input_dir.glob('*.yaml'))
+    print(f"Found {len(yaml_files)} YAML files")
 
-    # Read and parse YAML
-    with open(input_file, 'r', encoding='utf-8') as f:
-        data = yaml.safe_load(f)
-
-    # Parse Detroit quests
-    detroit_quests = parse_quest_content(data)
+    # Parse all Detroit quests
+    detroit_quests = []
+    for yaml_file in yaml_files:
+        print(f"Processing: {yaml_file.name}")
+        quest_data = parse_detroit_quest(yaml_file)
+        if quest_data:
+            detroit_quests.append(quest_data)
 
     if not detroit_quests:
         print("No Detroit quests found!")
         return
 
-    print(f"Found {len(detroit_quests)} Detroit quests")
+    print(f"Successfully parsed {len(detroit_quests)} Detroit quests")
 
     # Create Liquibase YAML
     create_liquibase_yaml(detroit_quests, output_file)

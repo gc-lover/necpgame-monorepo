@@ -52,3 +52,4 @@ type VisitApartmentParams struct {
 
 
 
+

@@ -107,3 +107,4 @@ class NpcsV2MigrationGenerator(BaseContentMigrationGenerator):
             'stats': json.dumps(stats_data, default=JsonSerializer.json_serializer, ensure_ascii=False)
         }
 
+

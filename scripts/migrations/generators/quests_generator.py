@@ -40,30 +40,37 @@ class QuestMigrationGenerator(BaseContentMigrationGenerator):
         metadata = spec.get('metadata', {})
         quest_def = spec.get('quest_definition', {})
         content = spec.get('content', {})
+        summary = spec.get('summary', {})
 
-        # Handle both old format (quest_definition) and new format (content)
-        if not quest_def and content:
-            # Extract from content structure
-            quest_def = {
-                'level_min': None,
-                'level_max': None,
-                'rewards': {
-                    'xp': 5000,
-                    'title': 'Имперский агент',
-                    'guild_bonuses': True
-                },
-                'objectives': [
-                    'Вступить в гильдию «Новая Империя»',
-                    'Выполнить 10 имперских миссий',
-                    'Накопить Legacy-очки для гильдии'
-                ]
-            }
+        # Handle both old format (quest_definition) and new format (content/summary)
+        if not quest_def:
+            if content:
+                # Extract from content structure - use default values
+                quest_def = {
+                    'level_min': None,
+                    'level_max': None,
+                    'rewards': {
+                        'xp': 1500,
+                        'currency': {'amount': 500, 'type': 'eddies'}
+                    },
+                    'objectives': [
+                        'Complete the quest objectives'
+                    ]
+                }
+            else:
+                # No quest_definition and no content - use minimal defaults
+                quest_def = {
+                    'level_min': 1,
+                    'level_max': None,
+                    'rewards': {'xp': 1000},
+                    'objectives': ['Complete quest']
+                }
 
         return {
             'id': metadata.get('id', f"quest-{yaml_file.stem}"),
             'quest_id': metadata.get('id', f"quest-{yaml_file.stem}"),
             'title': metadata.get('title', 'Unknown Quest'),
-            'description': spec.get('summary', {}).get('essence', ''),
+            'description': summary.get('essence', ''),
             'status': 'active',  # Default status from schema
             'level_min': quest_def.get('level_min'),
             'level_max': quest_def.get('level_max'),
