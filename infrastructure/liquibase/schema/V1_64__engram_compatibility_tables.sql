@@ -119,7 +119,7 @@ RETURNS INTEGER AS $$
 DECLARE
     v_resolved_count INTEGER := 0;
 BEGIN
-    -- Mark conflicts as resolved if they've been active for more than 24 hours
+    -- Mark conflicts as resolved if they have been active for more than 24 hours
     UPDATE gameplay.engram_conflicts
     SET is_active = FALSE,
         resolved_at = CURRENT_TIMESTAMP
