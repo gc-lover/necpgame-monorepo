@@ -458,17 +458,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  auctions:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/AuctionSummary'
-                  total:
-                    type: integer
-                  next_offset:
-                    type: integer
-                    nullable: true
+                $ref: '#/components/schemas/AuctionSummaryList'
         '400':
           description: Bad request
           content:
@@ -799,17 +789,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  auctions:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/AuctionSummary'
-                  total:
-                    type: integer
-                  next_offset:
-                    type: integer
-                    nullable: true
+                $ref: '#/components/schemas/AuctionSummaryList'
         '401':
           description: Unauthorized
           content:
@@ -1488,3 +1468,315 @@ components:
           description: Bid amount in minor units
           example: 15000
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AuctionSummaryList:
+      type: object
+      required:
+        - auctions
+        - total
+      properties:
+        auctions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuctionSummary'
+        total:
+          type: integer
+          minimum: 0
+          example: 25
+        next_offset:
+          type: integer
+          nullable: true
+          example: 20
+      description: 'BACKEND NOTE: Paginated auction list response.'
+    AuctionWithBidList:
+      type: object
+      required:
+        - auctions
+        - total
+      properties:
+        auctions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuctionWithBid'
+        total:
+          type: integer
+          minimum: 0
+          example: 15
+        next_offset:
+          type: integer
+          nullable: true
+          example: 20
+      description: 'BACKEND NOTE: Paginated auctions with user bids.'
+    GetEconomyOverviewParams:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Optional player ID filter
+      description: Parameters for economy overview request.
+    EconomyOverview:
+      type: object
+      required:
+        - total_players
+        - active_trades
+        - total_volume
+        - market_trends
+      properties:
+        total_players:
+          type: integer
+          minimum: 0
+          example: 15420
+        active_trades:
+          type: integer
+          minimum: 0
+          example: 342
+        total_volume:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total volume in minor units
+          example: 15000000
+        market_trends:
+          type: object
+          properties:
+            price_changes:
+              type: number
+              example: 2.5
+            popular_items:
+              type: array
+              items:
+                type: string
+              example: ["Plasma Rifle MK-II", "Cybernetic Implants"]
+      description: 'BACKEND NOTE: Aggregated economy statistics.'
+    GetCharacterInventoryParams:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        category:
+          type: string
+          enum: [weapons, armor, consumables, materials]
+          description: Filter by item category
+      description: Parameters for character inventory request.
+    CharacterInventory:
+      type: object
+      required:
+        - player_id
+        - items
+        - total_value
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItem'
+        total_value:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total inventory value in minor units
+          example: 750000
+        capacity:
+          type: integer
+          minimum: 0
+          example: 100
+        used_slots:
+          type: integer
+          minimum: 0
+          example: 45
+      description: 'BACKEND NOTE: Player inventory with valuation.'
+    InventoryItem:
+      type: object
+      required:
+        - item_id
+        - quantity
+        - item_type
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 3
+        item_type:
+          type: string
+          enum: [weapon, armor, consumable, material, cyberware]
+          example: weapon
+        name:
+          type: string
+          example: "Plasma Rifle MK-II"
+        value:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Item value in minor units
+          example: 250000
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+          example: rare
+      description: 'BACKEND NOTE: Individual inventory item.'
+    GetCraftingRecipesParams:
+      type: object
+      properties:
+        category:
+          type: string
+          enum: [weapons, armor, consumables, materials]
+          description: Filter by recipe category
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Filter by recipe tier
+        quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Filter by minimum quality
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of recipes to return
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Pagination offset
+      description: Parameters for crafting recipes request.
+    CraftingRecipeList:
+      type: object
+      required:
+        - recipes
+        - total
+      properties:
+        recipes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CraftingRecipe'
+        total:
+          type: integer
+          minimum: 0
+          example: 150
+        next_offset:
+          type: integer
+          nullable: true
+          example: 20
+      description: 'BACKEND NOTE: Paginated crafting recipes.'
+    CraftingRecipe:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - tier
+        - quality
+        - success_rate
+        - materials
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440003
+        name:
+          type: string
+          example: "Plasma Rifle MK-II"
+        description:
+          type: string
+          nullable: true
+          example: "Advanced energy weapon with plasma projectiles"
+        category:
+          type: string
+          enum: [weapons, armor, consumables, materials]
+          example: weapons
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 3
+        quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 85
+        success_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.75
+        duration:
+          type: integer
+          minimum: 1
+          description: Crafting duration in seconds
+          example: 300
+        materials:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeMaterial'
+        requirements:
+          $ref: '#/components/schemas/RecipeRequirements'
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T10:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T10:30:00Z'
+      description: 'BACKEND NOTE: Complete crafting recipe specification.'
+    RecipeMaterial:
+      type: object
+      required:
+        - item_id
+        - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440004
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 5
+        name:
+          type: string
+          example: "Plasma Cell"
+      description: Material required for crafting.
+    RecipeRequirements:
+      type: object
+      properties:
+        skill_level:
+          type: integer
+          minimum: 1
+          example: 3
+        station_type:
+          type: string
+          enum: [basic, advanced, professional, master]
+          example: advanced
+        faction:
+          type: string
+          enum: [neutral, corporation, techno, anarchist]
+          example: corporation
+      description: Requirements to craft the recipe.
+    GetPlayerWalletParams:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+      description: Parameters for player wallet request.
