@@ -1,0 +1,380 @@
+import yaml
+from pathlib import Path
+from datetime import datetime
+
+def create_economy_craft_system_document():
+    """Create comprehensive economic craft system document"""
+    document = {
+        'metadata': {
+            'id': 'mechanics-economy-craft-system-detailed',
+            'title': 'Mechanics - Economic Craft System - Detailed Implementation',
+            'document_type': 'mechanics',
+            'category': 'economy',
+            'subcategory': 'craft-system',
+            'status': 'draft',
+            'version': '1.0.0',
+            'last_updated': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'concept_approved': False,
+            'concept_reviewed_at': '',
+            'owners': [
+                {
+                    'role': 'game_designer',
+                    'contact': 'design@necp.game'
+                }
+            ],
+            'tags': [
+                'economy',
+                'crafting',
+                'production',
+                'market-dynamics'
+            ],
+            'topics': [
+                'crafting-mechanics',
+                'economic-simulation',
+                'resource-management',
+                'production-optimization'
+            ],
+            'related_systems': [
+                'economy-service',
+                'crafting-service',
+                'resource-service',
+                'market-service'
+            ],
+            'related_documents': [
+                {
+                    'id': 'mechanics-economy-overview',
+                    'relation': 'references'
+                },
+                {
+                    'id': 'mechanics-crafting-overview',
+                    'relation': 'implements'
+                }
+            ],
+            'source': 'scripts/generate_economy_craft_system.py',
+            'visibility': 'internal',
+            'audience': [
+                'design',
+                'backend',
+                'qa'
+            ],
+            'risk_level': 'high'
+        },
+        'executive_summary': {
+            'objective': 'Создать комплексную систему крафта, интегрированную с экономикой, где производство предметов влияет на рыночные цены, спрос и предложение ресурсов.',
+            'scope': 'Полная система крафта с экономическим моделированием, включая контракты, цепочки поставок, рыночные механизмы и оптимизацию производства.',
+            'key_features': [
+                'Динамическое ценообразование на основе спроса/предложения',
+                'Многоуровневые контракты крафта с различной сложностью',
+                'Экономическая оптимизация производства',
+                'Интеграция с глобальной экономикой игры'
+            ],
+            'economic_impact': 'Крафт становится ключевым экономическим активом, влияющим на рыночные тренды и стоимость ресурсов.'
+        },
+        'craft_contract_system': {
+            'contract_types': [
+                {
+                    'type': 'express_contract',
+                    'duration': '5-15 минут',
+                    'cost_multiplier': 1.5,
+                    'success_rate': '95%',
+                    'description': 'Быстрый крафт для простых предметов'
+                },
+                {
+                    'type': 'standard_contract',
+                    'duration': '30-60 минут',
+                    'cost_multiplier': 1.0,
+                    'success_rate': '85%',
+                    'description': 'Стандартный крафт с балансом скорости и стоимости'
+                },
+                {
+                    'type': 'premium_contract',
+                    'duration': '2-4 часа',
+                    'cost_multiplier': 0.8,
+                    'success_rate': '75%',
+                    'description': 'Качественный крафт с бонусами эффективности'
+                },
+                {
+                    'type': 'master_contract',
+                    'duration': '8-24 часа',
+                    'cost_multiplier': 0.6,
+                    'success_rate': '60%',
+                    'description': 'Мастерский крафт с максимальными бонусами'
+                },
+                {
+                    'type': 'bulk_contract',
+                    'duration': '1-7 дней',
+                    'cost_multiplier': 0.4,
+                    'success_rate': '40%',
+                    'description': 'Массовое производство с минимальными затратами'
+                }
+            ],
+            'contract_parameters': {
+                'material_efficiency': {
+                    'express': 0.7,
+                    'standard': 0.85,
+                    'premium': 0.95,
+                    'master': 1.0,
+                    'bulk': 1.1
+                },
+                'quality_bonuses': {
+                    'express': 0.8,
+                    'standard': 0.9,
+                    'premium': 1.0,
+                    'master': 1.15,
+                    'bulk': 0.85
+                },
+                'failure_consequences': {
+                    'material_loss': '30-70% (зависит от типа контракта)',
+                    'time_penalty': '50% от базового времени',
+                    'reputation_impact': '-1 to -5 points',
+                    'economic_impact': 'рыночные колебания'
+                }
+            }
+        },
+        'economic_integration': {
+            'price_dynamics': {
+                'supply_influence': {
+                    'crafting_demand': 'увеличивает цену базовых ресурсов',
+                    'finished_goods': 'снижает цену готовой продукции',
+                    'regional_variation': 'учитывает локальные рынки',
+                    'time_based_trends': 'сезонные колебания спроса'
+                },
+                'crafting_cost_calculation': {
+                    'material_costs': 'динамические рыночные цены',
+                    'labor_costs': 'на основе сложности и времени',
+                    'overhead_costs': 'процент от общих затрат',
+                    'profit_margins': '5-25% в зависимости от рынка'
+                }
+            },
+            'market_integration': {
+                'crafting_as_economic_activity': {
+                    'supply_creation': 'добавляет товары на рынок',
+                    'demand_generation': 'создает спрос на ресурсы',
+                    'price_stabilization': 'балансирует рыночные колебания',
+                    'economic_indicators': 'влияет на индексы экономики'
+                },
+                'crafting_efficiency_metrics': {
+                    'production_cost_index': 'отношение затрат к выходу',
+                    'market_efficiency_rating': 'эффективность по сравнению с рынком',
+                    'profitability_score': 'рентабельность производства',
+                    'scalability_factor': 'возможность масштабирования'
+                }
+            }
+        },
+        'production_optimization': {
+            'optimization_strategies': [
+                {
+                    'strategy': 'material_substitution',
+                    'description': 'Замена дорогих материалов аналогами',
+                    'benefit': 'снижение затрат на 15-30%',
+                    'risk': 'потеря качества 5-15%'
+                },
+                {
+                    'strategy': 'bulk_purchasing',
+                    'description': 'Закупка материалов оптом',
+                    'benefit': 'скидки 10-25% при больших объемах',
+                    'risk': 'заморозка капитала'
+                },
+                {
+                    'strategy': 'production_chaining',
+                    'description': 'Последовательное производство связанных предметов',
+                    'benefit': 'эффективность 20-40%',
+                    'risk': 'зависимость от цепочки'
+                },
+                {
+                    'strategy': 'specialization_focus',
+                    'description': 'Специализация на определенных типах крафта',
+                    'benefit': 'бонусы эффективности 25-50%',
+                    'risk': 'ограничение разнообразия'
+                },
+                {
+                    'strategy': 'automation_investment',
+                    'description': 'Инвестиции в автоматизированные системы',
+                    'benefit': 'снижение трудозатрат на 50-80%',
+                    'risk': 'высокие первоначальные вложения'
+                }
+            ],
+            'efficiency_calculations': {
+                'production_efficiency': 'выход / (вход * время)',
+                'cost_efficiency': 'прибыль / общие_затраты',
+                'time_efficiency': 'выход / время',
+                'resource_efficiency': 'полезный_выход / общий_вход'
+            }
+        },
+        'supply_chain_dynamics': {
+            'supply_chain_modeling': {
+                'tier_1_suppliers': 'базовые ресурсы и материалы',
+                'tier_2_processors': 'переработка и очистка',
+                'tier_3_manufacturers': 'производство компонентов',
+                'tier_4_assemblers': 'финальная сборка',
+                'tier_5_distributors': 'распространение и продажа'
+            },
+            'supply_chain_risks': [
+                {
+                    'risk_type': 'supply_disruption',
+                    'causes': ['дефицит ресурсов', 'политические события', 'конкуренция'],
+                    'impact': 'рост цен, задержки производства',
+                    'mitigation': 'диверсификация поставщиков, запасы'
+                },
+                {
+                    'risk_type': 'demand_fluctuation',
+                    'causes': ['рыночные тренды', 'сезонность', 'конкуренция'],
+                    'impact': 'перепроизводство или дефицит',
+                    'mitigation': 'прогнозирование спроса, гибкое производство'
+                },
+                {
+                    'risk_type': 'quality_variance',
+                    'causes': ['поставщики низкого качества', 'технологические проблемы'],
+                    'impact': 'брак продукции, репутационные потери',
+                    'mitigation': 'контроль качества, сертификация поставщиков'
+                }
+            ]
+        },
+        'crafting_economy_balance': {
+            'economic_balance_mechanisms': [
+                {
+                    'mechanism': 'dynamic_pricing',
+                    'purpose': 'автоматическое регулирование цен',
+                    'implementation': 'алгоритмы спроса-предложения',
+                    'effectiveness': 'высокая для стабильных рынков'
+                },
+                {
+                    'mechanism': 'production_quotas',
+                    'purpose': 'ограничение перепроизводства',
+                    'implementation': 'лимит на количество контрактов',
+                    'effectiveness': 'средняя, вызывает дефицит'
+                },
+                {
+                    'mechanism': 'resource_renewal',
+                    'purpose': 'восстановление истощенных ресурсов',
+                    'implementation': 'естественная регенерация и события',
+                    'effectiveness': 'высокая для долгосрочного баланса'
+                },
+                {
+                    'mechanism': 'crafting_subsidies',
+                    'purpose': 'стимулирование определенных производств',
+                    'implementation': 'государственные субсидии и льготы',
+                    'effectiveness': 'высокая для целевых секторов'
+                }
+            ],
+            'player_economic_engagement': [
+                {
+                    'engagement_type': 'crafting_as_career',
+                    'benefits': 'стабильный доход, развитие навыков',
+                    'challenges': 'конкуренция, рыночные риски'
+                },
+                {
+                    'engagement_type': 'investment_in_production',
+                    'benefits': 'пассивный доход, масштабирование',
+                    'challenges': 'начальные вложения, управление'
+                },
+                {
+                    'engagement_type': 'trading_crafted_goods',
+                    'benefits': 'спекуляция, арбитраж',
+                    'challenges': 'волатильность, логистика'
+                },
+                {
+                    'engagement_type': 'supply_chain_optimization',
+                    'benefits': 'эффективность, конкурентное преимущество',
+                    'challenges': 'сложность координации, риски'
+                }
+            ]
+        },
+        'technical_architecture': {
+            'crafting_engine': {
+                'core_components': [
+                    'contract_processor',
+                    'resource_manager',
+                    'quality_calculator',
+                    'economic_integrator'
+                ],
+                'data_structures': [
+                    'crafting_recipes',
+                    'production_queues',
+                    'resource_inventories',
+                    'economic_indicators'
+                ],
+                'processing_pipeline': [
+                    'contract_validation',
+                    'resource_allocation',
+                    'production_simulation',
+                    'result_calculation'
+                ]
+            },
+            'integration_points': {
+                'economy_service': 'ценовые данные, рыночные тренды',
+                'inventory_service': 'управление ресурсами и продуктами',
+                'market_service': 'торговые операции и листинги',
+                'player_service': 'навыки и репутация крафтера'
+            },
+            'performance_requirements': {
+                'contract_processing': '<100ms per contract',
+                'batch_operations': '<1s per 100 contracts',
+                'real_time_updates': '<50ms market data updates',
+                'concurrent_operations': '1000+ simultaneous contracts'
+            }
+        },
+        'future_expansions': {
+            'advanced_features': [
+                'ai_powered_optimization',
+                'predictive_supply_chains',
+                'blockchain_tracked_authenticity',
+                'crowdfunding_production_runs'
+            ],
+            'emerging_trends': [
+                'sustainable_crafting',
+                'custom_personalization',
+                'virtual_reality_design',
+                'nanoscale_manufacturing'
+            ],
+            'research_directions': [
+                'economic_modeling_accuracy',
+                'player_behavior_prediction',
+                'supply_chain_simulation',
+                'crafting_skill_development'
+            ]
+        },
+        'implementation_roadmap': {
+            'phase_1_basic_crafting': [
+                'Базовая система контрактов',
+                'Простые рецепты крафта',
+                'Основные ресурсы',
+                'Базовое ценообразование'
+            ],
+            'phase_2_economic_integration': [
+                'Динамическое ценообразование',
+                'Рыночная интеграция',
+                'Экономические показатели',
+                'Балансовые механизмы'
+            ],
+            'phase_3_advanced_features': [
+                'Оптимизация производства',
+                'Цепочки поставок',
+                'Продвинутые контракты',
+                'Специализация крафтеров'
+            ],
+            'phase_4_scalability': [
+                'Масштабируемая архитектура',
+                'Автоматизация процессов',
+                'ИИ-оптимизация',
+                'Кросс-платформенная интеграция'
+            ]
+        }
+    }
+
+    return document
+
+def main():
+    """Generate comprehensive economic craft system document"""
+    document = create_economy_craft_system_document()
+
+    output_dir = Path('knowledge/mechanics/economy')
+    output_file = output_dir / 'economy-craft-system-detailed.yaml'
+
+    with open(output_file, 'w', encoding='utf-8') as f:
+        yaml.dump(document, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+
+    print(f"Generated comprehensive economic craft system document: {output_file}")
+
+if __name__ == '__main__':
+    main()
