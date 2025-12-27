@@ -1,0 +1,502 @@
+metadata:
+  id: voice-lobby-system-architecture
+  title: 'Архитектура системы голосовых лобби - Полная спецификация'
+  document_type: architecture
+  category: systems
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-12-27T12:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-27T12:00:00Z
+  processed_by: architect
+  processed_at: 2025-12-27T12:00:00Z
+  github_issue_number: 140892117
+  owners:
+    - role: architect_lead
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - voice-lobby
+    - voice-chat
+    - party-system
+    - matchmaking
+  topics:
+    - system-architecture
+    - voice-communication
+    - social-interaction
+    - real-time-systems
+  related_systems:
+    - voice-service
+    - party-service
+    - guild-service
+    - clan-service
+    - matchmaking-service
+    - realtime-gateway
+  related_documents:
+    - id: voice-lobby-system
+      relation: backend_implementation
+      title: Voice Lobby & Party Finder Backend
+      link: knowledge/implementation/backend/voice-lobby/voice-lobby-system.yaml
+    - id: voice-lobby-technical
+      relation: technical_specification
+      title: Техническое задание голосовых лобби
+      link: knowledge/implementation/architecture/voice-lobby-technical.yaml
+    - id: voice-chat-system-architecture
+      relation: voice_infrastructure
+      title: Архитектура системы голосового чата
+      link: knowledge/implementation/architecture/voice-chat-system-architecture.yaml
+    - id: realtime-gateway-network-architecture
+      relation: network_integration
+      title: Архитектура сети realtime gateway
+      link: knowledge/implementation/architecture/realtime-gateway-network-architecture.yaml
+  source: shared/docs/knowledge/implementation/architecture/voice-lobby-system-architecture.md
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - systems
+    - devops
+  risk_level: high
+review:
+  chain:
+    - role: architect_lead
+      reviewer: architect
+      reviewed_at: 2025-12-27T12:00:00Z
+      status: approved
+  next_actions: [ ]
+summary:
+  problem: Необходима полная архитектура системы голосовых лобби для интеграции всех компонентов социального взаимодействия в Night City.
+  goal: Создать единую архитектуру голосовых лобби, объединяющую party finder, субканалы, права доступа и интеграцию с социальными системами.
+  essence: Голосовые лобби - это центр социального взаимодействия в Night City, где игроки формируют группы, общаются и координируют действия в реальном времени.
+  key_points:
+    - Архитектура микросервисов с 8 основными компонентами
+    - Интеграция с voice chat, party system, guilds и clans
+    - Масштабируемость до 50k одновременных пользователей
+    - WebRTC + WebSocket для real-time коммуникации
+    - Event-driven архитектура с Kafka для синхронизации
+content:
+  sections:
+    - id: system_overview
+      title: 'Обзор системы голосовых лобби'
+      body: |
+        Система голосовых лобби представляет собой комплексное решение для социального взаимодействия в Night City, объединяющее:
+
+        **Основные функции:**
+        - Голосовая коммуникация в лобби и подканалах
+        - Автоматический подбор групп (Party Finder)
+        - Управление правами доступа и модерация
+        - Интеграция с фракциями, гильдиями и кланами
+        - Real-time обновления и уведомления
+        - Аналитика и телеметрия использования
+
+        **Масштабируемость:**
+        - Одновременная поддержка 50,000+ пользователей
+        - Геораспределенная архитектура
+        - Автоматическое масштабирование компонентов
+        - Fault-tolerant дизайн с redundancy
+
+        **Качество обслуживания:**
+        - P99 latency <50ms для критических операций
+        - 99.9% uptime SLA
+        - Zero-downtime deployments
+        - Comprehensive monitoring и alerting
+      mechanics_links: [ ]
+
+    - id: architectural_components
+      title: 'Компоненты архитектуры'
+      body: |
+        **Voice Lobby Service (Основной сервис):**
+        - Микросервис на Go с REST API
+        - Порт 8096, Kubernetes deployment
+        - Управляет жизненным циклом лобби
+        - Координирует все подсистемы
+
+        **Компоненты системы:**
+
+        1. **Voice Lobby Manager** - центральный координатор
+        2. **Lobby Directory Manager** - каталог и поиск лобби
+        3. **Party Finder Engine** - алгоритм подбора групп
+        4. **Subchannel Controller** - управление подканалами
+        5. **Permissions Engine** - права доступа и модерация
+        6. **Lobby Matchmaker** - подбор подходящих лобби
+        7. **Voice Provider Integrator** - интеграция с voice провайдером
+        8. **Analytics & Telemetry Collectors** - сбор метрик
+
+        **Внешние интеграции:**
+        - Voice Service (WebRTC комнаты)
+        - Party/Guild/Clan Services (социальные группы)
+        - Character Service (данные персонажей)
+        - Analytics Service (метрики и отчеты)
+        - Realtime Gateway (WebSocket обновления)
+      mechanics_links: [ ]
+
+    - id: data_architecture
+      title: 'Архитектура данных'
+      body: |
+        **Основные таблицы:**
+
+        ```sql
+        -- Голосовые лобби
+        CREATE TABLE voice_lobbies (
+            id UUID PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            type VARCHAR(50) NOT NULL, -- activity, clan, raid, tournament
+            max_participants INTEGER DEFAULT 100,
+            current_participants INTEGER DEFAULT 0,
+            region VARCHAR(50),
+            language VARCHAR(10),
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+
+        -- Участники лобби
+        CREATE TABLE lobby_participants (
+            id UUID PRIMARY KEY,
+            lobby_id UUID REFERENCES voice_lobbies(id),
+            character_id UUID NOT NULL,
+            player_id UUID NOT NULL,
+            role VARCHAR(50) DEFAULT 'member', -- leader, commander, officer, member
+            joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            last_activity TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            is_muted BOOLEAN DEFAULT FALSE,
+            subchannel_id UUID
+        );
+
+        -- Подканалы
+        CREATE TABLE lobby_subchannels (
+            id UUID PRIMARY KEY,
+            lobby_id UUID REFERENCES voice_lobbies(id),
+            name VARCHAR(100) NOT NULL,
+            type VARCHAR(50) DEFAULT 'voice', -- voice, text
+            max_participants INTEGER DEFAULT 20,
+            is_private BOOLEAN DEFAULT FALSE,
+            parent_channel_id UUID,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+        ```
+
+        **Индексы производительности:**
+        - lobby_participants(lobby_id, character_id)
+        - lobby_participants(last_activity)
+        - voice_lobbies(type, region, current_participants)
+
+        **Кэширование:**
+        - Redis для активных лобби и участников
+        - TTL 5 минут для поиска
+        - LRU eviction policy
+      mechanics_links: [ ]
+
+    - id: network_architecture
+      title: 'Сетевая архитектура'
+      body: |
+        **Протоколы коммуникации:**
+
+        1. **HTTP/REST API** - управление лобби и конфигурация
+        2. **WebSocket** - real-time обновления состояния лобби
+        3. **WebRTC** - голосовая коммуникация (через Voice Service)
+        4. **Kafka** - event-driven синхронизация между сервисами
+
+        **API Gateway:**
+        - Rate limiting: 1000 req/sec per user
+        - Authentication: JWT tokens
+        - Load balancing: Round-robin с health checks
+        - Caching: CDN для статических ресурсов
+
+        **Real-time коммуникация:**
+        - WebSocket channels для лобби обновлений
+        - Server-sent events для уведомлений
+        - Heartbeat каждые 30 секунд
+        - Automatic reconnection с exponential backoff
+
+        **Геораспределение:**
+        - Regional clusters (NA, EU, ASIA)
+        - Cross-region replication с eventual consistency
+        - CDN для voice traffic optimization
+        - Smart routing based on player location
+      mechanics_links: [ ]
+
+    - id: scaling_strategy
+      title: 'Стратегия масштабирования'
+      body: |
+        **Горизонтальное масштабирование:**
+
+        - **Voice Lobby Service:** 10-20 pods per region
+        - **Database:** Read replicas (3 per region)
+        - **Cache:** Redis cluster с sharding
+        - **Kafka:** Multi-broker clusters (5+ brokers)
+
+        **Load Balancing:**
+        - L7 load balancer (NGINX/Traefik)
+        - Session affinity для WebSocket connections
+        - Health checks каждые 10 секунд
+        - Circuit breaker pattern для fault tolerance
+
+        **Auto-scaling:**
+        - CPU > 70% → +1 pod
+        - Memory > 80% → +1 pod
+        - Queue depth > 1000 → +2 pods
+        - Min/Max pods: 3/50 per service
+
+        **Capacity Planning:**
+        - Peak concurrent users: 50,000
+        - Average lobby size: 8-12 players
+        - Voice channels: 6,000+ simultaneous
+        - Database connections: 1,000 per pod
+      mechanics_links: [ ]
+
+    - id: security_architecture
+      title: 'Архитектура безопасности'
+      body: |
+        **Аутентификация и авторизация:**
+        - JWT tokens с 1-hour expiration
+        - Role-based access control (RBAC)
+        - Permission inheritance от социальных групп
+        - Session management с secure cookies
+
+        **Voice Security:**
+        - End-to-end encryption (WebRTC DTLS)
+        - Voice activity detection для anti-spam
+        - Automatic muting для toxic behavior
+        - Content moderation с AI filters
+
+        **API Security:**
+        - Rate limiting per IP и per user
+        - Input validation и sanitization
+        - SQL injection prevention
+        - XSS/CSRF protection
+
+        **Monitoring и Incident Response:**
+        - Real-time security event monitoring
+        - Automated blocking для suspicious activity
+        - Incident response playbooks
+        - Security audit logs с 1-year retention
+      mechanics_links: [ ]
+
+    - id: performance_requirements
+      title: 'Требования производительности'
+      body: |
+        **Latency Requirements:**
+        - Lobby creation: <200ms P99
+        - Party finder match: <500ms P99
+        - Voice channel join: <100ms P99
+        - Real-time updates: <50ms P99
+        - Database queries: <20ms P95
+
+        **Throughput:**
+        - HTTP API: 10,000+ req/sec
+        - WebSocket messages: 50,000+ msg/sec
+        - Voice connections: 6,000+ concurrent
+        - Database: 100,000+ queries/sec
+
+        **Resource Utilization:**
+        - CPU: <60% average per pod
+        - Memory: <4GB per pod
+        - Network: <100Mbps per pod
+        - Disk I/O: <50MB/sec per pod
+
+        **Optimization Techniques:**
+        - Memory pooling для объектов
+        - Connection pooling для БД
+        - Message batching для WebSocket
+        - Caching with Redis
+        - Async processing для heavy operations
+      mechanics_links: [ ]
+
+    - id: monitoring_observability
+      title: 'Мониторинг и наблюдаемость'
+      body: |
+        **Метрики:**
+        - Active lobbies count
+        - Participants per lobby distribution
+        - Voice channel utilization
+        - Matchmaking success rate
+        - Error rates and latency percentiles
+
+        **Логирование:**
+        - Structured logging с correlation IDs
+        - Audit trail для moderation actions
+        - Performance metrics export
+        - Security event logging
+
+        **Alerting:**
+        - High latency alerts (>500ms P99)
+        - Error rate spikes (>5%)
+        - Resource utilization thresholds
+        - Security incidents
+
+        **Tracing:**
+        - Distributed tracing с Jaeger
+        - Request flow visualization
+        - Performance bottleneck identification
+        - Cross-service dependency mapping
+
+        **Dashboards:**
+        - Real-time metrics (Grafana)
+        - Historical trends (7-30 days)
+        - Geographic distribution
+        - User behavior analytics
+      mechanics_links: [ ]
+
+    - id: deployment_strategy
+      title: 'Стратегия развертывания'
+      body: |
+        **CI/CD Pipeline:**
+        - Automated testing (unit, integration, e2e)
+        - Blue-green deployments
+        - Feature flags для gradual rollout
+        - Rollback automation (5-minute window)
+
+        **Infrastructure:**
+        - Kubernetes clusters per region
+        - Helm charts для всех сервисов
+        - ConfigMaps и Secrets management
+        - Network policies для security
+
+        **Database Migrations:**
+        - Liquibase для schema changes
+        - Zero-downtime migrations
+        - Backward compatibility validation
+        - Rollback scripts
+
+        **Disaster Recovery:**
+        - Multi-region failover
+        - Database backup every 15 minutes
+        - Point-in-time recovery
+        - Service mesh (Istio) для traffic management
+
+        **Compliance:**
+        - GDPR compliance для EU users
+        - COPPA compliance для minors
+        - Security audits every 6 months
+        - Penetration testing quarterly
+      mechanics_links: [ ]
+
+    - id: integration_points
+      title: 'Точки интеграции'
+      body: |
+        **Внутренние сервисы:**
+
+        - **Voice Service:** WebRTC room management
+        - **Party Service:** Group formation and management
+        - **Guild/Clan Services:** Social group integration
+        - **Character Service:** Player data and permissions
+        - **Matchmaking Service:** Game session coordination
+        - **Analytics Service:** Usage metrics and reporting
+
+        **Внешние системы:**
+
+        - **Voice Providers:** Discord, TeamSpeak integration
+        - **Social Platforms:** Discord bots, webhooks
+        - **Analytics Platforms:** Mixpanel, Amplitude
+        - **Monitoring:** DataDog, New Relic
+
+        **API Contracts:**
+
+        ```yaml
+        # Voice Lobby API
+        /api/v1/voice-lobbies:
+          POST: Create lobby
+          GET: List lobbies with filters
+
+        /api/v1/voice-lobbies/{id}:
+          GET: Get lobby details
+          PUT: Update lobby settings
+          DELETE: Delete lobby
+
+        /api/v1/voice-lobbies/{id}/participants:
+          POST: Join lobby
+          DELETE: Leave lobby
+
+        /api/v1/voice-lobbies/{id}/subchannels:
+          POST: Create subchannel
+          PUT: Update subchannel
+        ```
+
+        **Event Contracts:**
+        - LobbyCreated, LobbyJoined, LobbyLeft
+        - VoiceChannelJoined, VoiceChannelLeft
+        - PermissionChanged, ModerationAction
+      mechanics_links: [ ]
+
+    - id: future_evolution
+      title: 'Пути развития'
+      body: |
+        **Ближайшие улучшения (3-6 месяцев):**
+        - AI-powered matchmaking algorithms
+        - Advanced voice activity detection
+        - Cross-platform voice chat support
+        - Enhanced moderation tools
+
+        **Долгосрочные возможности (6-12 месяцев):**
+        - Spatial audio with 3D positioning
+        - Voice-to-text transcription
+        - Multi-language real-time translation
+        - VR/AR voice integration
+
+        **Технологические инновации:**
+        - WebRTC improvements (SVC, simulcast)
+        - Machine learning for toxicity detection
+        - Blockchain-based voice authentication
+        - Quantum-resistant encryption
+
+        **Масштабирование:**
+        - Global CDN for voice traffic
+        - Edge computing for low-latency regions
+        - Serverless functions for burst capacity
+        - Multi-cloud deployment strategy
+
+        **Монетизация:**
+        - Premium voice features (noise suppression, effects)
+        - Custom lobby themes and branding
+        - Analytics insights for guilds and clans
+        - Marketplace for voice room customizations
+      mechanics_links: [ ]
+appendix:
+  glossary:
+    - term: Voice Lobby
+      definition: Виртуальная комната для голосового общения группы игроков с подканалами и правами доступа
+    - term: Party Finder
+      definition: Система автоматического подбора игроков в группы на основе ролей, рейтинга и предпочтений
+    - term: Subchannel
+      definition: Отдельный голосовой канал внутри лобби для группировки участников (по ролям, задачам)
+    - term: Voice Provider
+      definition: Внешний сервис для обработки WebRTC соединений и голосового трафика
+    - term: Real-time Gateway
+      definition: Сервис для обработки WebSocket соединений и real-time обновлений
+  references:
+    - title: Voice Chat System Architecture
+      link: knowledge/implementation/architecture/voice-chat-system-architecture.yaml
+    - title: Realtime Gateway Network Architecture
+      link: knowledge/implementation/architecture/realtime-gateway-network-architecture.yaml
+    - title: Backend Voice Lobby System
+      link: knowledge/implementation/backend/voice-lobby/voice-lobby-system.yaml
+  decisions:
+    - decision: Микросервисная архитектура
+      rationale: Обеспечивает независимое масштабирование компонентов и fault isolation
+      alternatives_considered: ["Монолитная архитектура", "Serverless функции"]
+      impact: Увеличивает сложность разработки, но улучшает масштабируемость и надежность
+    - decision: Event-driven коммуникация
+      rationale: Обеспечивает loose coupling между сервисами и асинхронную обработку
+      alternatives_considered: ["Synchronous API calls", "Shared database"]
+      impact: Улучшает производительность и fault tolerance, но усложняет debugging
+    - decision: WebRTC для голоса
+      rationale: Лучшая производительность и качество по сравнению с WebSocket audio
+      alternatives_considered: ["WebSocket audio streaming", "External voice providers"]
+      impact: Требует больше инфраструктуры, но обеспечивает лучшее качество и latency
+implementation:
+  github_issue: 140892117
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: [ ]
+  status: completed
+  completed_at: 2025-12-27T12:00:00Z
+  completed_by: architect
+history:
+  - version: '1.0.0'
+    date: 2025-12-27
+    author: architect
+    changes: Создана полная архитектура системы голосовых лобби с компонентами, данными, сетью, масштабированием, безопасностью и интеграциями.
+validation:
+  checksum: ''
+  schema_version: '1.0'
