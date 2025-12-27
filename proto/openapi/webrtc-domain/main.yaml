@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: WebRTC Signaling Service API - Enterprise-Grade Voice Chat Signaling
-  description: '**Enterprise-Grade WebRTC Signaling Service API for NECPGAME**
+  description: "**Enterprise-Grade WebRTC Signaling Service API for NECPGAME**
 
     Comprehensive voice chat signaling service enabling real-time peer-to-peer
     voice communication for MMOFPS gaming with enterprise-grade reliability,
@@ -30,7 +30,7 @@ info:
     - Signaling throughput: 10000+ messages/sec
     - Connection establishment: <100ms average
 
-    '
+    "
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -40,28 +40,28 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-- url: https://api.necpgame.com/v1/webrtc-signaling
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/webrtc-signaling
-  description: Staging server
-- url: http://localhost:8080/api/v1/webrtc-signaling
-  description: Local development server
+  - url: https://api.necpgame.com/v1/webrtc-signaling
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/webrtc-signaling
+    description: Staging server
+  - url: http://localhost:8080/api/v1/webrtc-signaling
+    description: Local development server
 security:
-- BearerAuth: []
+  - BearerAuth: []
 tags:
-- name: Voice Signaling
-  description: WebRTC signaling protocol operations
-- name: Voice Channels
-  description: Voice channel and room management
-- name: Voice Quality
-  description: Voice quality monitoring and optimization
-- name: Health Monitoring
-  description: System health and performance monitoring
+  - name: Voice Signaling
+    description: WebRTC signaling protocol operations
+  - name: Voice Channels
+    description: Voice channel and room management
+  - name: Voice Quality
+    description: Voice quality monitoring and optimization
+  - name: Health Monitoring
+    description: System health and performance monitoring
 paths:
   /health:
     get:
       summary: WebRTC signaling service health check
-      description: '**Enterprise-grade health check endpoint**
+      description: "**Enterprise-grade health check endpoint**
 
 
         Provides real-time health status of the example domain microservice.
@@ -71,21 +71,21 @@ paths:
 
         **Performance:** <1ms response time, cached for 30 seconds
 
-        '
+        "
       operationId: webrtcSignalingHealthCheck
       tags:
-      - Health Monitoring
+        - Health Monitoring
       parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
+        - name: Accept-Encoding
+          in: header
+          schema:
+            type: string
+            enum:
+              - gzip
+              - deflate
+              - br
       responses:
-        '200':
+        "200":
           description: Service is healthy
           headers:
             Cache-Control:
@@ -100,20 +100,20 @@ paths:
               schema:
                 type: string
                 enum:
-                - gzip
-                - deflate
-                - br
+                  - gzip
+                  - deflate
+                  - br
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '429':
+                $ref: "#/components/schemas/HealthResponse"
+        "429":
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -123,11 +123,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /health/batch:
     post:
       summary: Batch health check for multiple signaling services
-      description: '**Performance optimization:** Check multiple domain health in single request
+      description:
+        "**Performance optimization:** Check multiple domain health in single request
 
 
         Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
@@ -137,10 +138,10 @@ paths:
 
         **Use case:** Service mesh health checks, Kubernetes readiness probes
 
-        '
+        "
       operationId: webrtcSignalingBatchHealthCheck
       tags:
-      - Health Monitoring
+        - Health Monitoring
       requestBody:
         required: true
         content:
@@ -148,28 +149,28 @@ paths:
             schema:
               type: object
               required:
-              - services
+                - services
               properties:
                 services:
                   type: array
                   items:
                     type: string
                     enum:
-                    - example-domain
-                    - system-domain
-                    - specialized-domain
+                      - example-domain
+                      - system-domain
+                      - specialized-domain
                     maxItems: 10
                   description: List of services to check
       responses:
-        '200':
-          $ref: '#/components/responses/HealthBatchSuccess'
-        '400':
+        "200":
+          $ref: "#/components/responses/HealthBatchSuccess"
+        "400":
           description: Invalid request - malformed service list
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
+                $ref: "#/components/schemas/Error"
+        "429":
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -180,11 +181,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /health/ws:
     get:
       summary: Real-time signaling health monitoring WebSocket
-      description: '**Performance optimization:** Real-time health updates without polling
+      description:
+        "**Performance optimization:** Real-time health updates without polling
 
 
         Eliminates periodic HTTP requests, reduces server load by ~90%.
@@ -198,24 +200,24 @@ paths:
 
         **Reconnection:** Automatic with exponential backoff
 
-        '
+        "
       operationId: webrtcSignalingHealthWebSocket
       tags:
-      - Health Monitoring
+        - Health Monitoring
       parameters:
-      - name: services
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - example-domain
-            - system-domain
-            - specialized-domain
-        description: Services to monitor (optional, monitors all if not specified)
+        - name: services
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - example-domain
+                - system-domain
+                - specialized-domain
+          description: Services to monitor (optional, monitors all if not specified)
       responses:
-        '200':
+        "200":
           description: WebSocket upgrade information returned
           content:
             application/json:
@@ -230,8 +232,8 @@ paths:
                     items:
                       type: string
                     example:
-                    - health-monitoring-v1
-        '101':
+                      - health-monitoring-v1
+        "101":
           description: WebSocket connection established successfully
           headers:
             Upgrade:
@@ -249,20 +251,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WebSocketHealthMessage'
-        '400':
+                $ref: "#/components/schemas/WebSocketHealthMessage"
+        "400":
           description: Invalid request - malformed service parameters
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '401':
+                $ref: "#/components/schemas/Error"
+        "401":
           description: Unauthorized - authentication required for WebSocket
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
+                $ref: "#/components/schemas/Error"
+        "429":
           description: Too many requests - WebSocket connection limit exceeded
           headers:
             Retry-After:
@@ -272,11 +274,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /voice-channels:
     get:
       summary: List voice channels with filtering and pagination
-      description: '**Enterprise-grade voice channel listing endpoint**
+      description: "**Enterprise-grade voice channel listing endpoint**
 
 
         Supports filtering by type (guild/party/global), status, and participant count.
@@ -286,72 +288,72 @@ paths:
 
         **Performance:** <25ms P95, supports 5000+ concurrent voice sessions
 
-        '
+        "
       operationId: listVoiceChannels
       tags:
-      - Voice Channels
+        - Voice Channels
       parameters:
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-        description: Page number for pagination
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        description: Number of items per page
-      - name: sort_by
-        in: query
-        schema:
-          type: string
-          enum:
-          - created_at
-          - name
-          - priority
-          default: created_at
-        description: Sort field
-      - name: sort_order
-        in: query
-        schema:
-          type: string
-          enum:
-          - asc
-          - desc
-          default: desc
-        description: Sort order
-      - name: filter_status
-        in: query
-        schema:
-          type: string
-          enum:
-          - active
-          - inactive
-          - pending
-        description: Filter by status
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - created_at
+              - name
+              - priority
+            default: created_at
+          description: Sort field
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          description: Sort order
+        - name: filter_status
+          in: query
+          schema:
+            type: string
+            enum:
+              - active
+              - inactive
+              - pending
+          description: Filter by status
       responses:
-        '200':
-          $ref: '#/components/responses/ExampleListSuccess'
-        '400':
+        "200":
+          $ref: "#/components/responses/ExampleListSuccess"
+        "400":
           description: Invalid request - malformed query parameters
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '422':
+                $ref: "#/components/schemas/Error"
+        "422":
           description: Unprocessable entity - validation failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     post:
       summary: Create new voice channel
-      description: '**Enterprise-grade voice channel creation endpoint**
+      description: "**Enterprise-grade voice channel creation endpoint**
 
 
         Creates guild parties, private rooms, or global voice channels with permission validation.
@@ -361,40 +363,40 @@ paths:
 
         **Performance:** <50ms P95, includes validation and business logic
 
-        '
+        "
       operationId: createVoiceChannel
       tags:
-      - Example Domain
+        - Example Domain
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
         schema:
-          $ref: '#/components/schemas/CreateVoiceChannelRequest'
+          $ref: "#/components/schemas/CreateVoiceChannelRequest"
       responses:
-        '201':
-          $ref: '#/components/responses/ExampleCreated'
-        '400':
+        "201":
+          $ref: "#/components/responses/ExampleCreated"
+        "400":
           description: Invalid request - malformed or missing data
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '409':
+                $ref: "#/components/schemas/Error"
+        "409":
           description: Conflict - example with this identifier already exists
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '422':
+                $ref: "#/components/schemas/Error"
+        "422":
           description: Unprocessable entity - business rule validation failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
+                $ref: "#/components/schemas/Error"
+        "429":
           description: Too many requests - creation rate limit exceeded
           headers:
             Retry-After:
@@ -404,11 +406,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /voice-channels/{channel_id}:
     get:
       summary: Get specific voice channel by ID
-      description: '**Enterprise-grade voice channel retrieval endpoint**
+      description: "**Enterprise-grade voice channel retrieval endpoint**
 
 
         Returns channel details, active participants, and connection quality metrics.
@@ -418,39 +420,39 @@ paths:
 
         **Performance:** <15ms P95 with participant count caching
 
-        '
+        "
       operationId: getVoiceChannel
       tags:
-      - Voice Channels
+        - Voice Channels
       parameters:
-      - name: channel_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Example unique identifier
-      - name: include_related
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include related data in response
-      - name: If-None-Match
-        in: header
-        schema:
-          type: string
-        description: Conditional request - return 304 if ETag matches
-      - name: If-Modified-Since
-        in: header
-        schema:
-          type: string
-          format: date-time
-        description: Conditional request - return 304 if not modified since this time
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Example unique identifier
+        - name: include_related
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include related data in response
+        - name: If-None-Match
+          in: header
+          schema:
+            type: string
+          description: Conditional request - return 304 if ETag matches
+        - name: If-Modified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          description: Conditional request - return 304 if not modified since this time
       responses:
-        '200':
-          $ref: '#/components/responses/ExampleRetrieved'
-        '304':
+        "200":
+          $ref: "#/components/responses/ExampleRetrieved"
+        "304":
           description: Not modified - resource has not changed
           headers:
             ETag:
@@ -461,19 +463,19 @@ paths:
               schema:
                 type: string
                 example: max-age=300, private
-        '400':
+        "400":
           description: Invalid request - malformed example ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
+                $ref: "#/components/schemas/Error"
+        "404":
           description: Example not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
+                $ref: "#/components/schemas/Error"
+        "429":
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -483,10 +485,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     put:
       summary: Update existing example
-      description: '**Enterprise-grade update endpoint**
+      description: "**Enterprise-grade update endpoint**
 
 
         Supports partial updates, optimistic locking, and audit trails.
@@ -496,53 +498,53 @@ paths:
 
         **Performance:** <25ms P95, includes validation and conflict resolution
 
-        '
+        "
       operationId: updateVoiceChannel
       tags:
-      - Voice Channels
+        - Voice Channels
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       parameters:
-      - name: channel_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Voice channel unique identifier
-      - name: If-Match
-        in: header
-        schema:
-          type: string
-        description: ETag for optimistic locking - prevents concurrent updates
-      - name: If-Unmodified-Since
-        in: header
-        schema:
-          type: string
-          format: date-time
-        description: Conditional update - proceed only if not modified since this time
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
+        - name: If-Match
+          in: header
+          schema:
+            type: string
+          description: ETag for optimistic locking - prevents concurrent updates
+        - name: If-Unmodified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          description: Conditional update - proceed only if not modified since this time
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateExampleRequest'
+              $ref: "#/components/schemas/UpdateExampleRequest"
       responses:
-        '200':
-          $ref: '#/components/responses/ExampleUpdated'
-        '400':
+        "200":
+          $ref: "#/components/responses/ExampleUpdated"
+        "400":
           description: Invalid request - malformed data or example ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
+                $ref: "#/components/schemas/Error"
+        "404":
           description: Example not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '409':
+                $ref: "#/components/schemas/Error"
+        "409":
           description: Conflict - version conflict (optimistic locking) or precondition failed
           headers:
             ETag:
@@ -553,8 +555,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '412':
+                $ref: "#/components/schemas/Error"
+        "412":
           description: Precondition failed - If-Match or If-Unmodified-Since condition not met
           headers:
             ETag:
@@ -565,14 +567,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '422':
+                $ref: "#/components/schemas/Error"
+        "422":
           description: Unprocessable entity - business rule validation failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
+                $ref: "#/components/schemas/Error"
+        "429":
           description: Too many requests - update rate limit exceeded
           headers:
             Retry-After:
@@ -582,10 +584,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     delete:
       summary: Delete example
-      description: '**Enterprise-grade deletion endpoint**
+      description: "**Enterprise-grade deletion endpoint**
 
 
         Supports soft deletes with audit trails and cleanup scheduling.
@@ -595,42 +597,42 @@ paths:
 
         **Performance:** <15ms P95, includes cleanup operations
 
-        '
+        "
       operationId: deleteVoiceChannel
       tags:
-      - Voice Channels
+        - Voice Channels
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       parameters:
-      - name: channel_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Voice channel unique identifier
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
       responses:
-        '204':
-          $ref: '#/components/responses/ExampleDeleted'
-        '400':
+        "204":
+          $ref: "#/components/responses/ExampleDeleted"
+        "400":
           description: Invalid request - malformed example ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
+                $ref: "#/components/schemas/Error"
+        "404":
           description: Example not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '409':
+                $ref: "#/components/schemas/Error"
+        "409":
           description: Conflict - example cannot be deleted (referential integrity)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
+                $ref: "#/components/schemas/Error"
+        "429":
           description: Too many requests - deletion rate limit exceeded
           headers:
             Retry-After:
@@ -640,12 +642,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /voice-channels/{channel_id}/join:
     post:
       summary: Join voice channel with WebRTC signaling
-      description: '**Real-time voice channel join with WebRTC handshake**
+      description: "**Real-time voice channel join with WebRTC handshake**
 
 
         Initiates WebRTC peer connection establishment with signaling protocol.
@@ -655,48 +657,49 @@ paths:
 
         **Performance:** <100ms average connection establishment
 
-        '
+        "
       operationId: joinVoiceChannel
       tags:
-      - Voice Signaling
+        - Voice Signaling
       parameters:
-      - name: channel_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Voice channel unique identifier
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JoinChannelRequest'
+              $ref: "#/components/schemas/JoinChannelRequest"
       responses:
-        '200':
+        "200":
           description: Successfully joined voice channel
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JoinChannelResponse'
-        '400':
+                $ref: "#/components/schemas/JoinChannelResponse"
+        "400":
           description: Invalid join request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '403':
+                $ref: "#/components/schemas/Error"
+        "403":
           description: Access denied to voice channel
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /voice-channels/{channel_id}/signal:
     post:
       summary: WebRTC signaling message exchange
-      description: '**Core WebRTC signaling endpoint for offer/answer/ICE exchange**
+      description:
+        "**Core WebRTC signaling endpoint for offer/answer/ICE exchange**
 
 
         Handles SDP offers, answers, and ICE candidates between peers.
@@ -706,42 +709,42 @@ paths:
 
         **Performance:** <10ms P99 signaling message processing
 
-        '
+        "
       operationId: exchangeSignalingMessage
       tags:
-      - Voice Signaling
+        - Voice Signaling
       parameters:
-      - name: channel_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Voice channel unique identifier
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SignalingMessage'
+              $ref: "#/components/schemas/SignalingMessage"
       responses:
-        '200':
+        "200":
           description: Signaling message processed successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SignalingResponse'
-        '400':
+                $ref: "#/components/schemas/SignalingResponse"
+        "400":
           description: Invalid signaling message
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /voice-channels/{channel_id}/leave:
     post:
       summary: Leave voice channel
-      description: '**Clean voice channel disconnection**
+      description: "**Clean voice channel disconnection**
 
 
         Removes participant from voice channel and cleans up signaling state.
@@ -751,36 +754,36 @@ paths:
 
         **Performance:** <25ms disconnection processing
 
-        '
+        "
       operationId: leaveVoiceChannel
       tags:
-      - Voice Channels
+        - Voice Channels
       parameters:
-      - name: channel_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Voice channel unique identifier
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
       responses:
-        '200':
+        "200":
           description: Successfully left voice channel
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LeaveChannelResponse'
-        '404':
+                $ref: "#/components/schemas/LeaveChannelResponse"
+        "404":
           description: Channel not found or already left
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /voice-quality/{channel_id}/report:
     post:
       summary: Report voice quality metrics
-      description: '**Real-time voice quality monitoring and optimization**
+      description: "**Real-time voice quality monitoring and optimization**
 
 
         Collects latency, packet loss, and audio quality metrics from clients.
@@ -790,37 +793,37 @@ paths:
 
         **Performance:** <5ms metrics processing with batch aggregation
 
-        '
+        "
       operationId: reportVoiceQuality
       tags:
-      - Voice Quality
+        - Voice Quality
       parameters:
-      - name: channel_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Voice channel unique identifier
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VoiceQualityReport'
+              $ref: "#/components/schemas/VoiceQualityReport"
       responses:
-        '200':
+        "200":
           description: Quality metrics recorded successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VoiceQualityResponse'
-        '400':
+                $ref: "#/components/schemas/VoiceQualityResponse"
+        "400":
           description: Invalid quality report
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
 components:
   responses:
@@ -841,13 +844,13 @@ components:
           schema:
             type: object
             required:
-            - results
-            - total_time_ms
+              - results
+              - total_time_ms
             properties:
               results:
                 type: array
                 items:
-                  $ref: '#/components/schemas/HealthResponse'
+                  $ref: "#/components/schemas/HealthResponse"
                 description: Health status for each requested service
               total_time_ms:
                 type: integer
@@ -874,7 +877,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ExampleListResponse'
+            $ref: "#/components/schemas/ExampleListResponse"
     ExampleCreated:
       description: Example created successfully
       headers:
@@ -895,7 +898,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ExampleResponse'
+            $ref: "#/components/schemas/ExampleResponse"
     ExampleRetrieved:
       description: Example retrieved successfully
       headers:
@@ -913,7 +916,7 @@ components:
           schema:
             type: string
             format: date-time
-            example: '2025-12-21T10:00:00Z'
+            example: "2025-12-21T10:00:00Z"
             description: Last modification timestamp
         X-Processing-Time:
           schema:
@@ -923,7 +926,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ExampleResponse'
+            $ref: "#/components/schemas/ExampleResponse"
     ExampleUpdated:
       description: Example updated successfully
       headers:
@@ -936,7 +939,7 @@ components:
           schema:
             type: string
             format: date-time
-            example: '2025-12-21T10:05:00Z'
+            example: "2025-12-21T10:05:00Z"
             description: Last modification timestamp
         X-Processing-Time:
           schema:
@@ -946,7 +949,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ExampleResponse'
+            $ref: "#/components/schemas/ExampleResponse"
     ExampleDeleted:
       description: Example deleted successfully
       headers:
@@ -960,7 +963,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: 'JWT Bearer token authentication.
+      description: "JWT Bearer token authentication.
 
 
         **Token Format:** `Bearer {token}`
@@ -992,12 +995,12 @@ components:
 
         - Revocation support via Redis
 
-        '
+        "
     ApiKeyAuth:
       type: apiKey
       in: header
       name: X-API-Key
-      description: 'API Key authentication for service-to-service communication.
+      description: "API Key authentication for service-to-service communication.
 
 
         **Use Cases:**
@@ -1017,7 +1020,7 @@ components:
 
         - Scoped permissions
 
-        '
+        "
     OAuth2:
       type: oauth2
       flows:
@@ -1040,7 +1043,7 @@ components:
       type: apiKey
       in: header
       name: X-Client-Certificate
-      description: 'Mutual TLS authentication for high-security operations.
+      description: "Mutual TLS authentication for high-security operations.
 
 
         **Requirements:**
@@ -1063,14 +1066,14 @@ components:
 
         **Header:** `X-Client-Certificate: {certificate_fingerprint}`
 
-        '
+        "
   schemas:
     HealthResponse:
       type: object
       required:
-      - status
-      - timestamp
-      - domain
+        - status
+        - timestamp
+        - domain
       properties:
         domain:
           type: string
@@ -1079,15 +1082,15 @@ components:
         status:
           type: string
           enum:
-          - healthy
-          - degraded
-          - unhealthy
+            - healthy
+            - degraded
+            - unhealthy
           example: healthy
           maxLength: 255
         timestamp:
           type: string
           format: date-time
-          example: '2025-12-21T10:00:00Z'
+          example: "2025-12-21T10:00:00Z"
           maxLength: 255
         version:
           type: string
@@ -1099,20 +1102,20 @@ components:
         active_connections:
           type: integer
           example: 1500
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
     WebSocketHealthMessage:
       type: object
       required:
-      - type
-      - timestamp
-      - health
+        - type
+        - timestamp
+        - health
       properties:
         type:
           type: string
           enum:
-          - health_update
-          - health_alert
-          - service_down
+            - health_update
+            - health_alert
+            - service_down
           example: health_update
           maxLength: 255
         timestamp:
@@ -1125,13 +1128,13 @@ components:
           description: Timestamp of the health message
           maxLength: 1000
         health:
-          $ref: '#/components/schemas/HealthResponse'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+          $ref: "#/components/schemas/HealthResponse"
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
     Error:
       type: object
       required:
-      - code
-      - message
+        - code
+        - message
       properties:
         message:
           type: string
@@ -1153,17 +1156,17 @@ components:
           minimum: 100
           maximum: 599
           example: 500
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
     VoiceChannel:
       type: object
       required:
-      - id
-      - name
-      - type
-      - max_participants
-      - created_at
-      - status
-      - is_active
+        - id
+        - name
+        - type
+        - max_participants
+        - created_at
+        - status
+        - is_active
       properties:
         id:
           type: string
@@ -1201,19 +1204,19 @@ components:
           type: string
           format: date-time
           description: Creation timestamp
-          example: '2025-12-27T16:00:00Z'
+          example: "2025-12-27T16:00:00Z"
         updated_at:
           type: string
           format: date-time
           description: Last update timestamp
-          example: '2025-12-27T16:30:00Z'
+          example: "2025-12-27T16:30:00Z"
         status:
           type: string
           enum:
-          - active
-          - inactive
-          - full
-          - closed
+            - active
+            - inactive
+            - full
+            - closed
           default: active
           description: Voice channel status
           example: active
@@ -1223,8 +1226,8 @@ components:
           description: Whether channel is currently active
           example: true
         quality_settings:
-          $ref: '#/components/schemas/VoiceQualitySettings'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50% for voice channel operations.'
+          $ref: "#/components/schemas/VoiceQualitySettings"
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50% for voice channel operations."
 
     VoiceQualitySettings:
       type: object
@@ -1258,13 +1261,13 @@ components:
           default: true
           description: Enable noise suppression
           example: true
-      description: 'BACKEND NOTE: Voice quality settings for adaptive bitrate control.'
+      description: "BACKEND NOTE: Voice quality settings for adaptive bitrate control."
 
     JoinChannelRequest:
       type: object
       required:
-      - user_id
-      - client_capabilities
+        - user_id
+        - client_capabilities
       properties:
         user_id:
           type: string
@@ -1272,13 +1275,13 @@ components:
           description: User joining the channel
           example: 550e8400-e29b-41d4-a716-446655440001
         client_capabilities:
-          $ref: '#/components/schemas/WebRTCCapabilities'
+          $ref: "#/components/schemas/WebRTCCapabilities"
         preferred_region:
           type: string
           maxLength: 50
           description: Preferred server region
           example: us-east-1
-      description: 'BACKEND NOTE: Request to join voice channel with client capabilities.'
+      description: "BACKEND NOTE: Request to join voice channel with client capabilities."
 
     WebRTCCapabilities:
       type: object
@@ -1300,21 +1303,21 @@ components:
           minimum: 8000
           maximum: 256000
           example: 128000
-      description: 'BACKEND NOTE: Client WebRTC capabilities for compatibility checking.'
+      description: "BACKEND NOTE: Client WebRTC capabilities for compatibility checking."
 
     JoinChannelResponse:
       type: object
       required:
-      - channel
-      - ice_servers
-      - session_token
+        - channel
+        - ice_servers
+        - session_token
       properties:
         channel:
-          $ref: '#/components/schemas/VoiceChannel'
+          $ref: "#/components/schemas/VoiceChannel"
         ice_servers:
           type: array
           items:
-            $ref: '#/components/schemas/ICEServer'
+            $ref: "#/components/schemas/ICEServer"
           description: STUN/TURN servers for NAT traversal
         session_token:
           type: string
@@ -1323,14 +1326,14 @@ components:
         participants:
           type: array
           items:
-            $ref: '#/components/schemas/VoiceParticipant'
+            $ref: "#/components/schemas/VoiceParticipant"
           description: Current channel participants
-      description: 'BACKEND NOTE: Response with channel info and connection details.'
+      description: "BACKEND NOTE: Response with channel info and connection details."
 
     ICEServer:
       type: object
       required:
-      - urls
+        - urls
       properties:
         urls:
           type: array
@@ -1343,13 +1346,13 @@ components:
         credential:
           type: string
           description: TURN server credential
-      description: 'BACKEND NOTE: STUN/TURN server configuration for WebRTC.'
+      description: "BACKEND NOTE: STUN/TURN server configuration for WebRTC."
 
     VoiceParticipant:
       type: object
       required:
-      - user_id
-      - joined_at
+        - user_id
+        - joined_at
       properties:
         user_id:
           type: string
@@ -1371,14 +1374,14 @@ components:
           type: string
           enum: [excellent, good, poor, disconnected]
           example: excellent
-      description: 'BACKEND NOTE: Voice channel participant information.'
+      description: "BACKEND NOTE: Voice channel participant information."
 
     SignalingMessage:
       type: object
       required:
-      - type
-      - sender_id
-      - target_id
+        - type
+        - sender_id
+        - target_id
       properties:
         type:
           type: string
@@ -1397,19 +1400,19 @@ components:
           description: SDP offer/answer data
           example: "v=0\r\no=- 12345 67890 IN IP4 192.168.1.1\r\n..."
         ice_candidate:
-          $ref: '#/components/schemas/ICECandidate'
+          $ref: "#/components/schemas/ICECandidate"
         timestamp:
           type: string
           format: date-time
           example: "2025-12-27T16:16:00Z"
-      description: 'BACKEND NOTE: WebRTC signaling message structure.'
+      description: "BACKEND NOTE: WebRTC signaling message structure."
 
     ICECandidate:
       type: object
       required:
-      - candidate
-      - sdp_mid
-      - sdp_mline_index
+        - candidate
+        - sdp_mid
+        - sdp_mline_index
       properties:
         candidate:
           type: string
@@ -1421,13 +1424,13 @@ components:
         sdp_mline_index:
           type: integer
           example: 0
-      description: 'BACKEND NOTE: WebRTC ICE candidate for peer connection.'
+      description: "BACKEND NOTE: WebRTC ICE candidate for peer connection."
 
     SignalingResponse:
       type: object
       required:
-      - success
-      - message_id
+        - success
+        - message_id
       properties:
         success:
           type: boolean
@@ -1440,12 +1443,12 @@ components:
           type: string
           format: date-time
           example: "2025-12-27T16:16:05Z"
-      description: 'BACKEND NOTE: Signaling message delivery confirmation.'
+      description: "BACKEND NOTE: Signaling message delivery confirmation."
 
     LeaveChannelResponse:
       type: object
       required:
-      - success
+        - success
       properties:
         success:
           type: boolean
@@ -1460,25 +1463,25 @@ components:
           maximum: 1
           description: Overall voice quality score
           example: 0.92
-      description: 'BACKEND NOTE: Voice channel leave confirmation with session stats.'
+      description: "BACKEND NOTE: Voice channel leave confirmation with session stats."
 
     VoiceQualityReport:
       type: object
       required:
-      - user_id
-      - metrics
+        - user_id
+        - metrics
       properties:
         user_id:
           type: string
           format: uuid
           example: 550e8400-e29b-41d4-a716-446655440001
         metrics:
-          $ref: '#/components/schemas/VoiceQualityMetrics'
+          $ref: "#/components/schemas/VoiceQualityMetrics"
         timestamp:
           type: string
           format: date-time
           example: "2025-12-27T16:17:00Z"
-      description: 'BACKEND NOTE: Voice quality metrics from client.'
+      description: "BACKEND NOTE: Voice quality metrics from client."
 
     VoiceQualityMetrics:
       type: object
@@ -1510,31 +1513,31 @@ components:
           maximum: 1
           description: Audio volume level (0-1)
           example: 0.75
-      description: 'BACKEND NOTE: Real-time voice quality measurements.'
+      description: "BACKEND NOTE: Real-time voice quality measurements."
 
     VoiceQualityResponse:
       type: object
       required:
-      - acknowledged
+        - acknowledged
       properties:
         acknowledged:
           type: boolean
           example: true
         recommended_settings:
-          $ref: '#/components/schemas/VoiceQualitySettings'
+          $ref: "#/components/schemas/VoiceQualitySettings"
         next_report_interval:
           type: integer
           minimum: 5
           maximum: 300
           description: Recommended reporting interval in seconds
           example: 30
-      description: 'BACKEND NOTE: Quality report acknowledgment with recommendations.'
+      description: "BACKEND NOTE: Quality report acknowledgment with recommendations."
 
     CreateVoiceChannelRequest:
       type: object
       required:
-      - name
-      - type
+        - name
+        - type
       properties:
         name:
           type: string
@@ -1572,7 +1575,7 @@ components:
           maximum: 10
           default: 5
           description: Processing priority
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
     UpdateExampleRequest:
       type: object
       properties:
@@ -1589,10 +1592,10 @@ components:
         status:
           type: string
           enum:
-          - active
-          - inactive
-          - pending
-          - archived
+            - active
+            - inactive
+            - pending
+            - archived
           description: New status
         tags:
           type: array
@@ -1609,26 +1612,26 @@ components:
           minimum: 1
           maximum: 10
           description: New priority
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
     ExampleResponse:
       type: object
       required:
-      - example
+        - example
       properties:
         example:
-          $ref: '#/components/schemas/VoiceChannel'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+          $ref: "#/components/schemas/VoiceChannel"
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
     ExampleListResponse:
       type: object
       required:
-      - examples
-      - total_count
-      - has_more
+        - examples
+        - total_count
+        - has_more
       properties:
         examples:
           type: array
           items:
-            $ref: '#/components/schemas/VoiceChannel'
+            $ref: "#/components/schemas/VoiceChannel"
           description: List of examples
         has_more:
           type: boolean
@@ -1646,5 +1649,6 @@ components:
           type: integer
           description: Items per page
           example: 20
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Paginated
-        responses optimized for memory efficiency.'
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Paginated
+        responses optimized for memory efficiency."

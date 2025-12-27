@@ -1,106 +1,93 @@
 openapi: 3.0.3
 info:
-  title: Achievement System Service API - Enterprise-Grade Player Achievement Management
-  description: '**Enterprise-Grade Achievement System Service API for NECPGAME**
+  title: Achievement System Service API - Enterprise-Grade Achievement Management
+  description: "**Enterprise-Grade Achievement System Service API for NECPGAME**
 
-    Comprehensive player achievement and progression tracking system with real-time unlocks,
-    milestone tracking, and social features for the MMOFPS RPG ecosystem.
+    Comprehensive achievement and milestone management system enabling player progression
+    tracking, unlockable rewards, and gamification features with enterprise-grade reliability,
+    performance optimizations, and real-time achievement processing.
 
     ## Key Features
 
-    - **Enterprise-grade architecture** with proper domain separation and event-driven unlocks
-
-    - **Backend optimization hints** for struct alignment and performance (30-50% memory savings)
-
-    - **Complete validation** with redocly and ogen code generation compatibility
-
-    - **Security-first approach** with JWT authentication and achievement validation
-
-    - **Performance-optimized** response structures with field ordering for memory efficiency
-
-    - **Comprehensive error handling** with proper HTTP status codes and detailed error responses
-
-    - **Real-time achievement processing** with WebSocket notifications for unlocks
+    - **Achievement Management**: Create, update, and manage achievement definitions
+    - **Player Progress Tracking**: Real-time progress monitoring and milestone tracking
+    - **Reward Distribution**: Automated reward granting for achievement unlocks
+    - **Milestone Systems**: Complex multi-stage achievements with progress tracking
+    - **Event-Driven Processing**: Real-time achievement unlocking via Kafka events
+    - **Anti-Cheat Integration**: Achievement validation and fraud prevention
+    - **Performance Analytics**: Achievement completion statistics and player engagement
+    - **Scalable Architecture**: Support for 100k+ concurrent achievement checks
 
     ## Domain Purpose
 
-    The Achievement System Service manages all aspects of player achievements, progression tracking,
-    milestone unlocks, and social recognition in NECPGAME. Supports real-time achievement processing
-    critical for player engagement and retention in competitive gaming environments.
+    This Achievement System provides comprehensive gamification infrastructure for NECPGAME,
+    enabling player engagement through unlockable rewards, progression tracking, and
+    milestone-based motivation systems with enterprise-grade reliability.
 
     ## Performance Targets
 
-    - P99 Latency: <15ms for achievement unlocks (CRITICAL for player experience)
+    - P99 Latency: <50ms for achievement unlocks
+    - Memory: <100KB per player achievement state
+    - Concurrent users: 50,000+ simultaneous tracking
+    - Throughput: 10k+ achievement checks/sec
+    - Data consistency: Event-sourced with CQRS
 
-    - P99 Latency: <50ms for achievement queries and progress tracking
-
-    - Memory: <10KB per active achievement session with pooling optimization
-
-    - Concurrent users: 100,000+ simultaneous achievement tracking
-
-    - Achievement unlocks: 50,000+ events/minute sustained throughput
-
-    - Real-time notifications: <100ms WebSocket delivery for unlocks
-
-    - Cache hit rate: 98%+ for frequently accessed achievement data
-    '
+    "
   version: 1.0.0
   contact:
     name: NECPGAME API Support
-    url: https://necpgame.com/support
     email: api@necpgame.com
+    url: https://github.com/gc-lover/necpgame-monorepo
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-- url: https://api.necpgame.com/v1/achievement-system
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/achievement-system
-  description: Staging server
-- url: http://localhost:8080/api/v1/achievement-system
-  description: Local development server
+  - url: https://api.necpgame.com/v1/achievements
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/achievements
+    description: Staging server
+  - url: http://localhost:8080/api/v1/achievements
+    description: Local development server
 security:
-- BearerAuth: []
+  - BearerAuth: []
 tags:
-- name: Achievement Management
-  description: Core achievement operations and progress tracking
-- name: Achievement Unlocks
-  description: Real-time achievement unlocks and notifications
-- name: Progression Tracking
-  description: Player progression and milestone management
-- name: Social Features
-  description: Achievement sharing and social recognition
-- name: Health Monitoring
-  description: System health and performance monitoring
+  - name: Achievement Management
+    description: Core achievement definition and management operations
+  - name: Player Achievements
+    description: Player progress tracking and achievement unlocks
+  - name: Reward Distribution
+    description: Achievement reward granting and management
+  - name: Achievement Analytics
+    description: Achievement completion statistics and insights
+  - name: Health Monitoring
+    description: System health and performance monitoring
 paths:
   /health:
     get:
-      summary: Example domain health check
-      description: '**Enterprise-grade health check endpoint**
+      summary: Achievement system service health check
+      description: "**Enterprise-grade health check endpoint**
 
-
-        Provides real-time health status of the example domain microservice.
+        Provides real-time health status of the achievement system microservice.
 
         Critical for service discovery, load balancing, and monitoring.
 
-
         **Performance:** <1ms response time, cached for 30 seconds
 
-        '
-      operationId: exampleDomainHealthCheck
+        "
+      operationId: achievementSystemHealthCheck
       tags:
-      - Health Monitoring
+        - Health Monitoring
       parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
+        - name: Accept-Encoding
+          in: header
+          schema:
+            type: string
+            enum:
+              - gzip
+              - deflate
+              - br
       responses:
-        '200':
+        "200":
           description: Service is healthy
           headers:
             Cache-Control:
@@ -115,20 +102,20 @@ paths:
               schema:
                 type: string
                 enum:
-                - gzip
-                - deflate
-                - br
+                  - gzip
+                  - deflate
+                  - br
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '503':
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
-        '429':
+                $ref: "#/components/schemas/HealthResponse"
+        "429":
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -138,24 +125,21 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
+
   /health/batch:
     post:
-      summary: Batch health check for multiple domain services
-      description: '**Performance optimization:** Check multiple domain health in single request
+      summary: Batch health check for multiple achievement services
+      description: "**Performance optimization:** Check multiple achievement services in single request
 
-
-        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-
-        Eliminates network overhead in health monitoring scenarios.
-
+        Enables efficient health monitoring across distributed achievement microservices.
 
         **Use case:** Service mesh health checks, Kubernetes readiness probes
 
-        '
-      operationId: exampleDomainBatchHealthCheck
+        "
+      operationId: achievementSystemBatchHealthCheck
       tags:
-      - Health Monitoring
+        - Health Monitoring
       requestBody:
         required: true
         content:
@@ -163,74 +147,66 @@ paths:
             schema:
               type: object
               required:
-              - services
+                - services
               properties:
                 services:
                   type: array
                   items:
                     type: string
                     enum:
-                    - example-domain
-                    - system-domain
-                    - specialized-domain
-                    maxItems: 10
+                      - achievement-system
+                      - reward-system
+                      - analytics-system
+                  maxItems: 10
                   description: List of services to check
       responses:
-        '200':
-          $ref: '#/components/responses/HealthBatchSuccess'
-        '400':
+        "200":
+          $ref: "#/components/responses/HealthBatchSuccess"
+        "400":
           description: Invalid request - malformed service list
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
+                $ref: "#/components/schemas/Error"
+        "429":
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
               schema:
                 type: integer
                 example: 60
-                description: Seconds to wait before retrying
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
+
   /health/ws:
     get:
-      summary: Real-time health monitoring WebSocket
-      description: '**Performance optimization:** Real-time health updates without polling
+      summary: Real-time achievement health monitoring WebSocket
+      description: "**Performance optimization:** Real-time health updates without polling
 
-
-        Eliminates periodic HTTP requests, reduces server load by ~90%.
-
-        Perfect for dashboard monitoring and alerting systems.
-
-
-        **Protocol:** WebSocket with JSON payloads
-
-        **Heartbeat:** 30 second intervals
+        Enables live monitoring of achievement system performance metrics.
 
         **Reconnection:** Automatic with exponential backoff
 
-        '
-      operationId: exampleDomainHealthWebSocket
+        "
+      operationId: achievementSystemHealthWebSocket
       tags:
-      - Health Monitoring
+        - Health Monitoring
       parameters:
-      - name: services
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - example-domain
-            - system-domain
-            - specialized-domain
-        description: Services to monitor (optional, monitors all if not specified)
+        - name: services
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - achievement-system
+                - reward-system
+                - analytics-system
+          description: Services to monitor (optional, monitors all if not specified)
       responses:
-        '200':
+        "200":
           description: WebSocket upgrade information returned
           content:
             application/json:
@@ -239,14 +215,14 @@ paths:
                 properties:
                   websocket_url:
                     type: string
-                    example: ws://localhost:8080/api/v1/example-domain/health/ws
+                    example: "wss://api.necpgame.com/v1/achievements/health"
                   supported_protocols:
                     type: array
                     items:
                       type: string
                     example:
-                    - health-monitoring-v1
-        '101':
+                      - health-monitoring-v1
+        "101":
           description: WebSocket connection established successfully
           headers:
             Upgrade:
@@ -260,710 +236,572 @@ paths:
             Sec-WebSocket-Accept:
               schema:
                 type: string
-                description: WebSocket handshake acceptance key
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebSocketHealthMessage'
-        '400':
+        "400":
           description: Invalid request - malformed service parameters
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '401':
+                $ref: "#/components/schemas/Error"
+        "401":
           description: Unauthorized - authentication required for WebSocket
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
+                $ref: "#/components/schemas/Error"
+        "429":
           description: Too many requests - WebSocket connection limit exceeded
           headers:
             Retry-After:
               schema:
                 type: integer
-                example: 30
+                example: 60
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  /examples:
+                $ref: "#/components/schemas/Error"
+
+  /achievements:
     get:
-      summary: List examples with filtering and pagination
-      description: '**Enterprise-grade listing endpoint**
+      summary: List achievements with filtering and pagination
+      description: "**Enterprise-grade achievement listing endpoint**
 
+        Supports complex filtering by category, difficulty, rewards, and completion status.
 
-        Supports complex filtering, sorting, and pagination patterns.
+        Optimized for achievement browsing and discovery.
 
-        Optimized for high-throughput scenarios with proper indexing.
+        **Performance:** <25ms P95, supports 1000+ concurrent requests
 
-
-        **Performance:** <10ms P95, supports 1000+ concurrent requests
-
-        '
-      operationId: listExamples
+        "
+      operationId: listAchievements
       tags:
-      - Example Domain
+        - Achievement Management
       parameters:
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-        description: Page number for pagination
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        description: Number of items per page
-      - name: sort_by
-        in: query
-        schema:
-          type: string
-          enum:
-          - created_at
-          - name
-          - priority
-          default: created_at
-        description: Sort field
-      - name: sort_order
-        in: query
-        schema:
-          type: string
-          enum:
-          - asc
-          - desc
-          default: desc
-        description: Sort order
-      - name: filter_status
-        in: query
-        schema:
-          type: string
-          enum:
-          - active
-          - inactive
-          - pending
-        description: Filter by status
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - combat
+              - exploration
+              - social
+              - economy
+              - progression
+              - special
+          description: Filter by achievement category
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum:
+              - easy
+              - medium
+              - hard
+              - legendary
+          description: Filter by difficulty level
+        - name: reward_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - cosmetic
+              - currency
+              - item
+              - title
+              - boost
+              - none
+          description: Filter by reward type
       responses:
-        '200':
-          $ref: '#/components/responses/ExampleListSuccess'
-        '400':
+        "200":
+          description: Achievements retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AchievementListResponse"
+        "400":
           description: Invalid request - malformed query parameters
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '422':
+                $ref: "#/components/schemas/Error"
+        "422":
           description: Unprocessable entity - validation failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
+
     post:
-      summary: Create new example
-      description: '**Enterprise-grade creation endpoint**
+      summary: Create new achievement
+      description: "**Enterprise-grade achievement creation endpoint**
 
+        Creates new achievement definitions with complex requirements and rewards.
 
-        Validates business rules, applies security checks, and ensures data consistency.
+        Validates achievement logic and ensures uniqueness.
 
-        Supports optimistic locking for concurrent operations.
+        **Performance:** <100ms P95, includes validation and reward calculation
 
-
-        **Performance:** <50ms P95, includes validation and business logic
-
-        '
-      operationId: createExample
+        "
+      operationId: createAchievement
       tags:
-      - Example Domain
+        - Achievement Management
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateExampleRequest'
+              $ref: "#/components/schemas/CreateAchievementRequest"
       responses:
-        '201':
-          $ref: '#/components/responses/ExampleCreated'
-        '400':
-          description: Invalid request - malformed or missing data
+        "201":
+          description: Achievement created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - example with this identifier already exists
+                $ref: "#/components/schemas/AchievementResponse"
+        "400":
+          description: Invalid request - malformed achievement data
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - business rule validation failed
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict - achievement with this ID already exists
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - creation rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Unprocessable entity - validation failed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  /examples/{example_id}:
+                $ref: "#/components/schemas/Error"
+
+  /achievements/{achievement_id}:
     get:
-      summary: Get specific example by ID
-      description: '**Enterprise-grade retrieval endpoint**
+      summary: Get specific achievement by ID
+      description: "**Enterprise-grade achievement retrieval endpoint**
 
+        Returns detailed achievement information including requirements and rewards.
 
-        Optimized with proper caching strategies and database indexing.
+        Supports conditional requests with ETags for caching optimization.
 
-        Supports conditional requests with ETags.
+        **Performance:** <10ms P95 with Redis caching
 
-
-        **Performance:** <5ms P95 with Redis caching
-
-        '
-      operationId: getExample
+        "
+      operationId: getAchievement
       tags:
-      - Example Domain
+        - Achievement Management
       parameters:
-      - name: example_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Example unique identifier
-      - name: include_related
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include related data in response
-      - name: If-None-Match
-        in: header
-        schema:
-          type: string
-        description: Conditional request - return 304 if ETag matches
-      - name: If-Modified-Since
-        in: header
-        schema:
-          type: string
-          format: date-time
-        description: Conditional request - return 304 if not modified since this time
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Achievement unique identifier
+        - name: include_progress
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include global progress statistics
+        - name: If-None-Match
+          in: header
+          schema:
+            type: string
+          description: Conditional request - return 304 if ETag matches
       responses:
-        '200':
-          $ref: '#/components/responses/ExampleRetrieved'
-        '304':
-          description: Not modified - resource has not changed
+        "200":
+          description: Achievement retrieved successfully
           headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
             Cache-Control:
               schema:
                 type: string
                 example: max-age=300, private
-        '400':
-          description: Invalid request - malformed example ID
+            ETag:
+              schema:
+                type: string
+                example: '"achievement-123-v1"'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Example not found
+                $ref: "#/components/schemas/AchievementResponse"
+        "304":
+          description: Not modified - achievement has not changed
+        "404":
+          description: Achievement not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
+
     put:
-      summary: Update existing example
-      description: '**Enterprise-grade update endpoint**
+      summary: Update existing achievement
+      description: "**Enterprise-grade achievement update endpoint**
 
+        Updates achievement definitions, requirements, or rewards.
 
-        Supports partial updates, optimistic locking, and audit trails.
+        Maintains data consistency and validates changes.
 
-        Ensures data consistency with event sourcing patterns.
+        **Performance:** <50ms P95, includes validation and cache invalidation
 
-
-        **Performance:** <25ms P95, includes validation and conflict resolution
-
-        '
-      operationId: updateExample
+        "
+      operationId: updateAchievement
       tags:
-      - Example Domain
+        - Achievement Management
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       parameters:
-      - name: example_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Example unique identifier
-      - name: If-Match
-        in: header
-        schema:
-          type: string
-        description: ETag for optimistic locking - prevents concurrent updates
-      - name: If-Unmodified-Since
-        in: header
-        schema:
-          type: string
-          format: date-time
-        description: Conditional update - proceed only if not modified since this time
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Achievement unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateExampleRequest'
+              $ref: "#/components/schemas/UpdateAchievementRequest"
       responses:
-        '200':
-          $ref: '#/components/responses/ExampleUpdated'
-        '400':
-          description: Invalid request - malformed data or example ID
+        "200":
+          description: Achievement updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Example not found
+                $ref: "#/components/schemas/AchievementResponse"
+        "400":
+          description: Invalid request - malformed data
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - version conflict (optimistic locking) or precondition failed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Achievement not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '412':
-          description: Precondition failed - If-Match or If-Unmodified-Since condition not met
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict - concurrent update detected
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - update rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
+
     delete:
-      summary: Delete example
-      description: '**Enterprise-grade deletion endpoint**
+      summary: Delete achievement
+      description: "**Enterprise-grade achievement deletion endpoint**
 
+        Removes achievement definitions and associated progress data.
 
-        Supports soft deletes with audit trails and cleanup scheduling.
+        Cascades cleanup operations for data consistency.
 
-        Ensures referential integrity and cascading deletes.
+        **Performance:** <30ms P95, includes cleanup operations
 
-
-        **Performance:** <15ms P95, includes cleanup operations
-
-        '
-      operationId: deleteExample
+        "
+      operationId: deleteAchievement
       tags:
-      - Example Domain
+        - Achievement Management
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       parameters:
-      - name: example_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Example unique identifier
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Achievement unique identifier
       responses:
-        '204':
-          $ref: '#/components/responses/ExampleDeleted'
-        '400':
-          description: Invalid request - malformed example ID
+        "204":
+          description: Achievement deleted successfully
+        "404":
+          description: Achievement not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Example not found
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict - achievement cannot be deleted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - example cannot be deleted (referential integrity)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - deletion rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
-  # Achievement System Endpoints
-  /api/v1/achievements/{playerId}:
+  /players/{player_id}/achievements:
     get:
-      summary: Get player achievements
-      description: '**HOT PATH:** Retrieve complete player achievement profile with progress tracking
+      summary: Get player achievement progress
+      description: "**Player achievement progress tracking endpoint**
 
+        Returns player's unlocked achievements and progress towards locked ones.
 
-        Critical for achievement screens, progression tracking, and player engagement.
+        Supports filtering by completion status and category.
 
-        Includes unlocked achievements, progress bars, and completion statistics.
+        **Performance:** <50ms P95, optimized for frequent player dashboard queries
 
-
-        **Performance:** P99 <50ms, cached for 60 seconds, 100k+ concurrent requests
-
-        **Memory optimization:** Struct field alignment for 30-50% memory savings
-
-        '
+        "
       operationId: getPlayerAchievements
       tags:
-      - Achievement Management
+        - Player Achievements
       parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Player unique identifier
-      - name: category
-        in: query
-        schema:
-          type: string
-          enum: [all, combat, exploration, social, progression, special]
-          default: all
-        description: Filter achievements by category
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum: [all, unlocked, locked, in_progress]
-          default: all
-        description: Filter by achievement status
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player unique identifier
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - unlocked
+              - in_progress
+              - locked
+              - all
+            default: all
+          description: Filter by achievement status
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - combat
+              - exploration
+              - social
+              - economy
+              - progression
+              - special
+          description: Filter by achievement category
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of achievements to return
       responses:
-        '200':
+        "200":
           description: Player achievements retrieved successfully
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: "max-age=60"
-            ETag:
-              schema:
-                type: string
-                example: '"abc123"'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PlayerAchievementsResponse'
+                $ref: "#/components/schemas/PlayerAchievementsResponse"
+        "404":
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-  /api/v1/achievements/{playerId}/progress/{achievementId}:
+  /players/{player_id}/achievements/{achievement_id}:
     get:
-      summary: Get specific achievement progress
-      description: '**High-performance progress tracking for UI and game systems**
+      summary: Get specific player achievement progress
+      description: "**Detailed player achievement progress endpoint**
 
+        Returns detailed progress information for a specific achievement.
 
-        Retrieve detailed progress information for a specific achievement including
-        current progress, requirements, and completion status.
+        Includes progress history and next milestone information.
 
+        **Performance:** <15ms P95 with player-specific caching
 
-        **Performance:** P99 <25ms, Redis-cached, optimized for frequent access
-
-        '
-      operationId: getAchievementProgress
+        "
+      operationId: getPlayerAchievementProgress
       tags:
-      - Achievement Management
+        - Player Achievements
       parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: achievementId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player unique identifier
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Achievement unique identifier
       responses:
-        '200':
+        "200":
           description: Achievement progress retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AchievementProgressResponse'
-
-    put:
-      summary: Update achievement progress
-      description: '**Real-time progress updates with validation and unlock detection**
-
-
-        Update player progress towards achievements with automatic unlock detection.
-
-        Critical for gameplay events, quest completions, and player actions.
-
-
-        **Performance:** P99 <15ms, event-driven unlocks with WebSocket notifications
-
-        '
-      operationId: updateAchievementProgress
-      tags:
-      - Achievement Unlocks
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: achievementId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AchievementProgressUpdateRequest'
-      responses:
-        '200':
-          description: Progress updated successfully
+                $ref: "#/components/schemas/PlayerAchievementProgressResponse"
+        "404":
+          description: Achievement or player not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AchievementProgressUpdateResponse'
+                $ref: "#/components/schemas/Error"
 
-  /api/v1/achievements/{playerId}/unlocks:
-    get:
-      summary: Get recent achievement unlocks
-      description: '**Real-time unlock notifications for player engagement**
-
-
-        Retrieve recently unlocked achievements with timestamps and rewards.
-
-        Used for UI notifications, achievement popups, and progression tracking.
-
-
-        **Performance:** P99 <30ms, optimized for notification systems
-
-        '
-      operationId: getRecentUnlocks
-      tags:
-      - Achievement Unlocks
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 50
-          default: 10
-        description: Maximum number of unlocks to return
-      - name: since
-        in: query
-        schema:
-          type: string
-          format: date-time
-        description: Only return unlocks after this timestamp
-      responses:
-        '200':
-          description: Recent unlocks retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecentUnlocksResponse'
-
-  /api/v1/achievements/{playerId}/milestones:
-    get:
-      summary: Get player progression milestones
-      description: '**Progression tracking for long-term player engagement**
-
-
-        Retrieve milestone achievements and progression towards major goals.
-
-        Includes completion percentages and reward previews.
-
-
-        **Performance:** P99 <75ms, cached with background updates
-
-        '
-      operationId: getPlayerMilestones
-      tags:
-      - Progression Tracking
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Milestones retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlayerMilestonesResponse'
-
-  /api/v1/achievements/leaderboards/{achievementId}:
-    get:
-      summary: Get achievement leaderboard
-      description: '**Social competition and player engagement**
-
-
-        Retrieve top players for specific achievements with rankings and completion times.
-
-        Critical for competitive features and social recognition.
-
-
-        **Performance:** P99 <100ms, Redis-backed leaderboards
-
-        '
-      operationId: getAchievementLeaderboard
-      tags:
-      - Social Features
-      parameters:
-      - name: achievementId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 10
-          maximum: 100
-          default: 50
-        description: Number of leaderboard entries to return
-      - name: timeframe
-        in: query
-        schema:
-          type: string
-          enum: [all_time, monthly, weekly, daily]
-          default: all_time
-        description: Timeframe for leaderboard rankings
-      responses:
-        '200':
-          description: Leaderboard retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AchievementLeaderboardResponse'
-
-  /api/v1/achievements/admin/{playerId}/override:
+  /achievements/events/unlock:
     post:
-      summary: Administrative achievement override
-      description: '**Admin-only:** Emergency achievement modifications for game support
+      summary: Process achievement unlock event
+      description: "**Real-time achievement unlock processing endpoint**
 
+        Processes player actions and determines achievement unlocks.
 
-        Allows game masters to unlock/modify achievements for bug fixes or player support.
+        Supports batch processing for high-throughput scenarios.
 
-        Includes full audit logging and approval workflows.
+        **Performance:** <25ms P99, optimized for event-driven processing
 
-
-        **Security:** Requires elevated admin permissions
-
-        '
-      operationId: adminAchievementOverride
+        "
+      operationId: processAchievementUnlock
       tags:
-      - Achievement Management
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - Player Achievements
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AdminAchievementOverrideRequest'
+              $ref: "#/components/schemas/AchievementUnlockEvent"
       responses:
-        '200':
-          description: Achievement override applied successfully
+        "200":
+          description: Achievement unlock processed successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminAchievementOverrideResponse'
-        '403':
-          description: Insufficient admin permissions
+                $ref: "#/components/schemas/AchievementUnlockResponse"
+        "400":
+          description: Invalid unlock event
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
+
+  /achievements/rewards/claim:
+    post:
+      summary: Claim achievement rewards
+      description: "**Achievement reward claiming endpoint**
+
+        Processes reward distribution for unlocked achievements.
+
+        Supports batch claiming and reward validation.
+
+        **Performance:** <100ms P95, includes inventory/reward distribution
+
+        "
+      operationId: claimAchievementRewards
+      tags:
+        - Reward Distribution
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimRewardsRequest"
+      responses:
+        "200":
+          description: Rewards claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClaimRewardsResponse"
+        "400":
+          description: Invalid claim request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Rewards already claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /achievements/analytics/completion:
+    get:
+      summary: Get achievement completion analytics
+      description: "**Achievement completion statistics endpoint**
+
+        Provides global and category-specific achievement completion rates.
+
+        Supports time-based filtering and trend analysis.
+
+        **Performance:** <200ms P95, optimized for dashboard queries
+
+        "
+      operationId: getAchievementAnalytics
+      tags:
+        - Achievement Analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - combat
+              - exploration
+              - social
+              - economy
+              - progression
+              - special
+          description: Filter by achievement category
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum:
+              - day
+              - week
+              - month
+              - all
+            default: week
+          description: Time period for analytics
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Maximum number of results
+      responses:
+        "200":
+          description: Achievement analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AchievementAnalyticsResponse"
+        "403":
+          description: Insufficient permissions for analytics access
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
   responses:
@@ -973,563 +811,765 @@ components:
         Cache-Control:
           schema:
             type: string
-            example: no-cache
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 15
-            description: Processing time in milliseconds
+            example: max-age=30
       content:
         application/json:
           schema:
             type: object
             required:
-            - results
-            - total_time_ms
+              - results
+              - total_time_ms
             properties:
               results:
                 type: array
                 items:
-                  $ref: '#/components/schemas/HealthResponse'
+                  $ref: "#/components/schemas/HealthResponse"
                 description: Health status for each requested service
               total_time_ms:
                 type: integer
                 description: Total processing time in milliseconds
-                example: 15
-                minimum: 0
-    ExampleListSuccess:
-      description: Examples retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 150
-            description: Total number of examples matching criteria
-        X-Page-Count:
-          schema:
-            type: integer
-            example: 8
-            description: Total number of pages
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleListResponse'
-    ExampleCreated:
-      description: Example created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
-            description: URL of the created example
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleRetrieved:
-      description: Example retrieved successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-            description: Cache control directives
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:00:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 5
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleUpdated:
-      description: Example updated successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v2"'
-            description: New entity tag after update
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:05:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 25
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleDeleted:
-      description: Example deleted successfully
-      headers:
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 15
-            description: Processing time in milliseconds
+                example: 1500
+
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: 'JWT Bearer token authentication.
+      description: "JWT Bearer token authentication.
 
+      **Security Features:**
+      - HS256 algorithm with 256-bit secrets
+      - Token expiration and refresh support
+      - Role-based access control
+      - Revocation support via Redis
 
-        **Token Format:** `Bearer {token}`
+      "
 
-        **Token Claims:**
-
-        - `sub`: User/Player ID
-
-        - `exp`: Expiration timestamp
-
-        - `iat`: Issued at timestamp
-
-        - `iss`: Token issuer
-
-        - `aud`: Token audience
-
-        - `roles`: User roles array
-
-        - `permissions`: User permissions array
-
-
-        **Security Features:**
-
-        - RS256 signature algorithm
-
-        - Token rotation required every 24 hours
-
-        - Automatic refresh tokens
-
-        - Revocation support via Redis
-
-        '
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: 'API Key authentication for service-to-service communication.
-
-
-        **Use Cases:**
-
-        - Internal service communication
-
-        - Third-party integrations
-
-        - Development and testing
-
-
-        **Security:**
-
-        - HMAC-SHA256 signed
-
-        - Rate limited per key
-
-        - Scoped permissions
-
-        '
-    OAuth2:
-      type: oauth2
-      flows:
-        authorizationCode:
-          authorizationUrl: https://auth.necpgame.com/oauth/authorize
-          tokenUrl: https://auth.necpgame.com/oauth/token
-          refreshUrl: https://auth.necpgame.com/oauth/refresh
-          scopes:
-            read: Read access to resources
-            write: Write access to resources
-            admin: Administrative access
-            profile: Access to user profile
-            guilds: Access to guild management
-        clientCredentials:
-          tokenUrl: https://auth.necpgame.com/oauth/token
-          scopes:
-            service: Service-to-service communication
-            monitoring: Monitoring and metrics access
-    MutualTLS:
-      type: apiKey
-      in: header
-      name: X-Client-Certificate
-      description: 'Mutual TLS authentication for high-security operations.
-
-
-        **Requirements:**
-
-        - Valid client certificate
-
-        - Certificate signed by trusted CA
-
-        - Certificate not revoked (OCSP/CRL check)
-
-
-        **Use Cases:**
-
-        - Administrative operations
-
-        - Financial transactions
-
-        - Critical system operations
-
-
-        **Header:** `X-Client-Certificate: {certificate_fingerprint}`
-
-        '
   schemas:
     HealthResponse:
       type: object
       required:
-      - status
-      - timestamp
-      - domain
+        - status
+        - timestamp
+        - service
       properties:
-        domain:
+        service:
           type: string
-          example: example-domain
-          maxLength: 50
+          example: achievement-system
+          maxLength: 100
         status:
           type: string
           enum:
-          - healthy
-          - degraded
-          - unhealthy
+            - healthy
+            - degraded
+            - unhealthy
           example: healthy
-          maxLength: 255
+          maxLength: 20
         timestamp:
           type: string
           format: date-time
-          example: '2025-12-21T10:00:00Z'
-          maxLength: 255
+          example: "2025-12-27T16:00:00Z"
+          maxLength: 30
         version:
           type: string
-          example: 1.0.0
-          maxLength: 50
+          example: "1.0.0"
+          maxLength: 20
         uptime_seconds:
           type: integer
           example: 3600
-        active_connections:
-          type: integer
-          example: 1500
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Memory savings: 30-50% for MMOFPS achievement operations.'
+          description: Service uptime in seconds
+        cache_hit_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.95
+          description: Redis cache hit rate percentage
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
 
-    # Achievement System Schemas
-    PlayerAchievementsResponse:
+    Error:
       type: object
       required:
-      - player_id
-      - achievements
-      - statistics
+        - code
+        - message
       properties:
-        player_id:
+        code:
+          type: integer
+          minimum: 400
+          maximum: 599
+          example: 500
+        message:
           type: string
-          format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440000"
-        achievements:
-          type: array
-          items:
-            $ref: '#/components/schemas/Achievement'
-          maxItems: 1000
-        statistics:
-          $ref: '#/components/schemas/AchievementStatistics'
-        recent_unlocks:
-          type: array
-          items:
-            $ref: '#/components/schemas/AchievementUnlock'
-          maxItems: 10
-        last_updated:
+          maxLength: 200
+          example: "Internal server error"
+        details:
+          type: string
+          maxLength: 1000
+          description: Additional error details
+        timestamp:
           type: string
           format: date-time
-      description: 'BACKEND NOTE: Struct aligned for performance. Achievements array first for memory efficiency.'
+          example: "2025-12-27T16:00:00Z"
+        request_id:
+          type: string
+          maxLength: 50
+          description: Request correlation ID
+        path:
+          type: string
+          maxLength: 500
+          description: API endpoint path
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Memory savings: 30-50% for error responses."
 
     Achievement:
       type: object
       required:
-      - id
-      - name
-      - category
-      - status
+        - id
+        - name
+        - category
+        - difficulty
+        - requirements
+        - rewards
+        - created_at
+        - is_active
       properties:
         id:
           type: string
           format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440001"
+          description: Achievement unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
         name:
           type: string
+          minLength: 1
           maxLength: 100
+          description: Achievement display name
           example: "First Blood"
+        description:
+          type: string
+          maxLength: 500
+          description: Achievement description
+          example: "Get your first kill in combat"
         category:
           type: string
-          enum: [combat, exploration, social, progression, special]
+          enum:
+            - combat
+            - exploration
+            - social
+            - economy
+            - progression
+            - special
+          description: Achievement category
           example: combat
-        status:
+        difficulty:
           type: string
-          enum: [locked, unlocked, hidden]
-          example: unlocked
-        progress_current:
-          type: integer
-          minimum: 0
-          example: 1
-        progress_max:
-          type: integer
-          minimum: 1
-          example: 1
-        unlocked_at:
-          type: string
-          format: date-time
+          enum:
+            - easy
+            - medium
+            - hard
+            - legendary
+          description: Achievement difficulty level
+          example: easy
+        requirements:
+          $ref: "#/components/schemas/AchievementRequirements"
         rewards:
           type: array
           items:
-            $ref: '#/components/schemas/AchievementReward'
+            $ref: "#/components/schemas/AchievementReward"
           maxItems: 5
-      description: 'BACKEND NOTE: Critical fields first for struct alignment.'
-
-    AchievementUnlock:
-      type: object
-      required:
-      - achievement_id
-      - unlocked_at
-      properties:
-        achievement_id:
-          type: string
-          format: uuid
-        name:
-          type: string
-          maxLength: 100
-        unlocked_at:
+          description: Achievement unlock rewards
+        points:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Achievement point value
+          example: 10
+        is_hidden:
+          type: boolean
+          default: false
+          description: Whether achievement is hidden until unlocked
+          example: false
+        prerequisites:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 10
+          description: Required achievements to unlock this one
+        created_at:
           type: string
           format: date-time
-      description: 'BACKEND NOTE: Minimal fields for unlock notifications.'
+          description: Creation timestamp
+          example: "2025-12-27T16:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-12-27T16:00:00Z"
+        is_active:
+          type: boolean
+          default: true
+          description: Whether achievement is currently active
+          example: true
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Memory savings: 30-50% for achievement operations."
+
+    AchievementRequirements:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - stat_threshold
+            - action_count
+            - time_based
+            - combination
+            - custom
+          description: Requirement type
+          example: stat_threshold
+        stat_name:
+          type: string
+          maxLength: 100
+          description: Player statistic to check
+          example: "kills"
+        threshold:
+          type: integer
+          minimum: 0
+          description: Required threshold value
+          example: 1
+        time_window:
+          type: integer
+          minimum: 0
+          description: Time window in seconds (for time-based requirements)
+          example: 3600
+        conditions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AchievementCondition"
+          maxItems: 10
+          description: Additional conditions for combination requirements
+      description: "Achievement unlock requirements definition."
+
+    AchievementCondition:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - stat_equals
+            - stat_greater
+            - stat_less
+            - item_owned
+            - location_visited
+            - custom
+          example: stat_greater
+        field:
+          type: string
+          maxLength: 100
+          example: "level"
+        value:
+          type: string
+          maxLength: 200
+          example: "5"
+      description: "Individual condition for complex achievement requirements."
 
     AchievementReward:
       type: object
       required:
-      - type
-      - value
+        - type
+        - value
       properties:
         type:
           type: string
-          enum: [currency, item, title, xp]
+          enum:
+            - currency
+            - item
+            - cosmetic
+            - title
+            - boost
+            - unlock
+          description: Reward type
           example: currency
         value:
           type: string
-          example: "1000"
-      description: 'BACKEND NOTE: Flexible reward system.'
+          maxLength: 200
+          description: Reward value/identifier
+          example: "100"
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Reward quantity
+          example: 100
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional reward metadata
+      description: "Achievement unlock reward definition."
 
-    AchievementStatistics:
+    PlayerAchievementProgress:
+      type: object
+      required:
+        - player_id
+        - achievement_id
+        - status
+        - progress
+        - updated_at
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        achievement_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        status:
+          type: string
+          enum:
+            - locked
+            - in_progress
+            - unlocked
+          example: unlocked
+        progress:
+          type: object
+          additionalProperties:
+            type: number
+          description: Current progress values
+          example:
+            kills: 5
+            level: 10
+        current_value:
+          type: number
+          description: Current progress value
+          example: 5
+        target_value:
+          type: number
+          description: Required target value
+          example: 10
+        unlocked_at:
+          type: string
+          format: date-time
+          description: Unlock timestamp
+          example: "2025-12-27T16:00:00Z"
+        claimed_at:
+          type: string
+          format: date-time
+          description: Reward claim timestamp
+          example: "2025-12-27T16:05:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-12-27T16:00:00Z"
+      description: "Player achievement progress tracking."
+
+    AchievementUnlockEvent:
+      type: object
+      required:
+        - player_id
+        - event_type
+        - event_data
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        event_type:
+          type: string
+          enum:
+            - player_action
+            - stat_update
+            - milestone_reached
+            - custom_event
+          example: stat_update
+        event_data:
+          type: object
+          additionalProperties: true
+          description: Event-specific data
+          example:
+            stat_name: "kills"
+            old_value: 4
+            new_value: 5
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-27T16:00:00Z"
+        session_id:
+          type: string
+          maxLength: 100
+          description: Player session identifier
+      description: "Event triggering achievement unlock processing."
+
+    ClaimRewardsRequest:
+      type: object
+      required:
+        - player_id
+        - achievement_ids
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        achievement_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 50
+          example:
+            - 550e8400-e29b-41d4-a716-446655440000
+      description: "Request to claim rewards for unlocked achievements."
+
+    AchievementListResponse:
+      type: object
+      required:
+        - achievements
+        - total_count
+        - has_more
+      properties:
+        achievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Achievement"
+          description: List of achievements
+        total_count:
+          type: integer
+          description: Total number of achievements available
+          example: 150
+        has_more:
+          type: boolean
+          description: Whether there are more achievements available
+          example: true
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 20
+      description: "Paginated achievement listing response."
+
+    AchievementResponse:
+      type: object
+      required:
+        - achievement
+      properties:
+        achievement:
+          $ref: "#/components/schemas/Achievement"
+      description: "Single achievement response."
+
+    PlayerAchievementsResponse:
+      type: object
+      required:
+        - player_id
+        - achievements
+        - summary
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        achievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerAchievementProgress"
+          description: Player's achievement progress
+        summary:
+          $ref: "#/components/schemas/PlayerAchievementSummary"
+      description: "Player achievements progress response."
+
+    PlayerAchievementSummary:
       type: object
       properties:
         total_achievements:
           type: integer
           example: 150
-        unlocked_achievements:
+        unlocked_count:
           type: integer
           example: 45
+        in_progress_count:
+          type: integer
+          example: 12
+        total_points:
+          type: integer
+          example: 1250
         completion_percentage:
           type: number
-          format: float
+          minimum: 0
+          maximum: 1
           example: 0.3
-      description: 'BACKEND NOTE: Statistics for UI display.'
-
-    AchievementProgressUpdateRequest:
-      type: object
-      required:
-      - progress_increment
-      properties:
-        progress_increment:
-          type: integer
-          minimum: 1
-          example: 1
-        source_event:
-          type: string
-          maxLength: 100
-          example: "player_kill"
-      description: 'BACKEND NOTE: Progress updates with event context.'
-
-    RecentUnlocksResponse:
-      type: object
-      required:
-      - unlocks
-      properties:
-        unlocks:
+        recent_unlocks:
           type: array
           items:
-            $ref: '#/components/schemas/AchievementUnlock'
-          maxItems: 50
-      description: 'BACKEND NOTE: Recent unlocks for UI notifications.'
+            $ref: "#/components/schemas/Achievement"
+          maxItems: 5
+          description: Recently unlocked achievements
+      description: "Player achievement statistics summary."
 
-    WebSocketHealthMessage:
+    PlayerAchievementProgressResponse:
       type: object
       required:
-      - type
-      - timestamp
-      - health
+        - progress
+        - achievement
       properties:
-        type:
+        progress:
+          $ref: "#/components/schemas/PlayerAchievementProgress"
+        achievement:
+          $ref: "#/components/schemas/Achievement"
+        next_milestone:
+          type: object
+          description: Next progress milestone information
+          properties:
+            description:
+              type: string
+              example: "Reach 10 kills"
+            current_value:
+              type: number
+              example: 5
+            target_value:
+              type: number
+              example: 10
+            progress_percentage:
+              type: number
+              minimum: 0
+              maximum: 1
+              example: 0.5
+      description: "Detailed player achievement progress response."
+
+    AchievementUnlockResponse:
+      type: object
+      required:
+        - processed_events
+        - unlocked_achievements
+      properties:
+        processed_events:
+          type: integer
+          description: Number of events processed
+          example: 1
+        unlocked_achievements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Achievement"
+          description: Newly unlocked achievements
+        progress_updates:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlayerAchievementProgress"
+          description: Updated achievement progress
+        rewards_granted:
+          type: array
+          items:
+            $ref: "#/components/schemas/AchievementReward"
+          description: Rewards granted for unlocks
+      description: "Achievement unlock processing response."
+
+    ClaimRewardsResponse:
+      type: object
+      required:
+        - claimed_rewards
+        - success
+      properties:
+        success:
+          type: boolean
+          example: true
+        claimed_rewards:
+          type: array
+          items:
+            type: object
+            required:
+              - achievement_id
+              - rewards
+            properties:
+              achievement_id:
+                type: string
+                format: uuid
+                example: 550e8400-e29b-41d4-a716-446655440000
+              rewards:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AchievementReward"
+                description: Claimed rewards for this achievement
+          description: Successfully claimed rewards
+        failed_claims:
+          type: array
+          items:
+            type: object
+            required:
+              - achievement_id
+              - error
+            properties:
+              achievement_id:
+                type: string
+                format: uuid
+                example: 550e8400-e29b-41d4-a716-446655440000
+              error:
+                type: string
+                example: "Rewards already claimed"
+          description: Failed reward claims
+      description: "Achievement reward claiming response."
+
+    AchievementAnalyticsResponse:
+      type: object
+      required:
+        - total_achievements
+        - completion_stats
+      properties:
+        total_achievements:
+          type: integer
+          example: 150
+        completion_stats:
+          type: object
+          properties:
+            overall_completion_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              example: 0.35
+            category_breakdown:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 25
+                  completed:
+                    type: integer
+                    example: 8
+                  completion_rate:
+                    type: number
+                    minimum: 0
+                    maximum: 1
+                    example: 0.32
+            difficulty_breakdown:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 50
+                  completed:
+                    type: integer
+                    example: 15
+                  completion_rate:
+                    type: number
+                    minimum: 0
+                    maximum: 1
+                    example: 0.3
+            trending_achievements:
+              type: array
+              items:
+                type: object
+                required:
+                  - achievement_id
+                  - unlocks_last_week
+                  - completion_rate
+                properties:
+                  achievement_id:
+                    type: string
+                    format: uuid
+                    example: 550e8400-e29b-41d4-a716-446655440000
+                  name:
+                    type: string
+                    example: "First Blood"
+                  unlocks_last_week:
+                    type: integer
+                    example: 1250
+                  completion_rate:
+                    type: number
+                    minimum: 0
+                    maximum: 1
+                    example: 0.45
+              maxItems: 20
+              description: Most popular achievements by recent unlocks
+      description: "Achievement completion analytics response."
+
+    CreateAchievementRequest:
+      type: object
+      required:
+        - name
+        - category
+        - difficulty
+        - requirements
+        - rewards
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: "First Blood"
+        description:
+          type: string
+          maxLength: 500
+          example: "Get your first kill in combat"
+        category:
           type: string
           enum:
-          - health_update
-          - health_alert
-          - service_down
-          example: health_update
-          maxLength: 255
-        timestamp:
+            - combat
+            - exploration
+            - social
+            - economy
+            - progression
+            - special
+          example: combat
+        difficulty:
           type: string
-          format: date-time
-          maxLength: 255
-        message_timestamp:
-          type: string
-          format: date-time
-          description: Timestamp of the health message
-          maxLength: 1000
-        health:
-          $ref: '#/components/schemas/HealthResponse'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    CreateExampleRequest:
-      type: object
-      required:
-      - name
-      - description
-      properties:
-        name:
-          type: string
-          maxLength: 100
-          example: "New Example"
-        description:
-          type: string
-          maxLength: 500
-          example: "Description of the new example"
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    UpdateExampleRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 100
-          description: Updated name for the example
-        description:
-          type: string
-          maxLength: 500
-          description: Updated description for the example
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    Error:
-      type: object
-      required:
-      - code
-      - message
-      properties:
-        message:
-          type: string
-          maxLength: 256
-          example: Internal server error
-        service:
-          type: string
-          example: achievement-system
-          maxLength: 50
-          description: Service that generated the error
-        details:
-          type: object
-          description: Additional error context
-          example:
-            field: name
-            reason: required
-        code:
+          enum:
+            - easy
+            - medium
+            - hard
+            - legendary
+          example: easy
+        requirements:
+          $ref: "#/components/schemas/AchievementRequirements"
+        rewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/AchievementReward"
+          minItems: 1
+          maxItems: 5
+        points:
           type: integer
-          format: int32
-          minimum: 100
-          maximum: 599
-          example: 500
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Memory savings: 30-50% for MMOFPS achievement operations.'
-
-      Example:
-        type: object
-        required:
-        - id
-        - name
-        - description
-        properties:
-          id:
+          minimum: 0
+          maximum: 1000
+          default: 10
+        is_hidden:
+          type: boolean
+          default: false
+        prerequisites:
+          type: array
+          items:
             type: string
             format: uuid
-            example: "123e4567-e89b-12d3-a456-426614174000"
-          name:
-            type: string
-            maxLength: 100
-            example: "Sample Example"
-          description:
-            type: string
-            maxLength: 500
-            example: "This is a sample example for demonstration"
-          created_at:
-            type: string
-            format: date-time
-            example: "2025-12-27T12:00:00Z"
-          updated_at:
-            type: string
-            format: date-time
-            example: "2025-12-27T12:30:00Z"
-        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+          maxItems: 10
+      description: "Request to create a new achievement definition."
 
-      ExampleResponse:
-        type: object
-        required:
-        - example
-        properties:
-          example:
-            $ref: '#/components/schemas/Example'
-        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-      ExampleListResponse:
-        type: object
-        required:
-        - examples
-        - total_count
-        - has_more
-        properties:
-          examples:
-            type: array
-            items:
-              $ref: '#/components/schemas/Example'
-          total_count:
-            type: integer
-            minimum: 0
-            description: Total number of examples available
-          has_more:
-            type: boolean
-            description: Whether there are more examples available
-        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
+    UpdateAchievementRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        requirements:
+          $ref: "#/components/schemas/AchievementRequirements"
+        rewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/AchievementReward"
+          minItems: 1
+          maxItems: 5
+        points:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        is_hidden:
+          type: boolean
+        is_active:
+          type: boolean
+      description: "Request to update an existing achievement."
