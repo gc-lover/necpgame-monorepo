@@ -1,0 +1,427 @@
+metadata:
+  id: admin-moderation-system-architecture
+  title: Архитектура системы администрирования и модерации (Admin Moderation System)
+  document_type: architecture
+  category: systems
+  status: final
+  version: '2.1.0'
+  last_updated: 2025-12-28T00:05:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - admin
+    - moderation
+    - operations
+    - security
+  related_systems:
+    - admin-service-go
+    - moderation-service-go
+    - player-service-go
+    - economy-service-go
+    - content-service-go
+  related_documents:
+    - id: admin-moderation-core
+      relation: supersedes
+    - id: backend-admin-moderation
+      relation: implements
+  github_issue: 140893854
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - operations
+    - security
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру Admin Moderation System
+    для оперативного управления игроками, экономикой, контентом и модерации
+    через единую админ-панель с контролем доступа и аудитом действий.
+  goal: |
+    Создать архитектурную схему Admin Moderation System с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints для администрирования
+    - Потоков данных и интеграций
+    - Систем ролей и разрешений
+    - Систем модерации и мониторинга
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура системы администрирования и модерации для оперативного
+    управления игрой через единую админ-панель с контролем доступа и аудитом.
+
+architecture:
+  overview: |
+    Admin Moderation System обеспечивает комплексное управление игрой через
+    единую админ-панель с поддержкой ролей, разрешений, аудита и интеграцией
+    со всеми игровыми системами для оперативного реагирования на ситуации.
+
+  components:
+    - name: Admin Panel Gateway
+      location: admin-service-go (основной сервис)
+      responsibility: |
+        - Единая точка входа для администрирования
+        - Аутентификация и авторизация администраторов
+        - API gateway для всех admin операций
+        - Session management для админов
+        - Rate limiting и security для admin access
+      authentication: |
+        - Multi-factor authentication (MFA)
+        - Role-based access control (RBAC)
+        - Session timeout и auto-logout
+        - IP whitelisting для sensitive operations
+        - Audit logging всех действий
+      endpoints:
+        - POST /api/v1/admin/auth/login - вход в систему
+        - POST /api/v1/admin/auth/logout - выход из системы
+        - GET /api/v1/admin/dashboard - главная панель
+        - GET /api/v1/admin/profile - профиль администратора
+
+    - name: Player Management Module
+      location: admin-service-go (модуль player-management)
+      responsibility: |
+        - Управление учетными записями игроков
+        - Просмотр и редактирование профилей
+        - Управление банами и ограничениями
+        - Player support operations
+        - Account recovery и security
+      player_operations: |
+        - PROFILE_VIEW: просмотр профиля игрока
+        - PROFILE_EDIT: редактирование данных
+        - ACCOUNT_BAN: блокировка аккаунта
+        - ACCOUNT_UNBAN: разблокировка аккаунта
+        - CHARACTER_RESET: сброс персонажа
+        - INVENTORY_EDIT: редактирование инвентаря
+        - SUPPORT_TICKET: обработка обращений
+      search_capabilities: |
+        - SEARCH_BY_ID: поиск по ID игрока
+        - SEARCH_BY_NAME: поиск по имени
+        - SEARCH_BY_EMAIL: поиск по email
+        - ADVANCED_FILTERS: фильтры по уровню, активности, etc.
+
+    - name: Economy Management Module
+      location: admin-service-go (модуль economy-management)
+      responsibility: |
+        - Управление экономикой игры
+        - Контроль валют и транзакций
+        - Управление предметами и ценами
+        - Economic analytics и monitoring
+        - Fraud detection и prevention
+      economy_controls: |
+        - CURRENCY_MANAGEMENT: управление валютами
+        - ITEM_MANAGEMENT: управление предметами
+        - PRICE_CONTROLS: контроль цен
+        - TRANSACTION_MONITORING: мониторинг транзакций
+        - MARKET_REGULATION: регулирование рынка
+        - REWARD_SYSTEMS: управление наградами
+      economic_tools: |
+        - INFLATION_CONTROLS: контроль инфляции
+        - BALANCE_ADJUSTMENTS: корректировка баланса
+        - ECONOMIC_REPORTS: экономические отчеты
+        - PLAYER_ECONOMY_VIEW: просмотр экономики игрока
+
+    - name: Content Management Module
+      location: admin-service-go (модуль content-management)
+      responsibility: |
+        - Управление игровым контентом
+        - Публикация обновлений и патчей
+        - Управление событиями и активностями
+        - Content moderation и approval
+        - Live operations management
+      content_operations: |
+        - QUEST_MANAGEMENT: управление квестами
+        - EVENT_MANAGEMENT: управление событиями
+        - NEWS_PUBLISHING: публикация новостей
+        - PATCH_NOTES: управление патчноутами
+        - ANNOUNCEMENT_SYSTEM: система объявлений
+        - LIVE_OPS: live operations
+      content_workflow: |
+        - DRAFT_CREATION: создание черновиков
+        - REVIEW_PROCESS: процесс ревью
+        - APPROVAL_WORKFLOW: workflow утверждения
+        - PUBLISHING_SCHEDULE: планирование публикации
+        - CONTENT_MONITORING: мониторинг контента
+
+    - name: Moderation Engine
+      location: admin-service-go (модуль moderation-engine)
+      responsibility: |
+        - Автоматическая и ручная модерация
+        - Обработка жалоб и reports
+        - Управление чатом и коммуникациями
+        - Anti-cheat system integration
+        - Community management tools
+      moderation_features: |
+        - CHAT_MODERATION: модерация чата
+        - REPORT_SYSTEM: система жалоб
+        - AUTOMATED_FILTERS: автоматические фильтры
+        - MANUAL_REVIEW: ручная проверка
+        - SANCTION_SYSTEM: система санкций
+        - APPEAL_PROCESS: процесс апелляций
+      anti_toxicity: |
+        - TEXT_ANALYSIS: анализ текста
+        - BEHAVIOR_ANALYSIS: анализ поведения
+        - PATTERN_DETECTION: обнаружение паттернов
+        - MACHINE_LEARNING: ML для модерации
+
+    - name: Analytics Dashboard
+      location: admin-service-go (модуль analytics-dashboard)
+      responsibility: |
+        - Real-time analytics и monitoring
+        - KPI tracking и reporting
+        - Player behavior insights
+        - System performance metrics
+        - Business intelligence tools
+      dashboard_features: |
+        - REAL_TIME_METRICS: метрики в реальном времени
+        - PLAYER_ANALYTICS: аналитика игроков
+        - REVENUE_TRACKING: отслеживание доходов
+        - SYSTEM_MONITORING: мониторинг системы
+        - CUSTOM_REPORTS: кастомные отчеты
+        - ALERT_SYSTEM: система алертов
+
+    - name: Role & Permission Manager
+      location: admin-service-go (модуль role-permission-manager)
+      responsibility: |
+        - Управление ролями и разрешениями
+        - Hierarchical permission system
+        - Access control policies
+        - Security audit и compliance
+        - Role assignment и management
+      role_hierarchy: |
+        - SUPER_ADMIN: полный доступ
+        - SENIOR_ADMIN: расширенный доступ
+        - ADMIN: стандартный админ
+        - MODERATOR: модератор
+        - SUPPORT: поддержка
+        - VIEWER: только просмотр
+      permission_granularity: |
+        - RESOURCE_LEVEL: уровень ресурса
+        - OPERATION_LEVEL: уровень операции
+        - FIELD_LEVEL: уровень поля
+        - TIME_BASED: временные ограничения
+        - CONTEXT_BASED: контекстные разрешения
+
+    - name: Audit & Compliance Manager
+      location: admin-service-go (модуль audit-compliance-manager)
+      responsibility: |
+        - Полный аудит всех действий
+        - Compliance monitoring
+        - Security incident tracking
+        - Data retention policies
+        - Regulatory reporting
+      audit_features: |
+        - ACTION_LOGGING: логирование действий
+        - CHANGE_TRACKING: отслеживание изменений
+        - DATA_ACCESS_LOG: логи доступа к данным
+        - SECURITY_EVENTS: события безопасности
+        - COMPLIANCE_REPORTS: отчеты соответствия
+      retention_policies: |
+        - AUDIT_LOGS: 7 лет хранения
+        - SECURITY_EVENTS: 5 лет хранения
+        - USER_DATA_CHANGES: 3 года хранения
+        - SYSTEM_LOGS: 2 года хранения
+
+  data_flow:
+    admin_login: |
+      1. Администратор входит в систему
+      2. Authentication Manager проверяет credentials
+      3. Role Manager загружает permissions
+      4. Session Manager создает сессию
+      5. Audit Manager логирует вход
+      6. Dashboard загружается с учетом прав
+
+    player_moderation: |
+      1. Поступает жалоба на игрока
+      2. Moderation Engine анализирует incident
+      3. Player Management проверяет историю
+      4. Analytics предоставляет контекст
+      5. Админ принимает решение
+      6. Audit Manager логирует действие
+
+    content_publishing: |
+      1. Live-ops создает контент
+      2. Content Management сохраняет draft
+      3. Review process проходит approval
+      4. Publishing Manager планирует публикацию
+      5. Announcement System рассылает уведомления
+      6. Analytics отслеживает engagement
+
+  integrations:
+    with_player_service: |
+      - Real-time player data access
+      - Account management operations
+      - Player behavior analytics
+      - Cross-platform account sync
+
+    with_economy_service: |
+      - Economic data monitoring
+      - Transaction audit trail
+      - Fraud detection integration
+      - Revenue analytics access
+
+    with_content_service: |
+      - Content management workflow
+      - Live operations coordination
+      - Announcement system integration
+      - Content performance metrics
+
+    with_moderation_service: |
+      - Automated moderation rules
+      - Manual review queue
+      - Appeal system management
+      - Community management tools
+
+  data_consistency:
+    strategy: Strong Consistency для audit logs, Eventual Consistency для analytics
+    mechanisms:
+      - Event Sourcing для всех admin actions
+      - CQRS для разделения команд и запросов
+      - Saga Pattern для комплексных операций
+      - Immutable audit logs
+      - Distributed consensus для critical operations
+
+  performance_requirements:
+    response_time: < 500ms для admin operations, < 200ms для dashboard queries
+    concurrent_admins: Support for 100+ simultaneous admin sessions
+    audit_throughput: 10000+ audit events per minute
+    dashboard_refresh: Real-time updates < 5 seconds
+    search_performance: Player search < 100ms
+
+  scalability:
+    microservice_scaling: |
+      - Admin Gateway: horizontal scaling
+      - Moderation Engine: event-driven scaling
+      - Analytics Dashboard: read-heavy scaling
+      - Audit Manager: write-heavy scaling
+    data_partitioning: |
+      - Audit logs: time-based partitioning
+      - Player data: player_id sharding
+      - Analytics: time-series partitioning
+
+  security:
+    access_security: |
+      - Multi-factor authentication required
+      - IP-based access controls
+      - Session management with timeouts
+      - Encrypted admin communications
+    data_security: |
+      - Sensitive data encryption at rest
+      - PII data access logging
+      - GDPR compliance features
+      - Data anonymization for analytics
+
+  database_schema:
+    tables:
+      - name: admin_users
+        description: Администраторы системы
+        fields:
+          - id: UUID (PK)
+          - username: VARCHAR(50) (unique)
+          - email: VARCHAR(255) (unique)
+          - password_hash: VARCHAR(255)
+          - role_id: UUID (FK admin_roles)
+          - is_active: BOOLEAN (default: true)
+          - last_login: TIMESTAMP (nullable)
+          - mfa_enabled: BOOLEAN (default: false)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - username (unique)
+          - email (unique)
+          - role_id
+
+      - name: admin_roles
+        description: Роли администраторов
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(50) (unique)
+          - description: TEXT
+          - permissions: JSONB
+          - hierarchy_level: INTEGER
+          - is_system_role: BOOLEAN (default: false)
+          - created_at: TIMESTAMP
+        indexes:
+          - name (unique)
+          - hierarchy_level
+
+      - name: admin_audit_log
+        description: Аудит действий администраторов
+        fields:
+          - id: UUID (PK)
+          - admin_id: UUID (FK admin_users)
+          - action: VARCHAR(100)
+          - resource_type: VARCHAR(50)
+          - resource_id: VARCHAR(255)
+          - old_values: JSONB (nullable)
+          - new_values: JSONB (nullable)
+          - ip_address: INET
+          - user_agent: TEXT
+          - timestamp: TIMESTAMP
+          - session_id: VARCHAR(255)
+        indexes:
+          - admin_id, timestamp
+          - action, timestamp
+          - resource_type, resource_id
+
+      - name: moderation_actions
+        description: Действия модерации
+        fields:
+          - id: UUID (PK)
+          - moderator_id: UUID (FK admin_users)
+          - target_player_id: UUID (FK players)
+          - action_type: ENUM (WARN, MUTE, BAN, UNBAN, SUSPEND)
+          - reason: TEXT
+          - duration_minutes: INTEGER (nullable)
+          - evidence_urls: JSONB
+          - appeal_status: ENUM (NONE, PENDING, APPROVED, DENIED)
+          - created_at: TIMESTAMP
+          - resolved_at: TIMESTAMP (nullable)
+        indexes:
+          - target_player_id, created_at
+          - moderator_id, created_at
+          - action_type, created_at
+
+      - name: admin_sessions
+        description: Сессии администраторов
+        fields:
+          - id: UUID (PK)
+          - admin_id: UUID (FK admin_users)
+          - session_token: VARCHAR(255) (unique)
+          - ip_address: INET
+          - user_agent: TEXT
+          - expires_at: TIMESTAMP
+          - last_activity: TIMESTAMP
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+        indexes:
+          - admin_id, is_active
+          - session_token (unique)
+          - expires_at
+
+  validation:
+    architecture_complete: true
+    components_defined: true
+    microservices_identified: true
+    api_endpoints_described: true
+    technical_specification_ready: true
+    subtasks_defined: true
+
+  next_steps:
+    - Передача задачи агенту API Designer для создания OpenAPI спецификации admin API
+    - Детализация role-based permission system
+    - Создание схем audit logging и compliance reporting
+    - Определение moderation workflow и appeal process
+    - Планирование интеграции с admin-service-go
+
+  history:
+    - version: '2.1.0'
+      date: 2025-12-28
+      author: Architect Agent
+      changes: |
+        Создана полная архитектура Admin Moderation System
+        Объединены компоненты администрирования и модерации
+        Добавлена схема БД и метрики производительности
+        Определены security и scalability требования
+        Статус изменен на final

@@ -1,0 +1,399 @@
+metadata:
+  id: character-management-system-architecture
+  title: Архитектура системы управления персонажами (Character Management System)
+  document_type: architecture
+  category: systems
+  status: final
+  version: '2.1.0'
+  last_updated: 2025-12-27T23:45:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - character-management
+    - player-progression
+    - inventory
+    - stats
+  related_systems:
+    - player-character-service-go
+    - inventory-service-go
+    - progression-service-go
+    - session-management-service-go
+  related_documents:
+    - id: player-character-management-system-architecture
+      relation: supersedes
+    - id: backend-character-management
+      relation: implements
+  github_issue: 140893223
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - game-designer
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру Character Management System
+    для управления персонажами игроков с поддержкой множественных слотов,
+    прогрессии, инвентаря, статистики и синхронизации между устройствами.
+  goal: |
+    Создать архитектурную схему Character Management System с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints для управления персонажами
+    - Потоков данных и интеграций
+    - Систем прогрессии и статистики
+    - Систем синхронизации и резервного копирования
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура системы управления персонажами для MMOFPS RPG
+    с поддержкой множественных персонажей, прогрессии и кросс-платформенной синхронизации.
+
+architecture:
+  overview: |
+    Character Management System обеспечивает комплексное управление персонажами игроков
+    включая создание, прогрессию, инвентарь, статистику и синхронизацию между платформами
+    с гарантией консистентности данных и высокой производительностью.
+
+  components:
+    - name: Character Lifecycle Manager
+      location: player-character-service-go (основной сервис)
+      responsibility: |
+        - Управление жизненным циклом персонажей
+        - Создание и удаление персонажей
+        - Переключение активных персонажей
+        - Управление слотами персонажей
+        - Резервное копирование и восстановление
+      character_limits: |
+        - FREE: 3 персонажа
+        - PREMIUM: 6 персонажей
+        - VIP: 10 персонажей
+        - MAX: 20 персонажей (для тестеров)
+      lifecycle_operations: |
+        - CREATE: создание нового персонажа
+        - ACTIVATE: переключение на персонажа
+        - DEACTIVATE: деактивация персонажа
+        - DELETE: мягкое удаление (30 дней восстановления)
+        - RESTORE: восстановление удаленного персонажа
+        - TRANSFER: перенос между аккаунтами
+      endpoints:
+        - POST /api/v1/characters - создать персонажа
+        - PUT /api/v1/characters/{id}/activate - активировать персонажа
+        - DELETE /api/v1/characters/{id} - удалить персонажа
+        - POST /api/v1/characters/{id}/restore - восстановить персонажа
+        - GET /api/v1/players/{playerId}/characters - список персонажей
+
+    - name: Character Stats Manager
+      location: player-character-service-go (модуль stats)
+      responsibility: |
+        - Управление характеристиками персонажа
+        - Прогрессия и leveling
+        - Расчет модификаторов и бонусов
+        - Синхронизация статистики в реальном времени
+        - Валидация значений характеристик
+      stat_categories: |
+        - CORE: базовые характеристики (Strength, Agility, Intelligence)
+        - COMBAT: боевые параметры (Health, Armor, Damage)
+        - PROGRESSION: опыт и уровень (XP, Level, Prestige)
+        - SPECIAL: уникальные способности (Cyberware, Implants)
+        - DERIVED: расчетные значения (DPS, Survivability)
+      leveling_system: |
+        - EXPONENTIAL: XP = level^2 * 100
+        - SOFT_CAP: уменьшение XP gain после level 50
+        - PRESTIGE: сброс с сохранением бонусов
+        - MASTERY: специализации после level 100
+
+    - name: Character Inventory Manager
+      location: player-character-service-go (модуль inventory)
+      responsibility: |
+        - Управление инвентарем персонажа
+        - Экипировка и unequip предметов
+        - Управление контейнерами (backpack, stash)
+        - Синхронизация с глобальным инвентарем
+        - Валидация предметов и требований
+      inventory_types: |
+        - EQUIPMENT: экипировка (weapon, armor, accessories)
+        - CONSUMABLES: расходники (health kits, ammo)
+        - CURRENCY: валюта и ресурсы
+        - QUEST_ITEMS: квестовые предметы
+        - COSMETICS: косметические предметы
+      inventory_limits: |
+        - BASE: 50 слотов (expandable)
+        - STASH: unlimited cloud storage
+        - SHARED: guild/family shared storage
+        - TEMPORARY: battle loot (auto-cleanup)
+
+    - name: Character Progression Tracker
+      location: player-character-service-go (модуль progression)
+      responsibility: |
+        - Отслеживание прогресса персонажа
+        - Achievement system integration
+        - Quest progress tracking
+        - Milestone celebrations
+        - Progress analytics
+      progression_metrics: |
+        - QUEST_COMPLETION: выполненные квесты
+        - ACHIEVEMENT_UNLOCKS: полученные достижения
+        - SKILL_MASTERY: уровень навыков
+        - SOCIAL_INTERACTIONS: социальная активность
+        - COMBAT_PERFORMANCE: боевые достижения
+      milestone_system: |
+        - LEVEL_MILESTONES: каждые 10 уровней
+        - QUEST_MILESTONES: сюжетные завершения
+        - ACHIEVEMENT_MILESTONES: редкие достижения
+        - SOCIAL_MILESTONES: community contributions
+
+    - name: Character Sync Manager
+      location: player-character-service-go (модуль sync)
+      responsibility: |
+        - Синхронизация между устройствами
+        - Конфликт resolution
+        - Offline progress handling
+        - Cross-platform sync
+        - Backup and restore
+      sync_strategies: |
+        - REAL_TIME: WebSocket sync для online
+        - PERIODIC: scheduled sync для offline progress
+        - ON_DEMAND: manual sync по запросу
+        - CRASH_RECOVERY: automatic recovery
+      conflict_resolution: |
+        - LAST_WRITE_WINS: для простых значений
+        - MERGE: для коллекций (inventory, achievements)
+        - PLAYER_CHOICE: для критичных конфликтов
+        - SERVER_AUTHORITY: для системных значений
+
+    - name: Character Validation Engine
+      location: player-character-service-go (модуль validation)
+      responsibility: |
+        - Валидация данных персонажа
+        - Античит проверки
+        - Баланс валидация
+        - Data integrity checks
+        - Fraud detection
+      validation_rules: |
+        - STAT_LIMITS: проверка границ характеристик
+        - ITEM_VALIDITY: проверка легитимности предметов
+        - PROGRESSION_CHECKS: валидация прогресса
+        - CHEAT_DETECTION: обнаружение аномалий
+        - DATA_INTEGRITY: проверка консистентности
+
+    - name: Character Analytics Collector
+      location: player-character-service-go (модуль analytics)
+      responsibility: |
+        - Сбор метрик использования
+        - Анализ паттернов прогресса
+        - Performance monitoring
+        - Player behavior insights
+        - System health monitoring
+      analytics_data: |
+        - PLAY_TIME: время в игре по персонажам
+        - PROGRESS_RATE: скорость leveling
+        - FEATURE_USAGE: использование систем
+        - ABANDONMENT: точки отвала игроков
+        - RETENTION: удержание по персонажам
+
+  data_flow:
+    character_creation: |
+      1. Игрок запрашивает создание персонажа
+      2. Character Lifecycle Manager проверяет лимиты
+      3. Character Validation Engine валидирует параметры
+      4. Character Stats Manager инициализирует базовые stats
+      5. Character Inventory Manager создает стартовый инвентарь
+      6. Character Sync Manager синхронизирует с другими устройствами
+      7. Analytics Collector логирует создание
+
+    character_switching: |
+      1. Игрок выбирает персонажа для активации
+      2. Character Lifecycle Manager проверяет доступность
+      3. Character Sync Manager синхронизирует состояние
+      4. Character Stats Manager загружает актуальные stats
+      5. Character Inventory Manager подготавливает инвентарь
+      6. Session Manager обновляет активного персонажа
+      7. Client получает полное состояние персонажа
+
+    progression_update: |
+      1. Игрок выполняет действие (убивает врага, завершает квест)
+      2. Character Progression Tracker рассчитывает награды
+      3. Character Stats Manager обновляет характеристики
+      4. Character Validation Engine проверяет изменения
+      5. Character Sync Manager рассылает обновления
+      6. Analytics Collector сохраняет метрики
+
+  integrations:
+    with_inventory_service: |
+      - Shared inventory management
+      - Item validation and requirements
+      - Equipment stats integration
+      - Cross-character item transfer
+
+    with_progression_service: |
+      - Achievement tracking
+      - Quest progress sync
+      - Milestone celebrations
+      - Level rewards distribution
+
+    with_session_service: |
+      - Active character tracking
+      - Session state management
+      - Device sync coordination
+      - Authentication integration
+
+    with_realtime_gateway: |
+      - Live stat updates
+      - Character switching notifications
+      - Party member sync
+      - Combat state sync
+
+  data_consistency:
+    strategy: Strong Consistency для критичных операций, Eventual Consistency для прогресса
+    mechanisms:
+      - Event Sourcing для всех изменений персонажа
+      - CQRS для разделения команд и запросов
+      - Saga Pattern для комплексных операций (character creation)
+      - Optimistic Locking для concurrent updates
+      - Redis для кэширования активных персонажей
+
+  performance_requirements:
+    response_time: < 100ms для character switching, < 50ms для stat updates
+    throughput: 10000+ concurrent players, 100000+ operations/minute
+    concurrent_characters: Support for 100000+ simultaneously active characters
+    storage: 1TB+ per region for character data
+    memory: < 8GB per service instance
+
+  scalability:
+    microservice_scaling: |
+      - Character Lifecycle Manager: horizontal scaling by player_id
+      - Character Stats Manager: event-driven auto-scaling
+      - Character Inventory Manager: sharded by character_id
+      - Analytics Collector: queue-based scaling
+    data_partitioning: |
+      - Player-based sharding for lifecycle operations
+      - Character-based sharding for stats/inventory
+      - Time-based partitioning for analytics
+      - Geographic distribution for global players
+
+  security:
+    data_protection: |
+      - Encrypted character data at rest
+      - Secure sync protocols
+      - Anti-cheat validation
+      - Fraud detection systems
+    access_control: |
+      - Player ownership verification
+      - Character access permissions
+      - Admin override controls
+      - Audit logging for changes
+
+  database_schema:
+    tables:
+      - name: player_characters
+        description: Основная таблица персонажей
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - name: VARCHAR(50)
+          - class: ENUM (Mercenary, Netrunner, Techie, Solo, Nomad)
+          - level: INTEGER (1-100)
+          - experience: BIGINT
+          - prestige_level: INTEGER (0-10)
+          - created_at: TIMESTAMP
+          - last_active_at: TIMESTAMP
+          - is_active: BOOLEAN
+          - is_deleted: BOOLEAN (default: false)
+          - deleted_at: TIMESTAMP (nullable)
+          - slot_number: INTEGER (1-20)
+        indexes:
+          - player_id, is_active
+          - player_id, slot_number (unique)
+          - level, last_active_at
+
+      - name: character_stats
+        description: Характеристики персонажей
+        fields:
+          - id: UUID (PK)
+          - character_id: UUID (FK player_characters)
+          - strength: INTEGER
+          - agility: INTEGER
+          - intelligence: INTEGER
+          - health_max: INTEGER
+          - armor: INTEGER
+          - damage: INTEGER
+          - critical_chance: DECIMAL(5,2)
+          - evasion: DECIMAL(5,2)
+          - updated_at: TIMESTAMP
+          - version: INTEGER (optimistic locking)
+        indexes:
+          - character_id (unique)
+
+      - name: character_inventory
+        description: Инвентарь персонажей
+        fields:
+          - id: UUID (PK)
+          - character_id: UUID (FK player_characters)
+          - item_id: UUID (FK items)
+          - slot_type: ENUM (EQUIPMENT, BACKPACK, STASH)
+          - slot_position: INTEGER
+          - quantity: INTEGER
+          - durability: INTEGER (nullable)
+          - enchantments: JSONB
+          - acquired_at: TIMESTAMP
+        indexes:
+          - character_id, slot_type, slot_position (unique)
+          - item_id, acquired_at
+
+      - name: character_progression
+        description: Прогрессия персонажей
+        fields:
+          - id: UUID (PK)
+          - character_id: UUID (FK player_characters)
+          - quests_completed: INTEGER
+          - achievements_unlocked: INTEGER
+          - skills_mastered: INTEGER
+          - combat_rating: INTEGER
+          - social_score: INTEGER
+          - milestones_reached: JSONB
+          - updated_at: TIMESTAMP
+        indexes:
+          - character_id (unique)
+          - combat_rating DESC
+
+      - name: character_sync_log
+        description: Лог синхронизации персонажей
+        fields:
+          - id: UUID (PK)
+          - character_id: UUID (FK player_characters)
+          - device_id: VARCHAR(255)
+          - sync_type: ENUM (FULL, INCREMENTAL, CONFLICT_RESOLUTION)
+          - changes_applied: JSONB
+          - conflict_resolved: BOOLEAN
+          - sync_timestamp: TIMESTAMP
+        indexes:
+          - character_id, sync_timestamp
+          - device_id, sync_timestamp
+
+  validation:
+    architecture_complete: true
+    components_defined: true
+    microservices_identified: true
+    api_endpoints_described: true
+    technical_specification_ready: true
+    subtasks_defined: true
+
+  next_steps:
+    - Передача задачи агенту API Designer для создания OpenAPI спецификации
+    - Детализация протоколов синхронизации
+    - Создание схем валидации данных персонажей
+    - Определение форматов progression events
+    - Планирование интеграции с player-character-service-go
+
+  history:
+    - version: '2.1.0'
+      date: 2025-12-27
+      author: Architect Agent
+      changes: |
+        Создана полная архитектура Character Management System
+        Объединены компоненты управления персонажами
+        Добавлена схема БД и метрики производительности
+        Определены security и scalability требования
+        Статус изменен на final

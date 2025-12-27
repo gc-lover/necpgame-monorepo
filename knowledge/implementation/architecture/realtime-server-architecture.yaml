@@ -1,0 +1,399 @@
+metadata:
+  id: realtime-server-architecture
+  title: Архитектура Realtime Server (Realtime Gateway System)
+  document_type: architecture
+  category: systems
+  status: final
+  version: '2.0.0'
+  last_updated: 2025-12-27T23:55:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - realtime
+    - websocket
+    - game-state
+    - synchronization
+  related_systems:
+    - realtime-gateway-go
+    - world-service-go
+    - gameplay-service-go
+    - social-service-go
+    - combat-service-go
+  related_documents:
+    - id: realtime-server-system-architecture
+      relation: supersedes
+    - id: backend-realtime-server
+      relation: implements
+  github_issue: 140893227
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - network
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру Realtime Server
+    для обеспечения real-time коммуникации, синхронизации игрового состояния,
+    управления зонами и оптимизации производительности для MMOFPS RPG.
+  goal: |
+    Создать архитектурную схему Realtime Server с определением:
+    - Компонентов системы (микросервисы, модули)
+    - WebSocket протоколов и messaging
+    - Потоков данных и interest management
+    - Систем зон и инстансов
+    - Оптимизаций производительности
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура Realtime Server для обеспечения real-time коммуникации,
+    синхронизации состояния игры и управления игровыми зонами в MMOFPS RPG.
+
+architecture:
+  overview: |
+    Realtime Server обеспечивает высокопроизводительную real-time коммуникацию
+    между клиентами и сервером через WebSocket с поддержкой зон, interest management,
+    state synchronization и оптимизаций для различных типов игрового контента.
+
+  components:
+    - name: WebSocket Gateway
+      location: realtime-gateway-go (основной сервис)
+      responsibility: |
+        - Управление WebSocket соединениями
+        - Аутентификация и авторизация соединений
+        - Маршрутизация сообщений по топикам
+        - Управление подписками и зонами интереса
+        - Load balancing и failover
+      websocket_features: |
+        - WSS (secure WebSocket) для production
+        - Connection pooling и reuse
+        - Heartbeat и ping/pong для health checks
+        - Compression (permessage-deflate)
+        - Binary message support for performance
+      connection_management: |
+        - MAX_CONNECTIONS: 10000 per instance
+        - CONNECTION_TIMEOUT: 30 seconds idle
+        - RECONNECT_STRATEGY: exponential backoff
+        - SESSION_RECOVERY: state sync on reconnect
+      endpoints:
+        - WSS /ws/game - основной игровоЙ WebSocket
+        - WS /ws/chat - текстовый чат WebSocket
+        - WS /ws/voice - голосовая связь WebSocket
+        - GET /api/v1/realtime/status - статус сервера
+
+    - name: Zone Manager
+      location: realtime-gateway-go (модуль zone-manager)
+      responsibility: |
+        - Управление игровыми зонами и инстансами
+        - Распределение игроков по зонам
+        - Управление capacity и load balancing
+        - Zone transitions и cross-zone communication
+        - Monitoring и analytics зон
+      zone_types: |
+        - STATIC: persistent world zones (Night City districts)
+        - DYNAMIC: instanced zones (dungeons, raids)
+        - PARTY: temporary party zones (group activities)
+        - PRIVATE: player-owned zones (apartments, vehicles)
+        - GLOBAL: cross-zone events and broadcasts
+      zone_capacity: |
+        - SMALL_ZONE: 50 players (apartments, small missions)
+        - MEDIUM_ZONE: 200 players (districts, medium events)
+        - LARGE_ZONE: 1000 players (downtown, major events)
+        - MASSIVE_ZONE: 5000+ players (global events, wars)
+
+    - name: Interest Management Engine
+      location: realtime-gateway-go (модуль interest-management)
+      responsibility: |
+        - Определение области интереса игроков
+        - Фильтрация релевантных обновлений
+        - Bandwidth optimization
+        - Relevance-based messaging
+        - Distance and visibility calculations
+      interest_zones: |
+        - VISUAL_RANGE: 50-100 meters (visible objects)
+        - AUDIBLE_RANGE: 25-50 meters (sound sources)
+        - INTERACTION_RANGE: 5-10 meters (interactive objects)
+        - PARTY_RANGE: unlimited (party members)
+        - GUILD_RANGE: guild territory (guild events)
+      optimization_techniques: |
+        - SPATIAL_PARTITIONING: quad-tree for position queries
+        - PRIORITY_QUEUE: importance-based message delivery
+        - DELTA_COMPRESSION: send only changed state
+        - PREDICTIVE_UPDATES: client-side prediction
+
+    - name: State Synchronization Manager
+      location: realtime-gateway-go (модуль state-sync)
+      responsibility: |
+        - Синхронизация игрового состояния
+        - Conflict resolution
+        - State validation и consistency
+        - Snapshot management
+        - Rollback и replay capabilities
+      sync_strategies: |
+        - SNAPSHOT_SYNC: full state sync on join
+        - DELTA_SYNC: incremental updates
+        - PREDICTIVE_SYNC: client-side prediction with server correction
+        - AUTHORITATIVE_SYNC: server-authoritative state
+        - CONSENSUS_SYNC: distributed state agreement
+      state_types: |
+        - PLAYER_STATE: position, health, equipment
+        - WORLD_STATE: NPCs, objects, environment
+        - COMBAT_STATE: active combat sessions
+        - SOCIAL_STATE: party/guild status
+        - GAME_STATE: quest progress, achievements
+
+    - name: Message Router
+      location: realtime-gateway-go (модуль message-router)
+      responsibility: |
+        - Маршрутизация сообщений между компонентами
+        - Protocol optimization и compression
+        - Message queuing и prioritization
+        - Event-driven architecture
+        - Message filtering и transformation
+      message_types: |
+        - PLAYER_ACTIONS: movement, combat, interactions
+        - SYSTEM_EVENTS: zone changes, server announcements
+        - SOCIAL_EVENTS: chat, party invites, guild updates
+        - GAME_EVENTS: quest updates, achievement unlocks
+        - ADMIN_EVENTS: maintenance, emergency broadcasts
+      routing_strategies: |
+        - DIRECT_ROUTING: point-to-point messaging
+        - BROADCAST_ROUTING: zone/area messaging
+        - PUBSUB_ROUTING: topic-based subscriptions
+        - RELAY_ROUTING: cross-zone message relay
+
+    - name: Performance Monitor
+      location: realtime-gateway-go (модуль performance-monitor)
+      responsibility: |
+        - Мониторинг производительности
+        - Метрики и telemetry
+        - Bottleneck detection
+        - Auto-scaling triggers
+        - Performance profiling
+      metrics_collected: |
+        - CONNECTION_COUNT: active WebSocket connections
+        - MESSAGE_THROUGHPUT: messages per second
+        - LATENCY: end-to-end message latency
+        - CPU_USAGE: server resource utilization
+        - MEMORY_USAGE: memory consumption patterns
+        - NETWORK_BANDWIDTH: data transfer rates
+      performance_profiles: |
+        - LOW_LOAD: < 1000 connections, basic monitoring
+        - MEDIUM_LOAD: 1000-5000 connections, enhanced monitoring
+        - HIGH_LOAD: 5000-10000 connections, detailed profiling
+        - CRITICAL_LOAD: > 10000 connections, emergency measures
+
+    - name: Reliability Manager
+      location: realtime-gateway-go (модуль reliability-manager)
+      responsibility: |
+        - Обеспечение отказоустойчивости
+        - Connection recovery
+        - Data persistence и backup
+        - Graceful degradation
+        - Disaster recovery
+      reliability_features: |
+        - CONNECTION_RECOVERY: automatic reconnect with state sync
+        - MESSAGE_GUARANTEES: at-least-once delivery
+        - STATE_PERSISTENCE: durable state storage
+        - FAILOVER_HANDLING: automatic server switching
+        - GRACEFUL_SHUTDOWN: clean connection draining
+
+    - name: Security Gateway
+      location: realtime-gateway-go (модуль security-gateway)
+      responsibility: |
+        - Безопасность WebSocket соединений
+        - Rate limiting и DDoS protection
+        - Message validation и sanitization
+        - Anti-cheat integration
+        - Audit logging
+      security_measures: |
+        - TLS_ENCRYPTION: WSS mandatory
+        - AUTHENTICATION: JWT token validation
+        - AUTHORIZATION: permission-based message filtering
+        - RATE_LIMITING: per-connection and per-IP limits
+        - CONTENT_FILTERING: malicious payload detection
+
+  data_flow:
+    player_connection: |
+      1. Клиент устанавливает WebSocket соединение
+      2. Security Gateway валидирует аутентификацию
+      3. Zone Manager определяет начальную зону
+      4. State Synchronization Manager отправляет snapshot
+      5. Interest Management Engine настраивает фильтры
+      6. Message Router подключает подписки
+      7. Performance Monitor начинает tracking
+
+    game_action: |
+      1. Игрок выполняет действие (movement, attack)
+      2. Message Router получает сообщение
+      3. Interest Management Engine определяет реципиентов
+      4. State Synchronization Manager валидирует состояние
+      5. Zone Manager проверяет zone boundaries
+      6. Message Router маршрутизирует обновления
+      7. Performance Monitor логирует метрики
+
+    zone_transition: |
+      1. Игрок переходит в новую зону
+      2. Zone Manager обрабатывает transition
+      3. State Synchronization Manager сохраняет состояние
+      4. Interest Management Engine пересчитывает интересы
+      5. Message Router обновляет подписки
+      6. Reliability Manager обеспечивает continuity
+
+  integrations:
+    with_world_service: |
+      - Zone boundaries and navigation
+      - World object synchronization
+      - Environmental state updates
+      - Cross-zone teleportation
+
+    with_combat_service: |
+      - Real-time combat state sync
+      - Damage and health updates
+      - Combat event broadcasting
+      - Anti-cheat validation
+
+    with_social_service: |
+      - Party/guild communication
+      - Friend status updates
+      - Social event notifications
+      - Group coordination
+
+    with_gameplay_service: |
+      - Quest progress updates
+      - Achievement notifications
+      - Game state synchronization
+      - Event-driven mechanics
+
+  data_consistency:
+    strategy: Eventual Consistency с strong consistency для критичных операций
+    mechanisms:
+      - Event Sourcing для игровых событий
+      - CQRS для разделения команд и запросов состояния
+      - Optimistic Concurrency для state updates
+      - Snapshot Isolation для complex operations
+      - Redis для distributed state cache
+
+  performance_requirements:
+    latency: < 50ms end-to-end for player actions, < 100ms for world updates
+    throughput: 10000+ concurrent connections, 100000+ messages/second
+    bandwidth: < 100KB/s per player average, peaks < 500KB/s
+    cpu_usage: < 40% per server instance
+    memory_usage: < 16GB per server instance
+
+  scalability:
+    horizontal_scaling: |
+      - WebSocket Gateway: auto-scaling by connection count
+      - Zone Manager: zone-based sharding
+      - Message Router: pub/sub pattern scaling
+      - State Sync: distributed cache clusters
+    global_distribution: |
+      - Regional server clusters
+      - Geographic load balancing
+      - Cross-region state sync
+      - Global event broadcasting
+
+  security:
+    connection_security: |
+      - WSS mandatory encryption
+      - Certificate pinning
+      - Connection fingerprinting
+      - Suspicious activity detection
+    message_security: |
+      - Message authentication
+      - Payload validation
+      - Anti-tampering checks
+      - Rate limiting per connection
+
+  database_schema:
+    tables:
+      - name: realtime_connections
+        description: Активные WebSocket соединения
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - connection_id: VARCHAR(255) (unique)
+          - zone_id: UUID (FK zones)
+          - connected_at: TIMESTAMP
+          - last_activity: TIMESTAMP
+          - client_version: VARCHAR(50)
+          - ip_address: INET
+          - user_agent: TEXT
+        indexes:
+          - player_id (unique)
+          - zone_id, connected_at
+          - connection_id (unique)
+
+      - name: realtime_messages
+        description: Лог сообщений для debugging
+        fields:
+          - id: UUID (PK)
+          - connection_id: VARCHAR(255) (FK realtime_connections)
+          - message_type: VARCHAR(50)
+          - payload_size: INTEGER
+          - sent_at: TIMESTAMP
+          - delivery_status: ENUM (SENT, DELIVERED, FAILED)
+          - processing_time_ms: INTEGER
+        indexes:
+          - connection_id, sent_at
+          - message_type, sent_at
+
+      - name: realtime_zones
+        description: Игровые зоны и их состояние
+        fields:
+          - id: UUID (PK)
+          - zone_name: VARCHAR(100)
+          - zone_type: ENUM (STATIC, DYNAMIC, PARTY, PRIVATE, GLOBAL)
+          - max_players: INTEGER
+          - current_players: INTEGER
+          - server_instance: VARCHAR(100)
+          - status: ENUM (ACTIVE, MAINTENANCE, FULL, CLOSED)
+          - created_at: TIMESTAMP
+          - last_updated: TIMESTAMP
+        indexes:
+          - zone_type, status
+          - server_instance, status
+
+      - name: realtime_performance
+        description: Метрики производительности
+        fields:
+          - id: UUID (PK)
+          - server_instance: VARCHAR(100)
+          - timestamp: TIMESTAMP
+          - active_connections: INTEGER
+          - messages_per_second: INTEGER
+          - average_latency_ms: DECIMAL(8,2)
+          - cpu_usage_percent: DECIMAL(5,2)
+          - memory_usage_mb: INTEGER
+          - network_bandwidth_mbps: DECIMAL(8,2)
+        indexes:
+          - server_instance, timestamp
+          - timestamp
+
+  validation:
+    architecture_complete: true
+    components_defined: true
+    microservices_identified: true
+    api_endpoints_described: true
+    technical_specification_ready: true
+    subtasks_defined: true
+
+  next_steps:
+    - Передача задачи агенту API Designer для создания WebSocket protocol specification
+    - Детализация interest management algorithms
+    - Создание схем message formats и state synchronization
+    - Определение zone partitioning strategies
+    - Планирование интеграции с realtime-gateway-go
+
+  history:
+    - version: '2.0.0'
+      date: 2025-12-27
+      author: Architect Agent
+      changes: |
+        Создана полная архитектура Realtime Server
+        Объединены компоненты WebSocket и zone management
+        Добавлена схема БД и метрики производительности
+        Определены security и scalability требования
+        Статус изменен на final
