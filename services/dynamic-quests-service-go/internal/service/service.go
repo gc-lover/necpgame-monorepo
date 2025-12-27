@@ -2678,6 +2678,345 @@ func (s *Service) GetEverythingBiggerQuest(ctx context.Context) (*models.Dynamic
 	return quest, nil
 }
 
+// GetLakeMichiganQuest returns the Lake Michigan quest for Chicago
+// Issue: #140928958
+func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Lake Michigan quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "canon-quest-004-lake-michigan",
+		Title:            "Чикаго — Озеро Мичиган (Third Coast)",
+		Description:      "Исследуйте 'Third Coast' США вдоль Lakefront Trail с сезонными активностями и атмосферой",
+		QuestType:        "side",
+		MinLevel:         1,
+		MaxLevel:         0, // No max level
+		EstimatedDuration: 30,
+		Difficulty:       "easy",
+		Themes:           []string{"nature", "exploration", "seasonal", "urban-outdoor", "chicago"},
+		Status:           "active",
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "season_choice",
+				Sequence:    1,
+				Title:       "Выбор сезона для прогулки",
+				Description: "Какое время года выбрать для исследования озера?",
+				Context:     "Lake Michigan предлагает совершенно разные впечатления зимой и летом",
+				Choices: []models.Choice{
+					{
+						ID:             "summer_exploration",
+						Text:           "Летнее исследование",
+						Description:    "Пляжи, теплое озеро, пикники и велосипеды",
+						Consequences: []models.Consequence{
+							{
+								Type:     "skill_boost",
+								Target:   "outdoor_flow",
+								Value:    float64(10),
+								Probability: 1.0,
+								Description: "Улучшение навыка outdoor flow",
+							},
+							{
+								Type:     "reputation",
+								Target:   "social",
+								Value:    float64(8),
+								Probability: 1.0,
+								Description: "Социальная репутация от общения с отдыхающими",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "winter_challenge",
+						Text:           "Зимний вызов",
+						Description:    "Ледяные ветра, замерзшее озеро, экстремальные условия",
+						Consequences: []models.Consequence{
+							{
+								Type:     "skill_boost",
+								Target:   "endurance",
+								Value:    float64(15),
+								Probability: 1.0,
+								Description: "Значительное улучшение выносливости",
+							},
+							{
+								Type:     "health_risk",
+								Target:   "health",
+								Value:    float64(-5),
+								Probability: 0.2,
+								Description: "Риск обморожения в экстремальных условиях",
+							},
+						},
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: false,
+			},
+			{
+				ID:          "trail_points",
+				Sequence:    2,
+				Title:       "Посещение ключевых точек Lakefront Trail",
+				Description: "Какие достопримечательности посетить?",
+				Context:     "29-километровый маршрут предлагает множество интересных мест",
+				Choices: []models.Choice{
+					{
+						ID:             "beach_focus",
+						Text:           "Фокус на пляжах",
+						Description:    "Посетить пляжи и прибрежные зоны отдыха",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "nature",
+								Value:    float64(12),
+								Probability: 1.0,
+								Description: "Репутация среди любителей природы",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "pier_focus",
+						Text:           "Фокус на Navy Pier",
+						Description:    "Посетить развлекательный комплекс Navy Pier",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "social",
+								Value:    float64(10),
+								Probability: 1.0,
+								Description: "Социальная репутация от посещения мероприятий",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "viewpoints_focus",
+						Text:           "Фокус на смотровые площадки",
+						Description:    "Посетить обзорные точки с видом на озеро",
+						Consequences: []models.Consequence{
+							{
+								Type:     "skill_boost",
+								Target:   "perception",
+								Value:    float64(8),
+								Probability: 1.0,
+								Description: "Улучшение восприятия от красивых видов",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: false,
+			},
+			{
+				ID:          "weather_interaction",
+				Sequence:    3,
+				Title:       "Взаимодействие с погодными условиями",
+				Description: "Как отреагировать на текущую погоду?",
+				Context:     "Погода на озере может быть непредсказуемой",
+				Choices: []models.Choice{
+					{
+						ID:             "embrace_weather",
+						Text:           "Принять погоду",
+						Description:    "Адаптироваться к условиям и насладиться моментом",
+						Consequences: []models.Consequence{
+							{
+								Type:     "skill_boost",
+								Target:   "adaptability",
+								Value:    float64(12),
+								Probability: 1.0,
+								Description: "Улучшение адаптивности",
+							},
+						},
+						RiskLevel:      "medium",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "seek_shelter",
+						Text:           "Искать укрытие",
+						Description:    "Найти ближайшее укрытие от непогоды",
+						Consequences: []models.Consequence{
+							{
+								Type:     "experience",
+								Target:   "practicality",
+								Value:    float64(5),
+								Probability: 1.0,
+								Description: "Практический опыт",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: false,
+			},
+			{
+				ID:          "local_interaction",
+				Sequence:    4,
+				Title:       "Взаимодействие с местными жителями",
+				Description: "Как пообщаться с жителями Чикаго?",
+				Context:     "Местные могут поделиться историями и открыть новые возможности",
+				Choices: []models.Choice{
+					{
+						ID:             "deep_conversation",
+						Text:           "Глубокий разговор",
+						Description:    "Обсудить историю и культуру Чикаго",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "local",
+								Value:    float64(15),
+								Probability: 1.0,
+								Description: "Репутация среди местных жителей",
+							},
+							{
+								Type:     "unlock",
+								Target:   "side_quests",
+								Value:    float64(1),
+								Probability: 1.0,
+								Description: "Доступ к дополнительным квестам",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "casual_chat",
+						Text:           "Легкий разговор",
+						Description:    "Короткий разговор о погоде и озере",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "local",
+								Value:    float64(8),
+								Probability: 1.0,
+								Description: "Небольшое улучшение репутации у местных",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: false,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "summer_master",
+				Title:       "Мастер летнего озера",
+				Description: "Полностью насладились летней атмосферой Lake Michigan",
+				Requirements: []string{"summer_exploration"},
+				Rewards: []models.Reward{
+					{
+						Type:  "experience",
+						Value: 700,
+					},
+					{
+						Type:  "currency",
+						Value: 25,
+					},
+				},
+				Narrative: "Вы стали настоящим мастером летнего отдыха на Lake Michigan, насладившись всеми радостями теплого сезона.",
+			},
+			{
+				ID:          "winter_survivor",
+				Title:       "Выживший зимнего озера",
+				Description: "Преодолели экстремальные зимние условия",
+				Requirements: []string{"winter_challenge"},
+				Rewards: []models.Reward{
+					{
+						Type:  "experience",
+						Value: 800,
+					},
+					{
+						Type:  "currency",
+						Value: 30,
+					},
+				},
+				Narrative: "Вы доказали свою стойкость, преодолев ледяные ветра и экстремальные условия зимнего Lake Michigan.",
+			},
+			{
+				ID:          "third_coast_explorer",
+				Title:       "Исследователь Third Coast",
+				Description: "Полностью изучили все аспекты Lake Michigan",
+				Requirements: []string{}, // Default ending
+				Rewards: []models.Reward{
+					{
+						Type:  "experience",
+						Value: 600,
+					},
+					{
+						Type:  "currency",
+						Value: 20,
+					},
+				},
+				Narrative: "Вы стали настоящим исследователем 'Third Coast', открыв для себя все тайны и красоты Lake Michigan.",
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "nature",
+				Change:      15,
+				Description: "Репутация среди любителей природы и экологии",
+				ChoiceID:    "beach_focus",
+			},
+			{
+				Faction:     "local",
+				Change:      10,
+				Description: "Репутация среди местных жителей Чикаго",
+				ChoiceID:    "deep_conversation",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Chicago, Illinois - Lake Michigan Shoreline",
+			TimePeriod:  "2020-2029",
+			Weather:     "Variable - Summer warmth or Winter chill",
+			Situation:   "Exploring the 'Third Coast' of America",
+			Objectives:  []string{
+				"Choose seasonal exploration path",
+				"Visit key Lakefront Trail landmarks",
+				"Interact with weather conditions",
+				"Connect with local Chicago residents",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "trail_runner",
+				Name:        "Trail Runner",
+				Role:        "Local Guide",
+				Description: "Experienced runner who knows every inch of Lakefront Trail",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "beach_vendor",
+				Name:        "Beach Vendor",
+				Role:        "Merchant",
+				Description: "Seasonal vendor selling refreshments and local goods",
+				Importance:  "tertiary",
+			},
+			{
+				ID:          "weather_monitor",
+				Name:        "Weather Monitor",
+				Role:        "Observer",
+				Description: "Local weather enthusiast tracking lake conditions",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "navy_pier_worker",
+				Name:        "Navy Pier Worker",
+				Role:        "Entertainer",
+				Description: "Works at Navy Pier, knows all the entertainment options",
+				Importance:  "tertiary",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
 // GetWillisTowerQuest returns the Willis Tower quest for Chicago
 // Issue: #140928947
 func (s *Service) GetWillisTowerQuest(ctx context.Context) (*models.DynamicQuest, error) {
