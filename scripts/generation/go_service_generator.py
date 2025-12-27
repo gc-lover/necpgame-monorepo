@@ -71,9 +71,11 @@ class GoServiceGenerator:
             # PERFORMANCE: Initialize Go module with optimized settings
             self._initialize_go_modules(service_dir, service_name, dry_run)
 
-        # PERFORMANCE: Test compilation with timeout and resource limits
-        if not skip_test and not dry_run:
-            self._test_compilation(service_dir, service_name)
+            # PERFORMANCE: Test compilation with timeout and resource limits
+            if not skip_test and not dry_run:
+                self._test_compilation(service_dir, service_name)
+
+            self.logger.info(f"Successfully generated {service_name}")
 
         except Exception as e:
             self.logger.error(f"Failed to generate service for domain {domain}: {e}")
