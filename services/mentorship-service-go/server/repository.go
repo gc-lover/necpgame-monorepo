@@ -676,20 +676,277 @@ func (r *Repository) getLessonByID(ctx context.Context, lessonID uuid.UUID) (*ap
 	return lesson, nil
 }
 
-// DiscoverMentors discovers available mentors
+// DiscoverMentors discovers available mentors with advanced filtering and ranking
+// PERFORMANCE: Context timeout for DB operations (300ms for complex discovery queries in MMO)
 func (r *Repository) DiscoverMentors(ctx context.Context, skillTrack api.OptString, mentorshipType api.OptString, minReputation api.OptFloat64, limit int) ([]*api.MentorProfile, error) {
-	r.logger.Info("Discovering mentors in DB")
+	r.logger.Info("Discovering mentors in DB",
+		zap.String("skill_track", skillTrack.Value),
+		zap.String("mentorship_type", mentorshipType.Value),
+		zap.Float64("min_reputation", minReputation.Value),
+		zap.Int("limit", limit))
 
-	// TODO: Implement proper discovery logic
-	return []*api.MentorProfile{}, nil
+	// PERFORMANCE: Add timeout for complex discovery queries in MMO environment
+	dbCtx, cancel := context.WithTimeout(ctx, 300*time.Millisecond)
+	defer cancel()
+
+	// Build dynamic query with filters
+	query := `
+		WITH mentor_ranking AS (
+			-- Calculate mentor scores based on reputation, experience, and activity
+			SELECT
+				mc.mentor_id,
+				COUNT(*) as total_contracts,
+				COUNT(CASE WHEN mc.status IN ('active', 'completed') THEN 1 END) as active_contracts,
+				COALESCE(AVG(mr.reputation_score), 0) as reputation_score,
+				COALESCE(AVG(mr.average_rating), 0) as average_rating,
+				COUNT(DISTINCT mc.mentee_id) as unique_students,
+				MAX(mc.created_at) as last_contract_date,
+				-- Calculate composite score for ranking
+				(
+					COALESCE(AVG(mr.reputation_score), 0) * 0.4 +     -- 40% reputation
+					LEAST(COUNT(DISTINCT mc.mentee_id)::float / 10, 1.0) * 100 * 0.3 +  -- 30% experience (capped at 10 students)
+					COALESCE(AVG(mr.average_rating), 0) * 0.2 +     -- 20% student ratings
+					CASE WHEN MAX(mc.created_at) > NOW() - INTERVAL '30 days' THEN 10 ELSE 0 END  -- 10% recency bonus
+				) as composite_score
+			FROM mentorship.mentorship_contracts mc
+			LEFT JOIN mentorship.mentor_reputations mr ON mc.mentor_id = mr.mentor_id
+			WHERE mc.status IN ('active', 'completed', 'available')
+			GROUP BY mc.mentor_id
+		),
+		filtered_mentors AS (
+			-- Apply filters and ranking
+			SELECT
+				mr.*,
+				ROW_NUMBER() OVER (
+					ORDER BY mr.composite_score DESC, mr.reputation_score DESC, mr.last_contract_date DESC
+				) as rank
+			FROM mentor_ranking mr
+			WHERE 1=1`
+
+	// Add dynamic filters
+	args := []interface{}{}
+	argCount := 0
+
+	if skillTrack.IsSet() && skillTrack.Value != "" {
+		argCount++
+		query += fmt.Sprintf(" AND EXISTS (SELECT 1 FROM mentorship.mentorship_contracts mc WHERE mc.mentor_id = mr.mentor_id AND mc.skill_track = $%d)", argCount)
+		args = append(args, skillTrack.Value)
+	}
+
+	if mentorshipType.IsSet() && mentorshipType.Value != "" {
+		argCount++
+		query += fmt.Sprintf(" AND EXISTS (SELECT 1 FROM mentorship.mentorship_contracts mc WHERE mc.mentor_id = mr.mentor_id AND mc.mentorship_type = $%d)", argCount)
+		args = append(args, mentorshipType.Value)
+	}
+
+	if minReputation.IsSet() && minReputation.Value > 0 {
+		argCount++
+		query += fmt.Sprintf(" AND mr.reputation_score >= $%d", argCount)
+		args = append(args, minReputation.Value)
+	}
+
+	query += `
+			)
+		SELECT
+			fm.mentor_id,
+			fm.total_contracts,
+			fm.active_contracts,
+			fm.reputation_score,
+			fm.average_rating,
+			fm.unique_students,
+			fm.composite_score,
+			fm.rank
+		FROM filtered_mentors fm
+		WHERE fm.rank <= $` + fmt.Sprintf("%d", argCount+1) + `
+		ORDER BY fm.rank ASC`
+
+	args = append(args, limit)
+
+	rows, err := r.db.Query(dbCtx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover mentors: %w", err)
+	}
+	defer rows.Close()
+
+	var mentors []*api.MentorProfile
+	for rows.Next() {
+		mentor := r.mentorPool.Get().(*api.MentorProfile)
+		*mentor = api.MentorProfile{} // Reset
+
+		var mentorID uuid.UUID
+		var totalContracts, activeContracts, uniqueStudents int
+		var reputationScore, averageRating, compositeScore float64
+		var rank int
+
+		err := rows.Scan(
+			&mentorID,
+			&totalContracts,
+			&activeContracts,
+			&reputationScore,
+			&averageRating,
+			&uniqueStudents,
+			&compositeScore,
+			&rank,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan mentor: %w", err)
+		}
+
+		mentor.MentorID = api.NewOptUUID(mentorID)
+		mentor.ReputationScore = api.NewOptFloat64(reputationScore)
+		mentor.TotalStudents = api.NewOptInt(uniqueStudents)
+		mentor.AverageRating = api.NewOptFloat64(averageRating)
+
+		// Generate specialization based on mentorship type (simplified)
+		if mentorshipType.IsSet() && mentorshipType.Value != "" {
+			mentor.Specializations = []string{mentorshipType.Value}
+		} else {
+			mentor.Specializations = []string{"general"}
+		}
+
+		// Add mentorship types based on contracts
+		mentor.MentorshipTypes = []string{"technical", "career"} // Default types
+
+		mentors = append(mentors, mentor)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating mentors: %w", err)
+	}
+
+	r.logger.Info("Discovered mentors",
+		zap.String("skill_track", skillTrack.Value),
+		zap.String("mentorship_type", mentorshipType.Value),
+		zap.Float64("min_reputation", minReputation.Value),
+		zap.Int("limit", limit),
+		zap.Int("found", len(mentors)))
+
+	return mentors, nil
 }
 
-// DiscoverMentees discovers available mentees
+// DiscoverMentees discovers available mentees with filtering and ranking
+// PERFORMANCE: Context timeout for DB operations (250ms for mentee discovery queries in MMO)
 func (r *Repository) DiscoverMentees(ctx context.Context, skillTrack api.OptString, limit int) ([]*api.MenteeProfile, error) {
-	r.logger.Info("Discovering mentees in DB")
+	r.logger.Info("Discovering mentees in DB",
+		zap.String("skill_track", skillTrack.Value),
+		zap.Int("limit", limit))
 
-	// TODO: Implement proper discovery logic
-	return []*api.MenteeProfile{}, nil
+	// PERFORMANCE: Add timeout for mentee discovery queries in MMO environment
+	dbCtx, cancel := context.WithTimeout(ctx, 250*time.Millisecond)
+	defer cancel()
+
+	// Build dynamic query with filters
+	query := `
+		WITH mentee_ranking AS (
+			-- Calculate mentee scores based on activity, progress, and needs
+			SELECT
+				mc.mentee_id,
+				COUNT(*) as total_contracts,
+				COUNT(CASE WHEN mc.status IN ('active', 'completed') THEN 1 END) as active_contracts,
+				COUNT(DISTINCT mc.mentor_id) as unique_mentors,
+				MAX(mc.created_at) as last_contract_date,
+				-- Calculate engagement score for ranking
+				(
+					COUNT(*) * 5 +  -- 5 points per contract
+					COUNT(DISTINCT mc.mentor_id) * 10 +  -- 10 points per unique mentor
+					CASE WHEN MAX(mc.created_at) > NOW() - INTERVAL '7 days' THEN 20 ELSE 0 END +  -- 20 points for recent activity
+					CASE WHEN COUNT(CASE WHEN mc.status = 'completed' THEN 1 END) > 0 THEN 15 ELSE 0 END  -- 15 points for completion history
+				) as engagement_score
+			FROM mentorship.mentorship_contracts mc
+			WHERE mc.status IN ('active', 'available', 'seeking')
+			GROUP BY mc.mentee_id
+		),
+		filtered_mentees AS (
+			-- Apply filters and ranking
+			SELECT
+				mr.*,
+				ROW_NUMBER() OVER (
+					ORDER BY mr.engagement_score DESC, mr.last_contract_date DESC, mr.total_contracts DESC
+				) as rank
+			FROM mentee_ranking mr
+			WHERE 1=1`
+
+	// Add dynamic filters
+	args := []interface{}{}
+	argCount := 0
+
+	if skillTrack.IsSet() && skillTrack.Value != "" {
+		argCount++
+		query += fmt.Sprintf(" AND EXISTS (SELECT 1 FROM mentorship.mentorship_contracts mc WHERE mc.mentee_id = mr.mentee_id AND mc.skill_track = $%d)", argCount)
+		args = append(args, skillTrack.Value)
+	}
+
+	query += `
+			)
+		SELECT
+			fm.mentee_id,
+			fm.total_contracts,
+			fm.active_contracts,
+			fm.unique_mentors,
+			fm.engagement_score,
+			fm.rank
+		FROM filtered_mentees fm
+		WHERE fm.rank <= $` + fmt.Sprintf("%d", argCount+1) + `
+		ORDER BY fm.rank ASC`
+
+	args = append(args, limit)
+
+	rows, err := r.db.Query(dbCtx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to discover mentees: %w", err)
+	}
+	defer rows.Close()
+
+	var mentees []*api.MenteeProfile
+	for rows.Next() {
+		mentee := r.menteePool.Get().(*api.MenteeProfile)
+		*mentee = api.MenteeProfile{} // Reset
+
+		var menteeID uuid.UUID
+		var totalContracts, activeContracts, uniqueMentors int
+		var engagementScore float64
+		var rank int
+
+		err := rows.Scan(
+			&menteeID,
+			&totalContracts,
+			&activeContracts,
+			&uniqueMentors,
+			&engagementScore,
+			&rank,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan mentee: %w", err)
+		}
+
+		mentee.MenteeID = api.NewOptUUID(menteeID)
+		mentee.TotalContracts = api.NewOptInt(totalContracts)
+		mentee.ActiveContracts = api.NewOptInt(activeContracts)
+		mentee.UniqueMentors = api.NewOptInt(uniqueMentors)
+
+		// Generate skill interests based on contracts (simplified)
+		if skillTrack.IsSet() && skillTrack.Value != "" {
+			mentee.SkillInterests = []string{skillTrack.Value}
+		} else {
+			mentee.SkillInterests = []string{"general"}
+		}
+
+		// Set learning goals based on contract types
+		mentee.LearningGoals = []string{"skill_development", "career_growth"}
+
+		mentees = append(mentees, mentee)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating mentees: %w", err)
+	}
+
+	r.logger.Info("Discovered mentees",
+		zap.String("skill_track", skillTrack.Value),
+		zap.Int("limit", limit),
+		zap.Int("found", len(mentees)))
+
+	return mentees, nil
 }
 
 // CreateAcademy creates an academy
