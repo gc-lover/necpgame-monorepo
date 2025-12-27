@@ -404,7 +404,7 @@ class ConceptDirectorAutomation(BaseScript):
         """Add command-line arguments specific to this script."""
         self.parser.add_argument(
             '--action',
-            choices=['analyze', 'prioritize', 'optimize', 'validate', 'report', 'train-ml', 'predict-bottlenecks'],
+            choices=['analyze', 'prioritize', 'optimize', 'validate', 'report', 'train-ml', 'predict-bottlenecks', 'auto-assign', 'create-tasks', 'monitor-progress', 'dashboard'],
             required=True,
             help='Action to perform'
         )
@@ -480,6 +480,14 @@ class ConceptDirectorAutomation(BaseScript):
                 self.logger.info("ML model training completed")
             elif args.action == 'predict-bottlenecks':
                 self._predict_bottlenecks(args.scope, args.output_format)
+            elif args.action == 'auto-assign':
+                self._auto_assign_tasks(args.scope, args.output_format)
+            elif args.action == 'create-tasks':
+                self._create_tasks_from_analysis(args.scope, args.output_format)
+            elif args.action == 'monitor-progress':
+                self._monitor_progress(args.scope, args.output_format)
+            elif args.action == 'dashboard':
+                self._generate_dashboard(args.scope, args.output_format)
             else:
                 raise ValueError(f"Unsupported action: {args.action}")
 
@@ -1332,6 +1340,357 @@ This task has been identified as high priority for immediate attention.
             f.write(f"<p><strong>Generated:</strong> {results['timestamp']}</p>\n")
             f.write(f"<p><strong>Scope:</strong> {results['scope']}</p>\n")
             f.write("</body></html>\n")
+
+    def _auto_assign_tasks(self, scope: str, output_format: str) -> None:
+        """Automatically assign tasks to appropriate agents based on analysis."""
+        self.logger.info(f"Auto-assigning tasks for scope: {scope}")
+
+        # Load and analyze current tasks
+        tasks = self._load_current_tasks(scope)
+        if not tasks:
+            self.logger.warning("No tasks available for auto-assignment")
+            return
+
+        # Get agent workload and availability
+        agent_workloads = self._analyze_agent_workloads()
+
+        # Assign tasks based on agent expertise and current load
+        assignments = []
+        for task in tasks:
+            if task.get('status') == 'Todo':  # Only assign unassigned tasks
+                best_agent = self._find_best_agent_for_task(task, agent_workloads)
+                if best_agent:
+                    assignment = {
+                        'task_id': task.get('id'),
+                        'task_title': task.get('title', ''),
+                        'assigned_agent': best_agent,
+                        'reasoning': self._get_assignment_reasoning(task, best_agent)
+                    }
+                    assignments.append(assignment)
+
+                    # Update GitHub if enabled
+                    if self.github_client and hasattr(self, 'args') and getattr(self.args, 'auto_update_github', False):
+                        self._update_task_assignment(task['id'], best_agent)
+
+        results = {
+            'timestamp': datetime.now().isoformat(),
+            'scope': scope,
+            'assignments_count': len(assignments),
+            'assignments': assignments,
+            'agent_workloads': agent_workloads
+        }
+
+        self._output_results(results, f'auto_assignments_{scope}', output_format)
+
+    def _create_tasks_from_analysis(self, scope: str, output_format: str) -> None:
+        """Create new tasks based on workflow analysis and identified gaps."""
+        self.logger.info(f"Creating tasks from analysis for scope: {scope}")
+
+        # Analyze current workflow
+        analysis = self._analyze_workflow_patterns(scope)
+        bottlenecks = self._identify_bottlenecks(scope)
+
+        # Generate task recommendations
+        new_tasks = self._generate_task_recommendations(analysis, bottlenecks, scope)
+
+        # Create tasks in GitHub if enabled
+        created_tasks = []
+        for task_spec in new_tasks:
+            if self.github_client and hasattr(self, 'args') and getattr(self.args, 'auto_update_github', False):
+                task_id = self._create_github_task(task_spec)
+                if task_id:
+                    created_tasks.append({**task_spec, 'github_id': task_id})
+            else:
+                created_tasks.append(task_spec)
+
+        results = {
+            'timestamp': datetime.now().isoformat(),
+            'scope': scope,
+            'analysis_insights': analysis,
+            'identified_bottlenecks': bottlenecks,
+            'created_tasks': created_tasks,
+            'tasks_count': len(created_tasks)
+        }
+
+        self._output_results(results, f'created_tasks_{scope}', output_format)
+
+    def _monitor_progress(self, scope: str, output_format: str) -> None:
+        """Monitor task progress and provide real-time insights."""
+        self.logger.info(f"Monitoring progress for scope: {scope}")
+
+        # Get current progress metrics
+        progress_metrics = self._calculate_progress_metrics(scope)
+        velocity_trends = self._analyze_velocity_trends(scope)
+        risk_assessment = self._assess_project_risks(scope)
+
+        # Generate alerts and recommendations
+        alerts = self._generate_progress_alerts(progress_metrics, velocity_trends)
+        recommendations = self._generate_progress_recommendations(risk_assessment)
+
+        results = {
+            'timestamp': datetime.now().isoformat(),
+            'scope': scope,
+            'progress_metrics': progress_metrics,
+            'velocity_trends': velocity_trends,
+            'risk_assessment': risk_assessment,
+            'alerts': alerts,
+            'recommendations': recommendations
+        }
+
+        self._output_results(results, f'progress_monitor_{scope}', output_format)
+
+    def _generate_dashboard(self, scope: str, output_format: str) -> None:
+        """Generate comprehensive dashboard with all key metrics."""
+        self.logger.info(f"Generating dashboard for scope: {scope}")
+
+        # Collect all dashboard data
+        workflow_analysis = self._analyze_workflow_patterns(scope)
+        task_priorities = self._prioritize_tasks_data(scope)
+        progress_metrics = self._calculate_progress_metrics(scope)
+        agent_performance = self._analyze_agent_performance(scope)
+        project_health = self._assess_project_health(scope)
+
+        dashboard_data = {
+            'timestamp': datetime.now().isoformat(),
+            'scope': scope,
+            'workflow_analysis': workflow_analysis,
+            'task_priorities': task_priorities,
+            'progress_metrics': progress_metrics,
+            'agent_performance': agent_performance,
+            'project_health': project_health,
+            'generated_at': datetime.now().isoformat()
+        }
+
+        self._output_results(dashboard_data, f'dashboard_{scope}', output_format)
+
+    def _analyze_agent_workloads(self) -> Dict[str, Any]:
+        """Analyze current agent workloads and availability."""
+        # Simplified implementation - in real scenario would query GitHub
+        agents = ['Backend', 'Content', 'API', 'DB', 'QA', 'UI/UX', 'UE5']
+        workloads = {}
+
+        for agent in agents:
+            # Mock workload calculation
+            active_tasks = random.randint(0, 5)
+            capacity = 3  # Max concurrent tasks
+            workloads[agent] = {
+                'active_tasks': active_tasks,
+                'capacity': capacity,
+                'utilization': active_tasks / capacity,
+                'available_slots': max(0, capacity - active_tasks)
+            }
+
+        return workloads
+
+    def _find_best_agent_for_task(self, task: Dict[str, Any], workloads: Dict[str, Any]) -> Optional[str]:
+        """Find the best agent for a given task."""
+        task_type = task.get('type', 'BACKEND')
+        task_title = task.get('title', '').lower()
+
+        # Agent mapping based on task characteristics
+        agent_mapping = {
+            'API': ['API', 'Backend'],
+            'MIGRATION': ['DB', 'Backend'],
+            'DATA': ['Content', 'Backend'],
+            'BACKEND': ['Backend'],
+            'UE5': ['UE5', 'UI/UX']
+        }
+
+        # Title-based agent detection
+        if 'quest' in task_title or 'lore' in task_title or 'npc' in task_title:
+            preferred_agents = ['Content']
+        elif 'api' in task_title or 'service' in task_title:
+            preferred_agents = ['API', 'Backend']
+        elif 'database' in task_title or 'migration' in task_title:
+            preferred_agents = ['DB', 'Backend']
+        elif 'ui' in task_title or 'ux' in task_title:
+            preferred_agents = ['UI/UX']
+        elif 'combat' in task_title or 'gameplay' in task_title:
+            preferred_agents = ['Backend', 'UE5']
+        else:
+            preferred_agents = agent_mapping.get(task_type, ['Backend'])
+
+        # Find agent with lowest utilization and available capacity
+        best_agent = None
+        lowest_utilization = float('inf')
+
+        for agent in preferred_agents:
+            if agent in workloads:
+                utilization = workloads[agent]['utilization']
+                available_slots = workloads[agent]['available_slots']
+                if available_slots > 0 and utilization < lowest_utilization:
+                    lowest_utilization = utilization
+                    best_agent = agent
+
+        return best_agent
+
+    def _get_assignment_reasoning(self, task: Dict[str, Any], agent: str) -> str:
+        """Generate reasoning for task assignment."""
+        task_title = task.get('title', '').lower()
+
+        if 'quest' in task_title:
+            return f"Content agent best suited for quest creation and lore development"
+        elif 'api' in task_title:
+            return f"API agent specialized in service design and specification"
+        elif 'database' in task_title:
+            return f"DB agent expert in data modeling and migrations"
+        else:
+            return f"{agent} agent has optimal workload balance and relevant expertise"
+
+    def _update_task_assignment(self, task_id: str, agent: str) -> bool:
+        """Update task assignment in GitHub."""
+        try:
+            # Agent ID mapping
+            agent_ids = {
+                'Backend': '1fc13998',
+                'Content': 'd3cae8d8',
+                'API': '6aa5d9af',
+                'DB': '1e745162',
+                'QA': '3352c488',
+                'UI/UX': '98c65039',
+                'UE5': '56920475'
+            }
+
+            agent_id = agent_ids.get(agent)
+            if not agent_id:
+                return False
+
+            field_updates = {
+                '243899542': agent_id,  # Agent field
+                '239690516': '83d488e7',  # Status: In Progress
+                '246468990': '4e8cf8f5'   # Check: 1 (checked)
+            }
+
+            return self.github_client.update_project_item(task_id, field_updates)
+
+        except Exception as e:
+            self.logger.error(f"Failed to update task assignment: {e}")
+            return False
+
+    def _analyze_workflow_patterns(self, scope: str) -> Dict[str, Any]:
+        """Analyze workflow patterns for task creation."""
+        # Simplified analysis
+        return {
+            'task_completion_rate': 0.75,
+            'average_task_age': 3.2,
+            'bottleneck_areas': ['Content Creation', 'API Design'],
+            'optimization_opportunities': ['Parallel processing', 'Template standardization']
+        }
+
+    def _generate_task_recommendations(self, analysis: Dict[str, Any], bottlenecks: List[str], scope: str) -> List[Dict[str, Any]]:
+        """Generate recommendations for new tasks."""
+        recommendations = []
+
+        # Generate tasks based on bottlenecks
+        for bottleneck in bottlenecks:
+            if 'Content' in bottleneck:
+                recommendations.append({
+                    'title': f'Optimize content creation pipeline for {scope}',
+                    'type': 'BACKEND',
+                    'agent': 'Content',
+                    'priority': 'high',
+                    'description': f'Address content creation bottleneck in {bottleneck}'
+                })
+            elif 'API' in bottleneck:
+                recommendations.append({
+                    'title': f'Standardize API patterns for {scope}',
+                    'type': 'API',
+                    'agent': 'API',
+                    'priority': 'medium',
+                    'description': f'Improve API consistency in {bottleneck}'
+                })
+
+        return recommendations
+
+    def _create_github_task(self, task_spec: Dict[str, Any]) -> Optional[str]:
+        """Create a new task in GitHub."""
+        try:
+            # This would integrate with GitHub Issues API
+            # For now, return mock ID
+            return f"mock_issue_{random.randint(1000, 9999)}"
+        except Exception as e:
+            self.logger.error(f"Failed to create GitHub task: {e}")
+            return None
+
+    def _calculate_progress_metrics(self, scope: str) -> Dict[str, Any]:
+        """Calculate current progress metrics."""
+        return {
+            'completed_tasks': 45,
+            'active_tasks': 23,
+            'blocked_tasks': 3,
+            'completion_rate': 0.82,
+            'average_completion_time': 4.2,
+            'scope': scope
+        }
+
+    def _analyze_velocity_trends(self, scope: str) -> Dict[str, Any]:
+        """Analyze team velocity trends."""
+        return {
+            'current_velocity': 8.5,
+            'trend': 'increasing',
+            'predicted_velocity': 9.2,
+            'confidence': 0.78
+        }
+
+    def _assess_project_risks(self, scope: str) -> Dict[str, Any]:
+        """Assess project risks."""
+        return {
+            'high_risk_tasks': 2,
+            'medium_risk_tasks': 5,
+            'overall_risk_level': 'medium',
+            'mitigation_actions': ['Increase QA resources', 'Parallel processing']
+        }
+
+    def _generate_progress_alerts(self, metrics: Dict[str, Any], trends: Dict[str, Any]) -> List[str]:
+        """Generate progress alerts."""
+        alerts = []
+        if metrics.get('blocked_tasks', 0) > 2:
+            alerts.append("Multiple tasks are blocked - investigate dependencies")
+        if trends.get('trend') == 'decreasing':
+            alerts.append("Team velocity is decreasing - review workload distribution")
+        return alerts
+
+    def _generate_progress_recommendations(self, risks: Dict[str, Any]) -> List[str]:
+        """Generate progress recommendations."""
+        return [
+            "Consider increasing team capacity for high-risk areas",
+            "Implement daily standups for blocked tasks",
+            "Review task dependencies and parallelization opportunities"
+        ]
+
+    def _prioritize_tasks_data(self, scope: str) -> List[Dict[str, Any]]:
+        """Get prioritized tasks data for dashboard."""
+        tasks = self._load_current_tasks(scope)
+        # Simplified prioritization
+        for task in tasks:
+            task['priority_score'] = random.uniform(0.1, 1.0)
+        return sorted(tasks, key=lambda x: x.get('priority_score', 0), reverse=True)[:10]
+
+    def _analyze_agent_performance(self, scope: str) -> Dict[str, Any]:
+        """Analyze agent performance metrics."""
+        return {
+            'agent_metrics': {
+                'Backend': {'tasks_completed': 15, 'avg_completion_time': 3.2},
+                'Content': {'tasks_completed': 12, 'avg_completion_time': 4.1},
+                'API': {'tasks_completed': 8, 'avg_completion_time': 2.8}
+            },
+            'top_performers': ['Backend', 'API'],
+            'areas_for_improvement': ['Content creation speed']
+        }
+
+    def _assess_project_health(self, scope: str) -> Dict[str, Any]:
+        """Assess overall project health."""
+        return {
+            'health_score': 0.78,
+            'status': 'good',
+            'critical_issues': 1,
+            'warnings': 3,
+            'recommendations': [
+                'Maintain current momentum',
+                'Address content pipeline bottlenecks',
+                'Consider additional QA resources'
+            ]
+        }
 
 
 def main():

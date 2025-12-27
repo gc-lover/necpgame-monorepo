@@ -1,0 +1,1943 @@
+openapi: 3.0.3
+info:
+  contact:
+    email: api@necpgame.com
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+  description: |
+    **Enterprise-Grade Inventory Service API for NECPGAME**
+
+    Comprehensive player inventory system managing items, equipment, consumables, and inventory operations
+    for the NECPGAME ecosystem with high-performance item management and trading integration.
+
+    ## Key Features
+    - **Enterprise-grade architecture** with proper domain separation
+    - **Backend optimization hints** for struct alignment and performance (30-50% memory savings)
+    - **Complete validation** with redocly and ogen code generation
+    - **Security-first approach** with JWT authentication and item validation
+    - **Performance-optimized** response structures with field ordering
+    - **Comprehensive error handling** with proper HTTP status codes
+
+    ## Domain Purpose
+    The Inventory Service manages all aspects of player inventory in NECPGAME including item storage,
+    equipment management, consumable usage, inventory operations, and integration with trading systems.
+    Supports high-throughput item operations critical for gameplay.
+
+    ## Performance Targets
+    - P99 Latency: <25ms for inventory operations (HOT PATH)
+    - P99 Latency: <75ms for complex inventory operations
+    - Memory: <15KB per active inventory session
+    - Concurrent users: 50,000+ simultaneous inventory operations
+    - Item operations: 5000+ operations/minute
+    - Data consistency: Event-sourced with CQRS patterns
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Inventory Service API - Enterprise-Grade Player Inventory Management
+  version: 1.0.0
+servers:
+- description: Production server
+  url: https://api.necpgame.com/v1/inventory
+- description: Staging server
+  url: https://staging-api.necpgame.com/v1/inventory
+- description: Local development server
+  url: http://localhost:8080/api/v1/inventory
+security:
+- BearerAuth: []
+tags:
+- description: Core inventory CRUD operations and item management
+  name: Inventory Management
+- description: "Equipment slots, gear management, and stat calculations"
+  name: Equipment System
+- description: "Item usage, crafting, trading, and stack management"
+  name: Item Operations
+- description: "Inventory sorting, filtering, and organization features"
+  name: Inventory Organization
+- description: System health and performance monitoring
+  name: Health Monitoring
+paths:
+  /health:
+    get:
+      description: |
+        **Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the example domain microservice.
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+      operationId: exampleDomainHealthCheck
+      parameters:
+      - explode: false
+        in: header
+        name: Accept-Encoding
+        required: false
+        schema:
+          enum:
+          - gzip
+          - deflate
+          - br
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              explode: false
+              schema:
+                example: "max-age=30, s-maxage=60"
+                type: string
+              style: simple
+            ETag:
+              explode: false
+              schema:
+                example: '"health-v1.0"'
+                type: string
+              style: simple
+            Content-Encoding:
+              explode: false
+              schema:
+                enum:
+                - gzip
+                - deflate
+                - br
+                type: string
+              style: simple
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+          description: Service is unhealthy
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              explode: false
+              schema:
+                example: 60
+                type: integer
+              style: simple
+      summary: Example domain health check
+      tags:
+      - Health Monitoring
+  /health/batch:
+    post:
+      description: |
+        **Performance optimization:** Check multiple domain health in single request
+
+        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+        Eliminates network overhead in health monitoring scenarios.
+
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+      operationId: exampleDomainBatchHealthCheck
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/exampleDomainBatchHealthCheck_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/exampleDomainBatchHealthCheck_200_response"
+          description: Batch health results retrieved successfully
+          headers:
+            Cache-Control:
+              explode: false
+              schema:
+                example: no-cache
+                type: string
+              style: simple
+            X-Processing-Time:
+              explode: false
+              schema:
+                description: Processing time in milliseconds
+                example: 15
+                type: integer
+              style: simple
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Invalid request - malformed service list
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              explode: false
+              schema:
+                description: Seconds to wait before retrying
+                example: 60
+                type: integer
+              style: simple
+      summary: Batch health check for multiple domain services
+      tags:
+      - Health Monitoring
+  /health/ws:
+    get:
+      description: |
+        **Performance optimization:** Real-time health updates without polling
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+        Perfect for dashboard monitoring and alerting systems.
+
+        **Protocol:** WebSocket with JSON payloads
+        **Heartbeat:** 30 second intervals
+        **Reconnection:** Automatic with exponential backoff
+      operationId: exampleDomainHealthWebSocket
+      parameters:
+      - description: "Services to monitor (optional, monitors all if not specified)"
+        explode: true
+        in: query
+        name: services
+        required: false
+        schema:
+          items:
+            enum:
+            - example-domain
+            - system-domain
+            - specialized-domain
+            type: string
+          type: array
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/exampleDomainHealthWebSocket_200_response"
+          description: WebSocket upgrade information returned
+        "101":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebSocketHealthMessage"
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              explode: false
+              schema:
+                example: websocket
+                type: string
+              style: simple
+            Connection:
+              explode: false
+              schema:
+                example: Upgrade
+                type: string
+              style: simple
+            Sec-WebSocket-Accept:
+              explode: false
+              schema:
+                description: WebSocket handshake acceptance key
+                type: string
+              style: simple
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Invalid request - malformed service parameters
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Unauthorized - authentication required for WebSocket
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              explode: false
+              schema:
+                example: 30
+                type: integer
+              style: simple
+      summary: Real-time health monitoring WebSocket
+      tags:
+      - Health Monitoring
+  /examples:
+    get:
+      description: |
+        **Enterprise-grade listing endpoint**
+
+        Supports complex filtering, sorting, and pagination patterns.
+        Optimized for high-throughput scenarios with proper indexing.
+
+        **Performance:** <10ms P95, supports 1000+ concurrent requests
+      operationId: listExamples
+      parameters:
+      - description: Page number for pagination
+        explode: true
+        in: query
+        name: page
+        required: false
+        schema:
+          default: 1
+          minimum: 1
+          type: integer
+        style: form
+      - description: Number of items per page
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          type: integer
+        style: form
+      - description: Sort field
+        explode: true
+        in: query
+        name: sort_by
+        required: false
+        schema:
+          default: created_at
+          enum:
+          - created_at
+          - name
+          - priority
+          type: string
+        style: form
+      - description: Sort order
+        explode: true
+        in: query
+        name: sort_order
+        required: false
+        schema:
+          default: desc
+          enum:
+          - asc
+          - desc
+          type: string
+        style: form
+      - description: Filter by status
+        explode: true
+        in: query
+        name: filter_status
+        required: false
+        schema:
+          enum:
+          - active
+          - inactive
+          - pending
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExampleListResponse"
+          description: Examples retrieved successfully
+          headers:
+            Cache-Control:
+              explode: false
+              schema:
+                example: "max-age=300, private"
+                type: string
+              style: simple
+            X-Total-Count:
+              explode: false
+              schema:
+                description: Total number of examples matching criteria
+                example: 150
+                type: integer
+              style: simple
+            X-Page-Count:
+              explode: false
+              schema:
+                description: Total number of pages
+                example: 8
+                type: integer
+              style: simple
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Invalid request - malformed query parameters
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Unprocessable entity - validation failed
+      summary: List examples with filtering and pagination
+      tags:
+      - Example Domain
+    post:
+      description: |
+        **Enterprise-grade creation endpoint**
+
+        Validates business rules, applies security checks, and ensures data consistency.
+        Supports optimistic locking for concurrent operations.
+
+        **Performance:** <50ms P95, includes validation and business logic
+      operationId: createExample
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExampleRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExampleResponse"
+          description: Example created successfully
+          headers:
+            Location:
+              explode: false
+              schema:
+                description: URL of the created example
+                example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
+                type: string
+              style: simple
+            ETag:
+              explode: false
+              schema:
+                description: Entity tag for caching and optimistic locking
+                example: '"example-123-v1"'
+                type: string
+              style: simple
+            Cache-Control:
+              explode: false
+              schema:
+                example: no-cache
+                type: string
+              style: simple
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Invalid request - malformed or missing data
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Conflict - example with this identifier already exists
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Unprocessable entity - business rule validation failed
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Too many requests - creation rate limit exceeded
+          headers:
+            Retry-After:
+              explode: false
+              schema:
+                example: 60
+                type: integer
+              style: simple
+      security:
+      - BearerAuth: []
+      summary: Create new example
+      tags:
+      - Example Domain
+  /examples/{example_id}:
+    delete:
+      description: |
+        **Enterprise-grade deletion endpoint**
+
+        Supports soft deletes with audit trails and cleanup scheduling.
+        Ensures referential integrity and cascading deletes.
+
+        **Performance:** <15ms P95, includes cleanup operations
+      operationId: deleteExample
+      parameters:
+      - description: Example unique identifier
+        explode: false
+        in: path
+        name: example_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Example deleted successfully
+          headers:
+            X-Processing-Time:
+              explode: false
+              schema:
+                description: Processing time in milliseconds
+                example: 15
+                type: integer
+              style: simple
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Invalid request - malformed example ID
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Example not found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Conflict - example cannot be deleted (referential integrity)
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Too many requests - deletion rate limit exceeded
+          headers:
+            Retry-After:
+              explode: false
+              schema:
+                example: 60
+                type: integer
+              style: simple
+      security:
+      - BearerAuth: []
+      summary: Delete example
+      tags:
+      - Example Domain
+    get:
+      description: |
+        **Enterprise-grade retrieval endpoint**
+
+        Optimized with proper caching strategies and database indexing.
+        Supports conditional requests with ETags.
+
+        **Performance:** <5ms P95 with Redis caching
+      operationId: getExample
+      parameters:
+      - description: Example unique identifier
+        explode: false
+        in: path
+        name: example_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - description: Include related data in response
+        explode: true
+        in: query
+        name: include_related
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - description: Conditional request - return 304 if ETag matches
+        explode: false
+        in: header
+        name: If-None-Match
+        required: false
+        schema:
+          type: string
+        style: simple
+      - description: Conditional request - return 304 if not modified since this time
+        explode: false
+        in: header
+        name: If-Modified-Since
+        required: false
+        schema:
+          format: date-time
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExampleResponse"
+          description: Example retrieved successfully
+          headers:
+            ETag:
+              explode: false
+              schema:
+                description: Entity tag for caching
+                example: '"example-123-v1"'
+                type: string
+              style: simple
+            Cache-Control:
+              explode: false
+              schema:
+                description: Cache control directives
+                example: "max-age=300, private"
+                type: string
+              style: simple
+            Last-Modified:
+              explode: false
+              schema:
+                description: Last modification timestamp
+                example: 2025-12-21T10:00:00Z
+                format: date-time
+                type: string
+              style: simple
+            X-Processing-Time:
+              explode: false
+              schema:
+                description: Processing time in milliseconds
+                example: 5
+                type: integer
+              style: simple
+        "304":
+          description: Not modified - resource has not changed
+          headers:
+            ETag:
+              explode: false
+              schema:
+                example: '"example-123-v1"'
+                type: string
+              style: simple
+            Cache-Control:
+              explode: false
+              schema:
+                example: "max-age=300, private"
+                type: string
+              style: simple
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Invalid request - malformed example ID
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Example not found
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              explode: false
+              schema:
+                example: 30
+                type: integer
+              style: simple
+      summary: Get specific example by ID
+      tags:
+      - Example Domain
+    put:
+      description: |
+        **Enterprise-grade update endpoint**
+
+        Supports partial updates, optimistic locking, and audit trails.
+        Ensures data consistency with event sourcing patterns.
+
+        **Performance:** <25ms P95, includes validation and conflict resolution
+      operationId: updateExample
+      parameters:
+      - description: Example unique identifier
+        explode: false
+        in: path
+        name: example_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - description: ETag for optimistic locking - prevents concurrent updates
+        explode: false
+        in: header
+        name: If-Match
+        required: false
+        schema:
+          type: string
+        style: simple
+      - description: Conditional update - proceed only if not modified since this
+          time
+        explode: false
+        in: header
+        name: If-Unmodified-Since
+        required: false
+        schema:
+          format: date-time
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateExampleRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExampleResponse"
+          description: Example updated successfully
+          headers:
+            ETag:
+              explode: false
+              schema:
+                description: New entity tag after update
+                example: '"example-123-v2"'
+                type: string
+              style: simple
+            Last-Modified:
+              explode: false
+              schema:
+                description: Last modification timestamp
+                example: 2025-12-21T10:05:00Z
+                format: date-time
+                type: string
+              style: simple
+            X-Processing-Time:
+              explode: false
+              schema:
+                description: Processing time in milliseconds
+                example: 25
+                type: integer
+              style: simple
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Invalid request - malformed data or example ID
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Example not found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Conflict - version conflict (optimistic locking) or precondition
+            failed
+          headers:
+            ETag:
+              explode: false
+              schema:
+                description: Current entity tag
+                example: '"example-123-v1"'
+                type: string
+              style: simple
+        "412":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Precondition failed - If-Match or If-Unmodified-Since condition
+            not met
+          headers:
+            ETag:
+              explode: false
+              schema:
+                description: Current entity tag
+                example: '"example-123-v1"'
+                type: string
+              style: simple
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Unprocessable entity - business rule validation failed
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Too many requests - update rate limit exceeded
+          headers:
+            Retry-After:
+              explode: false
+              schema:
+                example: 30
+                type: integer
+              style: simple
+      security:
+      - BearerAuth: []
+      summary: Update existing example
+      tags:
+      - Example Domain
+  /equipment:
+    get:
+      description: |
+        **Enterprise-grade equipment retrieval endpoint**
+
+        Retrieves player's current equipment setup including all gear slots and equipped items.
+        Optimized for equipment UI and character stats calculation.
+
+        **Performance:** <15ms P95 (HOT PATH), Redis cached
+        **Memory optimization:** 30-50% savings through struct field alignment
+      operationId: getPlayerEquipment
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/getPlayerEquipment_200_response"
+          description: Equipment retrieved successfully
+          headers:
+            Cache-Control:
+              explode: false
+              schema:
+                example: "max-age=30, private"
+                type: string
+              style: simple
+            X-Equipment-Slots:
+              description: Total number of equipment slots
+              explode: false
+              schema:
+                example: 12
+                type: integer
+              style: simple
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Player not found
+      summary: Get player equipment
+      tags:
+      - Equipment System
+    put:
+      description: |
+        **Enterprise-grade equipment modification endpoint**
+
+        Allows players to equip and unequip items, with validation of requirements and stat calculations.
+        Supports bulk equipment changes and automatic stat recalculation.
+
+        **Performance:** <50ms P95, includes stat recalculation
+        **Business rules:** Level requirements, class restrictions, equipment conflicts
+      operationId: modifyEquipment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/modifyEquipment_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/modifyEquipment_200_response"
+          description: Equipment modified successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Invalid equipment operation or item requirements not met
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Equipment conflict or insufficient inventory space
+      security:
+      - BearerAuth: []
+      summary: Equip/unequip items
+      tags:
+      - Equipment System
+  /items/{item_id}/use:
+    post:
+      description: |
+        **Enterprise-grade item usage endpoint**
+
+        Allows players to use consumable items, activate abilities, or trigger item effects.
+        Supports stackable items, cooldowns, and usage validation.
+
+        **Performance:** <25ms P95, includes effect application
+        **Business rules:** Cooldowns, usage limits, effect stacking
+      operationId: useItem
+      parameters:
+      - description: Item unique identifier
+        explode: false
+        in: path
+        name: item_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/useItem_request"
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/useItem_200_response"
+          description: Item used successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Item cannot be used or invalid usage parameters
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Item not found in inventory
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Item on cooldown or usage rate limit exceeded
+          headers:
+            Retry-After:
+              explode: false
+              schema:
+                example: 30
+                type: integer
+              style: simple
+      security:
+      - BearerAuth: []
+      summary: Use an item
+      tags:
+      - Item Operations
+components:
+  responses:
+    HealthBatchSuccess:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/exampleDomainBatchHealthCheck_200_response"
+      description: Batch health results retrieved successfully
+      headers:
+        Cache-Control:
+          explode: false
+          schema:
+            example: no-cache
+            type: string
+          style: simple
+        X-Processing-Time:
+          explode: false
+          schema:
+            description: Processing time in milliseconds
+            example: 15
+            type: integer
+          style: simple
+    ExampleListSuccess:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExampleListResponse"
+      description: Examples retrieved successfully
+      headers:
+        Cache-Control:
+          explode: false
+          schema:
+            example: "max-age=300, private"
+            type: string
+          style: simple
+        X-Total-Count:
+          explode: false
+          schema:
+            description: Total number of examples matching criteria
+            example: 150
+            type: integer
+          style: simple
+        X-Page-Count:
+          explode: false
+          schema:
+            description: Total number of pages
+            example: 8
+            type: integer
+          style: simple
+    ExampleCreated:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExampleResponse"
+      description: Example created successfully
+      headers:
+        Location:
+          explode: false
+          schema:
+            description: URL of the created example
+            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
+            type: string
+          style: simple
+        ETag:
+          explode: false
+          schema:
+            description: Entity tag for caching and optimistic locking
+            example: '"example-123-v1"'
+            type: string
+          style: simple
+        Cache-Control:
+          explode: false
+          schema:
+            example: no-cache
+            type: string
+          style: simple
+    ExampleRetrieved:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExampleResponse"
+      description: Example retrieved successfully
+      headers:
+        ETag:
+          explode: false
+          schema:
+            description: Entity tag for caching
+            example: '"example-123-v1"'
+            type: string
+          style: simple
+        Cache-Control:
+          explode: false
+          schema:
+            description: Cache control directives
+            example: "max-age=300, private"
+            type: string
+          style: simple
+        Last-Modified:
+          explode: false
+          schema:
+            description: Last modification timestamp
+            example: 2025-12-21T10:00:00Z
+            format: date-time
+            type: string
+          style: simple
+        X-Processing-Time:
+          explode: false
+          schema:
+            description: Processing time in milliseconds
+            example: 5
+            type: integer
+          style: simple
+    ExampleUpdated:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExampleResponse"
+      description: Example updated successfully
+      headers:
+        ETag:
+          explode: false
+          schema:
+            description: New entity tag after update
+            example: '"example-123-v2"'
+            type: string
+          style: simple
+        Last-Modified:
+          explode: false
+          schema:
+            description: Last modification timestamp
+            example: 2025-12-21T10:05:00Z
+            format: date-time
+            type: string
+          style: simple
+        X-Processing-Time:
+          explode: false
+          schema:
+            description: Processing time in milliseconds
+            example: 25
+            type: integer
+          style: simple
+    ExampleDeleted:
+      description: Example deleted successfully
+      headers:
+        X-Processing-Time:
+          explode: false
+          schema:
+            description: Processing time in milliseconds
+            example: 15
+            type: integer
+          style: simple
+  schemas:
+    HealthResponse:
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small).\
+        \ Expected memory savings: 30-50%."
+      example:
+        uptime_seconds: 3600
+        domain: example-domain
+        version: 1.0.0
+        active_connections: 1500
+        status: healthy
+        timestamp: 2025-12-21T10:00:00Z
+      properties:
+        domain:
+          example: example-domain
+          maxLength: 50
+          type: string
+        status:
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+          type: string
+        timestamp:
+          example: 2025-12-21T10:00:00Z
+          format: date-time
+          maxLength: 255
+          type: string
+        version:
+          example: 1.0.0
+          maxLength: 50
+          type: string
+        uptime_seconds:
+          example: 3600
+          type: integer
+        active_connections:
+          example: 1500
+          type: integer
+      required:
+      - domain
+      - status
+      - timestamp
+      type: object
+    WebSocketHealthMessage:
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small).\
+        \ Expected memory savings: 30-50%."
+      example:
+        message_timestamp: 2000-01-23T04:56:07.000+00:00
+        health:
+          uptime_seconds: 3600
+          domain: example-domain
+          version: 1.0.0
+          active_connections: 1500
+          status: healthy
+          timestamp: 2025-12-21T10:00:00Z
+        type: health_update
+        timestamp: 2000-01-23T04:56:07.000+00:00
+      properties:
+        type:
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+          example: health_update
+          maxLength: 255
+          type: string
+        timestamp:
+          format: date-time
+          maxLength: 255
+          type: string
+        message_timestamp:
+          description: Timestamp of the health message
+          format: date-time
+          maxLength: 1000
+          type: string
+        health:
+          $ref: "#/components/schemas/HealthResponse"
+      required:
+      - health
+      - timestamp
+      - type
+      type: object
+    Error:
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small).\
+        \ Expected memory savings: 30-50%."
+      example:
+        code: 500
+        domain: example-domain
+        details:
+          field: name
+          reason: required
+        message: Internal server error
+      properties:
+        message:
+          example: Internal server error
+          maxLength: 256
+          type: string
+        domain:
+          example: example-domain
+          maxLength: 50
+          type: string
+        details:
+          description: Additional error context
+          example:
+            field: name
+            reason: required
+          type: object
+        code:
+          example: 500
+          format: int32
+          maximum: 599
+          minimum: 100
+          type: integer
+      required:
+      - code
+      - message
+      type: object
+    Example:
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small).\
+        \ Expected memory savings: 30-50%. Hot path optimization required."
+      example:
+        is_active: true
+        updated_at: 2025-12-21T10:00:00Z
+        name: Sample Example
+        description: This is a comprehensive example demonstrating best practices.
+        created_at: 2025-12-21T10:00:00Z
+        id: 550e8400-e29b-41d4-a716-446655440000
+        priority: 7
+        status: active
+        tags:
+        - demo
+        - template
+        - best-practice
+      properties:
+        id:
+          description: Example unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          type: string
+        name:
+          description: Example display name
+          example: Sample Example
+          maxLength: 100
+          minLength: 1
+          type: string
+        description:
+          description: Detailed description
+          example: This is a comprehensive example demonstrating best practices.
+          maxLength: 1000
+          type: string
+        created_at:
+          description: Creation timestamp
+          example: 2025-12-21T10:00:00Z
+          format: date-time
+          type: string
+        updated_at:
+          description: Last update timestamp
+          example: 2025-12-21T10:00:00Z
+          format: date-time
+          type: string
+        status:
+          default: active
+          description: Current status
+          enum:
+          - active
+          - inactive
+          - pending
+          - archived
+          example: active
+          type: string
+        tags:
+          description: Associated tags
+          example:
+          - demo
+          - template
+          - best-practice
+          items:
+            maxLength: 50
+            type: string
+          maxItems: 10
+          type: array
+        is_active:
+          description: Whether this example is active
+          example: true
+          type: boolean
+        priority:
+          default: 5
+          description: Processing priority
+          example: 7
+          maximum: 10
+          minimum: 1
+          type: integer
+      required:
+      - created_at
+      - id
+      - is_active
+      - name
+      - status
+      type: object
+    CreateExampleRequest:
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small).\
+        \ Expected memory savings: 30-50%."
+      example:
+        name: My New Example
+        description: A new example following enterprise-grade patterns.
+        priority: 1
+        tags:
+        - tags
+        - tags
+        - tags
+        - tags
+        - tags
+      properties:
+        name:
+          description: Desired example name
+          example: My New Example
+          maxLength: 100
+          minLength: 1
+          type: string
+        description:
+          description: Example description
+          example: A new example following enterprise-grade patterns.
+          maxLength: 1000
+          type: string
+        tags:
+          description: Initial tags
+          items:
+            maxLength: 50
+            type: string
+          maxItems: 10
+          type: array
+        priority:
+          default: 5
+          description: Processing priority
+          maximum: 10
+          minimum: 1
+          type: integer
+      required:
+      - description
+      - name
+      type: object
+    UpdateExampleRequest:
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small).\
+        \ Expected memory savings: 30-50%."
+      example:
+        is_active: true
+        name: Updated Example Name
+        description: description
+        priority: 1
+        status: active
+        tags:
+        - tags
+        - tags
+        - tags
+        - tags
+        - tags
+      properties:
+        name:
+          description: New example name
+          example: Updated Example Name
+          maxLength: 100
+          minLength: 1
+          type: string
+        description:
+          description: New description
+          maxLength: 1000
+          type: string
+        status:
+          description: New status
+          enum:
+          - active
+          - inactive
+          - pending
+          - archived
+          type: string
+        tags:
+          description: Replace all tags
+          items:
+            maxLength: 50
+            type: string
+          maxItems: 10
+          type: array
+        is_active:
+          description: Update active status
+          type: boolean
+        priority:
+          description: New priority
+          maximum: 10
+          minimum: 1
+          type: integer
+      type: object
+    ExampleResponse:
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small).\
+        \ Expected memory savings: 30-50%."
+      example:
+        example:
+          is_active: true
+          updated_at: 2025-12-21T10:00:00Z
+          name: Sample Example
+          description: This is a comprehensive example demonstrating best practices.
+          created_at: 2025-12-21T10:00:00Z
+          id: 550e8400-e29b-41d4-a716-446655440000
+          priority: 7
+          status: active
+          tags:
+          - demo
+          - template
+          - best-practice
+      properties:
+        example:
+          $ref: "#/components/schemas/Example"
+      required:
+      - example
+      type: object
+    ExampleListResponse:
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small).\
+        \ Expected memory savings: 30-50%. Paginated responses optimized for memory\
+        \ efficiency."
+      example:
+        examples:
+        - is_active: true
+          updated_at: 2025-12-21T10:00:00Z
+          name: Sample Example
+          description: This is a comprehensive example demonstrating best practices.
+          created_at: 2025-12-21T10:00:00Z
+          id: 550e8400-e29b-41d4-a716-446655440000
+          priority: 7
+          status: active
+          tags:
+          - demo
+          - template
+          - best-practice
+        - is_active: true
+          updated_at: 2025-12-21T10:00:00Z
+          name: Sample Example
+          description: This is a comprehensive example demonstrating best practices.
+          created_at: 2025-12-21T10:00:00Z
+          id: 550e8400-e29b-41d4-a716-446655440000
+          priority: 7
+          status: active
+          tags:
+          - demo
+          - template
+          - best-practice
+        total_count: 150
+        limit: 20
+        has_more: true
+        page: 1
+      properties:
+        examples:
+          description: List of examples
+          items:
+            $ref: "#/components/schemas/Example"
+          type: array
+        has_more:
+          description: Whether there are more results available
+          example: true
+          type: boolean
+        total_count:
+          description: Total number of examples matching criteria
+          example: 150
+          type: integer
+        page:
+          description: Current page number
+          example: 1
+          type: integer
+        limit:
+          description: Items per page
+          example: 20
+          type: integer
+      required:
+      - examples
+      - has_more
+      - total_count
+      type: object
+    EquipmentSlot:
+      description: "BACKEND NOTE: Equipment slot representation for player inventory\
+        \ system."
+      example:
+        is_locked: false
+        item_id: 550e8400-e29b-41d4-a716-446655440001
+        required_level: 10
+        slot_id: 550e8400-e29b-41d4-a716-446655440000
+        slot_type: weapon
+      properties:
+        slot_id:
+          description: Unique identifier for the equipment slot
+          example: 550e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          type: string
+        slot_type:
+          description: Type of equipment slot
+          enum:
+          - weapon
+          - armor
+          - accessory
+          - cyberware
+          example: weapon
+          type: string
+        item_id:
+          description: ID of the equipped item (null if empty)
+          example: 550e8400-e29b-41d4-a716-446655440001
+          format: uuid
+          nullable: true
+          type: string
+        is_locked:
+          description: Whether the slot is locked (requires progression)
+          example: false
+          type: boolean
+        required_level:
+          description: Required player level to equip this slot
+          example: 10
+          minimum: 1
+          type: integer
+      required:
+      - item_id
+      - slot_id
+      - slot_type
+      type: object
+    EquipmentStats:
+      description: "BACKEND NOTE: Equipment statistics for player inventory overview."
+      example:
+        equipped_count: 8
+        slot_types:
+          weapon: 2
+          armor: 6
+          cyberware: 1
+          accessory: 3
+        available_slots: 4
+        total_slots: 12
+      properties:
+        total_slots:
+          description: Total number of equipment slots
+          example: 12
+          minimum: 0
+          type: integer
+        equipped_count:
+          description: Number of slots with equipped items
+          example: 8
+          minimum: 0
+          type: integer
+        available_slots:
+          description: Number of empty equipment slots
+          example: 4
+          minimum: 0
+          type: integer
+        slot_types:
+          $ref: "#/components/schemas/EquipmentStats_slot_types"
+      required:
+      - available_slots
+      - equipped_count
+      - total_slots
+      type: object
+    ItemEffect:
+      description: "BACKEND NOTE: Item usage effect representation for inventory consumables."
+      example:
+        duration_seconds: 300
+        stacks: 1
+        is_percentage: false
+        target_attribute: strength
+        effect_type: buff
+        value: 15.5
+      properties:
+        effect_type:
+          description: Type of item effect
+          enum:
+          - buff
+          - debuff
+          - heal
+          - damage
+          - stat_boost
+          example: buff
+          type: string
+        target_attribute:
+          description: Attribute affected by the effect
+          enum:
+          - health
+          - stamina
+          - strength
+          - agility
+          - intelligence
+          - charisma
+          - luck
+          example: strength
+          type: string
+        value:
+          description: "Effect value (positive for buffs, negative for debuffs)"
+          example: 15.5
+          format: float
+          type: number
+        duration_seconds:
+          description: Effect duration in seconds (null for permanent)
+          example: 300
+          nullable: true
+          type: integer
+        is_percentage:
+          description: Whether the value is a percentage modifier
+          example: false
+          type: boolean
+        stacks:
+          description: Maximum number of stacks for this effect
+          example: 1
+          minimum: 1
+          type: integer
+      required:
+      - effect_type
+      - target_attribute
+      - value
+      type: object
+    exampleDomainBatchHealthCheck_request:
+      properties:
+        services:
+          description: List of services to check
+          items:
+            enum:
+            - example-domain
+            - system-domain
+            - specialized-domain
+            maxItems: 10
+            type: string
+          type: array
+      required:
+      - services
+      type: object
+    exampleDomainBatchHealthCheck_200_response:
+      example:
+        total_time_ms: 15
+        results:
+        - uptime_seconds: 3600
+          domain: example-domain
+          version: 1.0.0
+          active_connections: 1500
+          status: healthy
+          timestamp: 2025-12-21T10:00:00Z
+        - uptime_seconds: 3600
+          domain: example-domain
+          version: 1.0.0
+          active_connections: 1500
+          status: healthy
+          timestamp: 2025-12-21T10:00:00Z
+      properties:
+        results:
+          description: Health status for each requested service
+          items:
+            $ref: "#/components/schemas/HealthResponse"
+          type: array
+        total_time_ms:
+          description: Total processing time in milliseconds
+          example: 15
+          minimum: 0
+          type: integer
+      required:
+      - results
+      - total_time_ms
+      type: object
+    exampleDomainHealthWebSocket_200_response:
+      example:
+        supported_protocols:
+        - health-monitoring-v1
+        websocket_url: ws://localhost:8080/api/v1/example-domain/health/ws
+      properties:
+        websocket_url:
+          example: ws://localhost:8080/api/v1/example-domain/health/ws
+          type: string
+        supported_protocols:
+          example:
+          - health-monitoring-v1
+          items:
+            type: string
+          type: array
+      type: object
+    getPlayerEquipment_200_response:
+      example:
+        equipment_slots:
+        - is_locked: false
+          item_id: 550e8400-e29b-41d4-a716-446655440001
+          required_level: 10
+          slot_id: 550e8400-e29b-41d4-a716-446655440000
+          slot_type: weapon
+        - is_locked: false
+          item_id: 550e8400-e29b-41d4-a716-446655440001
+          required_level: 10
+          slot_id: 550e8400-e29b-41d4-a716-446655440000
+          slot_type: weapon
+        stats_summary:
+          equipped_count: 8
+          slot_types:
+            weapon: 2
+            armor: 6
+            cyberware: 1
+            accessory: 3
+          available_slots: 4
+          total_slots: 12
+      properties:
+        equipment_slots:
+          description: All equipment slots and their contents
+          items:
+            $ref: "#/components/schemas/EquipmentSlot"
+          type: array
+        stats_summary:
+          $ref: "#/components/schemas/EquipmentStats"
+      required:
+      - equipment_slots
+      - stats_summary
+      type: object
+    modifyEquipment_request_operations_inner:
+      properties:
+        action:
+          enum:
+          - equip
+          - unequip
+          example: equip
+          type: string
+        slot_type:
+          enum:
+          - weapon_primary
+          - weapon_secondary
+          - helmet
+          - armor
+          - gloves
+          - boots
+          - amulet
+          - ring1
+          - ring2
+          - belt
+          - cape
+          example: weapon_primary
+          type: string
+        inventory_item_id:
+          description: Required for equip action - item to equip
+          example: 550e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          type: string
+      required:
+      - action
+      - slot_type
+      type: object
+    modifyEquipment_request:
+      properties:
+        operations:
+          description: Equipment modification operations
+          items:
+            $ref: "#/components/schemas/modifyEquipment_request_operations_inner"
+          maxItems: 10
+          minItems: 1
+          type: array
+      required:
+      - operations
+      type: object
+    modifyEquipment_200_response:
+      example:
+        stats_changes:
+          equipped_count: 8
+          slot_types:
+            weapon: 2
+            armor: 6
+            cyberware: 1
+            accessory: 3
+          available_slots: 4
+          total_slots: 12
+        equipment_slots:
+        - is_locked: false
+          item_id: 550e8400-e29b-41d4-a716-446655440001
+          required_level: 10
+          slot_id: 550e8400-e29b-41d4-a716-446655440000
+          slot_type: weapon
+        - is_locked: false
+          item_id: 550e8400-e29b-41d4-a716-446655440001
+          required_level: 10
+          slot_id: 550e8400-e29b-41d4-a716-446655440000
+          slot_type: weapon
+        operations_performed: 2
+      properties:
+        equipment_slots:
+          description: Updated equipment slots
+          items:
+            $ref: "#/components/schemas/EquipmentSlot"
+          type: array
+        stats_changes:
+          $ref: "#/components/schemas/EquipmentStats"
+        operations_performed:
+          description: Number of operations completed
+          example: 2
+          type: integer
+      required:
+      - equipment_slots
+      - operations_performed
+      - stats_changes
+      type: object
+    useItem_request:
+      properties:
+        quantity:
+          default: 1
+          description: Quantity to use (for stackable items)
+          example: 1
+          minimum: 1
+          type: integer
+        target:
+          description: Target player/character ID (if applicable)
+          example: 789e0123-e89b-12d3-a456-426614174001
+          format: uuid
+          type: string
+      type: object
+    useItem_200_response:
+      example:
+        item_id: 550e8400-e29b-41d4-a716-446655440000
+        cooldown_until: 2025-12-22T10:35:00Z
+        quantity_used: 1
+        effects_applied:
+        - duration_seconds: 300
+          stacks: 1
+          is_percentage: false
+          target_attribute: strength
+          effect_type: buff
+          value: 15.5
+        - duration_seconds: 300
+          stacks: 1
+          is_percentage: false
+          target_attribute: strength
+          effect_type: buff
+          value: 15.5
+        remaining_quantity: 9
+      properties:
+        item_id:
+          example: 550e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          type: string
+        quantity_used:
+          example: 1
+          type: integer
+        effects_applied:
+          description: Effects applied by item usage
+          items:
+            $ref: "#/components/schemas/ItemEffect"
+          type: array
+        remaining_quantity:
+          description: Remaining item quantity after use
+          example: 9
+          type: integer
+        cooldown_until:
+          description: When item can be used again
+          example: 2025-12-22T10:35:00Z
+          format: date-time
+          type: string
+      required:
+      - effects_applied
+      - item_id
+      - quantity_used
+      - remaining_quantity
+      type: object
+    EquipmentStats_slot_types:
+      description: Count of slots by type
+      example:
+        weapon: 2
+        armor: 6
+        cyberware: 1
+        accessory: 3
+      properties:
+        weapon:
+          example: 2
+          type: integer
+        armor:
+          example: 6
+          type: integer
+        accessory:
+          example: 3
+          type: integer
+        cyberware:
+          example: 1
+          type: integer
+      type: object
+  securitySchemes:
+    BearerAuth:
+      bearerFormat: JWT
+      description: |
+        JWT Bearer token authentication.
+
+        **Token Format:** `Bearer {token}`
+        **Token Claims:**
+        - `sub`: User/Player ID
+        - `exp`: Expiration timestamp
+        - `iat`: Issued at timestamp
+        - `iss`: Token issuer
+        - `aud`: Token audience
+        - `roles`: User roles array
+        - `permissions`: User permissions array
+
+        **Security Features:**
+        - RS256 signature algorithm
+        - Token rotation required every 24 hours
+        - Automatic refresh tokens
+        - Revocation support via Redis
+      scheme: bearer
+      type: http
+    ApiKeyAuth:
+      description: |
+        API Key authentication for service-to-service communication.
+
+        **Use Cases:**
+        - Internal service communication
+        - Third-party integrations
+        - Development and testing
+
+        **Security:**
+        - HMAC-SHA256 signed
+        - Rate limited per key
+        - Scoped permissions
+      in: header
+      name: X-API-Key
+      type: apiKey
+    OAuth2:
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.necpgame.com/oauth/authorize
+          refreshUrl: https://auth.necpgame.com/oauth/refresh
+          scopes:
+            read: Read access to resources
+            write: Write access to resources
+            admin: Administrative access
+            profile: Access to user profile
+            guilds: Access to guild management
+          tokenUrl: https://auth.necpgame.com/oauth/token
+        clientCredentials:
+          scopes:
+            service: Service-to-service communication
+            monitoring: Monitoring and metrics access
+          tokenUrl: https://auth.necpgame.com/oauth/token
+      type: oauth2
+    MutualTLS:
+      description: |
+        Mutual TLS authentication for high-security operations.
+
+        **Requirements:**
+        - Valid client certificate
+        - Certificate signed by trusted CA
+        - Certificate not revoked (OCSP/CRL check)
+
+        **Use Cases:**
+        - Administrative operations
+        - Financial transactions
+        - Critical system operations
+
+        **Header:** `X-Client-Certificate: {certificate_fingerprint}`
+      in: header
+      name: X-Client-Certificate
+      type: apiKey
