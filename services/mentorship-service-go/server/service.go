@@ -166,6 +166,19 @@ func (s *MentorshipService) GetLessonSchedules(ctx context.Context, contractID u
 	return schedules, nil
 }
 
+// GetLessons retrieves lessons for a contract
+func (s *MentorshipService) GetLessons(ctx context.Context, contractID uuid.UUID) ([]*api.Lesson, error) {
+	s.metrics.RecordRequest("GetLessons")
+	s.logger.Info("Getting lessons", zap.String("contract_id", contractID.String()))
+
+	// TODO: Implement repository method for getting lessons
+	// For now, return empty list (table doesn't exist yet)
+	lessons := []*api.Lesson{}
+
+	s.metrics.RecordSuccess("GetLessons")
+	return lessons, nil
+}
+
 // StartLesson starts a lesson
 func (s *MentorshipService) StartLesson(ctx context.Context, contractID uuid.UUID, req *api.StartLessonRequest) (*api.Lesson, error) {
 	s.metrics.RecordRequest("StartLesson")

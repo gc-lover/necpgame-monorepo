@@ -132,12 +132,19 @@ func (h *Handler) CreateLessonSchedule(ctx context.Context, params api.CreateLes
 
 // GetLessons implements getLessons
 func (h *Handler) GetLessons(ctx context.Context, params api.GetLessonsParams) (api.GetLessonsRes, error) {
-	h.logger.Info("GetLessons called")
+	h.logger.Info("GetLessons called", zap.String("contract_id", params.ContractID.String()))
 
-	// TODO: Implement
+	lessons, err := h.service.GetLessons(ctx, params.ContractID)
+	if err != nil {
+		h.logger.Error("Failed to get lessons",
+			zap.String("contract_id", params.ContractID.String()),
+			zap.Error(err))
+		return nil, err
+	}
+
 	return api.GetLessonsOK{
 		Data: api.LessonsListResponse{
-			Lessons: []*api.Lesson{},
+			Lessons: lessons,
 		},
 	}, nil
 }

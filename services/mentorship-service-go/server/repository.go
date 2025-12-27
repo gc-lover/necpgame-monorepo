@@ -28,6 +28,7 @@ type Repository struct {
 	menteePool     sync.Pool
 	reputationPool sync.Pool
 	schedulePool   sync.Pool
+	lessonPool     sync.Pool
 }
 
 // NewRepository creates a new repository with database connection
@@ -95,6 +96,12 @@ func NewRepository(logger *zap.Logger) *Repository {
 	repo.schedulePool = sync.Pool{
 		New: func() interface{} {
 			return &api.LessonSchedule{}
+		},
+	}
+
+	repo.lessonPool = sync.Pool{
+		New: func() interface{} {
+			return &api.Lesson{}
 		},
 	}
 
@@ -448,11 +455,119 @@ func (r *Repository) GetLessonSchedules(ctx context.Context, contractID uuid.UUI
 	return schedules, nil
 }
 
+// GetLessons retrieves lessons for a contract
+// NOTE: Requires lessons table to be created by Database agent
+// PERFORMANCE: Context timeout for DB operations (150ms for list operations in MMO)
+func (r *Repository) GetLessons(ctx context.Context, contractID uuid.UUID) ([]*api.Lesson, error) {
+	r.logger.Info("Retrieving lessons from DB", zap.String("contract_id", contractID.String()))
+
+	// PERFORMANCE: Add timeout for DB operations in MMO environment
+	dbCtx, cancel := context.WithTimeout(ctx, 150*time.Millisecond)
+	defer cancel()
+
+	// TODO: Database agent needs to create lessons table
+	// For now, return empty list
+	query := `
+		SELECT id, contract_id, schedule_id, lesson_type, format, content_id,
+			   started_at, completed_at, duration, skill_progress, evaluation,
+			   status, created_at, updated_at
+		FROM mentorship.lessons
+		WHERE contract_id = $1
+		ORDER BY created_at DESC
+	`
+
+	rows, err := r.db.Query(dbCtx, query, contractID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query lessons: %w", err)
+	}
+	defer rows.Close()
+
+	var lessons []*api.Lesson
+	for rows.Next() {
+		lesson := r.lessonPool.Get().(*api.Lesson)
+		*lesson = api.Lesson{} // Reset
+
+		err := rows.Scan(
+			&lesson.ID.Value,
+			&lesson.ContractID.Value,
+			&lesson.ScheduleID.Value,
+			&lesson.LessonType,
+			&lesson.Format,
+			&lesson.ContentID.Value,
+			&lesson.StartedAt.Value,
+			&lesson.CompletedAt.Value,
+			&lesson.Duration.Value,
+			&lesson.SkillProgress,
+			&lesson.Evaluation,
+			&lesson.Status,
+			&lesson.CreatedAt.Value,
+			&lesson.UpdatedAt.Value,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan lesson: %w", err)
+		}
+
+		lesson.ID.Set = true
+		lesson.ContractID.Set = true
+		lesson.ScheduleID.Set = true
+		lesson.ContentID.Set = true
+		lesson.StartedAt.Set = true
+		lesson.CompletedAt.Set = true
+		lesson.Duration.Set = true
+		lesson.CreatedAt.Set = true
+		lesson.UpdatedAt.Set = true
+
+		lessons = append(lessons, lesson)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating lessons: %w", err)
+	}
+
+	r.logger.Info("Retrieved lessons", zap.String("contract_id", contractID.String()), zap.Int("count", len(lessons)))
+	return lessons, nil
+}
+
 // CreateLesson creates a lesson
+// PERFORMANCE: Context timeout for DB operations (100ms for MMO responsiveness)
 func (r *Repository) CreateLesson(ctx context.Context, lesson *api.Lesson) error {
 	r.logger.Info("Creating lesson in DB", zap.String("id", lesson.ID.Value.String()))
 
-	// TODO: Implement
+	// PERFORMANCE: Add timeout for DB operations in MMO environment
+	dbCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+	defer cancel()
+
+	query := `
+		INSERT INTO mentorship.lessons (
+			id, contract_id, schedule_id, lesson_type, format, content_id,
+			started_at, completed_at, duration, skill_progress, evaluation,
+			status, created_at, updated_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+		)`
+
+	_, err := r.db.Exec(dbCtx, query,
+		lesson.ID.Value,
+		lesson.ContractID.Value,
+		lesson.ScheduleID.Value,
+		lesson.LessonType,
+		lesson.Format,
+		lesson.ContentID.Value,
+		lesson.StartedAt.Value,
+		lesson.CompletedAt.Value,
+		lesson.Duration.Value,
+		lesson.SkillProgress,
+		lesson.Evaluation,
+		lesson.Status,
+		time.Now(),
+		time.Now(),
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to create lesson: %w", err)
+	}
+
+	r.logger.Info("Lesson created successfully", zap.String("id", lesson.ID.Value.String()))
 	return nil
 }
 
