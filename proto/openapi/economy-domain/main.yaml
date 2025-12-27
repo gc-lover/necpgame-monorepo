@@ -21,6 +21,154 @@ tags:
   - name: Economy domain
     description: economy domain domain endpoints
 paths:
+  /api/v1/economy/characters/{characterId}/inventory:
+    get:
+      summary: Get character inventory
+      operationId: getCharacterInventory
+      tags:
+        - Economy domain
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Character UUID
+      responses:
+        '200':
+          description: Character inventory retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterInventory'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/economy/crafting/recipes:
+    get:
+      summary: Get crafting recipes
+      operationId: getCraftingRecipes
+      tags:
+        - Economy domain
+      parameters:
+        - name: skill_required
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by required skill
+        - name: difficulty
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [beginner, intermediate, advanced, expert]
+          description: Filter by difficulty
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Maximum number of recipes to return
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of recipes to skip
+      responses:
+        '200':
+          description: Crafting recipes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CraftingRecipeList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/economy/overview:
+    get:
+      summary: Get economy overview
+      operationId: getEconomyOverview
+      tags:
+        - Economy domain
+      parameters:
+        - name: include_market_data
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: true
+          description: Include market statistics
+        - name: include_currency_rates
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: true
+          description: Include currency exchange rates
+      responses:
+        '200':
+          description: Economy overview retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomyOverview'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/economy/currencies:
+    get:
+      summary: Get available currencies
+      operationId: getCurrencies
+      tags:
+        - Economy domain
+      responses:
+        '200':
+          description: Currencies retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyList'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/economy/health:
     get:
       summary: Health check
@@ -339,4 +487,305 @@ components:
           description: Timestamp of the health message
         health:
           $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CharacterInventory:
+      type: object
+      required:
+        - character_id
+        - items
+        - total_items
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character UUID
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItem'
+          description: List of inventory items
+        total_items:
+          type: integer
+          minimum: 0
+          description: Total number of items in inventory
+        last_updated:
+          type: string
+          format: date-time
+          description: Last inventory update timestamp
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    InventoryItem:
+      type: object
+      required:
+        - item_id
+        - name
+        - quantity
+        - item_type
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Unique item identifier
+        name:
+          type: string
+          maxLength: 255
+          description: Item name
+        quantity:
+          type: integer
+          minimum: 0
+          description: Item quantity
+        item_type:
+          type: string
+          enum: [weapon, armor, consumable, material, currency]
+          description: Type of item
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+          description: Item rarity
+        value:
+          type: integer
+          minimum: 0
+          description: Item value in game currency
+        created_at:
+          type: string
+          format: date-time
+          description: Item creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Item last update timestamp
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CurrencyList:
+      type: object
+      required:
+        - currencies
+        - total_count
+      properties:
+        currencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Currency'
+          description: List of available currencies
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of currencies
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Currency:
+      type: object
+      required:
+        - currency_id
+        - code
+        - name
+        - symbol
+      properties:
+        currency_id:
+          type: string
+          format: uuid
+          description: Unique currency identifier
+        code:
+          type: string
+          maxLength: 10
+          description: Currency code (e.g., USD, EUR, GOLD)
+        name:
+          type: string
+          maxLength: 255
+          description: Currency name
+        symbol:
+          type: string
+          maxLength: 5
+          description: Currency symbol (e.g., $, €, G)
+        exchange_rate:
+          type: number
+          minimum: 0
+          description: Exchange rate to base currency
+        is_active:
+          type: boolean
+          default: true
+          description: Whether currency is active
+        created_at:
+          type: string
+          format: date-time
+          description: Currency creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Currency last update timestamp
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    EconomyOverview:
+      type: object
+      required:
+        - timestamp
+        - market_stats
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Overview generation timestamp
+        market_stats:
+          $ref: '#/components/schemas/MarketStats'
+        currency_rates:
+          $ref: '#/components/schemas/CurrencyRates'
+        last_updated:
+          type: string
+          format: date-time
+          description: Last data update timestamp
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    MarketStats:
+      type: object
+      required:
+        - total_active_trades
+        - total_market_volume
+      properties:
+        total_active_trades:
+          type: integer
+          minimum: 0
+          description: Total number of active trades
+        total_market_volume:
+          type: number
+          minimum: 0
+          description: Total market volume
+        average_trade_price:
+          type: number
+          minimum: 0
+          description: Average trade price
+        active_sellers:
+          type: integer
+          minimum: 0
+          description: Number of active sellers
+        active_buyers:
+          type: integer
+          minimum: 0
+          description: Number of active buyers
+        top_traded_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopTradedItem'
+          description: Top traded items
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CurrencyRates:
+      type: object
+      properties:
+        base_currency:
+          type: string
+          description: Base currency code
+        rates:
+          type: object
+          additionalProperties:
+            type: number
+          description: Currency exchange rates
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    TopTradedItem:
+      type: object
+      required:
+        - item_id
+        - name
+        - trade_count
+        - total_volume
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Item identifier
+        name:
+          type: string
+          description: Item name
+        trade_count:
+          type: integer
+          minimum: 0
+          description: Number of trades
+        total_volume:
+          type: number
+          minimum: 0
+          description: Total trade volume
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CraftingRecipeList:
+      type: object
+      required:
+        - recipes
+        - total_count
+      properties:
+        recipes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CraftingRecipe'
+          description: List of crafting recipes
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of recipes
+        has_more:
+          type: boolean
+          description: Whether there are more recipes available
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CraftingRecipe:
+      type: object
+      required:
+        - recipe_id
+        - name
+        - result_item_id
+        - result_quantity
+        - ingredients
+      properties:
+        recipe_id:
+          type: string
+          format: uuid
+          description: Unique recipe identifier
+        name:
+          type: string
+          maxLength: 255
+          description: Recipe name
+        description:
+          type: string
+          description: Recipe description
+        result_item_id:
+          type: string
+          format: uuid
+          description: Result item identifier
+        result_quantity:
+          type: integer
+          minimum: 1
+          description: Quantity of result item
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeIngredient'
+          description: Required ingredients
+        crafting_time:
+          type: integer
+          minimum: 0
+          description: Crafting time in seconds
+        skill_required:
+          type: string
+          description: Required crafting skill
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced, expert]
+          description: Recipe difficulty
+        success_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Success rate (0-1)
+        created_at:
+          type: string
+          format: date-time
+          description: Recipe creation timestamp
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    RecipeIngredient:
+      type: object
+      required:
+        - item_id
+        - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Ingredient item identifier
+        quantity:
+          type: integer
+          minimum: 1
+          description: Required quantity
+        name:
+          type: string
+          description: Ingredient name (for display)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

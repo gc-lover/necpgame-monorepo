@@ -6,6 +6,7 @@ package server
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"sync"
 	"time"
 
@@ -85,4 +86,58 @@ func (r *Repository) Close() error {
 		return r.db.Close()
 	}
 	return nil
+}
+
+// ImportQuestContent imports quest content to database
+func (r *Repository) ImportQuestContent(ctx context.Context, questID string, yamlContent map[string]interface{}) error {
+	// PERFORMANCE: Use prepared statement for quest insertion
+	const insertQuestSQL = `
+		INSERT INTO gameplay.quest_definitions (
+			id, title, quest_type, level_min, level_max, requirements, objectives,
+			rewards, branches, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+		ON CONFLICT (id) DO UPDATE SET
+			title = EXCLUDED.title,
+			quest_type = EXCLUDED.quest_type,
+			level_min = EXCLUDED.level_min,
+			level_max = EXCLUDED.level_max,
+			requirements = EXCLUDED.requirements,
+			objectives = EXCLUDED.objectives,
+			rewards = EXCLUDED.rewards,
+			branches = EXCLUDED.branches,
+			updated_at = NOW()
+	`
+
+	// Extract quest data from YAML content
+	metadata, ok := yamlContent["metadata"].(map[string]interface{})
+	if !ok {
+		return sql.ErrNoRows // Invalid YAML structure
+	}
+
+	questDef, ok := yamlContent["quest_definition"].(map[string]interface{})
+	if !ok {
+		return sql.ErrNoRows // No quest definition
+	}
+
+	title := metadata["title"].(string)
+	questType := questDef["quest_type"].(string)
+	levelMin := int(questDef["level_min"].(float64))
+	levelMax := int(questDef["level_max"].(float64))
+
+	// Convert complex objects to JSON
+	requirementsJSON, _ := json.Marshal(questDef["requirements"])
+	objectivesJSON, _ := json.Marshal(questDef["objectives"])
+	rewardsJSON, _ := json.Marshal(questDef["rewards"])
+	branchesJSON, _ := json.Marshal(questDef["branches"])
+
+	// PERFORMANCE: Execute with context timeout
+	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	_, err := r.db.ExecContext(queryCtx, insertQuestSQL,
+		questID, title, questType, levelMin, levelMax,
+		string(requirementsJSON), string(objectivesJSON),
+		string(rewardsJSON), string(branchesJSON))
+
+	return err
 }

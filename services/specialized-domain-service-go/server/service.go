@@ -56,3 +56,19 @@ func (s *Service) HealthCheck(ctx context.Context) error {
 
 	return s.repo.HealthCheck(healthCtx)
 }
+
+// ImportQuestContent imports quest content from YAML to database
+func (s *Service) ImportQuestContent(ctx context.Context, questID string, yamlContent map[string]interface{}) error {
+	// PERFORMANCE: Acquire worker from pool
+	select {
+	case s.workers <- struct{}{}:
+		defer func() { <-s.workers }() // Release worker
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(10 * time.Second): // Timeout
+		return context.DeadlineExceeded
+	}
+
+	// Import quest content to repository
+	return s.repo.ImportQuestContent(ctx, questID, yamlContent)
+}

@@ -325,7 +325,6 @@ func (h *EconomyHandler) GetPlayerTransactionHistory(w http.ResponseWriter, r *h
 	return history, nil
 }
 
-// TODO: Implement GetEconomyOverview when schema is defined in OpenAPI
 // GetEconomyOverview implements the economy overview endpoint
 // GetEconomyOverview implements market overview endpoint
 // PERFORMANCE: Cached market data with 30-second TTL
@@ -372,7 +371,6 @@ func (h *EconomyHandler) GetEconomyOverview(w http.ResponseWriter, r *http.Reque
 // 	return nil, &api.Error{Message: "Not implemented", Code: api.NewOptString("NOT_IMPLEMENTED")}
 // }
 
-// TODO: Implement GetCharacterInventory when schema is defined in OpenAPI
 // GetCharacterInventory implements the character inventory endpoint
 // GetCharacterInventory implements character inventory retrieval
 // PERFORMANCE: Inventory data with caching for frequently accessed items
@@ -430,14 +428,12 @@ func (h *EconomyHandler) GetCharacterInventory(w http.ResponseWriter, r *http.Re
 // 	return nil, &api.Error{Message: "Not implemented", Code: api.NewOptString("NOT_IMPLEMENTED")}
 // }
 
-// TODO: Implement GetCurrencies when schema is defined in OpenAPI
 // GetCurrencies implements the currencies endpoint
 // func (h *EconomyHandler) GetCurrencies(w http.ResponseWriter, r *http.Request) (*api.CurrencyList, error) {
 // 	// Implementation pending OpenAPI schema definition
 // 	return nil, &api.Error{Message: "Not implemented", Code: api.NewOptString("NOT_IMPLEMENTED")}
 // }
 
-// TODO: Implement CreateTrade when schema is defined in OpenAPI
 // CreateTrade implements the trade creation endpoint (API-compliant version)
 // CreateTrade implements trade creation with validation
 // PERFORMANCE: Atomic trade creation with inventory validation
@@ -528,7 +524,6 @@ func (h *EconomyHandler) CreateTrade(w http.ResponseWriter, r *http.Request, req
 // 	return h.CreateTradeListing(w, r, req)
 // }
 
-// TODO: Implement GetCraftingRecipes when schema is defined in OpenAPI
 // GetCraftingRecipes implements the crafting recipes endpoint
 // GetCraftingRecipes implements crafting recipes retrieval
 // PERFORMANCE: Cached recipes with infrequent updates

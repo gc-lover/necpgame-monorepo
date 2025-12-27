@@ -76,6 +76,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+  /api/v1/quests/content/reload:
+    post:
+      summary: Импортировать контентный квест из YAML в БД
+      operationId: reloadQuestContent
+      tags:
+      - Quests
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReloadQuestContentRequest'
+      responses:
+        '200':
+          description: Квест успешно импортирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReloadQuestContentResponse'
+        '400':
+          description: Invalid quest data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/quests:
     get:
       summary: Get available quests
@@ -684,4 +717,29 @@ components:
         details:
           type: object
           description: Additional error details
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ReloadQuestContentRequest:
+      type: object
+      required:
+        - quest_id
+        - yaml_content
+      properties:
+        quest_id:
+          type: string
+          description: ID квеста из YAML файла (metadata.id)
+        yaml_content:
+          type: object
+          description: Полное содержимое YAML файла квеста
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ReloadQuestContentResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        message:
+          type: string
+        imported_at:
+          type: string
+          format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

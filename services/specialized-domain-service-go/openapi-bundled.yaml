@@ -1,284 +1,623 @@
 openapi: 3.0.3
 info:
-  title: Specialized domain API
-  description: 'Consolidated specialized domain Domain API for NECPGAME.
+  title: Quest System API
+  description: |
+    **Enterprise-Grade Quest Management API for NECPGAME MMOFPS**
 
-    This domain consolidates all specialized functionality.
+    Полная система управления квестами с enterprise-grade оптимизациями.
+    Поддерживает динамические квесты, NPC взаимодействия, награды и прогрессию.
 
-    '
+    ## Key Features
+    - **Enterprise-grade quest management** с оптимизацией производительности
+    - **Backend optimization hints** для struct alignment и memory savings
+    - **Complete validation** с redocly и ogen code generation
+    - **Security-first approach** с JWT authentication
+    - **Performance-optimized** response structures
+    - **Comprehensive error handling** с proper HTTP status codes
+
+    ## Domain Purpose
+    Quest System управляет всеми аспектами квестовой системы:
+    создание квестов, отслеживание прогресса, награды, NPC диалоги, ветвление сюжета.
+
+    ## Performance Targets
+    - Hot paths: 1000+ RPS, P99 <15ms (quest status, progress updates)
+    - Quest queries: <5ms average response time
+    - Memory: <35MB per service instance
+    - Cache hit rate: >95%
   version: 1.0.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
   contact:
-    name: NECPGAME API Support
+    name: NECPGAME Quests API Support
     url: https://necpgame.com/support
-    email: api@necpgame.com
+    email: api@quests.necpgame.com
 servers:
   - url: http://localhost:8080/api/v1
     description: Development server
   - url: https://api.necpgame.com/api/v1
     description: Production server
 security:
-  - BearerAuth: [ ]
+  - BearerAuth: []
 tags:
-  - name: Specialized domain
-    description: specialized domain domain endpoints
+  - name: Quests
+    description: Quest management operations
+  - name: Quest Progress
+    description: Quest progress tracking
 paths:
-  # Quest System Integration - enterprise-grade quest management
   /api/v1/quests/health:
-    $ref: './quests/main.yaml#/paths/~1api~1v1~1quests~1health'
-  /api/v1/quests:
-    $ref: './quests/main.yaml#/paths/~1api~1v1~1quests'
-  /api/v1/quests/{quest_id}:
-    $ref: './quests/main.yaml#/paths/~1api~1v1~1quests~1{quest_id}'
-  /api/v1/quests/{quest_id}/accept:
-    $ref: './quests/main.yaml#/paths/~1api~1v1~1quests~1{quest_id}~1accept'
-  /api/v1/quests/{quest_id}/progress:
-    $ref: './quests/main.yaml#/paths/~1api~1v1~1quests~1{quest_id}~1progress'
-  /api/v1/quests/{quest_id}/complete:
-    $ref: './quests/main.yaml#/paths/~1api~1v1~1quests~1{quest_id}~1complete'
-
-  # Combat System Integration - enterprise-grade combat management
-  /health:
-    $ref: './combat/combat-system.yaml#/paths/~1health'
-  /api/v1/combat/sessions:
-    $ref: './combat/combat-system.yaml#/paths/~1api~1v1~1combat~1sessions'
-  /api/v1/combat/sessions/{session_id}:
-    $ref: './combat/combat-system.yaml#/paths/~1api~1v1~1combat~1sessions~1{session_id}'
-  /api/v1/combat/sessions/{session_id}/actions:
-    $ref: './combat/combat-system.yaml#/paths/~1api~1v1~1combat~1sessions~1{session_id}~1actions'
-  /api/v1/combat/weapons:
-    $ref: './combat/combat-system.yaml#/paths/~1api~1v1~1combat~1weapons'
-  /api/v1/combat/abilities:
-    $ref: './combat/combat-system.yaml#/paths/~1api~1v1~1combat~1abilities'
-
-  # Combat Abilities Service Go Integration - enterprise-grade ability management
-  /combat/abilities/health:
-    $ref: './combat/combat-abilities-service-go/main.yaml#/paths/~1health'
-  /combat/abilities:
-    $ref: './combat/combat-abilities-service-go/main.yaml#/paths/~1combat~1abilities'
-  /combat/abilities/{ability_id}/cooldown:
-    $ref: './combat/combat-abilities-service-go/main.yaml#/paths/~1combat~1abilities~1{ability_id}~1cooldown'
-  /combat/abilities/{ability_id}/synergies:
-    $ref: './combat/combat-abilities-service-go/main.yaml#/paths/~1combat~1abilities~1{ability_id}~1synergies'
-  /combat/abilities/validate:
-    $ref: './combat/combat-abilities-service-go/main.yaml#/paths/~1combat~1abilities~1validate'
-
-  # Extended Combat Mechanics Integration - enterprise-grade advanced combat systems
-  /api/v1/combat/roles:
-    $ref: './combat/combat-extended-mechanics-service.yaml#/paths/~1api~1v1~1combat~1roles'
-  /api/v1/combat/roles/{role_id}:
-    $ref: './combat/combat-extended-mechanics-service.yaml#/paths/~1api~1v1~1combat~1roles~1{role_id}'
-  /api/v1/combat/roles/{role_id}/abilities:
-    $ref: './combat/combat-extended-mechanics-service.yaml#/paths/~1api~1v1~1combat~1roles~1{role_id}~1abilities'
-  /api/v1/combat/synergies:
-    $ref: './combat/combat-extended-mechanics-service.yaml#/paths/~1api~1v1~1combat~1synergies'
-  /api/v1/combat/combos:
-    $ref: './combat/combat-extended-mechanics-service.yaml#/paths/~1api~1v1~1combat~1combos'
-  /api/v1/combat/implants:
-    $ref: './combat/combat-extended-mechanics-service.yaml#/paths/~1api~1v1~1combat~1implants'
-  /api/v1/combat/implants/player/{player_id}:
-    $ref: './combat/combat-extended-mechanics-service.yaml#/paths/~1api~1v1~1combat~1implants~1player~1{player_id}'
-  /api/v1/combat/implants/stress/{player_id}:
-    $ref: './combat/combat-extended-mechanics-service.yaml#/paths/~1api~1v1~1combat~1implants~1stress~1{player_id}'
-  /api/v1/combat/progression/player/{player_id}:
-    $ref: './combat/combat-extended-mechanics-service.yaml#/paths/~1api~1v1~1combat~1progression~1player~1{player_id}'
-  /api/v1/combat/progression/player/{player_id}/rank:
-    $ref: './combat/combat-extended-mechanics-service.yaml#/paths/~1api~1v1~1combat~1progression~1player~1{player_id}~1rank'
-  /api/v1/combat/brands:
-    $ref: './combat/combat-extended-mechanics-service.yaml#/paths/~1api~1v1~1combat~1brands'
-  /api/v1/combat/brands/{brand_id}/weapons:
-    $ref: './combat/combat-extended-mechanics-service.yaml#/paths/~1api~1v1~1combat~1brands~1{brand_id}~1weapons'
-  /api/v1/combat/abilities/extended:
-    $ref: './combat/combat-extended-mechanics-service.yaml#/paths/~1api~1v1~1combat~1abilities~1extended'
-
-  # Game Mechanics Domain Integration - enterprise-grade centralized mechanics management
-  /api/v1/mechanics/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1health'
-  /api/v1/mechanics/health/batch:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1health~1batch'
-  /api/v1/mechanics/health/ws:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1health~1ws'
-  /api/v1/mechanics:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics'
-  /api/v1/mechanics/{mechanic_id}:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1{mechanic_id}'
-  /api/v1/mechanics/validate:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1validate'
-  /api/v1/mechanics/conflicts:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1conflicts'
-
-  # Economy Mechanics Integration
-  /api/v1/mechanics/economy/resources/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1economy~1resources~1health'
-  /api/v1/mechanics/economy/resources/catalog:
-    $ref: '../economy-domain/economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1catalog'
-  /api/v1/mechanics/economy/trade/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1economy~1trade~1health'
-  /api/v1/mechanics/economy/production/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1economy~1production~1health'
-
-  # Social Mechanics Integration
-  /api/v1/mechanics/social/guilds/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1social~1guilds~1health'
-  /api/v1/mechanics/social/relationships/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1social~1relationships~1health'
-  /api/v1/mechanics/social/reputation/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1social~1reputation~1health'
-
-  # World Mechanics Integration
-  /api/v1/mechanics/world/locations/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1world~1locations~1health'
-  /api/v1/mechanics/world/cities/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1world~1cities~1health'
-  /api/v1/mechanics/world/factions/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1world~1factions~1health'
-
-  # Combat Mechanics Integration
-  /api/v1/mechanics/combat/system/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1combat~1system~1health'
-  /api/v1/mechanics/combat/abilities/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1combat~1abilities~1health'
-  /api/v1/mechanics/combat/weapons/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1combat~1weapons~1health'
-
-  # Weapon Mechanics Integration
-  /api/v1/mechanics/weapons/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1weapons~1health'
-  /api/v1/mechanics/economy/weapons/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1economy~1weapons~1health'
-  /api/v1/mechanics/gameplay/weapons/health:
-    $ref: './mechanics/game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1gameplay~1weapons~1health'
-
-  # Stealth System Integration - enterprise-grade stealth mechanics
-  /api/v1/stealth/visibility/{character_id}:
-    $ref: './movement/stealth.yaml#/paths/~1gameplay~1combat~1stealth~1{character_id}~1visibility'
-  /api/v1/stealth/actions:
-    $ref: '../world-domain/advanced/gameplay-combat-stealth-actions-service.yaml#/paths/~1gameplay~1combat~1stealth~1actions'
-  /api/v1/stealth/detection:
-    $ref: '../world-domain/advanced/gameplay-combat-stealth-actions-service.yaml#/paths/~1gameplay~1combat~1stealth~1detection'
-  /api/v1/stealth/detection/recalculate:
-    $ref: '../world-domain/advanced/gameplay-combat-stealth-actions-service.yaml#/paths/~1gameplay~1combat~1stealth~1detection~1recalculate'
-  /api/v1/stealth/profile:
-    $ref: '../world-domain/advanced/gameplay-combat-stealth-actions-service.yaml#/paths/~1gameplay~1combat~1stealth~1profile'
-  /api/v1/stealth/disguise:
-    $ref: '../world-domain/advanced/gameplay-combat-stealth-disguise-service.yaml#/paths/~1gameplay~1combat~1stealth~1disguise'
-  /api/v1/stealth/disguise/{disguiseId}:
-    $ref: '../world-domain/advanced/gameplay-combat-stealth-disguise-service.yaml#/paths/~1gameplay~1combat~1stealth~1disguise~1{disguiseId}'
-  /api/v1/stealth/network/hack:
-    $ref: '../world-domain/advanced/gameplay-combat-stealth-disguise-service.yaml#/paths/~1gameplay~1combat~1stealth~1network~1hack'
-  /api/v1/stealth/network/nodes:
-    $ref: '../world-domain/advanced/gameplay-combat-stealth-disguise-service.yaml#/paths/~1gameplay~1combat~1stealth~1network~1nodes'
-
-  # Freerun/Parcour System Integration - enterprise-grade acrobatic movement
-  /api/v1/freerun/move/{character_id}:
-    $ref: '../system-domain/ai/gameplay-domain/freerun/freerun.yaml#/paths/~1gameplay~1combat~1freerun~1{character_id}~1move'
-  /api/v1/freerun/actions:
-    $ref: '../system-domain/ai/gameplay-domain/freerun/gameplay-combat-freerun-actions-service.yaml#/paths/~1gameplay~1combat~1freerun~1actions'
-  /api/v1/freerun/actions/available:
-    $ref: '../system-domain/ai/gameplay-domain/freerun/gameplay-combat-freerun-actions-service.yaml#/paths/~1gameplay~1combat~1freerun~1actions~1available'
-  /api/v1/freerun/stamina:
-    $ref: '../system-domain/ai/gameplay-domain/freerun/gameplay-combat-freerun-actions-service.yaml#/paths/~1gameplay~1combat~1freerun~1stamina'
-  /api/v1/freerun/stamina/recover:
-    $ref: '../system-domain/ai/gameplay-domain/freerun/gameplay-combat-freerun-actions-service.yaml#/paths/~1gameplay~1combat~1freerun~1stamina~1recover'
-  /api/v1/freerun/route:
-    $ref: '../system-domain/ai/gameplay-domain/freerun/gameplay-combat-freerun-routes-service.yaml#/paths/~1gameplay~1combat~1freerun~1route'
-  /api/v1/freerun/route/{routeId}:
-    $ref: '../system-domain/ai/gameplay-domain/freerun/gameplay-combat-freerun-routes-service.yaml#/paths/~1gameplay~1combat~1freerun~1route~1{routeId}'
-  /api/v1/freerun/telemetry:
-    $ref: '../system-domain/ai/gameplay-domain/freerun/gameplay-combat-freerun-routes-service.yaml#/paths/~1gameplay~1combat~1freerun~1telemetry'
-  # Additional freerun services (combat integration, loadouts) require common.yaml fixes
-  # /api/v1/freerun/actions/wall-run: $ref: './combat/combat-freerun-acrobatics-base-service.yaml#/paths/~1api~1v1~1gameplay~1combat~1freerun~1actions~1wall-run'
-  # /api/v1/freerun/actions/double-jump: $ref: './combat/combat-freerun-acrobatics-base-service.yaml#/paths/~1api~1v1~1gameplay~1combat~1freerun~1actions~1double-jump'
-  # /api/v1/freerun/actions/slide: $ref: './combat/combat-freerun-acrobatics-base-service.yaml#/paths/~1api~1v1~1gameplay~1combat~1freerun~1actions~1slide'
-  # /api/v1/freerun/actions/vault: $ref: './combat/combat-freerun-vault-service.yaml#/paths/~1api~1v1~1gameplay~1combat~1freerun~1actions~1vault'
-  # /api/v1/freerun/actions/wall-kick: $ref: './combat/combat-freerun-wall-kick-service.yaml#/paths/~1api~1v1~1gameplay~1combat~1freerun~1actions~1wall-kick'
-  # /api/v1/freerun/movement-attack: $ref: './combat/combat-freerun-combat-integration-service.yaml#/paths/~1api~1v1~1gameplay~1combat~1freerun~1movement-attack'
-  # /api/v1/freerun/movement-combo: $ref: './combat/combat-freerun-combat-integration-service.yaml#/paths/~1api~1v1~1gameplay~1combat~1freerun~1movement-combo'
-  # /api/v1/freerun/combo: $ref: '../world-domain/advanced/gameplay-combat-freerun-loadouts-service.yaml#/paths/~1gameplay~1combat~1freerun~1combo'
-  # /api/v1/freerun/loadout: $ref: '../world-domain/advanced/gameplay-combat-freerun-loadouts-service.yaml#/paths/~1gameplay~1combat~1freerun~1loadout'
-  # /api/v1/freerun/mobile-ability: $ref: '../world-domain/advanced/gameplay-combat-freerun-loadouts-service.yaml#/paths/~1gameplay~1combat~1freerun~1mobile-ability'
-
-  # Real-time Combat Integration (requires operationId fix in realtime-combat-service)
-  # /realtime-combat/health: $ref: './combat/realtime-combat-service/main.yaml#/paths/~1health'
-  # /realtime-combat/sessions: $ref: './combat/realtime-combat-service/main.yaml#/paths/~1sessions'
-
-  /api/v1/specialized-domain/health:
     get:
-      summary: specialized domain domain health check
-      operationId: specialized-domainHealthCheck
+      summary: Quest service health check
+      operationId: questHealthCheck
       tags:
-        - Specialized domain
+        - Quests
       responses:
         '200':
-          description: OK
+          description: Service is healthy
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=300, s-maxage=600
-            ETag:
-              schema:
-                type: string
-                example: '"-api-v1-specialized-domain-health-v1.0"'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                  - gzip
-                  - deflate
-                  - br
-  /api/v1/specialized-domain/health/batch:
+  /api/v1/quests/content/reload:
     post:
-      summary: Batch health check for multiple domains
-      operationId: batchHealthCheck
+      summary: Импортировать контентный квест из YAML в БД
+      operationId: reloadQuestContent
       tags:
-        - System
-      description: 'Performance optimization: Check multiple domain health in single request'
+        - Quests
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - domains
-              properties:
-                domains:
-                  type: array
-                  items:
-                    type: string
-                  maxItems: 10
+              $ref: '#/components/schemas/ReloadQuestContentRequest'
       responses:
         '200':
-          description: Batch health results
+          description: Квест успешно импортирован
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  results:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/HealthResponse'
-                  total_time_ms:
-                    type: integer
-                    description: Total processing time
-  /api/v1/specialized-domain/health/ws:
+                $ref: '#/components/schemas/ReloadQuestContentResponse'
+        '400':
+          description: Invalid quest data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/quests:
     get:
-      summary: Real-time health monitoring WebSocket
-      operationId: healthWebSocket
+      summary: Get available quests
+      operationId: getQuests
       tags:
-        - System
-      description: Real-time health updates without polling
+        - Quests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - available
+              - active
+              - completed
+              - failed
+            default: available
+          description: Filter by quest status
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum:
+              - main_story
+              - side_quest
+              - daily
+              - event
+              - faction
+          description: Filter by quest type
+        - name: location_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by location
+        - name: level_min
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Minimum character level
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Maximum number of results
       responses:
-        '101':
-          description: WebSocket connection established
+        '200':
+          description: Quests retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestListResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/quests/{quest_id}:
+    get:
+      summary: Get quest details
+      operationId: getQuest
+      tags:
+        - Quests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Quest unique identifier
+      responses:
+        '200':
+          description: Quest details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestDetailResponse'
+        '404':
+          description: Quest not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/quests/{quest_id}/accept:
+    post:
+      summary: Accept a quest
+      operationId: acceptQuest
+      tags:
+        - Quests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Quest to accept
+      responses:
+        '200':
+          description: Quest accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestProgressResponse'
+        '400':
+          description: Cannot accept quest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Quest already active or completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/quests/{quest_id}/progress:
+    get:
+      summary: Get quest progress
+      operationId: getQuestProgress
+      tags:
+        - Quest Progress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Quest identifier
+      responses:
+        '200':
+          description: Quest progress retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestProgressResponse'
+        '404':
+          description: Quest not found or not active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Update quest progress
+      operationId: updateQuestProgress
+      tags:
+        - Quest Progress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Quest identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProgressRequest'
+      responses:
+        '200':
+          description: Progress updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestProgressResponse'
+        '400':
+          description: Invalid progress update
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Quest not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/quests/{quest_id}/complete:
+    post:
+      summary: Complete a quest
+      operationId: completeQuest
+      tags:
+        - Quests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Quest to complete
+      responses:
+        '200':
+          description: Quest completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestCompletionResponse'
+        '400':
+          description: Cannot complete quest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Quest not ready for completion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/seattle/quests:
+    get:
+      summary: Получить все квесты Сиэтла 2020-2029
+      operationId: getSeattleQuests
+      tags:
+        - seattle-quests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: ID игрока для фильтрации доступных квестов
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - available
+              - in_progress
+              - completed
+              - failed
+          description: Статус квеста
+        - name: theme
+          in: query
+          schema:
+            type: string
+            enum:
+              - landmarks
+              - culture
+              - technology
+              - nature
+              - food
+          description: Тематика квеста
+      responses:
+        '200':
+          description: Список квестов Сиэтла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeattleQuestsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/seattle/quests/{quest_id}:
+    get:
+      summary: Получить детали квеста Сиэтла
+      operationId: getSeattleQuest
+      tags:
+        - seattle-quests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - space-needle
+              - pike-place-market
+              - starbucks-origin
+              - grunge-music
+              - amazon-hq
+              - mount-rainier
+              - rain-rain-rain
+              - boeing-factory
+              - seafood-salmon
+              - tech-boom-gentrification
+          description: ID квеста Сиэтла
+        - name: include_lore
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Включить исторический лор
+      responses:
+        '200':
+          description: Детали квеста
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeattleQuestDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/seattle/quests/{quest_id}/progress:
+    get:
+      summary: Получить прогресс игрока по квесту
+      operationId: getSeattleQuestProgress
+      tags:
+        - quest-progress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - space-needle
+              - pike-place-market
+              - starbucks-origin
+              - grunge-music
+              - amazon-hq
+              - mount-rainier
+              - rain-rain-rain
+              - boeing-factory
+              - seafood-salmon
+              - tech-boom-gentrification
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Прогресс по квесту
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/schemas-QuestProgressResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: Обновить прогресс по квесту
+      operationId: updateSeattleQuestProgress
+      tags:
+        - quest-progress
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - space-needle
+              - pike-place-market
+              - starbucks-origin
+              - grunge-music
+              - amazon-hq
+              - mount-rainier
+              - rain-rain-rain
+              - boeing-factory
+              - seafood-salmon
+              - tech-boom-gentrification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuestProgressRequest'
+      responses:
+        '200':
+          description: Прогресс обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateQuestProgressResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/seattle/quests/landmarks:
+    get:
+      summary: Получить достопримечательности Сиэтла
+      operationId: getSeattleLandmarks
+      tags:
+        - landmarks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - architecture
+              - nature
+              - culture
+              - technology
+              - food
+          description: Категория достопримечательности
+        - name: quest_related
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Только связанные с квестами
+      responses:
+        '200':
+          description: Достопримечательности Сиэтла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeattleLandmarksResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/seattle/quests/history/{year}:
+    get:
+      summary: Получить исторический контекст Сиэтла за год
+      operationId: getSeattleHistory
+      tags:
+        - history
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2029
+          description: Год (2020-2029)
+        - name: focus
+          in: query
+          schema:
+            type: string
+            enum:
+              - technology
+              - culture
+              - economy
+              - environment
+          description: Фокус исторического контекста
+      responses:
+        '200':
+          description: Исторический контекст
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeattleHistoryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/seattle/quests/routes:
+    get:
+      summary: Получить туристические маршруты по Сиэтлу
+      operationId: getSeattleRoutes
+      tags:
+        - landmarks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: quest_id
+          in: query
+          schema:
+            type: string
+            enum:
+              - space-needle
+              - pike-place-market
+              - starbucks-origin
+              - grunge-music
+              - amazon-hq
+              - mount-rainier
+              - rain-rain-rain
+              - boeing-factory
+              - seafood-salmon
+              - tech-boom-gentrification
+          description: Маршрут для конкретного квеста
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum:
+              - easy
+              - medium
+              - hard
+            default: medium
+          description: Сложность маршрута
+      responses:
+        '200':
+          description: Туристические маршруты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeattleRoutesResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
     BearerAuth:
@@ -286,172 +625,841 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
-    # Quest System Schemas Integration
     Quest:
-      $ref: './quests/main.yaml#/components/schemas/Quest'
-    QuestDetailResponse:
-      $ref: './quests/main.yaml#/components/schemas/QuestDetailResponse'
-    QuestListResponse:
-      $ref: './quests/main.yaml#/components/schemas/QuestListResponse'
-    QuestProgressResponse:
-      $ref: './quests/main.yaml#/components/schemas/QuestProgressResponse'
-    QuestCompletionResponse:
-      $ref: './quests/main.yaml#/components/schemas/QuestCompletionResponse'
-    QuestObjective:
-      $ref: './quests/main.yaml#/components/schemas/QuestObjective'
-    QuestReward:
-      $ref: './quests/main.yaml#/components/schemas/QuestReward'
-
-    # Combat Abilities Service Go Schemas Integration
-    CombatAbilityHealthResponse:
-      $ref: './combat/combat-abilities-service-go/main.yaml#/components/schemas/HealthResponse'
-    CombatAbilityError:
-      $ref: './combat/combat-abilities-service-go/main.yaml#/components/schemas/Error'
-    CombatActivateAbilityRequest:
-      $ref: './combat/combat-abilities-service-go/main.yaml#/components/schemas/ActivateAbilityRequest'
-    CombatActivateAbilityResponse:
-      $ref: './combat/combat-abilities-service-go/main.yaml#/components/schemas/ActivateAbilityResponse'
-    CombatListAbilitiesResponse:
-      $ref: './combat/combat-abilities-service-go/main.yaml#/components/schemas/ListAbilitiesResponse'
-    CombatAbilityCooldownResponse:
-      $ref: './combat/combat-abilities-service-go/main.yaml#/components/schemas/AbilityCooldownResponse'
-    CombatAbilitySynergiesResponse:
-      $ref: './combat/combat-abilities-service-go/main.yaml#/components/schemas/AbilitySynergiesResponse'
-    CombatValidateAbilityRequest:
-      $ref: './combat/combat-abilities-service-go/main.yaml#/components/schemas/ValidateAbilityRequest'
-    CombatValidateAbilityResponse:
-      $ref: './combat/combat-abilities-service-go/main.yaml#/components/schemas/ValidateAbilityResponse'
-    CombatAbilityInfo:
-      $ref: './combat/combat-abilities-service-go/main.yaml#/components/schemas/AbilityInfo'
-    CombatSynergyInfo:
-      $ref: './combat/combat-abilities-service-go/main.yaml#/components/schemas/SynergyInfo'
-
-    HealthResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          example: healthy
-          maxLength: 255
-        domain:
-          type: string
-          example: specialized-domain
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          maxLength: 255
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    Error:
-      type: object
-      properties:
-        message:
-          type: string
-          example: Internal server error
-          maxLength: 1000
-        domain:
-          type: string
-          example: specialized-domain
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          maxLength: 255
-        code:
-          type: integer
-          example: 500
-          format: int32
-          minimum: 100
-          maximum: 599
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    WebSocketHealthMessage:
       type: object
       required:
+        - id
+        - title
         - type
-        - message_timestamp
-        - health
+        - status
+        - created_at
       properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique quest identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        location_id:
+          type: string
+          format: uuid
+          description: Associated location
+        giver_npc_id:
+          type: string
+          format: uuid
+          description: NPC who gives the quest
+        title:
+          type: string
+          maxLength: 200
+          description: Quest title
+          example: Shadows of the Past
+        description:
+          type: string
+          maxLength: 2000
+          description: Detailed quest description
         type:
           type: string
           enum:
-            - health_update
-            - health_alert
-            - service_down
-        message_timestamp:
+            - main_story
+            - side_quest
+            - daily
+            - event
+            - faction
+          description: Quest type
+          example: main_story
+        status:
+          type: string
+          enum:
+            - draft
+            - available
+            - active
+            - completed
+            - failed
+            - expired
+          description: Quest status
+          example: available
+        created_at:
           type: string
           format: date-time
-          description: Timestamp of the health message
-        health:
-          $ref: '#/components/schemas/HealthResponse'
+        updated_at:
+          type: string
+          format: date-time
+        prerequisites:
+          type: array
+          items:
+            type: object
+            required:
+              - type
+              - value
+            properties:
+              type:
+                type: string
+                enum:
+                  - quest_completed
+                  - level_minimum
+                  - faction_reputation
+                  - item_owned
+              value:
+                type: string
+                description: Prerequisite value
+        is_repeatable:
+          type: boolean
+          default: false
+          description: Whether quest can be repeated
+        level_requirement:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Required character level
+          example: 15
+        time_limit_hours:
+          type: integer
+          minimum: 1
+          description: Time limit in hours
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Extended Combat Mechanics Schemas Integration
-    CombatRole:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/CombatRole'
-    CombatRolesResponse:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/CombatRolesResponse'
-    RoleAbilitiesResponse:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/RoleAbilitiesResponse'
-    SynergyMatrixResponse:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/SynergyMatrixResponse'
-    CombatCombo:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/CombatCombo'
-    CombosResponse:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/CombosResponse'
-    CombatImplant:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/CombatImplant'
-    ImplantsCatalogResponse:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/ImplantsCatalogResponse'
-    PlayerImplant:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/PlayerImplant'
-    PlayerImplantsResponse:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/PlayerImplantsResponse'
-    MasteryProgressionResponse:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/MasteryProgressionResponse'
-    MasteryRankResponse:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/MasteryRankResponse'
-    WeaponBrand:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/WeaponBrand'
-    WeaponBrandsResponse:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/WeaponBrandsResponse'
-    BrandWeaponsResponse:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/BrandWeaponsResponse'
-    CombatAbility:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/CombatAbility'
-    ExtendedAbilitiesResponse:
-      $ref: './combat/combat-extended-mechanics-service.yaml#/components/schemas/ExtendedAbilitiesResponse'
-
-    # Stealth System Schemas Integration
-    StealthVisibility:
-      $ref: './movement/stealth.yaml#/components/schemas/StealthVisibility'
-    # StealthActionRequest: $ref: '../world-domain/advanced/gameplay-combat-stealth-actions-service.yaml#/components/schemas/StealthActionRequest'
-    # StealthDetectionStatus: $ref: '../world-domain/advanced/gameplay-combat-stealth-actions-service.yaml#/components/schemas/StealthDetectionStatus'
-    # StealthProfile: $ref: '../world-domain/advanced/gameplay-combat-stealth-actions-service.yaml#/components/schemas/StealthProfile'
-    # DisguiseProfile: $ref: '../world-domain/advanced/gameplay-combat-stealth-disguise-service.yaml#/components/schemas/DisguiseProfile'
-    # NetworkNode: $ref: '../world-domain/advanced/gameplay-combat-stealth-disguise-service.yaml#/components/schemas/NetworkNode'
-
-    # Freerun/Parcour System Schemas Integration
-    FreerunMoveRequest:
-      $ref: '../system-domain/ai/gameplay-domain/freerun/freerun.yaml#/components/schemas/FreerunMoveRequest'
-    FreerunActionRequest:
-      $ref: '../system-domain/ai/gameplay-domain/freerun/gameplay-combat-freerun-actions-service.yaml#/components/schemas/FreerunActionRequest'
-    # Freerun schemas - references removed due to missing implementations
-    # FreerunAvailableActionsResponse: pending implementation
-    # FreerunStaminaState: pending implementation
-    FreerunRoute:
-      $ref: '../system-domain/ai/gameplay-domain/freerun/gameplay-combat-freerun-routes-service.yaml#/components/schemas/FreerunRoute'
-    FreerunTelemetryResponse:
-      $ref: '../system-domain/ai/gameplay-domain/freerun/gameplay-combat-freerun-routes-service.yaml#/components/schemas/FreerunTelemetryResponse'
-    FreerunTelemetryEntry:
-      $ref: '../system-domain/ai/gameplay-domain/freerun/gameplay-combat-freerun-routes-service.yaml#/components/schemas/FreerunTelemetryEntry'
-    # Additional freerun schemas require common.yaml fixes in referenced services
-    # WallRunAction: $ref: './combat/combat-freerun-acrobatics-base-service.yaml#/components/schemas/WallRunAction'
-    # DoubleJumpAction: $ref: './combat/combat-freerun-acrobatics-base-service.yaml#/components/schemas/DoubleJumpAction'
-    # SlideAction: $ref: './combat/combat-freerun-acrobatics-base-service.yaml#/components/schemas/SlideAction'
-    # VaultAction: $ref: './combat/combat-freerun-vault-service.yaml#/components/schemas/VaultAction'
-    # WallKickAction: $ref: './combat/combat-freerun-wall-kick-service.yaml#/components/schemas/WallKickAction'
-    # MovementAttack: $ref: './combat/combat-freerun-combat-integration-service.yaml#/components/schemas/MovementAttack'
-    # MovementCombo: $ref: './combat/combat-freerun-combat-integration-service.yaml#/components/schemas/MovementCombo'
-    # FreerunCombo: $ref: '../world-domain/advanced/gameplay-combat-freerun-loadouts-service.yaml#/components/schemas/FreerunCombo'
-    # FreerunLoadout: $ref: '../world-domain/advanced/gameplay-combat-freerun-loadouts-service.yaml#/components/schemas/FreerunLoadout'
-    # MobileAbility: $ref: '../world-domain/advanced/gameplay-combat-freerun-loadouts-service.yaml#/components/schemas/MobileAbility'
+    QuestObjective:
+      type: object
+      required:
+        - id
+        - description
+        - type
+        - current_progress
+        - target_progress
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Objective identifier
+        location_id:
+          type: string
+          format: uuid
+          description: Associated location
+        npc_id:
+          type: string
+          format: uuid
+          description: Associated NPC
+        item_id:
+          type: string
+          format: uuid
+          description: Required item
+        description:
+          type: string
+          maxLength: 500
+          description: Objective description
+        type:
+          type: string
+          enum:
+            - kill
+            - collect
+            - explore
+            - interact
+            - deliver
+            - escort
+            - defend
+          description: Objective type
+        current_progress:
+          type: integer
+          minimum: 0
+          description: Current progress value
+        target_progress:
+          type: integer
+          minimum: 1
+          description: Target progress value
+    QuestReward:
+      type: object
+      properties:
+        currency:
+          type: object
+          properties:
+            amount:
+              type: integer
+              minimum: 0
+            type:
+              type: string
+              enum:
+                - eddies
+                - tokens
+                - reputation
+              default: eddies
+        faction_reputation:
+          type: object
+          description: Faction reputation changes
+          additionalProperties:
+            type: integer
+            description: Reputation points (positive or negative)
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - item_id
+              - quantity
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+        experience_points:
+          type: integer
+          minimum: 0
+          description: XP reward
+    QuestDetailResponse:
+      type: object
+      required:
+        - quest
+        - objectives
+        - rewards
+      properties:
+        quest:
+          $ref: '#/components/schemas/Quest'
+        rewards:
+          $ref: '#/components/schemas/QuestReward'
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjective'
+        dialogue_options:
+          type: array
+          items:
+            type: object
+            required:
+              - text
+              - action
+            properties:
+              text:
+                type: string
+                maxLength: 200
+              action:
+                type: string
+                enum:
+                  - accept
+                  - decline
+                  - ask_more_info
+    QuestListResponse:
+      type: object
+      required:
+        - quests
+        - total_count
+      properties:
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Quest'
+        has_more:
+          type: boolean
+          default: false
+        total_count:
+          type: integer
+          minimum: 0
+    QuestProgressResponse:
+      type: object
+      required:
+        - quest_id
+        - status
+        - objectives
+        - started_at
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - active
+            - completed
+            - failed
+        started_at:
+          type: string
+          format: date-time
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjective'
+        time_remaining_seconds:
+          type: integer
+          minimum: 0
+          description: Seconds until quest expires
+    UpdateProgressRequest:
+      type: object
+      required:
+        - objective_id
+        - progress_increment
+      properties:
+        objective_id:
+          type: string
+          format: uuid
+          description: Objective to update
+        progress_increment:
+          type: integer
+          minimum: 1
+          description: Amount to add to progress
+    QuestCompletionResponse:
+      type: object
+      required:
+        - quest_id
+        - rewards_granted
+        - completed_at
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        next_quest_available:
+          type: string
+          format: uuid
+          description: ID of next quest in chain
+        completed_at:
+          type: string
+          format: date-time
+        rewards_granted:
+          $ref: '#/components/schemas/QuestReward'
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - degraded
+            - unhealthy
+          example: healthy
+        service:
+          type: string
+          example: quests
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: 1.0.0
+        active_quests:
+          type: integer
+          minimum: 0
+          description: Number of currently active quests
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SeattleQuest:
+      type: object
+      required:
+        - id
+        - title
+        - theme
+        - difficulty
+        - estimated_time
+      properties:
+        id:
+          type: string
+          enum:
+            - space-needle
+            - pike-place-market
+            - starbucks-origin
+            - grunge-music
+            - amazon-hq
+            - mount-rainier
+            - rain-rain-rain
+            - boeing-factory
+            - seafood-salmon
+            - tech-boom-gentrification
+          description: Уникальный ID квеста
+        title:
+          type: string
+          description: Название квеста
+        theme:
+          type: string
+          enum:
+            - landmarks
+            - culture
+            - technology
+            - nature
+            - food
+          description: Тематика квеста
+        difficulty:
+          type: string
+          enum:
+            - easy
+            - medium
+            - hard
+          description: Сложность квеста
+        description:
+          type: string
+          description: Описание квеста
+        location:
+          type: string
+          description: Основная локация в Сиэтле
+        historical_context:
+          type: string
+          description: Исторический контекст периода 2020-2029
+        rewards:
+          $ref: '#/components/schemas/QuestRewards'
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/schemas-QuestObjective'
+          description: Цели квеста
+        prerequisites:
+          type: array
+          items:
+            type: string
+          description: Необходимые условия
+        estimated_time:
+          type: integer
+          minimum: 15
+          maximum: 120
+          description: Ориентировочное время выполнения (минуты)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SeattleQuestsResponse:
+      type: object
+      required:
+        - quests
+        - total
+        - period
+      properties:
+        period:
+          type: string
+          example: 2020-2029
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeattleQuest'
+        total:
+          type: integer
+          minimum: 0
+        available_for_player:
+          type: integer
+          minimum: 0
+          description: Количество доступных игроку квестов
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SeattleQuestDetailResponse:
+      type: object
+      required:
+        - quest
+        - period
+        - historical_context
+      properties:
+        period:
+          type: string
+          example: 2020-2029
+        historical_context:
+          type: object
+          description: Детальный исторический контекст
+        quest:
+          $ref: '#/components/schemas/SeattleQuest'
+        related_landmarks:
+          type: array
+          items:
+            type: string
+          description: Связанные достопримечательности
+        cultural_insights:
+          type: array
+          items:
+            type: string
+          description: Культурные insights
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateQuestProgressRequest:
+      type: object
+      required:
+        - player_id
+        - objective_id
+        - progress_increment
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        objective_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        location_context:
+          type: object
+          description: Контекст локации
+        progress_increment:
+          type: integer
+          minimum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateQuestProgressResponse:
+      type: object
+      required:
+        - success
+        - new_progress
+        - quest_status
+      properties:
+        quest_status:
+          type: string
+          enum:
+            - in_progress
+            - completed
+        rewards_earned:
+          $ref: '#/components/schemas/QuestRewards'
+        next_objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/schemas-QuestObjective'
+        new_progress:
+          type: number
+          format: float
+        success:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SeattleLandmark:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - coordinates
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+          enum:
+            - architecture
+            - nature
+            - culture
+            - technology
+            - food
+        description:
+          type: string
+        historical_significance:
+          type: string
+        coordinates:
+          type: object
+          required:
+            - latitude
+            - longitude
+          properties:
+            latitude:
+              type: number
+              format: float
+            longitude:
+              type: number
+              format: float
+        related_quests:
+          type: array
+          items:
+            type: string
+          description: IDs связанных квестов
+        visit_tips:
+          type: array
+          items:
+            type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SeattleLandmarksResponse:
+      type: object
+      required:
+        - landmarks
+        - total
+        - categories
+      properties:
+        landmarks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeattleLandmark'
+        categories:
+          type: array
+          items:
+            type: string
+        total:
+          type: integer
+          minimum: 0
+        quest_related_count:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SeattleHistoryResponse:
+      type: object
+      required:
+        - year
+        - events
+        - cultural_context
+      properties:
+        cultural_context:
+          type: object
+          description: Культурный контекст года
+        economic_indicators:
+          type: object
+        events:
+          type: array
+          items:
+            type: object
+            required:
+              - title
+              - description
+              - impact
+            properties:
+              title:
+                type: string
+              description:
+                type: string
+              impact:
+                type: string
+                enum:
+                  - high
+                  - medium
+                  - low
+        technological_advances:
+          type: array
+          items:
+            type: string
+        year:
+          type: integer
+          minimum: 2020
+          maximum: 2029
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SeattleRoute:
+      type: object
+      required:
+        - id
+        - name
+        - waypoints
+        - difficulty
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        difficulty:
+          type: string
+          enum:
+            - easy
+            - medium
+            - hard
+        quest_integration:
+          type: string
+          enum:
+            - space-needle
+            - pike-place-market
+            - starbucks-origin
+            - grunge-music
+            - amazon-hq
+            - mount-rainier
+            - rain-rain-rain
+            - boeing-factory
+            - seafood-salmon
+            - tech-boom-gentrification
+        waypoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeattleLandmark'
+        highlights:
+          type: array
+          items:
+            type: string
+        estimated_duration:
+          type: integer
+          description: Ориентировочное время в минутах
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SeattleRoutesResponse:
+      type: object
+      required:
+        - routes
+        - total
+      properties:
+        routes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeattleRoute'
+        total:
+          type: integer
+          minimum: 0
+        quest_routes:
+          type: integer
+          minimum: 0
+          description: Количество маршрутов, связанных с квестами
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+        - message
+        - code
+      properties:
+        message:
+          type: string
+          maxLength: 1000
+          example: Quest not found
+        code:
+          type: string
+          pattern: ^[A-Z_][A-Z0-9_]*$
+          example: QUEST_NOT_FOUND
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+          description: Additional error details
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ReloadQuestContentRequest:
+      type: object
+      required:
+        - quest_id
+        - yaml_content
+      properties:
+        quest_id:
+          type: string
+          description: ID квеста из YAML файла (metadata.id)
+        yaml_content:
+          type: object
+          description: Полное содержимое YAML файла квеста
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ReloadQuestContentResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        message:
+          type: string
+        imported_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    QuestRewards:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+          description: Предметы
+        achievements:
+          type: array
+          items:
+            type: string
+          description: Достижения
+        lore_unlocks:
+          type: array
+          items:
+            type: string
+          description: Разблокированный лор
+        experience:
+          type: integer
+          minimum: 0
+          description: Опыт
+        currency:
+          type: integer
+          minimum: 0
+          description: Валюта
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    schemas-QuestObjective:
+      type: object
+      required:
+        - id
+        - description
+        - type
+        - progress_required
+      properties:
+        id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+            - visit_location
+            - collect_items
+            - talk_to_npc
+            - complete_task
+            - time_based
+        completed:
+          type: boolean
+          default: false
+        progress_required:
+          type: integer
+          minimum: 1
+        progress_current:
+          type: integer
+          default: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    schemas-Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: INVALID_REQUEST
+        message:
+          type: string
+          example: Неверные параметры запроса
+        details:
+          type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    schemas-QuestProgressResponse:
+      type: object
+      required:
+        - player_id
+        - quest_id
+        - status
+        - objectives
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          enum:
+            - space-needle
+            - pike-place-market
+            - starbucks-origin
+            - grunge-music
+            - amazon-hq
+            - mount-rainier
+            - rain-rain-rain
+            - boeing-factory
+            - seafood-salmon
+            - tech-boom-gentrification
+        status:
+          type: string
+          enum:
+            - not_started
+            - in_progress
+            - completed
+            - failed
+            - abandoned
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/schemas-QuestObjective'
+        overall_progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Общий прогресс (0.0-1.0)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/schemas-Error'
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/schemas-Error'
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/schemas-Error'

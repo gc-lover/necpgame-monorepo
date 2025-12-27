@@ -11,6 +11,7 @@ import (
 
 	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/pkg/api"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 // PERFORMANCE: Global timeouts for MMOFPS response requirements
@@ -62,7 +63,7 @@ type Handler struct {
 type GuildServiceInterface interface {
 	CreateGuild(ctx context.Context, name, description string, leaderID uuid.UUID) (*Guild, error)
 	GetGuild(ctx context.Context, id uuid.UUID) (*Guild, error)
-	ListGuilds(ctx context.Context, limit, offset int) ([]*Guild, error)
+	ListGuilds(ctx context.Context, limit, offset int, sortBy string) ([]*Guild, error)
 	UpdateGuild(ctx context.Context, id uuid.UUID, name, description string) error
 	DeleteGuild(ctx context.Context, id uuid.UUID) error
 
@@ -71,7 +72,7 @@ type GuildServiceInterface interface {
 	UpdateMemberRole(ctx context.Context, guildID, userID uuid.UUID, role string) error
 	ListMembers(ctx context.Context, guildID uuid.UUID) ([]*GuildMember, error)
 
-	CreateAnnouncement(ctx context.Context, guildID uuid.UUID, title, content string, authorID uuid.UUID) error
+	CreateAnnouncement(ctx context.Context, guildID, authorID uuid.UUID, title, content string) (*GuildAnnouncement, error)
 	ListAnnouncements(ctx context.Context, guildID uuid.UUID, limit, offset int) ([]*GuildAnnouncement, error)
 	GetPlayerGuilds(ctx context.Context, playerID uuid.UUID) ([]*Guild, error)
 	JoinGuild(ctx context.Context, guildID, playerID uuid.UUID) error
@@ -84,6 +85,14 @@ func NewHandler(logger *zap.Logger, service GuildServiceInterface) *Handler {
 		logger:  logger,
 		service: service,
 	}
+}
+
+// getUserIDFromContext extracts user ID from request context
+// This would typically be set by authentication middleware
+func getUserIDFromContext(ctx context.Context) string {
+	// TODO: Extract from JWT token or auth context
+	// For now, return a test user ID
+	return "660e8400-e29b-41d4-a716-446655440000"
 }
 
 // GetHealth implements health check endpoint
@@ -117,13 +126,57 @@ func (h *Handler) ListGuilds(ctx context.Context, params api.ListGuildsParams) (
 	ctx, cancel := context.WithTimeout(ctx, guildListTimeout)
 	defer cancel()
 
-	// TODO: Implement with caching and pagination
+	// Parse pagination parameters
+	limit := 20 // default
+	offset := 0 // default
+
+	if params.Limit != nil && *params.Limit > 0 && *params.Limit <= 100 {
+		limit = *params.Limit
+	}
+	if params.Offset != nil && *params.Offset >= 0 {
+		offset = *params.Offset
+	}
+
+	// Parse sorting parameter
+	sortBy := "created_at" // default
+	if params.SortBy != nil {
+		switch *params.SortBy {
+		case "level", "reputation", "members", "name":
+			sortBy = *params.SortBy
+		}
+	}
+
+	// Get guilds from service
+	guilds, err := h.service.ListGuilds(ctx, limit, offset, sortBy)
+	if err != nil {
+		h.logger.Error("Failed to list guilds", zap.Error(err))
+		return &api.ListGuildsInternalServerError{
+			Message: "Failed to retrieve guilds",
+			Code:    500,
+		}, nil
+	}
+
+	// Convert to API response format
 	resp := guildListResponsePool.Get().(*[]api.Guild)
 	defer guildListResponsePool.Put(resp)
 
-	// Placeholder response
-	*resp = []api.Guild{}
+	*resp = make([]api.Guild, 0, len(guilds))
+	for _, guild := range guilds {
+		apiGuild := api.Guild{
+			GuildID:     guild.ID,
+			Name:        guild.Name,
+			Description: &guild.Description,
+			LeaderID:    guild.LeaderID,
+			MemberCount: &guild.MemberCount,
+			MaxMembers:  &guild.MaxMembers,
+			Level:       &guild.Level,
+			Experience:  &guild.Experience,
+			Reputation:  &guild.Reputation,
+		}
+		*resp = append(*resp, apiGuild)
+	}
 
+	h.logger.Info("Successfully listed guilds", zap.Int("count", len(guilds)))
 	return resp, nil
 }
 
@@ -134,10 +187,6 @@ func (h *Handler) CreateGuild(ctx context.Context, req *api.CreateGuildReq) (api
 	ctx, cancel := context.WithTimeout(ctx, guildOpsTimeout)
 	defer cancel()
 
-	// TODO: Implement guild creation logic
-	resp := guildResponsePool.Get().(*api.Guild)
-	defer guildResponsePool.Put(resp)
-
 	// Extract user ID from context (set by auth middleware)
 	userID := getUserIDFromContext(ctx)
 	if userID == "" {
@@ -147,21 +196,47 @@ func (h *Handler) CreateGuild(ctx context.Context, req *api.CreateGuildReq) (api
 		}, nil
 	}
 
-	// Create guild with mock data
-	guildID := uuid.New()
 	leaderID, err := uuid.Parse(userID)
 	if err != nil {
-		leaderID = uuid.New()
+		h.logger.Error("Invalid user ID format", zap.String("userID", userID), zap.Error(err))
+		return &api.CreateGuildBadRequest{
+			Message: "Invalid user ID",
+			Code:    400,
+		}, nil
 	}
 
-	guild := api.Guild{
-		GuildID:  guildID,
-		Name:     req.Name,
-		LeaderID: leaderID,
+	// Prepare description
+	description := ""
+	if req.Description != nil {
+		description = *req.Description
 	}
 
+	// Create guild using service
+	guild, err := h.service.CreateGuild(ctx, req.Name, description, leaderID)
+	if err != nil {
+		h.logger.Error("Failed to create guild", zap.Error(err))
+		return &api.CreateGuildBadRequest{
+			Message: err.Error(),
+			Code:    400,
+		}, nil
+	}
+
+	// Convert to API response format
+	apiGuild := api.Guild{
+		GuildID:     guild.ID,
+		Name:        guild.Name,
+		Description: &guild.Description,
+		LeaderID:    guild.LeaderID,
+		MemberCount: &guild.MemberCount,
+		MaxMembers:  &guild.MaxMembers,
+		Level:       &guild.Level,
+		Experience:  &guild.Experience,
+		Reputation:  &guild.Reputation,
+	}
+
+	h.logger.Info("Successfully created guild", zap.String("guildID", guild.ID.String()))
 	return &api.CreateGuildCreated{
-		Guild: guild,
+		Guild: apiGuild,
 	}, nil
 }
 
@@ -172,21 +247,32 @@ func (h *Handler) GetGuild(ctx context.Context, params api.GetGuildParams) (api.
 	ctx, cancel := context.WithTimeout(ctx, guildOpsTimeout)
 	defer cancel()
 
-	// TODO: Implement with caching
-	resp := guildResponsePool.Get().(*api.Guild)
-	defer guildResponsePool.Put(resp)
-
-	// Placeholder response
-	// Mock guild data - will be replaced with DB query
-	guildID := params.GuildId
-	guild := api.Guild{
-		GuildID:  guildID,
-		Name:     "Test Guild",
-		LeaderID: uuid.MustParse("660e8400-e29b-41d4-a716-446655440000"),
+	// Get guild from service
+	guild, err := h.service.GetGuild(ctx, params.GuildId)
+	if err != nil {
+		h.logger.Error("Failed to get guild", zap.String("guildID", params.GuildId.String()), zap.Error(err))
+		return &api.GetGuildNotFound{
+			Message: "Guild not found",
+			Code:    404,
+		}, nil
 	}
 
+	// Convert to API response format
+	apiGuild := api.Guild{
+		GuildID:     guild.ID,
+		Name:        guild.Name,
+		Description: &guild.Description,
+		LeaderID:    guild.LeaderID,
+		MemberCount: &guild.MemberCount,
+		MaxMembers:  &guild.MaxMembers,
+		Level:       &guild.Level,
+		Experience:  &guild.Experience,
+		Reputation:  &guild.Reputation,
+	}
+
+	h.logger.Info("Successfully retrieved guild", zap.String("guildID", params.GuildId.String()))
 	return &api.GetGuildOK{
-		Guild: guild,
+		Guild: apiGuild,
 	}, nil
 }
 
@@ -206,15 +292,72 @@ func (h *Handler) UpdateGuild(ctx context.Context, req *api.UpdateGuildReq, para
 		}, nil
 	}
 
-	// Mock update - will be replaced with DB update
-	guild := api.Guild{
-		GuildID:  params.GuildId,
-		Name:     req.Name,
-		LeaderID: uuid.MustParse(userID),
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return &api.UpdateGuildBadRequest{
+			Message: "Invalid user ID",
+			Code:    400,
+		}, nil
 	}
 
+	// Check if user is the guild leader
+	guild, err := h.service.GetGuild(ctx, params.GuildId)
+	if err != nil {
+		return &api.UpdateGuildNotFound{
+			Message: "Guild not found",
+			Code:    404,
+		}, nil
+	}
+
+	if guild.LeaderID != userUUID {
+		return &api.UpdateGuildForbidden{
+			Message: "Only guild leader can update guild",
+			Code:    403,
+		}, nil
+	}
+
+	// Prepare description
+	description := ""
+	if req.Description != nil {
+		description = *req.Description
+	}
+
+	// Update guild using service
+	err = h.service.UpdateGuild(ctx, params.GuildId, req.Name, description)
+	if err != nil {
+		h.logger.Error("Failed to update guild", zap.Error(err))
+		return &api.UpdateGuildBadRequest{
+			Message: err.Error(),
+			Code:    400,
+		}, nil
+	}
+
+	// Get updated guild for response
+	updatedGuild, err := h.service.GetGuild(ctx, params.GuildId)
+	if err != nil {
+		h.logger.Error("Failed to get updated guild", zap.Error(err))
+		return &api.UpdateGuildInternalServerError{
+			Message: "Failed to retrieve updated guild",
+			Code:    500,
+		}, nil
+	}
+
+	// Convert to API response format
+	apiGuild := api.Guild{
+		GuildID:     updatedGuild.ID,
+		Name:        updatedGuild.Name,
+		Description: &updatedGuild.Description,
+		LeaderID:    updatedGuild.LeaderID,
+		MemberCount: &updatedGuild.MemberCount,
+		MaxMembers:  &updatedGuild.MaxMembers,
+		Level:       &updatedGuild.Level,
+		Experience:  &updatedGuild.Experience,
+		Reputation:  &updatedGuild.Reputation,
+	}
+
+	h.logger.Info("Successfully updated guild", zap.String("guildID", params.GuildId.String()))
 	return &api.UpdateGuildOK{
-		Guild: guild,
+		Guild: apiGuild,
 	}, nil
 }
 
@@ -225,24 +368,86 @@ func (h *Handler) DeleteGuild(ctx context.Context, params api.DeleteGuildParams)
 	ctx, cancel := context.WithTimeout(ctx, guildOpsTimeout)
 	defer cancel()
 
-	// TODO: Implement guild deletion logic
-	return &api.DeleteGuildNoContent{}, nil
+	// Extract user ID from context
+	userID := getUserIDFromContext(ctx)
+	if userID == "" {
+		return &api.DisbandGuildUnauthorized{
+			Message: "Unauthorized",
+			Code:    401,
+		}, nil
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return &api.DisbandGuildBadRequest{
+			Message: "Invalid user ID",
+			Code:    400,
+		}, nil
+	}
+
+	// Check if user is the guild leader
+	guild, err := h.service.GetGuild(ctx, params.GuildId)
+	if err != nil {
+		return &api.DisbandGuildNotFound{
+			Message: "Guild not found",
+			Code:    404,
+		}, nil
+	}
+
+	if guild.LeaderID != userUUID {
+		return &api.DisbandGuildForbidden{
+			Message: "Only guild leader can disband guild",
+			Code:    403,
+		}, nil
+	}
+
+	// Delete guild using service (soft delete)
+	err = h.service.DeleteGuild(ctx, params.GuildId)
+	if err != nil {
+		h.logger.Error("Failed to delete guild", zap.Error(err))
+		return &api.DisbandGuildInternalServerError{
+			Message: "Failed to disband guild",
+			Code:    500,
+		}, nil
+	}
+
+	h.logger.Info("Successfully disbanded guild", zap.String("guildID", params.GuildId.String()))
+	return &api.DisbandGuildNoContent{}, nil
 }
 
-// GetGuildMembers implements GET /api/v1/guilds/{guildId}/members
+// ListGuildMembers implements GET /api/v1/guilds/{guildId}/members
 // PERFORMANCE: <25ms P95 with member caching
-func (h *Handler) GetGuildMembers(ctx context.Context, params api.GetGuildMembersParams) (api.GetGuildMembersRes, error) {
+func (h *Handler) ListGuildMembers(ctx context.Context, params api.ListGuildMembersParams) (api.ListGuildMembersRes, error) {
 	// PERFORMANCE: Strict timeout for member listing
 	ctx, cancel := context.WithTimeout(ctx, memberOpsTimeout)
 	defer cancel()
 
-	// TODO: Implement with member caching
+	// Get members from service
+	members, err := h.service.ListMembers(ctx, params.GuildId)
+	if err != nil {
+		h.logger.Error("Failed to list guild members", zap.String("guildID", params.GuildId.String()), zap.Error(err))
+		return &api.ListGuildMembersInternalServerError{
+			Message: "Failed to retrieve guild members",
+			Code:    500,
+		}, nil
+	}
+
+	// Convert to API response format
 	resp := guildMemberResponsePool.Get().(*[]api.GuildMember)
 	defer guildMemberResponsePool.Put(resp)
 
-	// Placeholder response
-	*resp = []api.GuildMember{}
+	*resp = make([]api.GuildMember, 0, len(members))
+	for _, member := range members {
+		apiMember := api.GuildMember{
+			UserID:   member.UserID,
+			GuildID:  member.GuildID,
+			Role:     member.Role,
+			JoinedAt: member.JoinedAt,
+		}
+		*resp = append(*resp, apiMember)
+	}
 
+	h.logger.Info("Successfully listed guild members", zap.String("guildID", params.GuildId.String()), zap.Int("count", len(members)))
 	return resp, nil
 }
 
