@@ -3,7 +3,6 @@
 package api
 
 import (
-	"net/url"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -12,26 +11,12 @@ import (
 
 // Ref: #/components/schemas/Achievement
 type Achievement struct {
-	// Unique achievement identifier.
-	ID uuid.UUID `json:"id"`
-	// Achievement name.
-	Name string `json:"name"`
-	// Achievement description.
-	Description string `json:"description"`
-	// Achievement icon URL.
-	IconURL OptURI `json:"icon_url"`
-	// Achievement rarity.
-	Rarity AchievementRarity `json:"rarity"`
-	// Achievement points value.
-	Points int32 `json:"points"`
-	// Whether achievement is unlocked.
-	IsUnlocked bool `json:"is_unlocked"`
-	// When achievement was unlocked.
-	UnlockedAt OptNilDateTime `json:"unlocked_at"`
-	// Achievement creation timestamp.
-	CreatedAt time.Time `json:"created_at"`
-	// Achievement last update timestamp.
-	UpdatedAt time.Time `json:"updated_at"`
+	ID          uuid.UUID                `json:"id"`
+	Name        string                   `json:"name"`
+	Description OptString                `json:"description"`
+	Status      AchievementStatus        `json:"status"`
+	Difficulty  OptAchievementDifficulty `json:"difficulty"`
+	CreatedAt   OptDateTime              `json:"created_at"`
 }
 
 // GetID returns the value of ID.
@@ -45,43 +30,23 @@ func (s *Achievement) GetName() string {
 }
 
 // GetDescription returns the value of Description.
-func (s *Achievement) GetDescription() string {
+func (s *Achievement) GetDescription() OptString {
 	return s.Description
 }
 
-// GetIconURL returns the value of IconURL.
-func (s *Achievement) GetIconURL() OptURI {
-	return s.IconURL
+// GetStatus returns the value of Status.
+func (s *Achievement) GetStatus() AchievementStatus {
+	return s.Status
 }
 
-// GetRarity returns the value of Rarity.
-func (s *Achievement) GetRarity() AchievementRarity {
-	return s.Rarity
-}
-
-// GetPoints returns the value of Points.
-func (s *Achievement) GetPoints() int32 {
-	return s.Points
-}
-
-// GetIsUnlocked returns the value of IsUnlocked.
-func (s *Achievement) GetIsUnlocked() bool {
-	return s.IsUnlocked
-}
-
-// GetUnlockedAt returns the value of UnlockedAt.
-func (s *Achievement) GetUnlockedAt() OptNilDateTime {
-	return s.UnlockedAt
+// GetDifficulty returns the value of Difficulty.
+func (s *Achievement) GetDifficulty() OptAchievementDifficulty {
+	return s.Difficulty
 }
 
 // GetCreatedAt returns the value of CreatedAt.
-func (s *Achievement) GetCreatedAt() time.Time {
+func (s *Achievement) GetCreatedAt() OptDateTime {
 	return s.CreatedAt
-}
-
-// GetUpdatedAt returns the value of UpdatedAt.
-func (s *Achievement) GetUpdatedAt() time.Time {
-	return s.UpdatedAt
 }
 
 // SetID sets the value of ID.
@@ -95,134 +60,54 @@ func (s *Achievement) SetName(val string) {
 }
 
 // SetDescription sets the value of Description.
-func (s *Achievement) SetDescription(val string) {
+func (s *Achievement) SetDescription(val OptString) {
 	s.Description = val
 }
 
-// SetIconURL sets the value of IconURL.
-func (s *Achievement) SetIconURL(val OptURI) {
-	s.IconURL = val
+// SetStatus sets the value of Status.
+func (s *Achievement) SetStatus(val AchievementStatus) {
+	s.Status = val
 }
 
-// SetRarity sets the value of Rarity.
-func (s *Achievement) SetRarity(val AchievementRarity) {
-	s.Rarity = val
-}
-
-// SetPoints sets the value of Points.
-func (s *Achievement) SetPoints(val int32) {
-	s.Points = val
-}
-
-// SetIsUnlocked sets the value of IsUnlocked.
-func (s *Achievement) SetIsUnlocked(val bool) {
-	s.IsUnlocked = val
-}
-
-// SetUnlockedAt sets the value of UnlockedAt.
-func (s *Achievement) SetUnlockedAt(val OptNilDateTime) {
-	s.UnlockedAt = val
+// SetDifficulty sets the value of Difficulty.
+func (s *Achievement) SetDifficulty(val OptAchievementDifficulty) {
+	s.Difficulty = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.
-func (s *Achievement) SetCreatedAt(val time.Time) {
+func (s *Achievement) SetCreatedAt(val OptDateTime) {
 	s.CreatedAt = val
 }
 
-// SetUpdatedAt sets the value of UpdatedAt.
-func (s *Achievement) SetUpdatedAt(val time.Time) {
-	s.UpdatedAt = val
-}
-
-func (*Achievement) achievementGetAchievementRes() {}
-
-type AchievementGetAchievementInternalServerError Error
-
-func (*AchievementGetAchievementInternalServerError) achievementGetAchievementRes() {}
-
-type AchievementGetAchievementNotFound Error
-
-func (*AchievementGetAchievementNotFound) achievementGetAchievementRes() {}
-
-type AchievementGetAchievementUnauthorized Error
-
-func (*AchievementGetAchievementUnauthorized) achievementGetAchievementRes() {}
-
-type AchievementGetAchievementsBadRequest Error
-
-func (*AchievementGetAchievementsBadRequest) achievementGetAchievementsRes() {}
-
-type AchievementGetAchievementsInternalServerError Error
-
-func (*AchievementGetAchievementsInternalServerError) achievementGetAchievementsRes() {}
-
-type AchievementGetAchievementsUnauthorized Error
-
-func (*AchievementGetAchievementsUnauthorized) achievementGetAchievementsRes() {}
-
-// Ref: #/components/schemas/AchievementListResponse
-type AchievementListResponse struct {
-	Achievements []Achievement `json:"achievements"`
-	// Total number of achievements.
-	Count int32 `json:"count"`
-}
-
-// GetAchievements returns the value of Achievements.
-func (s *AchievementListResponse) GetAchievements() []Achievement {
-	return s.Achievements
-}
-
-// GetCount returns the value of Count.
-func (s *AchievementListResponse) GetCount() int32 {
-	return s.Count
-}
-
-// SetAchievements sets the value of Achievements.
-func (s *AchievementListResponse) SetAchievements(val []Achievement) {
-	s.Achievements = val
-}
-
-// SetCount sets the value of Count.
-func (s *AchievementListResponse) SetCount(val int32) {
-	s.Count = val
-}
-
-func (*AchievementListResponse) achievementGetAchievementsRes() {}
-
-// Achievement rarity.
-type AchievementRarity string
+type AchievementDifficulty string
 
 const (
-	AchievementRarityCommon    AchievementRarity = "common"
-	AchievementRarityUncommon  AchievementRarity = "uncommon"
-	AchievementRarityRare      AchievementRarity = "rare"
-	AchievementRarityEpic      AchievementRarity = "epic"
-	AchievementRarityLegendary AchievementRarity = "legendary"
+	AchievementDifficultyEasy      AchievementDifficulty = "easy"
+	AchievementDifficultyMedium    AchievementDifficulty = "medium"
+	AchievementDifficultyHard      AchievementDifficulty = "hard"
+	AchievementDifficultyLegendary AchievementDifficulty = "legendary"
 )
 
-// AllValues returns all AchievementRarity values.
-func (AchievementRarity) AllValues() []AchievementRarity {
-	return []AchievementRarity{
-		AchievementRarityCommon,
-		AchievementRarityUncommon,
-		AchievementRarityRare,
-		AchievementRarityEpic,
-		AchievementRarityLegendary,
+// AllValues returns all AchievementDifficulty values.
+func (AchievementDifficulty) AllValues() []AchievementDifficulty {
+	return []AchievementDifficulty{
+		AchievementDifficultyEasy,
+		AchievementDifficultyMedium,
+		AchievementDifficultyHard,
+		AchievementDifficultyLegendary,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s AchievementRarity) MarshalText() ([]byte, error) {
+func (s AchievementDifficulty) MarshalText() ([]byte, error) {
 	switch s {
-	case AchievementRarityCommon:
+	case AchievementDifficultyEasy:
 		return []byte(s), nil
-	case AchievementRarityUncommon:
+	case AchievementDifficultyMedium:
 		return []byte(s), nil
-	case AchievementRarityRare:
+	case AchievementDifficultyHard:
 		return []byte(s), nil
-	case AchievementRarityEpic:
-		return []byte(s), nil
-	case AchievementRarityLegendary:
+	case AchievementDifficultyLegendary:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -230,89 +115,315 @@ func (s AchievementRarity) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *AchievementRarity) UnmarshalText(data []byte) error {
-	switch AchievementRarity(data) {
-	case AchievementRarityCommon:
-		*s = AchievementRarityCommon
+func (s *AchievementDifficulty) UnmarshalText(data []byte) error {
+	switch AchievementDifficulty(data) {
+	case AchievementDifficultyEasy:
+		*s = AchievementDifficultyEasy
 		return nil
-	case AchievementRarityUncommon:
-		*s = AchievementRarityUncommon
+	case AchievementDifficultyMedium:
+		*s = AchievementDifficultyMedium
 		return nil
-	case AchievementRarityRare:
-		*s = AchievementRarityRare
+	case AchievementDifficultyHard:
+		*s = AchievementDifficultyHard
 		return nil
-	case AchievementRarityEpic:
-		*s = AchievementRarityEpic
-		return nil
-	case AchievementRarityLegendary:
-		*s = AchievementRarityLegendary
+	case AchievementDifficultyLegendary:
+		*s = AchievementDifficultyLegendary
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-type AchievementUnlockAchievementBadRequest Error
-
-func (*AchievementUnlockAchievementBadRequest) achievementUnlockAchievementRes() {}
-
-type AchievementUnlockAchievementConflict Error
-
-func (*AchievementUnlockAchievementConflict) achievementUnlockAchievementRes() {}
-
-type AchievementUnlockAchievementInternalServerError Error
-
-func (*AchievementUnlockAchievementInternalServerError) achievementUnlockAchievementRes() {}
-
-type AchievementUnlockAchievementNotFound Error
-
-func (*AchievementUnlockAchievementNotFound) achievementUnlockAchievementRes() {}
-
-type AchievementUnlockAchievementUnauthorized Error
-
-func (*AchievementUnlockAchievementUnauthorized) achievementUnlockAchievementRes() {}
-
-// Ref: #/components/schemas/AchievementUnlockResponse
-type AchievementUnlockResponse struct {
-	// Achievement ID.
-	AchievementID uuid.UUID `json:"achievement_id"`
-	// Unlock status.
-	Unlocked bool `json:"unlocked"`
-	// Unlock timestamp.
-	UnlockedAt time.Time `json:"unlocked_at"`
+// Ref: #/components/schemas/AchievementListResponse
+type AchievementListResponse struct {
+	Achievements []Achievement `json:"achievements"`
+	TotalCount   int           `json:"total_count"`
+	Page         OptInt        `json:"page"`
+	Limit        OptInt        `json:"limit"`
 }
 
-// GetAchievementID returns the value of AchievementID.
-func (s *AchievementUnlockResponse) GetAchievementID() uuid.UUID {
-	return s.AchievementID
+// GetAchievements returns the value of Achievements.
+func (s *AchievementListResponse) GetAchievements() []Achievement {
+	return s.Achievements
 }
 
-// GetUnlocked returns the value of Unlocked.
-func (s *AchievementUnlockResponse) GetUnlocked() bool {
-	return s.Unlocked
+// GetTotalCount returns the value of TotalCount.
+func (s *AchievementListResponse) GetTotalCount() int {
+	return s.TotalCount
 }
 
-// GetUnlockedAt returns the value of UnlockedAt.
-func (s *AchievementUnlockResponse) GetUnlockedAt() time.Time {
-	return s.UnlockedAt
+// GetPage returns the value of Page.
+func (s *AchievementListResponse) GetPage() OptInt {
+	return s.Page
 }
 
-// SetAchievementID sets the value of AchievementID.
-func (s *AchievementUnlockResponse) SetAchievementID(val uuid.UUID) {
-	s.AchievementID = val
+// GetLimit returns the value of Limit.
+func (s *AchievementListResponse) GetLimit() OptInt {
+	return s.Limit
 }
 
-// SetUnlocked sets the value of Unlocked.
-func (s *AchievementUnlockResponse) SetUnlocked(val bool) {
-	s.Unlocked = val
+// SetAchievements sets the value of Achievements.
+func (s *AchievementListResponse) SetAchievements(val []Achievement) {
+	s.Achievements = val
 }
 
-// SetUnlockedAt sets the value of UnlockedAt.
-func (s *AchievementUnlockResponse) SetUnlockedAt(val time.Time) {
-	s.UnlockedAt = val
+// SetTotalCount sets the value of TotalCount.
+func (s *AchievementListResponse) SetTotalCount(val int) {
+	s.TotalCount = val
 }
 
-func (*AchievementUnlockResponse) achievementUnlockAchievementRes() {}
+// SetPage sets the value of Page.
+func (s *AchievementListResponse) SetPage(val OptInt) {
+	s.Page = val
+}
+
+// SetLimit sets the value of Limit.
+func (s *AchievementListResponse) SetLimit(val OptInt) {
+	s.Limit = val
+}
+
+// Ref: #/components/schemas/AchievementResponse
+type AchievementResponse struct {
+	Achievement Achievement `json:"achievement"`
+}
+
+// GetAchievement returns the value of Achievement.
+func (s *AchievementResponse) GetAchievement() Achievement {
+	return s.Achievement
+}
+
+// SetAchievement sets the value of Achievement.
+func (s *AchievementResponse) SetAchievement(val Achievement) {
+	s.Achievement = val
+}
+
+// Ref: #/components/schemas/AchievementReward
+type AchievementReward struct {
+	RewardType  AchievementRewardRewardType `json:"reward_type"`
+	RewardID    string                      `json:"reward_id"`
+	Quantity    int                         `json:"quantity"`
+	Name        OptString                   `json:"name"`
+	Description OptString                   `json:"description"`
+	Rarity      OptAchievementRewardRarity  `json:"rarity"`
+}
+
+// GetRewardType returns the value of RewardType.
+func (s *AchievementReward) GetRewardType() AchievementRewardRewardType {
+	return s.RewardType
+}
+
+// GetRewardID returns the value of RewardID.
+func (s *AchievementReward) GetRewardID() string {
+	return s.RewardID
+}
+
+// GetQuantity returns the value of Quantity.
+func (s *AchievementReward) GetQuantity() int {
+	return s.Quantity
+}
+
+// GetName returns the value of Name.
+func (s *AchievementReward) GetName() OptString {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *AchievementReward) GetDescription() OptString {
+	return s.Description
+}
+
+// GetRarity returns the value of Rarity.
+func (s *AchievementReward) GetRarity() OptAchievementRewardRarity {
+	return s.Rarity
+}
+
+// SetRewardType sets the value of RewardType.
+func (s *AchievementReward) SetRewardType(val AchievementRewardRewardType) {
+	s.RewardType = val
+}
+
+// SetRewardID sets the value of RewardID.
+func (s *AchievementReward) SetRewardID(val string) {
+	s.RewardID = val
+}
+
+// SetQuantity sets the value of Quantity.
+func (s *AchievementReward) SetQuantity(val int) {
+	s.Quantity = val
+}
+
+// SetName sets the value of Name.
+func (s *AchievementReward) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *AchievementReward) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetRarity sets the value of Rarity.
+func (s *AchievementReward) SetRarity(val OptAchievementRewardRarity) {
+	s.Rarity = val
+}
+
+type AchievementRewardRarity string
+
+const (
+	AchievementRewardRarityCommon    AchievementRewardRarity = "common"
+	AchievementRewardRarityRare      AchievementRewardRarity = "rare"
+	AchievementRewardRarityEpic      AchievementRewardRarity = "epic"
+	AchievementRewardRarityLegendary AchievementRewardRarity = "legendary"
+)
+
+// AllValues returns all AchievementRewardRarity values.
+func (AchievementRewardRarity) AllValues() []AchievementRewardRarity {
+	return []AchievementRewardRarity{
+		AchievementRewardRarityCommon,
+		AchievementRewardRarityRare,
+		AchievementRewardRarityEpic,
+		AchievementRewardRarityLegendary,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AchievementRewardRarity) MarshalText() ([]byte, error) {
+	switch s {
+	case AchievementRewardRarityCommon:
+		return []byte(s), nil
+	case AchievementRewardRarityRare:
+		return []byte(s), nil
+	case AchievementRewardRarityEpic:
+		return []byte(s), nil
+	case AchievementRewardRarityLegendary:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AchievementRewardRarity) UnmarshalText(data []byte) error {
+	switch AchievementRewardRarity(data) {
+	case AchievementRewardRarityCommon:
+		*s = AchievementRewardRarityCommon
+		return nil
+	case AchievementRewardRarityRare:
+		*s = AchievementRewardRarityRare
+		return nil
+	case AchievementRewardRarityEpic:
+		*s = AchievementRewardRarityEpic
+		return nil
+	case AchievementRewardRarityLegendary:
+		*s = AchievementRewardRarityLegendary
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type AchievementRewardRewardType string
+
+const (
+	AchievementRewardRewardTypeCurrency AchievementRewardRewardType = "currency"
+	AchievementRewardRewardTypeItem     AchievementRewardRewardType = "item"
+	AchievementRewardRewardTypeCosmetic AchievementRewardRewardType = "cosmetic"
+	AchievementRewardRewardTypeTitle    AchievementRewardRewardType = "title"
+)
+
+// AllValues returns all AchievementRewardRewardType values.
+func (AchievementRewardRewardType) AllValues() []AchievementRewardRewardType {
+	return []AchievementRewardRewardType{
+		AchievementRewardRewardTypeCurrency,
+		AchievementRewardRewardTypeItem,
+		AchievementRewardRewardTypeCosmetic,
+		AchievementRewardRewardTypeTitle,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AchievementRewardRewardType) MarshalText() ([]byte, error) {
+	switch s {
+	case AchievementRewardRewardTypeCurrency:
+		return []byte(s), nil
+	case AchievementRewardRewardTypeItem:
+		return []byte(s), nil
+	case AchievementRewardRewardTypeCosmetic:
+		return []byte(s), nil
+	case AchievementRewardRewardTypeTitle:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AchievementRewardRewardType) UnmarshalText(data []byte) error {
+	switch AchievementRewardRewardType(data) {
+	case AchievementRewardRewardTypeCurrency:
+		*s = AchievementRewardRewardTypeCurrency
+		return nil
+	case AchievementRewardRewardTypeItem:
+		*s = AchievementRewardRewardTypeItem
+		return nil
+	case AchievementRewardRewardTypeCosmetic:
+		*s = AchievementRewardRewardTypeCosmetic
+		return nil
+	case AchievementRewardRewardTypeTitle:
+		*s = AchievementRewardRewardTypeTitle
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type AchievementStatus string
+
+const (
+	AchievementStatusActive   AchievementStatus = "active"
+	AchievementStatusInactive AchievementStatus = "inactive"
+	AchievementStatusHidden   AchievementStatus = "hidden"
+)
+
+// AllValues returns all AchievementStatus values.
+func (AchievementStatus) AllValues() []AchievementStatus {
+	return []AchievementStatus{
+		AchievementStatusActive,
+		AchievementStatusInactive,
+		AchievementStatusHidden,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AchievementStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case AchievementStatusActive:
+		return []byte(s), nil
+	case AchievementStatusInactive:
+		return []byte(s), nil
+	case AchievementStatusHidden:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AchievementStatus) UnmarshalText(data []byte) error {
+	switch AchievementStatus(data) {
+	case AchievementStatusActive:
+		*s = AchievementStatusActive
+		return nil
+	case AchievementStatusInactive:
+		*s = AchievementStatusInactive
+		return nil
+	case AchievementStatusHidden:
+		*s = AchievementStatusHidden
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 type BearerAuth struct {
 	Token string
@@ -339,78 +450,110 @@ func (s *BearerAuth) SetRoles(val []string) {
 	s.Roles = val
 }
 
-// Ref: #/components/schemas/Error
-type Error struct {
-	// Error message.
-	Error string `json:"error"`
-	// HTTP status code.
-	Status int32 `json:"status"`
-	// Service name.
-	Service string `json:"service"`
-	// Error timestamp.
-	Timestamp OptDateTime `json:"timestamp"`
+// Ref: #/components/schemas/CreateAchievementRequest
+type CreateAchievementRequest struct {
+	Name        string                                `json:"name"`
+	Description OptString                             `json:"description"`
+	Difficulty  OptCreateAchievementRequestDifficulty `json:"difficulty"`
 }
 
-// GetError returns the value of Error.
-func (s *Error) GetError() string {
-	return s.Error
+// GetName returns the value of Name.
+func (s *CreateAchievementRequest) GetName() string {
+	return s.Name
 }
 
-// GetStatus returns the value of Status.
-func (s *Error) GetStatus() int32 {
-	return s.Status
+// GetDescription returns the value of Description.
+func (s *CreateAchievementRequest) GetDescription() OptString {
+	return s.Description
 }
 
-// GetService returns the value of Service.
-func (s *Error) GetService() string {
-	return s.Service
+// GetDifficulty returns the value of Difficulty.
+func (s *CreateAchievementRequest) GetDifficulty() OptCreateAchievementRequestDifficulty {
+	return s.Difficulty
 }
 
-// GetTimestamp returns the value of Timestamp.
-func (s *Error) GetTimestamp() OptDateTime {
-	return s.Timestamp
+// SetName sets the value of Name.
+func (s *CreateAchievementRequest) SetName(val string) {
+	s.Name = val
 }
 
-// SetError sets the value of Error.
-func (s *Error) SetError(val string) {
-	s.Error = val
+// SetDescription sets the value of Description.
+func (s *CreateAchievementRequest) SetDescription(val OptString) {
+	s.Description = val
 }
 
-// SetStatus sets the value of Status.
-func (s *Error) SetStatus(val int32) {
-	s.Status = val
+// SetDifficulty sets the value of Difficulty.
+func (s *CreateAchievementRequest) SetDifficulty(val OptCreateAchievementRequestDifficulty) {
+	s.Difficulty = val
 }
 
-// SetService sets the value of Service.
-func (s *Error) SetService(val string) {
-	s.Service = val
+type CreateAchievementRequestDifficulty string
+
+const (
+	CreateAchievementRequestDifficultyEasy      CreateAchievementRequestDifficulty = "easy"
+	CreateAchievementRequestDifficultyMedium    CreateAchievementRequestDifficulty = "medium"
+	CreateAchievementRequestDifficultyHard      CreateAchievementRequestDifficulty = "hard"
+	CreateAchievementRequestDifficultyLegendary CreateAchievementRequestDifficulty = "legendary"
+)
+
+// AllValues returns all CreateAchievementRequestDifficulty values.
+func (CreateAchievementRequestDifficulty) AllValues() []CreateAchievementRequestDifficulty {
+	return []CreateAchievementRequestDifficulty{
+		CreateAchievementRequestDifficultyEasy,
+		CreateAchievementRequestDifficultyMedium,
+		CreateAchievementRequestDifficultyHard,
+		CreateAchievementRequestDifficultyLegendary,
+	}
 }
 
-// SetTimestamp sets the value of Timestamp.
-func (s *Error) SetTimestamp(val OptDateTime) {
-	s.Timestamp = val
+// MarshalText implements encoding.TextMarshaler.
+func (s CreateAchievementRequestDifficulty) MarshalText() ([]byte, error) {
+	switch s {
+	case CreateAchievementRequestDifficultyEasy:
+		return []byte(s), nil
+	case CreateAchievementRequestDifficultyMedium:
+		return []byte(s), nil
+	case CreateAchievementRequestDifficultyHard:
+		return []byte(s), nil
+	case CreateAchievementRequestDifficultyLegendary:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CreateAchievementRequestDifficulty) UnmarshalText(data []byte) error {
+	switch CreateAchievementRequestDifficulty(data) {
+	case CreateAchievementRequestDifficultyEasy:
+		*s = CreateAchievementRequestDifficultyEasy
+		return nil
+	case CreateAchievementRequestDifficultyMedium:
+		*s = CreateAchievementRequestDifficultyMedium
+		return nil
+	case CreateAchievementRequestDifficultyHard:
+		*s = CreateAchievementRequestDifficultyHard
+		return nil
+	case CreateAchievementRequestDifficultyLegendary:
+		*s = CreateAchievementRequestDifficultyLegendary
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // Ref: #/components/schemas/HealthResponse
 type HealthResponse struct {
-	// Service health status.
-	Status HealthResponseStatus `json:"status"`
-	// Service name.
-	Service string `json:"service"`
-	// Health check timestamp.
-	Timestamp time.Time `json:"timestamp"`
-	// Service version.
-	Version string `json:"version"`
+	Status            string    `json:"status"`
+	Timestamp         time.Time `json:"timestamp"`
+	Version           OptString `json:"version"`
+	UptimeSeconds     OptInt    `json:"uptime_seconds"`
+	ActiveConnections OptInt    `json:"active_connections"`
 }
 
 // GetStatus returns the value of Status.
-func (s *HealthResponse) GetStatus() HealthResponseStatus {
+func (s *HealthResponse) GetStatus() string {
 	return s.Status
-}
-
-// GetService returns the value of Service.
-func (s *HealthResponse) GetService() string {
-	return s.Service
 }
 
 // GetTimestamp returns the value of Timestamp.
@@ -419,18 +562,23 @@ func (s *HealthResponse) GetTimestamp() time.Time {
 }
 
 // GetVersion returns the value of Version.
-func (s *HealthResponse) GetVersion() string {
+func (s *HealthResponse) GetVersion() OptString {
 	return s.Version
 }
 
-// SetStatus sets the value of Status.
-func (s *HealthResponse) SetStatus(val HealthResponseStatus) {
-	s.Status = val
+// GetUptimeSeconds returns the value of UptimeSeconds.
+func (s *HealthResponse) GetUptimeSeconds() OptInt {
+	return s.UptimeSeconds
 }
 
-// SetService sets the value of Service.
-func (s *HealthResponse) SetService(val string) {
-	s.Service = val
+// GetActiveConnections returns the value of ActiveConnections.
+func (s *HealthResponse) GetActiveConnections() OptInt {
+	return s.ActiveConnections
+}
+
+// SetStatus sets the value of Status.
+func (s *HealthResponse) SetStatus(val string) {
+	s.Status = val
 }
 
 // SetTimestamp sets the value of Timestamp.
@@ -439,50 +587,202 @@ func (s *HealthResponse) SetTimestamp(val time.Time) {
 }
 
 // SetVersion sets the value of Version.
-func (s *HealthResponse) SetVersion(val string) {
+func (s *HealthResponse) SetVersion(val OptString) {
 	s.Version = val
 }
 
-// Service health status.
-type HealthResponseStatus string
+// SetUptimeSeconds sets the value of UptimeSeconds.
+func (s *HealthResponse) SetUptimeSeconds(val OptInt) {
+	s.UptimeSeconds = val
+}
 
-const (
-	HealthResponseStatusHealthy   HealthResponseStatus = "healthy"
-	HealthResponseStatusUnhealthy HealthResponseStatus = "unhealthy"
-)
+// SetActiveConnections sets the value of ActiveConnections.
+func (s *HealthResponse) SetActiveConnections(val OptInt) {
+	s.ActiveConnections = val
+}
 
-// AllValues returns all HealthResponseStatus values.
-func (HealthResponseStatus) AllValues() []HealthResponseStatus {
-	return []HealthResponseStatus{
-		HealthResponseStatusHealthy,
-		HealthResponseStatusUnhealthy,
+// NewOptAchievementDifficulty returns new OptAchievementDifficulty with value set to v.
+func NewOptAchievementDifficulty(v AchievementDifficulty) OptAchievementDifficulty {
+	return OptAchievementDifficulty{
+		Value: v,
+		Set:   true,
 	}
 }
 
-// MarshalText implements encoding.TextMarshaler.
-func (s HealthResponseStatus) MarshalText() ([]byte, error) {
-	switch s {
-	case HealthResponseStatusHealthy:
-		return []byte(s), nil
-	case HealthResponseStatusUnhealthy:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
+// OptAchievementDifficulty is optional AchievementDifficulty.
+type OptAchievementDifficulty struct {
+	Value AchievementDifficulty
+	Set   bool
+}
+
+// IsSet returns true if OptAchievementDifficulty was set.
+func (o OptAchievementDifficulty) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAchievementDifficulty) Reset() {
+	var v AchievementDifficulty
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAchievementDifficulty) SetTo(v AchievementDifficulty) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAchievementDifficulty) Get() (v AchievementDifficulty, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAchievementDifficulty) Or(d AchievementDifficulty) AchievementDifficulty {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAchievementRewardRarity returns new OptAchievementRewardRarity with value set to v.
+func NewOptAchievementRewardRarity(v AchievementRewardRarity) OptAchievementRewardRarity {
+	return OptAchievementRewardRarity{
+		Value: v,
+		Set:   true,
 	}
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *HealthResponseStatus) UnmarshalText(data []byte) error {
-	switch HealthResponseStatus(data) {
-	case HealthResponseStatusHealthy:
-		*s = HealthResponseStatusHealthy
-		return nil
-	case HealthResponseStatusUnhealthy:
-		*s = HealthResponseStatusUnhealthy
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
+// OptAchievementRewardRarity is optional AchievementRewardRarity.
+type OptAchievementRewardRarity struct {
+	Value AchievementRewardRarity
+	Set   bool
+}
+
+// IsSet returns true if OptAchievementRewardRarity was set.
+func (o OptAchievementRewardRarity) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAchievementRewardRarity) Reset() {
+	var v AchievementRewardRarity
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAchievementRewardRarity) SetTo(v AchievementRewardRarity) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAchievementRewardRarity) Get() (v AchievementRewardRarity, ok bool) {
+	if !o.Set {
+		return v, false
 	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAchievementRewardRarity) Or(d AchievementRewardRarity) AchievementRewardRarity {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptBool returns new OptBool with value set to v.
+func NewOptBool(v bool) OptBool {
+	return OptBool{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptBool is optional bool.
+type OptBool struct {
+	Value bool
+	Set   bool
+}
+
+// IsSet returns true if OptBool was set.
+func (o OptBool) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptBool) Reset() {
+	var v bool
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptBool) SetTo(v bool) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptBool) Get() (v bool, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptBool) Or(d bool) bool {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptCreateAchievementRequestDifficulty returns new OptCreateAchievementRequestDifficulty with value set to v.
+func NewOptCreateAchievementRequestDifficulty(v CreateAchievementRequestDifficulty) OptCreateAchievementRequestDifficulty {
+	return OptCreateAchievementRequestDifficulty{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCreateAchievementRequestDifficulty is optional CreateAchievementRequestDifficulty.
+type OptCreateAchievementRequestDifficulty struct {
+	Value CreateAchievementRequestDifficulty
+	Set   bool
+}
+
+// IsSet returns true if OptCreateAchievementRequestDifficulty was set.
+func (o OptCreateAchievementRequestDifficulty) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCreateAchievementRequestDifficulty) Reset() {
+	var v CreateAchievementRequestDifficulty
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCreateAchievementRequestDifficulty) SetTo(v CreateAchievementRequestDifficulty) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCreateAchievementRequestDifficulty) Get() (v CreateAchievementRequestDifficulty, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCreateAchievementRequestDifficulty) Or(d CreateAchievementRequestDifficulty) CreateAchievementRequestDifficulty {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
 }
 
 // NewOptDateTime returns new OptDateTime with value set to v.
@@ -525,6 +825,52 @@ func (o OptDateTime) Get() (v time.Time, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptDateTime) Or(d time.Time) time.Time {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFloat64 returns new OptFloat64 with value set to v.
+func NewOptFloat64(v float64) OptFloat64 {
+	return OptFloat64{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFloat64 is optional float64.
+type OptFloat64 struct {
+	Value float64
+	Set   bool
+}
+
+// IsSet returns true if OptFloat64 was set.
+func (o OptFloat64) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFloat64) Reset() {
+	var v float64
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFloat64) SetTo(v float64) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFloat64) Get() (v float64, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFloat64) Or(d float64) float64 {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -577,55 +923,38 @@ func (o OptInt) Or(d int) int {
 	return d
 }
 
-// NewOptNilDateTime returns new OptNilDateTime with value set to v.
-func NewOptNilDateTime(v time.Time) OptNilDateTime {
-	return OptNilDateTime{
+// NewOptPlayerAchievementStats returns new OptPlayerAchievementStats with value set to v.
+func NewOptPlayerAchievementStats(v PlayerAchievementStats) OptPlayerAchievementStats {
+	return OptPlayerAchievementStats{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptNilDateTime is optional nullable time.Time.
-type OptNilDateTime struct {
-	Value time.Time
+// OptPlayerAchievementStats is optional PlayerAchievementStats.
+type OptPlayerAchievementStats struct {
+	Value PlayerAchievementStats
 	Set   bool
-	Null  bool
 }
 
-// IsSet returns true if OptNilDateTime was set.
-func (o OptNilDateTime) IsSet() bool { return o.Set }
+// IsSet returns true if OptPlayerAchievementStats was set.
+func (o OptPlayerAchievementStats) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptNilDateTime) Reset() {
-	var v time.Time
+func (o *OptPlayerAchievementStats) Reset() {
+	var v PlayerAchievementStats
 	o.Value = v
 	o.Set = false
-	o.Null = false
 }
 
 // SetTo sets value to v.
-func (o *OptNilDateTime) SetTo(v time.Time) {
+func (o *OptPlayerAchievementStats) SetTo(v PlayerAchievementStats) {
 	o.Set = true
-	o.Null = false
-	o.Value = v
-}
-
-// IsNull returns true if value is Null.
-func (o OptNilDateTime) IsNull() bool { return o.Null }
-
-// SetToNull sets value to null.
-func (o *OptNilDateTime) SetToNull() {
-	o.Set = true
-	o.Null = true
-	var v time.Time
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptNilDateTime) Get() (v time.Time, ok bool) {
-	if o.Null {
-		return v, false
-	}
+func (o OptPlayerAchievementStats) Get() (v PlayerAchievementStats, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -633,45 +962,45 @@ func (o OptNilDateTime) Get() (v time.Time, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptNilDateTime) Or(d time.Time) time.Time {
+func (o OptPlayerAchievementStats) Or(d PlayerAchievementStats) PlayerAchievementStats {
 	if v, ok := o.Get(); ok {
 		return v
 	}
 	return d
 }
 
-// NewOptURI returns new OptURI with value set to v.
-func NewOptURI(v url.URL) OptURI {
-	return OptURI{
+// NewOptString returns new OptString with value set to v.
+func NewOptString(v string) OptString {
+	return OptString{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptURI is optional url.URL.
-type OptURI struct {
-	Value url.URL
+// OptString is optional string.
+type OptString struct {
+	Value string
 	Set   bool
 }
 
-// IsSet returns true if OptURI was set.
-func (o OptURI) IsSet() bool { return o.Set }
+// IsSet returns true if OptString was set.
+func (o OptString) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptURI) Reset() {
-	var v url.URL
+func (o *OptString) Reset() {
+	var v string
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptURI) SetTo(v url.URL) {
+func (o *OptString) SetTo(v string) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptURI) Get() (v url.URL, ok bool) {
+func (o OptString) Get() (v string, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -679,9 +1008,297 @@ func (o OptURI) Get() (v url.URL, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptURI) Or(d url.URL) url.URL {
+func (o OptString) Or(d string) string {
 	if v, ok := o.Get(); ok {
 		return v
 	}
 	return d
+}
+
+// Ref: #/components/schemas/PlayerAchievement
+type PlayerAchievement struct {
+	AchievementID uuid.UUID               `json:"achievement_id"`
+	Progress      float64                 `json:"progress"`
+	Status        PlayerAchievementStatus `json:"status"`
+	CompletedAt   OptDateTime             `json:"completed_at"`
+}
+
+// GetAchievementID returns the value of AchievementID.
+func (s *PlayerAchievement) GetAchievementID() uuid.UUID {
+	return s.AchievementID
+}
+
+// GetProgress returns the value of Progress.
+func (s *PlayerAchievement) GetProgress() float64 {
+	return s.Progress
+}
+
+// GetStatus returns the value of Status.
+func (s *PlayerAchievement) GetStatus() PlayerAchievementStatus {
+	return s.Status
+}
+
+// GetCompletedAt returns the value of CompletedAt.
+func (s *PlayerAchievement) GetCompletedAt() OptDateTime {
+	return s.CompletedAt
+}
+
+// SetAchievementID sets the value of AchievementID.
+func (s *PlayerAchievement) SetAchievementID(val uuid.UUID) {
+	s.AchievementID = val
+}
+
+// SetProgress sets the value of Progress.
+func (s *PlayerAchievement) SetProgress(val float64) {
+	s.Progress = val
+}
+
+// SetStatus sets the value of Status.
+func (s *PlayerAchievement) SetStatus(val PlayerAchievementStatus) {
+	s.Status = val
+}
+
+// SetCompletedAt sets the value of CompletedAt.
+func (s *PlayerAchievement) SetCompletedAt(val OptDateTime) {
+	s.CompletedAt = val
+}
+
+// Ref: #/components/schemas/PlayerAchievementStats
+type PlayerAchievementStats struct {
+	TotalAchievements     OptInt     `json:"total_achievements"`
+	CompletedAchievements OptInt     `json:"completed_achievements"`
+	CompletionPercentage  OptFloat64 `json:"completion_percentage"`
+	TotalPoints           OptInt     `json:"total_points"`
+}
+
+// GetTotalAchievements returns the value of TotalAchievements.
+func (s *PlayerAchievementStats) GetTotalAchievements() OptInt {
+	return s.TotalAchievements
+}
+
+// GetCompletedAchievements returns the value of CompletedAchievements.
+func (s *PlayerAchievementStats) GetCompletedAchievements() OptInt {
+	return s.CompletedAchievements
+}
+
+// GetCompletionPercentage returns the value of CompletionPercentage.
+func (s *PlayerAchievementStats) GetCompletionPercentage() OptFloat64 {
+	return s.CompletionPercentage
+}
+
+// GetTotalPoints returns the value of TotalPoints.
+func (s *PlayerAchievementStats) GetTotalPoints() OptInt {
+	return s.TotalPoints
+}
+
+// SetTotalAchievements sets the value of TotalAchievements.
+func (s *PlayerAchievementStats) SetTotalAchievements(val OptInt) {
+	s.TotalAchievements = val
+}
+
+// SetCompletedAchievements sets the value of CompletedAchievements.
+func (s *PlayerAchievementStats) SetCompletedAchievements(val OptInt) {
+	s.CompletedAchievements = val
+}
+
+// SetCompletionPercentage sets the value of CompletionPercentage.
+func (s *PlayerAchievementStats) SetCompletionPercentage(val OptFloat64) {
+	s.CompletionPercentage = val
+}
+
+// SetTotalPoints sets the value of TotalPoints.
+func (s *PlayerAchievementStats) SetTotalPoints(val OptInt) {
+	s.TotalPoints = val
+}
+
+type PlayerAchievementStatus string
+
+const (
+	PlayerAchievementStatusNotStarted PlayerAchievementStatus = "not_started"
+	PlayerAchievementStatusInProgress PlayerAchievementStatus = "in_progress"
+	PlayerAchievementStatusCompleted  PlayerAchievementStatus = "completed"
+	PlayerAchievementStatusLocked     PlayerAchievementStatus = "locked"
+)
+
+// AllValues returns all PlayerAchievementStatus values.
+func (PlayerAchievementStatus) AllValues() []PlayerAchievementStatus {
+	return []PlayerAchievementStatus{
+		PlayerAchievementStatusNotStarted,
+		PlayerAchievementStatusInProgress,
+		PlayerAchievementStatusCompleted,
+		PlayerAchievementStatusLocked,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s PlayerAchievementStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case PlayerAchievementStatusNotStarted:
+		return []byte(s), nil
+	case PlayerAchievementStatusInProgress:
+		return []byte(s), nil
+	case PlayerAchievementStatusCompleted:
+		return []byte(s), nil
+	case PlayerAchievementStatusLocked:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *PlayerAchievementStatus) UnmarshalText(data []byte) error {
+	switch PlayerAchievementStatus(data) {
+	case PlayerAchievementStatusNotStarted:
+		*s = PlayerAchievementStatusNotStarted
+		return nil
+	case PlayerAchievementStatusInProgress:
+		*s = PlayerAchievementStatusInProgress
+		return nil
+	case PlayerAchievementStatusCompleted:
+		*s = PlayerAchievementStatusCompleted
+		return nil
+	case PlayerAchievementStatusLocked:
+		*s = PlayerAchievementStatusLocked
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/PlayerAchievementsResponse
+type PlayerAchievementsResponse struct {
+	Achievements []PlayerAchievement       `json:"achievements"`
+	Statistics   OptPlayerAchievementStats `json:"statistics"`
+}
+
+// GetAchievements returns the value of Achievements.
+func (s *PlayerAchievementsResponse) GetAchievements() []PlayerAchievement {
+	return s.Achievements
+}
+
+// GetStatistics returns the value of Statistics.
+func (s *PlayerAchievementsResponse) GetStatistics() OptPlayerAchievementStats {
+	return s.Statistics
+}
+
+// SetAchievements sets the value of Achievements.
+func (s *PlayerAchievementsResponse) SetAchievements(val []PlayerAchievement) {
+	s.Achievements = val
+}
+
+// SetStatistics sets the value of Statistics.
+func (s *PlayerAchievementsResponse) SetStatistics(val OptPlayerAchievementStats) {
+	s.Statistics = val
+}
+
+// Ref: #/components/schemas/ProgressResponse
+type ProgressResponse struct {
+	AchievementID   uuid.UUID `json:"achievement_id"`
+	NewProgress     float64   `json:"new_progress"`
+	WasCompleted    OptBool   `json:"was_completed"`
+	RewardsUnlocked []string  `json:"rewards_unlocked"`
+}
+
+// GetAchievementID returns the value of AchievementID.
+func (s *ProgressResponse) GetAchievementID() uuid.UUID {
+	return s.AchievementID
+}
+
+// GetNewProgress returns the value of NewProgress.
+func (s *ProgressResponse) GetNewProgress() float64 {
+	return s.NewProgress
+}
+
+// GetWasCompleted returns the value of WasCompleted.
+func (s *ProgressResponse) GetWasCompleted() OptBool {
+	return s.WasCompleted
+}
+
+// GetRewardsUnlocked returns the value of RewardsUnlocked.
+func (s *ProgressResponse) GetRewardsUnlocked() []string {
+	return s.RewardsUnlocked
+}
+
+// SetAchievementID sets the value of AchievementID.
+func (s *ProgressResponse) SetAchievementID(val uuid.UUID) {
+	s.AchievementID = val
+}
+
+// SetNewProgress sets the value of NewProgress.
+func (s *ProgressResponse) SetNewProgress(val float64) {
+	s.NewProgress = val
+}
+
+// SetWasCompleted sets the value of WasCompleted.
+func (s *ProgressResponse) SetWasCompleted(val OptBool) {
+	s.WasCompleted = val
+}
+
+// SetRewardsUnlocked sets the value of RewardsUnlocked.
+func (s *ProgressResponse) SetRewardsUnlocked(val []string) {
+	s.RewardsUnlocked = val
+}
+
+// Ref: #/components/schemas/RewardResponse
+type RewardResponse struct {
+	AchievementID  uuid.UUID           `json:"achievement_id"`
+	RewardsGranted []AchievementReward `json:"rewards_granted"`
+	ClaimedAt      OptDateTime         `json:"claimed_at"`
+}
+
+// GetAchievementID returns the value of AchievementID.
+func (s *RewardResponse) GetAchievementID() uuid.UUID {
+	return s.AchievementID
+}
+
+// GetRewardsGranted returns the value of RewardsGranted.
+func (s *RewardResponse) GetRewardsGranted() []AchievementReward {
+	return s.RewardsGranted
+}
+
+// GetClaimedAt returns the value of ClaimedAt.
+func (s *RewardResponse) GetClaimedAt() OptDateTime {
+	return s.ClaimedAt
+}
+
+// SetAchievementID sets the value of AchievementID.
+func (s *RewardResponse) SetAchievementID(val uuid.UUID) {
+	s.AchievementID = val
+}
+
+// SetRewardsGranted sets the value of RewardsGranted.
+func (s *RewardResponse) SetRewardsGranted(val []AchievementReward) {
+	s.RewardsGranted = val
+}
+
+// SetClaimedAt sets the value of ClaimedAt.
+func (s *RewardResponse) SetClaimedAt(val OptDateTime) {
+	s.ClaimedAt = val
+}
+
+// Ref: #/components/schemas/UpdateProgressRequest
+type UpdateProgressRequest struct {
+	ProgressValue float64   `json:"progress_value"`
+	EventType     OptString `json:"event_type"`
+}
+
+// GetProgressValue returns the value of ProgressValue.
+func (s *UpdateProgressRequest) GetProgressValue() float64 {
+	return s.ProgressValue
+}
+
+// GetEventType returns the value of EventType.
+func (s *UpdateProgressRequest) GetEventType() OptString {
+	return s.EventType
+}
+
+// SetProgressValue sets the value of ProgressValue.
+func (s *UpdateProgressRequest) SetProgressValue(val float64) {
+	s.ProgressValue = val
+}
+
+// SetEventType sets the value of EventType.
+func (s *UpdateProgressRequest) SetEventType(val OptString) {
+	s.EventType = val
 }

@@ -13,38 +13,65 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
-// AchievementGetAchievement implements achievementGetAchievement operation.
+// ClaimAchievementReward implements claimAchievementReward operation.
 //
-// Get specific achievement.
+// Claim achievement reward.
 //
-// GET /api/v1/achievement/achievements/{achievementId}
-func (UnimplementedHandler) AchievementGetAchievement(ctx context.Context, params AchievementGetAchievementParams) (r AchievementGetAchievementRes, _ error) {
+// POST /players/{player_id}/achievements/{achievement_id}/claim-reward
+func (UnimplementedHandler) ClaimAchievementReward(ctx context.Context, params ClaimAchievementRewardParams) (r *RewardResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// AchievementGetAchievements implements achievementGetAchievements operation.
+// CreateAchievement implements createAchievement operation.
+//
+// Create achievement.
+//
+// POST /achievements
+func (UnimplementedHandler) CreateAchievement(ctx context.Context, req *CreateAchievementRequest) (r *AchievementResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAchievement implements getAchievement operation.
+//
+// Get achievement.
+//
+// GET /achievements/{achievement_id}
+func (UnimplementedHandler) GetAchievement(ctx context.Context, params GetAchievementParams) (r *AchievementResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetPlayerAchievements implements getPlayerAchievements operation.
 //
 // Get player achievements.
 //
-// GET /api/v1/achievement/achievements
-func (UnimplementedHandler) AchievementGetAchievements(ctx context.Context, params AchievementGetAchievementsParams) (r AchievementGetAchievementsRes, _ error) {
+// GET /players/{player_id}/achievements
+func (UnimplementedHandler) GetPlayerAchievements(ctx context.Context, params GetPlayerAchievementsParams) (r *PlayerAchievementsResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
-// AchievementUnlockAchievement implements achievementUnlockAchievement operation.
-//
-// Unlock achievement.
-//
-// POST /api/v1/achievement/achievements/{achievementId}/unlock
-func (UnimplementedHandler) AchievementUnlockAchievement(ctx context.Context, params AchievementUnlockAchievementParams) (r AchievementUnlockAchievementRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// Health implements health operation.
+// HealthCheck implements healthCheck operation.
 //
 // Health check.
 //
 // GET /health
-func (UnimplementedHandler) Health(ctx context.Context) (r *HealthResponse, _ error) {
+func (UnimplementedHandler) HealthCheck(ctx context.Context) (r *HealthResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListAchievements implements listAchievements operation.
+//
+// List achievements.
+//
+// GET /achievements
+func (UnimplementedHandler) ListAchievements(ctx context.Context, params ListAchievementsParams) (r *AchievementListResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UpdateAchievementProgress implements updateAchievementProgress operation.
+//
+// Update achievement progress.
+//
+// POST /players/{player_id}/achievements/{achievement_id}/progress
+func (UnimplementedHandler) UpdateAchievementProgress(ctx context.Context, req *UpdateProgressRequest, params UpdateAchievementProgressParams) (r *ProgressResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }

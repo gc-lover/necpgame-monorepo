@@ -1,57 +1,78 @@
-# Issue: #backend-achievement_system
-# PERFORMANCE: Multi-stage build for minimal production image
+# Achievement Service Go - Enterprise-Grade Production Container
+# Issue: #2253
 
-# Build stage - optimized Go compilation
-FROM golang:1.21-alpine AS builder
+# Use distroless base image for security and minimal attack surface
+FROM gcr.io/distroless/static-debian12:nonroot
 
-# PERFORMANCE: Install build dependencies
-RUN apk add --no-cache git ca-certificates
+# Copy the binary with minimal permissions
+COPY bin/achievement-service /achievement-service
 
-# PERFORMANCE: Set working directory
+# Use non-root user for security
+USER nonroot:nonroot
+
+# Health check for container orchestration
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD ["/achievement-service", "--health-check"]
+
+# Expose port
+EXPOSE 8081
+
+# Set security options
+ENV GIN_MODE=release
+
+# Run the service
+ENTRYPOINT ["/achievement-service"]
+
+# Multi-stage build for optimized image size
+FROM golang:1.24-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates tzdata
+
+# Set working directory
 WORKDIR /app
 
-# PERFORMANCE: Copy go mod files first for better caching
+# Copy go mod files
 COPY go.mod go.sum ./
+
+# Download dependencies with caching
 RUN go mod download
 
-# PERFORMANCE: Copy source code
+# Copy source code
 COPY . .
 
-# PERFORMANCE: Build optimized binary
+# Build with optimizations for production
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -a -installsuffix cgo \
-    -ldflags="-w -s -X main.version=$(date -u +%Y%m%d-%H%M%S)" \
-    -o achievement-service \
-    main.go
+    -ldflags="-s -w -X main.version=$(git rev-parse --short HEAD)" \
+    -o bin/achievement-service \
+    ./main.go
 
-# Production stage - minimal runtime image
-FROM alpine:latest
+# Final stage - minimal runtime image
+FROM gcr.io/distroless/static-debian12:nonroot
 
-# PERFORMANCE: Install runtime dependencies only
-RUN apk --no-cache add ca-certificates tzdata
+# Copy CA certificates for HTTPS calls
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-# PERFORMANCE: Create non-root user
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
+# Copy timezone data
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
-# PERFORMANCE: Set working directory
-WORKDIR /app
+# Copy the binary
+COPY --from=builder /app/bin/achievement-service /achievement-service
 
-# PERFORMANCE: Copy binary from builder stage
-COPY --from=builder /app/achievement-service .
+# Create non-root user
+USER nonroot:nonroot
 
-# PERFORMANCE: Change ownership to non-root user
-RUN chown appuser:appgroup achievement-service
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD ["/achievement-service", "--health-check"] || exit 1
 
-# PERFORMANCE: Switch to non-root user
-USER appuser
+# Expose port
+EXPOSE 8081
 
-# PERFORMANCE: Expose service port
-EXPOSE 8100
+# Set production environment
+ENV GIN_MODE=release \
+    PORT=8081
 
-# PERFORMANCE: Health check with optimized wget flags
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8100/health || exit 1
-
-# PERFORMANCE: Run with optimized settings
-CMD ["./achievement-service"]
+# Run with security features
+ENTRYPOINT ["/achievement-service"]

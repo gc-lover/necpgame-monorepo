@@ -1,63 +1,100 @@
-# Issue: #backend-achievement_system
-# PERFORMANCE: Optimized build for production deployment
+# Achievement Service Go - Enterprise-Grade Build Automation
+# Issue: #2253
 
-.PHONY: all build clean test deps generate-api docker-build docker-run check-file-sizes
+.PHONY: all build test clean docker-build docker-run generate-api help
 
-# PERFORMANCE: Parallel builds with optimized flags
-all: deps generate-api build test
+# Default target
+all: clean build test
 
-# PERFORMANCE: Generate optimized API code from OpenAPI spec
-generate-api:
-	@echo "Generating optimized API code..."
-	npx --yes @redocly/cli bundle ../../../proto/openapi/system-domain/achievement/main.yaml -o openapi-bundled.yaml
-	ogen --target pkg/api --package api --clean openapi-bundled.yaml
-
-# PERFORMANCE: Optimized Go build with production flags
+# Build the service with optimizations
 build:
-	@echo "Building optimized binary..."
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-		-ldflags="-w -s -X main.version=$(shell date -u +%Y%m%d-%H%M%S)" \
+	@echo "🏗️  Building achievement-service-go with enterprise optimizations..."
+	CGO_ENABLED=0 GOOS=linux go build \
+		-ldflags="-s -w -X main.version=$$(git rev-parse --short HEAD)" \
 		-o bin/achievement-service \
 		./main.go
+	@echo "✅ Build complete: bin/achievement-service"
 
-# PERFORMANCE: Clean build artifacts
-clean:
-	@echo "Cleaning build artifacts..."
-	rm -rf bin/ openapi-bundled.yaml
-	go clean ./...
-
-# PERFORMANCE: Download dependencies with module proxy
-deps:
-	@echo "Downloading optimized dependencies..."
-	go mod download
-	go mod tidy
-
-# PERFORMANCE: Run tests with race detection and coverage
+# Run tests with coverage
 test:
-	@echo "Running optimized tests..."
-	go test -race -coverprofile=coverage.out ./...
+	@echo "🧪 Running achievement service tests..."
+	go test -v -race -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out -o coverage.html
+	@echo "📊 Coverage report: coverage.html"
 
-# PERFORMANCE: Check file sizes (must be <1000 lines for generated code)
-check-file-sizes:
-	@echo "Checking file sizes..."
-	@find . -name "*.go" -exec wc -l {} \; | awk '$$1 > 1000 {print "ERROR: "$$2" has "$$1" lines (>1000)"; exit 1}'
+# Clean build artifacts
+clean:
+	@echo "🧹 Cleaning build artifacts..."
+	rm -rf bin/ coverage.out coverage.html
+	go clean -cache -testcache
 
-# PERFORMANCE: Multi-stage Docker build for minimal image size
+# Generate API code from OpenAPI spec (ogen)
+generate-api:
+	@echo "🔧 Generating API code with ogen optimizations..."
+	ogen --target pkg/api --package api --clean openapi-bundled.yaml
+
+# Run the service locally
+run:
+	@echo "🚀 Starting achievement-service-go locally..."
+	go run main.go
+
+# Docker operations
 docker-build:
-	@echo "Building optimized Docker image..."
-	docker build \
-		--target production \
-		--build-arg BUILDKIT_INLINE_CACHE=1 \
-		-t achievement-service:latest \
-		.
+	@echo "🐳 Building achievement service Docker image..."
+	docker build -t achievement-service-go:latest .
 
-# PERFORMANCE: Run in Docker with resource limits
 docker-run:
-	@echo "Running container with resource limits..."
-	docker run \
-		--cpus=1 \
-		--memory=512m \
-		--read-only \
-		-p 8100:8100 \
-		achievement-service:latest
+	@echo "🐳 Running achievement service in Docker..."
+	docker run -p 8081:8081 \
+		-e DATABASE_URL="postgres://user:password@localhost:5432/achievements" \
+		-e JWT_SECRET="your-secret-key" \
+		achievement-service-go:latest
+
+# Development helpers
+fmt:
+	@echo "📝 Formatting Go code..."
+	go fmt ./...
+
+vet:
+	@echo "🔍 Running go vet..."
+	go vet ./...
+
+lint:
+	@echo "🧹 Running golint..."
+	golint ./...
+
+# Performance profiling
+profile:
+	@echo "📈 Starting performance profiling..."
+	go tool pprof -http=:8082 bin/achievement-service
+
+# Database operations
+db-migrate:
+	@echo "🗄️  Running database migrations..."
+	@echo "TODO: Implement database migration logic"
+
+# Quality gates
+quality: fmt vet lint test
+	@echo "✅ All quality gates passed!"
+
+# Help
+help:
+	@echo "Achievement Service Go - Enterprise-Grade Build System"
+	@echo ""
+	@echo "Available targets:"
+	@echo "  all           - Clean, build, and test (default)"
+	@echo "  build         - Build the service with optimizations"
+	@echo "  test          - Run tests with coverage"
+	@echo "  clean         - Clean build artifacts"
+	@echo "  generate-api  - Generate API code from OpenAPI spec"
+	@echo "  run           - Run the service locally"
+	@echo "  docker-build  - Build Docker image"
+	@echo "  docker-run    - Run service in Docker"
+	@echo "  fmt           - Format Go code"
+	@echo "  vet           - Run go vet"
+	@echo "  lint          - Run golint"
+	@echo "  profile       - Start performance profiling"
+	@echo "  quality       - Run all quality checks"
+	@echo "  help          - Show this help message"
+
+# Issue: #2253

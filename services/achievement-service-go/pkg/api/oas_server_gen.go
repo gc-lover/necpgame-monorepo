@@ -8,30 +8,48 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
-	// AchievementGetAchievement implements achievementGetAchievement operation.
+	// ClaimAchievementReward implements claimAchievementReward operation.
 	//
-	// Get specific achievement.
+	// Claim achievement reward.
 	//
-	// GET /api/v1/achievement/achievements/{achievementId}
-	AchievementGetAchievement(ctx context.Context, params AchievementGetAchievementParams) (AchievementGetAchievementRes, error)
-	// AchievementGetAchievements implements achievementGetAchievements operation.
+	// POST /players/{player_id}/achievements/{achievement_id}/claim-reward
+	ClaimAchievementReward(ctx context.Context, params ClaimAchievementRewardParams) (*RewardResponse, error)
+	// CreateAchievement implements createAchievement operation.
+	//
+	// Create achievement.
+	//
+	// POST /achievements
+	CreateAchievement(ctx context.Context, req *CreateAchievementRequest) (*AchievementResponse, error)
+	// GetAchievement implements getAchievement operation.
+	//
+	// Get achievement.
+	//
+	// GET /achievements/{achievement_id}
+	GetAchievement(ctx context.Context, params GetAchievementParams) (*AchievementResponse, error)
+	// GetPlayerAchievements implements getPlayerAchievements operation.
 	//
 	// Get player achievements.
 	//
-	// GET /api/v1/achievement/achievements
-	AchievementGetAchievements(ctx context.Context, params AchievementGetAchievementsParams) (AchievementGetAchievementsRes, error)
-	// AchievementUnlockAchievement implements achievementUnlockAchievement operation.
-	//
-	// Unlock achievement.
-	//
-	// POST /api/v1/achievement/achievements/{achievementId}/unlock
-	AchievementUnlockAchievement(ctx context.Context, params AchievementUnlockAchievementParams) (AchievementUnlockAchievementRes, error)
-	// Health implements health operation.
+	// GET /players/{player_id}/achievements
+	GetPlayerAchievements(ctx context.Context, params GetPlayerAchievementsParams) (*PlayerAchievementsResponse, error)
+	// HealthCheck implements healthCheck operation.
 	//
 	// Health check.
 	//
 	// GET /health
-	Health(ctx context.Context) (*HealthResponse, error)
+	HealthCheck(ctx context.Context) (*HealthResponse, error)
+	// ListAchievements implements listAchievements operation.
+	//
+	// List achievements.
+	//
+	// GET /achievements
+	ListAchievements(ctx context.Context, params ListAchievementsParams) (*AchievementListResponse, error)
+	// UpdateAchievementProgress implements updateAchievementProgress operation.
+	//
+	// Update achievement progress.
+	//
+	// POST /players/{player_id}/achievements/{achievement_id}/progress
+	UpdateAchievementProgress(ctx context.Context, req *UpdateProgressRequest, params UpdateAchievementProgressParams) (*ProgressResponse, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

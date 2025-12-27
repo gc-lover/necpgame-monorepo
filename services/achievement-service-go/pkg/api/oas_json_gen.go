@@ -31,54 +31,36 @@ func (s *Achievement) encodeFields(e *jx.Encoder) {
 		e.Str(s.Name)
 	}
 	{
-		e.FieldStart("description")
-		e.Str(s.Description)
-	}
-	{
-		if s.IconURL.Set {
-			e.FieldStart("icon_url")
-			s.IconURL.Encode(e)
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
 		}
 	}
 	{
-		e.FieldStart("rarity")
-		s.Rarity.Encode(e)
+		e.FieldStart("status")
+		s.Status.Encode(e)
 	}
 	{
-		e.FieldStart("points")
-		e.Int32(s.Points)
-	}
-	{
-		e.FieldStart("is_unlocked")
-		e.Bool(s.IsUnlocked)
-	}
-	{
-		if s.UnlockedAt.Set {
-			e.FieldStart("unlocked_at")
-			s.UnlockedAt.Encode(e, json.EncodeDateTime)
+		if s.Difficulty.Set {
+			e.FieldStart("difficulty")
+			s.Difficulty.Encode(e)
 		}
 	}
 	{
-		e.FieldStart("created_at")
-		json.EncodeDateTime(e, s.CreatedAt)
-	}
-	{
-		e.FieldStart("updated_at")
-		json.EncodeDateTime(e, s.UpdatedAt)
+		if s.CreatedAt.Set {
+			e.FieldStart("created_at")
+			s.CreatedAt.Encode(e, json.EncodeDateTime)
+		}
 	}
 }
 
-var jsonFieldsNameOfAchievement = [10]string{
+var jsonFieldsNameOfAchievement = [6]string{
 	0: "id",
 	1: "name",
 	2: "description",
-	3: "icon_url",
-	4: "rarity",
-	5: "points",
-	6: "is_unlocked",
-	7: "unlocked_at",
-	8: "created_at",
-	9: "updated_at",
+	3: "status",
+	4: "difficulty",
+	5: "created_at",
 }
 
 // Decode decodes Achievement from json.
@@ -86,8 +68,7 @@ func (s *Achievement) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode Achievement to nil")
 	}
-	var requiredBitSet [2]uint8
-	s.setDefaults()
+	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -116,94 +97,44 @@ func (s *Achievement) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
 		case "description":
-			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
-				v, err := d.Str()
-				s.Description = string(v)
-				if err != nil {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"description\"")
 			}
-		case "icon_url":
+		case "status":
+			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
-				s.IconURL.Reset()
-				if err := s.IconURL.Decode(d); err != nil {
+				if err := s.Status.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"icon_url\"")
+				return errors.Wrap(err, "decode field \"status\"")
 			}
-		case "rarity":
-			requiredBitSet[0] |= 1 << 4
+		case "difficulty":
 			if err := func() error {
-				if err := s.Rarity.Decode(d); err != nil {
+				s.Difficulty.Reset()
+				if err := s.Difficulty.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"rarity\"")
-			}
-		case "points":
-			requiredBitSet[0] |= 1 << 5
-			if err := func() error {
-				v, err := d.Int32()
-				s.Points = int32(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"points\"")
-			}
-		case "is_unlocked":
-			requiredBitSet[0] |= 1 << 6
-			if err := func() error {
-				v, err := d.Bool()
-				s.IsUnlocked = bool(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"is_unlocked\"")
-			}
-		case "unlocked_at":
-			if err := func() error {
-				s.UnlockedAt.Reset()
-				if err := s.UnlockedAt.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"unlocked_at\"")
+				return errors.Wrap(err, "decode field \"difficulty\"")
 			}
 		case "created_at":
-			requiredBitSet[1] |= 1 << 0
 			if err := func() error {
-				v, err := json.DecodeDateTime(d)
-				s.CreatedAt = v
-				if err != nil {
+				s.CreatedAt.Reset()
+				if err := s.CreatedAt.Decode(d, json.DecodeDateTime); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"created_at\"")
-			}
-		case "updated_at":
-			requiredBitSet[1] |= 1 << 1
-			if err := func() error {
-				v, err := json.DecodeDateTime(d)
-				s.UpdatedAt = v
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"updated_at\"")
 			}
 		default:
 			return d.Skip()
@@ -214,9 +145,8 @@ func (s *Achievement) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [2]uint8{
-		0b01110111,
-		0b00000011,
+	for i, mask := range [1]uint8{
+		0b00001011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -262,230 +192,46 @@ func (s *Achievement) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes AchievementGetAchievementInternalServerError as json.
-func (s *AchievementGetAchievementInternalServerError) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
+// Encode encodes AchievementDifficulty as json.
+func (s AchievementDifficulty) Encode(e *jx.Encoder) {
+	e.Str(string(s))
 }
 
-// Decode decodes AchievementGetAchievementInternalServerError from json.
-func (s *AchievementGetAchievementInternalServerError) Decode(d *jx.Decoder) error {
+// Decode decodes AchievementDifficulty from json.
+func (s *AchievementDifficulty) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode AchievementGetAchievementInternalServerError to nil")
+		return errors.New("invalid: unable to decode AchievementDifficulty to nil")
 	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
 	}
-	*s = AchievementGetAchievementInternalServerError(unwrapped)
+	// Try to use constant string.
+	switch AchievementDifficulty(v) {
+	case AchievementDifficultyEasy:
+		*s = AchievementDifficultyEasy
+	case AchievementDifficultyMedium:
+		*s = AchievementDifficultyMedium
+	case AchievementDifficultyHard:
+		*s = AchievementDifficultyHard
+	case AchievementDifficultyLegendary:
+		*s = AchievementDifficultyLegendary
+	default:
+		*s = AchievementDifficulty(v)
+	}
+
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *AchievementGetAchievementInternalServerError) MarshalJSON() ([]byte, error) {
+func (s AchievementDifficulty) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AchievementGetAchievementInternalServerError) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes AchievementGetAchievementNotFound as json.
-func (s *AchievementGetAchievementNotFound) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
-}
-
-// Decode decodes AchievementGetAchievementNotFound from json.
-func (s *AchievementGetAchievementNotFound) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode AchievementGetAchievementNotFound to nil")
-	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
-	}
-	*s = AchievementGetAchievementNotFound(unwrapped)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *AchievementGetAchievementNotFound) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AchievementGetAchievementNotFound) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes AchievementGetAchievementUnauthorized as json.
-func (s *AchievementGetAchievementUnauthorized) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
-}
-
-// Decode decodes AchievementGetAchievementUnauthorized from json.
-func (s *AchievementGetAchievementUnauthorized) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode AchievementGetAchievementUnauthorized to nil")
-	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
-	}
-	*s = AchievementGetAchievementUnauthorized(unwrapped)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *AchievementGetAchievementUnauthorized) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AchievementGetAchievementUnauthorized) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes AchievementGetAchievementsBadRequest as json.
-func (s *AchievementGetAchievementsBadRequest) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
-}
-
-// Decode decodes AchievementGetAchievementsBadRequest from json.
-func (s *AchievementGetAchievementsBadRequest) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode AchievementGetAchievementsBadRequest to nil")
-	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
-	}
-	*s = AchievementGetAchievementsBadRequest(unwrapped)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *AchievementGetAchievementsBadRequest) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AchievementGetAchievementsBadRequest) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes AchievementGetAchievementsInternalServerError as json.
-func (s *AchievementGetAchievementsInternalServerError) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
-}
-
-// Decode decodes AchievementGetAchievementsInternalServerError from json.
-func (s *AchievementGetAchievementsInternalServerError) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode AchievementGetAchievementsInternalServerError to nil")
-	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
-	}
-	*s = AchievementGetAchievementsInternalServerError(unwrapped)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *AchievementGetAchievementsInternalServerError) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AchievementGetAchievementsInternalServerError) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes AchievementGetAchievementsUnauthorized as json.
-func (s *AchievementGetAchievementsUnauthorized) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
-}
-
-// Decode decodes AchievementGetAchievementsUnauthorized from json.
-func (s *AchievementGetAchievementsUnauthorized) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode AchievementGetAchievementsUnauthorized to nil")
-	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
-	}
-	*s = AchievementGetAchievementsUnauthorized(unwrapped)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *AchievementGetAchievementsUnauthorized) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AchievementGetAchievementsUnauthorized) UnmarshalJSON(data []byte) error {
+func (s *AchievementDifficulty) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -508,14 +254,28 @@ func (s *AchievementListResponse) encodeFields(e *jx.Encoder) {
 		e.ArrEnd()
 	}
 	{
-		e.FieldStart("count")
-		e.Int32(s.Count)
+		e.FieldStart("total_count")
+		e.Int(s.TotalCount)
+	}
+	{
+		if s.Page.Set {
+			e.FieldStart("page")
+			s.Page.Encode(e)
+		}
+	}
+	{
+		if s.Limit.Set {
+			e.FieldStart("limit")
+			s.Limit.Encode(e)
+		}
 	}
 }
 
-var jsonFieldsNameOfAchievementListResponse = [2]string{
+var jsonFieldsNameOfAchievementListResponse = [4]string{
 	0: "achievements",
-	1: "count",
+	1: "total_count",
+	2: "page",
+	3: "limit",
 }
 
 // Decode decodes AchievementListResponse from json.
@@ -545,17 +305,37 @@ func (s *AchievementListResponse) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"achievements\"")
 			}
-		case "count":
+		case "total_count":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				v, err := d.Int32()
-				s.Count = int32(v)
+				v, err := d.Int()
+				s.TotalCount = int(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"count\"")
+				return errors.Wrap(err, "decode field \"total_count\"")
+			}
+		case "page":
+			if err := func() error {
+				s.Page.Reset()
+				if err := s.Page.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"page\"")
+			}
+		case "limit":
+			if err := func() error {
+				s.Limit.Reset()
+				if err := s.Limit.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"limit\"")
 			}
 		default:
 			return d.Skip()
@@ -613,327 +393,494 @@ func (s *AchievementListResponse) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes AchievementRarity as json.
-func (s AchievementRarity) Encode(e *jx.Encoder) {
+// Encode implements json.Marshaler.
+func (s *AchievementResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *AchievementResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("achievement")
+		s.Achievement.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfAchievementResponse = [1]string{
+	0: "achievement",
+}
+
+// Decode decodes AchievementResponse from json.
+func (s *AchievementResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode AchievementResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "achievement":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Achievement.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"achievement\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode AchievementResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfAchievementResponse) {
+					name = jsonFieldsNameOfAchievementResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *AchievementResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *AchievementResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *AchievementReward) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *AchievementReward) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("reward_type")
+		s.RewardType.Encode(e)
+	}
+	{
+		e.FieldStart("reward_id")
+		e.Str(s.RewardID)
+	}
+	{
+		e.FieldStart("quantity")
+		e.Int(s.Quantity)
+	}
+	{
+		if s.Name.Set {
+			e.FieldStart("name")
+			s.Name.Encode(e)
+		}
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		if s.Rarity.Set {
+			e.FieldStart("rarity")
+			s.Rarity.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfAchievementReward = [6]string{
+	0: "reward_type",
+	1: "reward_id",
+	2: "quantity",
+	3: "name",
+	4: "description",
+	5: "rarity",
+}
+
+// Decode decodes AchievementReward from json.
+func (s *AchievementReward) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode AchievementReward to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "reward_type":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.RewardType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"reward_type\"")
+			}
+		case "reward_id":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.RewardID = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"reward_id\"")
+			}
+		case "quantity":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Int()
+				s.Quantity = int(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"quantity\"")
+			}
+		case "name":
+			if err := func() error {
+				s.Name.Reset()
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "rarity":
+			if err := func() error {
+				s.Rarity.Reset()
+				if err := s.Rarity.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rarity\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode AchievementReward")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfAchievementReward) {
+					name = jsonFieldsNameOfAchievementReward[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *AchievementReward) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *AchievementReward) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes AchievementRewardRarity as json.
+func (s AchievementRewardRarity) Encode(e *jx.Encoder) {
 	e.Str(string(s))
 }
 
-// Decode decodes AchievementRarity from json.
-func (s *AchievementRarity) Decode(d *jx.Decoder) error {
+// Decode decodes AchievementRewardRarity from json.
+func (s *AchievementRewardRarity) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode AchievementRarity to nil")
+		return errors.New("invalid: unable to decode AchievementRewardRarity to nil")
 	}
 	v, err := d.StrBytes()
 	if err != nil {
 		return err
 	}
 	// Try to use constant string.
-	switch AchievementRarity(v) {
-	case AchievementRarityCommon:
-		*s = AchievementRarityCommon
-	case AchievementRarityUncommon:
-		*s = AchievementRarityUncommon
-	case AchievementRarityRare:
-		*s = AchievementRarityRare
-	case AchievementRarityEpic:
-		*s = AchievementRarityEpic
-	case AchievementRarityLegendary:
-		*s = AchievementRarityLegendary
+	switch AchievementRewardRarity(v) {
+	case AchievementRewardRarityCommon:
+		*s = AchievementRewardRarityCommon
+	case AchievementRewardRarityRare:
+		*s = AchievementRewardRarityRare
+	case AchievementRewardRarityEpic:
+		*s = AchievementRewardRarityEpic
+	case AchievementRewardRarityLegendary:
+		*s = AchievementRewardRarityLegendary
 	default:
-		*s = AchievementRarity(v)
+		*s = AchievementRewardRarity(v)
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s AchievementRarity) MarshalJSON() ([]byte, error) {
+func (s AchievementRewardRarity) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AchievementRarity) UnmarshalJSON(data []byte) error {
+func (s *AchievementRewardRarity) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
-// Encode encodes AchievementUnlockAchievementBadRequest as json.
-func (s *AchievementUnlockAchievementBadRequest) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
+// Encode encodes AchievementRewardRewardType as json.
+func (s AchievementRewardRewardType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
 }
 
-// Decode decodes AchievementUnlockAchievementBadRequest from json.
-func (s *AchievementUnlockAchievementBadRequest) Decode(d *jx.Decoder) error {
+// Decode decodes AchievementRewardRewardType from json.
+func (s *AchievementRewardRewardType) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode AchievementUnlockAchievementBadRequest to nil")
+		return errors.New("invalid: unable to decode AchievementRewardRewardType to nil")
 	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
 	}
-	*s = AchievementUnlockAchievementBadRequest(unwrapped)
+	// Try to use constant string.
+	switch AchievementRewardRewardType(v) {
+	case AchievementRewardRewardTypeCurrency:
+		*s = AchievementRewardRewardTypeCurrency
+	case AchievementRewardRewardTypeItem:
+		*s = AchievementRewardRewardTypeItem
+	case AchievementRewardRewardTypeCosmetic:
+		*s = AchievementRewardRewardTypeCosmetic
+	case AchievementRewardRewardTypeTitle:
+		*s = AchievementRewardRewardTypeTitle
+	default:
+		*s = AchievementRewardRewardType(v)
+	}
+
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *AchievementUnlockAchievementBadRequest) MarshalJSON() ([]byte, error) {
+func (s AchievementRewardRewardType) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AchievementUnlockAchievementBadRequest) UnmarshalJSON(data []byte) error {
+func (s *AchievementRewardRewardType) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
-// Encode encodes AchievementUnlockAchievementConflict as json.
-func (s *AchievementUnlockAchievementConflict) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
+// Encode encodes AchievementStatus as json.
+func (s AchievementStatus) Encode(e *jx.Encoder) {
+	e.Str(string(s))
 }
 
-// Decode decodes AchievementUnlockAchievementConflict from json.
-func (s *AchievementUnlockAchievementConflict) Decode(d *jx.Decoder) error {
+// Decode decodes AchievementStatus from json.
+func (s *AchievementStatus) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode AchievementUnlockAchievementConflict to nil")
+		return errors.New("invalid: unable to decode AchievementStatus to nil")
 	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
 	}
-	*s = AchievementUnlockAchievementConflict(unwrapped)
+	// Try to use constant string.
+	switch AchievementStatus(v) {
+	case AchievementStatusActive:
+		*s = AchievementStatusActive
+	case AchievementStatusInactive:
+		*s = AchievementStatusInactive
+	case AchievementStatusHidden:
+		*s = AchievementStatusHidden
+	default:
+		*s = AchievementStatus(v)
+	}
+
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *AchievementUnlockAchievementConflict) MarshalJSON() ([]byte, error) {
+func (s AchievementStatus) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AchievementUnlockAchievementConflict) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes AchievementUnlockAchievementInternalServerError as json.
-func (s *AchievementUnlockAchievementInternalServerError) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
-}
-
-// Decode decodes AchievementUnlockAchievementInternalServerError from json.
-func (s *AchievementUnlockAchievementInternalServerError) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode AchievementUnlockAchievementInternalServerError to nil")
-	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
-	}
-	*s = AchievementUnlockAchievementInternalServerError(unwrapped)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *AchievementUnlockAchievementInternalServerError) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AchievementUnlockAchievementInternalServerError) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes AchievementUnlockAchievementNotFound as json.
-func (s *AchievementUnlockAchievementNotFound) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
-}
-
-// Decode decodes AchievementUnlockAchievementNotFound from json.
-func (s *AchievementUnlockAchievementNotFound) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode AchievementUnlockAchievementNotFound to nil")
-	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
-	}
-	*s = AchievementUnlockAchievementNotFound(unwrapped)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *AchievementUnlockAchievementNotFound) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AchievementUnlockAchievementNotFound) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes AchievementUnlockAchievementUnauthorized as json.
-func (s *AchievementUnlockAchievementUnauthorized) Encode(e *jx.Encoder) {
-	unwrapped := (*Error)(s)
-
-	unwrapped.Encode(e)
-}
-
-// Decode decodes AchievementUnlockAchievementUnauthorized from json.
-func (s *AchievementUnlockAchievementUnauthorized) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode AchievementUnlockAchievementUnauthorized to nil")
-	}
-	var unwrapped Error
-	if err := func() error {
-		if err := unwrapped.Decode(d); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		return errors.Wrap(err, "alias")
-	}
-	*s = AchievementUnlockAchievementUnauthorized(unwrapped)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *AchievementUnlockAchievementUnauthorized) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AchievementUnlockAchievementUnauthorized) UnmarshalJSON(data []byte) error {
+func (s *AchievementStatus) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
 // Encode implements json.Marshaler.
-func (s *AchievementUnlockResponse) Encode(e *jx.Encoder) {
+func (s *CreateAchievementRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
 	e.ObjEnd()
 }
 
 // encodeFields encodes fields.
-func (s *AchievementUnlockResponse) encodeFields(e *jx.Encoder) {
+func (s *CreateAchievementRequest) encodeFields(e *jx.Encoder) {
 	{
-		e.FieldStart("achievement_id")
-		json.EncodeUUID(e, s.AchievementID)
+		e.FieldStart("name")
+		e.Str(s.Name)
 	}
 	{
-		e.FieldStart("unlocked")
-		e.Bool(s.Unlocked)
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
 	}
 	{
-		e.FieldStart("unlocked_at")
-		json.EncodeDateTime(e, s.UnlockedAt)
+		if s.Difficulty.Set {
+			e.FieldStart("difficulty")
+			s.Difficulty.Encode(e)
+		}
 	}
 }
 
-var jsonFieldsNameOfAchievementUnlockResponse = [3]string{
-	0: "achievement_id",
-	1: "unlocked",
-	2: "unlocked_at",
+var jsonFieldsNameOfCreateAchievementRequest = [3]string{
+	0: "name",
+	1: "description",
+	2: "difficulty",
 }
 
-// Decode decodes AchievementUnlockResponse from json.
-func (s *AchievementUnlockResponse) Decode(d *jx.Decoder) error {
+// Decode decodes CreateAchievementRequest from json.
+func (s *CreateAchievementRequest) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode AchievementUnlockResponse to nil")
+		return errors.New("invalid: unable to decode CreateAchievementRequest to nil")
 	}
 	var requiredBitSet [1]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "achievement_id":
+		case "name":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				v, err := json.DecodeUUID(d)
-				s.AchievementID = v
+				v, err := d.Str()
+				s.Name = string(v)
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"achievement_id\"")
+				return errors.Wrap(err, "decode field \"name\"")
 			}
-		case "unlocked":
-			requiredBitSet[0] |= 1 << 1
+		case "description":
 			if err := func() error {
-				v, err := d.Bool()
-				s.Unlocked = bool(v)
-				if err != nil {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"unlocked\"")
+				return errors.Wrap(err, "decode field \"description\"")
 			}
-		case "unlocked_at":
-			requiredBitSet[0] |= 1 << 2
+		case "difficulty":
 			if err := func() error {
-				v, err := json.DecodeDateTime(d)
-				s.UnlockedAt = v
-				if err != nil {
+				s.Difficulty.Reset()
+				if err := s.Difficulty.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"unlocked_at\"")
+				return errors.Wrap(err, "decode field \"difficulty\"")
 			}
 		default:
 			return d.Skip()
 		}
 		return nil
 	}); err != nil {
-		return errors.Wrap(err, "decode AchievementUnlockResponse")
+		return errors.Wrap(err, "decode CreateAchievementRequest")
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00000111,
+		0b00000001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -945,8 +892,8 @@ func (s *AchievementUnlockResponse) Decode(d *jx.Decoder) error {
 				bitIdx := bits.TrailingZeros8(result)
 				fieldIdx := i*8 + bitIdx
 				var name string
-				if fieldIdx < len(jsonFieldsNameOfAchievementUnlockResponse) {
-					name = jsonFieldsNameOfAchievementUnlockResponse[fieldIdx]
+				if fieldIdx < len(jsonFieldsNameOfCreateAchievementRequest) {
+					name = jsonFieldsNameOfCreateAchievementRequest[fieldIdx]
 				} else {
 					name = strconv.Itoa(fieldIdx)
 				}
@@ -967,161 +914,58 @@ func (s *AchievementUnlockResponse) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *AchievementUnlockResponse) MarshalJSON() ([]byte, error) {
+func (s *CreateAchievementRequest) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *AchievementUnlockResponse) UnmarshalJSON(data []byte) error {
+func (s *CreateAchievementRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
 
-// Encode implements json.Marshaler.
-func (s *Error) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
+// Encode encodes CreateAchievementRequestDifficulty as json.
+func (s CreateAchievementRequestDifficulty) Encode(e *jx.Encoder) {
+	e.Str(string(s))
 }
 
-// encodeFields encodes fields.
-func (s *Error) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("error")
-		e.Str(s.Error)
-	}
-	{
-		e.FieldStart("status")
-		e.Int32(s.Status)
-	}
-	{
-		e.FieldStart("service")
-		e.Str(s.Service)
-	}
-	{
-		if s.Timestamp.Set {
-			e.FieldStart("timestamp")
-			s.Timestamp.Encode(e, json.EncodeDateTime)
-		}
-	}
-}
-
-var jsonFieldsNameOfError = [4]string{
-	0: "error",
-	1: "status",
-	2: "service",
-	3: "timestamp",
-}
-
-// Decode decodes Error from json.
-func (s *Error) Decode(d *jx.Decoder) error {
+// Decode decodes CreateAchievementRequestDifficulty from json.
+func (s *CreateAchievementRequestDifficulty) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode Error to nil")
+		return errors.New("invalid: unable to decode CreateAchievementRequestDifficulty to nil")
 	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "error":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := d.Str()
-				s.Error = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"error\"")
-			}
-		case "status":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Int32()
-				s.Status = int32(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"status\"")
-			}
-		case "service":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				v, err := d.Str()
-				s.Service = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"service\"")
-			}
-		case "timestamp":
-			if err := func() error {
-				s.Timestamp.Reset()
-				if err := s.Timestamp.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"timestamp\"")
-			}
-		default:
-			return d.Skip()
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode Error")
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
 	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000111,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfError) {
-					name = jsonFieldsNameOfError[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
+	// Try to use constant string.
+	switch CreateAchievementRequestDifficulty(v) {
+	case CreateAchievementRequestDifficultyEasy:
+		*s = CreateAchievementRequestDifficultyEasy
+	case CreateAchievementRequestDifficultyMedium:
+		*s = CreateAchievementRequestDifficultyMedium
+	case CreateAchievementRequestDifficultyHard:
+		*s = CreateAchievementRequestDifficultyHard
+	case CreateAchievementRequestDifficultyLegendary:
+		*s = CreateAchievementRequestDifficultyLegendary
+	default:
+		*s = CreateAchievementRequestDifficulty(v)
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s *Error) MarshalJSON() ([]byte, error) {
+func (s CreateAchievementRequestDifficulty) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *Error) UnmarshalJSON(data []byte) error {
+func (s *CreateAchievementRequestDifficulty) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -1137,27 +981,38 @@ func (s *HealthResponse) Encode(e *jx.Encoder) {
 func (s *HealthResponse) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("status")
-		s.Status.Encode(e)
-	}
-	{
-		e.FieldStart("service")
-		e.Str(s.Service)
+		e.Str(s.Status)
 	}
 	{
 		e.FieldStart("timestamp")
 		json.EncodeDateTime(e, s.Timestamp)
 	}
 	{
-		e.FieldStart("version")
-		e.Str(s.Version)
+		if s.Version.Set {
+			e.FieldStart("version")
+			s.Version.Encode(e)
+		}
+	}
+	{
+		if s.UptimeSeconds.Set {
+			e.FieldStart("uptime_seconds")
+			s.UptimeSeconds.Encode(e)
+		}
+	}
+	{
+		if s.ActiveConnections.Set {
+			e.FieldStart("active_connections")
+			s.ActiveConnections.Encode(e)
+		}
 	}
 }
 
-var jsonFieldsNameOfHealthResponse = [4]string{
+var jsonFieldsNameOfHealthResponse = [5]string{
 	0: "status",
-	1: "service",
-	2: "timestamp",
-	3: "version",
+	1: "timestamp",
+	2: "version",
+	3: "uptime_seconds",
+	4: "active_connections",
 }
 
 // Decode decodes HealthResponse from json.
@@ -1172,27 +1027,17 @@ func (s *HealthResponse) Decode(d *jx.Decoder) error {
 		case "status":
 			requiredBitSet[0] |= 1 << 0
 			if err := func() error {
-				if err := s.Status.Decode(d); err != nil {
+				v, err := d.Str()
+				s.Status = string(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"status\"")
 			}
-		case "service":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Str()
-				s.Service = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"service\"")
-			}
 		case "timestamp":
-			requiredBitSet[0] |= 1 << 2
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				v, err := json.DecodeDateTime(d)
 				s.Timestamp = v
@@ -1204,16 +1049,34 @@ func (s *HealthResponse) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"timestamp\"")
 			}
 		case "version":
-			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
-				v, err := d.Str()
-				s.Version = string(v)
-				if err != nil {
+				s.Version.Reset()
+				if err := s.Version.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"version\"")
+			}
+		case "uptime_seconds":
+			if err := func() error {
+				s.UptimeSeconds.Reset()
+				if err := s.UptimeSeconds.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"uptime_seconds\"")
+			}
+		case "active_connections":
+			if err := func() error {
+				s.ActiveConnections.Reset()
+				if err := s.ActiveConnections.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"active_connections\"")
 			}
 		default:
 			return d.Skip()
@@ -1225,7 +1088,7 @@ func (s *HealthResponse) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00001111,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -1271,42 +1134,136 @@ func (s *HealthResponse) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes HealthResponseStatus as json.
-func (s HealthResponseStatus) Encode(e *jx.Encoder) {
-	e.Str(string(s))
+// Encode encodes AchievementDifficulty as json.
+func (o OptAchievementDifficulty) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
 }
 
-// Decode decodes HealthResponseStatus from json.
-func (s *HealthResponseStatus) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode HealthResponseStatus to nil")
+// Decode decodes AchievementDifficulty from json.
+func (o *OptAchievementDifficulty) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptAchievementDifficulty to nil")
 	}
-	v, err := d.StrBytes()
-	if err != nil {
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
 		return err
 	}
-	// Try to use constant string.
-	switch HealthResponseStatus(v) {
-	case HealthResponseStatusHealthy:
-		*s = HealthResponseStatusHealthy
-	case HealthResponseStatusUnhealthy:
-		*s = HealthResponseStatusUnhealthy
-	default:
-		*s = HealthResponseStatus(v)
-	}
-
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s HealthResponseStatus) MarshalJSON() ([]byte, error) {
+func (s OptAchievementDifficulty) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *HealthResponseStatus) UnmarshalJSON(data []byte) error {
+func (s *OptAchievementDifficulty) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes AchievementRewardRarity as json.
+func (o OptAchievementRewardRarity) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes AchievementRewardRarity from json.
+func (o *OptAchievementRewardRarity) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptAchievementRewardRarity to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptAchievementRewardRarity) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptAchievementRewardRarity) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes bool as json.
+func (o OptBool) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Bool(bool(o.Value))
+}
+
+// Decode decodes bool from json.
+func (o *OptBool) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptBool to nil")
+	}
+	o.Set = true
+	v, err := d.Bool()
+	if err != nil {
+		return err
+	}
+	o.Value = bool(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptBool) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptBool) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes CreateAchievementRequestDifficulty as json.
+func (o OptCreateAchievementRequestDifficulty) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes CreateAchievementRequestDifficulty from json.
+func (o *OptCreateAchievementRequestDifficulty) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptCreateAchievementRequestDifficulty to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptCreateAchievementRequestDifficulty) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptCreateAchievementRequestDifficulty) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -1346,88 +1303,979 @@ func (s *OptDateTime) UnmarshalJSON(data []byte) error {
 	return s.Decode(d, json.DecodeDateTime)
 }
 
-// Encode encodes time.Time as json.
-func (o OptNilDateTime) Encode(e *jx.Encoder, format func(*jx.Encoder, time.Time)) {
+// Encode encodes float64 as json.
+func (o OptFloat64) Encode(e *jx.Encoder) {
 	if !o.Set {
 		return
 	}
-	if o.Null {
-		e.Null()
-		return
-	}
-	format(e, o.Value)
+	e.Float64(float64(o.Value))
 }
 
-// Decode decodes time.Time from json.
-func (o *OptNilDateTime) Decode(d *jx.Decoder, format func(*jx.Decoder) (time.Time, error)) error {
+// Decode decodes float64 from json.
+func (o *OptFloat64) Decode(d *jx.Decoder) error {
 	if o == nil {
-		return errors.New("invalid: unable to decode OptNilDateTime to nil")
-	}
-	if d.Next() == jx.Null {
-		if err := d.Null(); err != nil {
-			return err
-		}
-
-		var v time.Time
-		o.Value = v
-		o.Set = true
-		o.Null = true
-		return nil
+		return errors.New("invalid: unable to decode OptFloat64 to nil")
 	}
 	o.Set = true
-	o.Null = false
-	v, err := format(d)
+	v, err := d.Float64()
 	if err != nil {
 		return err
 	}
-	o.Value = v
+	o.Value = float64(v)
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s OptNilDateTime) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e, json.EncodeDateTime)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptNilDateTime) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d, json.DecodeDateTime)
-}
-
-// Encode encodes url.URL as json.
-func (o OptURI) Encode(e *jx.Encoder) {
-	if !o.Set {
-		return
-	}
-	json.EncodeURI(e, o.Value)
-}
-
-// Decode decodes url.URL from json.
-func (o *OptURI) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode OptURI to nil")
-	}
-	o.Set = true
-	v, err := json.DecodeURI(d)
-	if err != nil {
-		return err
-	}
-	o.Value = v
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s OptURI) MarshalJSON() ([]byte, error) {
+func (s OptFloat64) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptURI) UnmarshalJSON(data []byte) error {
+func (s *OptFloat64) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes int as json.
+func (o OptInt) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Int(int(o.Value))
+}
+
+// Decode decodes int from json.
+func (o *OptInt) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptInt to nil")
+	}
+	o.Set = true
+	v, err := d.Int()
+	if err != nil {
+		return err
+	}
+	o.Value = int(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptInt) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptInt) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes PlayerAchievementStats as json.
+func (o OptPlayerAchievementStats) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes PlayerAchievementStats from json.
+func (o *OptPlayerAchievementStats) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptPlayerAchievementStats to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptPlayerAchievementStats) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptPlayerAchievementStats) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes string as json.
+func (o OptString) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes string from json.
+func (o *OptString) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptString to nil")
+	}
+	o.Set = true
+	v, err := d.Str()
+	if err != nil {
+		return err
+	}
+	o.Value = string(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptString) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptString) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *PlayerAchievement) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *PlayerAchievement) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("achievement_id")
+		json.EncodeUUID(e, s.AchievementID)
+	}
+	{
+		e.FieldStart("progress")
+		e.Float64(s.Progress)
+	}
+	{
+		e.FieldStart("status")
+		s.Status.Encode(e)
+	}
+	{
+		if s.CompletedAt.Set {
+			e.FieldStart("completed_at")
+			s.CompletedAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+}
+
+var jsonFieldsNameOfPlayerAchievement = [4]string{
+	0: "achievement_id",
+	1: "progress",
+	2: "status",
+	3: "completed_at",
+}
+
+// Decode decodes PlayerAchievement from json.
+func (s *PlayerAchievement) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PlayerAchievement to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "achievement_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.AchievementID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"achievement_id\"")
+			}
+		case "progress":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Float64()
+				s.Progress = float64(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"progress\"")
+			}
+		case "status":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Status.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"status\"")
+			}
+		case "completed_at":
+			if err := func() error {
+				s.CompletedAt.Reset()
+				if err := s.CompletedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"completed_at\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode PlayerAchievement")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfPlayerAchievement) {
+					name = jsonFieldsNameOfPlayerAchievement[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *PlayerAchievement) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PlayerAchievement) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *PlayerAchievementStats) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *PlayerAchievementStats) encodeFields(e *jx.Encoder) {
+	{
+		if s.TotalAchievements.Set {
+			e.FieldStart("total_achievements")
+			s.TotalAchievements.Encode(e)
+		}
+	}
+	{
+		if s.CompletedAchievements.Set {
+			e.FieldStart("completed_achievements")
+			s.CompletedAchievements.Encode(e)
+		}
+	}
+	{
+		if s.CompletionPercentage.Set {
+			e.FieldStart("completion_percentage")
+			s.CompletionPercentage.Encode(e)
+		}
+	}
+	{
+		if s.TotalPoints.Set {
+			e.FieldStart("total_points")
+			s.TotalPoints.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfPlayerAchievementStats = [4]string{
+	0: "total_achievements",
+	1: "completed_achievements",
+	2: "completion_percentage",
+	3: "total_points",
+}
+
+// Decode decodes PlayerAchievementStats from json.
+func (s *PlayerAchievementStats) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PlayerAchievementStats to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "total_achievements":
+			if err := func() error {
+				s.TotalAchievements.Reset()
+				if err := s.TotalAchievements.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_achievements\"")
+			}
+		case "completed_achievements":
+			if err := func() error {
+				s.CompletedAchievements.Reset()
+				if err := s.CompletedAchievements.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"completed_achievements\"")
+			}
+		case "completion_percentage":
+			if err := func() error {
+				s.CompletionPercentage.Reset()
+				if err := s.CompletionPercentage.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"completion_percentage\"")
+			}
+		case "total_points":
+			if err := func() error {
+				s.TotalPoints.Reset()
+				if err := s.TotalPoints.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"total_points\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode PlayerAchievementStats")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *PlayerAchievementStats) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PlayerAchievementStats) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes PlayerAchievementStatus as json.
+func (s PlayerAchievementStatus) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes PlayerAchievementStatus from json.
+func (s *PlayerAchievementStatus) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PlayerAchievementStatus to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch PlayerAchievementStatus(v) {
+	case PlayerAchievementStatusNotStarted:
+		*s = PlayerAchievementStatusNotStarted
+	case PlayerAchievementStatusInProgress:
+		*s = PlayerAchievementStatusInProgress
+	case PlayerAchievementStatusCompleted:
+		*s = PlayerAchievementStatusCompleted
+	case PlayerAchievementStatusLocked:
+		*s = PlayerAchievementStatusLocked
+	default:
+		*s = PlayerAchievementStatus(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s PlayerAchievementStatus) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PlayerAchievementStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *PlayerAchievementsResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *PlayerAchievementsResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("achievements")
+		e.ArrStart()
+		for _, elem := range s.Achievements {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		if s.Statistics.Set {
+			e.FieldStart("statistics")
+			s.Statistics.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfPlayerAchievementsResponse = [2]string{
+	0: "achievements",
+	1: "statistics",
+}
+
+// Decode decodes PlayerAchievementsResponse from json.
+func (s *PlayerAchievementsResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode PlayerAchievementsResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "achievements":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				s.Achievements = make([]PlayerAchievement, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem PlayerAchievement
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Achievements = append(s.Achievements, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"achievements\"")
+			}
+		case "statistics":
+			if err := func() error {
+				s.Statistics.Reset()
+				if err := s.Statistics.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"statistics\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode PlayerAchievementsResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfPlayerAchievementsResponse) {
+					name = jsonFieldsNameOfPlayerAchievementsResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *PlayerAchievementsResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *PlayerAchievementsResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ProgressResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ProgressResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("achievement_id")
+		json.EncodeUUID(e, s.AchievementID)
+	}
+	{
+		e.FieldStart("new_progress")
+		e.Float64(s.NewProgress)
+	}
+	{
+		if s.WasCompleted.Set {
+			e.FieldStart("was_completed")
+			s.WasCompleted.Encode(e)
+		}
+	}
+	{
+		if s.RewardsUnlocked != nil {
+			e.FieldStart("rewards_unlocked")
+			e.ArrStart()
+			for _, elem := range s.RewardsUnlocked {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfProgressResponse = [4]string{
+	0: "achievement_id",
+	1: "new_progress",
+	2: "was_completed",
+	3: "rewards_unlocked",
+}
+
+// Decode decodes ProgressResponse from json.
+func (s *ProgressResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ProgressResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "achievement_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.AchievementID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"achievement_id\"")
+			}
+		case "new_progress":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Float64()
+				s.NewProgress = float64(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"new_progress\"")
+			}
+		case "was_completed":
+			if err := func() error {
+				s.WasCompleted.Reset()
+				if err := s.WasCompleted.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"was_completed\"")
+			}
+		case "rewards_unlocked":
+			if err := func() error {
+				s.RewardsUnlocked = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.RewardsUnlocked = append(s.RewardsUnlocked, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rewards_unlocked\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ProgressResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfProgressResponse) {
+					name = jsonFieldsNameOfProgressResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ProgressResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ProgressResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *RewardResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *RewardResponse) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("achievement_id")
+		json.EncodeUUID(e, s.AchievementID)
+	}
+	{
+		e.FieldStart("rewards_granted")
+		e.ArrStart()
+		for _, elem := range s.RewardsGranted {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	{
+		if s.ClaimedAt.Set {
+			e.FieldStart("claimed_at")
+			s.ClaimedAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+}
+
+var jsonFieldsNameOfRewardResponse = [3]string{
+	0: "achievement_id",
+	1: "rewards_granted",
+	2: "claimed_at",
+}
+
+// Decode decodes RewardResponse from json.
+func (s *RewardResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode RewardResponse to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "achievement_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.AchievementID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"achievement_id\"")
+			}
+		case "rewards_granted":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				s.RewardsGranted = make([]AchievementReward, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem AchievementReward
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.RewardsGranted = append(s.RewardsGranted, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rewards_granted\"")
+			}
+		case "claimed_at":
+			if err := func() error {
+				s.ClaimedAt.Reset()
+				if err := s.ClaimedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"claimed_at\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode RewardResponse")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfRewardResponse) {
+					name = jsonFieldsNameOfRewardResponse[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *RewardResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *RewardResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *UpdateProgressRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *UpdateProgressRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("progress_value")
+		e.Float64(s.ProgressValue)
+	}
+	{
+		if s.EventType.Set {
+			e.FieldStart("event_type")
+			s.EventType.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfUpdateProgressRequest = [2]string{
+	0: "progress_value",
+	1: "event_type",
+}
+
+// Decode decodes UpdateProgressRequest from json.
+func (s *UpdateProgressRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode UpdateProgressRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "progress_value":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Float64()
+				s.ProgressValue = float64(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"progress_value\"")
+			}
+		case "event_type":
+			if err := func() error {
+				s.EventType.Reset()
+				if err := s.EventType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"event_type\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode UpdateProgressRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000001,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfUpdateProgressRequest) {
+					name = jsonFieldsNameOfUpdateProgressRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *UpdateProgressRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *UpdateProgressRequest) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

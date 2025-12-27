@@ -6,8 +6,11 @@ package api
 type OperationName = string
 
 const (
-	AchievementGetAchievementOperation    OperationName = "AchievementGetAchievement"
-	AchievementGetAchievementsOperation   OperationName = "AchievementGetAchievements"
-	AchievementUnlockAchievementOperation OperationName = "AchievementUnlockAchievement"
-	HealthOperation                       OperationName = "Health"
+	ClaimAchievementRewardOperation    OperationName = "ClaimAchievementReward"
+	CreateAchievementOperation         OperationName = "CreateAchievement"
+	GetAchievementOperation            OperationName = "GetAchievement"
+	GetPlayerAchievementsOperation     OperationName = "GetPlayerAchievements"
+	HealthCheckOperation               OperationName = "HealthCheck"
+	ListAchievementsOperation          OperationName = "ListAchievements"
+	UpdateAchievementProgressOperation OperationName = "UpdateAchievementProgress"
 )

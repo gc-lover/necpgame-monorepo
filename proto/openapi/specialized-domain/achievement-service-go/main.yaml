@@ -115,10 +115,6 @@ paths:
               schema:
                 type: string
                 example: max-age=30, s-maxage=60
-            ETag:
-              schema:
-                type: string
-                example: '"health-v1.0"'
             Content-Encoding:
               schema:
                 type: string
@@ -769,10 +765,6 @@ paths:
         '304':
           description: Not modified - resource has not changed
           headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
             Cache-Control:
               schema:
                 type: string
@@ -859,25 +851,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '409':
-          description: Conflict - version conflict (optimistic locking) or precondition failed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
+          description: Conflict - version conflict or precondition failed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '412':
-          description: Precondition failed - If-Match or If-Unmodified-Since condition not met
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
+          description: Precondition failed - condition not met
           content:
             application/json:
               schema:
@@ -1018,11 +998,6 @@ components:
             type: string
             example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
             description: URL of the created example
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching and optimistic locking
         Cache-Control:
           schema:
             type: string
@@ -1034,11 +1009,6 @@ components:
     ExampleRetrieved:
       description: Example retrieved successfully
       headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching
         Cache-Control:
           schema:
             type: string
@@ -1062,11 +1032,6 @@ components:
     ExampleUpdated:
       description: Example updated successfully
       headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v2"'
-            description: New entity tag after update
         Last-Modified:
           schema:
             type: string
@@ -1464,3 +1429,226 @@ components:
           example: 20
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Paginated
         responses optimized for memory efficiency.'
+
+    # Achievement System Schemas
+    PlayerAchievement:
+      type: object
+      required:
+        - achievement_id
+        - title
+        - progress
+        - max_progress
+        - is_completed
+        - unlocked_at
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+          description: Unique achievement identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        title:
+          type: string
+          description: Achievement display name
+          example: "First Blood"
+          maxLength: 100
+        description:
+          type: string
+          description: Achievement description
+          example: "Kill your first enemy"
+          maxLength: 500
+        progress:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Current progress towards completion
+          example: 5
+        max_progress:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Maximum progress required
+          example: 10
+        is_completed:
+          type: boolean
+          description: Whether achievement is fully completed
+          example: false
+        is_claimed:
+          type: boolean
+          description: Whether rewards have been claimed
+          example: false
+        unlocked_at:
+          type: string
+          format: date-time
+          description: When achievement was first unlocked
+          example: "2025-12-27T07:00:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          description: When achievement was completed
+          example: "2025-12-27T08:00:00Z"
+        claimed_at:
+          type: string
+          format: date-time
+          description: When rewards were claimed
+          example: "2025-12-27T08:30:00Z"
+        category:
+          type: string
+          enum: [combat, exploration, social, progression, collection, special]
+          description: Achievement category
+          example: "combat"
+        points:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Achievement point value
+          example: 10
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+          description: Achievement rarity tier
+          example: "common"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    PlayerAchievementStats:
+      type: object
+      required:
+        - total_achievements
+        - completed_achievements
+        - total_points
+        - completion_percentage
+      properties:
+        total_achievements:
+          type: integer
+          format: int32
+          description: Total available achievements
+          example: 150
+        completed_achievements:
+          type: integer
+          format: int32
+          description: Number of completed achievements
+          example: 45
+        total_points:
+          type: integer
+          format: int32
+          description: Total achievement points earned
+          example: 1250
+        completion_percentage:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+          description: Overall completion percentage
+          example: 30.0
+        category_breakdown:
+          type: object
+          description: Achievement counts by category
+          properties:
+            combat:
+              type: integer
+              example: 12
+            exploration:
+              type: integer
+              example: 8
+            social:
+              type: integer
+              example: 15
+            progression:
+              type: integer
+              example: 6
+            collection:
+              type: integer
+              example: 4
+            special:
+              type: integer
+              example: 0
+        rarity_breakdown:
+          type: object
+          description: Achievement counts by rarity
+          properties:
+            common:
+              type: integer
+              example: 35
+            uncommon:
+              type: integer
+              example: 8
+            rare:
+              type: integer
+              example: 2
+            epic:
+              type: integer
+              example: 0
+            legendary:
+              type: integer
+              example: 0
+        recent_achievements:
+          type: array
+          description: Recently completed achievements
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/PlayerAchievement'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    UpdateProgressRequest:
+      type: object
+      required:
+        - progress_amount
+        - event_type
+      properties:
+        progress_amount:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Amount to add to achievement progress
+          example: 1
+        event_type:
+          type: string
+          description: Type of event triggering progress update
+          example: "enemy_killed"
+          maxLength: 50
+        metadata:
+          type: object
+          description: Additional event metadata
+          example:
+            weapon_used: "assault_rifle"
+            enemy_type: "cyberpsycho"
+            location: "night_city"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    AchievementReward:
+      type: object
+      required:
+        - reward_type
+        - reward_id
+        - quantity
+      properties:
+        reward_type:
+          type: string
+          enum: [currency, item, title, cosmetic, boost, unlock]
+          description: Type of reward granted
+          example: "currency"
+        reward_id:
+          type: string
+          description: Unique identifier for the reward
+          example: "eddies"
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Quantity of reward granted
+          example: 1000
+        name:
+          type: string
+          description: Human-readable reward name
+          example: "Eddies"
+          maxLength: 100
+        description:
+          type: string
+          description: Reward description
+          example: "In-game currency"
+          maxLength: 200
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+          description: Reward rarity
+          example: "common"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

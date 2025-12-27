@@ -1,0 +1,354 @@
+openapi: 3.0.3
+info:
+  title: Achievement Service API - Simplified MVP
+  description: |
+    **Enterprise-Grade Achievement Service API for NECPGAME**
+
+    Simplified MVP version for initial implementation.
+    Performance targets: P99 Latency <25ms for achievement checks.
+  version: 1.0.0
+servers:
+- url: http://localhost:8081/api/v1
+  description: Local development server
+security:
+- BearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /achievements:
+    get:
+      summary: List achievements
+      operationId: listAchievements
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 20
+      responses:
+        '200':
+          description: Achievements list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementListResponse'
+    post:
+      summary: Create achievement
+      operationId: createAchievement
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAchievementRequest'
+      responses:
+        '201':
+          description: Achievement created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementResponse'
+  /achievements/{achievement_id}:
+    get:
+      summary: Get achievement
+      operationId: getAchievement
+      parameters:
+      - name: achievement_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Achievement retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementResponse'
+  /players/{player_id}/achievements:
+    get:
+      summary: Get player achievements
+      operationId: getPlayerAchievements
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Player achievements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerAchievementsResponse'
+  /players/{player_id}/achievements/{achievement_id}/progress:
+    post:
+      summary: Update achievement progress
+      operationId: updateAchievementProgress
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: achievement_id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProgressRequest'
+      responses:
+        '200':
+          description: Progress updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressResponse'
+  /players/{player_id}/achievements/{achievement_id}/claim-reward:
+    post:
+      summary: Claim achievement reward
+      operationId: claimAchievementReward
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: achievement_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Reward claimed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: "1.0.0"
+        uptime_seconds:
+          type: integer
+          example: 3600
+        active_connections:
+          type: integer
+          example: 1500
+    AchievementListResponse:
+      type: object
+      required:
+      - achievements
+      - total_count
+      properties:
+        achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Achievement'
+        total_count:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+    Achievement:
+      type: object
+      required:
+      - id
+      - name
+      - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, hidden]
+        difficulty:
+          type: string
+          enum: [easy, medium, hard, legendary]
+        created_at:
+          type: string
+          format: date-time
+    CreateAchievementRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        difficulty:
+          type: string
+          enum: [easy, medium, hard, legendary]
+    AchievementResponse:
+      type: object
+      required:
+      - achievement
+      properties:
+        achievement:
+          $ref: '#/components/schemas/Achievement'
+    PlayerAchievementsResponse:
+      type: object
+      required:
+      - achievements
+      properties:
+        achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerAchievement'
+        statistics:
+          $ref: '#/components/schemas/PlayerAchievementStats'
+    PlayerAchievement:
+      type: object
+      required:
+      - achievement_id
+      - progress
+      - status
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        status:
+          type: string
+          enum: [not_started, in_progress, completed, locked]
+        completed_at:
+          type: string
+          format: date-time
+    PlayerAchievementStats:
+      type: object
+      properties:
+        total_achievements:
+          type: integer
+        completed_achievements:
+          type: integer
+        completion_percentage:
+          type: number
+        total_points:
+          type: integer
+    UpdateProgressRequest:
+      type: object
+      required:
+      - progress_value
+      properties:
+        progress_value:
+          type: number
+          minimum: 0
+          maximum: 1
+        event_type:
+          type: string
+          example: "combat_win"
+    ProgressResponse:
+      type: object
+      required:
+      - achievement_id
+      - new_progress
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        new_progress:
+          type: number
+        was_completed:
+          type: boolean
+        rewards_unlocked:
+          type: array
+          items:
+            type: string
+    RewardResponse:
+      type: object
+      required:
+      - achievement_id
+      - rewards_granted
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        rewards_granted:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementReward'
+        claimed_at:
+          type: string
+          format: date-time
+    AchievementReward:
+      type: object
+      required:
+      - reward_type
+      - reward_id
+      - quantity
+      properties:
+        reward_type:
+          type: string
+          enum: [currency, item, cosmetic, title]
+        reward_id:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+        description:
+          type: string
+        rarity:
+          type: string
+          enum: [common, rare, epic, legendary]
+
+# Issue: #2253

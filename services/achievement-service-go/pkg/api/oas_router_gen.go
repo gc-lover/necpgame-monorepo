@@ -40,7 +40,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.notFound(w, r)
 		return
 	}
-	args := [1]string{}
+	args := [2]string{}
 
 	// Static code generated router with unwrapped path search.
 	switch {
@@ -61,9 +61,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
-			case 'a': // Prefix: "api/v1/achievement/achievements"
+			case 'a': // Prefix: "achievements"
 
-				if l := len("api/v1/achievement/achievements"); len(elem) >= l && elem[0:l] == "api/v1/achievement/achievements" {
+				if l := len("achievements"); len(elem) >= l && elem[0:l] == "achievements" {
 					elem = elem[l:]
 				} else {
 					break
@@ -72,9 +72,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if len(elem) == 0 {
 					switch r.Method {
 					case "GET":
-						s.handleAchievementGetAchievementsRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleListAchievementsRequest([0]string{}, elemIsEscaped, w, r)
+					case "POST":
+						s.handleCreateAchievementRequest([0]string{}, elemIsEscaped, w, r)
 					default:
-						s.notAllowed(w, r, "GET")
+						s.notAllowed(w, r, "GET,POST")
 					}
 
 					return
@@ -88,19 +90,20 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						break
 					}
 
-					// Param: "achievementId"
-					// Match until "/"
+					// Param: "achievement_id"
+					// Leaf parameter, slashes are prohibited
 					idx := strings.IndexByte(elem, '/')
-					if idx < 0 {
-						idx = len(elem)
+					if idx >= 0 {
+						break
 					}
-					args[0] = elem[:idx]
-					elem = elem[idx:]
+					args[0] = elem
+					elem = ""
 
 					if len(elem) == 0 {
+						// Leaf node.
 						switch r.Method {
 						case "GET":
-							s.handleAchievementGetAchievementRequest([1]string{
+							s.handleGetAchievementRequest([1]string{
 								args[0],
 							}, elemIsEscaped, w, r)
 						default:
@@ -108,30 +111,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						}
 
 						return
-					}
-					switch elem[0] {
-					case '/': // Prefix: "/unlock"
-
-						if l := len("/unlock"); len(elem) >= l && elem[0:l] == "/unlock" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch r.Method {
-							case "POST":
-								s.handleAchievementUnlockAchievementRequest([1]string{
-									args[0],
-								}, elemIsEscaped, w, r)
-							default:
-								s.notAllowed(w, r, "POST")
-							}
-
-							return
-						}
-
 					}
 
 				}
@@ -148,12 +127,141 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					// Leaf node.
 					switch r.Method {
 					case "GET":
-						s.handleHealthRequest([0]string{}, elemIsEscaped, w, r)
+						s.handleHealthCheckRequest([0]string{}, elemIsEscaped, w, r)
 					default:
 						s.notAllowed(w, r, "GET")
 					}
 
 					return
+				}
+
+			case 'p': // Prefix: "players/"
+
+				if l := len("players/"); len(elem) >= l && elem[0:l] == "players/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				// Param: "player_id"
+				// Match until "/"
+				idx := strings.IndexByte(elem, '/')
+				if idx < 0 {
+					idx = len(elem)
+				}
+				args[0] = elem[:idx]
+				elem = elem[idx:]
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/achievements"
+
+					if l := len("/achievements"); len(elem) >= l && elem[0:l] == "/achievements" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch r.Method {
+						case "GET":
+							s.handleGetPlayerAchievementsRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "GET")
+						}
+
+						return
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "achievement_id"
+						// Match until "/"
+						idx := strings.IndexByte(elem, '/')
+						if idx < 0 {
+							idx = len(elem)
+						}
+						args[1] = elem[:idx]
+						elem = elem[idx:]
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case '/': // Prefix: "/"
+
+							if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'c': // Prefix: "claim-reward"
+
+								if l := len("claim-reward"); len(elem) >= l && elem[0:l] == "claim-reward" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "POST":
+										s.handleClaimAchievementRewardRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "POST")
+									}
+
+									return
+								}
+
+							case 'p': // Prefix: "progress"
+
+								if l := len("progress"); len(elem) >= l && elem[0:l] == "progress" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "POST":
+										s.handleUpdateAchievementProgressRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "POST")
+									}
+
+									return
+								}
+
+							}
+
+						}
+
+					}
+
 				}
 
 			}
@@ -171,7 +279,7 @@ type Route struct {
 	operationGroup string
 	pathPattern    string
 	count          int
-	args           [1]string
+	args           [2]string
 }
 
 // Name returns ogen operation name.
@@ -256,9 +364,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
-			case 'a': // Prefix: "api/v1/achievement/achievements"
+			case 'a': // Prefix: "achievements"
 
-				if l := len("api/v1/achievement/achievements"); len(elem) >= l && elem[0:l] == "api/v1/achievement/achievements" {
+				if l := len("achievements"); len(elem) >= l && elem[0:l] == "achievements" {
 					elem = elem[l:]
 				} else {
 					break
@@ -267,11 +375,20 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				if len(elem) == 0 {
 					switch method {
 					case "GET":
-						r.name = AchievementGetAchievementsOperation
-						r.summary = "Get player achievements"
-						r.operationID = "achievementGetAchievements"
+						r.name = ListAchievementsOperation
+						r.summary = "List achievements"
+						r.operationID = "listAchievements"
 						r.operationGroup = ""
-						r.pathPattern = "/api/v1/achievement/achievements"
+						r.pathPattern = "/achievements"
+						r.args = args
+						r.count = 0
+						return r, true
+					case "POST":
+						r.name = CreateAchievementOperation
+						r.summary = "Create achievement"
+						r.operationID = "createAchievement"
+						r.operationGroup = ""
+						r.pathPattern = "/achievements"
 						r.args = args
 						r.count = 0
 						return r, true
@@ -288,56 +405,30 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						break
 					}
 
-					// Param: "achievementId"
-					// Match until "/"
+					// Param: "achievement_id"
+					// Leaf parameter, slashes are prohibited
 					idx := strings.IndexByte(elem, '/')
-					if idx < 0 {
-						idx = len(elem)
+					if idx >= 0 {
+						break
 					}
-					args[0] = elem[:idx]
-					elem = elem[idx:]
+					args[0] = elem
+					elem = ""
 
 					if len(elem) == 0 {
+						// Leaf node.
 						switch method {
 						case "GET":
-							r.name = AchievementGetAchievementOperation
-							r.summary = "Get specific achievement"
-							r.operationID = "achievementGetAchievement"
+							r.name = GetAchievementOperation
+							r.summary = "Get achievement"
+							r.operationID = "getAchievement"
 							r.operationGroup = ""
-							r.pathPattern = "/api/v1/achievement/achievements/{achievementId}"
+							r.pathPattern = "/achievements/{achievement_id}"
 							r.args = args
 							r.count = 1
 							return r, true
 						default:
 							return
 						}
-					}
-					switch elem[0] {
-					case '/': // Prefix: "/unlock"
-
-						if l := len("/unlock"); len(elem) >= l && elem[0:l] == "/unlock" {
-							elem = elem[l:]
-						} else {
-							break
-						}
-
-						if len(elem) == 0 {
-							// Leaf node.
-							switch method {
-							case "POST":
-								r.name = AchievementUnlockAchievementOperation
-								r.summary = "Unlock achievement"
-								r.operationID = "achievementUnlockAchievement"
-								r.operationGroup = ""
-								r.pathPattern = "/api/v1/achievement/achievements/{achievementId}/unlock"
-								r.args = args
-								r.count = 1
-								return r, true
-							default:
-								return
-							}
-						}
-
 					}
 
 				}
@@ -354,9 +445,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					// Leaf node.
 					switch method {
 					case "GET":
-						r.name = HealthOperation
+						r.name = HealthCheckOperation
 						r.summary = "Health check"
-						r.operationID = "health"
+						r.operationID = "healthCheck"
 						r.operationGroup = ""
 						r.pathPattern = "/health"
 						r.args = args
@@ -365,6 +456,142 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					default:
 						return
 					}
+				}
+
+			case 'p': // Prefix: "players/"
+
+				if l := len("players/"); len(elem) >= l && elem[0:l] == "players/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				// Param: "player_id"
+				// Match until "/"
+				idx := strings.IndexByte(elem, '/')
+				if idx < 0 {
+					idx = len(elem)
+				}
+				args[0] = elem[:idx]
+				elem = elem[idx:]
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/achievements"
+
+					if l := len("/achievements"); len(elem) >= l && elem[0:l] == "/achievements" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "GET":
+							r.name = GetPlayerAchievementsOperation
+							r.summary = "Get player achievements"
+							r.operationID = "getPlayerAchievements"
+							r.operationGroup = ""
+							r.pathPattern = "/players/{player_id}/achievements"
+							r.args = args
+							r.count = 1
+							return r, true
+						default:
+							return
+						}
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "achievement_id"
+						// Match until "/"
+						idx := strings.IndexByte(elem, '/')
+						if idx < 0 {
+							idx = len(elem)
+						}
+						args[1] = elem[:idx]
+						elem = elem[idx:]
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case '/': // Prefix: "/"
+
+							if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'c': // Prefix: "claim-reward"
+
+								if l := len("claim-reward"); len(elem) >= l && elem[0:l] == "claim-reward" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "POST":
+										r.name = ClaimAchievementRewardOperation
+										r.summary = "Claim achievement reward"
+										r.operationID = "claimAchievementReward"
+										r.operationGroup = ""
+										r.pathPattern = "/players/{player_id}/achievements/{achievement_id}/claim-reward"
+										r.args = args
+										r.count = 2
+										return r, true
+									default:
+										return
+									}
+								}
+
+							case 'p': // Prefix: "progress"
+
+								if l := len("progress"); len(elem) >= l && elem[0:l] == "progress" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "POST":
+										r.name = UpdateAchievementProgressOperation
+										r.summary = "Update achievement progress"
+										r.operationID = "updateAchievementProgress"
+										r.operationGroup = ""
+										r.pathPattern = "/players/{player_id}/achievements/{achievement_id}/progress"
+										r.args = args
+										r.count = 2
+										return r, true
+									default:
+										return
+									}
+								}
+
+							}
+
+						}
+
+					}
+
 				}
 
 			}

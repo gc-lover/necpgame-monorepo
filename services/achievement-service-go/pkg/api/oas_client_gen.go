@@ -28,30 +28,48 @@ func trimTrailingSlashes(u *url.URL) {
 
 // Invoker invokes operations described by OpenAPI v3 specification.
 type Invoker interface {
-	// AchievementGetAchievement invokes achievementGetAchievement operation.
+	// ClaimAchievementReward invokes claimAchievementReward operation.
 	//
-	// Get specific achievement.
+	// Claim achievement reward.
 	//
-	// GET /api/v1/achievement/achievements/{achievementId}
-	AchievementGetAchievement(ctx context.Context, params AchievementGetAchievementParams) (AchievementGetAchievementRes, error)
-	// AchievementGetAchievements invokes achievementGetAchievements operation.
+	// POST /players/{player_id}/achievements/{achievement_id}/claim-reward
+	ClaimAchievementReward(ctx context.Context, params ClaimAchievementRewardParams) (*RewardResponse, error)
+	// CreateAchievement invokes createAchievement operation.
+	//
+	// Create achievement.
+	//
+	// POST /achievements
+	CreateAchievement(ctx context.Context, request *CreateAchievementRequest) (*AchievementResponse, error)
+	// GetAchievement invokes getAchievement operation.
+	//
+	// Get achievement.
+	//
+	// GET /achievements/{achievement_id}
+	GetAchievement(ctx context.Context, params GetAchievementParams) (*AchievementResponse, error)
+	// GetPlayerAchievements invokes getPlayerAchievements operation.
 	//
 	// Get player achievements.
 	//
-	// GET /api/v1/achievement/achievements
-	AchievementGetAchievements(ctx context.Context, params AchievementGetAchievementsParams) (AchievementGetAchievementsRes, error)
-	// AchievementUnlockAchievement invokes achievementUnlockAchievement operation.
-	//
-	// Unlock achievement.
-	//
-	// POST /api/v1/achievement/achievements/{achievementId}/unlock
-	AchievementUnlockAchievement(ctx context.Context, params AchievementUnlockAchievementParams) (AchievementUnlockAchievementRes, error)
-	// Health invokes health operation.
+	// GET /players/{player_id}/achievements
+	GetPlayerAchievements(ctx context.Context, params GetPlayerAchievementsParams) (*PlayerAchievementsResponse, error)
+	// HealthCheck invokes healthCheck operation.
 	//
 	// Health check.
 	//
 	// GET /health
-	Health(ctx context.Context) (*HealthResponse, error)
+	HealthCheck(ctx context.Context) (*HealthResponse, error)
+	// ListAchievements invokes listAchievements operation.
+	//
+	// List achievements.
+	//
+	// GET /achievements
+	ListAchievements(ctx context.Context, params ListAchievementsParams) (*AchievementListResponse, error)
+	// UpdateAchievementProgress invokes updateAchievementProgress operation.
+	//
+	// Update achievement progress.
+	//
+	// POST /players/{player_id}/achievements/{achievement_id}/progress
+	UpdateAchievementProgress(ctx context.Context, request *UpdateProgressRequest, params UpdateAchievementProgressParams) (*ProgressResponse, error)
 }
 
 // Client implements OAS client.
@@ -99,21 +117,21 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 	return u
 }
 
-// AchievementGetAchievement invokes achievementGetAchievement operation.
+// ClaimAchievementReward invokes claimAchievementReward operation.
 //
-// Get specific achievement.
+// Claim achievement reward.
 //
-// GET /api/v1/achievement/achievements/{achievementId}
-func (c *Client) AchievementGetAchievement(ctx context.Context, params AchievementGetAchievementParams) (AchievementGetAchievementRes, error) {
-	res, err := c.sendAchievementGetAchievement(ctx, params)
+// POST /players/{player_id}/achievements/{achievement_id}/claim-reward
+func (c *Client) ClaimAchievementReward(ctx context.Context, params ClaimAchievementRewardParams) (*RewardResponse, error) {
+	res, err := c.sendClaimAchievementReward(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendAchievementGetAchievement(ctx context.Context, params AchievementGetAchievementParams) (res AchievementGetAchievementRes, err error) {
+func (c *Client) sendClaimAchievementReward(ctx context.Context, params ClaimAchievementRewardParams) (res *RewardResponse, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("achievementGetAchievement"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/api/v1/achievement/achievements/{achievementId}"),
+		otelogen.OperationID("claimAchievementReward"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/players/{player_id}/achievements/{achievement_id}/claim-reward"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -129,7 +147,7 @@ func (c *Client) sendAchievementGetAchievement(ctx context.Context, params Achie
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, AchievementGetAchievementOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, ClaimAchievementRewardOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -146,17 +164,17 @@ func (c *Client) sendAchievementGetAchievement(ctx context.Context, params Achie
 
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [2]string
-	pathParts[0] = "/api/v1/achievement/achievements/"
+	var pathParts [5]string
+	pathParts[0] = "/players/"
 	{
-		// Encode "achievementId" parameter.
+		// Encode "player_id" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "achievementId",
+			Param:   "player_id",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.AchievementId))
+			return e.EncodeValue(conv.StringToString(params.PlayerID))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -166,10 +184,30 @@ func (c *Client) sendAchievementGetAchievement(ctx context.Context, params Achie
 		}
 		pathParts[1] = encoded
 	}
+	pathParts[2] = "/achievements/"
+	{
+		// Encode "achievement_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "achievement_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.AchievementID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	pathParts[4] = "/claim-reward"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
+	r, err := ht.NewRequest(ctx, "POST", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
 	}
@@ -179,7 +217,7 @@ func (c *Client) sendAchievementGetAchievement(ctx context.Context, params Achie
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, AchievementGetAchievementOperation, r); {
+			switch err := c.securityBearerAuth(ctx, ClaimAchievementRewardOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -215,7 +253,7 @@ func (c *Client) sendAchievementGetAchievement(ctx context.Context, params Achie
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeAchievementGetAchievementResponse(resp)
+	result, err := decodeClaimAchievementRewardResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -223,21 +261,21 @@ func (c *Client) sendAchievementGetAchievement(ctx context.Context, params Achie
 	return result, nil
 }
 
-// AchievementGetAchievements invokes achievementGetAchievements operation.
+// CreateAchievement invokes createAchievement operation.
 //
-// Get player achievements.
+// Create achievement.
 //
-// GET /api/v1/achievement/achievements
-func (c *Client) AchievementGetAchievements(ctx context.Context, params AchievementGetAchievementsParams) (AchievementGetAchievementsRes, error) {
-	res, err := c.sendAchievementGetAchievements(ctx, params)
+// POST /achievements
+func (c *Client) CreateAchievement(ctx context.Context, request *CreateAchievementRequest) (*AchievementResponse, error) {
+	res, err := c.sendCreateAchievement(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendAchievementGetAchievements(ctx context.Context, params AchievementGetAchievementsParams) (res AchievementGetAchievementsRes, err error) {
+func (c *Client) sendCreateAchievement(ctx context.Context, request *CreateAchievementRequest) (res *AchievementResponse, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("achievementGetAchievements"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/api/v1/achievement/achievements"),
+		otelogen.OperationID("createAchievement"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/achievements"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -253,7 +291,7 @@ func (c *Client) sendAchievementGetAchievements(ctx context.Context, params Achi
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, AchievementGetAchievementsOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, CreateAchievementOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -271,65 +309,16 @@ func (c *Client) sendAchievementGetAchievements(ctx context.Context, params Achi
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/api/v1/achievement/achievements"
+	pathParts[0] = "/achievements"
 	uri.AddPathParts(u, pathParts[:]...)
 
-	stage = "EncodeQueryParams"
-	q := uri.NewQueryEncoder()
-	{
-		// Encode "player_id" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "player_id",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			return e.EncodeValue(conv.StringToString(params.PlayerID))
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "limit" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "limit",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Limit.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	{
-		// Encode "offset" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "offset",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.Offset.Get(); ok {
-				return e.EncodeValue(conv.IntToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	u.RawQuery = q.Values().Encode()
-
 	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
+	r, err := ht.NewRequest(ctx, "POST", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeCreateAchievementRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
 	}
 
 	{
@@ -337,7 +326,7 @@ func (c *Client) sendAchievementGetAchievements(ctx context.Context, params Achi
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, AchievementGetAchievementsOperation, r); {
+			switch err := c.securityBearerAuth(ctx, CreateAchievementOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -373,7 +362,7 @@ func (c *Client) sendAchievementGetAchievements(ctx context.Context, params Achi
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeAchievementGetAchievementsResponse(resp)
+	result, err := decodeCreateAchievementResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -381,21 +370,21 @@ func (c *Client) sendAchievementGetAchievements(ctx context.Context, params Achi
 	return result, nil
 }
 
-// AchievementUnlockAchievement invokes achievementUnlockAchievement operation.
+// GetAchievement invokes getAchievement operation.
 //
-// Unlock achievement.
+// Get achievement.
 //
-// POST /api/v1/achievement/achievements/{achievementId}/unlock
-func (c *Client) AchievementUnlockAchievement(ctx context.Context, params AchievementUnlockAchievementParams) (AchievementUnlockAchievementRes, error) {
-	res, err := c.sendAchievementUnlockAchievement(ctx, params)
+// GET /achievements/{achievement_id}
+func (c *Client) GetAchievement(ctx context.Context, params GetAchievementParams) (*AchievementResponse, error) {
+	res, err := c.sendGetAchievement(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendAchievementUnlockAchievement(ctx context.Context, params AchievementUnlockAchievementParams) (res AchievementUnlockAchievementRes, err error) {
+func (c *Client) sendGetAchievement(ctx context.Context, params GetAchievementParams) (res *AchievementResponse, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("achievementUnlockAchievement"),
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/api/v1/achievement/achievements/{achievementId}/unlock"),
+		otelogen.OperationID("getAchievement"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/achievements/{achievement_id}"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -411,7 +400,131 @@ func (c *Client) sendAchievementUnlockAchievement(ctx context.Context, params Ac
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, AchievementUnlockAchievementOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GetAchievementOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [2]string
+	pathParts[0] = "/achievements/"
+	{
+		// Encode "achievement_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "achievement_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.AchievementID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetAchievementOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetAchievementResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetPlayerAchievements invokes getPlayerAchievements operation.
+//
+// Get player achievements.
+//
+// GET /players/{player_id}/achievements
+func (c *Client) GetPlayerAchievements(ctx context.Context, params GetPlayerAchievementsParams) (*PlayerAchievementsResponse, error) {
+	res, err := c.sendGetPlayerAchievements(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetPlayerAchievements(ctx context.Context, params GetPlayerAchievementsParams) (res *PlayerAchievementsResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getPlayerAchievements"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/players/{player_id}/achievements"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetPlayerAchievementsOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -429,16 +542,16 @@ func (c *Client) sendAchievementUnlockAchievement(ctx context.Context, params Ac
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [3]string
-	pathParts[0] = "/api/v1/achievement/achievements/"
+	pathParts[0] = "/players/"
 	{
-		// Encode "achievementId" parameter.
+		// Encode "player_id" parameter.
 		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "achievementId",
+			Param:   "player_id",
 			Style:   uri.PathStyleSimple,
 			Explode: false,
 		})
 		if err := func() error {
-			return e.EncodeValue(conv.StringToString(params.AchievementId))
+			return e.EncodeValue(conv.StringToString(params.PlayerID))
 		}(); err != nil {
 			return res, errors.Wrap(err, "encode path")
 		}
@@ -448,11 +561,11 @@ func (c *Client) sendAchievementUnlockAchievement(ctx context.Context, params Ac
 		}
 		pathParts[1] = encoded
 	}
-	pathParts[2] = "/unlock"
+	pathParts[2] = "/achievements"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
+	r, err := ht.NewRequest(ctx, "GET", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
 	}
@@ -462,7 +575,7 @@ func (c *Client) sendAchievementUnlockAchievement(ctx context.Context, params Ac
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, AchievementUnlockAchievementOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GetPlayerAchievementsOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -498,7 +611,7 @@ func (c *Client) sendAchievementUnlockAchievement(ctx context.Context, params Ac
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeAchievementUnlockAchievementResponse(resp)
+	result, err := decodeGetPlayerAchievementsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -506,19 +619,19 @@ func (c *Client) sendAchievementUnlockAchievement(ctx context.Context, params Ac
 	return result, nil
 }
 
-// Health invokes health operation.
+// HealthCheck invokes healthCheck operation.
 //
 // Health check.
 //
 // GET /health
-func (c *Client) Health(ctx context.Context) (*HealthResponse, error) {
-	res, err := c.sendHealth(ctx)
+func (c *Client) HealthCheck(ctx context.Context) (*HealthResponse, error) {
+	res, err := c.sendHealthCheck(ctx)
 	return res, err
 }
 
-func (c *Client) sendHealth(ctx context.Context) (res *HealthResponse, err error) {
+func (c *Client) sendHealthCheck(ctx context.Context) (res *HealthResponse, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("health"),
+		otelogen.OperationID("healthCheck"),
 		semconv.HTTPRequestMethodKey.String("GET"),
 		semconv.URLTemplateKey.String("/health"),
 	}
@@ -536,7 +649,7 @@ func (c *Client) sendHealth(ctx context.Context) (res *HealthResponse, err error
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, HealthOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, HealthCheckOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -568,7 +681,7 @@ func (c *Client) sendHealth(ctx context.Context) (res *HealthResponse, err error
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, HealthOperation, r); {
+			switch err := c.securityBearerAuth(ctx, HealthCheckOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -604,7 +717,298 @@ func (c *Client) sendHealth(ctx context.Context) (res *HealthResponse, err error
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeHealthResponse(resp)
+	result, err := decodeHealthCheckResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ListAchievements invokes listAchievements operation.
+//
+// List achievements.
+//
+// GET /achievements
+func (c *Client) ListAchievements(ctx context.Context, params ListAchievementsParams) (*AchievementListResponse, error) {
+	res, err := c.sendListAchievements(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListAchievements(ctx context.Context, params ListAchievementsParams) (res *AchievementListResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listAchievements"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/achievements"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListAchievementsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/achievements"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeQueryParams"
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "page" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Page.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "limit" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "limit",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Limit.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, ListAchievementsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListAchievementsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// UpdateAchievementProgress invokes updateAchievementProgress operation.
+//
+// Update achievement progress.
+//
+// POST /players/{player_id}/achievements/{achievement_id}/progress
+func (c *Client) UpdateAchievementProgress(ctx context.Context, request *UpdateProgressRequest, params UpdateAchievementProgressParams) (*ProgressResponse, error) {
+	res, err := c.sendUpdateAchievementProgress(ctx, request, params)
+	return res, err
+}
+
+func (c *Client) sendUpdateAchievementProgress(ctx context.Context, request *UpdateProgressRequest, params UpdateAchievementProgressParams) (res *ProgressResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("updateAchievementProgress"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/players/{player_id}/achievements/{achievement_id}/progress"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, UpdateAchievementProgressOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [5]string
+	pathParts[0] = "/players/"
+	{
+		// Encode "player_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "player_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.PlayerID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/achievements/"
+	{
+		// Encode "achievement_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "achievement_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.StringToString(params.AchievementID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	pathParts[4] = "/progress"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeUpdateAchievementProgressRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, UpdateAchievementProgressOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeUpdateAchievementProgressResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

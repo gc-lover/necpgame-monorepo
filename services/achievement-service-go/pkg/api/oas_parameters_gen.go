@@ -14,25 +14,32 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-// AchievementGetAchievementParams is parameters of achievementGetAchievement operation.
-type AchievementGetAchievementParams struct {
-	// Achievement ID.
-	AchievementId string
+// ClaimAchievementRewardParams is parameters of claimAchievementReward operation.
+type ClaimAchievementRewardParams struct {
+	PlayerID      string
+	AchievementID string
 }
 
-func unpackAchievementGetAchievementParams(packed middleware.Parameters) (params AchievementGetAchievementParams) {
+func unpackClaimAchievementRewardParams(packed middleware.Parameters) (params ClaimAchievementRewardParams) {
 	{
 		key := middleware.ParameterKey{
-			Name: "achievementId",
+			Name: "player_id",
 			In:   "path",
 		}
-		params.AchievementId = packed[key].(string)
+		params.PlayerID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "achievement_id",
+			In:   "path",
+		}
+		params.AchievementID = packed[key].(string)
 	}
 	return params
 }
 
-func decodeAchievementGetAchievementParams(args [1]string, argsEscaped bool, r *http.Request) (params AchievementGetAchievementParams, _ error) {
-	// Decode path: achievementId.
+func decodeClaimAchievementRewardParams(args [2]string, argsEscaped bool, r *http.Request) (params ClaimAchievementRewardParams, _ error) {
+	// Decode path: player_id.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
@@ -44,7 +51,7 @@ func decodeAchievementGetAchievementParams(args [1]string, argsEscaped bool, r *
 		}
 		if len(param) > 0 {
 			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "achievementId",
+				Param:   "player_id",
 				Value:   param,
 				Style:   uri.PathStyleSimple,
 				Explode: false,
@@ -61,7 +68,7 @@ func decodeAchievementGetAchievementParams(args [1]string, argsEscaped bool, r *
 					return err
 				}
 
-				params.AchievementId = c
+				params.PlayerID = c
 				return nil
 			}(); err != nil {
 				return err
@@ -72,7 +79,52 @@ func decodeAchievementGetAchievementParams(args [1]string, argsEscaped bool, r *
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "achievementId",
+			Name: "player_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: achievement_id.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "achievement_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.AchievementID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "achievement_id",
 			In:   "path",
 			Err:  err,
 		}
@@ -80,57 +132,107 @@ func decodeAchievementGetAchievementParams(args [1]string, argsEscaped bool, r *
 	return params, nil
 }
 
-// AchievementGetAchievementsParams is parameters of achievementGetAchievements operation.
-type AchievementGetAchievementsParams struct {
-	// Player ID.
-	PlayerID string
-	// Maximum number of achievements to return.
-	Limit OptInt `json:",omitempty,omitzero"`
-	// Number of achievements to skip.
-	Offset OptInt `json:",omitempty,omitzero"`
+// GetAchievementParams is parameters of getAchievement operation.
+type GetAchievementParams struct {
+	AchievementID string
 }
 
-func unpackAchievementGetAchievementsParams(packed middleware.Parameters) (params AchievementGetAchievementsParams) {
+func unpackGetAchievementParams(packed middleware.Parameters) (params GetAchievementParams) {
 	{
 		key := middleware.ParameterKey{
-			Name: "player_id",
-			In:   "query",
+			Name: "achievement_id",
+			In:   "path",
 		}
-		params.PlayerID = packed[key].(string)
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "limit",
-			In:   "query",
-		}
-		if v, ok := packed[key]; ok {
-			params.Limit = v.(OptInt)
-		}
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "offset",
-			In:   "query",
-		}
-		if v, ok := packed[key]; ok {
-			params.Offset = v.(OptInt)
-		}
+		params.AchievementID = packed[key].(string)
 	}
 	return params
 }
 
-func decodeAchievementGetAchievementsParams(args [0]string, argsEscaped bool, r *http.Request) (params AchievementGetAchievementsParams, _ error) {
-	q := uri.NewQueryDecoder(r.URL.Query())
-	// Decode query: player_id.
+func decodeGetAchievementParams(args [1]string, argsEscaped bool, r *http.Request) (params GetAchievementParams, _ error) {
+	// Decode path: achievement_id.
 	if err := func() error {
-		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "player_id",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
 		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "achievement_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
 
-		if err := q.HasParam(cfg); err == nil {
-			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.AchievementID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "achievement_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetPlayerAchievementsParams is parameters of getPlayerAchievements operation.
+type GetPlayerAchievementsParams struct {
+	PlayerID string
+}
+
+func unpackGetPlayerAchievementsParams(packed middleware.Parameters) (params GetPlayerAchievementsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "player_id",
+			In:   "path",
+		}
+		params.PlayerID = packed[key].(string)
+	}
+	return params
+}
+
+func decodeGetPlayerAchievementsParams(args [1]string, argsEscaped bool, r *http.Request) (params GetPlayerAchievementsParams, _ error) {
+	// Decode path: player_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "player_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
 				val, err := d.DecodeValue()
 				if err != nil {
 					return err
@@ -143,23 +245,102 @@ func decodeAchievementGetAchievementsParams(args [0]string, argsEscaped bool, r 
 
 				params.PlayerID = c
 				return nil
-			}); err != nil {
+			}(); err != nil {
 				return err
 			}
 		} else {
-			return err
+			return validate.ErrFieldRequired
 		}
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "player_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListAchievementsParams is parameters of listAchievements operation.
+type ListAchievementsParams struct {
+	Page  OptInt `json:",omitempty,omitzero"`
+	Limit OptInt `json:",omitempty,omitzero"`
+}
+
+func unpackListAchievementsParams(packed middleware.Parameters) (params ListAchievementsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "page",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Page = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "limit",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Limit = v.(OptInt)
+		}
+	}
+	return params
+}
+
+func decodeListAchievementsParams(args [0]string, argsEscaped bool, r *http.Request) (params ListAchievementsParams, _ error) {
+	q := uri.NewQueryDecoder(r.URL.Query())
+	// Set default value for query: page.
+	{
+		val := int(1)
+		params.Page.SetTo(val)
+	}
+	// Decode query: page.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "page",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotPageVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotPageVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Page.SetTo(paramsDotPageVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "page",
 			In:   "query",
 			Err:  err,
 		}
 	}
 	// Set default value for query: limit.
 	{
-		val := int(50)
+		val := int(20)
 		params.Limit.SetTo(val)
 	}
 	// Decode query: limit.
@@ -194,31 +375,6 @@ func decodeAchievementGetAchievementsParams(args [0]string, argsEscaped bool, r 
 			}); err != nil {
 				return err
 			}
-			if err := func() error {
-				if value, ok := params.Limit.Get(); ok {
-					if err := func() error {
-						if err := (validate.Int{
-							MinSet:        true,
-							Min:           1,
-							MaxSet:        true,
-							Max:           100,
-							MinExclusive:  false,
-							MaxExclusive:  false,
-							MultipleOfSet: false,
-							MultipleOf:    0,
-							Pattern:       nil,
-						}).Validate(int64(value)); err != nil {
-							return errors.Wrap(err, "int")
-						}
-						return nil
-					}(); err != nil {
-						return err
-					}
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
 		}
 		return nil
 	}(); err != nil {
@@ -228,99 +384,35 @@ func decodeAchievementGetAchievementsParams(args [0]string, argsEscaped bool, r 
 			Err:  err,
 		}
 	}
-	// Set default value for query: offset.
-	{
-		val := int(0)
-		params.Offset.SetTo(val)
-	}
-	// Decode query: offset.
-	if err := func() error {
-		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "offset",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.HasParam(cfg); err == nil {
-			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotOffsetVal int
-				if err := func() error {
-					val, err := d.DecodeValue()
-					if err != nil {
-						return err
-					}
-
-					c, err := conv.ToInt(val)
-					if err != nil {
-						return err
-					}
-
-					paramsDotOffsetVal = c
-					return nil
-				}(); err != nil {
-					return err
-				}
-				params.Offset.SetTo(paramsDotOffsetVal)
-				return nil
-			}); err != nil {
-				return err
-			}
-			if err := func() error {
-				if value, ok := params.Offset.Get(); ok {
-					if err := func() error {
-						if err := (validate.Int{
-							MinSet:        true,
-							Min:           0,
-							MaxSet:        false,
-							Max:           0,
-							MinExclusive:  false,
-							MaxExclusive:  false,
-							MultipleOfSet: false,
-							MultipleOf:    0,
-							Pattern:       nil,
-						}).Validate(int64(value)); err != nil {
-							return errors.Wrap(err, "int")
-						}
-						return nil
-					}(); err != nil {
-						return err
-					}
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "offset",
-			In:   "query",
-			Err:  err,
-		}
-	}
 	return params, nil
 }
 
-// AchievementUnlockAchievementParams is parameters of achievementUnlockAchievement operation.
-type AchievementUnlockAchievementParams struct {
-	// Achievement ID.
-	AchievementId string
+// UpdateAchievementProgressParams is parameters of updateAchievementProgress operation.
+type UpdateAchievementProgressParams struct {
+	PlayerID      string
+	AchievementID string
 }
 
-func unpackAchievementUnlockAchievementParams(packed middleware.Parameters) (params AchievementUnlockAchievementParams) {
+func unpackUpdateAchievementProgressParams(packed middleware.Parameters) (params UpdateAchievementProgressParams) {
 	{
 		key := middleware.ParameterKey{
-			Name: "achievementId",
+			Name: "player_id",
 			In:   "path",
 		}
-		params.AchievementId = packed[key].(string)
+		params.PlayerID = packed[key].(string)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "achievement_id",
+			In:   "path",
+		}
+		params.AchievementID = packed[key].(string)
 	}
 	return params
 }
 
-func decodeAchievementUnlockAchievementParams(args [1]string, argsEscaped bool, r *http.Request) (params AchievementUnlockAchievementParams, _ error) {
-	// Decode path: achievementId.
+func decodeUpdateAchievementProgressParams(args [2]string, argsEscaped bool, r *http.Request) (params UpdateAchievementProgressParams, _ error) {
+	// Decode path: player_id.
 	if err := func() error {
 		param := args[0]
 		if argsEscaped {
@@ -332,7 +424,7 @@ func decodeAchievementUnlockAchievementParams(args [1]string, argsEscaped bool, 
 		}
 		if len(param) > 0 {
 			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "achievementId",
+				Param:   "player_id",
 				Value:   param,
 				Style:   uri.PathStyleSimple,
 				Explode: false,
@@ -349,7 +441,7 @@ func decodeAchievementUnlockAchievementParams(args [1]string, argsEscaped bool, 
 					return err
 				}
 
-				params.AchievementId = c
+				params.PlayerID = c
 				return nil
 			}(); err != nil {
 				return err
@@ -360,7 +452,52 @@ func decodeAchievementUnlockAchievementParams(args [1]string, argsEscaped bool, 
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "achievementId",
+			Name: "player_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: achievement_id.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "achievement_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToString(val)
+				if err != nil {
+					return err
+				}
+
+				params.AchievementID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "achievement_id",
 			In:   "path",
 			Err:  err,
 		}
