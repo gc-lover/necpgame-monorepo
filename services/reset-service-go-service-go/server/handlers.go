@@ -41,21 +41,21 @@ var responsePool = sync.Pool{
 // PERFORMANCE: Memory pool for reset history responses
 var historyPool = sync.Pool{
 	New: func() interface{} {
-		return &api.ResetHistoryResponse{}
+		return &api.GetResetHistoryOK{}
 	},
 }
 
 // PERFORMANCE: Memory pool for reset stats responses
 var statsPool = sync.Pool{
 	New: func() interface{} {
-		return &api.ResetStatsResponse{}
+		return &api.GetResetStatsOK{}
 	},
 }
 
 // PERFORMANCE: Memory pool for trigger reset responses
 var triggerPool = sync.Pool{
 	New: func() interface{} {
-		return &api.TriggerResetResponse{}
+		return &api.TriggerResetOK{}
 	},
 }
 
@@ -129,23 +129,32 @@ func (h *Handler) GetResetHistory(ctx context.Context, params api.GetResetHistor
 	// Mock data for demonstration (in real implementation, this would come from database)
 	mockResets := []api.GetResetHistoryOKResetsItem{
 		{
-			ResetID:   api.NewOptUUID(api.UUID{0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0}),
+			ResetID:   uuid.MustParse("12345678-9abc-def0-1234-56789abcdef0"),
 			ResetType: api.GetResetHistoryOKResetsItemResetTypeCharacterReset,
 			Status:    api.GetResetHistoryOKResetsItemStatusCompleted,
 			CreatedAt: time.Now().Add(-time.Hour),
 			CompletedAt: api.NewOptDateTime(time.Now().Add(-30 * time.Minute)),
 		},
 		{
-			ResetID:   api.NewOptUUID(api.UUID{0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00}),
+			ResetID:   uuid.MustParse("11223344-5566-7788-99aa-bbccddeeff00"),
 			ResetType: api.GetResetHistoryOKResetsItemResetTypeFullReset,
 			Status:    api.GetResetHistoryOKResetsItemStatusProcessing,
 			CreatedAt: time.Now().Add(-2 * time.Hour),
 		},
 	}
 
-	// Apply pagination
-	start := int(params.Offset)
-	end := start + int(params.Limit)
+	// Apply pagination (with defaults)
+	offset := 0
+	if params.Offset.IsSet() {
+		offset = params.Offset.Value
+	}
+	limit := 10
+	if params.Limit.IsSet() {
+		limit = params.Limit.Value
+	}
+
+	start := offset
+	end := start + limit
 	total := len(mockResets)
 
 	if start < total {
