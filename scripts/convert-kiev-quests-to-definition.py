@@ -35,11 +35,11 @@ class KievQuestConverter:
                 converted_file = self.convert_quest_file(quest_file)
                 if converted_file:
                     converted_files.append(converted_file)
-                    print(f"✓ Converted {quest_file.name} -> {converted_file.name}")
+                    print(f"[OK] Converted {quest_file.name} -> {converted_file.name}")
                 else:
-                    print(f"✗ Failed to convert {quest_file.name}")
+                    print(f"[ERROR] Failed to convert {quest_file.name}")
             except Exception as e:
-                print(f"✗ Error converting {quest_file.name}: {e}")
+                print(f"[ERROR] Error converting {quest_file.name}: {e}")
 
         return converted_files
 
@@ -104,8 +104,13 @@ class KievQuestConverter:
 
     def extract_level_range(self, quest_id: str, content: Dict[str, Any]) -> tuple:
         """Extract level range from quest content or use defaults."""
-        # Default ranges based on quest complexity
-        quest_number = int(quest_id.split('-')[-1])
+        # Extract quest number from filename pattern quest-NNN-
+        import re
+        match = re.search(r'quest-(\d+)', quest_id)
+        if match:
+            quest_number = int(match.group(1))
+        else:
+            quest_number = 1  # Default
 
         if quest_number <= 3:
             return (1, 10)  # Early game quests
@@ -203,7 +208,7 @@ def main():
     converter = KievQuestConverter()
     converted_files = converter.convert_all_quests()
 
-    print(f"\n✅ Successfully converted {len(converted_files)} Kiev quests to quest_definition format")
+    print(f"\n[SUCCESS] Successfully converted {len(converted_files)} Kiev quests to quest_definition format")
     print("\nConverted files:")
     for file in converted_files:
         print(f"  - {file.name}")
