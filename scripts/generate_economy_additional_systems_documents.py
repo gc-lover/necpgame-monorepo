@@ -1,0 +1,398 @@
+import yaml
+from pathlib import Path
+from datetime import datetime
+
+ECONOMY_SYSTEMS_DOCUMENTS = [
+    {
+        'name': 'economy-resource-scarcity-mechanics',
+        'title': 'Economy - Resource Scarcity Mechanics',
+        'description': 'Механики дефицита ресурсов в экономике'
+    },
+    {
+        'name': 'economy-market-volatility-system',
+        'title': 'Economy - Market Volatility System',
+        'description': 'Система волатильности рынка'
+    },
+    {
+        'name': 'economy-inflation-deflation-controls',
+        'title': 'Economy - Inflation Deflation Controls',
+        'description': 'Контрол инфляции и дефляции'
+    },
+    {
+        'name': 'economy-taxation-revenue-system',
+        'title': 'Economy - Taxation Revenue System',
+        'description': 'Система налогообложения и доходов'
+    },
+    {
+        'name': 'economy-bartering-trade-system',
+        'title': 'Economy - Bartering Trade System',
+        'description': 'Система бартерной торговли'
+    },
+    {
+        'name': 'economy-auction-house-mechanics',
+        'title': 'Economy - Auction House Mechanics',
+        'description': 'Механики аукционного дома'
+    },
+    {
+        'name': 'economy-supply-chain-logistics',
+        'title': 'Economy - Supply Chain Logistics',
+        'description': 'Логистика цепочек поставок'
+    },
+    {
+        'name': 'economy-black-market-economics',
+        'title': 'Economy - Black Market Economics',
+        'description': 'Экономика черного рынка'
+    },
+    {
+        'name': 'economy-economic-events-system',
+        'title': 'Economy - Economic Events System',
+        'description': 'Система экономических событий'
+    }
+]
+
+def create_economy_system_document_template(doc_data):
+    """Create a detailed economy system document template"""
+    template = {
+        'metadata': {
+            'id': f'mechanics-economy-{doc_data["name"]}',
+            'title': doc_data['title'],
+            'document_type': 'mechanics',
+            'category': 'economy',
+            'subcategory': 'additional-systems',
+            'status': 'draft',
+            'version': '1.0.0',
+            'last_updated': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'concept_approved': False,
+            'concept_reviewed_at': '',
+            'owners': [
+                {
+                    'role': 'game_designer',
+                    'contact': 'design@necp.game'
+                }
+            ],
+            'tags': [
+                'economy',
+                'mechanics',
+                'systems'
+            ],
+            'topics': [
+                'economic-simulation',
+                'resource-management',
+                'market-dynamics'
+            ],
+            'related_systems': [
+                'economy-service',
+                'market-service',
+                'resource-service'
+            ],
+            'related_documents': [
+                {
+                    'id': 'mechanics-economy-overview',
+                    'relation': 'references'
+                },
+                {
+                    'id': 'mechanics-economy-core-mechanics',
+                    'relation': 'part_of'
+                }
+            ],
+            'source': f'knowledge/mechanics/economy/{doc_data["name"]}.yaml',
+            'visibility': 'internal',
+            'audience': [
+                'design',
+                'systems',
+                'backend'
+            ],
+            'risk_level': 'high'
+        },
+        'summary': {
+            'problem': f'Необходимо детализировать {doc_data["description"].lower()} для создания реалистичной экономической симуляции.',
+            'goal': f'Описать ключевые аспекты, алгоритмы и влияние на геймплей {doc_data["description"].lower()}.',
+            'essence': doc_data["description"],
+            'key_points': [
+                'Основные экономические принципы',
+                'Математические модели и алгоритмы',
+                'Влияние на поведение игроков',
+                'Баланс и экономическая стабильность'
+            ]
+        },
+        'core_mechanics': {
+            'economic_principles': [
+                {
+                    'principle': 'supply_demand_dynamics',
+                    'description': 'Взаимодействие предложения и спроса',
+                    'implementation': 'динамическое ценообразование'
+                },
+                {
+                    'principle': 'opportunity_cost',
+                    'description': 'Альтернативные издержки выбора',
+                    'implementation': 'расчет эффективности решений'
+                },
+                {
+                    'principle': 'marginal_utility',
+                    'description': 'Предельная полезность ресурсов',
+                    'implementation': 'диминуирующая отдача'
+                },
+                {
+                    'principle': 'market_efficiency',
+                    'description': 'Эффективность рыночных механизмов',
+                    'implementation': 'автоматическое уравновешивание'
+                }
+            ],
+            'mathematical_models': {
+                'pricing_algorithms': [
+                    'demand_curve_modeling',
+                    'supply_elasticity_calculations',
+                    'competitive_pricing_optimization',
+                    'psychological_pricing_factors'
+                ],
+                'market_dynamics': [
+                    'price_fluctuation_simulators',
+                    'trend_analysis_engines',
+                    'market_sentiment_indicators',
+                    'economic_cycle_modeling'
+                ],
+                'player_economics': [
+                    'income_expenditure_tracking',
+                    'wealth_distribution_analysis',
+                    'economic_class_mobility',
+                    'purchasing_power_calculations'
+                ]
+            },
+            'system_integration': {
+                'resource_management': 'Связь с системами ресурсов',
+                'player_progression': 'Влияние на прогрессию игрока',
+                'social_interactions': 'Экономические аспекты общения',
+                'content_generation': 'Генерация экономического контента'
+            }
+        },
+        'player_economic_interactions': {
+            'transaction_types': [
+                {
+                    'type': 'direct_trading',
+                    'mechanisms': ['player_to_player_trades', 'npc_merchant_interactions', 'market_exchanges'],
+                    'economic_impact': 'price_discovery'
+                },
+                {
+                    'type': 'market_participation',
+                    'mechanisms': ['buy_orders', 'sell_orders', 'market_making', 'speculation'],
+                    'economic_impact': 'liquidity_provision'
+                },
+                {
+                    'type': 'resource_gathering',
+                    'mechanisms': ['mining', 'crafting', 'farming', 'exploration'],
+                    'economic_impact': 'supply_inflation'
+                },
+                {
+                    'type': 'service_providing',
+                    'mechanisms': ['transportation', 'protection', 'information_brokerage'],
+                    'economic_impact': 'value_added_services'
+                }
+            ],
+            'economic_decision_making': {
+                'short_term_decisions': [
+                    'immediate_resource_needs',
+                    'opportunity_costs',
+                    'risk_reward_calculations',
+                    'market_timing'
+                ],
+                'long_term_strategies': [
+                    'wealth_accumulation',
+                    'economic_diversification',
+                    'market_positioning',
+                    'legacy_building'
+                ],
+                'decision_support': [
+                    'market_intelligence',
+                    'economic_forecasting',
+                    'comparative_analysis',
+                    'historical_data'
+                ]
+            }
+        },
+        'market_regulation': {
+            'price_controls': [
+                {
+                    'mechanism': 'floor_price_guarantees',
+                    'purpose': 'prevent_price_collapse',
+                    'implementation': 'minimum_price_thresholds'
+                },
+                {
+                    'mechanism': 'ceiling_price_limits',
+                    'purpose': 'prevent_exploitation',
+                    'implementation': 'maximum_price_caps'
+                },
+                {
+                    'mechanism': 'taxation_systems',
+                    'purpose': 'revenue_generation',
+                    'implementation': 'progressive_tax_rates'
+                },
+                {
+                    'mechanism': 'subsidy_programs',
+                    'purpose': 'market_stabilization',
+                    'implementation': 'targeted_financial_support'
+                }
+            ],
+            'market_stability': [
+                {
+                    'mechanism': 'circuit_breakers',
+                    'purpose': 'prevent_extreme_volatility',
+                    'implementation': 'trading_halts'
+                },
+                {
+                    'mechanism': 'market_makers',
+                    'purpose': 'ensure_liquidity',
+                    'implementation': 'automated_market_participants'
+                },
+                {
+                    'mechanism': 'stabilization_funds',
+                    'purpose': 'crisis_intervention',
+                    'implementation': 'emergency_intervention_capital'
+                },
+                {
+                    'mechanism': 'economic_indicators',
+                    'purpose': 'market_health_monitoring',
+                    'implementation': 'real_time_economic_metrics'
+                }
+            ]
+        },
+        'technical_architecture': {
+            'data_structures': {
+                'market_data_models': [
+                    'price_history_databases',
+                    'transaction_ledger_systems',
+                    'inventory_tracking_structures',
+                    'economic_agent_profiles'
+                ],
+                'economic_simulations': [
+                    'market_dynamics_engines',
+                    'supply_chain_models',
+                    'economic_forecasting_systems',
+                    'player_behavior_predictors'
+                ]
+            },
+            'processing_engines': {
+                'real_time_processing': [
+                    'price_update_algorithms',
+                    'order_matching_engines',
+                    'market_clearing_mechanisms',
+                    'economic_event_processors'
+                ],
+                'batch_processing': [
+                    'economic_trend_analysis',
+                    'market_stability_assessments',
+                    'economic_health_reports',
+                    'player_economic_impact_studies'
+                ]
+            },
+            'scalability_considerations': {
+                'performance_optimization': [
+                    'efficient_data_structures',
+                    'parallel_processing_capabilities',
+                    'caching_strategies',
+                    'database_optimization'
+                ],
+                'system_limits': [
+                    'maximum_concurrent_transactions',
+                    'market_capacity_limits',
+                    'economic_simulation_boundaries',
+                    'player_economic_complexity'
+                ]
+            }
+        },
+        'balancing_framework': {
+            'economic_balance_metrics': [
+                {
+                    'metric': 'price_stability_index',
+                    'purpose': 'measure_market_volatility',
+                    'target_range': 'acceptable_fluctuation_levels'
+                },
+                {
+                    'metric': 'wealth_distribution_curve',
+                    'purpose': 'assess_economic_inequality',
+                    'target_range': 'balanced_distribution'
+                },
+                {
+                    'metric': 'economic_activity_level',
+                    'purpose': 'measure_market_engagement',
+                    'target_range': 'optimal_participation'
+                },
+                {
+                    'metric': 'resource_utilization_rate',
+                    'purpose': 'track_economic_efficiency',
+                    'target_range': 'sustainable_usage'
+                }
+            ],
+            'player_economic_experience': [
+                {
+                    'aspect': 'economic_accessibility',
+                    'considerations': 'entry_barriers',
+                    'balancing_approach': 'progressive_difficulty_scaling'
+                },
+                {
+                    'aspect': 'economic_risk_reward',
+                    'considerations': 'investment_returns',
+                    'balancing_approach': 'variance_adjustment'
+                },
+                {
+                    'aspect': 'economic_learning_curve',
+                    'considerations': 'skill_development',
+                    'balancing_approach': 'tutorial_integration'
+                },
+                {
+                    'aspect': 'economic_social_impact',
+                    'considerations': 'community_effects',
+                    'balancing_approach': 'social_system_integration'
+                }
+            ]
+        },
+        'future_evolution': {
+            'advanced_features': [
+                'ai_driven_market_analysis',
+                'predictive_economic_modeling',
+                'cross_realm_economic_integration',
+                'real_world_economic_data_integration'
+            ],
+            'emerging_trends': [
+                'blockchain_based_economies',
+                'decentralized_autonomous_markets',
+                'neural_network_economic_prediction',
+                'quantum_computing_economic_simulation'
+            ],
+            'research_directions': [
+                'behavioral_economics_integration',
+                'cultural_economic_differences',
+                'sustainable_economic_systems',
+                'ethical_economic_design'
+            ]
+        }
+    }
+
+    return template
+
+def main():
+    """Generate 9 economy additional systems documents"""
+    economy_dir = Path('knowledge/mechanics/economy')
+
+    generated_count = 0
+
+    for doc_data in ECONOMY_SYSTEMS_DOCUMENTS:
+        doc_file = economy_dir / f'{doc_data["name"]}.yaml'
+
+        # Check if document already exists
+        if doc_file.exists():
+            print(f"Document already exists: {doc_data['name']}")
+            continue
+
+        print(f"Generating document: {doc_data['title']}")
+
+        template = create_economy_system_document_template(doc_data)
+
+        with open(doc_file, 'w', encoding='utf-8') as f:
+            yaml.dump(template, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+
+        generated_count += 1
+
+    print(f"Generated {generated_count} economy additional systems documents")
+
+if __name__ == '__main__':
+    main()
