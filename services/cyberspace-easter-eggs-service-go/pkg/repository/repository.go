@@ -63,6 +63,27 @@ type Repository struct {
 	db *sql.DB
 }
 
+// NewConnection creates a new database connection
+func NewConnection(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database connection: %w", err)
+	}
+
+	// Configure connection pool
+	db.SetMaxOpenConns(25)                 // PERFORMANCE: Connection pool size
+	db.SetMaxIdleConns(10)                 // PERFORMANCE: Idle connections
+	db.SetConnMaxLifetime(5 * time.Minute) // PERFORMANCE: Connection lifetime
+
+	// Test connection
+	if err := db.Ping(); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	return db, nil
+}
+
 // NewRepository creates a new repository instance
 func NewRepository(db *sql.DB) RepositoryInterface {
 	return &Repository{db: db}
