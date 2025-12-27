@@ -215,7 +215,7 @@ func (s *AdminService) GetSystemHealth(ctx context.Context) (*models.SystemHealt
 		Status:      "healthy",
 		Timestamp:   time.Now(),
 		Version:     "1.0.0",
-		Uptime:      time.Since(time.Now()), // TODO: Track actual uptime
+		Uptime:      time.Since(s.startTime), // Calculate actual uptime from service start
 		Database:    "connected",
 		Cache:       "connected",
 		Services:    []models.ServiceStatus{},
