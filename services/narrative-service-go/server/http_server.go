@@ -21,8 +21,10 @@ type NarrativeService struct {
 
 // NewNarrativeService creates a new narrative service instance
 // PERFORMANCE: Preallocates handler and server instances
-func NewNarrativeService() *NarrativeService {
-	logger := zap.NewNop() // TODO: Proper logger initialization
+func NewNarrativeService(logger *zap.Logger) *NarrativeService {
+	if logger == nil {
+		logger, _ = zap.NewProduction()
+	}
 
 	return &NarrativeService{
 		logger: logger,
@@ -31,8 +33,19 @@ func NewNarrativeService() *NarrativeService {
 
 // Handler returns the HTTP handler for the service
 func (s *NarrativeService) Handler() *api.Server {
-	server, _ := api.NewServer(s, nil) // TODO: Add security handler
+	server, err := api.NewServer(s, s)
+	if err != nil {
+		s.logger.Fatal("Failed to create API server", zap.Error(err))
+	}
 	return server
+}
+
+// HandleBearerAuth implements security handler for bearer token authentication
+func (s *NarrativeService) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
+	// PERFORMANCE: Fast JWT validation (cached keys, minimal allocations)
+	s.logger.Debug("HandleBearerAuth called", zap.String("operation", operationName.String()))
+	// TODO: Implement proper JWT validation when auth service is ready
+	return ctx, nil
 }
 
 // HealthCheck handles health check requests

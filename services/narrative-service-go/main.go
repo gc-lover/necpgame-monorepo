@@ -23,11 +23,18 @@ func main() {
 		os.Setenv("GOGC", "50") // Lower GC threshold for real-time narrative
 	}
 
+	// PERFORMANCE: Initialize structured logger
+	zapLogger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
+	defer zapLogger.Sync()
+
 	// PERFORMANCE: Preallocate logger to avoid allocations
 	logger := log.New(os.Stdout, "[narrative] ", log.LstdFlags)
 
 	// PERFORMANCE: Initialize service with memory pooling for narrative operations
-	svc := server.NewNarrativeService()
+	svc := server.NewNarrativeService(zapLogger)
 
 	// PERFORMANCE: Configure HTTP server with optimized settings for narrative hot paths
 	httpServer := &http.Server{
