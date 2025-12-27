@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+"""
+Import Phoenix Part 1 Quests to Database
+Imports quest data from YAML files to database using Liquibase format.
+Imports first part of Phoenix quests from 2020-2029 period.
+"""
+
 import yaml
 import json
 import uuid
@@ -5,8 +12,8 @@ from pathlib import Path
 from datetime import datetime
 import hashlib
 
-def parse_detroit_quest(yaml_file):
-    """Parse individual Detroit quest from YAML file"""
+def parse_phoenix_quest(yaml_file):
+    """Parse individual Phoenix quest from YAML file"""
     try:
         with open(yaml_file, 'r', encoding='utf-8') as f:
             data = yaml.safe_load(f)
@@ -14,13 +21,16 @@ def parse_detroit_quest(yaml_file):
         metadata = data.get('metadata', {})
         quest_def = data.get('quest_definition', {})
 
+        # Extract quest information
         quest_id = metadata.get('id', '')
         title = metadata.get('title', '')
         description = data.get('summary', {}).get('essence', '')
 
+        # Get level requirements
         level_min = quest_def.get('level_min', 1)
         level_max = quest_def.get('level_max', None)
 
+        # Parse objectives
         objectives = []
         for obj in quest_def.get('objectives', []):
             objectives.append({
@@ -32,24 +42,28 @@ def parse_detroit_quest(yaml_file):
                 'optional': obj.get('optional', False)
             })
 
+        # Parse rewards
         rewards_data = quest_def.get('rewards', {})
         rewards = []
 
-        if 'xp' in rewards_data:
+        # Experience reward
+        if 'experience' in rewards_data:
             rewards.append({
                 'type': 'experience',
-                'amount': rewards_data['xp'],
+                'amount': rewards_data['experience'],
                 'description': 'Опыт за выполнение квеста'
             })
 
-        if 'currency' in rewards_data:
+        # Money reward
+        if 'money' in rewards_data:
             rewards.append({
                 'type': 'currency',
-                'amount': rewards_data['currency'],
+                'amount': rewards_data['money'],
                 'currency': 'eddies',
                 'description': 'Вознаграждение в эдди'
             })
 
+        # Reputation rewards
         if 'reputation' in rewards_data:
             for rep_type, amount in rewards_data['reputation'].items():
                 rewards.append({
@@ -59,6 +73,7 @@ def parse_detroit_quest(yaml_file):
                     'description': f'Репутация: {rep_type}'
                 })
 
+        # Item rewards
         if 'items' in rewards_data and rewards_data['items']:
             for item in rewards_data['items']:
                 rewards.append({
@@ -67,6 +82,7 @@ def parse_detroit_quest(yaml_file):
                     'description': f'Предмет: {item}'
                 })
 
+        # Default rewards if none specified
         if not rewards:
             rewards = [
                 {
@@ -82,11 +98,6 @@ def parse_detroit_quest(yaml_file):
                 }
             ]
 
-        # Extract city and period from path
-        parts = yaml_file.parts
-        city = parts[-3]  # city name
-        period = parts[-2]  # period like 2020-2029
-
         quest_data = {
             'id': str(uuid.uuid4()),
             'quest_id': quest_id,
@@ -98,12 +109,12 @@ def parse_detroit_quest(yaml_file):
             'rewards': rewards,
             'objectives': objectives,
             'metadata': {
-                'city': 'Detroit, Michigan, USA',
-                'period': period,
+                'city': 'Phoenix, Arizona, USA',
+                'period': '2020-2029',
                 'type': quest_def.get('quest_type', 'side'),
                 'source_file': str(yaml_file),
                 'imported_at': datetime.now().isoformat(),
-                'version': metadata.get('version', '1.0.0'),
+                'version': metadata.get('version', '2.0.0'),
                 'tags': metadata.get('tags', [])
             }
         }
@@ -123,11 +134,12 @@ def create_liquibase_yaml(quests, output_file):
         if not quest:
             continue
 
-        changeset_id = f"quests-detroit-{quest['quest_id']}-{hashlib.md5(str(quest).encode()).hexdigest()[:8]}"
+        # Create unique changeset ID
+        changeset_id = f"quests-phoenix-part1-{quest['quest_id']}-{hashlib.md5(str(quest).encode()).hexdigest()[:8]}"
 
         changeset = {
             'id': changeset_id,
-            'author': 'detroit-quests-import',
+            'author': 'phoenix-part1-quests-import',
             'changes': [
                 {
                     'insert': {
@@ -155,42 +167,47 @@ def create_liquibase_yaml(quests, output_file):
         'databaseChangeLog': changesets
     }
 
+    # Ensure output directory exists
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output_file, 'w', encoding='utf-8') as f:
         yaml.dump(liquibase_data, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
 
     print(f"Created Liquibase YAML file: {output_file}")
-    print(f"Imported {len(changesets)} Detroit quests")
+    print(f"Imported {len(changesets)} Phoenix Part 1 quests")
 
 def main():
     """Main function"""
-    input_dir = Path('knowledge/canon/lore/timeline-author/quests/america/detroit')
-    output_file = Path('infrastructure/liquibase/data/gameplay/quests/data_quests_detroit_import.yaml')
+    # Input directory with Phoenix quests
+    input_dir = Path('knowledge/canon/lore/timeline-author/quests/america/phoenix/2020-2029')
 
-    print(f"Reading Detroit quest files from: {input_dir}")
+    # Output file for Liquibase migration
+    output_file = Path('infrastructure/liquibase/data/gameplay/quests/data_quests_phoenix_part1_import.yaml')
 
-    detroit_quests = []
+    print(f"Reading Phoenix quest files from: {input_dir}")
 
-    # Find all YAML files recursively
-    yaml_files = list(input_dir.glob('**/*.yaml'))
+    # Find all YAML files in the directory
+    yaml_files = list(input_dir.glob('*.yaml'))
     print(f"Found {len(yaml_files)} YAML files")
 
+    # Parse all Phoenix quests
+    phoenix_quests = []
     for yaml_file in yaml_files:
         print(f"Processing: {yaml_file.name}")
-        quest_data = parse_detroit_quest(yaml_file)
+        quest_data = parse_phoenix_quest(yaml_file)
         if quest_data:
-            detroit_quests.append(quest_data)
+            phoenix_quests.append(quest_data)
 
-    if not detroit_quests:
-        print("No Detroit quests found!")
+    if not phoenix_quests:
+        print("No Phoenix quests found!")
         return
 
-    print(f"Successfully parsed {len(detroit_quests)} Detroit quests")
+    print(f"Successfully parsed {len(phoenix_quests)} Phoenix quests")
 
-    create_liquibase_yaml(detroit_quests, output_file)
+    # Create Liquibase YAML
+    create_liquibase_yaml(phoenix_quests, output_file)
 
-    print("Detroit quests import completed successfully!")
+    print("Phoenix Part 1 quests import completed successfully!")
 
 if __name__ == '__main__':
     main()
