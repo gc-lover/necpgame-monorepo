@@ -217,6 +217,112 @@ func (v *Validator) ValidateCreateLessonScheduleRequest(ctx context.Context, req
 	return nil
 }
 
+// ValidateCompleteLessonRequest validates lesson completion request
+func (v *Validator) ValidateCompleteLessonRequest(ctx context.Context, req *api.CompleteLessonRequest) error {
+	v.logger.Debug("Validating CompleteLessonRequest")
+
+	if req == nil {
+		return errors.New("request cannot be nil")
+	}
+
+	// Duration validation if provided
+	if req.Duration.IsSet() {
+		if req.Duration.Value <= 0 {
+			return errors.New("duration must be positive")
+		}
+		if req.Duration.Value > 480 { // 8 hours max
+			return errors.New("duration cannot exceed 480 minutes (8 hours)")
+		}
+	}
+
+	// Skill progress validation
+	if req.SkillProgress != nil {
+		if err := v.validateSkillProgress(req.SkillProgress); err != nil {
+			return fmt.Errorf("invalid skill_progress: %w", err)
+		}
+	}
+
+	// Evaluation validation
+	if req.Evaluation != nil {
+		if err := v.validateEvaluation(req.Evaluation); err != nil {
+			return fmt.Errorf("invalid evaluation: %w", err)
+		}
+	}
+
+	v.logger.Debug("CompleteLessonRequest validation passed")
+	return nil
+}
+
+// validateSkillProgress validates skill progress JSON structure
+func (v *Validator) validateSkillProgress(skillProgress map[string]interface{}) error {
+	// Basic structure validation - ensure it's a valid JSON object
+	if len(skillProgress) == 0 {
+		return errors.New("skill_progress cannot be empty")
+	}
+
+	// Validate that values are numeric (skill levels)
+	for skill, value := range skillProgress {
+		if skill == "" {
+			return errors.New("skill names cannot be empty")
+		}
+		if value == nil {
+			return fmt.Errorf("skill '%s' value cannot be null", skill)
+		}
+		// Allow both numbers and strings that can be parsed as numbers
+		switch v := value.(type) {
+		case float64:
+			if v < 0 || v > 100 {
+				return fmt.Errorf("skill '%s' value must be between 0 and 100", skill)
+			}
+		case int:
+			if v < 0 || v > 100 {
+				return fmt.Errorf("skill '%s' value must be between 0 and 100", skill)
+			}
+		default:
+			return fmt.Errorf("skill '%s' value must be a number", skill)
+		}
+	}
+
+	return nil
+}
+
+// validateEvaluation validates evaluation JSON structure
+func (v *Validator) validateEvaluation(evaluation map[string]interface{}) error {
+	// Basic structure validation
+	if len(evaluation) == 0 {
+		return errors.New("evaluation cannot be empty")
+	}
+
+	// Validate required evaluation fields
+	requiredFields := []string{"overall_rating", "effectiveness"}
+	for _, field := range requiredFields {
+		if _, exists := evaluation[field]; !exists {
+			return fmt.Errorf("evaluation must contain '%s' field", field)
+		}
+	}
+
+	// Validate rating fields are numeric
+	ratingFields := []string{"overall_rating", "content_quality", "teaching_quality", "communication"}
+	for _, field := range ratingFields {
+		if value, exists := evaluation[field]; exists && value != nil {
+			switch v := value.(type) {
+			case float64:
+				if v < 1.0 || v > 5.0 {
+					return fmt.Errorf("rating field '%s' must be between 1.0 and 5.0", field)
+				}
+			case int:
+				if v < 1 || v > 5 {
+					return fmt.Errorf("rating field '%s' must be between 1 and 5", field)
+				}
+			default:
+				return fmt.Errorf("rating field '%s' must be a number", field)
+			}
+		}
+	}
+
+	return nil
+}
+
 // ValidateUUID validates if a string is a valid UUID
 func (v *Validator) ValidateUUID(ctx context.Context, id string) error {
 	if _, err := uuid.Parse(id); err != nil {

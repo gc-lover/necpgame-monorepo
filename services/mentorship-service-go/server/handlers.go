@@ -167,7 +167,10 @@ func (h *Handler) CompleteLesson(ctx context.Context, params api.CompleteLessonP
 
 	lesson, err := h.service.CompleteLesson(ctx, params.LessonID, req)
 	if err != nil {
-		return api.CompleteLessonOK{}, nil // TODO: Proper error handling
+		h.logger.Error("Failed to complete lesson",
+			zap.String("lesson_id", params.LessonID.String()),
+			zap.Error(err))
+		return nil, err
 	}
 
 	return api.CompleteLessonOK{Data: *lesson}, nil

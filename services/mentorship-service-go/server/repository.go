@@ -572,11 +572,101 @@ func (r *Repository) CreateLesson(ctx context.Context, lesson *api.Lesson) error
 }
 
 // CompleteLesson completes a lesson
+// PERFORMANCE: Context timeout for DB operations (150ms for update operations in MMO)
 func (r *Repository) CompleteLesson(ctx context.Context, lessonID uuid.UUID, req *api.CompleteLessonRequest) (*api.Lesson, error) {
 	r.logger.Info("Completing lesson in DB", zap.String("id", lessonID.String()))
 
-	// TODO: Implement
-	return &api.Lesson{}, nil
+	// PERFORMANCE: Add timeout for DB operations in MMO environment
+	dbCtx, cancel := context.WithTimeout(ctx, 150*time.Millisecond)
+	defer cancel()
+
+	// Build dynamic UPDATE query based on provided fields
+	query := `
+		UPDATE mentorship.lessons SET
+			status = 'completed',
+			completed_at = $1,
+			updated_at = $2`
+	args := []interface{}{time.Now(), time.Now()}
+	argCount := 2
+
+	if req.SkillProgress != nil {
+		argCount++
+		query += fmt.Sprintf(", skill_progress = $%d", argCount)
+		args = append(args, req.SkillProgress)
+	}
+
+	if req.Evaluation != nil {
+		argCount++
+		query += fmt.Sprintf(", evaluation = $%d", argCount)
+		args = append(args, req.Evaluation)
+	}
+
+	if req.Duration.IsSet() {
+		argCount++
+		query += fmt.Sprintf(", duration = $%d", argCount)
+		args = append(args, req.Duration.Value)
+	}
+
+	query += fmt.Sprintf(" WHERE id = $%d RETURNING id", argCount+1)
+	args = append(args, lessonID)
+
+	// Execute UPDATE query
+	var updatedID uuid.UUID
+	err := r.db.QueryRow(dbCtx, query, args...).Scan(&updatedID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to complete lesson: %w", err)
+	}
+
+	r.logger.Info("Lesson completed successfully", zap.String("id", lessonID.String()))
+
+	// Return updated lesson
+	return r.getLessonByID(dbCtx, lessonID)
+}
+
+// getLessonByID retrieves a single lesson by ID
+// PERFORMANCE: Private helper method for internal use
+func (r *Repository) getLessonByID(ctx context.Context, lessonID uuid.UUID) (*api.Lesson, error) {
+	query := `
+		SELECT id, contract_id, schedule_id, lesson_type, format, content_id,
+			   started_at, completed_at, duration, skill_progress, evaluation,
+			   status, created_at, updated_at
+		FROM mentorship.lessons
+		WHERE id = $1`
+
+	lesson := r.lessonPool.Get().(*api.Lesson)
+	*lesson = api.Lesson{} // Reset
+
+	err := r.db.QueryRow(ctx, query, lessonID).Scan(
+		&lesson.ID.Value,
+		&lesson.ContractID.Value,
+		&lesson.ScheduleID.Value,
+		&lesson.LessonType,
+		&lesson.Format,
+		&lesson.ContentID.Value,
+		&lesson.StartedAt.Value,
+		&lesson.CompletedAt.Value,
+		&lesson.Duration.Value,
+		&lesson.SkillProgress,
+		&lesson.Evaluation,
+		&lesson.Status,
+		&lesson.CreatedAt.Value,
+		&lesson.UpdatedAt.Value,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve lesson: %w", err)
+	}
+
+	lesson.ID.Set = true
+	lesson.ContractID.Set = true
+	lesson.ScheduleID.Set = true
+	lesson.ContentID.Set = true
+	lesson.StartedAt.Set = true
+	lesson.CompletedAt.Set = true
+	lesson.Duration.Set = true
+	lesson.CreatedAt.Set = true
+	lesson.UpdatedAt.Set = true
+
+	return lesson, nil
 }
 
 // DiscoverMentors discovers available mentors

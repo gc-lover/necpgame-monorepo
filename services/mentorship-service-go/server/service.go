@@ -207,6 +207,13 @@ func (s *MentorshipService) StartLesson(ctx context.Context, contractID uuid.UUI
 // CompleteLesson completes a lesson
 func (s *MentorshipService) CompleteLesson(ctx context.Context, lessonID uuid.UUID, req *api.CompleteLessonRequest) (*api.Lesson, error) {
 	s.metrics.RecordRequest("CompleteLesson")
+	s.logger.Info("Completing lesson", zap.String("lesson_id", lessonID.String()))
+
+	// Validate completion request
+	if err := s.validator.ValidateCompleteLessonRequest(ctx, req); err != nil {
+		s.metrics.RecordError("CompleteLesson")
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
 
 	lesson, err := s.repo.CompleteLesson(ctx, lessonID, req)
 	if err != nil {
@@ -214,6 +221,7 @@ func (s *MentorshipService) CompleteLesson(ctx context.Context, lessonID uuid.UU
 		return nil, fmt.Errorf("failed to complete lesson: %w", err)
 	}
 
+	s.metrics.RecordSuccess("CompleteLesson")
 	return lesson, nil
 }
 
