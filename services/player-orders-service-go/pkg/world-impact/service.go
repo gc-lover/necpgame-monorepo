@@ -377,6 +377,59 @@ func (s *Service) performRecalculation() {
 		zap.Int("active_events", len(s.activeEvents)))
 }
 
+// GetAllEconomicIndexes returns all economic indexes
+func (s *Service) GetAllEconomicIndexes() []*OrderEconomicIndex {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	indexes := make([]*OrderEconomicIndex, 0, len(s.economicIndexes))
+	for _, index := range s.economicIndexes {
+		indexes = append(indexes, index)
+	}
+	return indexes
+}
+
+// GetAllSocialImpacts returns all social impacts
+func (s *Service) GetAllSocialImpacts() []*SocialImpact {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	impacts := make([]*SocialImpact, 0, len(s.socialImpacts))
+	for _, impact := range s.socialImpacts {
+		impacts = append(impacts, impact)
+	}
+	return impacts
+}
+
+// GetAllPoliticalImpacts returns all political impacts
+func (s *Service) GetAllPoliticalImpacts() []*PoliticalImpact {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	impacts := make([]*PoliticalImpact, 0, len(s.politicalImpacts))
+	for _, impact := range s.politicalImpacts {
+		impacts = append(impacts, impact)
+	}
+	return impacts
+}
+
+// GetAllCityDevelopments returns all city developments
+func (s *Service) GetAllCityDevelopments() []*CityDevelopment {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	devs := make([]*CityDevelopment, 0, len(s.cityDevelopments))
+	for _, dev := range s.cityDevelopments {
+		devs = append(devs, dev)
+	}
+	return devs
+}
+
+// RecalculateImpacts triggers immediate recalculation (for API calls)
+func (s *Service) RecalculateImpacts(ctx context.Context) {
+	s.performRecalculation()
+}
+
 // Close cleans up resources
 func (s *Service) Close() error {
 	return s.kafkaWriter.Close()
