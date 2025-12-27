@@ -8,8 +8,6 @@ import (
 	"context"
 	"sync"
 	"time"
-
-	"github.com/gc-lover/necpgame-monorepo/services/combat-stats-service-go/pkg/api"
 )
 
 // PERFORMANCE: Global timeouts for MMOFPS response requirements
