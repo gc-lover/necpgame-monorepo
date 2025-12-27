@@ -1,0 +1,245 @@
+# Issue: #2259
+metadata:
+  id: canon-quest-seattle-faction-alliance-2028
+  title: 'Сиэтл 2020-2029 — Тайный альянс с факцией'
+  document_type: canon
+  category: quest
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-27T09:15:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: content_writer
+      contact: content@necp.game
+  tags:
+    - seattle
+    - faction
+    - alliance
+    - diplomacy
+    - intrigue
+    - 2028
+  topics:
+    - political-diplomacy
+    - faction-relations
+    - secret-agreements
+  related_systems:
+    - narrative-service
+    - faction-service
+    - social-service
+  related_documents:
+    - id: canon-lore-timeline-author-index
+      relation: references
+    - id: github-issue-2259
+      title: GitHub Issue #2259
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/2259
+      relation: implements
+  source: shared/docs/knowledge/canon/lore/timeline-author/quests/america/seattle/2020-2029/quest-039-faction-alliance.md
+  visibility: internal
+  audience:
+    - content
+    - narrative
+    - backend
+  risk_level: high
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: [ ]
+summary:
+  problem: В хаосе Сиэтла 2028 года фракции ищут тайных союзников для выживания
+  goal: Создать квест с формированием тайного альянса между игроком и одной из фракций
+  essence: |
+    Игрок становится посредником в тайных переговорах между фракциями,
+    выполняет секретные задания и формирует альянс, который изменит баланс сил в городе.
+  key_points:
+    - Тайные дипломатические переговоры
+    - Выполнение секретных заданий для фракций
+    - Балансирование между конфликтующими сторонами
+    - Долгосрочные последствия альянса
+quest_definition:
+  quest_type: side
+  level_min: 20
+  level_max: 35
+  requirements:
+    required_quests:
+      - canon-quest-seattle-corporate-protest-2027
+    required_flags:
+      - corporate_protest_completed
+    required_reputation:
+      activism: 15
+    required_items: [ ]
+  objectives:
+    - id: establish_contact
+      text: "Установить контакт с представителем выбранной фракции через нейтрального посредника"
+      type: interact
+      target: faction_representative_contact
+      count: 1
+      optional: false
+    - id: prove_loyalty
+      text: "Выполнить тестовое задание для демонстрации лояльности фракции"
+      type: task_completion
+      target: faction_loyalty_task
+      count: 1
+      optional: false
+    - id: gather_intelligence
+      text: "Собрать разведданные о конкурирующих фракциях"
+      type: espionage
+      target: rival_faction_intelligence
+      count: 5
+      optional: false
+    - id: mediate_negotiation
+      text: "Посредничать в переговорах между фракциями для формирования альянса"
+      type: diplomacy
+      target: inter_faction_negotiation
+      count: 1
+      optional: false
+    - id: execute_secret_operation
+      text: "Провести совместную секретную операцию с новой фракцией-союзником"
+      type: mission
+      target: alliance_secret_operation
+      count: 1
+      optional: false
+    - id: solidify_alliance
+      text: "Закрепить альянс формальным договором или ритуалом"
+      type: ceremony
+      target: alliance_ceremony
+      count: 1
+      optional: false
+  rewards:
+    experience: 10000
+    money: 3000
+    reputation:
+      faction_loyalty: 40
+      diplomatic: 25
+    items:
+      - id: faction_signet_ring
+        name: "Перстень Фракции"
+        type: accessory
+        rarity: rare
+        description: "Символ принадлежности к фракции и знак доверия"
+      - id: alliance_contract
+        name: "Договор Альянса"
+        type: document
+        rarity: epic
+        description: "Юридически обязывающий договор с фракцией"
+    unlocks:
+      achievements:
+        - "Мастер Дипломатии"
+      flags:
+        - "faction_alliance_formed"
+        - "diplomatic_master"
+      quests:
+        - "quest-040-alliance-benefits"
+      factions:
+        - name: "Dynamic Faction Alliance"
+          reputation_bonus: 30
+          special_access: true
+  branches:
+    - id: nomad_alliance
+      condition: "Выбрать альянс с кочевниками Nomad"
+      consequences:
+        unlock_quest: "quest-040-nomad-caravan"
+        reputation_change:
+          nomad: 50
+          corporate: -20
+        faction_perks:
+          - "Доступ к контрабандным маршрутам"
+          - "Скидки на оружие"
+      locked_content: "corporate_alliance"
+    - id: corporate_alliance
+      condition: "Выбрать альянс с корпорацией"
+      consequences:
+        unlock_quest: "quest-040-corporate-black-ops"
+        reputation_change:
+          corporate: 50
+          street_cred: -20
+        faction_perks:
+          - "Корпоративные импланты"
+          - "Доступ к лабораториям"
+      locked_content: "nomad_alliance"
+    - id: street_alliance
+      condition: "Выбрать альянс с уличными бандами"
+      consequences:
+        unlock_quest: "quest-040-street-empire"
+        reputation_change:
+          street_cred: 50
+          police: -15
+        faction_perks:
+          - "Информаторы в полиции"
+          - "Черный рынок"
+      locked_content: "other_alliances"
+content:
+  sections:
+    - id: quest_overview
+      title: Описание
+      body: |
+        В преддверии апокалипсиса 2029 года фракции Сиэтла отчаянно ищут союзников.
+        Игрок становится ключевым посредником в формировании тайного альянса,
+        балансируя между интересами разных сторон и обеспечивая выживание в хаосе.
+      mechanics_links:
+        - mechanics/social/diplomacy-system.yaml
+        - mechanics/faction/alliance-mechanics.yaml
+      assets: [ ]
+    - id: quest_flow
+      title: Этапы опыта
+      body: |
+        1. Игрок получает предложение стать посредником в тайных переговорах.
+        2. Выбирает фракцию для альянса из доступных вариантов.
+        3. Выполняет задания для доказательства лояльности.
+        4. Собирает разведданные о потенциальных угрозах.
+        5. Организует секретную встречу лидеров фракций.
+        6. Проводит совместную операцию для укрепления доверия.
+        7. Заключает формальный альянс с церемонией.
+      mechanics_links:
+        - mechanics/espionage/intelligence-gathering.yaml
+        - mechanics/social/negotiation.yaml
+      assets: [ ]
+    - id: regional_details
+      title: Региональные детали Сиэтла 2028
+      body: |
+        Сиэтл 2028 года - город на грани хаоса. Фракции понимают, что выживание
+        возможно только через альянсы. Корпорации, уличные банды и кочевники
+        ищут союзников в преддверии надвигающейся катастрофы.
+      mechanics_links: [ ]
+      assets: [ ]
+    - id: rewards
+      title: Награды и эффекты
+      body: |
+        Квест дает 10000 XP, 3000 eddies и значительно повышает репутацию в выбранной фракции.
+        Игрок получает доступ к эксклюзивным ресурсам и квестам фракции.
+      mechanics_links: [ ]
+      assets: [ ]
+    - id: branching_opportunities
+      title: Возможности ветвления
+      body: |
+        - Альянс с корпорациями: доступ к технологиям, но потеря уличного доверия
+        - Альянс с кочевниками: мобильность и ресурсы, но корпоративная вражда
+        - Альянс с улицей: местная поддержка, но проблемы с законом
+        - Двойная игра: предательство после получения выгоды
+      mechanics_links:
+        - mechanics/faction/reputation-system.yaml
+        - mechanics/politics/alliance-dynamics.yaml
+      assets: [ ]
+appendix:
+  glossary:
+    - term: "Faction Alliance"
+      definition: "Тайный договор между фракциями для совместных действий и взаимной поддержки"
+    - term: "Diplomatic Mediation"
+      definition: "Процесс посредничества в переговорах между конфликтующими сторонами"
+  references:
+    - "Seattle Faction History - Real gang and corporate rivalries in Seattle"
+    - "Political Alliances in Cyberpunk - Faction diplomacy mechanics"
+    - "Secret Society Lore - Hidden alliance tropes in fiction"
+  decisions:
+    - date: 2025-12-27T09:15:00Z
+      decision: "Created faction alliance quest with multiple diplomatic paths"
+      rationale: "Adds political intrigue and long-term consequences to Seattle quest line"
+implementation:
+  github_issue: 2259
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/content/queued.yaml#canon-quest-seattle-faction-alliance
+  blockers: [ ]
