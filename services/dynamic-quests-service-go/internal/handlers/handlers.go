@@ -468,6 +468,21 @@ func (h *Handlers) GetCapitalBuildingQuest(w http.ResponseWriter, r *http.Reques
 	h.respondJSON(w, http.StatusOK, quest)
 }
 
+// GetOutdoorLifestyleQuest handles GET /quests/denver/outdoor-lifestyle
+// Issue: #140928921
+func (h *Handlers) GetOutdoorLifestyleQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get Outdoor Lifestyle quest request")
+
+	quest, err := h.service.GetOutdoorLifestyleQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get Outdoor Lifestyle quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
 // GetOilLegacyQuest handles GET /quests/dallas/oil-legacy
 // Issue: #140928929
 func (h *Handlers) GetOilLegacyQuest(w http.ResponseWriter, r *http.Request) {

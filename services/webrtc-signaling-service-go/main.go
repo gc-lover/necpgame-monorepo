@@ -137,6 +137,12 @@ func setupRouter(h *handlers.Handlers) *chi.Mux {
 		r.Post("/voice-channels/{channel_id}/signal", h.ExchangeSignalingMessage)
 		r.Post("/voice-channels/{channel_id}/leave", h.LeaveVoiceChannel)
 
+		// Guild voice channels management
+		r.Get("/guilds/{guild_id}/voice-channels", h.ListGuildVoiceChannels)
+		r.Post("/guilds/{guild_id}/voice-channels", h.CreateGuildVoiceChannel)
+		r.Put("/guilds/{guild_id}/voice-channels/{channel_id}", h.UpdateGuildVoiceChannel)
+		r.Post("/guilds/{guild_id}/voice-channels/{channel_id}/join", h.JoinGuildVoiceChannel)
+
 		// Voice quality monitoring
 		r.Post("/voice-quality/{channel_id}/report", h.ReportVoiceQuality)
 	})

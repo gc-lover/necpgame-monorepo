@@ -7,6 +7,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/prometheus/client_golang v1.18.0
 	go.uber.org/zap v1.26.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

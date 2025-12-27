@@ -105,6 +105,119 @@ func (h *Handlers) MetricsHandler() http.Handler {
 	})
 }
 
+// Guild Voice Channel handlers
+func (h *Handlers) CreateGuildVoiceChannel(w http.ResponseWriter, r *http.Request) {
+	var req models.GuildVoiceChannelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// TODO: Get user ID from JWT token
+	ownerID := uuid.New() // Placeholder
+
+	ctx, cancel := contextWithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	response, err := h.service.CreateGuildVoiceChannel(ctx, &req, ownerID)
+	if err != nil {
+		h.logger.Error("Failed to create guild voice channel", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to create guild voice channel")
+		return
+	}
+
+	h.respondJSON(w, http.StatusCreated, response)
+}
+
+func (h *Handlers) ListGuildVoiceChannels(w http.ResponseWriter, r *http.Request) {
+	guildIDStr := r.URL.Query().Get("guild_id")
+	if guildIDStr == "" {
+		h.respondError(w, http.StatusBadRequest, "Missing guild_id parameter")
+		return
+	}
+
+	guildID, err := uuid.Parse(guildIDStr)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid guild_id format")
+		return
+	}
+
+	ctx, cancel := contextWithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	channels, err := h.service.GetGuildVoiceChannels(ctx, guildID)
+	if err != nil {
+		h.logger.Error("Failed to list guild voice channels", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to list guild voice channels")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, channels)
+}
+
+func (h *Handlers) UpdateGuildVoiceChannel(w http.ResponseWriter, r *http.Request) {
+	channelIDStr := chi.URLParam(r, "channel_id")
+	channelID, err := uuid.Parse(channelIDStr)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid channel_id format")
+		return
+	}
+
+	var req models.GuildVoiceChannelUpdateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// TODO: Get user ID from JWT token
+	userID := uuid.New() // Placeholder
+
+	ctx, cancel := contextWithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	response, err := h.service.UpdateGuildVoiceChannel(ctx, channelID, &req, userID)
+	if err != nil {
+		h.logger.Error("Failed to update guild voice channel", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to update guild voice channel")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
+}
+
+func (h *Handlers) JoinGuildVoiceChannel(w http.ResponseWriter, r *http.Request) {
+	channelIDStr := chi.URLParam(r, "channel_id")
+	channelID, err := uuid.Parse(channelIDStr)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid channel_id format")
+		return
+	}
+
+	var req models.JoinVoiceChannelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	userID, err := uuid.Parse(req.UserID)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid user_id format")
+		return
+	}
+
+	ctx, cancel := contextWithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	response, err := h.service.JoinGuildVoiceChannel(ctx, channelID, userID)
+	if err != nil {
+		h.logger.Error("Failed to join guild voice channel", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
+}
+
 // Voice channel handlers
 func (h *Handlers) ListVoiceChannels(w http.ResponseWriter, r *http.Request) {
 	guildIDStr := r.URL.Query().Get("guild_id")

@@ -18,6 +18,19 @@ type VoiceChannel struct {
 	IsActive    bool      `json:"is_active" db:"is_active"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	// Guild-specific fields
+	IsDefaultGuildChannel bool             `json:"is_default_guild_channel,omitempty" db:"is_default_guild_channel"`
+	GuildPermissions      *GuildPermissions `json:"guild_permissions,omitempty" db:"guild_permissions"`
+}
+
+// GuildPermissions represents guild-specific voice channel permissions
+type GuildPermissions struct {
+	AllowedRoles    []string `json:"allowed_roles"`    // ["leader", "officer", "member"]
+	BlockedUsers    []string `json:"blocked_users"`    // User IDs that cannot join
+	MutedUsers      []string `json:"muted_users"`      // Users that are muted in this channel
+	DeafenedUsers   []string `json:"deafened_users"`   // Users that are deafened in this channel
+	IsModerated     bool     `json:"is_moderated"`     // Whether channel has moderation enabled
+	RequireApproval bool     `json:"require_approval"` // Whether users need approval to join
 }
 
 // VoiceParticipant represents a user in a voice channel
@@ -163,6 +176,43 @@ type VoiceChannelRequest struct {
 	MaxUsers int        `json:"max_users"`
 	Private  bool       `json:"private"`
 	Password *string    `json:"password,omitempty"`
+}
+
+// GuildVoiceChannelRequest represents guild-specific voice channel request
+type GuildVoiceChannelRequest struct {
+	Name               string            `json:"name"`
+	Type               string            `json:"type"` // Must be "guild"
+	GuildID            string            `json:"guild_id"`
+	MaxUsers           int               `json:"max_users"`
+	IsDefaultChannel   bool              `json:"is_default_channel"`
+	AllowedRoles       []string          `json:"allowed_roles"`
+	IsModerated        bool              `json:"is_moderated"`
+	RequireApproval    bool              `json:"require_approval"`
+}
+
+// GuildVoiceChannelResponse represents guild voice channel response
+type GuildVoiceChannelResponse struct {
+	ID                   string            `json:"id"`
+	Name                 string            `json:"name"`
+	Type                 string            `json:"type"`
+	GuildID              string            `json:"guild_id"`
+	OwnerID              string            `json:"owner_id"`
+	MaxUsers             int               `json:"max_users"`
+	CurrentUsers         int               `json:"current_users"`
+	IsActive             bool              `json:"is_active"`
+	IsDefaultChannel     bool              `json:"is_default_channel"`
+	GuildPermissions     GuildPermissions  `json:"guild_permissions"`
+	CreatedAt            time.Time         `json:"created_at"`
+}
+
+// GuildVoiceChannelUpdateRequest represents update request for guild voice channels
+type GuildVoiceChannelUpdateRequest struct {
+	Name             *string            `json:"name,omitempty"`
+	MaxUsers         *int               `json:"max_users,omitempty"`
+	AllowedRoles     *[]string          `json:"allowed_roles,omitempty"`
+	IsModerated      *bool              `json:"is_moderated,omitempty"`
+	RequireApproval  *bool              `json:"require_approval,omitempty"`
+	BlockedUsers     *[]string          `json:"blocked_users,omitempty"`
 }
 
 // VoiceChannelResponse represents voice channel response

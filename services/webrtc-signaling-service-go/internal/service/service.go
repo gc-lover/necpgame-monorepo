@@ -28,6 +28,289 @@ func NewService(repo *repository.Repository, logger *zap.Logger) *Service {
 	}
 }
 
+// Guild Voice Channel methods
+func (s *Service) CreateGuildVoiceChannel(ctx context.Context, req *models.GuildVoiceChannelRequest, ownerID uuid.UUID) (*models.GuildVoiceChannelResponse, error) {
+	// Validate guild membership (placeholder - should integrate with guild service)
+	guildID, err := uuid.Parse(req.GuildID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid guild ID: %w", err)
+	}
+
+	// Check if user has permission to create channels in this guild (placeholder)
+	// TODO: Integrate with guild service to validate permissions
+
+	channel := &models.VoiceChannel{
+		ID:                     uuid.New(),
+		Name:                   req.Name,
+		Type:                   "guild",
+		GuildID:                &guildID,
+		OwnerID:                ownerID,
+		MaxUsers:               req.MaxUsers,
+		CurrentUsers:           0,
+		IsActive:               true,
+		CreatedAt:              time.Now(),
+		UpdatedAt:              time.Now(),
+		IsDefaultGuildChannel:  req.IsDefaultChannel,
+		GuildPermissions: &models.GuildPermissions{
+			AllowedRoles:    req.AllowedRoles,
+			BlockedUsers:    []string{},
+			MutedUsers:      []string{},
+			DeafenedUsers:   []string{},
+			IsModerated:     req.IsModerated,
+			RequireApproval: req.RequireApproval,
+		},
+	}
+
+	if channel.MaxUsers <= 0 {
+		channel.MaxUsers = 50 // Default for guild channels
+	}
+
+	err = s.repo.CreateVoiceChannel(ctx, channel)
+	if err != nil {
+		s.logger.Error("Failed to create guild voice channel", zap.Error(err))
+		return nil, fmt.Errorf("failed to create guild voice channel: %w", err)
+	}
+
+	response := &models.GuildVoiceChannelResponse{
+		ID:               channel.ID.String(),
+		Name:             channel.Name,
+		Type:             channel.Type,
+		GuildID:          channel.GuildID.String(),
+		OwnerID:          channel.OwnerID.String(),
+		MaxUsers:         channel.MaxUsers,
+		CurrentUsers:     channel.CurrentUsers,
+		IsActive:         channel.IsActive,
+		IsDefaultChannel: channel.IsDefaultGuildChannel,
+		GuildPermissions: *channel.GuildPermissions,
+		CreatedAt:        channel.CreatedAt,
+	}
+
+	s.logger.Info("Guild voice channel created",
+		zap.String("channel_id", channel.ID.String()),
+		zap.String("guild_id", guildID.String()),
+		zap.String("owner_id", ownerID.String()))
+
+	return response, nil
+}
+
+func (s *Service) GetGuildVoiceChannels(ctx context.Context, guildID uuid.UUID) ([]*models.GuildVoiceChannelResponse, error) {
+	channels, err := s.repo.ListVoiceChannels(ctx, &guildID)
+	if err != nil {
+		return nil, err
+	}
+
+	responses := make([]*models.GuildVoiceChannelResponse, 0, len(channels))
+	for _, channel := range channels {
+		if channel.Type == "guild" {
+			response := &models.GuildVoiceChannelResponse{
+				ID:               channel.ID.String(),
+				Name:             channel.Name,
+				Type:             channel.Type,
+				GuildID:          channel.GuildID.String(),
+				OwnerID:          channel.OwnerID.String(),
+				MaxUsers:         channel.MaxUsers,
+				CurrentUsers:     channel.CurrentUsers,
+				IsActive:         channel.IsActive,
+				IsDefaultChannel: channel.IsDefaultGuildChannel,
+				CreatedAt:        channel.CreatedAt,
+			}
+
+			if channel.GuildPermissions != nil {
+				response.GuildPermissions = *channel.GuildPermissions
+			}
+
+			responses = append(responses, response)
+		}
+	}
+
+	return responses, nil
+}
+
+func (s *Service) UpdateGuildVoiceChannel(ctx context.Context, channelID uuid.UUID, req *models.GuildVoiceChannelUpdateRequest, userID uuid.UUID) (*models.GuildVoiceChannelResponse, error) {
+	// Get existing channel
+	channel, err := s.repo.GetVoiceChannel(ctx, channelID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Verify user has permission to update (placeholder - should integrate with guild service)
+	if channel.OwnerID != userID {
+		return nil, fmt.Errorf("insufficient permissions to update channel")
+	}
+
+	// Apply updates
+	if req.Name != nil {
+		channel.Name = *req.Name
+	}
+	if req.MaxUsers != nil && *req.MaxUsers > 0 {
+		channel.MaxUsers = *req.MaxUsers
+	}
+	if req.AllowedRoles != nil {
+		if channel.GuildPermissions == nil {
+			channel.GuildPermissions = &models.GuildPermissions{}
+		}
+		channel.GuildPermissions.AllowedRoles = *req.AllowedRoles
+	}
+	if req.IsModerated != nil {
+		if channel.GuildPermissions == nil {
+			channel.GuildPermissions = &models.GuildPermissions{}
+		}
+		channel.GuildPermissions.IsModerated = *req.IsModerated
+	}
+	if req.RequireApproval != nil {
+		if channel.GuildPermissions == nil {
+			channel.GuildPermissions = &models.GuildPermissions{}
+		}
+		channel.GuildPermissions.RequireApproval = *req.RequireApproval
+	}
+	if req.BlockedUsers != nil {
+		if channel.GuildPermissions == nil {
+			channel.GuildPermissions = &models.GuildPermissions{}
+		}
+		channel.GuildPermissions.BlockedUsers = *req.BlockedUsers
+	}
+
+	channel.UpdatedAt = time.Now()
+
+	err = s.repo.UpdateVoiceChannel(ctx, channel)
+	if err != nil {
+		s.logger.Error("Failed to update guild voice channel", zap.Error(err))
+		return nil, fmt.Errorf("failed to update guild voice channel: %w", err)
+	}
+
+	response := &models.GuildVoiceChannelResponse{
+		ID:               channel.ID.String(),
+		Name:             channel.Name,
+		Type:             channel.Type,
+		GuildID:          channel.GuildID.String(),
+		OwnerID:          channel.OwnerID.String(),
+		MaxUsers:         channel.MaxUsers,
+		CurrentUsers:     channel.CurrentUsers,
+		IsActive:         channel.IsActive,
+		IsDefaultChannel: channel.IsDefaultGuildChannel,
+		CreatedAt:        channel.CreatedAt,
+	}
+
+	if channel.GuildPermissions != nil {
+		response.GuildPermissions = *channel.GuildPermissions
+	}
+
+	s.logger.Info("Guild voice channel updated",
+		zap.String("channel_id", channelID.String()),
+		zap.String("guild_id", channel.GuildID.String()))
+
+	return response, nil
+}
+
+func (s *Service) JoinGuildVoiceChannel(ctx context.Context, channelID, userID uuid.UUID) (*models.JoinVoiceChannelResponse, error) {
+	// Get channel info
+	channel, err := s.repo.GetVoiceChannel(ctx, channelID)
+	if err != nil {
+		return nil, err
+	}
+
+	if channel.Type != "guild" {
+		return nil, fmt.Errorf("channel is not a guild voice channel")
+	}
+
+	if !channel.IsActive {
+		return nil, fmt.Errorf("guild voice channel is not active")
+	}
+
+	if channel.CurrentUsers >= channel.MaxUsers {
+		return nil, fmt.Errorf("guild voice channel is full")
+	}
+
+	// Check guild permissions (placeholder - should integrate with guild service)
+	if channel.GuildPermissions != nil {
+		// Check if user is blocked
+		for _, blockedUser := range channel.GuildPermissions.BlockedUsers {
+			if blockedUser == userID.String() {
+				return nil, fmt.Errorf("user is blocked from this channel")
+			}
+		}
+
+		// Check if channel requires approval (placeholder)
+		if channel.GuildPermissions.RequireApproval {
+			return nil, fmt.Errorf("channel requires approval to join")
+		}
+	}
+
+	// Add participant
+	participant := &models.VoiceParticipant{
+		ID:       uuid.New(),
+		ChannelID: channelID,
+		UserID:   userID,
+		Role:     "member",
+		IsMuted:  false,
+		IsDeafened: false,
+		JoinedAt: time.Now(),
+	}
+
+	err = s.repo.AddVoiceParticipant(ctx, participant)
+	if err != nil {
+		s.logger.Error("Failed to add guild voice participant", zap.Error(err))
+		return nil, fmt.Errorf("failed to join guild voice channel: %w", err)
+	}
+
+	// Update channel user count
+	channel.CurrentUsers++
+	err = s.repo.UpdateVoiceChannel(ctx, channel)
+	if err != nil {
+		s.logger.Error("Failed to update guild channel user count", zap.Error(err))
+		// Don't return error as user is already added
+	}
+
+	// Get participants
+	participants, err := s.repo.GetVoiceParticipants(ctx, channelID)
+	if err != nil {
+		s.logger.Error("Failed to get guild voice participants", zap.Error(err))
+		// Continue anyway
+	}
+
+	// Convert to response format
+	participantInfos := make([]models.VoiceParticipantInfo, len(participants))
+	for i, p := range participants {
+		participantInfos[i] = models.VoiceParticipantInfo{
+			UserID:     p.UserID.String(),
+			Username:   "User_" + p.UserID.String()[:8], // Placeholder
+			Role:       p.Role,
+			IsMuted:    p.IsMuted,
+			IsDeafened: p.IsDeafened,
+		}
+	}
+
+	response := &models.JoinVoiceChannelResponse{
+		Success: true,
+		Channel: models.VoiceChannelResponse{
+			ID:           channel.ID.String(),
+			Name:         channel.Name,
+			Type:         channel.Type,
+			OwnerID:      channel.OwnerID.String(),
+			MaxUsers:     channel.MaxUsers,
+			CurrentUsers: channel.CurrentUsers,
+			IsActive:     channel.IsActive,
+			CreatedAt:    channel.CreatedAt,
+		},
+		Participants: participantInfos,
+		Signaling: models.SignalingConfig{
+			ICEServers: []models.ICEServerConfig{
+				{
+					URLs: []string{"stun:stun.l.google.com:19302"},
+				},
+			},
+			SessionID: uuid.New().String(),
+		},
+	}
+
+	s.logger.Info("User joined guild voice channel",
+		zap.String("channel_id", channelID.String()),
+		zap.String("guild_id", channel.GuildID.String()),
+		zap.String("user_id", userID.String()))
+
+	return response, nil
+}
+
 // VoiceChannel methods
 func (s *Service) CreateVoiceChannel(ctx context.Context, req *models.VoiceChannelRequest, ownerID uuid.UUID) (*models.VoiceChannelResponse, error) {
 	channel := &models.VoiceChannel{

@@ -2184,6 +2184,329 @@ func (s *Service) GetCapitalBuildingQuest(ctx context.Context) (*models.DynamicQ
 	return quest, nil
 }
 
+// GetOutdoorLifestyleQuest returns the Outdoor Lifestyle quest for Denver
+// Issue: #140928921
+func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Outdoor Lifestyle quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "canon-quest-denver-2029-009-outdoor-lifestyle",
+		Title:            "Денвер: жизнь под открытым небом",
+		Description:      "Проведите день на свежем воздухе в Денвере, сочетая активные виды спорта и социальные мероприятия",
+		QuestType:        "side",
+		MinLevel:         2,
+		MaxLevel:         0, // No max level
+		EstimatedDuration: 45,
+		Difficulty:       "easy",
+		Themes:           []string{"outdoor", "lifestyle", "sports", "social", "nature"},
+		Status:           "active",
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "morning_bike_ride",
+				Sequence:    1,
+				Title:       "Утренний велозаезд по Cherry Creek Trail",
+				Description: "Выберите подход к утреннему велозаезду",
+				Context:     "Начните день с активного велоспорта по живописной трассе Cherry Creek",
+				Choices: []models.Choice{
+					{
+						ID:             "leisure_ride",
+						Text:           "Прогулочный заезд",
+						Description:    "Спокойная поездка для наслаждения природой",
+						Consequences: []models.Consequence{
+							{
+								Type:     "skill_boost",
+								Target:   "outdoor_flow",
+								Value:    float64(10),
+								Probability: 1.0,
+								Description: "Небольшое улучшение навыка outdoor flow",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "speed_ride",
+						Text:           "Скоростной заезд",
+						Description:    "Интенсивная тренировка с высокой скоростью",
+						Consequences: []models.Consequence{
+							{
+								Type:     "skill_boost",
+								Target:   "outdoor_flow",
+								Value:    float64(15),
+								Probability: 1.0,
+								Description: "Значительное улучшение навыка outdoor flow",
+							},
+							{
+								Type:     "health_risk",
+								Target:   "stamina",
+								Value:    float64(-5),
+								Probability: 0.3,
+								Description: "Риск переутомления",
+							},
+						},
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: false,
+			},
+			{
+				ID:          "midday_kayaking",
+				Sequence:    2,
+				Title:       "Полуденный каякинг на Confluence Park",
+				Description: "Выберите стиль каякинга",
+				Context:     "Продолжите день водными активностями на реке",
+				Choices: []models.Choice{
+					{
+						ID:             "guided_tour",
+						Text:           "Экскурсионный тур",
+						Description:    "Безопасный тур с гидом по спокойным водам",
+						Consequences: []models.Consequence{
+							{
+								Type:     "skill_boost",
+								Target:   "outdoor_flow",
+								Value:    float64(12),
+								Probability: 1.0,
+								Description: "Среднее улучшение навыка outdoor flow",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "extreme_rapids",
+						Text:           "Экстремальный сплав",
+						Description:    "Тренировка на бурных порогах",
+						Consequences: []models.Consequence{
+							{
+								Type:     "skill_boost",
+								Target:   "outdoor_flow",
+								Value:    float64(20),
+								Probability: 1.0,
+								Description: "Большое улучшение навыка outdoor flow",
+							},
+							{
+								Type:     "health_risk",
+								Target:   "health",
+								Value:    float64(-10),
+								Probability: 0.4,
+								Description: "Риск травмы при экстремальном сплаве",
+							},
+						},
+						RiskLevel:      "high",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: false,
+			},
+			{
+				ID:          "afternoon_yoga",
+				Sequence:    3,
+				Title:       "Послеобеденный йога-митап на Sloan's Lake",
+				Description: "Выберите тип йога-сессии",
+				Context:     "Завершите спортивную часть дня йогой у озера",
+				Choices: []models.Choice{
+					{
+						ID:             "relaxation_yoga",
+						Text:           "Йога релаксации",
+						Description:    "Спокойная сессия для восстановления",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "social",
+								Value:    float64(10),
+								Probability: 1.0,
+								Description: "Улучшение социальной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "power_yoga",
+						Text:           "Силовая йога",
+						Description:    "Интенсивная тренировка для продвинутых",
+						Consequences: []models.Consequence{
+							{
+								Type:     "skill_boost",
+								Target:   "outdoor_flow",
+								Value:    float64(18),
+								Probability: 1.0,
+								Description: "Значительное улучшение навыка outdoor flow",
+							},
+						},
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: false,
+			},
+			{
+				ID:          "evening_patio",
+				Sequence:    4,
+				Title:       "Вечерний патио-вечер с живой музыкой",
+				Description: "Выберите стиль вечера",
+				Context:     "Завершите день социальным мероприятием",
+				Choices: []models.Choice{
+					{
+						ID:             "casual_social",
+						Text:           "Неформальное общение",
+						Description:    "Расслабленный вечер с друзьями",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "social",
+								Value:    float64(15),
+								Probability: 1.0,
+								Description: "Улучшение социальной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "networking",
+						Text:           "Нетворкинг",
+						Description:    "Вечер для деловых знакомств",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "corporate",
+								Value:    float64(8),
+								Probability: 1.0,
+								Description: "Небольшое улучшение корпоративной репутации",
+							},
+							{
+								Type:     "reputation",
+								Target:   "social",
+								Value:    float64(10),
+								Probability: 1.0,
+								Description: "Улучшение социальной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: false,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "sports_focus",
+				Title:       "Спортивный день",
+				Description: "Фокус на активных видах спорта",
+				Requirements: []string{"speed_ride", "extreme_rapids", "power_yoga"},
+				Rewards: []models.Reward{
+					{
+						Type:  "experience",
+						Value: 2500,
+					},
+					{
+						Type:  "currency",
+						Value: 50,
+					},
+				},
+				Narrative: "Вы провели идеальный спортивный день в Денвере, полностью сосредоточившись на физической активности.",
+			},
+			{
+				ID:          "social_focus",
+				Title:       "Социальный день",
+				Description: "Фокус на общении и отдыхе",
+				Requirements: []string{"leisure_ride", "guided_tour", "relaxation_yoga", "casual_social"},
+				Rewards: []models.Reward{
+					{
+						Type:  "experience",
+						Value: 2000,
+					},
+					{
+						Type:  "currency",
+						Value: 60,
+					},
+				},
+				Narrative: "Вы провели расслабляющий день, наслаждаясь природой и общением с людьми.",
+			},
+			{
+				ID:          "balanced_day",
+				Title:       "Сбалансированный день",
+				Description: "Сочетание спорта и социального взаимодействия",
+				Requirements: []string{}, // Default ending
+				Rewards: []models.Reward{
+					{
+						Type:  "experience",
+						Value: 2200,
+					},
+					{
+						Type:  "currency",
+						Value: 55,
+					},
+				},
+				Narrative: "Вы нашли идеальный баланс между активным отдыхом и социальным взаимодействием.",
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "sports",
+				Change:      20,
+				Description: "Репутация среди спортсменов",
+				ChoiceID:    "sports_focus",
+			},
+			{
+				Faction:     "social",
+				Change:      15,
+				Description: "Социальная репутация",
+				ChoiceID:    "social_focus",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Denver, Colorado",
+			TimePeriod:  "2029",
+			Weather:     "Sunny, 75°F",
+			Situation:   "A perfect day for outdoor activities in the Mile High City",
+			Objectives:  []string{
+				"Morning bike ride along Cherry Creek Trail",
+				"Midday kayaking at Confluence Park",
+				"Afternoon yoga at Sloan's Lake",
+				"Evening patio gathering with live music",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "bike_instructor",
+				Name:        "Bike Instructor",
+				Role:        "Guide",
+				Description: "Local cycling expert",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "kayak_guide",
+				Name:        "Kayak Guide",
+				Role:        "Guide",
+				Description: "Experienced river guide",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "yoga_instructor",
+				Name:        "Yoga Instructor",
+				Role:        "Instructor",
+				Description: "Certified yoga teacher",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "bar_owner",
+				Name:        "Bar Owner",
+				Role:        "Host",
+				Description: "Local business owner hosting the patio event",
+				Importance:  "tertiary",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
 // GetEverythingBiggerQuest returns the Everything Bigger quest for Dallas
 // Issue: #140928943
 func (s *Service) GetEverythingBiggerQuest(ctx context.Context) (*models.DynamicQuest, error) {

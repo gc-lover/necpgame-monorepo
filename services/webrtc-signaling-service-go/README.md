@@ -43,6 +43,12 @@ Enterprise-Grade WebRTC Signaling Service for NECPGAME MMOFPS RPG.
 - `POST /api/v1/voice-channels/{channel_id}/signal` - Exchange signaling messages
 - `POST /api/v1/voice-channels/{channel_id}/leave` - Leave voice channel
 
+### Guild Voice Channel Management
+- `GET /api/v1/guilds/{guild_id}/voice-channels` - List guild voice channels
+- `POST /api/v1/guilds/{guild_id}/voice-channels` - Create guild voice channel
+- `PUT /api/v1/guilds/{guild_id}/voice-channels/{channel_id}` - Update guild voice channel
+- `POST /api/v1/guilds/{guild_id}/voice-channels/{channel_id}/join` - Join guild voice channel
+
 ### Voice Quality Monitoring
 - `POST /api/v1/voice-quality/{channel_id}/report` - Report voice quality
 
