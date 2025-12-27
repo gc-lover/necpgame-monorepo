@@ -1,0 +1,291 @@
+import yaml
+from pathlib import Path
+from datetime import datetime
+
+ECONOMY_DOCUMENTS = [
+    {
+        'name': 'economy-core-resource-management',
+        'title': 'Economy - Core Resource Management',
+        'description': 'Базовое управление ресурсами в экономической системе'
+    },
+    {
+        'name': 'economy-supply-demand-dynamics',
+        'title': 'Economy - Supply Demand Dynamics',
+        'description': 'Динамика спроса и предложения в глобальной экономике'
+    },
+    {
+        'name': 'economy-inflation-deflation-controls',
+        'title': 'Economy - Inflation Deflation Controls',
+        'description': 'Контроль инфляции и дефляции в игровой экономике'
+    },
+    {
+        'name': 'economy-player-economic-classes',
+        'title': 'Economy - Player Economic Classes',
+        'description': 'Экономические классы игроков и социальная мобильность'
+    },
+    {
+        'name': 'economy-market-volatility-simulator',
+        'title': 'Economy - Market Volatility Simulator',
+        'description': 'Симулятор волатильности рынка и экономических кризисов'
+    }
+]
+
+def create_economy_document_template(doc_data):
+    """Create a detailed economy mechanics document template"""
+    template = {
+        'metadata': {
+            'id': f'canon-mechanics-{doc_data["name"]}',
+            'title': doc_data['title'],
+            'document_type': 'canon',
+            'category': 'mechanics',
+            'subcategory': 'economy-basic',
+            'status': 'draft',
+            'version': '1.0.0',
+            'last_updated': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'concept_approved': False,
+            'concept_reviewed_at': '',
+            'owners': [
+                {
+                    'role': 'backend_director',
+                    'contact': 'backend@necp.game'
+                }
+            ],
+            'tags': [
+                'economy',
+                'mechanics',
+                'resources',
+                'market'
+            ],
+            'topics': [
+                'game-economy',
+                'resource-management',
+                'market-dynamics'
+            ],
+            'related_systems': [
+                'economy-service',
+                'trading-service',
+                'backend-service'
+            ],
+            'related_documents': [
+                {
+                    'id': 'canon-mechanics-economy-overview',
+                    'relation': 'part_of'
+                },
+                {
+                    'id': 'canon-mechanics-economy-currencies-detailed',
+                    'relation': 'references'
+                }
+            ],
+            'source': f'shared/docs/knowledge/mechanics/economy/{doc_data["name"]}.yaml',
+            'visibility': 'internal',
+            'audience': [
+                'backend',
+                'design',
+                'systems'
+            ],
+            'risk_level': 'medium'
+        },
+        'summary': {
+            'problem': f'Необходимо детализировать {doc_data["description"].lower()} для создания сбалансированной экономической системы.',
+            'goal': f'Описать технические аспекты, баланс и игровые механики {doc_data["description"].lower()}.',
+            'essence': doc_data["description"],
+            'key_points': [
+                'Технические требования к реализации',
+                'Баланс и игровой дизайн',
+                'Интеграция с существующими системами',
+                'Влияние на игровой опыт'
+            ]
+        },
+        'technical_specification': {
+            'system_requirements': {
+                'processing_power': 'high/medium/low',
+                'database_load': 'estimated_queries_per_second',
+                'memory_usage': 'estimated_gb',
+                'network_bandwidth': 'estimated_mbps'
+            },
+            'data_structures': {
+                'resource_inventory': {
+                    'player_id': 'uuid',
+                    'resource_type': 'string',
+                    'quantity': 'integer',
+                    'quality': 'enum(low/medium/high/legendary)',
+                    'location': 'coordinates',
+                    'last_updated': 'timestamp'
+                },
+                'market_data': {
+                    'item_id': 'uuid',
+                    'current_price': 'decimal',
+                    'price_history': 'time_series_array',
+                    'supply_volume': 'integer',
+                    'demand_volume': 'integer',
+                    'volatility_index': 'decimal'
+                }
+            },
+            'algorithms': {
+                'price_calculation': 'supply_demand_weighted_average',
+                'inflation_control': 'central_bank_simulation',
+                'volatility_model': 'stochastic_process_with_bounds',
+                'class_mobility': 'progression_based_on_economic_activity'
+            }
+        },
+        'economic_mechanics': {
+            'resource_management': {
+                'acquisition_methods': ['mining', 'crafting', 'trading', 'looting'],
+                'storage_system': 'inventory_with_capacity_limits',
+                'transfer_mechanics': 'instant/direct_trade',
+                'decay_system': 'time_based_resource_degradation'
+            },
+            'market_dynamics': {
+                'supply_sources': ['player_production', 'npc_vendors', 'random_events'],
+                'demand_drivers': ['player_needs', 'quest_requirements', 'faction_demands'],
+                'price_fluctuation': 'real_time_based_on_activity',
+                'market_manipulation': 'player_driven_price_influence'
+            },
+            'inflation_deflation': {
+                'inflation_triggers': ['excessive_money_printing', 'resource_scarcity'],
+                'deflation_triggers': ['economic_crashes', 'overproduction'],
+                'control_mechanisms': ['central_bank_intervention', 'automatic_adjustment'],
+                'player_impact': ['purchasing_power_changes', 'saving_value_fluctuation']
+            },
+            'social_classes': {
+                'class_definition': {
+                    'poor': 'income_below_1000_eddies',
+                    'middle': 'income_1000_10000_eddies',
+                    'rich': 'income_10000_100000_eddies',
+                    'elite': 'income_above_100000_eddies'
+                },
+                'mobility_factors': ['economic_activity', 'investment_returns', 'social_connections'],
+                'class_benefits': ['access_to_markets', 'trading_fees', 'investment_opportunities'],
+                'class_penalties': ['tax_rates', 'access_restrictions', 'social_stigma']
+            }
+        },
+        'volatility_system': {
+            'volatility_factors': [
+                {
+                    'factor': 'player_activity',
+                    'impact': 'high',
+                    'description': 'Количество активных трейдеров влияет на волатильность'
+                },
+                {
+                    'factor': 'global_events',
+                    'impact': 'medium',
+                    'description': 'Мировые события вызывают рыночные колебания'
+                },
+                {
+                    'factor': 'faction_conflicts',
+                    'impact': 'high',
+                    'description': 'Корпоративные войны влияют на цены ресурсов'
+                }
+            ],
+            'crisis_simulation': {
+                'crisis_types': ['market_crash', 'hyperinflation', 'resource_shortage'],
+                'trigger_conditions': ['player_population', 'economic_activity', 'random_events'],
+                'recovery_mechanisms': ['government_intervention', 'player_initiatives'],
+                'long_term_effects': ['wealth_redistribution', 'market_restructuring']
+            },
+            'stability_controls': {
+                'floor_ceiling_prices': 'prevent_extreme_fluctuations',
+                'intervention_triggers': 'automatic_market_stabilization',
+                'player_feedback': 'economic_indicator_display',
+                'adjustment_periods': 'gradual_price_changes'
+            }
+        },
+        'player_economic_classes': {
+            'class_structure': {
+                'street_level': {
+                    'income_range': '0-1000_eddies',
+                    'lifestyle': 'survival_based',
+                    'opportunities': 'limited',
+                    'risks': 'high'
+                },
+                'corporate_climb': {
+                    'income_range': '1000-10000_eddies',
+                    'lifestyle': 'professional',
+                    'opportunities': 'moderate',
+                    'risks': 'medium'
+                },
+                'executive_elite': {
+                    'income_range': '10000-100000_eddies',
+                    'lifestyle': 'luxury',
+                    'opportunities': 'high',
+                    'risks': 'low'
+                },
+                'corporate_titan': {
+                    'income_range': '100000+_eddies',
+                    'lifestyle': 'transcendent',
+                    'opportunities': 'unlimited',
+                    'risks': 'minimal'
+                }
+            },
+            'mobility_mechanics': {
+                'progression_pathways': ['business_success', 'investment_returns', 'criminal_enterprise'],
+                'mobility_barriers': ['initial_capital', 'social_connections', 'education_level'],
+                'class_perks': ['market_access', 'tax_breaks', 'exclusive_deals'],
+                'downward_mobility': ['bad_investments', 'economic_crashes', 'criminal_prosecution']
+            }
+        },
+        'implementation_notes': {
+            'backend_requirements': [
+                'Real-time price calculation engine',
+                'Economic simulation loops',
+                'Player transaction logging',
+                'Market data analytics'
+            ],
+            'frontend_requirements': [
+                'Economic dashboard UI',
+                'Market price charts',
+                'Class progression indicators',
+                'Volatility warning systems'
+            ],
+            'balancing_requirements': [
+                'Economic stability testing',
+                'Player progression validation',
+                'Market manipulation prevention',
+                'Inflation control verification'
+            ]
+        },
+        'future_expansions': {
+            'planned_features': [
+                'Advanced market prediction AI',
+                'Player-owned corporations',
+                'Global economic events',
+                'Cross-server trading'
+            ],
+            'research_areas': [
+                'Real-world economic modeling',
+                'Player behavior economics',
+                'Dynamic pricing algorithms',
+                'Social class psychology'
+            ]
+        }
+    }
+
+    return template
+
+def main():
+    """Generate 5 economy basic mechanics documents"""
+    economy_dir = Path('knowledge/mechanics/economy')
+
+    generated_count = 0
+
+    for doc_data in ECONOMY_DOCUMENTS:
+        doc_file = economy_dir / f'{doc_data["name"]}.yaml'
+
+        # Check if document already exists
+        if doc_file.exists():
+            print(f"Document already exists: {doc_data['name']}")
+            continue
+
+        print(f"Generating document: {doc_data['title']}")
+
+        template = create_economy_document_template(doc_data)
+
+        with open(doc_file, 'w', encoding='utf-8') as f:
+            yaml.dump(template, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+
+        generated_count += 1
+
+    print(f"Generated {generated_count} economy basic mechanics documents")
+
+if __name__ == '__main__':
+    main()
