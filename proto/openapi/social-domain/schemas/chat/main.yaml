@@ -1,0 +1,101 @@
+components:
+  schemas:
+    ChatRooms:
+      type: object
+      required:
+      - rooms
+      properties:
+        rooms:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatRoom'
+          description: List of available chat rooms
+
+    ChatRoom:
+      type: object
+      required:
+      - room_id
+      - name
+      - type
+      - participant_count
+      - created_at
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: Chat room unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440090
+        name:
+          type: string
+          maxLength: 50
+          description: Chat room display name
+          example: "Global Chat"
+        type:
+          type: string
+          enum:
+          - global
+          - faction
+          - guild
+          - party
+          - private
+          - trade
+          - event
+          description: Chat room type
+          example: global
+        description:
+          type: string
+          maxLength: 200
+          description: Chat room description
+          example: "Global discussion channel for all players"
+        participant_count:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Current number of participants
+          example: 245
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Maximum allowed participants
+          example: 500
+        is_active:
+          type: boolean
+          description: Whether room is active
+          example: true
+        requires_permission:
+          type: boolean
+          description: Whether special permission is required to join
+          example: false
+        faction_restriction:
+          type: string
+          enum:
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          description: Required faction to join (if applicable)
+          example: nomad
+        guild_restriction:
+          type: string
+          format: uuid
+          description: Required guild ID to join (if applicable)
+          example: 550e8400-e29b-41d4-a716-446655440000
+        created_at:
+          type: string
+          format: date-time
+          description: Room creation timestamp
+          example: '2025-12-27T09:54:00Z'
+        moderators:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Moderator player IDs
+          example:
+          - 550e8400-e29b-41d4-a716-446655440001
+        last_message_at:
+          type: string
+          format: date-time
+          description: Last message timestamp
+          example: '2025-12-27T10:30:00Z'

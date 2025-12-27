@@ -102,6 +102,13 @@ func (s *MentorshipService) GetMentorshipContract(ctx context.Context, contractI
 // UpdateMentorshipContract updates a contract
 func (s *MentorshipService) UpdateMentorshipContract(ctx context.Context, contractID uuid.UUID, req *api.UpdateMentorshipContractRequest) (*api.MentorshipContract, error) {
 	s.metrics.RecordRequest("UpdateMentorshipContract")
+	s.logger.Info("Updating mentorship contract", zap.String("contract_id", contractID.String()))
+
+	// Validate update request
+	if err := s.validator.ValidateUpdateMentorshipContractRequest(ctx, req); err != nil {
+		s.metrics.RecordError("UpdateMentorshipContract")
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
 
 	contract, err := s.repo.UpdateMentorshipContract(ctx, contractID, req)
 	if err != nil {
@@ -109,6 +116,7 @@ func (s *MentorshipService) UpdateMentorshipContract(ctx context.Context, contra
 		return nil, fmt.Errorf("failed to update contract: %w", err)
 	}
 
+	s.metrics.RecordSuccess("UpdateMentorshipContract")
 	return contract, nil
 }
 
@@ -236,6 +244,7 @@ func (s *MentorshipService) GetMentorReputation(ctx context.Context, mentorID uu
 
 	return reputation, nil
 }
+
 
 
 

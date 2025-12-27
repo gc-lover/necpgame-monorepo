@@ -1,0 +1,80 @@
+# Makefile for {domain} service
+
+.PHONY: build run test clean deps docker-build docker-run k8s-deploy
+
+# Build the service
+build:
+	go build -o bin/{service_name} .
+
+# Run the service
+run:
+	go run main.go
+
+# Run tests
+test:
+	go test ./...
+
+# Run integration tests
+test-integration:
+	go test -tags=integration ./tests/
+
+# Clean build artifacts
+clean:
+	rm -rf bin/
+
+# Install dependencies
+deps:
+	go mod tidy
+	go mod download
+
+# Format code
+fmt:
+	go fmt ./...
+
+# Lint code
+lint:
+	golangci-lint run
+
+# Generate API code (if spec changes)
+generate-api:
+	npx --yes @redocly/cli bundle ../../proto/openapi/{domain}/main.yaml -o openapi-bundled.yaml
+	ogen --target pkg/api --package api --clean openapi-bundled.yaml
+
+# Docker build
+docker-build:
+	docker build -t {service_name} .
+
+# Docker run
+docker-run:
+	docker run -p 8080:8080 {service_name}
+
+# Docker compose up
+docker-up:
+	docker-compose up -d
+
+# Docker compose down
+docker-down:
+	docker-compose down
+
+# Kubernetes deploy
+k8s-deploy:
+	kubectl apply -f k8s/
+
+# Performance benchmark
+bench:
+	go test -bench=. -benchmem
+
+# Profile CPU
+profile-cpu:
+	go tool pprof -http=:8081 cpu.prof
+
+# Profile memory
+profile-mem:
+	go tool pprof -http=:8082 mem.prof
+
+# Health check
+health:
+	curl -f http://localhost:8080/health
+
+# All-in-one setup
+setup: deps generate-api build docker-build

@@ -13,6 +13,7 @@ import argparse
 from migrations.generators import (
     QuestMigrationGenerator,
     NpcsMigrationGenerator,
+    NpcsV2MigrationGenerator,
     DialoguesMigrationGenerator,
     LoreMigrationGenerator,
     EnemiesMigrationGenerator,
@@ -26,6 +27,7 @@ from migrations.generators import (
 GENERATOR_MAPPING: Dict[str, Type] = {
     'quests': QuestMigrationGenerator,
     'npcs': NpcsMigrationGenerator,
+    'npcs-v2': NpcsV2MigrationGenerator,
     'dialogues': DialoguesMigrationGenerator,
     'lore': LoreMigrationGenerator,
     'enemies': EnemiesMigrationGenerator,
@@ -46,7 +48,7 @@ class MigrationGeneratorRunner:
         self.parser.add_argument(
             'content_type',
             choices=list(GENERATOR_MAPPING.keys()),
-            help='Type of content to generate migrations for (documentation = all YAML files from knowledge/)'
+            help='Type of content to generate migrations for (npcs-v2 = new format NPCs, documentation = all YAML files from knowledge/)'
         )
 
     def run_generator(self, content_type: str) -> bool:

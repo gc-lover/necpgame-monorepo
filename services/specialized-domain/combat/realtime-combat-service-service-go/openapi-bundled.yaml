@@ -1,0 +1,759 @@
+# Issue: #2197
+openapi: 3.0.3
+info:
+  title: Specialized Domain - Real-time Combat API
+  description: |
+    **Enterprise-Grade Real-time Combat API** for NECPGAME MMOFPS RPG.
+
+    **Module Purpose:** Real-time combat state management, WebSocket-based live combat updates, position synchronization, damage events, and combat session orchestration.
+
+    **Architecture:** Event-driven microservice with WebSocket connections, Kafka event streaming, and Redis for state caching.
+
+    **Core Features:**
+    - WebSocket real-time combat sessions (10k+ concurrent connections)
+    - Live position updates and movement synchronization
+    - Real-time damage calculation and application
+    - Combat state events (start/end, join/leave, victory/defeat)
+    - Anti-cheat position validation and lag compensation
+    - Combat statistics and performance monitoring
+    - Cross-session communication and team coordination
+
+    **Performance Targets:**
+    - WebSocket connections: 10k+ concurrent, <50MB memory per 1000 connections
+    - Position updates: 1000+ updates/sec, P99 <10ms latency
+    - Damage events: 2000+ events/sec, <5ms processing time
+    - Combat sessions: 500+ active sessions, <20ms state sync
+    - Event throughput: 5000+ events/sec via Kafka
+    - Cache hit rate: >98% (Redis for active combat states)
+
+    **BACKEND NOTE:** WebSocket worker pools required. Memory per connection: ~5KB.
+    Position validation algorithms for anti-cheat. Event sourcing for combat replay.
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME Combat API Support
+    url: https://necpgame.com/support
+    email: api@combat.necpgame.com
+
+servers:
+  - url: http://localhost:8085/api/v1/specialized-domain/combat/realtime
+    description: Real-time Combat Service Development Server
+  - url: https://combat.necpgame.com/api/v1
+    description: Real-time Combat Service Production Server
+
+security:
+  - BearerAuth: [ ]
+
+tags:
+  - name: Combat Sessions
+    description: Combat session management and lifecycle
+  - name: Real-time Updates
+    description: WebSocket-based real-time combat updates
+  - name: Position Sync
+    description: Player position synchronization and validation
+  - name: Combat Events
+    description: Combat event streaming and notifications
+  - name: Statistics
+    description: Combat performance statistics and analytics
+  - name: System
+    description: Health checks and system operations
+
+paths:
+  # Session management
+  /health:
+    get:
+      summary: Real-time combat service health check
+      operationId: realtimeCombatHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/health-schemas.yaml#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  # Combat session endpoints
+  /sessions:
+    post:
+      summary: Create new combat session
+      description: |
+        Creates a new real-time combat session with WebSocket support.
+
+        **BACKEND NOTE:** Initializes Redis cache, Kafka topics, WebSocket room.
+        Session supports 2-50 players with configurable rules.
+      operationId: createCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/session-schemas.yaml#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Combat session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/session-schemas.yaml#/components/schemas/CombatSession'
+        '400':
+          description: Invalid session parameters
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '429':
+          description: Session creation rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  /sessions/{session_id}:
+    get:
+      summary: Get combat session details
+      description: Retrieves current state and metadata of a combat session.
+      operationId: getCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      responses:
+        '200':
+          description: Session details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/session-schemas.yaml#/components/schemas/CombatSession'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+    put:
+      summary: Update combat session
+      description: |
+        Updates combat session parameters (game mode, settings, etc.).
+
+        **BACKEND NOTE:** Validates session state before update.
+        Notifies all connected players via WebSocket.
+      operationId: updateCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/session-schemas.yaml#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: Session updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/session-schemas.yaml#/components/schemas/CombatSession'
+        '400':
+          description: Invalid update parameters
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to update session
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+    delete:
+      summary: End combat session
+      description: |
+        Terminates a combat session and cleans up resources.
+
+        **BACKEND NOTE:** Closes all WebSocket connections, archives session data.
+        Publishes final statistics to Kafka.
+      operationId: endCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      responses:
+        '204':
+          description: Session ended successfully (No Content)
+        '403':
+          description: Not authorized to end session
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  /sessions/{session_id}/join:
+    post:
+      summary: Join combat session
+      description: |
+        Allows a player to join an active combat session.
+
+        **BACKEND NOTE:** Validates player eligibility, assigns to team.
+        Establishes WebSocket connection for real-time updates.
+      operationId: joinCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/session-schemas.yaml#/components/schemas/JoinSessionRequest'
+      responses:
+        '200':
+          description: Successfully joined session
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/session-schemas.yaml#/components/schemas/JoinSessionResponse'
+        '400':
+          description: Invalid join request or session full
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to join session
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  /sessions/{session_id}/leave:
+    post:
+      summary: Leave combat session
+      description: Allows a player to leave an active combat session.
+      operationId: leaveCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      responses:
+        '200':
+          description: Successfully left session
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/SuccessResponse'
+        '403':
+          description: Not authorized to leave session
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  # WebSocket endpoint for real-time updates
+  /ws/sessions/{session_id}:
+    get:
+      summary: WebSocket connection for real-time combat updates
+      description: |
+        Establishes WebSocket connection for real-time combat updates.
+
+        **BACKEND NOTE:** Long-lived connection (10k+ concurrent).
+        Message format: JSON with event types. Heartbeat every 15 seconds.
+        Supports position updates, damage events, state changes.
+      operationId: combatWebSocket
+      tags:
+        - Real-time Updates
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: JWT authentication token
+        - name: client_version
+          in: query
+          schema:
+            type: string
+            default: "1.0.0"
+          description: Client application version
+      responses:
+        '101':
+          description: WebSocket connection established
+          headers:
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+              description: WebSocket handshake confirmation
+        '400':
+          description: Invalid connection parameters
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to join session
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '429':
+          description: Connection rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  # Position synchronization
+  /sessions/{session_id}/positions:
+    post:
+      summary: Update player position
+      description: |
+        Updates player position for anti-cheat validation and synchronization.
+
+        **BACKEND NOTE:** High-frequency endpoint (1000+ RPS).
+        Validates position against server physics, lag compensation.
+        Broadcasts to other players in session.
+      operationId: updatePlayerPosition
+      tags:
+        - Position Sync
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/position-schemas.yaml#/components/schemas/PositionUpdateRequest'
+      responses:
+        '200':
+          description: Position updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/position-schemas.yaml#/components/schemas/PositionUpdateResponse'
+        '400':
+          description: Invalid position data
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to update position
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '429':
+          description: Position update rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  # Combat statistics
+  /sessions/{session_id}/stats:
+    get:
+      summary: Get combat session statistics
+      description: Retrieves real-time statistics for a combat session.
+      operationId: getSessionStats
+      tags:
+        - Statistics
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/stats-schemas.yaml#/components/schemas/CombatStatsResponse'
+        '403':
+          description: Not authorized to view statistics
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  # Damage events - CRITICAL for real-time combat
+  /sessions/{session_id}/damage:
+    post:
+      summary: Apply damage to target
+      description: |
+        Applies damage from attacker to target with validation and effects.
+
+        **BACKEND NOTE:** High-frequency endpoint (500+ RPS expected).
+        Validates damage calculation, applies status effects, updates health.
+        Publishes damage event to Kafka for analytics and replay.
+        Critical for combat balance and anti-cheat systems.
+      operationId: applyDamage
+      tags:
+        - Combat Events
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/damage-schemas.yaml#/components/schemas/DamageRequest'
+      responses:
+        '200':
+          description: Damage applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/damage-schemas.yaml#/components/schemas/DamageResponse'
+        '400':
+          description: Invalid damage request or validation failed
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to apply damage
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session or target not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '429':
+          description: Damage application rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  # Combat actions (abilities, attacks)
+  /sessions/{session_id}/actions:
+    post:
+      summary: Execute combat action
+      description: |
+        Executes a combat action (attack, ability, special move) with validation.
+
+        **BACKEND NOTE:** High-frequency endpoint (300+ RPS expected).
+        Validates action cooldowns, resource costs, targeting.
+        Applies action effects, updates combat state.
+        Supports combo systems and ability synergies.
+      operationId: executeCombatAction
+      tags:
+        - Combat Events
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/action-schemas.yaml#/components/schemas/CombatActionRequest'
+      responses:
+        '200':
+          description: Action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/action-schemas.yaml#/components/schemas/CombatActionResponse'
+        '400':
+          description: Invalid action request or validation failed
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to execute action
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '429':
+          description: Action execution rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  # Spectator mode
+  /sessions/{session_id}/spectate:
+    post:
+      summary: Join session as spectator
+      description: |
+        Allows a player to join combat session in spectator mode.
+
+        **BACKEND NOTE:** Read-only access to combat data.
+        Receives real-time updates but cannot participate.
+        Useful for coaching, streaming, tournament viewing.
+      operationId: spectateCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/session-schemas.yaml#/components/schemas/SpectateRequest'
+      responses:
+        '200':
+          description: Successfully joined as spectator
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/session-schemas.yaml#/components/schemas/SpectateResponse'
+        '400':
+          description: Invalid spectate request
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to spectate session
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  # Combat replay
+  /sessions/{session_id}/replay:
+    get:
+      summary: Get combat session replay data
+      description: |
+        Retrieves replay data for combat session analysis and review.
+
+        **BACKEND NOTE:** Event-sourced replay system.
+        Supports time-based filtering and speed control.
+        Critical for tournament analysis and anti-cheat review.
+      operationId: getCombatReplay
+      tags:
+        - Combat Events
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+        - name: start_time
+          in: query
+          schema:
+            type: integer
+            description: Start timestamp for replay (Unix milliseconds)
+        - name: end_time
+          in: query
+          schema:
+            type: integer
+            description: End timestamp for replay (Unix milliseconds)
+        - name: speed
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: 0.1
+            maximum: 10.0
+            default: 1.0
+            description: Replay speed multiplier
+      responses:
+        '200':
+          description: Replay data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/replay-schemas.yaml#/components/schemas/CombatReplayResponse'
+        '400':
+          description: Invalid replay parameters
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to view replay
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session or replay data not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication

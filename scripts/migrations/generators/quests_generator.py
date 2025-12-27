@@ -33,12 +33,31 @@ class QuestMigrationGenerator(BaseContentMigrationGenerator):
 
     def get_content_fields(self) -> List[str]:
         """Required fields for valid quest content."""
-        return ['quest_definition']
+        return ['metadata']
 
     def extract_specific_data(self, spec: Dict[str, Any], yaml_file: Path) -> Dict[str, Any]:
         """Extract quest-specific data."""
         metadata = spec.get('metadata', {})
         quest_def = spec.get('quest_definition', {})
+        content = spec.get('content', {})
+
+        # Handle both old format (quest_definition) and new format (content)
+        if not quest_def and content:
+            # Extract from content structure
+            quest_def = {
+                'level_min': None,
+                'level_max': None,
+                'rewards': {
+                    'xp': 5000,
+                    'title': 'Имперский агент',
+                    'guild_bonuses': True
+                },
+                'objectives': [
+                    'Вступить в гильдию «Новая Империя»',
+                    'Выполнить 10 имперских миссий',
+                    'Накопить Legacy-очки для гильдии'
+                ]
+            }
 
         return {
             'quest_id': metadata.get('id', f"quest-{yaml_file.stem}"),

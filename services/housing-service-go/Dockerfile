@@ -77,3 +77,4 @@ ENV GIN_MODE=release \
 # Run with security features
 ENTRYPOINT ["/housing-service"]
 
+

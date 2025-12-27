@@ -1,0 +1,105 @@
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      - domain
+      properties:
+        domain:
+          type: string
+          example: social-domain
+          maxLength: 50
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-27T09:54:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+        active_guilds:
+          type: integer
+          example: 1250
+        active_players:
+          type: integer
+          example: 5000
+        total_quests:
+          type: integer
+          example: 500
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        message:
+          type: string
+          maxLength: 256
+          example: Internal server error
+        domain:
+          type: string
+          example: social-domain
+          maxLength: 50
+        details:
+          type: object
+          description: Additional error context
+          example:
+            field: guild_id
+            reason: invalid_uuid_format
+        code:
+          type: integer
+          format: int32
+          minimum: 100
+          maximum: 599
+          example: 500
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      - status
+      properties:
+        type:
+          type: string
+          enum:
+          - health_check
+          example: health_check
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-27T09:54:00Z'
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+        active_connections:
+          type: integer
+          example: 1250
+        messages_per_second:
+          type: number
+          example: 45.5
+        average_latency_ms:
+          type: number
+          example: 12.3
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

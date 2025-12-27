@@ -1,0 +1,102 @@
+package server
+
+import (
+	"log"
+	"net/http"
+	"strings"
+	"time"
+	{"github.com/golang-jwt/jwt/v4"" if needs_auth else ""}
+	{"golang.org/x/time/rate"" if needs_rate_limiting else ""}
+)
+
+// LoggingMiddleware logs HTTP requests with performance metrics
+func LoggingMiddleware(next http.Handler) http.Handler {{
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {{
+		start := time.Now()
+
+		// Wrap ResponseWriter to capture status code
+		wrapped := &responseWriter{{ResponseWriter: w, statusCode: http.StatusOK}}
+
+		next.ServeHTTP(wrapped, r)
+
+		duration := time.Since(start)
+		log.Printf("%s %s %d %v", r.Method, r.URL.Path, wrapped.statusCode, duration)
+	}})
+}}
+
+// MetricsMiddleware collects HTTP metrics
+func MetricsMiddleware(next http.Handler) http.Handler {{
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {{
+		start := time.Now()
+
+		wrapped := &responseWriter{{ResponseWriter: w, statusCode: http.StatusOK}}
+		next.ServeHTTP(wrapped, r)
+
+		duration := time.Since(start)
+		// TODO: Send metrics to monitoring system
+		_ = duration // Prevent unused variable warning
+	}})
+}}
+
+type responseWriter struct {{
+	http.ResponseWriter
+	statusCode int
+}}
+
+func (rw *responseWriter) WriteHeader(code int) {{
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}}
+{"""
+// AuthMiddleware validates JWT tokens
+func AuthMiddleware(next http.Handler) http.Handler {{
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {{
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {{
+			http.Error(w, "Missing authorization header", http.StatusUnauthorized)
+			return
+		}}
+
+		// TODO: Implement JWT validation
+		// For now, just check if header exists
+		if !strings.HasPrefix(authHeader, "Bearer ") {{
+			http.Error(w, "Invalid authorization header", http.StatusUnauthorized)
+			return
+		}}
+
+		next.ServeHTTP(w, r)
+	}})
+}}
+""" if needs_auth else ""}{"""
+// RateLimitMiddleware implements rate limiting
+func RateLimitMiddleware(next http.Handler) http.Handler {{
+	// TODO: Implement proper rate limiting with Redis
+	// For now, simple in-memory rate limiter
+	limiter := rate.NewLimiter(rate.Limit(100), 100) // 100 requests per second
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {{
+		if !limiter.Allow() {{
+			http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+			return
+		}}
+
+		next.ServeHTTP(w, r)
+	}})
+}}
+""" if needs_rate_limiting else ""}{"""
+// CORSMiddleware handles CORS
+func CORSMiddleware(next http.Handler) http.Handler {{
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {{
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {{
+			w.WriteHeader(http.StatusOK)
+			return
+		}}
+
+		next.ServeHTTP(w, r)
+	}})
+}}
+""" if needs_cors else ""}

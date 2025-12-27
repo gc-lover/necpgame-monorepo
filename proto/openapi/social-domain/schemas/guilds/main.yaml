@@ -1,0 +1,366 @@
+components:
+  schemas:
+    Guild:
+      type: object
+      required:
+      - id
+      - name
+      - created_at
+      - level
+      - member_count
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Guild unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        leader_id:
+          type: string
+          format: uuid
+          description: UUID of the guild leader
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Guild display name
+          example: Shadow Hunters
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+          example: Elite PvP guild focused on territory control and resource acquisition.
+        motto:
+          type: string
+          maxLength: 100
+          description: Guild motto/slogan
+          example: Conquer or Die
+        faction:
+          type: string
+          enum:
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - other
+          description: Guild faction alignment
+          example: nomad
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Guild level (1-100)
+          example: 25
+        experience:
+          type: integer
+          minimum: 0
+          description: Guild experience points
+          example: 125000
+        member_count:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Current number of members
+          example: 47
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Maximum allowed members
+          example: 100
+        is_active:
+          type: boolean
+          description: Whether guild is active
+          example: true
+        is_recruiting:
+          type: boolean
+          description: Whether guild is accepting new members
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Guild creation timestamp
+          example: '2025-12-27T09:54:00Z'
+        emblem_url:
+          type: string
+          format: uri
+          description: Guild emblem image URL
+          example: https://necpgame.com/guilds/550e8400-e29b-41d4-a716-446655440000/emblem.png
+        banner_url:
+          type: string
+          format: uri
+          description: Guild banner image URL
+          example: https://necpgame.com/guilds/550e8400-e29b-41d4-a716-446655440000/banner.png
+
+    CreateGuildRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Guild display name
+          example: Shadow Hunters
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+          example: Elite PvP guild focused on territory control and resource acquisition.
+        motto:
+          type: string
+          maxLength: 100
+          description: Guild motto/slogan
+          example: Conquer or Die
+        faction:
+          type: string
+          enum:
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - other
+          description: Guild faction alignment
+          example: nomad
+        is_recruiting:
+          type: boolean
+          description: Whether guild is accepting new members
+          default: true
+          example: true
+        emblem_url:
+          type: string
+          format: uri
+          description: Guild emblem image URL
+        banner_url:
+          type: string
+          format: uri
+          description: Guild banner image URL
+
+    UpdateGuildRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+        motto:
+          type: string
+          maxLength: 100
+          description: Guild motto/slogan
+        faction:
+          type: string
+          enum:
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - other
+          description: Guild faction alignment
+        is_recruiting:
+          type: boolean
+          description: Whether guild is accepting new members
+        emblem_url:
+          type: string
+          format: uri
+          description: Guild emblem image URL
+        banner_url:
+          type: string
+          format: uri
+          description: Guild banner image URL
+
+    GuildResponse:
+      type: object
+      required:
+      - guild
+      properties:
+        guild:
+          $ref: '#/components/schemas/Guild'
+
+    GuildsListResponse:
+      type: object
+      required:
+      - guilds
+      - pagination
+      properties:
+        guilds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Guild'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total
+          - total_pages
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+            total:
+              type: integer
+              example: 150
+            total_pages:
+              type: integer
+              example: 8
+
+    GuildMember:
+      type: object
+      required:
+      - player_id
+      - role
+      - joined_at
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440002
+        role:
+          type: string
+          enum:
+          - leader
+          - officer
+          - veteran
+          - member
+          - recruit
+          description: Member role in guild
+          example: member
+        joined_at:
+          type: string
+          format: date-time
+          description: When player joined the guild
+          example: '2025-12-27T09:54:00Z'
+        contribution_points:
+          type: integer
+          minimum: 0
+          description: Total contribution points earned
+          example: 1250
+        last_active_at:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+          example: '2025-12-27T10:30:00Z'
+        permissions:
+          type: array
+          items:
+            type: string
+            enum:
+            - manage_members
+            - manage_bank
+            - declare_war
+            - post_announcements
+            - manage_territory
+            - invite_members
+          description: Granted permissions
+          example:
+          - post_announcements
+          - invite_members
+
+    GuildMembersResponse:
+      type: object
+      required:
+      - members
+      - pagination
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildMember'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total
+          - total_pages
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+            total:
+              type: integer
+              example: 47
+            total_pages:
+              type: integer
+              example: 3
+
+    Territory:
+      type: object
+      required:
+      - territory_id
+      - name
+      - coordinates
+      - guild_id
+      - controlled_since
+      properties:
+        territory_id:
+          type: string
+          format: uuid
+          description: Territory unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440010
+        name:
+          type: string
+          maxLength: 100
+          description: Territory display name
+          example: "Downtown Control Zone"
+        coordinates:
+          type: object
+          required:
+          - x
+          - y
+          - z
+          properties:
+            x:
+              type: number
+              description: X coordinate
+              example: 123.45
+            y:
+              type: number
+              description: Y coordinate
+              example: 67.89
+            z:
+              type: number
+              description: Z coordinate
+              example: 10.0
+        guild_id:
+          type: string
+          format: uuid
+          description: Controlling guild ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        controlled_since:
+          type: string
+          format: date-time
+          description: When control was established
+          example: '2025-12-27T09:54:00Z'
+        defense_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Territory defense level
+          example: 5
+        resource_generation:
+          type: object
+          description: Resources generated per hour
+          properties:
+            credits:
+              type: integer
+              minimum: 0
+              example: 100
+            materials:
+              type: integer
+              minimum: 0
+              example: 25
+        last_war_at:
+          type: string
+          format: date-time
+          description: Last war timestamp
+          example: '2025-12-26T15:30:00Z'

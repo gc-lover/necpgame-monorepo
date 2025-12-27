@@ -59,7 +59,8 @@ func (h *Handler) CreateMentorshipContract(ctx context.Context, req *api.CreateM
 
 	contract, err := h.service.CreateMentorshipContract(ctx, req)
 	if err != nil {
-		return api.CreateMentorshipContractCreated{}, nil // TODO: Proper error handling
+		h.logger.Error("Failed to create mentorship contract", zap.Error(err))
+		return &api.CreateMentorshipContractBadRequest{}, nil
 	}
 
 	return api.CreateMentorshipContractCreated{Data: *contract}, nil
@@ -239,6 +240,7 @@ func (h *Handler) GetReputationLeaderboard(ctx context.Context, params api.GetRe
 		},
 	}, nil
 }
+
 
 
 

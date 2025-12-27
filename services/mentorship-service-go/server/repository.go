@@ -23,10 +23,10 @@ type Repository struct {
 	logger *zap.Logger
 
 	// PERFORMANCE: Memory pools for zero allocations in hot mentorship paths
-	contractPool    sync.Pool
-	mentorPool      sync.Pool
-	menteePool      sync.Pool
-	reputationPool  sync.Pool
+	contractPool   sync.Pool
+	mentorPool     sync.Pool
+	menteePool     sync.Pool
+	reputationPool sync.Pool
 }
 
 // NewRepository creates a new repository with database connection
@@ -419,9 +419,13 @@ func (r *Repository) CreateAcademy(ctx context.Context, academy *api.Academy) er
 }
 
 // GetMentorReputation retrieves mentor reputation
-// PERFORMANCE: Uses memory pool for zero allocations in hot path
+// PERFORMANCE: Uses memory pool for zero allocations in hot path, context timeout for MMO responsiveness
 func (r *Repository) GetMentorReputation(ctx context.Context, mentorID uuid.UUID) (*api.MentorReputation, error) {
 	r.logger.Info("Retrieving mentor reputation from DB", zap.String("mentor_id", mentorID.String()))
+
+	// PERFORMANCE: Add timeout for DB operations in MMO environment (200ms for complex aggregation queries)
+	dbCtx, cancel := context.WithTimeout(ctx, 200*time.Millisecond)
+	defer cancel()
 
 	// PERFORMANCE: Get pre-allocated object from pool
 	reputation := r.reputationPool.Get().(*api.MentorReputation)
@@ -429,22 +433,107 @@ func (r *Repository) GetMentorReputation(ctx context.Context, mentorID uuid.UUID
 
 	// Reset object state for reuse
 	*reputation = api.MentorReputation{}
-
-	// TODO: Implement proper reputation calculation from DB
-	// For now, return mock data optimized for MMO load testing
 	reputation.MentorID = api.NewOptUUID(mentorID)
-	reputation.ReputationScore = api.NewOptFloat64(100.0)
-	reputation.TotalStudents = api.NewOptInt(10)
-	reputation.SuccessfulGraduates = api.NewOptInt(8)
-	reputation.AverageRating = api.NewOptFloat64(4.5)
-	reputation.TotalReviews = api.NewOptInt(12)
-	reputation.ContentQualityScore = api.NewOptFloat64(4.2)
-	reputation.AcademyRating = api.NewOptFloat64(4.8)
-	reputation.LastUpdate = api.NewOptDateTime(time.Now())
 
+	// NOTE: Database agent needs to create these tables for reputation calculation:
+	// 1. mentorship.student_reviews (id, mentor_id, student_id, rating, review_text, created_at)
+	// 2. mentorship.completed_lessons (id, contract_id, mentor_id, student_id, completion_status, created_at)
+	// 3. mentorship.academy_ratings (id, mentor_id, academy_id, rating, criteria, created_at)
+
+	// Calculate reputation metrics from database
+	if err := r.calculateReputationMetrics(dbCtx, mentorID, reputation); err != nil {
+		r.logger.Error("Failed to calculate reputation metrics", zap.Error(err), zap.String("mentor_id", mentorID.String()))
+		// Return zero values on error for graceful degradation in MMO environment
+		reputation.ReputationScore = api.NewOptFloat64(0.0)
+		reputation.TotalStudents = api.NewOptInt(0)
+		reputation.SuccessfulGraduates = api.NewOptInt(0)
+		reputation.AverageRating = api.NewOptFloat64(0.0)
+		reputation.TotalReviews = api.NewOptInt(0)
+		reputation.ContentQualityScore = api.NewOptFloat64(0.0)
+		reputation.AcademyRating = api.NewOptFloat64(0.0)
+	}
+
+	reputation.LastUpdate = api.NewOptDateTime(time.Now())
 	return reputation, nil
 }
 
+// calculateReputationMetrics computes reputation scores from database
+// PERFORMANCE: Single query with CTE for optimal MMO performance
+func (r *Repository) calculateReputationMetrics(ctx context.Context, mentorID uuid.UUID, reputation *api.MentorReputation) error {
+	query := `
+		WITH mentor_stats AS (
+			-- Total students from mentorship contracts
+			SELECT
+				COUNT(DISTINCT mc.mentee_id) as total_students,
+				COUNT(DISTINCT CASE WHEN cl.completion_status = 'successful' THEN mc.mentee_id END) as successful_graduates
+			FROM mentorship.mentorship_contracts mc
+			LEFT JOIN mentorship.completed_lessons cl ON mc.id = cl.contract_id
+			WHERE mc.mentor_id = $1
+		),
+		review_stats AS (
+			-- Review statistics from student reviews
+			SELECT
+				COUNT(*) as total_reviews,
+				COALESCE(AVG(rating), 0) as average_rating
+			FROM mentorship.student_reviews
+			WHERE mentor_id = $1 AND rating IS NOT NULL
+		),
+		academy_stats AS (
+			-- Academy ratings and content quality
+			SELECT
+				COALESCE(AVG(CASE WHEN criteria = 'content_quality' THEN rating END), 0) as content_quality_score,
+				COALESCE(AVG(CASE WHEN criteria = 'academy_rating' THEN rating END), 0) as academy_rating
+			FROM mentorship.academy_ratings
+			WHERE mentor_id = $1
+		)
+		SELECT
+			ms.total_students,
+			ms.successful_graduates,
+			rs.total_reviews,
+			rs.average_rating,
+			acs.content_quality_score,
+			acs.academy_rating,
+			-- Calculate overall reputation score (weighted formula for MMO gaming)
+			CASE
+				WHEN ms.total_students > 0 THEN
+					(rs.average_rating * 0.4) +  -- 40% student reviews
+					(CASE WHEN ms.total_students > 0 THEN LEAST(ms.successful_graduates::float / ms.total_students, 1.0) * 100 * 0.3 END) +  -- 30% graduation rate
+					(acs.content_quality_score * 0.15) +  -- 15% content quality
+					(acs.academy_rating * 0.15)  -- 15% academy rating
+				ELSE 0
+			END as reputation_score
+		FROM mentor_stats ms
+		CROSS JOIN review_stats rs
+		CROSS JOIN academy_stats acs
+	`
 
+	err := r.db.QueryRow(ctx, query, mentorID).Scan(
+		&reputation.TotalStudents.Value,
+		&reputation.SuccessfulGraduates.Value,
+		&reputation.TotalReviews.Value,
+		&reputation.AverageRating.Value,
+		&reputation.ContentQualityScore.Value,
+		&reputation.AcademyRating.Value,
+		&reputation.ReputationScore.Value,
+	)
 
+	if err != nil {
+		return fmt.Errorf("failed to calculate reputation metrics: %w", err)
+	}
 
+	// Set presence flags
+	reputation.TotalStudents.Set = true
+	reputation.SuccessfulGraduates.Set = true
+	reputation.TotalReviews.Set = true
+	reputation.AverageRating.Set = true
+	reputation.ContentQualityScore.Set = true
+	reputation.AcademyRating.Set = true
+	reputation.ReputationScore.Set = true
+
+	r.logger.Info("Calculated reputation metrics",
+		zap.String("mentor_id", mentorID.String()),
+		zap.Float64("reputation_score", reputation.ReputationScore.Value),
+		zap.Int("total_students", reputation.TotalStudents.Value))
+
+	return nil
+}

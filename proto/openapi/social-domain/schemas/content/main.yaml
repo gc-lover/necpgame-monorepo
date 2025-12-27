@@ -1,0 +1,872 @@
+components:
+  schemas:
+    Quest:
+      type: object
+      required:
+      - quest_id
+      - title
+      - description
+      - type
+      - status
+      - created_at
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+          description: Quest unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440030
+        title:
+          type: string
+          maxLength: 100
+          description: Quest title
+          example: "Shadow Syndicate Initiation"
+        description:
+          type: string
+          maxLength: 1000
+          description: Quest description
+          example: "Join the Shadow Syndicate and prove your worth by completing three initiation tasks."
+        type:
+          type: string
+          enum:
+          - main_story
+          - side_quest
+          - daily
+          - weekly
+          - achievement
+          - event
+          description: Quest type
+          example: side_quest
+        status:
+          type: string
+          enum:
+          - available
+          - active
+          - completed
+          - failed
+          - expired
+          description: Quest status
+          example: active
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - very_hard
+          - nightmare
+          description: Quest difficulty level
+          example: medium
+        required_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Minimum player level required
+          example: 10
+        time_limit_minutes:
+          type: integer
+          minimum: 1
+          description: Time limit in minutes
+          example: 1440  # 24 hours
+        created_at:
+          type: string
+          format: date-time
+          description: Quest creation timestamp
+          example: '2025-12-27T09:54:00Z'
+        expires_at:
+          type: string
+          format: date-time
+          description: Quest expiration timestamp
+          example: '2025-12-28T09:54:00Z'
+
+    CreateQuestRequest:
+      type: object
+      required:
+      - title
+      - description
+      - type
+      properties:
+        title:
+          type: string
+          maxLength: 100
+          example: "Shadow Syndicate Initiation"
+        description:
+          type: string
+          maxLength: 1000
+          example: "Join the Shadow Syndicate and prove your worth..."
+        type:
+          type: string
+          enum:
+          - main_story
+          - side_quest
+          - daily
+          - weekly
+          - achievement
+          - event
+          example: side_quest
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - very_hard
+          - nightmare
+          example: medium
+        required_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 10
+        time_limit_minutes:
+          type: integer
+          minimum: 1
+          example: 1440
+
+    UpdateQuestRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - very_hard
+          - nightmare
+        required_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        time_limit_minutes:
+          type: integer
+          minimum: 1
+
+    QuestResponse:
+      type: object
+      required:
+      - quest
+      properties:
+        quest:
+          $ref: '#/components/schemas/Quest'
+
+    QuestsListResponse:
+      type: object
+      required:
+      - quests
+      - pagination
+      properties:
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Quest'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total
+          - total_pages
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+            total:
+              type: integer
+              example: 150
+            total_pages:
+              type: integer
+              example: 8
+
+    QuestReward:
+      type: object
+      required:
+      - type
+      - amount
+      properties:
+        type:
+          type: string
+          enum:
+          - credits
+          - experience
+          - item
+          - reputation
+          - title
+          description: Reward type
+          example: credits
+        amount:
+          type: integer
+          minimum: 1
+          description: Reward amount
+          example: 1000
+        item_id:
+          type: string
+          format: uuid
+          description: Item ID if reward is an item
+          example: 550e8400-e29b-41d4-a716-446655440040
+
+    QuestObjective:
+      type: object
+      required:
+      - objective_id
+      - description
+      - type
+      - target_value
+      properties:
+        objective_id:
+          type: string
+          format: uuid
+          description: Objective unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440035
+        description:
+          type: string
+          maxLength: 200
+          description: Objective description
+          example: "Defeat 5 enemies in the downtown area"
+        type:
+          type: string
+          enum:
+          - kill
+          - collect
+          - explore
+          - interact
+          - craft
+          - time
+          description: Objective type
+          example: kill
+        target_value:
+          type: integer
+          minimum: 1
+          description: Target value to complete objective
+          example: 5
+        current_value:
+          type: integer
+          minimum: 0
+          description: Current progress value
+          example: 2
+        is_completed:
+          type: boolean
+          description: Whether objective is completed
+          example: false
+
+    NPC:
+      type: object
+      required:
+      - npc_id
+      - name
+      - type
+      - location
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+          description: NPC unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440050
+        name:
+          type: string
+          maxLength: 50
+          description: NPC display name
+          example: "Marcus 'Ghost' Chen"
+        type:
+          type: string
+          enum:
+          - merchant
+          - quest_giver
+          - guard
+          - informant
+          - faction_leader
+          - civilian
+          description: NPC type
+          example: quest_giver
+        faction:
+          type: string
+          enum:
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - neutral
+          description: NPC faction alignment
+          example: nomad
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: NPC level
+          example: 25
+        location:
+          type: object
+          required:
+          - zone
+          - coordinates
+          properties:
+            zone:
+              type: string
+              maxLength: 50
+              description: Zone/area name
+              example: "Downtown District"
+            coordinates:
+              type: object
+              required:
+              - x
+              - y
+              - z
+              properties:
+                x:
+                  type: number
+                  example: 123.45
+                y:
+                  type: number
+                  example: 67.89
+                z:
+                  type: number
+                  example: 10.0
+        dialogue_tree_id:
+          type: string
+          format: uuid
+          description: Root dialogue tree ID
+          example: 550e8400-e29b-41d4-a716-446655440060
+        shop_inventory:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Available items for sale (if merchant)
+          example:
+          - 550e8400-e29b-41d4-a716-446655440040
+        reputation_requirement:
+          type: integer
+          minimum: -100
+          maximum: 100
+          description: Minimum reputation required to interact
+          example: 10
+
+    CreateNPCRequest:
+      type: object
+      required:
+      - name
+      - type
+      - location
+      properties:
+        name:
+          type: string
+          maxLength: 50
+          example: "Marcus 'Ghost' Chen"
+        type:
+          type: string
+          enum:
+          - merchant
+          - quest_giver
+          - guard
+          - informant
+          - faction_leader
+          - civilian
+          example: quest_giver
+        faction:
+          type: string
+          enum:
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - neutral
+          example: nomad
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 25
+        location:
+          type: object
+          required:
+          - zone
+          - coordinates
+          properties:
+            zone:
+              type: string
+              maxLength: 50
+              example: "Downtown District"
+            coordinates:
+              type: object
+              required:
+              - x
+              - y
+              - z
+              properties:
+                x:
+                  type: number
+                  example: 123.45
+                y:
+                  type: number
+                  example: 67.89
+                z:
+                  type: number
+                  example: 10.0
+        dialogue_tree_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440060
+        shop_inventory:
+          type: array
+          items:
+            type: string
+            format: uuid
+          example:
+          - 550e8400-e29b-41d4-a716-446655440040
+        reputation_requirement:
+          type: integer
+          minimum: -100
+          maximum: 100
+          example: 10
+
+    UpdateNPCRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        type:
+          type: string
+          enum:
+          - merchant
+          - quest_giver
+          - guard
+          - informant
+          - faction_leader
+          - civilian
+        faction:
+          type: string
+          enum:
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - neutral
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        location:
+          type: object
+          properties:
+            zone:
+              type: string
+              maxLength: 50
+            coordinates:
+              type: object
+              properties:
+                x:
+                  type: number
+                y:
+                  type: number
+                z:
+                  type: number
+        dialogue_tree_id:
+          type: string
+          format: uuid
+        shop_inventory:
+          type: array
+          items:
+            type: string
+            format: uuid
+        reputation_requirement:
+          type: integer
+          minimum: -100
+          maximum: 100
+
+    NPCResponse:
+      type: object
+      required:
+      - npc
+      properties:
+        npc:
+          $ref: '#/components/schemas/NPC'
+
+    NPCsListResponse:
+      type: object
+      required:
+      - npcs
+      - pagination
+      properties:
+        npcs:
+          type: array
+          items:
+            $ref: '#/components/schemas/NPC'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total
+          - total_pages
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+            total:
+              type: integer
+              example: 150
+            total_pages:
+              type: integer
+              example: 8
+
+    Dialogue:
+      type: object
+      required:
+      - dialogue_id
+      - npc_id
+      - root_node_id
+      properties:
+        dialogue_id:
+          type: string
+          format: uuid
+          description: Dialogue tree unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440060
+        npc_id:
+          type: string
+          format: uuid
+          description: Associated NPC ID
+          example: 550e8400-e29b-41d4-a716-446655440050
+        root_node_id:
+          type: string
+          format: uuid
+          description: Root dialogue node ID
+          example: 550e8400-e29b-41d4-a716-446655440070
+        title:
+          type: string
+          maxLength: 100
+          description: Dialogue tree title
+          example: "Marcus Chen Introduction"
+
+    DialogueNode:
+      type: object
+      required:
+      - node_id
+      - dialogue_id
+      - text
+      properties:
+        node_id:
+          type: string
+          format: uuid
+          description: Node unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440070
+        dialogue_id:
+          type: string
+          format: uuid
+          description: Parent dialogue tree ID
+          example: 550e8400-e29b-41d4-a716-446655440060
+        parent_node_id:
+          type: string
+          format: uuid
+          description: Parent node ID (null for root)
+          example: 550e8400-e29b-41d4-a716-446655440071
+        text:
+          type: string
+          maxLength: 500
+          description: NPC dialogue text
+          example: "You look like someone who knows how to handle themselves in a fight. Interested in some work?"
+        responses:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueResponse'
+          description: Available player responses
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueCondition'
+          description: Conditions to show this node
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueAction'
+          description: Actions triggered by this node
+
+    DialogueResponse:
+      type: object
+      required:
+      - response_id
+      - text
+      - next_node_id
+      properties:
+        response_id:
+          type: string
+          format: uuid
+          description: Response unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440075
+        text:
+          type: string
+          maxLength: 200
+          description: Player response text
+          example: "What kind of work are we talking about?"
+        next_node_id:
+          type: string
+          format: uuid
+          description: Next dialogue node ID
+          example: 550e8400-e29b-41d4-a716-446655440076
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueCondition'
+          description: Conditions to show this response
+
+    DialogueCondition:
+      type: object
+      required:
+      - type
+      - operator
+      - value
+      properties:
+        type:
+          type: string
+          enum:
+          - player_level
+          - reputation
+          - quest_status
+          - item_owned
+          - faction_standing
+          - time_of_day
+          description: Condition type
+          example: player_level
+        operator:
+          type: string
+          enum:
+          - equals
+          - not_equals
+          - greater_than
+          - less_than
+          - greater_equal
+          - less_equal
+          - contains
+          - not_contains
+          description: Comparison operator
+          example: greater_equal
+        value:
+          type: string
+          description: Condition value (will be parsed based on type)
+          example: "10"
+
+    DialogueAction:
+      type: object
+      required:
+      - type
+      properties:
+        type:
+          type: string
+          enum:
+          - start_quest
+          - complete_quest
+          - give_item
+          - remove_item
+          - change_reputation
+          - set_flag
+          - trigger_event
+          description: Action type
+          example: start_quest
+        parameters:
+          type: object
+          description: Action-specific parameters
+          example:
+            quest_id: "550e8400-e29b-41d4-a716-446655440030"
+
+    CreateDialogueRequest:
+      type: object
+      required:
+      - npc_id
+      - title
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440050
+        title:
+          type: string
+          maxLength: 100
+          example: "Marcus Chen Introduction"
+        root_node:
+          $ref: '#/components/schemas/DialogueNode'
+
+    DialoguesListResponse:
+      type: object
+      required:
+      - dialogues
+      - pagination
+      properties:
+        dialogues:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dialogue'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total
+          - total_pages
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+            total:
+              type: integer
+              example: 150
+            total_pages:
+              type: integer
+              example: 8
+
+    LoreEntry:
+      type: object
+      required:
+      - lore_id
+      - title
+      - content
+      - category
+      properties:
+        lore_id:
+          type: string
+          format: uuid
+          description: Lore entry unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440080
+        title:
+          type: string
+          maxLength: 100
+          description: Lore entry title
+          example: "The Fall of Old London"
+        content:
+          type: string
+          maxLength: 10000
+          description: Lore entry content (rich text/markdown)
+          example: "In the year 2077, the great city of London met its tragic end..."
+        category:
+          type: string
+          enum:
+          - history
+          - factions
+          - technology
+          - characters
+          - locations
+          - events
+          - culture
+          description: Lore category
+          example: history
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 30
+          description: Lore tags for search
+          example:
+          - london
+          - fall
+          - history
+        author_id:
+          type: string
+          format: uuid
+          description: Author player ID
+          example: 550e8400-e29b-41d4-a716-446655440002
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2025-12-27T09:54:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: '2025-12-27T10:30:00Z'
+        is_canonical:
+          type: boolean
+          description: Whether this is official canon lore
+          example: true
+
+    CreateLoreRequest:
+      type: object
+      required:
+      - title
+      - content
+      - category
+      properties:
+        title:
+          type: string
+          maxLength: 100
+          example: "The Fall of Old London"
+        content:
+          type: string
+          maxLength: 10000
+          example: "In the year 2077, the great city of London met its tragic end..."
+        category:
+          type: string
+          enum:
+          - history
+          - factions
+          - technology
+          - characters
+          - locations
+          - events
+          - culture
+          example: history
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 30
+          example:
+          - london
+          - fall
+          - history
+        is_canonical:
+          type: boolean
+          default: false
+          example: false
+
+    LoreResponse:
+      type: object
+      required:
+      - lore
+      properties:
+        lore:
+          $ref: '#/components/schemas/LoreEntry'
+
+    LoreListResponse:
+      type: object
+      required:
+      - entries
+      - pagination
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoreEntry'
+        pagination:
+          type: object
+          required:
+          - page
+          - limit
+          - total
+          - total_pages
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+            total:
+              type: integer
+              example: 150
+            total_pages:
+              type: integer
+              example: 8
