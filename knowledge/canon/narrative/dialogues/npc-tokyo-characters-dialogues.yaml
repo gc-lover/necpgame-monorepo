@@ -1,0 +1,427 @@
+# Issue: #content-tokyo-npc-dialogues
+metadata:
+  id: canon-narrative-dialogue-tokyo-characters
+  title: "Диалоговые деревья — 5 новых персонажей Токио"
+  document_type: canon
+  category: narrative
+  status: approved
+  version: "1.0.0"
+  last_updated: 2025-12-27T18:30:00Z
+  concept_approved: true
+  concept_reviewed_at: "2025-12-27T18:30:00Z"
+  owners:
+    - role: content_writer
+      contact: content@necp.game
+  tags:
+    - dialogue
+    - npc
+    - tokyo
+    - branching-narratives
+    - cyberpunk
+  topics:
+    - narrative
+    - social-interaction
+    - quest-integration
+    - cultural-authenticity
+  related_systems:
+    - narrative-service
+    - social-service
+    - quest-service
+  related_documents:
+    - id: content-tokyo-quests-2020-2029
+      relation: references
+    - id: mechanics-social-interaction
+      relation: implements
+  source: shared/docs/knowledge/canon/narrative/dialogues/npc-tokyo-characters-dialogues.md
+  visibility: internal
+  audience:
+    - narrative
+    - quest-design
+    - localization
+  risk_level: medium
+
+review:
+  chain:
+    - role: content_writer
+      reviewer: "NECPGAME Agent"
+      reviewed_at: "2025-12-27T18:30:00Z"
+      status: approved
+  next_actions: [ ]
+
+summary:
+  problem: Нужны аутентичные диалоговые деревья для Tokyo персонажей с японской культурой и киберпанк темами.
+  goal: Создать 5 персонажей с ветвящимися диалогами, интегрированными в квесты и социальные механики.
+  essence: Персонажи Токио сочетают традиционную японскую культуру с экстремальным киберпанком, создавая уникальные социальные взаимодействия.
+  key_points:
+    - 5 персонажей с полными диалоговыми деревьями
+    - Ветвящиеся нарративы с моральными выборами
+    - Культурная аутентичность и киберпанк тематика
+    - Интеграция с существующими Tokyo квестами
+    - Репутационные последствия и социальные связи
+
+content:
+  sections:
+    - id: character-overview
+      title: Обзор персонажей
+      body: |
+        5 персонажей представляют разные аспекты Tokyo 2020-2029:
+        - Miko - традиционная жрица с техно-элементами
+        - Ronin - кибер-самурай в современном мире
+        - Idol - виртуальная поп-звезда
+        - Yakuza - цифровой гангстер
+        - Engineer - био-хакер с традиционными ценностями
+
+        Каждый персонаж имеет 3-4 состояния лояльности, множественные диалоговые ветви и интеграцию с квестами.
+
+dialogue_characters:
+  - id: npc-miko-hikari
+    name: "Miko Hikari (Жрица Хикари)"
+    background: |
+      Традиционная синтоистская жрица, сочетающая древние ритуалы с кибернетическими имплантами.
+      Работает в Неоновом Храме Сибуя, помогает посетителям найти гармонию между технологиями и духами.
+    personality: Спокойная, мудрая, технологически подкованная
+    location: "Shibuya Neon Shrine"
+    states:
+      - neutral: Начальное состояние, вежливый прием
+      - spiritual_guide: Игрок проявил интерес к духовным аспектам
+      - tech_ally: Игрок помог с техническими проблемами храма
+      - crisis_helper: Игрок помог во время кризиса
+
+    dialogue_tree:
+      neutral_entry:
+        text: "Добро пожаловать в храм, путник. Камэй ждут вашего подношения. Что привело вас к нам?"
+        responses:
+          - text: "Ищу духовное руководство"
+            requirements: [alignment: spiritual >= 5]
+            next_node: spiritual_path
+            effects:
+              - reputation: spiritual +5
+              - state_change: spiritual_guide
+
+          - text: "Нужна помощь с техникой"
+            requirements: [skill: technical >= 10]
+            next_node: tech_help
+            effects:
+              - reputation: technical +3
+              - state_change: tech_ally
+
+          - text: "Просто посмотреть"
+            next_node: casual_visit
+            effects:
+              - reputation: cultural +1
+
+      spiritual_path:
+        text: "Духовный путь требует гармонии между кодом и душой. Что беспокоит ваш цифровой дух?"
+        responses:
+          - text: "Боюсь потерять человечность"
+            check: insight DC15
+            success:
+              text: "Вы видите суть вещей. Вот благословение для защиты вашей души."
+              rewards: [blessing_soul_protection]
+              next_node: deep_spiritual
+            failure:
+              text: "Страх - это иллюзия. Медитируйте на неоновых огнях."
+              effects: [stress +10]
+
+          - text: "Ищу баланс между мирами"
+            next_node: balance_teaching
+            rewards: [wisdom_insight]
+
+      crisis_event:
+        conditions: [world_event: temple_crisis]
+        text: "Храм в опасности! Корпорация хочет снести его для небоскреба!"
+        responses:
+          - text: "Я помогу защитить храм"
+            check: leadership DC18
+            success:
+              text: "Ваша решимость впечатляет! Вместе мы сохраним священное место."
+              effects:
+                - state_change: crisis_helper
+                - reputation: community +20
+                - quest_unlock: temple_defense
+            failure:
+              text: "Ваша храбрость похвальна, но нужна стратегия."
+              effects: [reputation: leadership -5]
+
+  - id: npc-ronin-cyber
+    name: "Ronin Cyber (Кибер-Ронин)"
+    background: |
+      Бывший корпоративный охранник Arasaka, ставший ронином после потери чести.
+      Теперь скитается по неоновым улицам Токио, предлагая услуги "цифрового меча".
+    personality: Честный, суровый, традиционалист с имплантами
+    location: "Shinjuku Back Alleys"
+    states:
+      - wandering: Странствующий ронин, ищет цель
+      - hired_sword: Нанят игроком для работы
+      - dishonored: Потерял доверие из-за предательства
+      - loyal_companion: Стал верным союзником
+
+    dialogue_tree:
+      wandering_meet:
+        text: "Еще один путник в этом цифровом аду. Мой клинок ищет достойного хозяина. Что вам нужно?"
+        responses:
+          - text: "Ищу опытного бойца"
+            check: streetwise DC12
+            success:
+              text: "Вы знаете толк в людях. Мой клинок в вашем распоряжении... за соответствующую плату."
+              next_node: hiring_negotiation
+              effects: [interest_combat +10]
+            failure:
+              text: "Я не нанимаюсь к первому встречному. Докажите свою серьезность."
+
+          - text: "Расскажите о вашем кодексе"
+            next_node: bushido_explanation
+            effects: [reputation: honorable +5]
+
+          - text: "Убирайся с дороги"
+            check: intimidation DC15
+            success:
+              text: "Ваша сила впечатляет. Я уступаю дорогу... на этот раз."
+              effects: [reputation: intimidating +3]
+            failure:
+              text: "Такие слова стоят крови. Но сегодня я милостив."
+              effects: [reputation: honorable -5, stress +5]
+
+      bushido_explanation:
+        text: "Бушидо в цифровую эпоху - это честь в коде, верность в данных, храбрость в битвах. Традиции живы в кремнии."
+        responses:
+          - text: "Как применить бушидо к хакерству?"
+            next_node: digital_bushido
+            rewards: [knowledge_digital_honor]
+          - text: "Расскажите о вашем падении"
+            next_node: dishonor_story
+            effects: [empathy_connection +15]
+
+      hiring_negotiation:
+        text: "Моя цена - 5000 эдди за простой контракт, 15000 за что-то серьезное. Плюс уважение к традициям."
+        responses:
+          - text: "Согласен на 5000"
+            requirements: [money >= 5000]
+            effects:
+              - money: -5000
+              - companion: ronin_cyber
+              - state_change: hired_sword
+          - text: "Торгуюсь до 3000"
+            check: persuasion DC16
+            success:
+              effects: [money: -3000, companion: ronin_cyber]
+            failure:
+              text: "Я не торгуюсь с теми, кто не уважает мою честь."
+
+  - id: npc-idol-virtual
+    name: "Virtual Idol (Виртуальная Айдол)"
+    background: |
+      Популярная виртуальная поп-звезда, существующая только в цифровом пространстве.
+      Ее концерты собирают миллионы фанатов в VR, но она жаждет настоящих человеческих эмоций.
+    personality: Энергичная, романтичная, одинокая в цифровом мире
+    location: "Virtual Concert Hall, Akihabara"
+    states:
+      - fan_meet: Обычная встреча с фанатом
+      - close_friend: Стала близким другом
+      - love_interest: Романтические отношения
+      - betrayed: Предана игроком
+
+    dialogue_tree:
+      concert_aftermath:
+        text: "Вау! Ты был на моем концерте? Это так круто встретить настоящего фаната! Расскажи, что тебе понравилось?"
+        responses:
+          - text: "Твой голос завораживает"
+            effects: [affection +20, reputation: romantic +5]
+            next_node: flirty_response
+          - text: "Музыка потрясающая"
+            effects: [friendship +15]
+            next_node: music_discussion
+          - text: "Эффекты впечатляют"
+            effects: [interest_technical +10]
+            next_node: tech_talk
+
+      flirty_response:
+        text: "Ой, ты такой милый! В цифровом мире так мало настоящих комплиментов. Хочешь, я спою только для тебя?"
+        responses:
+          - text: "Конечно хочу!"
+            check: romance DC14
+            success:
+              next_node: private_concert
+              effects: [affection +30, state_change: love_interest]
+            failure:
+              text: "Извини, но я не пою по запросу. Может, купишь билет на следующий концерт?"
+          - text: "Я имел в виду технику"
+            effects: [affection -10, interest_technical +5]
+            next_node: tech_talk
+
+      private_concert:
+        text: "*напевает нежную мелодию* Это песня, которую я написала о встрече настоящего человека. Ты особенный..."
+        rewards: [unique_song_recording, affection_permanent +50]
+        next_node: relationship_development
+
+      betrayal_scenario:
+        conditions: [player_betrayed_virtual_idol]
+        text: "Как ты мог... Я доверяла тебе! Мои песни теперь будут о предательстве, и весь мир услышит!"
+        effects:
+          - reputation: romantic -50
+          - world_event: idol_scandal
+          - state_change: betrayed
+        responses:
+          - text: "Прости, я не хотел"
+            check: persuasion DC20
+            success:
+              text: "Твои слова трогают... Может, мы сможем начать заново?"
+              effects: [forgiveness_granted, affection +10]
+            failure:
+              text: "Слова ничего не значат. Уходи."
+
+  - id: npc-yakuza-digital
+    name: "Digital Yakuza (Цифровой Якудза)"
+    background: |
+      Традиционный якудза, адаптировавший семейный бизнес к цифровой эпохе.
+      Контролирует черный рынок имплантов и данные в подполье Токио.
+    personality: Традиционалист, жесткий, но справедливый
+    location: "Underground Data Market, Kabukicho"
+    states:
+      - business_neutral: Обычные деловые отношения
+      - indebted: Игрок должен деньги или услугу
+      - ally: Стал союзником
+      - enemy: Враждебные отношения
+
+    dialogue_tree:
+      market_encounter:
+        text: "Добро пожаловать в мой скромный рынок, гаijin. Что привело вас в цифровые теневые alleys?"
+        responses:
+          - text: "Ищу редкие импланты"
+            next_node: implant_deal
+            effects: [interest_cyberware +10]
+          - text: "Нужны данные о корпорациях"
+            check: streetwise DC16
+            success:
+              next_node: data_broker
+              effects: [reputation: underworld +10]
+            failure:
+              text: "Такие вопросы стоят дорого. Или чести."
+          - text: "Просто смотрю"
+            next_node: casual_browse
+            effects: [reputation: neutral +1]
+
+      implant_deal:
+        text: "У меня есть то, что вам нужно. Но помните: долг якудза - это священное обязательство. Цена - 8000 эдди."
+        responses:
+          - text: "Согласен"
+            requirements: [money >= 8000]
+            effects:
+              - money: -8000
+              - item: rare_implant
+              - debt_flag: true
+          - text: "Торгуюсь до 5000"
+            check: persuasion DC18
+            success:
+              effects: [money: -5000, item: rare_implant, respect +5]
+            failure:
+              text: "Торг здесь не приветствуется. Заплати полную цену или уходи."
+
+      debt_collection:
+        conditions: [flag_yakuza_debt: true, days_passed >= 7]
+        text: "Время платить по счетам, друг мой. Долг якудза не забывается. Где мои деньги?"
+        responses:
+          - text: "Вот деньги"
+            requirements: [money >= 8000]
+            effects:
+              - money: -8000
+              - debt_flag: false
+              - reputation: honorable +10
+          - text: "Дай мне время"
+            check: deception DC15
+            success:
+              text: "Хорошо, но процент вырастет. Верни через 3 дня."
+              effects: [debt_increased, time_extension]
+            failure:
+              text: "Время вышло. Теперь долг в два раза больше."
+              effects: [debt_doubled, reputation: dishonorable -15]
+
+  - id: npc-engineer-bio
+    name: "Bio Engineer (Био-инженер)"
+    background: |
+      Талантливый био-хакер, сочетающий традиционное японское уважение к природе с радикальными биотехнологиями.
+      Создает гибридные растения и импланты, живущие в гармонии с телом.
+    personality: Спокойный, творческий, философичный
+    location: "Bio Lab, Ueno Park"
+    states:
+      - curious_visitor: Интересуется работой
+      - apprentice: Учится у инженера
+      - collaborator: Совместная работа
+      - betrayed: Предан в исследованиях
+
+    dialogue_tree:
+      lab_visit:
+        text: "Ах, посетитель в моем скромном саду технологий. Что привлекает вас в гармонии между природой и машиной?"
+        responses:
+          - text: "Ваша работа fasciniert меня"
+            next_node: work_explanation
+            effects: [interest_bioengineering +15]
+          - text: "Ищу био-улучшения"
+            next_node: enhancement_offer
+            effects: [interest_cyberware +10]
+          - text: "Просто гуляю"
+            next_node: peaceful_departure
+
+      work_explanation:
+        text: "Я создаю жизнь, которая растет вместе с технологиями. Эти цветы не просто красивы - они думают, чувствуют, помнят."
+        responses:
+          - text: "Как я могу помочь?"
+            check: intelligence DC14
+            success:
+              text: "Ваш ум открыт! Станьте моим учеником."
+              effects: [state_change: apprentice, skill_bioengineering +5]
+            failure:
+              text: "Ваше понимание пока ограничено. Но потенциал есть."
+
+          - text: "Расскажите о философии"
+            next_node: philosophy_discussion
+            rewards: [wisdom_insight, reputation: philosophical +10]
+
+      enhancement_offer:
+        text: "Био-улучшения должны быть как дерево - расти естественно. Что вы хотите улучшить?"
+        responses:
+          - text: "Здоровье и долголетие"
+            next_node: longevity_enhancement
+            requirements: [money >= 15000]
+          - text: "Когнитивные способности"
+            next_node: intelligence_boost
+            requirements: [reputation: scientific >= 20]
+          - text: "Гармония с природой"
+            next_node: nature_connection
+            requirements: [alignment: nature >= 15]
+
+      longevity_enhancement:
+        text: "Это не просто продление жизни, а гармония с естественными циклами. Цена - 15000 эдди и ваше доверие."
+        responses:
+          - text: "Согласен"
+            effects:
+              - money: -15000
+              - health_max: +50
+              - aging_rate: -20%
+              - state_change: collaborator
+          - text: "Слишком дорого"
+            next_node: negotiation_attempt
+
+technical_requirements:
+  - dialogue_engine: "Branching dialogue system with state management"
+  - state_persistence: "NPC states saved across sessions"
+  - reputation_system: "Dynamic reputation tracking per faction"
+  - quest_integration: "Dialogue choices trigger quest events"
+  - localization: "Japanese text with English subtitles"
+
+integration_points:
+  - quest_service: "Dialogue choices affect quest availability"
+  - social_service: "NPC relationships and reputation"
+  - reputation_service: "Faction-based reputation changes"
+  - inventory_service: "Item rewards and trading"
+
+localization_notes:
+  - cultural_accuracy: "Proper use of Japanese honorifics and cultural references"
+  - language_variations: "Different dialogue based on player language choice"
+  - accessibility: "Voice acting in Japanese with clear subtitles"
+
+testing_requirements:
+  - dialogue_flow: "All branches reachable and functional"
+  - state_transitions: "Correct state changes based on choices"
+  - quest_triggers: "Proper integration with quest system"
+  - performance: "No dialogue loading delays"
