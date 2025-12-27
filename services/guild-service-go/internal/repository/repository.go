@@ -15,7 +15,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/pkg/models"
-	serverModels "github.com/gc-lover/necpgame-monorepo/services/guild-service-go/server"
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
