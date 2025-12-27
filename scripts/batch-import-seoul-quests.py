@@ -37,7 +37,7 @@ class SeoulQuestImporter:
             # Run import script
             result = subprocess.run([
                 sys.executable, str(self.import_script),
-                str(quest_file)
+                "--quest-file", str(quest_file)
             ], capture_output=True, text=True, timeout=60)
 
             if result.returncode == 0:
@@ -77,8 +77,7 @@ class SeoulQuestImporter:
 
     def print_summary(self):
         """Print import summary."""
-        print("
-=== SEOUL QUESTS IMPORT SUMMARY ===")
+        print("\n=== SEOUL QUESTS IMPORT SUMMARY ===")
         print(f"Successfully imported: {self.success_count}")
         print(f"Failed imports: {self.fail_count}")
         print(f"Total processed: {self.success_count + self.fail_count}")

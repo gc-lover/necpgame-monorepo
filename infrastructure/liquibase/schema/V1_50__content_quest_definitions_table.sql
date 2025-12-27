@@ -9,48 +9,18 @@ BEGIN;
 -- Table: gameplay.quest_definitions
 CREATE TABLE IF NOT EXISTS gameplay.quest_definitions
 (
-    id
-    UUID
-    PRIMARY
-    KEY
-    DEFAULT
-    gen_random_uuid
-(
-),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(200) NOT NULL,
     description TEXT,
-    title VARCHAR
-(
-    200
-) NOT NULL,
-    status VARCHAR
-(
-    20
-) NOT NULL DEFAULT 'active' CHECK
-(
-    status
-    IN
-(
-    'active',
-    'completed',
-    'archived'
-)),
+    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'archived')),
+    level_min INTEGER NOT NULL CHECK (level_min >= 1 AND level_min <= 100),
+    level_max INTEGER NOT NULL CHECK (level_max >= 1 AND level_max <= 100),
     rewards JSONB,
     objectives JSONB,
     metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                             level_min INTEGER NOT NULL CHECK (level_min >= 1 AND level_min <= 100),
-    level_max INTEGER NOT NULL CHECK
-(
-    level_max
-    >=
-    1
-    AND
-    level_max
-    <=
-    100
-)
-    );
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Indexes for performance (optimized for API queries)
 CREATE INDEX IF NOT EXISTS idx_quest_definitions_status ON gameplay.quest_definitions(status);
