@@ -11,10 +11,13 @@ type Collector struct {
 	sessionsCreated       prometheus.Counter
 	sessionsStarted       prometheus.Counter
 	sessionsEnded         prometheus.Counter
+	playersJoined         prometheus.Counter
+	playersLeft           prometheus.Counter
 	damageEvents          prometheus.Counter
 	actionEvents          prometheus.Counter
 	errors                prometheus.Counter
 	activeSessions        prometheus.Gauge
+	activePlayers         prometheus.Gauge
 	requestDuration       prometheus.Histogram
 	comboCompleted        prometheus.Counter
 	synergyActivated      prometheus.Counter
@@ -50,6 +53,18 @@ func NewCollector() *Collector {
 		activeSessions: promauto.NewGauge(prometheus.GaugeOpts{
 			Name: "combat_active_sessions",
 			Help: "Number of currently active combat sessions",
+		}),
+		activePlayers: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "combat_active_players",
+			Help: "Number of currently active players in combat",
+		}),
+		playersJoined: promauto.NewCounter(prometheus.CounterOpts{
+			Name: "combat_players_joined_total",
+			Help: "Total number of players who joined combat sessions",
+		}),
+		playersLeft: promauto.NewCounter(prometheus.CounterOpts{
+			Name: "combat_players_left_total",
+			Help: "Total number of players who left combat sessions",
 		}),
 		requestDuration: promauto.NewHistogram(prometheus.HistogramOpts{
 			Name: "combat_request_duration_seconds",
@@ -112,4 +127,16 @@ func (c *Collector) IncrementComboCompleted(comboID string) {
 // IncrementSynergyActivated increments the synergy activated counter
 func (c *Collector) IncrementSynergyActivated(synergyID string) {
 	c.synergyActivated.Inc()
+}
+
+// IncrementPlayersJoined increments the players joined counter
+func (c *Collector) IncrementPlayersJoined() {
+	c.playersJoined.Inc()
+	c.activePlayers.Inc()
+}
+
+// IncrementPlayersLeft increments the players left counter
+func (c *Collector) IncrementPlayersLeft() {
+	c.playersLeft.Inc()
+	c.activePlayers.Dec()
 }
