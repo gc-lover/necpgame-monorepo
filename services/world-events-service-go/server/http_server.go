@@ -41,7 +41,7 @@ func NewSecurityHandler(jwtSecret string, logger *zap.Logger) *SecurityHandler {
 
 func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
 	// Extract token from BearerAuth
-	tokenString := string(t)
+	tokenString := t.Token
 
 	// Parse and validate token
 	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
