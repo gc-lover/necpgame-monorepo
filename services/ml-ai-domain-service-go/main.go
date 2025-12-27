@@ -971,6 +971,7 @@ func (h *MLAIHandler) MakePrediction(ctx context.Context, req *api.PredictionReq
 	// Set timeout for prediction (500ms - must be fast for real-time gaming)
 	predictCtx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 	defer cancel()
+	_ = predictCtx // Context ready for future ML model inference calls
 
 	// Validate prediction input (mock validation - in real implementation would validate req.Data or similar)
 	// For now, just ensure we have a valid model ID
