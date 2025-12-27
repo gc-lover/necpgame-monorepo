@@ -896,7 +896,37 @@ func (h *Handler) JoinGuild(ctx context.Context, params api.JoinGuildParams) (ap
 	ctx, cancel := context.WithTimeout(ctx, memberOpsTimeout)
 	defer cancel()
 
-	// TODO: Implement guild join logic
+	// Extract user ID from context and verify it matches the player ID
+	userID := getUserIDFromContext(ctx)
+	if userID == "" {
+		return &api.JoinGuildUnauthorized{
+			Message: "Unauthorized",
+			Code:    401,
+		}, nil
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil || userUUID != params.PlayerId {
+		return &api.JoinGuildForbidden{
+			Message: "Cannot join guild for another player",
+			Code:    403,
+		}, nil
+	}
+
+	// Join guild using service
+	err = h.service.JoinGuild(ctx, params.GuildId, params.PlayerId)
+	if err != nil {
+		h.logger.Error("Failed to join guild", zap.Error(err))
+		return &api.JoinGuildBadRequest{
+			Message: err.Error(),
+			Code:    400,
+		}, nil
+	}
+
+	h.logger.Info("Player successfully joined guild",
+		zap.String("guildID", params.GuildId.String()),
+		zap.String("playerID", params.PlayerId.String()))
+
 	return &api.JoinGuildOK{}, nil
 }
 
@@ -907,6 +937,36 @@ func (h *Handler) LeaveGuild(ctx context.Context, params api.LeaveGuildParams) (
 	ctx, cancel := context.WithTimeout(ctx, memberOpsTimeout)
 	defer cancel()
 
-	// TODO: Implement guild leave logic
+	// Extract user ID from context and verify it matches the player ID
+	userID := getUserIDFromContext(ctx)
+	if userID == "" {
+		return &api.LeaveGuildUnauthorized{
+			Message: "Unauthorized",
+			Code:    401,
+		}, nil
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil || userUUID != params.PlayerId {
+		return &api.LeaveGuildForbidden{
+			Message: "Cannot leave guild for another player",
+			Code:    403,
+		}, nil
+	}
+
+	// Leave guild using service
+	err = h.service.LeaveGuild(ctx, params.GuildId, params.PlayerId)
+	if err != nil {
+		h.logger.Error("Failed to leave guild", zap.Error(err))
+		return &api.LeaveGuildBadRequest{
+			Message: err.Error(),
+			Code:    400,
+		}, nil
+	}
+
+	h.logger.Info("Player successfully left guild",
+		zap.String("guildID", params.GuildId.String()),
+		zap.String("playerID", params.PlayerId.String()))
+
 	return &api.LeaveGuildOK{}, nil
 }

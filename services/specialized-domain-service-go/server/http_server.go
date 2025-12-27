@@ -13,8 +13,9 @@ type SpecializeddomainService struct {
 }
 
 func NewSpecializeddomainService() *SpecializeddomainService {
+	server, _ := api.NewServer(&Handler{}, nil) // TODO: Add proper security handler
 	return &SpecializeddomainService{
-		api: api.NewServer(&Handler{}),
+		api: server,
 	}
 }
 

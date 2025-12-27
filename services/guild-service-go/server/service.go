@@ -16,11 +16,11 @@ import (
 
 // GuildService implements GuildServiceInterface
 type GuildService struct {
-	logger    *zap.Logger
-	mu        sync.RWMutex
-	guilds    map[uuid.UUID]*Guild // In-memory cache for hot guilds
-	members   map[uuid.UUID]map[uuid.UUID]*GuildMember // guildID -> userID -> member
-	repository interface{} // Database repository
+	logger     *zap.Logger
+	mu         sync.RWMutex
+	guilds     map[uuid.UUID]*Guild // In-memory cache for hot guilds
+	members    map[uuid.UUID]map[uuid.UUID]*GuildMember // guildID -> userID -> member
+	repository *repository.Repository // Database repository
 }
 
 // NewGuildService creates a new guild service instance
@@ -33,7 +33,7 @@ func NewGuildService(logger *zap.Logger) *GuildService {
 }
 
 // UpdateRepository sets the database repository for data persistence
-func (s *GuildService) UpdateRepository(repo interface{}) {
+func (s *GuildService) UpdateRepository(repo *repository.Repository) {
 	s.repository = repo
 }
 

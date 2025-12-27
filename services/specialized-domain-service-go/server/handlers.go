@@ -94,7 +94,7 @@ func (h *Handler) ReloadQuestContent(ctx context.Context, req *api.ReloadQuestCo
 }
 
 // Example stub - replace with actual implementations:
-func (h *Handler) ExampleDomainHealthCheck(ctx context.Context, params api.ExampleDomainHealthCheckParams) (api.ExampleDomainHealthCheckRes, error) {
+func (h *Handler) QuestHealthCheck(ctx context.Context) error {
 	// TODO: Implement health check logic
-	return nil, fmt.Errorf("not implemented")
+	return h.service.HealthCheck(ctx)
 }
