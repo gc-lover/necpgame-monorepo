@@ -155,6 +155,16 @@ func setupRouter(handlers *handlers.CombatHandlers, metrics *metrics.Collector, 
 		// Combat statistics
 		r.Get("/sessions/{sessionId}/stats", handlers.GetCombatStats)
 		r.Get("/players/{playerId}/stats", handlers.GetPlayerCombatStats)
+
+		// Combo system
+		r.Post("/sessions/{sessionId}/combos", handlers.ProcessComboInput)
+		r.Get("/combos/definitions", handlers.GetComboDefinitions)
+		r.Get("/players/{playerId}/combos", handlers.GetPlayerCombos)
+
+		// Synergy system
+		r.Post("/synergies/activate", handlers.ActivateSynergy)
+		r.Get("/synergies/definitions", handlers.GetSynergyDefinitions)
+		r.Get("/players/{playerId}/synergies", handlers.GetPlayerSynergies)
 	})
 
 	return r

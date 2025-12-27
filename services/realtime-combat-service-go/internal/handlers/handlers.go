@@ -317,31 +317,83 @@ func (h *CombatHandlers) ExecuteAction(w http.ResponseWriter, r *http.Request) {
 // StartSpectating starts spectating a combat session
 func (h *CombatHandlers) StartSpectating(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
-	// Implementation for spectating
-	h.respondWithJSON(w, http.StatusOK, map[string]string{
-		"message": "Spectating started",
+	if sessionID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing session ID")
+		return
+	}
+
+	playerID := r.Header.Get("X-Player-ID")
+	if playerID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing player ID")
+		return
+	}
+
+	if err := h.service.StartSpectating(r.Context(), sessionID, playerID); err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
+		"message":   "Spectating started",
 		"sessionId": sessionID,
+		"playerId":  playerID,
 	})
 }
 
 // GetCombatState gets the current state of combat
 func (h *CombatHandlers) GetCombatState(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
-	// Implementation for getting combat state
-	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
-		"sessionId": sessionID,
-		"status":    "active",
-		"players":   []interface{}{},
-	})
+	if sessionID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing session ID")
+		return
+	}
+
+	state, err := h.service.GetCombatSessionState(r.Context(), sessionID)
+	if err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, state)
 }
 
 // UpdatePosition updates player position
 func (h *CombatHandlers) UpdatePosition(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
-	// Implementation for position updates
-	h.respondWithJSON(w, http.StatusOK, map[string]string{
-		"message": "Position updated",
+	if sessionID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing session ID")
+		return
+	}
+
+	playerID := r.Header.Get("X-Player-ID")
+	if playerID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing player ID")
+		return
+	}
+
+	var req struct {
+		X float64 `json:"x"`
+		Y float64 `json:"y"`
+		Z float64 `json:"z"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	position := repository.Position{X: req.X, Y: req.Y, Z: req.Z}
+
+	if err := h.service.UpdatePlayerPosition(r.Context(), sessionID, playerID, position); err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
+		"message":   "Position updated",
 		"sessionId": sessionID,
+		"playerId":  playerID,
+		"position":  position,
 	})
 }
 
@@ -369,30 +421,174 @@ func (h *CombatHandlers) GetCombatReplay(w http.ResponseWriter, r *http.Request)
 // GetCombatStats gets combat statistics
 func (h *CombatHandlers) GetCombatStats(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
-	// Implementation for combat stats
-	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
-		"sessionId": sessionID,
-		"stats": map[string]interface{}{
-			"totalDamage":  1000,
-			"totalKills":   5,
-			"duration":     300,
-		},
-	})
+	if sessionID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing session ID")
+		return
+	}
+
+	stats, err := h.service.GetCombatSessionStats(r.Context(), sessionID)
+	if err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, stats)
 }
 
 // GetPlayerCombatStats gets player combat statistics
 func (h *CombatHandlers) GetPlayerCombatStats(w http.ResponseWriter, r *http.Request) {
 	playerID := chi.URLParam(r, "playerId")
-	// Implementation for player stats
+	if playerID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing player ID")
+		return
+	}
+
+	stats, err := h.service.GetPlayerCombatStats(r.Context(), playerID)
+	if err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, stats)
+}
+
+// ProcessComboInput processes a combo input from a player
+func (h *CombatHandlers) ProcessComboInput(w http.ResponseWriter, r *http.Request) {
+	sessionID := chi.URLParam(r, "sessionId")
+	if sessionID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing session ID")
+		return
+	}
+
+	playerID := r.Header.Get("X-Player-ID")
+	if playerID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing player ID")
+		return
+	}
+
+	var req struct {
+		Type     string `json:"type"`
+		Direction string `json:"direction,omitempty"`
+		Modifier string `json:"modifier,omitempty"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	input := service.ComboInput{
+		Type:      req.Type,
+		Direction: req.Direction,
+		Modifier:  req.Modifier,
+	}
+
+	result, err := h.service.ProcessComboInput(r.Context(), playerID, sessionID, input)
+	if err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, result)
+}
+
+// GetComboDefinitions returns available combo definitions
+func (h *CombatHandlers) GetComboDefinitions(w http.ResponseWriter, r *http.Request) {
+	difficulty := r.URL.Query().Get("difficulty")
+
+	combos, err := h.service.GetComboDefinitions(r.Context(), difficulty)
+	if err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
+		"combos": combos,
+		"total":  len(combos),
+	})
+}
+
+// GetPlayerCombos returns active combos for a player
+func (h *CombatHandlers) GetPlayerCombos(w http.ResponseWriter, r *http.Request) {
+	playerID := chi.URLParam(r, "playerId")
+	if playerID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing player ID")
+		return
+	}
+
+	combos, err := h.service.GetActiveCombos(r.Context(), playerID)
+	if err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"playerId": playerID,
-		"stats": map[string]interface{}{
-			"kills":      10,
-			"deaths":     5,
-			"damage":     5000,
-			"accuracy":   0.75,
-			"rank":       "Gold",
-		},
+		"combos":   combos,
+		"active":   len(combos),
+	})
+}
+
+// ActivateSynergy attempts to activate a synergy
+func (h *CombatHandlers) ActivateSynergy(w http.ResponseWriter, r *http.Request) {
+	playerID := r.Header.Get("X-Player-ID")
+	if playerID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing player ID")
+		return
+	}
+
+	var req struct {
+		SynergyID string `json:"synergyId"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	result, err := h.service.ActivateSynergy(r.Context(), playerID, req.SynergyID)
+	if err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, result)
+}
+
+// GetSynergyDefinitions returns available synergy definitions
+func (h *CombatHandlers) GetSynergyDefinitions(w http.ResponseWriter, r *http.Request) {
+	rarity := r.URL.Query().Get("rarity")
+
+	synergies, err := h.service.GetSynergyDefinitions(r.Context(), rarity)
+	if err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
+		"synergies": synergies,
+		"total":     len(synergies),
+	})
+}
+
+// GetPlayerSynergies returns active synergies for a player
+func (h *CombatHandlers) GetPlayerSynergies(w http.ResponseWriter, r *http.Request) {
+	playerID := chi.URLParam(r, "playerId")
+	if playerID == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Missing player ID")
+		return
+	}
+
+	synergies, err := h.service.GetActiveSynergies(r.Context(), playerID)
+	if err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
+		"playerId":  playerID,
+		"synergies": synergies,
+		"active":    len(synergies),
 	})
 }
 
