@@ -1,0 +1,463 @@
+metadata:
+  id: seasonal-trials-system-architecture
+  title: Архитектура системы сезонных испытаний
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-27T20:29:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - liveops
+    - seasonal
+    - events
+    - progression
+    - rewards
+    - community
+  related_systems:
+    - liveops-service
+    - progression-service
+    - economy-service
+    - analytics-service
+    - content-service
+  related_documents:
+    - id: seasonal-trials-system
+      relation: implements
+  github_issue: 142074642
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - liveops
+    - content
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы сезонных испытаний,
+    включающую:
+    - Управление сезонными циклами и событиями
+    - Тематический контент и нарративы
+    - Прогрессию и награды в сезонах
+    - Сообщественные события и соревнования
+    - Экономику сезонной валюты
+    - Аналитику вовлеченности игроков
+    - Интеграцию с live ops инструментами
+  goal: |
+    Создать архитектурную схему сезонных испытаний с определением:
+    - Компонентов управления сезонами
+    - Системы тематического контента
+    - Прогрессии и наград
+    - Сообщественных механик
+    - Экономических моделей
+    - Аналитических инструментов
+    - Live Ops интеграций
+  essence: |
+    Полная архитектура сезонных испытаний с циклами, темами,
+    прогрессией и сообщественными механиками.
+
+architecture:
+  overview: |
+    Архитектура системы сезонных испытаний состоит из следующих компонентов:
+    1. Season Manager - управление сезонами
+    2. Content Rotator - ротация контента
+    3. Progression Tracker - отслеживание прогрессии
+    4. Reward System - система наград
+    5. Community Events - сообщественные события
+    6. Analytics Dashboard - аналитика
+    7. Live Ops Tools - инструменты live ops
+
+  microservices:
+    - name: liveops-service
+      port: 8087
+      responsibility: |
+        Обработка сезонных испытаний:
+        - Управление сезонными циклами
+        - Ротация тематического контента
+        - Отслеживание прогрессии игроков
+        - Распределение сезонных наград
+        - Организация сообщественных событий
+        - Сбор аналитики вовлеченности
+        - Интеграция с live ops инструментами
+      components:
+        - season-manager: управление сезонами
+        - content-rotator: ротация контента
+        - progression-tracker: отслеживание прогрессии
+        - reward-system: система наград
+        - community-events: сообщественные события
+        - analytics-dashboard: аналитика
+        - live-ops-tools: инструменты live ops
+      endpoints:
+        - GET /api/v1/liveops/seasons/current - текущий сезон
+        - GET /api/v1/liveops/seasons/{seasonId} - информация о сезоне
+        - POST /api/v1/liveops/seasons/create - создать сезон
+        - PUT /api/v1/liveops/seasons/{seasonId}/update - обновить сезон
+        - GET /api/v1/liveops/seasons/{seasonId}/progress - прогресс сезона
+        - GET /api/v1/liveops/seasons/player/{playerId}/progress - прогресс игрока
+        - POST /api/v1/liveops/seasons/{seasonId}/content/rotate - ротировать контент
+        - GET /api/v1/liveops/seasons/events - активные события
+        - POST /api/v1/liveops/seasons/events/create - создать событие
+        - GET /api/v1/liveops/seasons/analytics - аналитика сезона
+        - POST /api/v1/liveops/seasons/rewards/distribute - распределить награды
+      websocket_channels:
+        - wss://api.necp.game/v1/liveops/seasons/live - обновления сезона
+        - wss://api.necp.game/v1/liveops/events/live - активные события
+      events_published:
+        - liveops.season.started: начало сезона
+        - liveops.season.ended: конец сезона
+        - liveops.season.progress-updated: обновление прогрессии
+        - liveops.season.reward-earned: получение награды
+        - liveops.season.event-triggered: триггер события
+        - liveops.season.content-rotated: ротация контента
+        - liveops.season.milestone-reached: достижение вехи
+
+  seasonal_structure:
+    season_phases:
+      - name: preparation_phase
+        duration: "1-2 недели"
+        activities: ["теasers", "beta_testing", "player_feedback"]
+        goals: "Генерация ожидания"
+
+      - name: launch_phase
+        duration: "1 неделя"
+        activities: ["grand_launch", "initial_events", "early_access"]
+        goals: "Максимальная вовлеченность"
+
+      - name: main_phase
+        duration: "8-10 недель"
+        activities: ["regular_events", "progression", "community_activities"]
+        goals: "Стабильная вовлеченность"
+
+      - name: climax_phase
+        duration: "2-3 недели"
+        activities: ["major_events", "final_challenges", "leaderboard_races"]
+        goals: "Пик активности"
+
+      - name: conclusion_phase
+        duration: "1 неделя"
+        activities: ["final_rewards", "season_wrap_up", "transition_teasers"]
+        goals: "Завершение и подготовка к следующему"
+
+    seasonal_themes:
+      - name: cyberpunk_neon
+        aesthetic: "Неоновые цвета, техно-стиль"
+        mechanics: ["hacking_challenges", "corporate_intrigue"]
+        rewards: ["cyberware_cosmetics", "neon_weapons"]
+
+      - name: post_apocalyptic
+        aesthetic: "Пыльные тона, разрушения"
+        mechanics: ["scavenging_trials", "survival_challenges"]
+        rewards: ["wasteland_gear", "mutation_cosmetics"]
+
+      - name: fantasy_realms
+        aesthetic: "Мистические цвета, магические эффекты"
+        mechanics: ["magic_duels", "artifact_hunts"]
+        rewards: ["enchanted_items", "magical_mounts"]
+
+      - name: space_exploration
+        aesthetic: "Космические тона, футуристика"
+        mechanics: ["zero_gravity_trials", "alien_encounters"]
+        rewards: ["spacesuits", "starships"]
+
+  progression_system:
+    battle_pass_structure:
+      - name: free_track
+        access: "Все игроки"
+        rewards: ["cosmetics", "titles", "basic_currency"]
+        tiers: 50
+        completion_time: "Стандартное"
+
+      - name: premium_track
+        access: "Покупка или заработок"
+        rewards: ["legendary_items", "exclusive_cosmetics", "premium_currency"]
+        tiers: 100
+        completion_time: "Ускоренное"
+
+      - name: ultimate_track
+        access: "Специальные предложения"
+        rewards: ["mythical_items", "permanent_unlocks", "elite_cosmetics"]
+        tiers: 150
+        completion_time: "Максимально ускоренное"
+
+    milestone_system:
+      - name: participation_milestones
+        triggers: ["login_streaks", "event_participation", "social_interactions"]
+        rewards: ["bonus_xp", "seasonal_currency", "progress_acceleration"]
+
+      - name: achievement_milestones
+        triggers: ["specific_challenges", "rare_events", "community_contributions"]
+        rewards: ["unique_items", "titles", "showcase_badges"]
+
+      - name: leaderboard_milestones
+        triggers: ["rank_advancement", "record_breaking", "competitive_wins"]
+        rewards: ["competitive_cosmetics", "priority_access", "bragging_rights"]
+
+  reward_economy:
+    seasonal_currencies:
+      - name: season_tokens
+        acquisition: ["daily_logins", "event_completion", "battle_pass_progress"]
+        spending: ["cosmetic_unlocks", "boosters", "seasonal_store"]
+        exchange_rate: "1:1 с премиум валютой"
+        persistence: "Текущий сезон"
+
+      - name: event_coins
+        acquisition: ["limited_events", "special_challenges", "community_goals"]
+        spending: ["event_exclusives", "rare_cosmetics", "time_limited_offers"]
+        exchange_rate: "Премиум только"
+        persistence: "Текущее событие"
+
+      - name: community_points
+        acquisition: ["social_interactions", "content_creation", "peer_recognition"]
+        spending: ["social_cosmetics", "guild_benefits", "community_events"]
+        exchange_rate: "Не конвертируется"
+        persistence: "Бессрочный"
+
+    reward_tiers:
+      - name: common_rewards
+        drop_rate: "70%"
+        examples: ["basic_cosmetics", "small_currency", "minor_boosts"]
+
+      - name: rare_rewards
+        drop_rate: "25%"
+        examples: ["good_cosmetics", "medium_currency", "useful_boosts"]
+
+      - name: epic_rewards
+        drop_rate: "4.5%"
+        examples: ["great_cosmetics", "large_currency", "powerful_boosts"]
+
+      - name: legendary_rewards
+        drop_rate: "0.5%"
+        examples: ["best_cosmetics", "massive_currency", "game_changing_boosts"]
+
+  community_system:
+    guild_challenges:
+      - name: guild_vs_guild
+        format: "Командные соревнования"
+        rewards: ["guild_cosmetics", "territory_control", "guild_resources"]
+        duration: "1 неделя"
+
+      - name: guild_collaboration
+        format: "Совместные испытания"
+        rewards: ["shared_rewards", "guild_bonds", "collective_achievements"]
+        duration: "Весь сезон"
+
+    player_events:
+      - name: flash_events
+        duration: "1-4 часа"
+        triggers: ["random", "player_initiated", "community_request"]
+        rewards: ["bonus_multipliers", "exclusive_items", "social_recognition"]
+
+      - name: mega_events
+        duration: "24-72 часа"
+        triggers: ["seasonal_schedule", "major_updates", "holidays"]
+        rewards: ["massive_rewards", "permanent_unlocks", "legendary_items"]
+
+    creator_economy:
+      - name: user_generated_content
+        types: ["custom_challenges", "seasonal_skins", "community_stories"]
+        monetization: ["creator_tokens", "royalty_shares", "featured_placement"]
+        moderation: ["community_voting", "ai_filtering", "human_review"]
+
+  content_rotation:
+    dynamic_content:
+      - name: procedural_generation
+        method: "AI-assisted creation"
+        themes: ["seasonal_motifs", "player_preferences", "community_trends"]
+        quality_control: ["automated_testing", "player_feedback", "balancing_algorithms"]
+
+      - name: curated_content
+        method: "Designer created"
+        themes: ["narrative_driven", "mechanically_focused", "visually_stunning"]
+        quality_control: ["internal_testing", "focus_groups", "metrics_analysis"]
+
+    rotation_strategies:
+      - name: weekly_rotation
+        frequency: "Еженедельно"
+        content_types: ["challenges", "events", "cosmetics"]
+        player_impact: ["fresh_content", "replayability", "engagement"]
+
+      - name: milestone_based
+        frequency: "По достижению целей"
+        content_types: ["rewards", "unlockables", "story_elements"]
+        player_impact: ["progression_feeling", "achievement_sense", "motivation"]
+
+  analytics_system:
+    player_engagement:
+      - name: retention_metrics
+        tracks: ["daily_return_rate", "weekly_active_users", "season_completion"]
+        insights: ["content_effectiveness", "difficulty_balance", "reward_optimization"]
+
+      - name: progression_analytics
+        tracks: ["battle_pass_completion", "milestone_achievement", "skill_development"]
+        insights: ["engagement_patterns", "challenge_suitability", "reward_value"]
+
+    content_performance:
+      - name: event_analytics
+        tracks: ["participation_rates", "completion_rates", "social_sharing"]
+        insights: ["viral_potential", "community_impact", "event_success"]
+
+      - name: reward_analytics
+        tracks: ["redemption_rates", "player_satisfaction", "economic_impact"]
+        insights: ["reward_balance", "player_motivation", "monetization_efficiency"]
+
+  live_ops_integration:
+    real_time_tools:
+      - name: event_scheduler
+        features: ["drag_drop_interface", "automated_triggers", "performance_monitoring"]
+        integration: ["game_server", "player_client", "analytics_system"]
+
+      - name: reward_manager
+        features: ["dynamic_pricing", "ab_testing", "player_segmentation"]
+        integration: ["economy_service", "analytics_service", "player_database"]
+
+      - name: content_deployer
+        features: ["hot_swapping", "version_control", "rollback_capability"]
+        integration: ["cdn_network", "game_servers", "player_clients"]
+
+    automated_systems:
+      - name: smart_balancing
+        algorithm: "Machine learning"
+        inputs: ["player_performance", "completion_rates", "feedback_data"]
+        outputs: ["difficulty_adjustments", "reward_optimization", "content_rotation"]
+
+      - name: predictive_engagement
+        algorithm: "Behavioral analysis"
+        inputs: ["player_patterns", "social_data", "market_trends"]
+        outputs: ["event_suggestions", "content_recommendations", "seasonal_planning"]
+
+  data_flows:
+    season_lifecycle_flow: |
+      1. Season Manager планирует сезон через POST /api/v1/liveops/seasons/create
+      2. Content Rotator подготавливает тематический контент
+      3. Live Ops Tools настраивают события и награды
+      4. При запуске сезона Analytics Dashboard начинает сбор данных
+      5. По ходу сезона Progression Tracker отслеживает прогресс игроков
+      6. Community Events организует социальные активности
+      7. Reward System распределяет награды за достижения
+      8. При завершении сезона Liveops Service публикует событие liveops.season.ended
+
+    event_execution_flow: |
+      1. Live Ops Tools планирует событие через POST /api/v1/liveops/seasons/events/create
+      2. Event Scheduler активирует событие в запланированное время
+      3. Community Events уведомляет игроков через WebSocket
+      4. По ходу события Analytics Dashboard собирает метрики вовлеченности
+      5. Reward System обрабатывает награды в реальном времени
+      6. Content Rotator может динамически корректировать контент
+      7. По завершении Analytics Dashboard анализирует эффективность
+
+  database_structure:
+    tables:
+      - name: seasons
+        description: Сезоны игры
+        columns:
+          - id: UUID PRIMARY KEY
+          - name: VARCHAR(255)
+          - theme: VARCHAR(100)
+          - start_date: TIMESTAMP
+          - end_date: TIMESTAMP
+          - status: VARCHAR(50)
+          - battle_pass_config: JSONB
+          - reward_config: JSONB
+          - created_at: TIMESTAMP
+
+      - name: season_progression
+        description: Прогрессия игроков в сезоне
+        columns:
+          - id: UUID PRIMARY KEY
+          - season_id: UUID FOREIGN KEY
+          - player_id: UUID FOREIGN KEY
+          - current_tier: INTEGER
+          - total_xp: INTEGER
+          - claimed_rewards: JSONB
+          - milestones_achieved: JSONB
+          - last_updated: TIMESTAMP
+
+      - name: season_events
+        description: События сезона
+        columns:
+          - id: UUID PRIMARY KEY
+          - season_id: UUID FOREIGN KEY
+          - event_name: VARCHAR(255)
+          - event_type: VARCHAR(100)
+          - start_time: TIMESTAMP
+          - end_time: TIMESTAMP
+          - participants: INTEGER
+          - completion_rate: DECIMAL(5,2)
+          - rewards_distributed: JSONB
+
+      - name: season_rewards
+        description: Награды сезона
+        columns:
+          - id: UUID PRIMARY KEY
+          - season_id: UUID FOREIGN KEY
+          - reward_type: VARCHAR(50)
+          - reward_data: JSONB
+          - tier_requirement: INTEGER
+          - claim_limit: INTEGER
+          - claimed_count: INTEGER
+
+      - name: season_analytics
+        description: Аналитика сезона
+        columns:
+          - id: UUID PRIMARY KEY
+          - season_id: UUID FOREIGN KEY
+          - date: DATE
+          - active_players: INTEGER
+          - event_participation: INTEGER
+          - reward_claims: INTEGER
+          - average_session_time: INTEGER
+          - retention_rate: DECIMAL(5,2)
+
+      - name: season_currency
+        description: Сезонная валюта
+        columns:
+          - id: UUID PRIMARY KEY
+          - season_id: UUID FOREIGN KEY
+          - player_id: UUID FOREIGN KEY
+          - currency_type: VARCHAR(50)
+          - balance: INTEGER
+          - earned_total: INTEGER
+          - spent_total: INTEGER
+          - last_transaction: TIMESTAMP
+
+      - name: community_content
+        description: Контент сообщества
+        columns:
+          - id: UUID PRIMARY KEY
+          - season_id: UUID FOREIGN KEY
+          - creator_id: UUID FOREIGN KEY
+          - content_type: VARCHAR(50)
+          - content_data: JSONB
+          - rating: DECIMAL(3,2)
+          - views: INTEGER
+          - featured: BOOLEAN
+          - created_at: TIMESTAMP
+
+  success_metrics:
+    engagement_metrics:
+      - season_completion_rate: "Процент завершивших сезон"
+      - average_session_increase: "Рост средней сессии"
+      - return_player_rate: "Коэффициент возврата игроков"
+      - community_participation: "Уровень участия сообщества"
+
+    economic_metrics:
+      - seasonal_revenue: "Доход от сезонного контента"
+      - currency_velocity: "Скорость оборота валюты"
+      - reward_redemption_rate: "Коэффициент использования наград"
+      - player_lifetime_value: "Долгосрочная ценность игрока"
+
+  scaling_considerations:
+    content_scaling:
+      - multi_season_support: "Одновременная поддержка нескольких сезонов"
+      - global_localization: "Локализация для разных регионов"
+      - cross_platform_sync: "Синхронизация между платформами"
+
+    performance_scaling:
+      - real_time_analytics: "Обработка данных тысяч игроков"
+      - dynamic_content_delivery: "Доставка персонализированного контента"
+      - concurrent_events: "Поддержка множественных одновременных событий"
+
+# Issue: #142074642

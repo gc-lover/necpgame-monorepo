@@ -5,7 +5,7 @@ metadata:
   category: systems
   status: draft
   version: "1.0.0"
-  last_updated: 2025-12-XXT00:00:00Z
+  last_updated: 2025-12-27T20:30:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -13,152 +13,428 @@ metadata:
     - architecture
     - gameplay
     - restricted-modes
-    - hardcore
-    - permadeath
+    - limitations
     - challenge
+    - variety
+    - game-modes
   related_systems:
     - gameplay-service
-    - character-service
-    - achievement-service
+    - progression-service
+    - inventory-service
+    - ability-service
+    - analytics-service
   related_documents:
-    - id: restricted-modes-idea
+    - id: restricted-modes-system
       relation: implements
-  github_issue: 1502
+  github_issue: 142074648
   visibility: internal
   audience:
     - architect
     - backend
     - gameplay
+    - content
     - api-designer
 
 summary:
   problem: |
-    Не хватает экстремальных режимов сложности для игроков, ищущих максимальный вызов.
-    Режимы с ограничениями могут предоставить уникальный опыт для хардкорных игроков.
+    Требуется спроектировать архитектуру системы режимов с ограничениями,
+    включающую:
+    - Различные типы ограничений (ресурсы, способности, механики)
+    - Баланс ограничений с вознаграждениями
+    - Прогрессию и разблокировку режимов
+    - Социальные аспекты (рейтинги, сообщество)
+    - Аналитику эффективности режимов
+    - Интеграцию с основной игрой
+    - Масштабируемость для новых режимов
   goal: |
-    Создать архитектуру режимов с ограничениями, которая:
-    - Предоставляет экстремальные вызовы для игроков
-    - Добавляет уникальные ограничения и механики
-    - Награждает игроков за успешное прохождение
-    - Интегрируется с системой достижений
+    Создать архитектурную схему режимов с ограничениями с определением:
+    - Типов ограничений и их реализации
+    - Системы баланса и наград
+    - Прогрессии и разблокировки
+    - Социальных механик
+    - Аналитики и оптимизации
+    - Интеграции с ядром игры
+    - Расширяемости системы
   essence: |
-    Система режимов с ограничениями предоставляет экстремальные вызовы через различные
-    типы ограничений: перманентная смерть, ограниченные ресурсы, одиночное прохождение
-    и прохождение без смертей.
+    Полная архитектура режимов с ограничениями для разнообразия геймплея,
+    баланса вызовов и социальных взаимодействий.
 
 architecture:
   overview: |
-    Система режимов с ограничениями состоит из следующих компонентов:
-    1. Restricted Mode Manager - управление режимами с ограничениями
-    2. Permadeath Handler - обработка перманентной смерти
-    3. Resource Limiter - ограничение ресурсов
-    4. Solo Challenge Controller - управление одиночными испытаниями
-    5. No-Death Tracker - отслеживание прохождения без смертей
+    Архитектура системы режимов с ограничениями состоит из следующих компонентов:
+    1. Mode Manager - управление режимами
+    2. Restriction Engine - движок ограничений
+    3. Balance Calculator - расчет баланса
+    4. Progression System - система прогрессии
+    5. Social Features - социальные функции
+    6. Analytics Engine - аналитика
+    7. Content Generator - генератор контента
 
   microservices:
     - name: gameplay-service
       port: 8083
       responsibility: |
         Обработка режимов с ограничениями:
-        - Управление режимами
-        - Отслеживание ограничений
-        - Применение механик режимов
+        - Управление режимами и их конфигурациями
+        - Применение и снятие ограничений
+        - Расчет баланса и компенсаций
+        - Отслеживание прогрессии в режимах
+        - Социальные взаимодействия
+        - Сбор аналитики режимов
+        - Генерация контента режимов
       components:
-        - restricted-mode-manager: управление режимами
-        - permadeath-handler: обработка перманентной смерти
-        - resource-limiter: ограничение ресурсов
-        - solo-challenge-controller: управление одиночными испытаниями
-        - no-death-tracker: отслеживание без смертей
+        - mode-manager: управление режимами
+        - restriction-engine: ограничения
+        - balance-calculator: баланс
+        - progression-system: прогрессия
+        - social-features: социальные функции
+        - analytics-engine: аналитика
+        - content-generator: генератор контента
       endpoints:
-        - POST /api/v1/gameplay/restricted-modes/select - выбор режима
-        - GET /api/v1/gameplay/restricted-modes/available - доступные режимы
-        - GET /api/v1/gameplay/restricted-modes/status - статус режима
-        - POST /api/v1/gameplay/restricted-modes/ironman/create - создание Ironman персонажа
+        - GET /api/v1/gameplay/modes/restricted - список ограниченных режимов
+        - GET /api/v1/gameplay/modes/restricted/{modeId} - информация о режиме
+        - POST /api/v1/gameplay/modes/restricted/{modeId}/join - присоединиться к режиму
+        - POST /api/v1/gameplay/modes/restricted/{modeId}/restrictions/apply - применить ограничения
+        - GET /api/v1/gameplay/modes/restricted/{modeId}/progress - прогресс в режиме
+        - GET /api/v1/gameplay/modes/restricted/leaderboard - лидерборд режимов
+        - POST /api/v1/gameplay/modes/restricted/{modeId}/complete - завершить режим
+        - GET /api/v1/gameplay/modes/restricted/analytics - аналитика режимов
+        - POST /api/v1/gameplay/modes/restricted/create - создать кастомный режим
+        - GET /api/v1/gameplay/modes/restricted/community - сообщество режимов
       websocket_channels:
-        - wss://api.necp.game/v1/gameplay/restricted-modes/{modeId} - события режима
+        - wss://api.necp.game/v1/gameplay/modes/restricted/{modeId}/live - режим в реальном времени
+        - wss://api.necp.game/v1/gameplay/modes/restricted/social/live - социальные обновления
       events_published:
-        - gameplay.restricted-mode.activated: активация режима
-        - gameplay.restricted-mode.failed: провал режима
-        - gameplay.restricted-mode.completed: завершение режима
-        - gameplay.restricted-mode.permadeath: перманентная смерть
+        - gameplay.mode.restricted.joined: присоединение к режиму
+        - gameplay.mode.restricted.restriction-applied: ограничение применено
+        - gameplay.mode.restricted.progress-updated: прогресс обновлен
+        - gameplay.mode.restricted.completed: режим завершен
+        - gameplay.mode.restricted.record-broken: рекорд побит
+        - gameplay.mode.restricted.social-interaction: социальное взаимодействие
+        - gameplay.mode.restricted.content-generated: контент сгенерирован
+
+  restriction_types:
+    resource_restrictions:
+      - name: limited_ammo
+        description: "Ограниченное количество боеприпасов"
+        implementation: "Ammo tracking with depletion mechanics"
+        compensation: "Increased weapon effectiveness, critical hits"
+        difficulty_modifier: "1.5x"
+
+      - name: no_healing
+        description: "Отсутствие лечения"
+        implementation: "Disable all healing abilities and items"
+        compensation: "Increased damage output, defensive bonuses"
+        difficulty_modifier: "2.0x"
+
+      - name: limited_inventory
+        description: "Ограниченный инвентарь"
+        implementation: "Inventory size reduction, item limits"
+        compensation: "Better item quality, instant switching"
+        difficulty_modifier: "1.3x"
+
+    ability_restrictions:
+      - name: no_abilities
+        description: "Отключение всех способностей"
+        implementation: "Complete ability system disable"
+        compensation: "Enhanced base stats, weapon bonuses"
+        difficulty_modifier: "2.5x"
+
+      - name: single_weapon
+        description: "Только одно оружие"
+        implementation: "Weapon switching disable, single loadout"
+        compensation: "Weapon mastery bonuses, special ammo types"
+        difficulty_modifier: "1.8x"
+
+      - name: no_movement_abilities
+        description: "Отключение способностей движения"
+        implementation: "Disable dashes, jumps, mobility skills"
+        compensation: "Increased base movement speed, environmental bonuses"
+        difficulty_modifier: "2.2x"
+
+    gameplay_restrictions:
+      - name: time_limit
+        description: "Ограничение по времени"
+        implementation: "Countdown timer with failure on expiration"
+        compensation: "Score multipliers, bonus objectives"
+        difficulty_modifier: "1.7x"
+
+      - name: damage_limit
+        description: "Ограничение урона"
+        implementation: "Damage cap per enemy/player"
+        compensation: "Precision bonuses, combo multipliers"
+        difficulty_modifier: "2.0x"
+
+      - name: visibility_restricted
+        description: "Ограниченная видимость"
+        implementation: "Fog of war, limited vision radius"
+        compensation: "Enhanced senses, detection abilities"
+        difficulty_modifier: "1.9x"
+
+  balance_mechanisms:
+    compensation_system:
+      - name: stat_bonuses
+        application: "Automatic stat increases based on restrictions"
+        calculation: "Linear scaling with difficulty modifier"
+        examples: ["+50% damage for no_healing", "+30% speed for no_movement"]
+
+      - name: item_enhancements
+        application: "Quality improvements for restricted items"
+        calculation: "Exponential scaling with limitation severity"
+        examples: ["Legendary quality weapons", "Epic rarity consumables"]
+
+      - name: environmental_aids
+        application: "World modifications to assist restricted play"
+        calculation: "Context-aware bonuses based on active restrictions"
+        examples: ["Extra cover points", "Bonus resource spawns"]
+
+    difficulty_scaling:
+      - name: adaptive_ai
+        adjustment: "Enemy AI adapts to player restrictions"
+        intelligence: "Reduced for easier modes, enhanced for harder"
+        fairness: "Maintains challenge without frustration"
+
+      - name: resource_density
+        adjustment: "Resource spawn rates scale with restrictions"
+        abundance: "Higher density for restrictive modes"
+        variety: "Diverse resource types for different strategies"
+
+      - name: checkpoint_frequency
+        adjustment: "Save points frequency based on mode difficulty"
+        density: "More frequent for harder restrictions"
+        accessibility: "Quick access without breaking immersion"
+
+  progression_system:
+    mode_unlocks:
+      - name: skill_based
+        requirement: "Master specific skills to unlock restrictive modes"
+        tracking: "Performance metrics in normal gameplay"
+        progression: "Gradual unlock of increasingly restrictive modes"
+
+      - name: achievement_based
+        requirement: "Complete specific achievements to unlock modes"
+        tracking: "Achievement completion across all game modes"
+        progression: "Reward-based access to challenge content"
+
+      - name: community_based
+        requirement: "Community voting and participation unlocks"
+        tracking: "Social engagement and community contributions"
+        progression: "Democratic access to new restrictive modes"
+
+    mastery_system:
+      - name: mode_mastery
+        tiers: ["Novice", "Apprentice", "Expert", "Master", "Grandmaster"]
+        requirements: ["Completion count", "Performance scores", "Consistency"]
+        rewards: ["Exclusive cosmetics", "Special abilities", "Community recognition"]
+
+      - name: restriction_mastery
+        tracking: "Performance across all modes with specific restrictions"
+        specialization: "Deep expertise in particular limitation types"
+        benefits: ["Reduced difficulty penalties", "Enhanced compensations"]
+
+  social_integration:
+    community_features:
+      - name: mode_specific_guilds
+        formation: "Players unite around preferred restrictive modes"
+        activities: ["Group challenges", "Strategy sharing", "Competitive events"]
+        benefits: ["Shared knowledge", "Group unlocks", "Social rewards"]
+
+      - name: streamer_integration
+        features: ["Live mode broadcasting", "Spectator mode", "Challenge requests"]
+        monetization: ["Donation integration", "Sponsor opportunities"]
+        community: ["Viewer participation", "Challenge voting"]
+
+      - name: content_creation
+        tools: ["Mode replay system", "Strategy guides", "Tutorial creation"]
+        platform: ["In-game sharing", "Community forums", "Social media integration"]
+        rewards: ["Creator recognition", "Exclusive access", "Monetization opportunities"]
+
+    competitive_elements:
+      - name: global_leaderboards
+        categories: ["Fastest completion", "Highest score", "Most consistent"]
+        timeframes: ["Daily", "Weekly", "All-time", "Seasonal"]
+        rewards: ["Rank titles", "Exclusive cosmetics", "Community recognition"]
+
+      - name: tournament_system
+        formats: ["Single elimination", "Round robin", "Battle royale"]
+        entry: ["Open registration", "Invitation only", "Skill-based"]
+        prizes: ["Unique rewards", "Prestige points", "Community status"]
+
+  analytics_system:
+    performance_tracking:
+      - name: player_success_rates
+        metrics: ["Completion percentage", "Average time", "Score distribution"]
+        insights: ["Difficulty balance", "Player skill assessment", "Mode popularity"]
+
+      - name: restriction_effectiveness
+        metrics: ["Restriction usage", "Abandonment rates", "Satisfaction scores"]
+        insights: ["Balance adjustments", "Player preferences", "Design improvements"]
+
+      - name: social_engagement
+        metrics: ["Community participation", "Content creation", "Competitive activity"]
+        insights: ["Social features success", "Community health", "Retention impact"]
+
+    optimization_engine:
+      - name: dynamic_adjustments
+        triggers: ["Low completion rates", "High frustration", "Unbalanced difficulty"]
+        actions: ["Compensation tweaks", "Resource rebalancing", "UI improvements"]
+
+      - name: content_recommendations
+        algorithm: "Player preference learning"
+        suggestions: ["Similar modes", "Progressive challenges", "Personalized restrictions"]
+        delivery: ["In-game prompts", "Post-match suggestions", "Community recommendations"]
+
+  content_generation:
+    procedural_modes:
+      - name: random_restrictions
+        generation: "Algorithmic combination of restrictions"
+        balance_check: "Automated difficulty assessment"
+        uniqueness: "Guaranteed variation across play sessions"
+
+      - name: themed_challenges
+        themes: ["Historical events", "Pop culture", "Player suggestions"]
+        restrictions: "Theme-appropriate limitations"
+        narrative: "Integrated storytelling elements"
+
+      - name: community_created
+        tools: ["Mode editor", "Restriction builder", "Balance checker"]
+        moderation: ["Community voting", "Automated validation", "Human review"]
+        rewards: ["Creator credits", "Exclusive access", "Monetization share"]
 
   data_flows:
-    restricted_mode_activation_flow: |
-      1. Игрок выбирает режим с ограничениями
-      2. Restricted Mode Manager проверяет требования
-      3. Restricted Mode Manager активирует режим
-      4. В зависимости от режима активируются соответствующие контроллеры
-      5. Gameplay Service публикует событие gameplay.restricted-mode.activated
-      6. Realtime Gateway отправляет информацию о режиме клиентам
+    mode_execution_flow: |
+      1. Игрок выбирает режим с ограничениями через GET /api/v1/gameplay/modes/restricted/{modeId}
+      2. Mode Manager валидирует доступность режима для игрока
+      3. Restriction Engine применяет ограничения через POST /api/v1/gameplay/modes/restricted/{modeId}/restrictions/apply
+      4. Balance Calculator активирует компенсационные механизмы
+      5. По ходу игры Progression System отслеживает прогресс
+      6. Analytics Engine собирает данные о производительности
+      7. При завершении режима Reward System рассчитывает награды
+      8. Gameplay Service публикует событие gameplay.mode.restricted.completed
 
-    permadeath_flow: |
-      1. Игрок умирает в Ironman Mode
-      2. Permadeath Handler обрабатывает смерть
-      3. Permadeath Handler удаляет персонажа
-      4. Permadeath Handler сохраняет достижения Ironman
-      5. Character Service удаляет персонажа
-      6. Gameplay Service публикует событие gameplay.restricted-mode.permadeath
+    social_integration_flow: |
+      1. Игрок присоединяется к сообществу режима
+      2. Social Features подключают к соответствующим каналам
+      3. Community Events организуют групповые активности
+      4. Content Generator создает пользовательский контент
+      5. Leaderboard Service обновляет рейтинги
+      6. Analytics Engine анализирует социальную вовлеченность
+      7. Reward System распределяет социальные награды
 
   database_structure:
     tables:
-      - name: restricted_mode_sessions
-        description: Сессии режимов с ограничениями
+      - name: restricted_modes
+        description: Режимы с ограничениями
         columns:
           - id: UUID PRIMARY KEY
-          - character_id: UUID FOREIGN KEY
-          - mode_type: ENUM (ironman, hardcore, solo, nodeath)
-          - status: ENUM (active, completed, failed)
-          - restrictions: JSONB
-          - started_at: TIMESTAMP
-          - completed_at: TIMESTAMP (nullable)
-
-      - name: ironman_characters
-        description: Ironman персонажи
-        columns:
-          - id: UUID PRIMARY KEY
-          - character_id: UUID FOREIGN KEY
+          - name: VARCHAR(255)
+          - description: TEXT
+          - restriction_set: JSONB
+          - compensation_set: JSONB
+          - difficulty_rating: DECIMAL(3,1)
+          - min_level: INTEGER
+          - max_level: INTEGER
+          - is_active: BOOLEAN
+          - created_by: UUID
           - created_at: TIMESTAMP
-          - died_at: TIMESTAMP (nullable)
-          - achievements: JSONB
 
-  integrations:
-    character_service: |
-      - Хранение статуса режимов
-      - Обработка смертей
-      - Удаление персонажей (Ironman)
+      - name: mode_attempts
+        description: Попытки прохождения режимов
+        columns:
+          - id: UUID PRIMARY KEY
+          - mode_id: UUID FOREIGN KEY
+          - player_id: UUID FOREIGN KEY
+          - restrictions_applied: JSONB
+          - compensations_active: JSONB
+          - start_time: TIMESTAMP
+          - end_time: TIMESTAMP
+          - completion_status: VARCHAR(50)
+          - score_achieved: DECIMAL(10,2)
+          - time_taken: INTEGER
 
-    achievement_service: |
-      - Отслеживание достижений
-      - Выдача титулов
-      - Уведомления о достижениях
+      - name: player_mode_progress
+        description: Прогресс игрока в режимах
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - mode_id: UUID FOREIGN KEY
+          - best_score: DECIMAL(10,2)
+          - best_time: INTEGER
+          - completion_count: INTEGER
+          - mastery_level: INTEGER
+          - unlocked_at: TIMESTAMP
+          - last_played: TIMESTAMP
 
-  technical_tasks:
-    phases:
-      phase_1:
-        name: Restricted Mode Manager и Permadeath Handler
-        tasks:
-          - Реализация Restricted Mode Manager
-          - Реализация Permadeath Handler
-          - Управление режимами
-          - Обработка перманентной смерти
-          - Интеграция с Character Service
-        estimated_effort: 4 days
+      - name: mode_leaderboards
+        description: Лидерборды режимов
+        columns:
+          - id: UUID PRIMARY KEY
+          - mode_id: UUID FOREIGN KEY
+          - leaderboard_type: VARCHAR(50)
+          - player_id: UUID FOREIGN KEY
+          - rank: INTEGER
+          - score: DECIMAL(10,2)
+          - achieved_at: TIMESTAMP
+          - is_current: BOOLEAN
 
-      phase_2:
-        name: Resource Limiter и Solo Challenge Controller
-        tasks:
-          - Реализация Resource Limiter
-          - Реализация Solo Challenge Controller
-          - Ограничение ресурсов
-          - Управление одиночными испытаниями
-          - Интеграция с Gameplay Service
-        estimated_effort: 3 days
+      - name: restriction_analytics
+        description: Аналитика ограничений
+        columns:
+          - id: UUID PRIMARY KEY
+          - restriction_type: VARCHAR(100)
+          - mode_id: UUID FOREIGN KEY
+          - usage_count: INTEGER
+          - completion_rate: DECIMAL(5,2)
+          - average_score: DECIMAL(10,2)
+          - player_satisfaction: DECIMAL(3,1)
+          - last_updated: TIMESTAMP
 
-      phase_3:
-        name: No-Death Tracker
-        tasks:
-          - Реализация No-Death Tracker
-          - Отслеживание прохождения без смертей
-          - Интеграция с Achievement Service
-        estimated_effort: 2 days
+      - name: community_content
+        description: Контент сообщества режимов
+        columns:
+          - id: UUID PRIMARY KEY
+          - mode_id: UUID FOREIGN KEY
+          - creator_id: UUID FOREIGN KEY
+          - content_type: VARCHAR(50)
+          - title: VARCHAR(255)
+          - content_data: JSONB
+          - rating: DECIMAL(3,1)
+          - views: INTEGER
+          - downloads: INTEGER
+          - created_at: TIMESTAMP
 
+      - name: social_interactions
+        description: Социальные взаимодействия в режимах
+        columns:
+          - id: UUID PRIMARY KEY
+          - mode_id: UUID FOREIGN KEY
+          - interaction_type: VARCHAR(50)
+          - participants: JSONB
+          - interaction_data: JSONB
+          - timestamp: TIMESTAMP
+
+  success_metrics:
+    engagement_metrics:
+      - mode_completion_rate: "Процент завершенных режимов"
+      - average_session_length: "Средняя продолжительность сессии"
+      - player_retention: "Удержание игроков в режимах"
+      - community_participation: "Уровень участия сообщества"
+
+    balance_metrics:
+      - difficulty_satisfaction: "Удовлетворенность балансом сложности"
+      - restriction_effectiveness: "Эффективность ограничений"
+      - compensation_adequacy: "Адекватность компенсаций"
+      - progression_smoothness: "Плавность прогрессии"
+
+  scaling_considerations:
+    content_scaling:
+      - mode_variety: "Поддержка сотен уникальных режимов"
+      - procedural_generation: "Генерация контента на лету"
+      - community_content: "Масштабируемая модерация пользовательского контента"
+
+    performance_scaling:
+      - concurrent_sessions: "Поддержка тысяч одновременных сессий"
+      - real_time_analytics: "Обработка данных в реальном времени"
+      - leaderboard_updates: "Масштабируемые обновления рейтингов"
+
+# Issue: #142074648

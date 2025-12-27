@@ -5,184 +5,395 @@ metadata:
   category: systems
   status: draft
   version: "1.0.0"
-  last_updated: 2025-12-XXT00:00:00Z
+  last_updated: 2025-12-27T20:29:30Z
   owners:
     - role: architect
       contact: architect@necp.game
   tags:
     - architecture
     - ai
-    - adaptive-ai
+    - adaptive
     - machine-learning
-    - difficulty
-    - hardcore
+    - personalization
+    - dynamic-difficulty
+    - behavioral-analysis
   related_systems:
+    - ai-service
     - gameplay-service
     - analytics-service
-    - ai-service
+    - progression-service
+    - ml-service
   related_documents:
-    - id: adaptive-ai-idea
+    - id: adaptive-ai-system
       relation: implements
-    - id: combat-ai-enemies-architecture
-      relation: extends
-  github_issue: 1501
+  github_issue: 142074645
   visibility: internal
   audience:
     - architect
     - backend
-    - ai
-    - api-designer
+    - ai-engineer
+    - gameplay
+    - analytics
 
 summary:
   problem: |
-    Текущий AI использует фиксированные паттерны поведения, что делает бои предсказуемыми.
-    Не хватает адаптивности AI, которая бы подстраивалась под тактики игроков.
+    Требуется спроектировать архитектуру системы адаптивного AI,
+    включающую:
+    - Анализ поведения игроков в реальном времени
+    - Динамическую адаптацию сложности и контента
+    - Персонализацию игрового опыта
+    - Прогнозные модели поведения игроков
+    - Балансировку на основе данных
+    - Этические аспекты адаптивного AI
+    - Масштабируемость для миллионов игроков
   goal: |
-    Создать архитектуру адаптивного AI, которая:
-    - Анализирует тактики игроков в реальном времени
-    - Адаптирует паттерны атак и защиту
-    - Использует контр-стратегии против игроков
-    - Усиливает слабые места команды
+    Создать архитектурную схему адаптивного AI с определением:
+    - Компонентов анализа и адаптации
+    - Машинного обучения и моделей
+    - Реального времени обработки данных
+    - Персонализации опыта
+    - Балансировки и оптимизации
+    - Этических ограничений
+    - Масштабируемых решений
   essence: |
-    Система адаптивного AI анализирует действия игроков и адаптирует поведение врагов
-    в реальном времени. AI изучает тактики команды и применяет контр-стратегии.
+    Полная архитектура адаптивного AI с анализом поведения,
+    динамической адаптацией и персонализацией опыта.
 
 architecture:
   overview: |
-    Система адаптивного AI состоит из следующих компонентов:
-    1. Tactics Analyzer - анализ тактик игроков
-    2. Adaptation Engine - адаптация поведения AI
-    3. Counter-Strategy Controller - применение контр-стратегий
-    4. ML Training Pipeline - обучение моделей
-    5. Adaptation Telemetry Collector - сбор телеметрии адаптаций
+    Архитектура системы адаптивного AI состоит из следующих компонентов:
+    1. Behavior Analyzer - анализ поведения игроков
+    2. Adaptation Engine - движок адаптации
+    3. Prediction Model - прогнозирование поведения
+    4. Personalization Service - персонализация опыта
+    5. Dynamic Balancer - динамическая балансировка
+    6. Ethics Guardian - этический контроль
+    7. Performance Optimizer - оптимизация производительности
 
   microservices:
     - name: ai-service
-      port: 8090
+      port: 8088
       responsibility: |
         Обработка адаптивного AI:
-        - Анализ тактик игроков
-        - Адаптация поведения AI
-        - Обучение моделей
+        - Анализ поведения игроков
+        - Адаптация сложности и контента
+        - Прогнозирование поведения
+        - Персонализация опыта
+        - Динамическая балансировка
+        - Этический контроль
+        - Оптимизация производительности
       components:
-        - tactics-analyzer: анализ тактик
-        - adaptation-engine: адаптация поведения
-        - counter-strategy-controller: контр-стратегии
-        - ml-training-pipeline: обучение моделей
-        - adaptation-telemetry-collector: сбор телеметрии
+        - behavior-analyzer: анализ поведения
+        - adaptation-engine: адаптация
+        - prediction-model: прогнозирование
+        - personalization-service: персонализация
+        - dynamic-balancer: балансировка
+        - ethics-guardian: этика
+        - performance-optimizer: оптимизация
       endpoints:
-        - POST /api/v1/ai/analyze/tactics - анализ тактик команды
-        - GET /api/v1/ai/adaptations/{encounterId} - текущие адаптации
-        - POST /api/v1/ai/training/data - отправка данных для обучения
-        - GET /api/v1/ai/models/status - статус моделей
+        - GET /api/v1/ai/player/{playerId}/profile - профиль игрока
+        - POST /api/v1/ai/player/{playerId}/analyze - анализ поведения
+        - GET /api/v1/ai/adaptation/{playerId}/recommendations - рекомендации адаптации
+        - POST /api/v1/ai/personalization/{playerId}/apply - применить персонализацию
+        - GET /api/v1/ai/prediction/{playerId}/forecast - прогноз поведения
+        - GET /api/v1/ai/balance/global - глобальная балансировка
+        - POST /api/v1/ai/ethics/{playerId}/check - проверка этики
+        - GET /api/v1/ai/performance/metrics - метрики производительности
+        - POST /api/v1/ai/model/train - обучение модели
+        - GET /api/v1/ai/model/predict - предсказания модели
       websocket_channels:
-        - wss://api.necp.game/v1/ai/adaptations/{encounterId} - события адаптаций
+        - wss://api.necp.game/v1/ai/player/{playerId}/live - персонализированные обновления
+        - wss://api.necp.game/v1/ai/global/live - глобальные адаптации
       events_published:
-        - ai.adaptation.applied: применение адаптации
-        - ai.strategy.changed: изменение стратегии
-        - ai.training.completed: завершение обучения
+        - ai.behavior.analyzed: поведение проанализировано
+        - ai.adaptation.applied: адаптация применена
+        - ai.prediction.updated: прогноз обновлен
+        - ai.personalization.changed: персонализация изменена
+        - ai.balance.adjusted: баланс скорректирован
+        - ai.ethics.violation: этическое нарушение
+        - ai.performance.optimized: производительность оптимизирована
 
-    - name: gameplay-service
-      port: 8083
-      responsibility: |
-        Сбор данных о действиях игроков:
-        - Отслеживание позиций и способностей
-        - Сбор данных для анализа
-        - Применение адаптаций AI
-      components:
-        - player-action-tracker: отслеживание действий
-        - adaptation-applicator: применение адаптаций
+  behavioral_analysis:
+    data_collection:
+      - name: gameplay_metrics
+        sources: ["combat_data", "movement_patterns", "decision_making"]
+        frequency: "real-time"
+        retention: "90 days"
+        privacy_level: "anonymized"
+
+      - name: social_interactions
+        sources: ["chat_logs", "guild_activity", "friend_interactions"]
+        frequency: "event-based"
+        retention: "30 days"
+        privacy_level: "aggregated"
+
+      - name: progression_data
+        sources: ["skill_development", "achievement_unlocks", "time_spent"]
+        frequency: "daily"
+        retention: "indefinite"
+        privacy_level: "personal"
+
+    analysis_methods:
+      - name: statistical_analysis
+        techniques: ["clustering", "regression", "correlation_analysis"]
+        application: "Pattern recognition, difficulty scaling"
+        output: "Player archetypes, optimal challenges"
+
+      - name: machine_learning
+        techniques: ["supervised_learning", "unsupervised_learning", "reinforcement_learning"]
+        application: "Behavior prediction, content recommendation"
+        output: "Personalized experiences, adaptive difficulty"
+
+      - name: behavioral_modeling
+        techniques: ["markov_chains", "bayesian_networks", "neural_networks"]
+        application: "Decision prediction, emotional state analysis"
+        output: "Player flow optimization, engagement prediction"
+
+  adaptation_mechanisms:
+    difficulty_adaptation:
+      - name: dynamic_scaling
+        triggers: ["performance_metrics", "completion_rates", "frustration_indicators"]
+        adjustments: ["enemy_strength", "resource_availability", "puzzle_complexity"]
+        bounds: ["minimum_viable", "maximum_challenge", "player_skill_cap"]
+
+      - name: content_modulation
+        triggers: ["engagement_drops", "repetition_indicators", "skill_gaps"]
+        adjustments: ["spawn_rates", "loot_tables", "encounter_variety"]
+        bounds: ["content_diversity", "narrative_coherence", "system_balance"]
+
+      - name: pacing_control
+        triggers: ["session_length", "attention_spans", "fatigue_indicators"]
+        adjustments: ["event_frequency", "downtime_periods", "intensity_cycles"]
+        bounds: ["engagement_optimization", "burnout_prevention", "flow_state"]
+
+    personalization_engine:
+      - name: player_archetypes
+        classification: ["aggressive", "defensive", "exploratory", "social", "competitive"]
+        adaptation: ["combat_style", "content_focus", "social_features"]
+        evolution: "Dynamic reclassification based on behavior"
+
+      - name: preference_learning
+        tracking: ["content_consumption", "interaction_patterns", "feedback_responses"]
+        application: ["content_recommendation", "ui_customization", "difficulty_preference"]
+        privacy: "Opt-in with granular controls"
+
+      - name: skill_based_matching
+        assessment: ["mechanical_skill", "strategic_thinking", "social_intelligence"]
+        matching: ["opponent_selection", "content_difficulty", "team_composition"]
+        fairness: "Anti-exploitation measures"
+
+  prediction_system:
+    forecasting_models:
+      - name: churn_prediction
+        inputs: ["session_frequency", "engagement_metrics", "social_activity"]
+        outputs: ["churn_probability", "retention_strategies", "intervention_timing"]
+        accuracy_target: "85%"
+
+      - name: skill_progression
+        inputs: ["performance_history", "learning_patterns", "challenge_responses"]
+        outputs: ["optimal_difficulty", "content_recommendations", "skill_gap_analysis"]
+        accuracy_target: "90%"
+
+      - name: content_engagement
+        inputs: ["content_interactions", "completion_rates", "player_feedback"]
+        outputs: ["content_popularity", "personalized_suggestions", "design_insights"]
+        accuracy_target: "80%"
+
+    real_time_processing:
+      - name: streaming_analytics
+        technology: "Apache Kafka + Flink"
+        latency: "< 100ms"
+        throughput: "100k events/second"
+        scaling: "Auto-scaling based on load"
+
+      - name: edge_computation
+        technology: "Distributed ML inference"
+        latency: "< 10ms"
+        throughput: "1M inferences/second"
+        caching: "Player-specific models"
+
+  ethical_framework:
+    privacy_protection:
+      - name: data_minimization
+        principle: "Collect only necessary data"
+        implementation: ["purpose_limitation", "data_retention_policies", "anonymization"]
+        compliance: "GDPR, CCPA, PIPL"
+
+      - name: consent_management
+        principle: "Explicit user consent"
+        implementation: ["granular_permissions", "withdrawal_rights", "transparency_reports"]
+        compliance: "Privacy by design"
+
+      - name: algorithmic_transparency
+        principle: "Explainable AI decisions"
+        implementation: ["decision_explanations", "bias_auditing", "human_oversight"]
+        compliance: "AI ethics guidelines"
+
+    fairness_guarantees:
+      - name: anti_discrimination
+        monitoring: ["demographic_bias", "performance_disparity", "access_inequality"]
+        mitigation: ["bias_detection", "fairness_constraints", "diversity_promotion"]
+        auditing: "Regular third-party reviews"
+
+      - name: inclusivity_design
+        consideration: ["accessibility_needs", "cultural_sensitivity", "skill_diversity"]
+        implementation: ["adaptive_interfaces", "localized_content", "flexible_difficulty"]
+        validation: "User testing with diverse groups"
+
+  performance_optimization:
+    computational_efficiency:
+      - name: model_compression
+        techniques: ["quantization", "pruning", "knowledge_distillation"]
+        benefits: ["reduced_latency", "lower_memory_usage", "energy_efficiency"]
+        tradeoffs: ["accuracy_impact", "update_frequency"]
+
+      - name: caching_strategies
+        implementation: ["player_profiles", "prediction_results", "adaptation_rules"]
+        invalidation: ["time_based", "event_driven", "accuracy_threshold"]
+        monitoring: ["hit_rates", "cache_sizes", "update_frequencies"]
+
+      - name: distributed_processing
+        architecture: ["microservice_mesh", "event_driven", "serverless_functions"]
+        scaling: ["horizontal_scaling", "geographic_distribution", "load_balancing"]
+        resilience: ["fault_tolerance", "circuit_breakers", "graceful_degradation"]
+
+  integration_patterns:
+    gameplay_integration:
+      - name: real_time_adaptation
+        mechanism: "Event-driven updates"
+        triggers: ["player_actions", "performance_metrics", "environmental_changes"]
+        response_time: "< 50ms"
+
+      - name: content_personalization
+        mechanism: "Dynamic content selection"
+        criteria: ["player_preferences", "skill_level", "engagement_history"]
+        delivery: "Just-in-time generation"
+
+      - name: social_adaptation
+        mechanism: "Group dynamics analysis"
+        factors: ["team_composition", "social_bonds", "competitive_balance"]
+        outcomes: ["matchmaking_optimization", "group_challenges", "social_features"]
 
   data_flows:
-    tactics_analysis_flow: |
-      1. Player Action Tracker собирает данные о действиях игроков
-      2. Tactics Analyzer анализирует позиции, способности и паттерны
-      3. Tactics Analyzer определяет слабые места команды
-      4. Tactics Analyzer передает данные в Adaptation Engine
-      5. AI Service публикует событие ai.tactics.analyzed
+    behavioral_analysis_flow: |
+      1. Игрок взаимодействует с игрой, генерируя игровые события
+      2. Behavior Analyzer собирает данные через event streams
+      3. Statistical Analysis и ML модели обрабатывают данные
+      4. Prediction Model генерирует прогнозы поведения
+      5. Ethics Guardian проверяет этические аспекты
+      6. Adaptation Engine рассчитывает необходимые изменения
+      7. Personalization Service применяет персонализированные настройки
+      8. AI Service публикует событие ai.adaptation.applied
 
-    adaptation_flow: |
-      1. Adaptation Engine получает результаты анализа тактик
-      2. Adaptation Engine определяет необходимые адаптации
-      3. Counter-Strategy Controller выбирает контр-стратегии
-      4. Adaptation Engine применяет адаптации к AI врагам
-      5. AI Service публикует событие ai.adaptation.applied
-      6. Gameplay Service применяет адаптации в бою
-
-    training_flow: |
-      1. Adaptation Telemetry Collector собирает данные за период
-      2. ML Training Pipeline анализирует эффективность адаптаций
-      3. ML Training Pipeline обучает модели на исторических данных
-      4. ML Training Pipeline обновляет модели AI
-      5. AI Service публикует событие ai.training.completed
+    continuous_learning_flow: |
+      1. Analytics Service собирает результаты адаптаций
+      2. Performance Optimizer оценивает эффективность моделей
+      3. ML Service обновляет модели на основе новых данных
+      4. Prediction Model интегрирует улучшенные прогнозы
+      5. Dynamic Balancer корректирует глобальные параметры
+      6. Ethics Guardian проверяет новые модели на bias
+      7. AI Service развертывает обновленные модели
 
   database_structure:
     tables:
-      - name: player_tactics_data
-        description: Данные о тактиках игроков
+      - name: player_behavior_profiles
+        description: Профили поведения игроков
         columns:
           - id: UUID PRIMARY KEY
-          - encounter_id: UUID FOREIGN KEY
           - player_id: UUID FOREIGN KEY
-          - position_data: JSONB
-          - ability_usage: JSONB
-          - pattern_data: JSONB
+          - archetype: VARCHAR(50)
+          - skill_level: DECIMAL(5,2)
+          - engagement_score: DECIMAL(5,2)
+          - frustration_indicators: JSONB
+          - preference_vector: JSONB
+          - last_updated: TIMESTAMP
+
+      - name: adaptation_history
+        description: История адаптаций
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - adaptation_type: VARCHAR(50)
+          - before_state: JSONB
+          - after_state: JSONB
+          - effectiveness_score: DECIMAL(5,2)
           - timestamp: TIMESTAMP
 
-      - name: ai_adaptations
-        description: Адаптации AI
+      - name: prediction_models
+        description: Прогнозные модели
         columns:
           - id: UUID PRIMARY KEY
-          - encounter_id: UUID FOREIGN KEY
-          - enemy_id: UUID FOREIGN KEY
-          - adaptation_type: VARCHAR(100)
-          - adaptation_data: JSONB
-          - applied_at: TIMESTAMP
+          - model_type: VARCHAR(50)
+          - model_version: VARCHAR(20)
+          - accuracy_metrics: JSONB
+          - training_data: JSONB
+          - deployment_date: TIMESTAMP
+          - status: VARCHAR(50)
 
-      - name: ai_training_data
-        description: Данные для обучения AI
+      - name: ai_ethics_audit
+        description: Аудит этических аспектов AI
         columns:
           - id: UUID PRIMARY KEY
-          - encounter_id: UUID FOREIGN KEY
-          - tactics_data: JSONB
-          - adaptation_data: JSONB
+          - player_id: UUID FOREIGN KEY
+          - decision_type: VARCHAR(100)
+          - ethical_concerns: JSONB
+          - mitigation_actions: JSONB
+          - auditor_review: VARCHAR(50)
+          - timestamp: TIMESTAMP
+
+      - name: performance_metrics
+        description: Метрики производительности AI
+        columns:
+          - id: UUID PRIMARY KEY
+          - metric_type: VARCHAR(50)
+          - value: DECIMAL(10,4)
+          - threshold: DECIMAL(10,4)
+          - timestamp: TIMESTAMP
+          - context: JSONB
+
+      - name: behavioral_data
+        description: Поведенческие данные
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID FOREIGN KEY
+          - event_type: VARCHAR(100)
+          - event_data: JSONB
+          - session_context: JSONB
+          - timestamp: TIMESTAMP
+
+      - name: personalization_rules
+        description: Правила персонализации
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_segment: VARCHAR(100)
+          - rule_type: VARCHAR(50)
+          - rule_conditions: JSONB
+          - rule_actions: JSONB
           - effectiveness: DECIMAL(5,2)
-          - timestamp: TIMESTAMP
+          - last_updated: TIMESTAMP
 
-  integrations:
-    analytics_service: |
-      - Анализ данных о тактиках
-      - Обучение моделей
-      - Оптимизация AI
+  success_metrics:
+    adaptation_effectiveness:
+      - retention_improvement: "Увеличение retention rate"
+      - engagement_increase: "Рост времени сессии"
+      - skill_development: "Ускорение прогрессии навыков"
+      - player_satisfaction: "Уровень удовлетворенности"
 
-  technical_tasks:
-    phases:
-      phase_1:
-        name: Tactics Analyzer и Player Action Tracker
-        tasks:
-          - Реализация Tactics Analyzer
-          - Реализация Player Action Tracker
-          - Анализ тактик игроков
-          - Определение слабых мест
-          - Интеграция с Gameplay Service
-        estimated_effort: 5 days
+    ai_performance:
+      - prediction_accuracy: "Точность прогнозов поведения"
+      - response_latency: "Время отклика адаптаций"
+      - computational_efficiency: "Эффективность использования ресурсов"
+      - model_drift_detection: "Обнаружение degradation моделей"
 
-      phase_2:
-        name: Adaptation Engine и Counter-Strategy Controller
-        tasks:
-          - Реализация Adaptation Engine
-          - Реализация Counter-Strategy Controller
-          - Адаптация поведения AI
-          - Применение контр-стратегий
-          - Интеграция с AI Service
-        estimated_effort: 6 days
+  scaling_considerations:
+    data_scaling:
+      - player_data_volume: "Обработка данных миллионов игроков"
+      - real_time_processing: "Низкая latency для адаптаций"
+      - model_training: "Масштабируемое обучение моделей"
 
-      phase_3:
-        name: ML Training Pipeline
-        tasks:
-          - Реализация ML Training Pipeline
-          - Обучение моделей
-          - Оптимизация AI
-          - Интеграция с Analytics Service
-        estimated_effort: 5 days
+    computational_scaling:
+      - distributed_inference: "Распределенный ML inference"
+      - edge_computing: "Вычисления на edge устройствах"
+      - cloud_scaling: "Автомасштабирование в облаке"
 
+# Issue: #142074645

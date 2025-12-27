@@ -1,0 +1,438 @@
+metadata:
+  id: time-trials-challenge-system-architecture
+  title: Архитектура системы временных испытаний (Time Trials)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-27T20:28:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - gameplay
+    - time-trials
+    - challenges
+    - competition
+    - leaderboards
+    - rewards
+  related_systems:
+    - gameplay-service
+    - progression-service
+    - analytics-service
+    - leaderboard-service
+    - economy-service
+  related_documents:
+    - id: time-trials-challenge-system
+      relation: implements
+  github_issue: 142074639
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - gameplay
+    - api-designer
+    - content
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы временных испытаний (Time Trials),
+    включающую:
+    - Различные типы испытаний с таймерами
+    - Систему рекордов и лидербордов
+    - Награды за достижения
+    - Сезонные испытания и события
+    - Античит меры и валидацию
+    - Социальные функции (соревнования, стримы)
+    - Интеграцию с прогрессией и экономикой
+  goal: |
+    Создать архитектурную схему системы Time Trials с определением:
+    - Компонентов управления испытаниями
+    - Системы тайминга и рекордов
+    - Лидербордов и соревнований
+    - Наградной системы
+    - Античит механизмов
+    - Социальных функций
+    - API и интеграций
+  essence: |
+    Полная архитектура системы временных испытаний с таймерами, рекордами,
+    наградами и соревновательными механиками.
+
+architecture:
+  overview: |
+    Архитектура системы Time Trials состоит из следующих компонентов:
+    1. Trial Manager - управление испытаниями
+    2. Timer Engine - система тайминга
+    3. Record Validator - валидация рекордов
+    4. Leaderboard Service - лидерборды
+    5. Reward Distributor - распределение наград
+    6. Anti-Cheat Monitor - античит система
+    7. Social Features - социальные функции
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Обработка Time Trials:
+        - Управление испытаниями
+        - Тайминг и рекорды
+        - Валидация результатов
+        - Распределение наград
+        - Античит проверки
+        - Социальные функции
+      components:
+        - trial-manager: управление испытаниями
+        - timer-engine: система тайминга
+        - record-validator: валидация рекордов
+        - reward-distributor: распределение наград
+        - anti-cheat-monitor: античит система
+        - social-features: социальные функции
+      endpoints:
+        - GET /api/v1/gameplay/trials - список доступных испытаний
+        - GET /api/v1/gameplay/trials/{trialId} - информация об испытании
+        - POST /api/v1/gameplay/trials/{trialId}/start - начать испытание
+        - POST /api/v1/gameplay/trials/{trialId}/finish - завершить испытание
+        - GET /api/v1/gameplay/trials/{trialId}/leaderboard - лидерборд испытания
+        - GET /api/v1/gameplay/trials/personal-records - личные рекорды
+        - POST /api/v1/gameplay/trials/{trialId}/submit-score - отправить результат
+        - GET /api/v1/gameplay/trials/seasonal - сезонные испытания
+        - POST /api/v1/gameplay/trials/create-custom - создать кастомное испытание
+        - GET /api/v1/gameplay/trials/live-streams - активные стримы испытаний
+      websocket_channels:
+        - wss://api.necp.game/v1/gameplay/trials/{trialId}/live - живое испытание
+        - wss://api.necp.game/v1/gameplay/trials/leaderboard/live - обновления лидерборда
+      events_published:
+        - gameplay.trial.started: начало испытания
+        - gameplay.trial.completed: завершение испытания
+        - gameplay.trial.record-broken: новый рекорд
+        - gameplay.trial.reward-earned: получение награды
+        - gameplay.trial.anti-cheat-flagged: флаг античита
+        - gameplay.trial.social-challenge: социальный вызов
+        - gameplay.trial.season-ended: конец сезона
+
+  trial_types:
+    speedrun_trials:
+      - name: parkour_speedrun
+        description: Быстрое прохождение паркур-маршрута
+        time_limit: "5-15 минут"
+        scoring: "Время прохождения"
+        modifiers: ["no_damage", "perfect_run", "speed_focus"]
+
+      - name: combat_speedrun
+        description: Быстрое прохождение боевого испытания
+        time_limit: "3-10 минут"
+        scoring: "Время + эффективность боя"
+        modifiers: ["headshot_only", "melee_only", "stealth_focus"]
+
+      - name: puzzle_speedrun
+        description: Быстрое решение головоломок
+        time_limit: "2-8 минут"
+        scoring: "Время решения"
+        modifiers: ["no_hints", "perfect_solution", "minimal_interactions"]
+
+    challenge_trials:
+      - name: survival_challenge
+        description: Выживание в экстремальных условиях
+        time_limit: "10-30 минут"
+        scoring: "Время выживания + очки"
+        modifiers: ["limited_ammo", "no_healing", "environmental_hazards"]
+
+      - name: collection_challenge
+        description: Сбор предметов в ограниченное время
+        time_limit: "5-15 минут"
+        scoring: "Количество предметов + время"
+        modifiers: ["moving_targets", "hidden_items", "competitive"]
+
+      - name: boss_rush_challenge
+        description: Последовательное сражение с боссами
+        time_limit: "8-20 минут"
+        scoring: "Время + HP сохранено"
+        modifiers: ["increasing_difficulty", "no_checkpoints", "combo_focus"]
+
+    seasonal_trials:
+      - name: holiday_speedrun
+        description: Тематические испытания по праздникам
+        time_limit: "Варьируется"
+        scoring: "Сезонные метрики"
+        modifiers: ["themed_obstacles", "event_rewards", "limited_time"]
+
+      - name: community_created
+        description: Испытания созданные сообществом
+        time_limit: "Устанавливается создателем"
+        scoring: "Голосование сообщества"
+        modifiers: ["user_generated", "peer_reviewed", "featured"]
+
+  timer_system:
+    precision_timing:
+      - name: client_side_timer
+        accuracy: "Миллисекунды"
+        sync_method: "NTP сервер"
+        drift_correction: "Автоматическая"
+        anti_cheat: "Серверная валидация"
+
+      - name: server_side_timer
+        accuracy: "Микросекунды"
+        sync_method: "GPS/атомные часы"
+        drift_correction: "Реального времени"
+        anti_cheat: "Множественная верификация"
+
+    time_manipulation:
+      - name: speed_modifiers
+        types: ["slow_motion", "time_dilation", "bullet_time"]
+        application: "Временные эффекты"
+        balance: "Не влияет на тайминг"
+
+      - name: pause_system
+        allowed: "Только в safe zones"
+        duration: "Максимум 30 секунд"
+        anti_exploit: "Время добавляется к общему"
+
+  leaderboard_system:
+    global_leaderboards:
+      - name: all_time_best
+        scope: "Глобальный"
+        update_frequency: "Реальное время"
+        retention: "Бессрочный"
+        rewards: ["titles", "cosmetics", "achievements"]
+
+      - name: seasonal_leaderboards
+        scope: "Сезонный"
+        update_frequency: "Ежечасно"
+        retention: "Текущий сезон"
+        rewards: ["seasonal_badges", "bonus_xp", "event_currency"]
+
+      - name: regional_leaderboards
+        scope: "Региональный"
+        update_frequency: "Ежедневно"
+        retention: "Текущий месяц"
+        rewards: ["regional_titles", "local_events"]
+
+    social_features:
+      - name: friend_challenges
+        mechanism: "Приватные вызовы между друзьями"
+        rewards: "Социальные награды"
+        visibility: "Только участники"
+
+      - name: guild_competitions
+        mechanism: "Командные соревнования"
+        rewards: "Гильдейские достижения"
+        visibility: "Гильдия"
+
+      - name: streaming_integration
+        mechanism: "Интеграция с платформами стримов"
+        rewards: "Спонсорские награды"
+        visibility: "Публичная"
+
+  reward_system:
+    performance_rewards:
+      - name: time_based_rewards
+        tiers: ["gold", "silver", "bronze", "personal_best"]
+        criteria: "Относительно мирового рекорда"
+        rewards: ["currency", "items", "cosmetics"]
+
+      - name: achievement_rewards
+        types: ["first_completion", "perfect_run", "speed_demon"]
+        criteria: "Особые условия выполнения"
+        rewards: ["unique_items", "titles", "mounts"]
+
+      - name: progression_rewards
+        mechanism: "Улучшение ранга в лидерборде"
+        criteria: "Перемещение вверх"
+        rewards: ["skill_points", "unlocks", "privileges"]
+
+    seasonal_rewards:
+      - name: event_currency
+        accumulation: "За все испытания сезона"
+        spending: "Сезонный магазин"
+        reset: "Конец сезона"
+
+      - name: seasonal_cosmetics
+        unlock_method: "Прогресс в сезоне"
+        exclusivity: "Только сезон"
+        trading: "Ограниченное"
+
+  anti_cheat_system:
+    detection_methods:
+      - name: statistical_analysis
+        monitors: ["time_distribution", "input_patterns", "performance_consistency"]
+        flags: ["anomalous_times", "perfect_patterns", "impossible_sequences"]
+
+      - name: hardware_verification
+        checks: ["system_specs", "driver_versions", "running_processes"]
+        flags: ["modified_hardware", "cheat_software", "virtual_machines"]
+
+      - name: behavioral_analysis
+        tracks: ["play_patterns", "reaction_times", "decision_making"]
+        flags: ["bot_behavior", "macro_usage", "predictable_choices"]
+
+    penalty_system:
+      - name: warning_system
+        levels: ["soft_flag", "hard_flag", "strike"]
+        consequences: ["reduced_rewards", "temporary_ban", "permanent_ban"]
+
+      - name: score_modification
+        mechanism: "Автоматическая корректировка результатов"
+        transparency: "Показывается игроку"
+        appeal_process: "Человеческая проверка"
+
+  social_integration:
+    spectator_mode:
+      - name: live_spectating
+        features: ["first_person_view", "replay_system", "commentary_track"]
+        access: "Все игроки"
+        monetization: "Донаты стримерам"
+
+      - name: replay_system
+        storage: "30 дней лучших запусков"
+        features: ["slow_motion", "camera_angles", "statistics_overlay"]
+        sharing: "Социальные сети"
+
+    community_features:
+      - name: user_generated_trials
+        creation_tools: "Встроенный редактор"
+        moderation: "Сообщество + AI"
+        monetization: "Авторские отчисления"
+
+      - name: trial_tournaments
+        formats: ["single_elimination", "round_robin", "swiss_system"]
+        prizes: "Награды от разработчиков"
+        broadcasting: "Официальные стримы"
+
+  data_flows:
+    trial_execution_flow: |
+      1. Игрок выбирает испытание через GET /api/v1/gameplay/trials/{trialId}
+      2. Trial Manager валидирует доступность и требования
+      3. Timer Engine инициализирует тайминг с синхронизацией
+      4. Игрок начинает испытание через POST /api/v1/gameplay/trials/{trialId}/start
+      5. Anti-Cheat Monitor начинает мониторинг в фоновом режиме
+      6. По ходу испытания Timer Engine отслеживает прогресс
+      7. При завершении Record Validator проверяет результат
+      8. Leaderboard Service обновляет позиции
+      9. Reward Distributor рассчитывает награды
+      10. Gameplay Service публикует событие gameplay.trial.completed
+
+    record_validation_flow: |
+      1. Игрок отправляет результат через POST /api/v1/gameplay/trials/{trialId}/submit-score
+      2. Record Validator выполняет первичную проверку
+      3. Anti-Cheat Monitor анализирует паттерны поведения
+      4. Statistical Analysis проверяет на аномалии
+      5. Hardware Verification подтверждает легитимность
+      6. При успехе результат принимается
+      7. Leaderboard Service обновляет таблицы
+      8. При подозрении результат помечается на ручную проверку
+
+  database_structure:
+    tables:
+      - name: time_trials
+        description: Временные испытания
+        columns:
+          - id: UUID PRIMARY KEY
+          - name: VARCHAR(255)
+          - type: VARCHAR(50)
+          - time_limit_seconds: INTEGER
+          - scoring_method: VARCHAR(100)
+          - modifiers: JSONB
+          - is_active: BOOLEAN
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: trial_attempts
+        description: Попытки прохождения испытаний
+        columns:
+          - id: UUID PRIMARY KEY
+          - trial_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - start_time: TIMESTAMP
+          - end_time: TIMESTAMP
+          - final_score: DECIMAL(10,2)
+          - completion_status: VARCHAR(50)
+          - anti_cheat_flags: JSONB
+          - client_version: VARCHAR(50)
+          - submitted_at: TIMESTAMP
+
+      - name: trial_records
+        description: Рекорды испытаний
+        columns:
+          - id: UUID PRIMARY KEY
+          - trial_id: UUID FOREIGN KEY
+          - character_id: UUID FOREIGN KEY
+          - record_time: DECIMAL(10,3)
+          - record_score: DECIMAL(10,2)
+          - record_date: TIMESTAMP
+          - verification_status: VARCHAR(50)
+          - is_world_record: BOOLEAN
+          - is_seasonal_record: BOOLEAN
+
+      - name: trial_leaderboards
+        description: Лидерборды испытаний
+        columns:
+          - id: UUID PRIMARY KEY
+          - trial_id: UUID FOREIGN KEY
+          - leaderboard_type: VARCHAR(50)
+          - position: INTEGER
+          - character_id: UUID FOREIGN KEY
+          - score: DECIMAL(10,2)
+          - achieved_at: TIMESTAMP
+          - last_updated: TIMESTAMP
+
+      - name: trial_rewards
+        description: Награды за испытания
+        columns:
+          - id: UUID PRIMARY KEY
+          - trial_id: UUID FOREIGN KEY
+          - reward_type: VARCHAR(50)
+          - reward_data: JSONB
+          - threshold_score: DECIMAL(10,2)
+          - threshold_rank: INTEGER
+          - is_seasonal: BOOLEAN
+          - valid_until: TIMESTAMP
+
+      - name: trial_anti_cheat
+        description: Античит данные
+        columns:
+          - id: UUID PRIMARY KEY
+          - attempt_id: UUID FOREIGN KEY
+          - check_type: VARCHAR(100)
+          - check_result: VARCHAR(50)
+          - confidence_score: DECIMAL(5,2)
+          - flagged_at: TIMESTAMP
+          - reviewed_by: UUID
+          - review_result: VARCHAR(50)
+
+      - name: trial_social
+        description: Социальные функции испытаний
+        columns:
+          - id: UUID PRIMARY KEY
+          - trial_id: UUID FOREIGN KEY
+          - feature_type: VARCHAR(50)
+          - participants: JSONB
+          - metadata: JSONB
+          - created_at: TIMESTAMP
+          - expires_at: TIMESTAMP
+
+  success_metrics:
+    performance_metrics:
+      - trial_completion_rate: "Процент завершенных испытаний"
+      - average_trial_time: "Среднее время прохождения"
+      - record_improvement_rate: "Скорость улучшения рекордов"
+      - anti_cheat_accuracy: "Точность обнаружения читов"
+
+    engagement_metrics:
+      - daily_active_trials: "Количество активных игроков в испытаниях"
+      - trial_replay_rate: "Частота повторных прохождений"
+      - social_interaction_rate: "Уровень социальных взаимодействий"
+      - community_content_rate: "Количество пользовательского контента"
+
+  scaling_considerations:
+    performance_scaling:
+      - concurrent_trials: "Поддержка тысяч одновременных испытаний"
+      - leaderboard_updates: "Реал-тайм обновления позиций"
+      - anti_cheat_processing: "Масштабируемая обработка античита"
+
+    content_scaling:
+      - trial_generation: "Автоматическое создание испытаний"
+      - seasonal_rotation: "Регулярное обновление контента"
+      - community_moderation: "Масштабируемая модерация"
+
+# Issue: #142074639
