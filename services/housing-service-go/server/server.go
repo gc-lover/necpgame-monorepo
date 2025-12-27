@@ -319,13 +319,59 @@ func (s *Server) GetApartmentFurniture(ctx context.Context, params api.GetApartm
 		}, nil
 	}
 
-	// TODO: Query furniture items from database
-	// For now, return mock furniture data
-	furniture := s.getMockApartmentFurniture(apartmentID)
+	// Query furniture items from database with JOIN
+	rows, err := s.db.Query(ctx, `
+		SELECT af.id, af.position, af.rotation, af.placed_at,
+		       fi.name, fi.type, fi.description, fi.price, fi.rarity, fi.space_required, fi.category
+		FROM gameplay.apartment_furniture af
+		JOIN gameplay.furniture_items fi ON af.furniture_item_id = fi.id
+		WHERE af.apartment_id = $1
+		ORDER BY af.placed_at DESC
+	`, apartmentID)
+
+	if err != nil {
+		s.logger.Error("Failed to query apartment furniture", zap.Error(err))
+		return nil, fmt.Errorf("database query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var furnitureItems []api.FurnitureItem
+	for rows.Next() {
+		var item api.FurnitureItem
+		var position, rotation []byte
+
+		err := rows.Scan(
+			&item.FurnitureID, &position, &rotation, &item.PlacedAt,
+			&item.Name, &item.Type, &item.Description, &item.Price,
+			&item.Rarity, &item.SpaceRequired, &item.Category)
+
+		if err != nil {
+			s.logger.Error("Failed to scan furniture item", zap.Error(err))
+			continue
+		}
+
+		// Parse JSONB position and rotation
+		if err := json.Unmarshal(position, &item.Position); err != nil {
+			s.logger.Warn("Failed to parse furniture position", zap.Error(err))
+			item.Position = api.Position{} // Default position
+		}
+
+		if err := json.Unmarshal(rotation, &item.Rotation); err != nil {
+			s.logger.Warn("Failed to parse furniture rotation", zap.Error(err))
+			item.Rotation = api.Rotation{} // Default rotation
+		}
+
+		furnitureItems = append(furnitureItems, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		s.logger.Error("Rows iteration error", zap.Error(err))
+		return nil, fmt.Errorf("rows iteration failed: %w", err)
+	}
 
 	return &api.FurnitureListResponse{
-		FurnitureItems: furniture,
-		TotalCount:     len(furniture),
+		FurnitureItems: furnitureItems,
+		TotalCount:     len(furnitureItems),
 		ApartmentID:    apartmentID,
 	}, nil
 }
@@ -826,17 +872,185 @@ func (s *Server) getMockApartmentFurniture(apartmentID uuid.UUID) []api.Furnitur
 }
 
 func (s *Server) placeFurnitureInApartment(apartmentID uuid.UUID, req *api.PlaceFurnitureRequest) furniturePlacementResult {
+	// Check apartment ownership and get current furniture slots used
+	var ownerID uuid.UUID
+	var furnitureSlotsUsed, maxSlots int
+	err := s.db.QueryRow(context.Background(), `
+		SELECT a.owner_id, a.furniture_slots_used, at.furniture_slots
+		FROM gameplay.apartments a
+		JOIN gameplay.apartment_types at ON a.apartment_type_id = at.type
+		WHERE a.id = $1
+	`, apartmentID).Scan(&ownerID, &furnitureSlotsUsed, &maxSlots)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return furniturePlacementResult{
+				Success: false,
+				Error:   "Apartment not found",
+			}
+		}
+		s.logger.Error("Failed to check apartment ownership", zap.Error(err))
+		return furniturePlacementResult{
+			Success: false,
+			Error:   "Database error",
+		}
+	}
+
+	// TODO: Check if current user owns the apartment (requires user context)
+
+	// Get furniture item details
+	furnitureItemID, err := uuid.Parse(string(req.FurnitureID))
+	if err != nil {
+		return furniturePlacementResult{
+			Success: false,
+			Error:   "Invalid furniture ID",
+		}
+	}
+
+	var spaceRequired int
+	err = s.db.QueryRow(context.Background(), `
+		SELECT space_required FROM gameplay.furniture_items WHERE id = $1
+	`, furnitureItemID).Scan(&spaceRequired)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return furniturePlacementResult{
+				Success: false,
+				Error:   "Furniture item not found",
+			}
+		}
+		s.logger.Error("Failed to get furniture item details", zap.Error(err))
+		return furniturePlacementResult{
+			Success: false,
+			Error:   "Database error",
+		}
+	}
+
+	// Check if there's enough space
+	if furnitureSlotsUsed + spaceRequired > maxSlots {
+		return furniturePlacementResult{
+			Success: false,
+			Error:   "Not enough space in apartment",
+		}
+	}
+
+	// Insert furniture placement
+	positionJSON, err := json.Marshal(req.Position)
+	if err != nil {
+		s.logger.Error("Failed to marshal position", zap.Error(err))
+		return furniturePlacementResult{
+			Success: false,
+			Error:   "Invalid position data",
+		}
+	}
+
+	rotationJSON, err := json.Marshal(req.Rotation)
+	if err != nil {
+		s.logger.Error("Failed to marshal rotation", zap.Error(err))
+		return furniturePlacementResult{
+			Success: false,
+			Error:   "Invalid rotation data",
+		}
+	}
+
+	var placementID uuid.UUID
+	err = s.db.QueryRow(context.Background(), `
+		INSERT INTO gameplay.apartment_furniture
+		(apartment_id, furniture_item_id, position, rotation, placed_at)
+		VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+		RETURNING id
+	`, apartmentID, furnitureItemID, positionJSON, rotationJSON).Scan(&placementID)
+
+	if err != nil {
+		s.logger.Error("Failed to insert furniture placement", zap.Error(err))
+		return furniturePlacementResult{
+			Success: false,
+			Error:   "Failed to place furniture",
+		}
+	}
+
+	// Update apartment's furniture slots used
+	_, err = s.db.Exec(context.Background(), `
+		UPDATE gameplay.apartments
+		SET furniture_slots_used = furniture_slots_used + $1, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2
+	`, spaceRequired, apartmentID)
+
+	if err != nil {
+		s.logger.Error("Failed to update apartment furniture slots", zap.Error(err))
+		// Note: We don't rollback the furniture placement here for simplicity
+	}
+
 	return furniturePlacementResult{
 		Success:        true,
-		PlacementID:    uuid.New(),
-		SpaceRemaining: 10, // Mock remaining space
+		PlacementID:    placementID,
+		SpaceRemaining: maxSlots - (furnitureSlotsUsed + spaceRequired),
 	}
 }
 
 func (s *Server) removeFurnitureFromApartment(apartmentID, furnitureID uuid.UUID) furnitureRemovalResult {
+	// Check if the furniture item exists in the apartment and get space required
+	var spaceRequired int
+	err := s.db.QueryRow(context.Background(), `
+		SELECT fi.space_required
+		FROM gameplay.apartment_furniture af
+		JOIN gameplay.furniture_items fi ON af.furniture_item_id = fi.id
+		WHERE af.apartment_id = $1 AND af.id = $2
+	`, apartmentID, furnitureID).Scan(&spaceRequired)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return furnitureRemovalResult{
+				Success: false,
+				Error:   "Furniture not found in apartment",
+			}
+		}
+		s.logger.Error("Failed to check furniture in apartment", zap.Error(err))
+		return furnitureRemovalResult{
+			Success: false,
+			Error:   "Database error",
+		}
+	}
+
+	// TODO: Check if current user owns the apartment (requires user context)
+
+	// Remove furniture from apartment
+	result, err := s.db.Exec(context.Background(), `
+		DELETE FROM gameplay.apartment_furniture
+		WHERE apartment_id = $1 AND id = $2
+	`, apartmentID, furnitureID)
+
+	if err != nil {
+		s.logger.Error("Failed to remove furniture", zap.Error(err))
+		return furnitureRemovalResult{
+			Success: false,
+			Error:   "Failed to remove furniture",
+		}
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return furnitureRemovalResult{
+			Success: false,
+			Error:   "Furniture not found",
+		}
+	}
+
+	// Update apartment's furniture slots used
+	_, err = s.db.Exec(context.Background(), `
+		UPDATE gameplay.apartments
+		SET furniture_slots_used = furniture_slots_used - $1, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2
+	`, spaceRequired, apartmentID)
+
+	if err != nil {
+		s.logger.Error("Failed to update apartment furniture slots", zap.Error(err))
+		// Note: We don't rollback the furniture removal here for simplicity
+	}
+
 	return furnitureRemovalResult{
 		Success:    true,
-		SpaceFreed: 2, // Mock space freed
+		SpaceFreed: spaceRequired,
 	}
 }
 

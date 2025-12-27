@@ -18,6 +18,7 @@ type Server struct {
 	logger               *zap.Logger
 	db                   *pgxpool.Pool
 	tokenAuth            *jwtauth.JWTAuth
+	startTime            time.Time   // Service start time for uptime tracking
 	positionPool         *sync.Pool // Memory pool for position operations
 	pathfindingPool      *sync.Pool // Memory pool for pathfinding operations
 	validationPool       *sync.Pool // Memory pool for validation operations
@@ -28,6 +29,7 @@ type Server struct {
 func NewServer(db *pgxpool.Pool, logger *zap.Logger, tokenAuth *jwtauth.JWTAuth) *Server {
 	return &Server{
 		db:        db,
+		startTime: time.Now(), // Initialize start time for uptime tracking
 		logger:    logger,
 		tokenAuth: tokenAuth,
 		positionPool: &sync.Pool{
@@ -76,7 +78,7 @@ func (s *Server) GetHealth(ctx context.Context) (movementservice.GetHealthRes, e
 	healthResp.Status = "healthy"
 	healthResp.Timestamp = time.Now()
 	healthResp.Version = "1.0.0"
-	healthResp.Uptime = 0 // TODO: Implement uptime tracking
+	healthResp.Uptime = int(time.Since(s.startTime).Seconds()) // Calculate uptime since service start
 
 	s.logger.Info("Health check requested",
 		zap.String("status", healthResp.Status),
