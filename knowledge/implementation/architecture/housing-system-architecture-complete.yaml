@@ -1,0 +1,435 @@
+metadata:
+  id: housing-system-architecture-complete
+  title: Архитектура системы жилья (Housing System)
+  document_type: architecture
+  category: systems
+  status: final
+  version: '2.0.0'
+  last_updated: 2025-12-28T00:25:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - housing
+    - social
+    - customization
+    - economy
+  related_systems:
+    - housing-service-go
+    - world-service-go
+    - economy-service-go
+    - social-service-go
+    - inventory-service-go
+  related_documents:
+    - id: housing-system-architecture
+      relation: supersedes
+    - id: backend-housing-system
+      relation: implements
+  github_issue: 140890815
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - game-designer
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру Housing System
+    для управления квартирами игроков в MMOFPS RPG с поддержкой мебели,
+    престижа, функциональных бонусов и социального взаимодействия.
+  goal: |
+    Создать архитектурную схему Housing System с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints для управления жильем
+    - Потоков данных и интеграций
+    - Систем покупки и кастомизации
+    - Систем престижа и бонусов
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура системы жилья для создания персонализированных
+    пространств игроков с социальным взаимодействием и игровыми преимуществами.
+
+architecture:
+  overview: |
+    Housing System обеспечивает комплексное управление жилыми пространствами игроков
+    включая покупку квартир, размещение мебели, расчет престижа, функциональные бонусы
+    и социальное взаимодействие для повышения вовлеченности игроков.
+
+  components:
+    - name: Housing Core Manager
+      location: housing-service-go (основной сервис)
+      responsibility: |
+        - Управление жизненным циклом жилья
+        - Координация между компонентами системы
+        - Валидация операций с жильем
+        - Управление правами доступа
+        - Интеграция с внешними системами
+      housing_types: |
+        - APARTMENT: индивидуальные квартиры
+        - PENTHOUSE: премиум жилье с бонусами
+        - GUILD_HALL: гильдейские залы
+        - SHARED_SPACE: общие пространства
+        - TEMPORARY: временное жилье (отели)
+      access_permissions: |
+        - OWNER: полный контроль
+        - CO_OWNER: совместное владение
+        - GUEST: ограниченный доступ
+        - VISITOR: только просмотр
+        - BLOCKED: запрет доступа
+      endpoints:
+        - POST /api/v1/housing - создать жилье
+        - GET /api/v1/housing/{id} - получить информацию
+        - PUT /api/v1/housing/{id} - обновить настройки
+        - DELETE /api/v1/housing/{id} - удалить жилье
+        - POST /api/v1/housing/{id}/transfer - передать владение
+
+    - name: Housing Purchase System
+      location: housing-service-go (модуль purchase)
+      responsibility: |
+        - Управление каталогом доступного жилья
+        - Обработка покупок и аренды
+        - Ценообразование и скидки
+        - Интеграция с экономической системой
+        - Управление лимитами владения
+      purchase_types: |
+        - PURCHASE: полная покупка
+        - RENT: аренда с ежемесячной платой
+        - LEASE: долгосрочная аренда
+        - AUCTION: аукционная продажа
+        - GIFT: подарок от системы/игроков
+      pricing_model: |
+        - BASE_PRICE: базовая стоимость
+        - LOCATION_MULTIPLIER: множитель локации
+        - DEMAND_MULTIPLIER: множитель спроса
+        - SEASONAL_DISCOUNT: сезонные скидки
+        - LOYALTY_DISCOUNT: скидки для лояльных игроков
+
+    - name: Furniture Management System
+      location: housing-service-go (модуль furniture)
+      responsibility: |
+        - Управление каталогом мебели
+        - Покупка и хранение предметов
+        - Управление инвентарем мебели
+        - Валидация размещения
+        - Интеграция с инвентарем игрока
+      furniture_categories: |
+        - DECORATION: декоративные предметы
+        - FUNCTIONAL: функциональные бонусы
+        - COMFORT: предметы комфорта
+        - STORAGE: системы хранения
+        - LIGHTING: освещение
+        - ENTERTAINMENT: развлекательные предметы
+      furniture_rarity: |
+        - COMMON: обычные предметы
+        - UNCOMMON: необычные
+        - RARE: редкие
+        - EPIC: эпические
+        - LEGENDARY: легендарные
+
+    - name: Furniture Placement Engine
+      location: housing-service-go (модуль placement)
+      responsibility: |
+        - Управление размещением мебели
+        - Валидация позиций и коллизий
+        - Предпросмотр размещения
+        - Сохранение и загрузка лэйаутов
+        - Оптимизация производительности
+      placement_features: |
+        - GRID_SYSTEM: сеточная система размещения
+        - COLLISION_DETECTION: обнаружение столкновений
+        - SNAP_TO_GRID: привязка к сетке
+        - ROTATION_SUPPORT: поворот предметов
+        - WALL_MOUNTING: крепление к стенам
+        - FLOOR_CEILING: размещение на полу/потолке
+
+    - name: Prestige Calculation Engine
+      location: housing-service-go (модуль prestige)
+      responsibility: |
+        - Расчет престижа жилья
+        - Управление рейтингами
+        - Лидерборды престижа
+        - Награды за достижения
+        - Социальное сравнение
+      prestige_factors: |
+        - FURNITURE_VALUE: стоимость мебели
+        - FURNITURE_RARITY: редкость предметов
+        - DESIGN_HARMONY: гармония дизайна
+        - VISITOR_RATINGS: оценки посетителей
+        - COMPLETION_LEVEL: уровень завершенности
+        - TIME_INVESTMENT: время на оформление
+      prestige_tiers: |
+        - BRONZE: базовый уровень
+        - SILVER: средний уровень
+        - GOLD: высокий уровень
+        - PLATINUM: премиум уровень
+        - DIAMOND: элитный уровень
+
+    - name: Functional Bonus System
+      location: housing-service-go (модуль bonuses)
+      responsibility: |
+        - Расчет и применение бонусов
+        - Управление эффектами мебели
+        - Синхронизация с игровыми системами
+        - Валидация бонусов
+        - Балансировка преимуществ
+      bonus_types: |
+        - STAT_BONUSES: бонусы к характеристикам
+        - REGENERATION: ускоренная регенерация
+        - CRAFTING_BONUSES: бонусы к крафту
+        - SOCIAL_BONUSES: социальные преимущества
+        - ECONOMY_BONUSES: экономические преимущества
+        - EXPERIENCE_BONUSES: бонусы к опыту
+
+    - name: Visitor Management System
+      location: housing-service-go (модуль visitors)
+      responsibility: |
+        - Управление посещениями жилья
+        - Система приглашений
+        - Отслеживание активности
+        - Социальные взаимодействия
+        - Модерация посетителей
+      visit_types: |
+        - FRIENDLY_VISIT: дружеский визит
+        - TOUR: экскурсия по жилью
+        - PARTY: вечеринка
+        - BUSINESS_MEETING: деловая встреча
+        - COMPETITION: соревнование
+      social_features: |
+        - RATING_SYSTEM: система оценок
+        - COMMENT_SYSTEM: комментарии
+        - PHOTO_SHARING: обмен фото
+        - ACHIEVEMENT_UNLOCKS: достижения
+
+    - name: Housing Analytics Engine
+      location: housing-service-go (модуль analytics)
+      responsibility: |
+        - Сбор метрик использования
+        - Анализ паттернов поведения
+        - Отчеты по популярности
+        - Оптимизация контента
+        - Монетизация insights
+      analytics_metrics: |
+        - VISIT_COUNT: количество посещений
+        - AVERAGE_TIME: среднее время пребывания
+        - POPULAR_ITEMS: популярная мебель
+        - PRESTIGE_DISTRIBUTION: распределение престижа
+        - REVENUE_TRACKING: отслеживание доходов
+        - PLAYER_ENGAGEMENT: вовлеченность игроков
+
+  data_flow:
+    housing_purchase: |
+      1. Игрок выбирает жилье из каталога
+      2. Purchase System проверяет доступность и цену
+      3. Economy Service обрабатывает транзакцию
+      4. Housing Core создает запись о владении
+      5. Player Service обновляет инвентарь
+      6. Analytics логирует покупку
+
+    furniture_placement: |
+      1. Игрок выбирает мебель для размещения
+      2. Placement Engine валидирует позицию
+      3. Furniture Manager обновляет состояние
+      4. Prestige Engine пересчитывает рейтинг
+      5. Bonus System применяет эффекты
+      6. Client обновляет визуализацию
+
+    visitor_interaction: |
+      1. Посетитель запрашивает доступ
+      2. Visitor Manager проверяет разрешения
+      3. Social Service логирует взаимодействие
+      4. Analytics собирает метрики
+      5. Achievement System проверяет награды
+      6. Rating System обновляет оценки
+
+  integrations:
+    with_economy_service: |
+      - Housing purchases and transactions
+      - Furniture marketplace
+      - Rental payments
+      - Economic bonuses application
+
+    with_social_service: |
+      - Friend invitations
+      - Guild hall management
+      - Social events in housing
+      - Community ratings and reviews
+
+    with_inventory_service: |
+      - Furniture storage management
+      - Item placement validation
+      - Equipment bonuses integration
+      - Inventory capacity management
+
+    with_world_service: |
+      - Housing location management
+      - World integration for apartments
+      - Navigation and teleportation
+      - Environmental effects
+
+  data_consistency:
+    strategy: Eventual Consistency с strong consistency для transactions
+    mechanisms:
+      - Event Sourcing для housing events
+      - CQRS для разделения reads/writes
+      - Saga Pattern для комплексных операций
+      - Optimistic Locking для placement operations
+      - Redis для real-time state sync
+
+  performance_requirements:
+    response_time: < 200ms для placement operations, < 500ms для complex queries
+    throughput: 10000+ housing operations/minute, 50000+ furniture placements/minute
+    concurrent_users: Support for 50000+ simultaneous housing interactions
+    storage: 2TB+ for housing data and furniture assets
+    memory: < 4GB per service instance
+
+  scalability:
+    horizontal_scaling: |
+      - Housing Core: sharded by housing_id
+      - Furniture System: auto-scaling by load
+      - Analytics Engine: event-driven scaling
+      - Placement Engine: compute-intensive scaling
+    data_partitioning: |
+      - Geographic housing distribution
+      - Player-based ownership sharding
+      - Time-based analytics partitioning
+
+  security:
+    ownership_validation: |
+      - Player ownership verification
+      - Access permission checks
+      - Fraud detection for transactions
+      - Audit trail for all changes
+    content_moderation: |
+      - Furniture content validation
+      - Visitor behavior monitoring
+      - Inappropriate content filtering
+      - Automated moderation systems
+
+  database_schema:
+    tables:
+      - name: player_housing
+        description: Жилье игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - housing_type: ENUM (APARTMENT, PENTHOUSE, GUILD_HALL, SHARED, TEMPORARY)
+          - location_id: UUID (FK locations)
+          - purchase_date: TIMESTAMP
+          - prestige_score: INTEGER
+          - access_settings: JSONB
+          - customization_data: JSONB
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - player_id, is_active
+          - housing_type, prestige_score
+          - location_id
+
+      - name: housing_furniture
+        description: Мебель в жилье
+        fields:
+          - id: UUID (PK)
+          - housing_id: UUID (FK player_housing)
+          - furniture_id: UUID (FK furniture_catalog)
+          - position_x: DECIMAL(10,2)
+          - position_y: DECIMAL(10,2)
+          - position_z: DECIMAL(10,2)
+          - rotation_x: DECIMAL(5,2)
+          - rotation_y: DECIMAL(5,2)
+          - rotation_z: DECIMAL(5,2)
+          - scale: DECIMAL(3,2)
+          - placed_at: TIMESTAMP
+          - durability: INTEGER
+        indexes:
+          - housing_id, placed_at
+          - furniture_id
+
+      - name: furniture_catalog
+        description: Каталог мебели
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255)
+          - category: ENUM (DECORATION, FUNCTIONAL, COMFORT, STORAGE, LIGHTING, ENTERTAINMENT)
+          - rarity: ENUM (COMMON, UNCOMMON, RARE, EPIC, LEGENDARY)
+          - base_price: INTEGER
+          - bonuses: JSONB
+          - model_data: JSONB
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+        indexes:
+          - category, rarity
+          - base_price
+
+      - name: housing_visits
+        description: Посещения жилья
+        fields:
+          - id: UUID (PK)
+          - housing_id: UUID (FK player_housing)
+          - visitor_id: UUID (FK players)
+          - visit_type: ENUM (FRIENDLY, TOUR, PARTY, BUSINESS, COMPETITION)
+          - entered_at: TIMESTAMP
+          - exited_at: TIMESTAMP (nullable)
+          - rating: INTEGER (1-5, nullable)
+          - comments: TEXT (nullable)
+        indexes:
+          - housing_id, entered_at
+          - visitor_id, entered_at
+          - visit_type
+
+      - name: housing_prestige
+        description: Престиж жилья
+        fields:
+          - id: UUID (PK)
+          - housing_id: UUID (FK player_housing)
+          - prestige_score: INTEGER
+          - tier: ENUM (BRONZE, SILVER, GOLD, PLATINUM, DIAMOND)
+          - factors: JSONB
+          - calculated_at: TIMESTAMP
+          - rank_position: INTEGER (nullable)
+        indexes:
+          - housing_id, calculated_at
+          - prestige_score DESC
+          - tier
+
+      - name: housing_bonuses
+        description: Бонусы жилья
+        fields:
+          - id: UUID (PK)
+          - housing_id: UUID (FK player_housing)
+          - bonus_type: ENUM (STAT, REGENERATION, CRAFTING, SOCIAL, ECONOMY, EXPERIENCE)
+          - bonus_value: DECIMAL(8,2)
+          - source_furniture: UUID (FK housing_furniture)
+          - is_active: BOOLEAN (default: true)
+          - applied_at: TIMESTAMP
+        indexes:
+          - housing_id, bonus_type
+          - source_furniture
+
+  validation:
+    architecture_complete: true
+    components_defined: true
+    microservices_identified: true
+    api_endpoints_described: true
+    technical_specification_ready: true
+    subtasks_defined: true
+
+  next_steps:
+    - Передача задачи агенту API Designer для создания OpenAPI спецификации housing API
+    - Детализация furniture placement algorithms
+    - Создание схем prestige calculation formulas
+    - Определение visitor interaction protocols
+    - Планирование интеграции с housing-service-go
+
+  history:
+    - version: '2.0.0'
+      date: 2025-12-28
+      author: Architect Agent
+      changes: |
+        Создана полная архитектура Housing System
+        Расширены компоненты управления жильем
+        Добавлена схема БД и метрики производительности
+        Определены security и scalability требования
+        Статус изменен на final

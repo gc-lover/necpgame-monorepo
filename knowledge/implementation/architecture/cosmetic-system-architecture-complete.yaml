@@ -1,0 +1,484 @@
+metadata:
+  id: cosmetic-system-architecture-complete
+  title: Архитектура системы косметики (Cosmetic System)
+  document_type: architecture
+  category: systems
+  status: final
+  version: '2.0.0'
+  last_updated: 2025-12-28T00:55:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - cosmetic
+    - monetization
+    - personalization
+    - inventory
+  related_systems:
+    - cosmetic-service-go
+    - inventory-service-go
+    - economy-service-go
+    - shop-service-go
+    - analytics-service-go
+  related_documents:
+    - id: cosmetic-core
+      relation: supersedes
+    - id: backend-cosmetic-system
+      relation: implements
+  github_issue: 140891329
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - monetization
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру Cosmetic System
+    для управления косметическими предметами в MMOFPS RPG включая каталог,
+    покупки, экипировку, магазин, редкости и персонализацию персонажей.
+  goal: |
+    Создать архитектурную схему Cosmetic System с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints для управления косметикой
+    - Потоков данных и интеграций
+    - Систем монетизации и персонализации
+    - Систем аналитики и контент-менеджмента
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура системы косметики для персонализации персонажей
+    и монетизации через косметические предметы в MMOFPS RPG.
+
+architecture:
+  overview: |
+    Cosmetic System обеспечивает комплексное управление косметическими предметами
+    включая каталог, покупки, экипировку, магазин, редкости и персонализацию
+    для повышения вовлеченности игроков и монетизации.
+
+  components:
+    - name: Cosmetic Core Manager
+      location: cosmetic-service-go (основной сервис)
+      responsibility: |
+        - Управление жизненным циклом косметики
+        - Координация между компонентами системы
+        - Валидация операций с косметикой
+        - Управление правами доступа
+        - Интеграция с внешними системами
+      cosmetic_categories: |
+        - WEAPON_SKINS: скины оружия
+        - ARMOR_SETS: комплекты брони
+        - CHARACTER_MODELS: модели персонажей
+        - ANIMATIONS: анимации и позы
+        - EFFECTS: визуальные эффекты
+        - EMOTES: эмоции и жесты
+        - ACCESSORIES: аксессуары
+        - PETS: питомцы и компаньоны
+      cosmetic_status: |
+        - ACTIVE: доступна для покупки/использования
+        - RETIRED: убрана из продажи, доступна владельцам
+        - LIMITED: лимитированная серия
+        - EXCLUSIVE: эксклюзивная косметика
+      endpoints:
+        - GET /api/v1/cosmetics - получить каталог косметики
+        - GET /api/v1/cosmetics/{id} - детали косметики
+        - POST /api/v1/cosmetics/{id}/purchase - купить косметику
+        - POST /api/v1/cosmetics/{id}/equip - экипировать косметику
+
+    - name: Cosmetic Catalog Manager
+      location: cosmetic-service-go (модуль catalog)
+      responsibility: |
+        - Управление каталогом косметических предметов
+        - Организация по категориям и коллекциям
+        - Управление метаданными и ассетами
+        - Поиск и фильтрация косметики
+        - Управление локализацией
+      catalog_organization: |
+        - COLLECTIONS: тематические коллекции
+        - SEASONS: сезонные коллекции
+        - EVENTS: ивентовые косметики
+        - BUNDLES: наборы косметики
+        - SINGLE_ITEMS: одиночные предметы
+      asset_management: |
+        - 3D_MODELS: модели персонажей/оружия
+        - TEXTURES: текстуры и материалы
+        - ANIMATIONS: анимационные файлы
+        - PARTICLES: эффекты частиц
+        - AUDIO: звуковые эффекты
+
+    - name: Cosmetic Shop Manager
+      location: cosmetic-service-go (модуль shop)
+      responsibility: |
+        - Управление магазином косметики
+        - Ротация товаров и скидки
+        - Управление ценами и валютами
+        - Battle Pass интеграция
+        - Промо-акции и бандлы
+      shop_features: |
+        - DAILY_ROTATION: ежедневная ротация
+        - WEEKLY_FEATURED: еженедельные акции
+        - SEASONAL_SALES: сезонные скидки
+        - BUNDLE_DEALS: наборы со скидкой
+        - LIMITED_TIME: лимитированные предложения
+      pricing_strategies: |
+        - FIXED_PRICE: фиксированная цена
+        - DYNAMIC_PRICING: динамическое ценообразование
+        - AUCTION_SYSTEM: аукционная система
+        - CROWDFUNDING: коллективное финансирование
+
+    - name: Cosmetic Inventory Manager
+      location: cosmetic-service-go (модуль inventory)
+      responsibility: |
+        - Управление владением косметикой
+        - Синхронизация с глобальным инвентарем
+        - Управление коллекциями игроков
+        - Передача косметики между игроками
+        - Управление сроками владения
+      ownership_types: |
+        - PERMANENT: постоянное владение
+        - RENTAL: аренда с ограниченным сроком
+        - LIMITED_USE: ограниченное количество использований
+        - SUBSCRIPTION: подписка на использование
+        - LOAN: временная передача
+      inventory_features: |
+        - COLLECTION_VIEW: просмотр коллекций
+        - FAVORITES: избранные предметы
+        - SHOWCASE: демонстрация коллекций
+        - TRADING: обмен косметикой
+        - GIFTING: дарение косметики
+
+    - name: Cosmetic Equip System
+      location: cosmetic-service-go (модуль equip)
+      responsibility: |
+        - Управление экипировкой косметики
+        - Валидация совместимости
+        - Предпросмотр комбинаций
+        - Сохранение лэйаутов
+        - Синхронизация между устройствами
+      equip_validation: |
+        - CATEGORY_RESTRICTIONS: ограничения по категориям
+        - RARITY_REQUIREMENTS: требования по редкости
+        - LEVEL_REQUIREMENTS: требования по уровню
+        - EVENT_RESTRICTIONS: ивентовые ограничения
+        - COMPATIBILITY_CHECKS: проверки совместимости
+      equip_features: |
+        - LOADOUTS: сохранение наборов
+        - PRESETS: предустановленные комбинации
+        - RANDOMIZATION: случайные комбинации
+        - SOCIAL_SHARING: шэринг лэйаутов
+
+    - name: Cosmetic Rarity System
+      location: cosmetic-service-go (модуль rarity)
+      responsibility: |
+        - Управление системой редкостей
+        - Расчет вероятностей дропа
+        - Управление коллекционными сетами
+        - Создание эксклюзивного контента
+        - Балансировка экономики
+      rarity_tiers: |
+        - COMMON: обычная косметика
+        - UNCOMMON: необычная косметика
+        - RARE: редкая косметика
+        - EPIC: эпическая косметика
+        - LEGENDARY: легендарная косметика
+        - MYTHIC: мифическая косметика
+      drop_mechanics: |
+        - GUARANTEED_DROPS: гарантированные дропы
+        - PROBABILITY_SYSTEM: система вероятностей
+        - PITY_SYSTEM: система жалости
+        - EVENT_BOOSTS: ивентовые усиления
+
+    - name: Cosmetic Preview System
+      location: cosmetic-service-go (модуль preview)
+      responsibility: |
+        - Система предпросмотра косметики
+        - Генерация превью изображений
+        - Кэширование превью контента
+        - Оптимизация производительности
+        - Поддержка различных устройств
+      preview_features: |
+        - STATIC_IMAGES: статические изображения
+        - ANIMATED_PREVIEWS: анимированные превью
+        - 360_DEGREE_VIEW: круговой обзор
+        - COMPARISON_MODE: режим сравнения
+        - SOCIAL_PREVIEWS: превью для шэринга
+
+    - name: Cosmetic Analytics Engine
+      location: cosmetic-service-go (модуль analytics)
+      responsibility: |
+        - Сбор метрик популярности
+        - Анализ паттернов использования
+        - Отчеты по монетизации
+        - Оптимизация каталога
+        - Игровые insights
+      analytics_metrics: |
+        - PURCHASE_RATES: частота покупок
+        - USAGE_STATISTICS: статистика использования
+        - POPULARITY_RANKINGS: рейтинги популярности
+        - REVENUE_ANALYSIS: анализ доходов
+        - PLAYER_ENGAGEMENT: вовлеченность игроков
+
+    - name: Cosmetic Content Pipeline
+      location: cosmetic-service-go (модуль content-pipeline)
+      responsibility: |
+        - Управление пайплайном контента
+        - Интеграция с asset pipeline
+        - Автоматизированное тестирование
+        - Управление версиями ассетов
+        - CDN интеграция
+      pipeline_features: |
+        - ASSET_IMPORT: импорт ассетов
+        - AUTOMATED_TESTING: автоматическое тестирование
+        - VERSION_CONTROL: контроль версий
+        - CDN_DEPLOYMENT: развертывание на CDN
+        - PERFORMANCE_OPTIMIZATION: оптимизация производительности
+
+  data_flow:
+    cosmetic_purchase: |
+      1. Игрок выбирает косметику в магазине
+      2. Shop Manager проверяет доступность и цену
+      3. Economy Service обрабатывает транзакцию
+      4. Inventory Manager добавляет предмет в инвентарь
+      5. Analytics записывает покупку
+      6. Notification отправляется игроку
+
+    cosmetic_equip: |
+      1. Игрок выбирает косметику для экипировки
+      2. Equip System валидирует совместимость
+      3. Preview System генерирует превью
+      4. Core Manager сохраняет конфигурацию
+      5. Sync Manager рассылает обновления
+      6. Client обновляет визуализацию
+
+    catalog_update: |
+      1. Content Pipeline получает новые ассеты
+      2. Catalog Manager обновляет метаданные
+      3. Preview System генерирует превью
+      4. Shop Manager добавляет в ротацию
+      5. Notification рассылает обновления
+      6. Analytics начинает сбор метрик
+
+  integrations:
+    with_economy_service: |
+      - Currency transactions for purchases
+      - Pricing and discount management
+      - Revenue tracking and analytics
+      - Economic balance adjustments
+
+    with_inventory_service: |
+      - Cosmetic item storage and management
+      - Cross-platform inventory sync
+      - Item durability and maintenance
+      - Inventory capacity management
+
+    with_shop_service: |
+      - Storefront integration
+      - Cart and checkout management
+      - Purchase history tracking
+      - Refund and return handling
+
+    with_analytics_service: |
+      - Advanced usage analytics
+      - Player segmentation
+      - Content performance metrics
+      - Monetization optimization
+
+  data_consistency:
+    strategy: Strong Consistency для purchases, Eventual Consistency для equip
+    mechanisms:
+      - Event Sourcing для всех cosmetic transactions
+      - CQRS для разделения reads/writes
+      - Saga Pattern для комплексных purchases
+      - Optimistic Locking для equip operations
+      - Redis distributed cache for catalog data
+
+  performance_requirements:
+    response_time: < 100ms для equip operations, < 300ms для catalog queries
+    throughput: 10000+ equip operations/minute, 50000+ catalog views/minute
+    concurrent_users: Support for 100000+ simultaneous cosmetic interactions
+    storage: 5TB+ for cosmetic assets and metadata
+    memory: < 12GB per service instance
+
+  scalability:
+    horizontal_scaling: |
+      - Core Manager: sharded by player/region
+      - Catalog Manager: read-heavy scaling
+      - Shop Manager: transaction-heavy scaling
+      - Analytics Engine: batch processing scaling
+    data_partitioning: |
+      - Geographic player distribution
+      - Category-based asset partitioning
+      - Time-based analytics partitioning
+
+  security:
+    asset_security: |
+      - DRM protection for premium assets
+      - Anti-cheat validation for equip
+      - Content integrity verification
+      - Anti-tampering measures
+    transaction_security: |
+      - Secure payment processing
+      - Fraud detection systems
+      - Transaction audit trails
+      - Refund abuse prevention
+
+  database_schema:
+    tables:
+      - name: cosmetics_catalog
+        description: Каталог косметических предметов
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255)
+          - description: TEXT
+          - category: ENUM (WEAPON_SKINS, ARMOR_SETS, CHARACTER_MODELS, ANIMATIONS, EFFECTS, EMOTES, ACCESSORIES, PETS)
+          - rarity: ENUM (COMMON, UNCOMMON, RARE, EPIC, LEGENDARY, MYTHIC)
+          - base_price: INTEGER
+          - currency_type: ENUM (CREDITS, PREMIUM_CURRENCY, EVENT_CURRENCY)
+          - collection_id: UUID (FK cosmetic_collections, nullable)
+          - asset_bundle_path: TEXT
+          - preview_image_path: TEXT
+          - metadata: JSONB
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+        indexes:
+          - category, rarity
+          - collection_id
+          - base_price
+
+      - name: cosmetic_collections
+        description: Коллекции косметики
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255)
+          - description: TEXT
+          - theme: VARCHAR(100)
+          - start_date: TIMESTAMP
+          - end_date: TIMESTAMP (nullable)
+          - bonus_rewards: JSONB
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+        indexes:
+          - start_date, end_date
+          - theme
+
+      - name: player_cosmetic_inventory
+        description: Инвентарь косметики игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - cosmetic_id: UUID (FK cosmetics_catalog)
+          - ownership_type: ENUM (PERMANENT, RENTAL, LIMITED_USE, SUBSCRIPTION, LOAN)
+          - acquired_date: TIMESTAMP
+          - expiration_date: TIMESTAMP (nullable)
+          - usage_count: INTEGER (default: 0)
+          - usage_limit: INTEGER (nullable)
+          - is_equipped: BOOLEAN (default: false)
+          - is_favorite: BOOLEAN (default: false)
+        indexes:
+          - player_id, cosmetic_id (unique)
+          - ownership_type, expiration_date
+          - is_equipped
+
+      - name: cosmetic_equip_loadouts
+        description: Наборы экипировки косметики
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - loadout_name: VARCHAR(100)
+          - cosmetic_config: JSONB
+          - is_active: BOOLEAN (default: false)
+          - created_at: TIMESTAMP
+          - last_used: TIMESTAMP
+        indexes:
+          - player_id, is_active
+          - last_used
+
+      - name: cosmetic_shop_rotation
+        description: Ротация товаров в магазине
+        fields:
+          - id: UUID (PK)
+          - cosmetic_id: UUID (FK cosmetics_catalog)
+          - slot_type: ENUM (DAILY, WEEKLY, FEATURED, LIMITED_TIME)
+          - discount_percentage: DECIMAL(5,2) (default: 0)
+          - start_date: TIMESTAMP
+          - end_date: TIMESTAMP
+          - priority: INTEGER
+          - is_active: BOOLEAN (default: true)
+        indexes:
+          - slot_type, start_date, end_date
+          - cosmetic_id, is_active
+          - priority
+
+      - name: cosmetic_purchase_history
+        description: История покупок косметики
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - cosmetic_id: UUID (FK cosmetics_catalog)
+          - purchase_price: INTEGER
+          - currency_used: ENUM (CREDITS, PREMIUM_CURRENCY, EVENT_CURRENCY)
+          - discount_applied: DECIMAL(5,2)
+          - purchase_date: TIMESTAMP
+          - payment_method: VARCHAR(50)
+          - transaction_id: VARCHAR(255)
+        indexes:
+          - player_id, purchase_date
+          - cosmetic_id, purchase_date
+          - transaction_id (unique)
+
+      - name: cosmetic_usage_analytics
+        description: Аналитика использования косметики
+        fields:
+          - id: UUID (PK)
+          - cosmetic_id: UUID (FK cosmetics_catalog)
+          - date: DATE
+          - equip_count: INTEGER
+          - view_count: INTEGER
+          - purchase_count: INTEGER
+          - favorite_count: INTEGER
+          - share_count: INTEGER
+          - average_rating: DECIMAL(3,2)
+        indexes:
+          - cosmetic_id, date
+          - date
+
+      - name: cosmetic_player_preferences
+        description: Предпочтения игроков по косметике
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - preferred_categories: JSONB
+          - preferred_rarities: JSONB
+          - budget_range: JSONB
+          - favorite_collections: JSONB
+          - notification_settings: JSONB
+          - updated_at: TIMESTAMP
+        indexes:
+          - player_id (unique)
+
+  validation:
+    architecture_complete: true
+    components_defined: true
+    microservices_identified: true
+    api_endpoints_described: true
+    technical_specification_ready: true
+    subtasks_defined: true
+
+  next_steps:
+    - Передача задачи агенту API Designer для создания OpenAPI спецификации cosmetic API
+    - Детализация asset pipeline integration
+    - Создание схем rarity drop mechanics
+    - Определение pricing optimization algorithms
+    - Планирование интеграции с cosmetic-service-go
+
+  history:
+    - version: '2.0.0'
+      date: 2025-12-28
+      author: Architect Agent
+      changes: |
+        Создана полная архитектура Cosmetic System
+        Расширены компоненты управления косметикой
+        Добавлена схема БД и метрики производительности
+        Определены security и scalability требования
+        Статус изменен на final

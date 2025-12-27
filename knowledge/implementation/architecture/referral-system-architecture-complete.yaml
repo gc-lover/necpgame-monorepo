@@ -1,0 +1,510 @@
+metadata:
+  id: referral-system-architecture-complete
+  title: Архитектура реферальной системы (Referral System)
+  document_type: architecture
+  category: systems
+  status: final
+  version: '2.0.0'
+  last_updated: 2025-12-28T00:45:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - referral
+    - growth
+    - rewards
+    - social
+  related_systems:
+    - referral-service-go
+    - economy-service-go
+    - notification-service-go
+    - player-service-go
+    - analytics-service-go
+  related_documents:
+    - id: referral-system-architecture
+      relation: supersedes
+    - id: backend-referral-system
+      relation: implements
+  github_issue: 140891087
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - growth
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру Referral System
+    для привлечения новых игроков через реферальные коды, трекинг активности,
+    milestone награды и социальные взаимодействия в MMOFPS RPG.
+  goal: |
+    Создать архитектурную схему Referral System с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints для управления рефералами
+    - Потоков данных и интеграций
+    - Систем наград и milestone
+    - Систем аналитики и fraud prevention
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура реферальной системы для органического роста
+    с трекингом, наградами и предотвращением мошенничества.
+
+architecture:
+  overview: |
+    Referral System обеспечивает комплексное управление реферальными программами
+    включая генерацию кодов, трекинг привлечения игроков, milestone награды,
+    лидерборды и интеграцию с социальными и экономическими системами.
+
+  components:
+    - name: Referral Core Manager
+      location: referral-service-go (основной сервис)
+      responsibility: |
+        - Управление жизненным циклом реферальных программ
+        - Координация между компонентами системы
+        - Валидация операций и состояний
+        - Интеграция с внешними системами
+        - Управление конфигурацией программ
+      referral_programs: |
+        - STANDARD: базовая реферальная программа
+        - PREMIUM: премиум программа с бонусами
+        - EVENT: ивентовая программа
+        - LIMITED_TIME: лимитированная по времени
+        - SOCIAL: социальная программа
+      program_status: |
+        - ACTIVE: активная программа
+        - PAUSED: приостановленная
+        - COMPLETED: завершенная
+        - ARCHIVED: архивная
+      endpoints:
+        - GET /api/v1/referral/programs - список программ
+        - POST /api/v1/referral/programs - создать программу (admin)
+        - PUT /api/v1/referral/programs/{id} - обновить программу (admin)
+        - GET /api/v1/referral/programs/{id}/stats - статистика программы
+
+    - name: Referral Code Generator
+      location: referral-service-go (модуль code-generator)
+      responsibility: |
+        - Генерация уникальных реферальных кодов
+        - Управление форматами кодов
+        - Проверка уникальности
+        - Управление сроками действия кодов
+        - Массовое создание кодов
+      code_formats: |
+        - ALPHANUMERIC: буквы и цифры (DEFAULT)
+        - NUMERIC_ONLY: только цифры
+        - CUSTOM_PREFIX: с префиксом
+        - QR_CODE: QR коды
+        - CUSTOM_FORMAT: кастомный формат
+      code_properties: |
+        - LENGTH: длина кода (6-16 символов)
+        - EXPIRATION: срок действия
+        - USAGE_LIMIT: лимит использований
+        - REGIONAL: региональные ограничения
+        - CAMPAIGN: привязка к кампании
+
+    - name: Referral Tracking Engine
+      location: referral-service-go (модуль tracking)
+      responsibility: |
+        - Отслеживание реферальных связей
+        - Мониторинг активности рефералов
+        - Расчет конверсий и retention
+        - Управление attribution window
+        - Fraud detection и prevention
+      tracking_metrics: |
+        - REGISTRATION: регистрация по коду
+        - FIRST_LOGIN: первый вход в игру
+        - RETENTION_7D: удержание через 7 дней
+        - RETENTION_30D: удержание через 30 дней
+        - REVENUE_GENERATED: сгенерированная выручка
+        - LIFETIME_VALUE: пожизненная ценность
+      attribution_models: |
+        - FIRST_CLICK: первый клик
+        - LAST_CLICK: последний клик
+        - LINEAR: равномерное распределение
+        - TIME_DECAY: с затуханием по времени
+        - CUSTOM: кастомная модель
+
+    - name: Milestone Reward System
+      location: referral-service-go (модуль milestones)
+      responsibility: |
+        - Управление milestone наградами
+        - Отслеживание прогресса по целям
+        - Расчет и выдача наград
+        - Управление требованиями milestone
+        - Планирование будущих milestone
+      milestone_types: |
+        - COUNT_BASED: по количеству рефералов (5, 10, 25, 50, 100)
+        - QUALITY_BASED: по качеству рефералов (retention, revenue)
+        - TIME_BASED: по времени (ежемесячные, квартальные)
+        - COMBO: комбинированные условия
+        - SPECIAL: специальные достижения
+      reward_structures: |
+        - INSTANT: мгновенные награды
+        - STAGED: поэтапные награды
+        - PROGRESSIVE: прогрессивные награды
+        - EXCLUSIVE: эксклюзивные награды
+
+    - name: Referral Reward Distributor
+      location: referral-service-go (модуль rewards)
+      responsibility: |
+        - Расчет и выдача наград реферерам
+        - Управление наградами для рефералов
+        - Интеграция с инвентарем и экономикой
+        - Отслеживание полученных наград
+        - Валидация доступности наград
+      reward_types: |
+        - CURRENCY: игровая валюта
+        - ITEMS: игровые предметы
+        - COSMETICS: косметические предметы
+        - BOOSTERS: временные усилители
+        - TITLES: звания и достижения
+        - EXCLUSIVE: эксклюзивный контент
+      reward_tiers: |
+        - BRONZE: базовые награды
+        - SILVER: средние награды
+        - GOLD: продвинутые награды
+        - PLATINUM: премиум награды
+        - DIAMOND: элитные награды
+
+    - name: Leaderboard Management System
+      location: referral-service-go (модуль leaderboard)
+      responsibility: |
+        - Управление лидербордами рефералов
+        - Расчет рейтингов и позиций
+        - Обновление в реальном времени
+        - Кэширование для производительности
+        - Социальные функции (сравнение, конкурсы)
+      leaderboard_types: |
+        - GLOBAL: глобальный рейтинг
+        - REGIONAL: региональный рейтинг
+        - FRIENDS: рейтинг среди друзей
+        - GUILD: гильдейский рейтинг
+        - SEASONAL: сезонный рейтинг
+      ranking_criteria: |
+        - TOTAL_REFERRALS: общее количество
+        - ACTIVE_REFERRALS: активные рефералы
+        - QUALITY_SCORE: качество рефералов
+        - REVENUE_GENERATED: сгенерированная выручка
+
+    - name: Fraud Prevention Engine
+      location: referral-service-go (модуль fraud-prevention)
+      responsibility: |
+        - Обнаружение мошенничества
+        - Валидация реферальных связей
+        - Анализ suspicious паттернов
+        - Автоматические блокировки
+        - Ручная модерация подозрительных случаев
+      fraud_detection: |
+        - FAKE_ACCOUNTS: обнаружение фейковых аккаунтов
+        - CLICK_FARMING: выявление клик-фарминга
+        - SELF_REFERRAL: предотвращение само-рефералов
+        - BOT_ACTIVITY: обнаружение ботов
+        - COLLUSION: выявление сговора
+      prevention_measures: |
+        - IP_TRACKING: отслеживание IP адресов
+        - DEVICE_FINGERPRINTING: fingerprinting устройств
+        - BEHAVIOR_ANALYSIS: анализ поведения
+        - RATE_LIMITING: ограничение частоты
+        - MANUAL_REVIEW: ручная проверка
+
+    - name: Referral Analytics Hub
+      location: referral-service-go (модуль analytics)
+      responsibility: |
+        - Сбор метрик эффективности программ
+        - Анализ ROI реферальных кампаний
+        - Отчеты для growth команды
+        - Прогнозы и рекомендации
+        - A/B тестирование программ
+      analytics_metrics: |
+        - CONVERSION_RATES: конверсия в регистрацию
+        - RETENTION_RATES: удержание рефералов
+        - VIRAL_COEFFICIENT: коэффициент вирусности
+        - CUSTOMER_ACQUISITION_COST: стоимость привлечения
+        - LIFETIME_VALUE: пожизненная ценность
+        - PROGRAM_ROI: окупаемость программы
+
+    - name: Referral Communication Manager
+      location: referral-service-go (модуль communication)
+      responsibility: |
+        - Управление коммуникациями с участниками
+        - Персонализированные сообщения
+        - Push-уведомления и email
+        - In-game announcements
+        - Социальный шэринг
+      communication_channels: |
+        - IN_GAME: внутриигровые уведомления
+        - PUSH: мобильные пуш-уведомления
+        - EMAIL: email рассылки
+        - SMS: SMS уведомления
+        - SOCIAL: социальные сети
+
+  data_flow:
+    referral_registration: |
+      1. Новый игрок регистрируется с реферальным кодом
+      2. Code Validator проверяет валидность кода
+      3. Referral Tracker создает связь реферал-реферер
+      4. Player Service создает аккаунт игрока
+      5. Reward Distributor выдает welcome награды
+      6. Communication Manager отправляет уведомления
+
+    milestone_achievement: |
+      1. Referral Tracker обнаруживает достижение milestone
+      2. Milestone Manager рассчитывает награды
+      3. Reward Distributor подготавливает выдачу
+      4. Notification Service отправляет congratulations
+      5. Leaderboard обновляется в реальном времени
+      6. Analytics логирует achievement
+
+    fraud_detection: |
+      1. Fraud Prevention Engine анализирует активность
+      2. Обнаруживает suspicious паттерн
+      3. Автоматически блокирует подозрительную активность
+      4. Communication Manager уведомляет участников
+      5. Analytics сохраняет incident для анализа
+      6. Manual review queue обновляется
+
+  integrations:
+    with_player_service: |
+      - Player registration and account creation
+      - Profile management and verification
+      - Account linking and cross-platform sync
+      - Player behavior analytics
+
+    with_economy_service: |
+      - Currency transactions for rewards
+      - Item distribution and inventory management
+      - Economic incentives and bonuses
+      - Revenue attribution and tracking
+
+    with_notification_service: |
+      - Push notifications for milestones
+      - Email campaigns for program updates
+      - In-game announcements and celebrations
+      - Multi-channel communication
+
+    with_analytics_service: |
+      - Advanced user segmentation
+      - Attribution modeling and analysis
+      - Performance metrics and reporting
+      - Predictive modeling for growth
+
+  data_consistency:
+    strategy: Strong Consistency для reward distribution, Eventual Consistency для tracking
+    mechanisms:
+      - Event Sourcing для всех referral events
+      - CQRS для разделения reads/writes
+      - Saga Pattern для комплексных reward flows
+      - Optimistic Locking для leaderboard updates
+      - Redis distributed cache for real-time data
+
+  performance_requirements:
+    response_time: < 200ms для code validation, < 500ms для complex queries
+    throughput: 10000+ registrations/minute, 50000+ tracking events/minute
+    concurrent_users: Support for 50000+ active referral participants
+    storage: 200GB+ for referral data and analytics
+    memory: < 6GB per service instance
+
+  scalability:
+    horizontal_scaling: |
+      - Core Manager: sharded by referral program
+      - Tracking Engine: auto-scaling by event volume
+      - Reward Distributor: queue-based scaling
+      - Analytics Hub: batch processing scaling
+    data_partitioning: |
+      - Geographic referral distribution
+      - Time-based analytics partitioning
+      - Program-based data sharding
+
+  security:
+    code_security: |
+      - Cryptographically secure code generation
+      - Code expiration and invalidation
+      - Usage tracking and limits
+      - Anti-brute force protection
+    fraud_security: |
+      - Advanced fraud detection algorithms
+      - Real-time monitoring and alerts
+      - Automated response systems
+      - Manual review processes
+
+  database_schema:
+    tables:
+      - name: referral_programs
+        description: Реферальные программы
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255)
+          - description: TEXT
+          - status: ENUM (ACTIVE, PAUSED, COMPLETED, ARCHIVED)
+          - start_date: TIMESTAMP
+          - end_date: TIMESTAMP (nullable)
+          - reward_config: JSONB
+          - fraud_detection_rules: JSONB
+          - created_at: TIMESTAMP
+        indexes:
+          - status, start_date
+          - end_date
+
+      - name: referral_codes
+        description: Реферальные коды
+        fields:
+          - id: UUID (PK)
+          - code: VARCHAR(50) (unique)
+          - player_id: UUID (FK players)
+          - program_id: UUID (FK referral_programs)
+          - format: ENUM (ALPHANUMERIC, NUMERIC_ONLY, CUSTOM_PREFIX, QR_CODE)
+          - expiration_date: TIMESTAMP (nullable)
+          - usage_limit: INTEGER
+          - usage_count: INTEGER (default: 0)
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+        indexes:
+          - code (unique)
+          - player_id, program_id
+          - expiration_date
+
+      - name: referral_relationships
+        description: Реферальные связи
+        fields:
+          - id: UUID (PK)
+          - referrer_id: UUID (FK players)
+          - referee_id: UUID (FK players)
+          - program_id: UUID (FK referral_programs)
+          - referral_code_id: UUID (FK referral_codes)
+          - status: ENUM (PENDING, ACTIVE, COMPLETED, TERMINATED)
+          - conversion_date: TIMESTAMP (nullable)
+          - attribution_model: ENUM (FIRST_CLICK, LAST_CLICK, LINEAR, TIME_DECAY)
+          - quality_score: DECIMAL(3,2)
+          - created_at: TIMESTAMP
+        indexes:
+          - referrer_id, created_at
+          - referee_id (unique)
+          - program_id, status
+          - referral_code_id
+
+      - name: referral_milestones
+        description: Milestone награды
+        fields:
+          - id: UUID (PK)
+          - program_id: UUID (FK referral_programs)
+          - milestone_type: ENUM (COUNT_BASED, QUALITY_BASED, TIME_BASED, COMBO, SPECIAL)
+          - target_value: INTEGER
+          - reward_data: JSONB
+          - is_active: BOOLEAN (default: true)
+          - created_at: TIMESTAMP
+        indexes:
+          - program_id, milestone_type
+          - target_value
+
+      - name: player_milestone_progress
+        description: Прогресс игроков по milestone
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - milestone_id: UUID (FK referral_milestones)
+          - current_value: INTEGER
+          - target_value: INTEGER
+          - completed: BOOLEAN (default: false)
+          - completed_at: TIMESTAMP (nullable)
+          - claimed: BOOLEAN (default: false)
+          - claimed_at: TIMESTAMP (nullable)
+        indexes:
+          - player_id, milestone_id (unique)
+          - completed, claimed
+          - completed_at
+
+      - name: referral_rewards
+        description: Выданные награды
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - referral_id: UUID (FK referral_relationships) (nullable)
+          - milestone_id: UUID (FK referral_milestones) (nullable)
+          - reward_type: ENUM (CURRENCY, ITEMS, COSMETICS, BOOSTERS, TITLES, EXCLUSIVE)
+          - reward_data: JSONB
+          - delivery_status: ENUM (PENDING, DELIVERED, FAILED)
+          - delivered_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+        indexes:
+          - player_id, created_at
+          - delivery_status
+          - delivered_at
+
+      - name: referral_leaderboard
+        description: Лидерборд рефералов
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - program_id: UUID (FK referral_programs)
+          - total_referrals: INTEGER
+          - active_referrals: INTEGER
+          - quality_score: DECIMAL(5,2)
+          - rank_position: INTEGER
+          - last_updated: TIMESTAMP
+        indexes:
+          - program_id, rank_position
+          - player_id, program_id (unique)
+          - quality_score DESC
+
+      - name: referral_analytics
+        description: Аналитика реферальных программ
+        fields:
+          - id: UUID (PK)
+          - program_id: UUID (FK referral_programs)
+          - date: DATE
+          - new_registrations: INTEGER
+          - total_referrals: INTEGER
+          - conversion_rate: DECIMAL(5,4)
+          - retention_7d: DECIMAL(5,4)
+          - retention_30d: DECIMAL(5,4)
+          - revenue_generated: DECIMAL(12,2)
+          - viral_coefficient: DECIMAL(4,2)
+        indexes:
+          - program_id, date
+          - date
+
+      - name: referral_fraud_incidents
+        description: Инциденты мошенничества
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - incident_type: ENUM (FAKE_ACCOUNTS, CLICK_FARMING, SELF_REFERRAL, BOT_ACTIVITY, COLLUSION)
+          - severity: ENUM (LOW, MEDIUM, HIGH, CRITICAL)
+          - details: JSONB
+          - automated_action: ENUM (WARN, BLOCK_CODE, SUSPEND_ACCOUNT, BAN_ACCOUNT)
+          - manual_review_required: BOOLEAN (default: false)
+          - reviewed_by: UUID (FK admin_users, nullable)
+          - reviewed_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+        indexes:
+          - player_id, created_at
+          - incident_type, severity
+          - manual_review_required, created_at
+
+  validation:
+    architecture_complete: true
+    components_defined: true
+    microservices_identified: true
+    api_endpoints_described: true
+    technical_specification_ready: true
+    subtasks_defined: true
+
+  next_steps:
+    - Передача задачи агенту API Designer для создания OpenAPI спецификации referral API
+    - Детализация fraud detection algorithms
+    - Создание схем attribution models
+    - Определение reward balancing system
+    - Планирование интеграции с referral-service-go
+
+  history:
+    - version: '2.0.0'
+      date: 2025-12-28
+      author: Architect Agent
+      changes: |
+        Создана полная архитектура Referral System
+        Расширены компоненты реферальных программ
+        Добавлена схема БД и метрики производительности
+        Определены security и scalability требования
+        Статус изменен на final

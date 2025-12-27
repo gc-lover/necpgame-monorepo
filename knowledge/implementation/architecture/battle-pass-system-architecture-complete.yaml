@@ -1,0 +1,429 @@
+metadata:
+  id: battle-pass-system-architecture-complete
+  title: Архитектура системы Battle Pass (Battle Pass System)
+  document_type: architecture
+  category: systems
+  status: final
+  version: '2.0.0'
+  last_updated: 2025-12-28T00:35:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - battle-pass
+    - monetization
+    - progression
+    - seasonal
+  related_systems:
+    - battle-pass-service-go
+    - economy-service-go
+    - progression-service-go
+    - notification-service-go
+    - achievement-service-go
+  related_documents:
+    - id: battle-pass-system-architecture
+      relation: supersedes
+    - id: backend-battle-pass
+      relation: implements
+  github_issue: 140890221
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - game-designer
+    - live-ops
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру Battle Pass System
+    для сезонной прогрессии игроков в MMOFPS RPG с бесплатным и премиум треками,
+    челленджами, наградами и интеграцией с монетизацией.
+  goal: |
+    Создать архитектурную схему Battle Pass System с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints для управления Battle Pass
+    - Потоков данных и интеграций
+    - Систем прогрессии и наград
+    - Систем челленджей и монетизации
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура сезонной системы Battle Pass для вовлеченности игроков
+    с прогрессией, наградами и премиум-монетизацией.
+
+architecture:
+  overview: |
+    Battle Pass System обеспечивает сезонную прогрессию игроков через уровни,
+    предлагая бесплатные и премиум награды, челленджи и интеграцию с игровыми механиками
+    для повышения вовлеченности и монетизации.
+
+  components:
+    - name: Battle Pass Core Engine
+      location: battle-pass-service-go (основной сервис)
+      responsibility: |
+        - Управление жизненным циклом Battle Pass сезонов
+        - Координация между компонентами системы
+        - Валидация операций и состояний
+        - Интеграция с внешними системами
+        - Управление конфигурацией сезонов
+      season_lifecycle: |
+        - PREPARATION: подготовка нового сезона
+        - ACTIVE: активный сезон
+        - ENDING: завершение сезона (последние дни)
+        - COMPLETED: сезон завершен
+        - ARCHIVED: сезон в архиве
+      season_types: |
+        - REGULAR: стандартный сезон (3 месяца)
+        - EVENT: специальный ивент-сезон (1 месяц)
+        - LIMITED: лимитированный сезон (2 недели)
+        - PERMANENT: постоянный Battle Pass
+      endpoints:
+        - GET /api/v1/battle-pass/seasons/current - текущий сезон
+        - GET /api/v1/battle-pass/seasons - список сезонов
+        - POST /api/v1/battle-pass/seasons - создать сезон (admin)
+        - PUT /api/v1/battle-pass/seasons/{id} - обновить сезон (admin)
+
+    - name: Progression Tracking System
+      location: battle-pass-service-go (модуль progression)
+      responsibility: |
+        - Отслеживание прогресса игроков
+        - Расчет и начисление XP
+        - Управление уровнями и треками
+        - Синхронизация прогресса
+        - Валидация достижений
+      progression_tracks: |
+        - FREE: бесплатный трек (базовые награды)
+        - PREMIUM: премиум трек (расширенные награды)
+        - ULTIMATE: ультимативный трек (максимальные награды)
+      xp_sources: |
+        - QUEST_COMPLETION: завершение квестов
+        - COMBAT_VICTORIES: победы в бою
+        - ACHIEVEMENT_UNLOCKS: достижения
+        - DAILY_ACTIVITIES: ежедневные активности
+        - EVENT_PARTICIPATION: участие в ивентах
+        - SOCIAL_INTERACTIONS: социальные действия
+
+    - name: Challenge Management System
+      location: battle-pass-service-go (модуль challenges)
+      responsibility: |
+        - Генерация и управление челленджами
+        - Отслеживание прогресса по задачам
+        - Валидация выполнения условий
+        - Расчет наград за челленджи
+        - Управление сроками челленджей
+      challenge_types: |
+        - DAILY: ежедневные челленджи
+        - WEEKLY: еженедельные челленджи
+        - SEASONAL: сезонные челленджи
+        - LIMITED_TIME: лимитированные челленджи
+        - PERSONAL: персональные челленджи
+      challenge_categories: |
+        - COMBAT: боевые задачи
+        - SOCIAL: социальные взаимодействия
+        - PROGRESSION: прогресс в игре
+        - COLLECTION: сбор предметов
+        - EXPLORATION: исследование мира
+
+    - name: Reward Distribution Engine
+      location: battle-pass-service-go (модуль rewards)
+      responsibility: |
+        - Управление каталогом наград
+        - Расчет и выдача наград
+        - Интеграция с инвентарем игрока
+        - Отслеживание полученных наград
+        - Валидация доступности наград
+      reward_types: |
+        - COSMETICS: косметические предметы
+        - CURRENCY: игровая валюта
+        - ITEMS: игровые предметы
+        - BOOSTERS: усилители и бонусы
+        - TITLES: звания и достижения
+        - EXCLUSIVE: эксклюзивный контент
+      reward_tiers: |
+        - TIER_1: базовые награды (уровни 1-25)
+        - TIER_2: средние награды (уровни 26-50)
+        - TIER_3: продвинутые награды (уровни 51-75)
+        - TIER_4: элитные награды (уровни 76-100)
+
+    - name: Premium Monetization Handler
+      location: battle-pass-service-go (модуль premium)
+      responsibility: |
+        - Управление премиум-подписками
+        - Обработка платежей
+        - Управление скидками и акциями
+        - Аналитика монетизации
+        - Интеграция с платежными системами
+      premium_tiers: |
+        - BASIC: базовый премиум (текущий сезон)
+        - ADVANCED: расширенный (текущий + следующий)
+        - ULTIMATE: ультимативный (все сезоны)
+        - LIFETIME: пожизненный доступ
+      pricing_strategy: |
+        - EARLY_ACCESS: скидка за раннюю покупку
+        - BULK_DISCOUNT: скидка за несколько сезонов
+        - LOYALTY_REWARDS: бонусы для постоянных игроков
+        - REGIONAL_PRICING: региональные цены
+
+    - name: Analytics & Insights Engine
+      location: battle-pass-service-go (модуль analytics)
+      responsibility: |
+        - Сбор метрик вовлеченности
+        - Анализ эффективности контента
+        - Отчеты по монетизации
+        - Прогнозы и рекомендации
+        - A/B тестирование наград
+      analytics_metrics: |
+        - PLAYER_ENGAGEMENT: уровень вовлеченности
+        - COMPLETION_RATES: процент завершения сезонов
+        - PREMIUM_CONVERSION: конверсия в премиум
+        - CHURN_ANALYSIS: анализ оттока игроков
+        - REVENUE_TRACKING: отслеживание доходов
+
+    - name: Notification & Communication Hub
+      location: battle-pass-service-go (модуль notifications)
+      responsibility: |
+        - Управление уведомлениями
+        - Персонализированные сообщения
+        - Push-уведомления и email
+        - In-game announcements
+        - Социальный шэринг прогресса
+      notification_types: |
+        - PROGRESS_UPDATES: обновления прогресса
+        - REWARD_AVAILABLE: доступные награды
+        - CHALLENGE_COMPLETED: выполненные челленджи
+        - SEASON_ENDING: окончание сезона
+        - PREMIUM_OFFERS: предложения премиум
+
+  data_flow:
+    player_progression: |
+      1. Игрок выполняет игровые действия
+      2. XP System рассчитывает заработанный опыт
+      3. Progression Tracker обновляет уровень игрока
+      4. Reward Engine проверяет доступные награды
+      5. Notification Hub отправляет обновления
+      6. Analytics собирает метрики прогресса
+
+    challenge_completion: |
+      1. Игрок выполняет условия челленджа
+      2. Challenge Manager валидирует выполнение
+      3. XP System начисляет бонусный опыт
+      4. Reward Engine выдает награды
+      5. Notification Hub уведомляет игрока
+      6. Analytics логирует завершение
+
+    season_transition: |
+      1. Наступает конец сезона
+      2. Core Engine завершает текущий сезон
+      3. Reward Engine выдает финальные награды
+      4. Progression Tracker сбрасывается для нового сезона
+      5. Notification Hub рассылает итоги сезона
+      6. Analytics анализирует сезонную статистику
+
+  integrations:
+    with_economy_service: |
+      - Currency transactions for premium purchases
+      - Reward distribution and inventory management
+      - Economic analytics and revenue tracking
+      - Item pricing and marketplace integration
+
+    with_progression_service: |
+      - Achievement integration for XP bonuses
+      - Quest completion tracking
+      - Level progression synchronization
+      - Milestone celebration system
+
+    with_notification_service: |
+      - Push notifications for progress updates
+      - Email campaigns for season announcements
+      - In-game notification system
+      - Social media integration
+
+    with_achievement_service: |
+      - Achievement unlocks for Battle Pass progress
+      - Challenge completion integration
+      - Reward system coordination
+
+  data_consistency:
+    strategy: Strong Consistency для transactions, Eventual Consistency для progress
+    mechanisms:
+      - Event Sourcing для всех progression events
+      - CQRS для разделения reads/writes
+      - Saga Pattern для season transitions
+      - Optimistic Locking для concurrent updates
+      - Redis distributed cache for real-time data
+
+  performance_requirements:
+    response_time: < 100ms для progress updates, < 200ms для reward claims
+    throughput: 50000+ XP events/minute, 10000+ reward claims/minute
+    concurrent_users: Support for 100000+ active Battle Pass participants
+    storage: 500GB+ for seasonal data and player progress
+    memory: < 8GB per service instance
+
+  scalability:
+    horizontal_scaling: |
+      - Core Engine: sharded by season/player
+      - Progression System: auto-scaling by load
+      - Reward Engine: queue-based scaling
+      - Analytics: batch processing scaling
+    data_partitioning: |
+      - Season-based data partitioning
+      - Player-based progress sharding
+      - Geographic distribution for regions
+
+  security:
+    purchase_security: |
+      - Payment validation and fraud detection
+      - Transaction audit trails
+      - Refund and chargeback handling
+      - Regional compliance (GDPR, CCPA)
+    progress_security: |
+      - XP farming prevention
+      - Cheat detection systems
+      - Progress validation
+      - Anti-tampering measures
+
+  database_schema:
+    tables:
+      - name: battle_pass_seasons
+        description: Сезоны Battle Pass
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255)
+          - description: TEXT
+          - start_date: TIMESTAMP
+          - end_date: TIMESTAMP
+          - status: ENUM (PREPARATION, ACTIVE, ENDING, COMPLETED, ARCHIVED)
+          - max_level: INTEGER (default: 100)
+          - premium_price: INTEGER
+          - theme: VARCHAR(100)
+          - rewards_config: JSONB
+          - created_at: TIMESTAMP
+        indexes:
+          - status, start_date
+          - end_date
+
+      - name: player_battle_pass
+        description: Прогресс игроков в Battle Pass
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - season_id: UUID (FK battle_pass_seasons)
+          - current_level: INTEGER
+          - current_xp: BIGINT
+          - total_xp: BIGINT
+          - premium_unlocked: BOOLEAN
+          - premium_purchased_at: TIMESTAMP (nullable)
+          - last_activity: TIMESTAMP
+          - created_at: TIMESTAMP
+        indexes:
+          - player_id, season_id (unique)
+          - season_id, current_level
+          - premium_unlocked
+
+      - name: battle_pass_challenges
+        description: Челленджи Battle Pass
+        fields:
+          - id: UUID (PK)
+          - season_id: UUID (FK battle_pass_seasons)
+          - challenge_type: ENUM (DAILY, WEEKLY, SEASONAL, LIMITED, PERSONAL)
+          - category: ENUM (COMBAT, SOCIAL, PROGRESSION, COLLECTION, EXPLORATION)
+          - title: VARCHAR(255)
+          - description: TEXT
+          - requirements: JSONB
+          - xp_reward: INTEGER
+          - item_rewards: JSONB
+          - start_date: TIMESTAMP
+          - end_date: TIMESTAMP
+          - is_active: BOOLEAN (default: true)
+        indexes:
+          - season_id, challenge_type
+          - start_date, end_date
+          - category
+
+      - name: player_challenges
+        description: Прогресс игроков по челленджам
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - challenge_id: UUID (FK battle_pass_challenges)
+          - progress: INTEGER
+          - completed: BOOLEAN (default: false)
+          - completed_at: TIMESTAMP (nullable)
+          - claimed: BOOLEAN (default: false)
+          - claimed_at: TIMESTAMP (nullable)
+        indexes:
+          - player_id, challenge_id (unique)
+          - challenge_id, completed
+          - completed_at
+
+      - name: battle_pass_rewards
+        description: Награды Battle Pass по уровням
+        fields:
+          - id: UUID (PK)
+          - season_id: UUID (FK battle_pass_seasons)
+          - level: INTEGER
+          - track: ENUM (FREE, PREMIUM, ULTIMATE)
+          - reward_type: ENUM (COSMETICS, CURRENCY, ITEMS, BOOSTERS, TITLES, EXCLUSIVE)
+          - reward_data: JSONB
+          - rarity: ENUM (COMMON, UNCOMMON, RARE, EPIC, LEGENDARY)
+          - is_premium_locked: BOOLEAN
+        indexes:
+          - season_id, level, track (unique)
+          - reward_type
+
+      - name: player_rewards_claimed
+        description: Полученные награды игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - reward_id: UUID (FK battle_pass_rewards)
+          - claimed_at: TIMESTAMP
+          - claimed_via: ENUM (AUTO, MANUAL, ADMIN)
+          - delivery_status: ENUM (PENDING, DELIVERED, FAILED)
+        indexes:
+          - player_id, claimed_at
+          - reward_id
+          - delivery_status
+
+      - name: battle_pass_analytics
+        description: Аналитика Battle Pass
+        fields:
+          - id: UUID (PK)
+          - season_id: UUID (FK battle_pass_seasons)
+          - date: DATE
+          - active_players: INTEGER
+          - premium_conversions: INTEGER
+          - average_level: DECIMAL(5,2)
+          - completion_rate: DECIMAL(5,4)
+          - revenue: DECIMAL(12,2)
+          - engagement_score: DECIMAL(3,2)
+        indexes:
+          - season_id, date
+          - date
+
+  validation:
+    architecture_complete: true
+    components_defined: true
+    microservices_identified: true
+    api_endpoints_described: true
+    technical_specification_ready: true
+    subtasks_defined: true
+
+  next_steps:
+    - Передача задачи агенту API Designer для создания OpenAPI спецификации Battle Pass API
+    - Детализация XP calculation formulas
+    - Создание схем challenge generation algorithms
+    - Определение reward balancing system
+    - Планирование интеграции с battle-pass-service-go
+
+  history:
+    - version: '2.0.0'
+      date: 2025-12-28
+      author: Architect Agent
+      changes: |
+        Создана полная архитектура Battle Pass System
+        Расширены компоненты сезонной прогрессии
+        Добавлена схема БД и метрики производительности
+        Определены security и scalability требования
+        Статус изменен на final
