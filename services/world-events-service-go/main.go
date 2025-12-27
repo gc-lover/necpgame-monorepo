@@ -14,27 +14,38 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-service-go/server"
 )
 
 func main() {
+	// Initialize structured logging
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
+	defer logger.Sync()
+
 	// Initialize database connection
 	db, err := initDatabase()
 	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		logger.Fatal("Failed to initialize database", zap.Error(err))
 	}
 	defer db.Close()
 
 	// Initialize Redis connection
 	redisClient, err := initRedis()
 	if err != nil {
-		log.Fatalf("Failed to initialize Redis: %v", err)
+		logger.Fatal("Failed to initialize Redis", zap.Error(err))
 	}
 	defer redisClient.Close()
 
 	// Create server instance with dependencies
-	srv := server.NewServer(db, redisClient)
+	srv, err := server.NewServer(db, redisClient, logger)
+	if err != nil {
+		logger.Fatal("Failed to create server", zap.Error(err))
+	}
 
 	// Create HTTP server
 	httpServer := &http.Server{

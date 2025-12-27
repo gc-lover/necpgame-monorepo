@@ -227,12 +227,32 @@ func (s *Service) GetAbilitySynergies(ctx context.Context, abilityID uuid.UUID) 
 
 	var synergies []SynergyInfo
 	for _, synergy := range ability.Synergies {
+		// Check if synergy partner ability exists and condition is met
+		isActive := false
+		if synergy.Condition != "" {
+			// Basic synergy activation logic:
+			// - "always": always active
+			// - "partner_exists": active if partner ability exists
+			// - "both_equipped": would require checking if both abilities are equipped (not implemented yet)
+			switch synergy.Condition {
+			case "always":
+				isActive = true
+			case "partner_exists":
+				// Check if partner ability exists in database
+				partnerAbility, err := s.repo.GetAbility(ctx, synergy.PartnerAbilityID)
+				isActive = err == nil && partnerAbility != nil
+			default:
+				// Unknown condition, default to inactive
+				isActive = false
+			}
+		}
+
 		synergies = append(synergies, SynergyInfo{
 			PartnerAbilityID: synergy.PartnerAbilityID,
 			SynergyType:      synergy.Type,
 			BonusMultiplier:  synergy.BonusMultiplier,
 			Condition:        synergy.Condition,
-			IsActive:         true, // TODO: Implement synergy activation logic
+			IsActive:         isActive,
 		})
 	}
 

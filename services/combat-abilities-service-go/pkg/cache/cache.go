@@ -144,12 +144,20 @@ func (c *InMemoryCache) SetCooldown(ctx context.Context, characterID, abilityID 
 	key := characterID.String() + ":" + abilityID.String()
 	c.cooldowns[key] = remainingMs
 
-	// TODO: Implement TTL expiration
+	// Implement TTL expiration with context cancellation support
 	go func() {
-		time.Sleep(ttl)
-		c.mu.Lock()
-		delete(c.cooldowns, key)
-		c.mu.Unlock()
+		select {
+		case <-time.After(ttl):
+			c.mu.Lock()
+			delete(c.cooldowns, key)
+			c.mu.Unlock()
+		case <-ctx.Done():
+			// Context cancelled, cleanup
+			c.mu.Lock()
+			delete(c.cooldowns, key)
+			c.mu.Unlock()
+			return
+		}
 	}()
 
 	return nil

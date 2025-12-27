@@ -83,52 +83,6 @@ func (sm *SecurityMiddleware) Authenticate(next http.Handler) http.Handler {
 	})
 }
 
-// CORSMiddleware adds CORS headers
-func CORSMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-// RateLimitMiddleware provides basic rate limiting
-func RateLimitMiddleware(next http.Handler) http.Handler {
-	// Simple in-memory rate limiter (production should use Redis)
-	requests := make(map[string][]time.Time)
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		clientIP := r.RemoteAddr
-		now := time.Now()
-
-		// Clean old requests
-		var recent []time.Time
-		for _, t := range requests[clientIP] {
-			if now.Sub(t) < time.Minute {
-				recent = append(recent, t)
-			}
-		}
-		requests[clientIP] = recent
-
-		// Check rate limit (100 requests per minute)
-		if len(recent) >= 100 {
-			http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-			return
-		}
-
-		// Add current request
-		requests[clientIP] = append(requests[clientIP], now)
-
-		next.ServeHTTP(w, r)
-	})
-}
 
 type SpecializeddomainService struct {
 	api *api.Server

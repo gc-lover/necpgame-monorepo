@@ -43,13 +43,24 @@ def main():
         conn = psycopg2.connect(**conn_params)
         print("Connected to database")
 
-        # Get all SQL migration files
+        # Apply schema migrations first
         script_dir = Path(__file__).parent
         project_root = script_dir.parent
+
+        # Schema migrations (V1_00 to V1_49)
+        schema_dir = project_root / 'infrastructure' / 'liquibase' / 'schema'
+        print(f"Looking for schema migrations in: {schema_dir.absolute()}")
+        schema_files = sorted(schema_dir.glob('V*.sql'))
+        print(f"Found {len(schema_files)} schema files")
+
+        # Data migrations (V1_50+)
         migrations_dir = project_root / 'infrastructure' / 'liquibase' / 'migrations'
-        print(f"Looking for migrations in: {migrations_dir.absolute()}")
-        sql_files = sorted(migrations_dir.glob('V*.sql'))
-        print(f"Found {len(sql_files)} SQL files: {[str(f.name) for f in sql_files[:3]]}")
+        print(f"Looking for data migrations in: {migrations_dir.absolute()}")
+        migration_files = sorted(migrations_dir.glob('V*.sql'))
+        print(f"Found {len(migration_files)} data migration files")
+
+        sql_files = schema_files + migration_files
+        print(f"Total SQL files to apply: {len(sql_files)}")
 
         if not sql_files:
             print("No SQL migration files found")
