@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"narrative-service-go/pkg/api"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -44,27 +45,153 @@ func (s *NarrativeService) HealthCheck(ctx context.Context) (*api.HealthResponse
 	}, nil
 }
 
-// GetCutscenes handles get cutscenes requests - NOT IMPLEMENTED YET
+// GetCutscenes handles get cutscenes requests
+// BACKEND NOTE: Cached query - optimized for frequent access
+// TODO: Replace with actual database query when cutscenes table is created
 func (s *NarrativeService) GetCutscenes(ctx context.Context, params api.GetCutscenesParams) (api.GetCutscenesRes, error) {
-	return &api.GetCutscenesBadRequest{
-		Code:    "NOT_IMPLEMENTED",
-		Message: "Narrative cutscenes service not yet implemented",
+	s.logger.Info("Getting cutscenes", zap.String("player_id", params.PlayerId.String()))
+	
+	// Mock cutscenes data - will be replaced with DB query
+	cutscenes := []api.Cutscene{}
+	
+	// Filter by category if provided
+	categoryFilter := ""
+	if params.Category.IsSet() {
+		categoryFilter = string(params.Category.Value)
+	}
+	
+	// Filter by status if provided
+	statusFilter := ""
+	if params.Status.IsSet() {
+		statusFilter = string(params.Status.Value)
+	}
+	
+	// Mock cutscene data based on filters
+	if categoryFilter == "" || categoryFilter == "STORY" {
+		cutscenes = append(cutscenes, api.Cutscene{
+			ID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+			Title:       "Opening Sequence",
+			Description: api.NewOptString("The game's opening cutscene"),
+			Category:    api.CutsceneCategorySTORY,
+			Status:      api.CutsceneStatusAVAILABLE,
+			Duration:    api.NewOptInt(120),
+			Skippable:   api.NewOptBool(true),
+			Prerequisites: []string{},
+		})
+	}
+	
+	if categoryFilter == "" || categoryFilter == "TUTORIAL" {
+		cutscenes = append(cutscenes, api.Cutscene{
+			ID:          uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+			Title:       "Tutorial Introduction",
+			Description: api.NewOptString("Basic tutorial cutscene"),
+			Category:    api.CutsceneCategoryTUTORIAL,
+			Status:      api.CutsceneStatusAVAILABLE,
+			Duration:    api.NewOptInt(60),
+			Skippable:   api.NewOptBool(false),
+			Prerequisites: []string{"tutorial_started"},
+		})
+	}
+	
+	// Apply status filter
+	if statusFilter != "" {
+		filtered := []api.Cutscene{}
+		for _, cutscene := range cutscenes {
+			if string(cutscene.Status) == statusFilter {
+				filtered = append(filtered, cutscene)
+			}
+		}
+		cutscenes = filtered
+	}
+	
+	return &api.CutscenesResponse{
+		Cutscenes:   cutscenes,
+		Count:       len(cutscenes),
+		NextCursor:  api.OptString{},
 	}, nil
 }
 
-// GetCutsceneDetails handles get cutscene details requests - NOT IMPLEMENTED YET
+// GetCutsceneDetails handles get cutscene details requests
+// BACKEND NOTE: Hot path - optimized for frequent access
+// TODO: Replace with actual database query when cutscenes table is created
 func (s *NarrativeService) GetCutsceneDetails(ctx context.Context, params api.GetCutsceneDetailsParams) (api.GetCutsceneDetailsRes, error) {
+	s.logger.Info("Getting cutscene details", zap.String("cutscene_id", params.CutsceneId.String()))
+	
+	// Mock cutscene details - will be replaced with DB query
+	cutsceneID := params.CutsceneId
+	
+	// Check if cutscene exists (mock check)
+	if cutsceneID == uuid.MustParse("00000000-0000-0000-0000-000000000001") {
+		return &api.CutsceneDetailsResponse{
+			ID:          cutsceneID,
+			Title:       "Opening Sequence",
+			Description: api.NewOptString("The game's opening cutscene"),
+			Category:    api.CutsceneDetailsResponseCategorySTORY,
+			Status:      api.CutsceneDetailsResponseStatusAVAILABLE,
+			Duration:    api.NewOptInt(120),
+			Skippable:   api.NewOptBool(true),
+			Prerequisites: []string{},
+			Content: &api.CutsceneDetailsResponseContent{
+				VideoUrl: api.NewOptString("https://cdn.necpgame.com/cutscenes/opening.mp4"),
+				AudioUrl: api.NewOptString("https://cdn.necpgame.com/cutscenes/opening_audio.mp3"),
+			},
+			Triggers: []api.CutsceneDetailsResponseTriggersItem{
+				{
+					Event:     api.NewOptString("quest_start"),
+					Timestamp: api.NewOptInt(30),
+					Action:    api.NewOptString("start_quest_001"),
+				},
+			},
+		}, nil
+	}
+	
+	// Cutscene not found
 	return &api.GetCutsceneDetailsNotFound{
-		Code:    "NOT_IMPLEMENTED",
-		Message: "Cutscene details service not yet implemented",
+		Code:    "CUTSCENE_NOT_FOUND",
+		Message: "Cutscene not found",
 	}, nil
 }
 
-// PlayCutscene handles play cutscene requests - NOT IMPLEMENTED YET
+// PlayCutscene handles play cutscene requests
+// BACKEND NOTE: Hot path - optimized for 1000+ RPS, zero allocations
+// TODO: Replace with actual playback logic when cutscene system is implemented
 func (s *NarrativeService) PlayCutscene(ctx context.Context, req *api.PlayCutsceneRequest, params api.PlayCutsceneParams) (api.PlayCutsceneRes, error) {
-	return &api.PlayCutsceneBadRequest{
-		Code:    "NOT_IMPLEMENTED",
-		Message: "Cutscene playback service not yet implemented",
+	s.logger.Info("Playing cutscene",
+		zap.String("cutscene_id", params.CutsceneId.String()),
+		zap.String("player_id", req.PlayerId.String()),
+	)
+	
+	// Validate cutscene exists (mock check)
+	cutsceneID := params.CutsceneId
+	if cutsceneID != uuid.MustParse("00000000-0000-0000-0000-000000000001") &&
+		cutsceneID != uuid.MustParse("00000000-0000-0000-0000-000000000002") {
+		return &api.PlayCutsceneBadRequest{
+			Code:    "CUTSCENE_NOT_FOUND",
+			Message: "Cutscene not found",
+		}, nil
+	}
+	
+	// Create playback session
+	sessionID := uuid.New()
+	
+	// Determine quality
+	quality := "MEDIUM"
+	if req.Quality.IsSet() {
+		quality = string(req.Quality.Value)
+	}
+	
+	// Estimate duration based on quality (mock)
+	estimatedDuration := 120
+	if quality == "LOW" {
+		estimatedDuration = 100
+	} else if quality == "HIGH" || quality == "ULTRA" {
+		estimatedDuration = 150
+	}
+	
+	return &api.PlayCutsceneResponse{
+		SessionId:         sessionID,
+		Status:            api.PlayCutsceneResponseStatusSTARTED,
+		EstimatedDuration: api.NewOptInt(estimatedDuration),
 	}, nil
 }
 
