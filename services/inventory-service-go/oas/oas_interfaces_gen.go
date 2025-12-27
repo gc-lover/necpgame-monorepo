@@ -25,10 +25,22 @@ type GetExampleRes interface {
 	getExampleRes()
 }
 
+type GetPlayerEquipmentRes interface {
+	getPlayerEquipmentRes()
+}
+
 type ListExamplesRes interface {
 	listExamplesRes()
 }
 
+type ModifyEquipmentRes interface {
+	modifyEquipmentRes()
+}
+
 type UpdateExampleRes interface {
 	updateExampleRes()
+}
+
+type UseItemRes interface {
+	useItemRes()
 }

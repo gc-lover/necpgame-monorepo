@@ -404,7 +404,7 @@ class ConceptDirectorAutomation(BaseScript):
         """Add command-line arguments specific to this script."""
         self.parser.add_argument(
             '--action',
-            choices=['analyze', 'prioritize', 'optimize', 'validate', 'report', 'train-ml', 'predict-bottlenecks', 'auto-assign', 'create-tasks', 'monitor-progress', 'dashboard'],
+            choices=['analyze', 'prioritize', 'optimize', 'validate', 'report', 'train-ml', 'predict-bottlenecks', 'auto-assign', 'create-tasks', 'monitor-progress', 'dashboard', 'auto-create-tasks', 'train-from-github'],
             required=True,
             help='Action to perform'
         )
@@ -488,6 +488,10 @@ class ConceptDirectorAutomation(BaseScript):
                 self._monitor_progress(args.scope, args.output_format)
             elif args.action == 'dashboard':
                 self._generate_dashboard(args.scope, args.output_format)
+            elif args.action == 'auto-create-tasks':
+                self._auto_create_tasks(args.scope, args.output_format)
+            elif args.action == 'train-from-github':
+                self._train_ml_from_github_data(args.scope, args.output_format)
             else:
                 raise ValueError(f"Unsupported action: {args.action}")
 
@@ -1603,11 +1607,42 @@ This task has been identified as high priority for immediate attention.
         return recommendations
 
     def _create_github_task(self, task_spec: Dict[str, Any]) -> Optional[str]:
-        """Create a new task in GitHub."""
-        try:
-            # This would integrate with GitHub Issues API
-            # For now, return mock ID
+        """Create a new task in GitHub Issues and add to project."""
+        if not self.github_client:
+            self.logger.warning("GitHub client not available, skipping task creation")
             return f"mock_issue_{random.randint(1000, 9999)}"
+
+        try:
+            # Create GitHub Issue
+            issue_url = f"{self.github_client.base_url}/repos/{self.github_client.owner}/necpgame-monorepo/issues"
+            issue_payload = {
+                "title": task_spec["title"],
+                "body": task_spec["description"],
+                "labels": task_spec.get("labels", [])
+            }
+
+            issue_response = self.github_client.session.post(issue_url, json=issue_payload)
+            if issue_response.status_code != 201:
+                self.logger.error(f"Failed to create issue: {issue_response.status_code}")
+                return None
+
+            issue_data = issue_response.json()
+            issue_number = issue_data["number"]
+
+            # Add issue to GitHub Project
+            project_url = f"{self.github_client.base_url}/users/{self.github_client.owner}/projects/{self.github_client.project_number}/items"
+            project_payload = {
+                "content_id": issue_data["node_id"],
+                "content_type": "Issue"
+            }
+
+            project_response = self.github_client.session.post(project_url, json=project_payload)
+            if project_response.status_code != 201:
+                self.logger.warning(f"Failed to add issue to project: {project_response.status_code}")
+
+            self.logger.info(f"Created GitHub task: #{issue_number} - {task_spec['title']}")
+            return str(issue_number)
+
         except Exception as e:
             self.logger.error(f"Failed to create GitHub task: {e}")
             return None
@@ -1691,6 +1726,324 @@ This task has been identified as high priority for immediate attention.
                 'Consider additional QA resources'
             ]
         }
+
+    def _auto_create_tasks(self, scope: str, output_format: str) -> None:
+        """Automatically create tasks based on workflow analysis and bottlenecks."""
+        self.logger.info(f"Auto-creating tasks for scope: {scope}")
+
+        # Analyze current workflow to identify gaps
+        analysis = self._analyze_workflow_gaps(scope)
+
+        # Generate task recommendations
+        task_recommendations = self._generate_task_recommendations(analysis)
+
+        # Create tasks in GitHub
+        created_tasks = []
+        for task_spec in task_recommendations:
+            task_id = self._create_github_task(task_spec)
+            if task_id:
+                created_tasks.append({
+                    "id": task_id,
+                    "title": task_spec["title"],
+                    "type": task_spec.get("type", "UNKNOWN")
+                })
+
+        # Output results
+        result = {
+            "scope": scope,
+            "analysis_summary": analysis,
+            "created_tasks": created_tasks,
+            "total_created": len(created_tasks)
+        }
+
+        self._output_results(result, f"auto_created_tasks_{scope}", output_format)
+        self.logger.info(f"Auto-created {len(created_tasks)} tasks for scope {scope}")
+
+    def _analyze_workflow_gaps(self, scope: str) -> Dict[str, Any]:
+        """Analyze workflow to identify gaps and missing tasks."""
+        gaps = {
+            "missing_api_specs": [],
+            "missing_migrations": [],
+            "missing_content": [],
+            "bottleneck_areas": [],
+            "priority_gaps": []
+        }
+
+        # Check for missing API specifications
+        api_domains = ['combat', 'economy', 'social', 'world', 'guild']
+        for domain in api_domains:
+            spec_path = f"proto/openapi/{domain}-domain/main.yaml"
+            if not os.path.exists(spec_path):
+                gaps["missing_api_specs"].append(domain)
+
+        # Check for missing database migrations
+        # This would integrate with liquibase structure
+
+        # Analyze current bottlenecks
+        bottlenecks = self._identify_bottlenecks(scope)
+        gaps["bottleneck_areas"] = bottlenecks
+
+        return gaps
+
+    def _generate_task_recommendations(self, analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate specific task recommendations based on analysis."""
+        tasks = []
+
+        # Create tasks for missing API specs
+        for domain in analysis["missing_api_specs"]:
+            tasks.append({
+                "title": f"[API] Create OpenAPI specification for {domain}-domain",
+                "description": f"""Create enterprise-grade OpenAPI 3.0 specification for {domain} domain.
+
+Requirements:
+- Use TEMPLATE_USAGE_GUIDE.md structure
+- Include all CRUD operations
+- Add proper schemas and examples
+- Backend optimization hints
+- Security-first approach
+
+Related: proto/openapi/TEMPLATE_USAGE_GUIDE.md""",
+                "labels": ["api", "specification", domain],
+                "type": "API"
+            })
+
+        # Create tasks for bottleneck areas
+        for bottleneck in analysis["bottleneck_areas"][:3]:  # Top 3 bottlenecks
+            bottleneck_type = bottleneck.get('stage', 'unknown').replace('_', ' ')
+            bottleneck_area = bottleneck.get('stage', 'general')
+
+            tasks.append({
+                "title": f"[Optimization] Address {bottleneck_type} bottleneck",
+                "description": f"""Optimize {bottleneck_type} bottleneck.
+
+Current issue: {bottleneck.get('recommendation', 'Performance bottleneck detected')}
+Impact score: {bottleneck.get('impact_score', 'Medium')}
+Average wait time: {bottleneck.get('average_wait_time', 'Unknown')}
+
+Recommended actions:
+- Profile current implementation
+- Identify optimization opportunities
+- Implement performance improvements
+- Add monitoring and metrics""",
+                "labels": ["optimization", "performance", bottleneck_area],
+                "type": "BACKEND"
+            })
+
+        return tasks
+
+    def _train_ml_from_github_data(self, scope: str, output_format: str) -> None:
+        """Train ML model using real GitHub Projects data."""
+        self.logger.info(f"Training ML model from GitHub data for scope: {scope}")
+
+        # Collect training data from GitHub Projects
+        training_data = self._collect_github_training_data(scope)
+
+        if not training_data:
+            self.logger.warning("No training data available from GitHub")
+            return
+
+        # Train the ML model
+        self.prioritization_engine.train(training_data)
+
+        # Validate model performance
+        validation_results = self._validate_ml_model(training_data)
+
+        # Save model if good performance
+        if validation_results.get('accuracy', 0) > 0.7:
+            self._save_ml_model()
+            self.logger.info("ML model trained and saved successfully")
+        else:
+            self.logger.warning("ML model performance below threshold, using rule-based fallback")
+
+        # Output results
+        result = {
+            "scope": scope,
+            "training_samples": len(training_data),
+            "validation_results": validation_results,
+            "model_saved": validation_results.get('accuracy', 0) > 0.7
+        }
+
+        self._output_results(result, output_format)
+
+    def _collect_github_training_data(self, scope: str) -> List[Dict[str, Any]]:
+        """Collect training data from GitHub Projects items."""
+        training_data = []
+
+        try:
+            # Get all project items
+            items = self.github_client.get_project_items()
+
+            for item in items:
+                # Extract features from GitHub item
+                task_data = self._extract_task_features_from_github(item)
+
+                # Only include completed tasks with clear priority indicators
+                if task_data and task_data.get('completed'):
+                    training_data.append(task_data)
+
+        except Exception as e:
+            self.logger.error(f"Failed to collect GitHub training data: {e}")
+
+        return training_data
+
+    def _extract_task_features_from_github(self, item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Extract task features from GitHub project item."""
+        try:
+            fields = item.get('fields', [])
+            issue_details = item.get('issue_details', {})
+
+            # Extract basic task info
+            task_type = None
+            for field in fields:
+                if field.get('name') == 'TYPE':
+                    task_type = field.get('value', {}).get('name')
+
+            # Calculate task age
+            created_at = issue_details.get('created_at')
+            closed_at = issue_details.get('closed_at')
+
+            if not created_at:
+                return None
+
+            age_days = (datetime.now() - datetime.fromisoformat(created_at.replace('Z', '+00:00'))).days
+
+            # Determine priority based on completion time and type
+            completion_time = None
+            if closed_at:
+                completion_time = (datetime.fromisoformat(closed_at.replace('Z', '+00:00')) -
+                                 datetime.fromisoformat(created_at.replace('Z', '+00:00'))).days
+
+            # Calculate priority score based on completion patterns
+            priority_score = self._calculate_priority_from_completion(task_type, age_days, completion_time)
+
+            return {
+                'type': task_type,
+                'age_days': age_days,
+                'completion_time': completion_time,
+                'actual_priority': priority_score,
+                'completed': closed_at is not None,
+                'business_impact': self._assess_business_impact(issue_details),
+                'dependencies': [],  # Would need more complex analysis
+                'complexity': self._assess_task_complexity_from_github(issue_details)
+            }
+
+        except Exception as e:
+            self.logger.warning(f"Failed to extract features from GitHub item: {e}")
+            return None
+
+    def _calculate_priority_from_completion(self, task_type: str, age_days: int, completion_time: Optional[int]) -> float:
+        """Calculate priority score based on completion patterns."""
+        base_priority = 0.5
+
+        # Type-based priority
+        type_priorities = {
+            'API': 0.8,
+            'BACKEND': 0.7,
+            'DATA': 0.6,
+            'MIGRATION': 0.6,
+            'UE5': 0.7
+        }
+        base_priority = type_priorities.get(task_type, 0.5)
+
+        # Age factor - older tasks might be more important
+        if age_days > 7:
+            base_priority += 0.1
+
+        # Completion time factor - quickly completed tasks might be high priority
+        if completion_time and completion_time < 2:
+            base_priority += 0.2
+        elif completion_time and completion_time > 14:
+            base_priority -= 0.1
+
+        return max(0.0, min(1.0, base_priority))
+
+    def _assess_business_impact(self, issue_details: Dict[str, Any]) -> str:
+        """Assess business impact from issue details."""
+        body = issue_details.get('body', '').lower()
+        title = issue_details.get('title', '').lower()
+
+        if any(word in body or word in title for word in ['critical', 'blocker', 'urgent', 'high priority']):
+            return 'high'
+        elif any(word in body or word in title for word in ['important', 'medium', 'should']):
+            return 'medium'
+        else:
+            return 'low'
+
+    def _assess_task_complexity_from_github(self, issue_details: Dict[str, Any]) -> float:
+        """Assess task complexity from GitHub issue details."""
+        body = issue_details.get('body', '')
+        body_length = len(body)
+
+        # Complexity based on description length and keywords
+        complexity = 0.3  # base
+
+        if body_length > 1000:
+            complexity += 0.3
+        elif body_length > 500:
+            complexity += 0.2
+        elif body_length > 200:
+            complexity += 0.1
+
+        # Check for complexity indicators
+        complexity_keywords = ['complex', 'difficult', 'challenging', 'multiple', 'integration', 'refactor']
+        if any(keyword in body.lower() for keyword in complexity_keywords):
+            complexity += 0.2
+
+        return min(1.0, complexity)
+
+    def _validate_ml_model(self, training_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Validate ML model performance."""
+        if not self.prioritization_engine.is_trained:
+            return {"accuracy": 0.0, "error": "Model not trained"}
+
+        # Simple validation using training data split
+        test_sample_size = max(1, len(training_data) // 5)
+        test_sample = training_data[:test_sample_size]
+
+        predictions = []
+        actuals = []
+
+        for task in test_sample:
+            prediction = self.prioritization_engine.predict_priority(task)
+            actual = task.get('actual_priority', 0.5)
+
+            predictions.append(prediction)
+            actuals.append(actual)
+
+        # Calculate simple accuracy metric
+        if predictions and actuals:
+            accuracy = 1.0 - (sum(abs(p - a) for p, a in zip(predictions, actuals)) / len(predictions))
+            accuracy = max(0.0, min(1.0, accuracy))
+        else:
+            accuracy = 0.0
+
+        return {
+            "accuracy": accuracy,
+            "test_samples": len(test_sample),
+            "avg_prediction_error": statistics.mean([abs(p - a) for p, a in zip(predictions, actuals)]) if predictions else 0.0
+        }
+
+    def _save_ml_model(self) -> None:
+        """Save trained ML model to disk."""
+        try:
+            import joblib
+
+            model_data = {
+                'model': self.prioritization_engine.model,
+                'scaler': self.prioritization_engine.scaler,
+                'weights': self.prioritization_engine.weights,
+                'baseline_stats': self.prioritization_engine.baseline_stats,
+                'is_trained': self.prioritization_engine.is_trained
+            }
+
+            model_path = "models/prioritization_model.pkl"
+            os.makedirs(os.path.dirname(model_path), exist_ok=True)
+            joblib.dump(model_data, model_path)
+
+            self.logger.info(f"ML model saved to {model_path}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to save ML model: {e}")
 
 
 def main():

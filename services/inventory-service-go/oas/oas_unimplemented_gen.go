@@ -87,6 +87,19 @@ func (UnimplementedHandler) GetExample(ctx context.Context, params GetExamplePar
 	return r, ht.ErrNotImplemented
 }
 
+// GetPlayerEquipment implements getPlayerEquipment operation.
+//
+// **Enterprise-grade equipment retrieval endpoint**
+// Retrieves player's current equipment setup including all gear slots and equipped items.
+// Optimized for equipment UI and character stats calculation.
+// **Performance:** <15ms P95 (HOT PATH), Redis cached
+// **Memory optimization:** 30-50% savings through struct field alignment.
+//
+// GET /equipment
+func (UnimplementedHandler) GetPlayerEquipment(ctx context.Context) (r GetPlayerEquipmentRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListExamples implements listExamples operation.
 //
 // **Enterprise-grade listing endpoint**
@@ -99,6 +112,19 @@ func (UnimplementedHandler) ListExamples(ctx context.Context, params ListExample
 	return r, ht.ErrNotImplemented
 }
 
+// ModifyEquipment implements modifyEquipment operation.
+//
+// **Enterprise-grade equipment modification endpoint**
+// Allows players to equip and unequip items, with validation of requirements and stat calculations.
+// Supports bulk equipment changes and automatic stat recalculation.
+// **Performance:** <50ms P95, includes stat recalculation
+// **Business rules:** Level requirements, class restrictions, equipment conflicts.
+//
+// PUT /equipment
+func (UnimplementedHandler) ModifyEquipment(ctx context.Context, req *ModifyEquipmentReq) (r ModifyEquipmentRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // UpdateExample implements updateExample operation.
 //
 // **Enterprise-grade update endpoint**
@@ -108,5 +134,18 @@ func (UnimplementedHandler) ListExamples(ctx context.Context, params ListExample
 //
 // PUT /examples/{example_id}
 func (UnimplementedHandler) UpdateExample(ctx context.Context, req *UpdateExampleRequest, params UpdateExampleParams) (r UpdateExampleRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UseItem implements useItem operation.
+//
+// **Enterprise-grade item usage endpoint**
+// Allows players to use consumable items, activate abilities, or trigger item effects.
+// Supports stackable items, cooldowns, and usage validation.
+// **Performance:** <25ms P95, includes effect application
+// **Business rules:** Cooldowns, usage limits, effect stacking.
+//
+// POST /items/{item_id}/use
+func (UnimplementedHandler) UseItem(ctx context.Context, req OptUseItemReq, params UseItemParams) (r UseItemRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

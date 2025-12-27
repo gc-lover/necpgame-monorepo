@@ -61,64 +61,100 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
-			case 'e': // Prefix: "examples"
+			case 'e': // Prefix: "e"
 
-				if l := len("examples"); len(elem) >= l && elem[0:l] == "examples" {
+				if l := len("e"); len(elem) >= l && elem[0:l] == "e" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					switch r.Method {
-					case "GET":
-						s.handleListExamplesRequest([0]string{}, elemIsEscaped, w, r)
-					case "POST":
-						s.handleCreateExampleRequest([0]string{}, elemIsEscaped, w, r)
-					default:
-						s.notAllowed(w, r, "GET,POST")
-					}
-
-					return
+					break
 				}
 				switch elem[0] {
-				case '/': // Prefix: "/"
+				case 'q': // Prefix: "quipment"
 
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+					if l := len("quipment"); len(elem) >= l && elem[0:l] == "quipment" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
-					// Param: "example_id"
-					// Leaf parameter, slashes are prohibited
-					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
-						break
-					}
-					args[0] = elem
-					elem = ""
-
 					if len(elem) == 0 {
 						// Leaf node.
 						switch r.Method {
-						case "DELETE":
-							s.handleDeleteExampleRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
 						case "GET":
-							s.handleGetExampleRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
+							s.handleGetPlayerEquipmentRequest([0]string{}, elemIsEscaped, w, r)
 						case "PUT":
-							s.handleUpdateExampleRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
+							s.handleModifyEquipmentRequest([0]string{}, elemIsEscaped, w, r)
 						default:
-							s.notAllowed(w, r, "DELETE,GET,PUT")
+							s.notAllowed(w, r, "GET,PUT")
 						}
 
 						return
+					}
+
+				case 'x': // Prefix: "xamples"
+
+					if l := len("xamples"); len(elem) >= l && elem[0:l] == "xamples" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch r.Method {
+						case "GET":
+							s.handleListExamplesRequest([0]string{}, elemIsEscaped, w, r)
+						case "POST":
+							s.handleCreateExampleRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "GET,POST")
+						}
+
+						return
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "example_id"
+						// Leaf parameter, slashes are prohibited
+						idx := strings.IndexByte(elem, '/')
+						if idx >= 0 {
+							break
+						}
+						args[0] = elem
+						elem = ""
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "DELETE":
+								s.handleDeleteExampleRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							case "GET":
+								s.handleGetExampleRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							case "PUT":
+								s.handleUpdateExampleRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "DELETE,GET,PUT")
+							}
+
+							return
+						}
+
 					}
 
 				}
@@ -194,6 +230,51 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							return
 						}
 
+					}
+
+				}
+
+			case 'i': // Prefix: "items/"
+
+				if l := len("items/"); len(elem) >= l && elem[0:l] == "items/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				// Param: "item_id"
+				// Match until "/"
+				idx := strings.IndexByte(elem, '/')
+				if idx < 0 {
+					idx = len(elem)
+				}
+				args[0] = elem[:idx]
+				elem = elem[idx:]
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/use"
+
+					if l := len("/use"); len(elem) >= l && elem[0:l] == "/use" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleUseItemRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
 					}
 
 				}
@@ -298,89 +379,137 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
-			case 'e': // Prefix: "examples"
+			case 'e': // Prefix: "e"
 
-				if l := len("examples"); len(elem) >= l && elem[0:l] == "examples" {
+				if l := len("e"); len(elem) >= l && elem[0:l] == "e" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					switch method {
-					case "GET":
-						r.name = ListExamplesOperation
-						r.summary = "List examples with filtering and pagination"
-						r.operationID = "listExamples"
-						r.operationGroup = ""
-						r.pathPattern = "/examples"
-						r.args = args
-						r.count = 0
-						return r, true
-					case "POST":
-						r.name = CreateExampleOperation
-						r.summary = "Create new example"
-						r.operationID = "createExample"
-						r.operationGroup = ""
-						r.pathPattern = "/examples"
-						r.args = args
-						r.count = 0
-						return r, true
-					default:
-						return
-					}
+					break
 				}
 				switch elem[0] {
-				case '/': // Prefix: "/"
+				case 'q': // Prefix: "quipment"
 
-					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+					if l := len("quipment"); len(elem) >= l && elem[0:l] == "quipment" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
-					// Param: "example_id"
-					// Leaf parameter, slashes are prohibited
-					idx := strings.IndexByte(elem, '/')
-					if idx >= 0 {
-						break
-					}
-					args[0] = elem
-					elem = ""
-
 					if len(elem) == 0 {
 						// Leaf node.
 						switch method {
-						case "DELETE":
-							r.name = DeleteExampleOperation
-							r.summary = "Delete example"
-							r.operationID = "deleteExample"
-							r.operationGroup = ""
-							r.pathPattern = "/examples/{example_id}"
-							r.args = args
-							r.count = 1
-							return r, true
 						case "GET":
-							r.name = GetExampleOperation
-							r.summary = "Get specific example by ID"
-							r.operationID = "getExample"
+							r.name = GetPlayerEquipmentOperation
+							r.summary = "Get player equipment"
+							r.operationID = "getPlayerEquipment"
 							r.operationGroup = ""
-							r.pathPattern = "/examples/{example_id}"
+							r.pathPattern = "/equipment"
 							r.args = args
-							r.count = 1
+							r.count = 0
 							return r, true
 						case "PUT":
-							r.name = UpdateExampleOperation
-							r.summary = "Update existing example"
-							r.operationID = "updateExample"
+							r.name = ModifyEquipmentOperation
+							r.summary = "Equip/unequip items"
+							r.operationID = "modifyEquipment"
 							r.operationGroup = ""
-							r.pathPattern = "/examples/{example_id}"
+							r.pathPattern = "/equipment"
 							r.args = args
-							r.count = 1
+							r.count = 0
 							return r, true
 						default:
 							return
 						}
+					}
+
+				case 'x': // Prefix: "xamples"
+
+					if l := len("xamples"); len(elem) >= l && elem[0:l] == "xamples" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "GET":
+							r.name = ListExamplesOperation
+							r.summary = "List examples with filtering and pagination"
+							r.operationID = "listExamples"
+							r.operationGroup = ""
+							r.pathPattern = "/examples"
+							r.args = args
+							r.count = 0
+							return r, true
+						case "POST":
+							r.name = CreateExampleOperation
+							r.summary = "Create new example"
+							r.operationID = "createExample"
+							r.operationGroup = ""
+							r.pathPattern = "/examples"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "example_id"
+						// Leaf parameter, slashes are prohibited
+						idx := strings.IndexByte(elem, '/')
+						if idx >= 0 {
+							break
+						}
+						args[0] = elem
+						elem = ""
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "DELETE":
+								r.name = DeleteExampleOperation
+								r.summary = "Delete example"
+								r.operationID = "deleteExample"
+								r.operationGroup = ""
+								r.pathPattern = "/examples/{example_id}"
+								r.args = args
+								r.count = 1
+								return r, true
+							case "GET":
+								r.name = GetExampleOperation
+								r.summary = "Get specific example by ID"
+								r.operationID = "getExample"
+								r.operationGroup = ""
+								r.pathPattern = "/examples/{example_id}"
+								r.args = args
+								r.count = 1
+								return r, true
+							case "PUT":
+								r.name = UpdateExampleOperation
+								r.summary = "Update existing example"
+								r.operationID = "updateExample"
+								r.operationGroup = ""
+								r.pathPattern = "/examples/{example_id}"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
 					}
 
 				}
@@ -471,6 +600,54 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							}
 						}
 
+					}
+
+				}
+
+			case 'i': // Prefix: "items/"
+
+				if l := len("items/"); len(elem) >= l && elem[0:l] == "items/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				// Param: "item_id"
+				// Match until "/"
+				idx := strings.IndexByte(elem, '/')
+				if idx < 0 {
+					idx = len(elem)
+				}
+				args[0] = elem[:idx]
+				elem = elem[idx:]
+
+				if len(elem) == 0 {
+					break
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/use"
+
+					if l := len("/use"); len(elem) >= l && elem[0:l] == "/use" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch method {
+						case "POST":
+							r.name = UseItemOperation
+							r.summary = "Use an item"
+							r.operationID = "useItem"
+							r.operationGroup = ""
+							r.pathPattern = "/items/{item_id}/use"
+							r.args = args
+							r.count = 1
+							return r, true
+						default:
+							return
+						}
 					}
 
 				}

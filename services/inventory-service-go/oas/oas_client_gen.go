@@ -84,6 +84,16 @@ type Invoker interface {
 	//
 	// GET /examples/{example_id}
 	GetExample(ctx context.Context, params GetExampleParams) (GetExampleRes, error)
+	// GetPlayerEquipment invokes getPlayerEquipment operation.
+	//
+	// **Enterprise-grade equipment retrieval endpoint**
+	// Retrieves player's current equipment setup including all gear slots and equipped items.
+	// Optimized for equipment UI and character stats calculation.
+	// **Performance:** <15ms P95 (HOT PATH), Redis cached
+	// **Memory optimization:** 30-50% savings through struct field alignment.
+	//
+	// GET /equipment
+	GetPlayerEquipment(ctx context.Context) (GetPlayerEquipmentRes, error)
 	// ListExamples invokes listExamples operation.
 	//
 	// **Enterprise-grade listing endpoint**
@@ -93,6 +103,16 @@ type Invoker interface {
 	//
 	// GET /examples
 	ListExamples(ctx context.Context, params ListExamplesParams) (ListExamplesRes, error)
+	// ModifyEquipment invokes modifyEquipment operation.
+	//
+	// **Enterprise-grade equipment modification endpoint**
+	// Allows players to equip and unequip items, with validation of requirements and stat calculations.
+	// Supports bulk equipment changes and automatic stat recalculation.
+	// **Performance:** <50ms P95, includes stat recalculation
+	// **Business rules:** Level requirements, class restrictions, equipment conflicts.
+	//
+	// PUT /equipment
+	ModifyEquipment(ctx context.Context, request *ModifyEquipmentReq) (ModifyEquipmentRes, error)
 	// UpdateExample invokes updateExample operation.
 	//
 	// **Enterprise-grade update endpoint**
@@ -102,6 +122,16 @@ type Invoker interface {
 	//
 	// PUT /examples/{example_id}
 	UpdateExample(ctx context.Context, request *UpdateExampleRequest, params UpdateExampleParams) (UpdateExampleRes, error)
+	// UseItem invokes useItem operation.
+	//
+	// **Enterprise-grade item usage endpoint**
+	// Allows players to use consumable items, activate abilities, or trigger item effects.
+	// Supports stackable items, cooldowns, and usage validation.
+	// **Performance:** <25ms P95, includes effect application
+	// **Business rules:** Cooldowns, usage limits, effect stacking.
+	//
+	// POST /items/{item_id}/use
+	UseItem(ctx context.Context, request OptUseItemReq, params UseItemParams) (UseItemRes, error)
 }
 
 // Client implements OAS client.
@@ -946,6 +976,116 @@ func (c *Client) sendGetExample(ctx context.Context, params GetExampleParams) (r
 	return result, nil
 }
 
+// GetPlayerEquipment invokes getPlayerEquipment operation.
+//
+// **Enterprise-grade equipment retrieval endpoint**
+// Retrieves player's current equipment setup including all gear slots and equipped items.
+// Optimized for equipment UI and character stats calculation.
+// **Performance:** <15ms P95 (HOT PATH), Redis cached
+// **Memory optimization:** 30-50% savings through struct field alignment.
+//
+// GET /equipment
+func (c *Client) GetPlayerEquipment(ctx context.Context) (GetPlayerEquipmentRes, error) {
+	res, err := c.sendGetPlayerEquipment(ctx)
+	return res, err
+}
+
+func (c *Client) sendGetPlayerEquipment(ctx context.Context) (res GetPlayerEquipmentRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getPlayerEquipment"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/equipment"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetPlayerEquipmentOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/equipment"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetPlayerEquipmentOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetPlayerEquipmentResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // ListExamples invokes listExamples operation.
 //
 // **Enterprise-grade listing endpoint**
@@ -1144,6 +1284,119 @@ func (c *Client) sendListExamples(ctx context.Context, params ListExamplesParams
 	return result, nil
 }
 
+// ModifyEquipment invokes modifyEquipment operation.
+//
+// **Enterprise-grade equipment modification endpoint**
+// Allows players to equip and unequip items, with validation of requirements and stat calculations.
+// Supports bulk equipment changes and automatic stat recalculation.
+// **Performance:** <50ms P95, includes stat recalculation
+// **Business rules:** Level requirements, class restrictions, equipment conflicts.
+//
+// PUT /equipment
+func (c *Client) ModifyEquipment(ctx context.Context, request *ModifyEquipmentReq) (ModifyEquipmentRes, error) {
+	res, err := c.sendModifyEquipment(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendModifyEquipment(ctx context.Context, request *ModifyEquipmentReq) (res ModifyEquipmentRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("modifyEquipment"),
+		semconv.HTTPRequestMethodKey.String("PUT"),
+		semconv.URLTemplateKey.String("/equipment"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ModifyEquipmentOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/equipment"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "PUT", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeModifyEquipmentRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, ModifyEquipmentOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeModifyEquipmentResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // UpdateExample invokes updateExample operation.
 //
 // **Enterprise-grade update endpoint**
@@ -1298,6 +1551,138 @@ func (c *Client) sendUpdateExample(ctx context.Context, request *UpdateExampleRe
 
 	stage = "DecodeResponse"
 	result, err := decodeUpdateExampleResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// UseItem invokes useItem operation.
+//
+// **Enterprise-grade item usage endpoint**
+// Allows players to use consumable items, activate abilities, or trigger item effects.
+// Supports stackable items, cooldowns, and usage validation.
+// **Performance:** <25ms P95, includes effect application
+// **Business rules:** Cooldowns, usage limits, effect stacking.
+//
+// POST /items/{item_id}/use
+func (c *Client) UseItem(ctx context.Context, request OptUseItemReq, params UseItemParams) (UseItemRes, error) {
+	res, err := c.sendUseItem(ctx, request, params)
+	return res, err
+}
+
+func (c *Client) sendUseItem(ctx context.Context, request OptUseItemReq, params UseItemParams) (res UseItemRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("useItem"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/items/{item_id}/use"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, UseItemOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/items/"
+	{
+		// Encode "item_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "item_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.ItemID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/use"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeUseItemRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, UseItemOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeUseItemResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

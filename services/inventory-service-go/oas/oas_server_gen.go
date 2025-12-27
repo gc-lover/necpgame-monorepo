@@ -64,6 +64,16 @@ type Handler interface {
 	//
 	// GET /examples/{example_id}
 	GetExample(ctx context.Context, params GetExampleParams) (GetExampleRes, error)
+	// GetPlayerEquipment implements getPlayerEquipment operation.
+	//
+	// **Enterprise-grade equipment retrieval endpoint**
+	// Retrieves player's current equipment setup including all gear slots and equipped items.
+	// Optimized for equipment UI and character stats calculation.
+	// **Performance:** <15ms P95 (HOT PATH), Redis cached
+	// **Memory optimization:** 30-50% savings through struct field alignment.
+	//
+	// GET /equipment
+	GetPlayerEquipment(ctx context.Context) (GetPlayerEquipmentRes, error)
 	// ListExamples implements listExamples operation.
 	//
 	// **Enterprise-grade listing endpoint**
@@ -73,6 +83,16 @@ type Handler interface {
 	//
 	// GET /examples
 	ListExamples(ctx context.Context, params ListExamplesParams) (ListExamplesRes, error)
+	// ModifyEquipment implements modifyEquipment operation.
+	//
+	// **Enterprise-grade equipment modification endpoint**
+	// Allows players to equip and unequip items, with validation of requirements and stat calculations.
+	// Supports bulk equipment changes and automatic stat recalculation.
+	// **Performance:** <50ms P95, includes stat recalculation
+	// **Business rules:** Level requirements, class restrictions, equipment conflicts.
+	//
+	// PUT /equipment
+	ModifyEquipment(ctx context.Context, req *ModifyEquipmentReq) (ModifyEquipmentRes, error)
 	// UpdateExample implements updateExample operation.
 	//
 	// **Enterprise-grade update endpoint**
@@ -82,6 +102,16 @@ type Handler interface {
 	//
 	// PUT /examples/{example_id}
 	UpdateExample(ctx context.Context, req *UpdateExampleRequest, params UpdateExampleParams) (UpdateExampleRes, error)
+	// UseItem implements useItem operation.
+	//
+	// **Enterprise-grade item usage endpoint**
+	// Allows players to use consumable items, activate abilities, or trigger item effects.
+	// Supports stackable items, cooldowns, and usage validation.
+	// **Performance:** <25ms P95, includes effect application
+	// **Business rules:** Cooldowns, usage limits, effect stacking.
+	//
+	// POST /items/{item_id}/use
+	UseItem(ctx context.Context, req OptUseItemReq, params UseItemParams) (UseItemRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

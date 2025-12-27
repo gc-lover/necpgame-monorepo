@@ -112,6 +112,228 @@ type DeleteExampleNotFound Error
 
 func (*DeleteExampleNotFound) deleteExampleRes() {}
 
+// BACKEND NOTE: Equipment slot representation for player inventory system.
+// Ref: #/components/schemas/EquipmentSlot
+type EquipmentSlot struct {
+	// Unique identifier for the equipment slot.
+	SlotID uuid.UUID `json:"slot_id"`
+	// Type of equipment slot.
+	SlotType EquipmentSlotSlotType `json:"slot_type"`
+	// ID of the equipped item (null if empty).
+	ItemID NilUUID `json:"item_id"`
+	// Whether the slot is locked (requires progression).
+	IsLocked OptBool `json:"is_locked"`
+	// Required player level to equip this slot.
+	RequiredLevel OptInt `json:"required_level"`
+}
+
+// GetSlotID returns the value of SlotID.
+func (s *EquipmentSlot) GetSlotID() uuid.UUID {
+	return s.SlotID
+}
+
+// GetSlotType returns the value of SlotType.
+func (s *EquipmentSlot) GetSlotType() EquipmentSlotSlotType {
+	return s.SlotType
+}
+
+// GetItemID returns the value of ItemID.
+func (s *EquipmentSlot) GetItemID() NilUUID {
+	return s.ItemID
+}
+
+// GetIsLocked returns the value of IsLocked.
+func (s *EquipmentSlot) GetIsLocked() OptBool {
+	return s.IsLocked
+}
+
+// GetRequiredLevel returns the value of RequiredLevel.
+func (s *EquipmentSlot) GetRequiredLevel() OptInt {
+	return s.RequiredLevel
+}
+
+// SetSlotID sets the value of SlotID.
+func (s *EquipmentSlot) SetSlotID(val uuid.UUID) {
+	s.SlotID = val
+}
+
+// SetSlotType sets the value of SlotType.
+func (s *EquipmentSlot) SetSlotType(val EquipmentSlotSlotType) {
+	s.SlotType = val
+}
+
+// SetItemID sets the value of ItemID.
+func (s *EquipmentSlot) SetItemID(val NilUUID) {
+	s.ItemID = val
+}
+
+// SetIsLocked sets the value of IsLocked.
+func (s *EquipmentSlot) SetIsLocked(val OptBool) {
+	s.IsLocked = val
+}
+
+// SetRequiredLevel sets the value of RequiredLevel.
+func (s *EquipmentSlot) SetRequiredLevel(val OptInt) {
+	s.RequiredLevel = val
+}
+
+// Type of equipment slot.
+type EquipmentSlotSlotType string
+
+const (
+	EquipmentSlotSlotTypeWeapon    EquipmentSlotSlotType = "weapon"
+	EquipmentSlotSlotTypeArmor     EquipmentSlotSlotType = "armor"
+	EquipmentSlotSlotTypeAccessory EquipmentSlotSlotType = "accessory"
+	EquipmentSlotSlotTypeCyberware EquipmentSlotSlotType = "cyberware"
+)
+
+// AllValues returns all EquipmentSlotSlotType values.
+func (EquipmentSlotSlotType) AllValues() []EquipmentSlotSlotType {
+	return []EquipmentSlotSlotType{
+		EquipmentSlotSlotTypeWeapon,
+		EquipmentSlotSlotTypeArmor,
+		EquipmentSlotSlotTypeAccessory,
+		EquipmentSlotSlotTypeCyberware,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s EquipmentSlotSlotType) MarshalText() ([]byte, error) {
+	switch s {
+	case EquipmentSlotSlotTypeWeapon:
+		return []byte(s), nil
+	case EquipmentSlotSlotTypeArmor:
+		return []byte(s), nil
+	case EquipmentSlotSlotTypeAccessory:
+		return []byte(s), nil
+	case EquipmentSlotSlotTypeCyberware:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *EquipmentSlotSlotType) UnmarshalText(data []byte) error {
+	switch EquipmentSlotSlotType(data) {
+	case EquipmentSlotSlotTypeWeapon:
+		*s = EquipmentSlotSlotTypeWeapon
+		return nil
+	case EquipmentSlotSlotTypeArmor:
+		*s = EquipmentSlotSlotTypeArmor
+		return nil
+	case EquipmentSlotSlotTypeAccessory:
+		*s = EquipmentSlotSlotTypeAccessory
+		return nil
+	case EquipmentSlotSlotTypeCyberware:
+		*s = EquipmentSlotSlotTypeCyberware
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Equipment statistics for player inventory overview.
+// Ref: #/components/schemas/EquipmentStats
+type EquipmentStats struct {
+	// Total number of equipment slots.
+	TotalSlots int `json:"total_slots"`
+	// Number of slots with equipped items.
+	EquippedCount int `json:"equipped_count"`
+	// Number of empty equipment slots.
+	AvailableSlots int `json:"available_slots"`
+	// Count of slots by type.
+	SlotTypes OptEquipmentStatsSlotTypes `json:"slot_types"`
+}
+
+// GetTotalSlots returns the value of TotalSlots.
+func (s *EquipmentStats) GetTotalSlots() int {
+	return s.TotalSlots
+}
+
+// GetEquippedCount returns the value of EquippedCount.
+func (s *EquipmentStats) GetEquippedCount() int {
+	return s.EquippedCount
+}
+
+// GetAvailableSlots returns the value of AvailableSlots.
+func (s *EquipmentStats) GetAvailableSlots() int {
+	return s.AvailableSlots
+}
+
+// GetSlotTypes returns the value of SlotTypes.
+func (s *EquipmentStats) GetSlotTypes() OptEquipmentStatsSlotTypes {
+	return s.SlotTypes
+}
+
+// SetTotalSlots sets the value of TotalSlots.
+func (s *EquipmentStats) SetTotalSlots(val int) {
+	s.TotalSlots = val
+}
+
+// SetEquippedCount sets the value of EquippedCount.
+func (s *EquipmentStats) SetEquippedCount(val int) {
+	s.EquippedCount = val
+}
+
+// SetAvailableSlots sets the value of AvailableSlots.
+func (s *EquipmentStats) SetAvailableSlots(val int) {
+	s.AvailableSlots = val
+}
+
+// SetSlotTypes sets the value of SlotTypes.
+func (s *EquipmentStats) SetSlotTypes(val OptEquipmentStatsSlotTypes) {
+	s.SlotTypes = val
+}
+
+// Count of slots by type.
+type EquipmentStatsSlotTypes struct {
+	Weapon    OptInt `json:"weapon"`
+	Armor     OptInt `json:"armor"`
+	Accessory OptInt `json:"accessory"`
+	Cyberware OptInt `json:"cyberware"`
+}
+
+// GetWeapon returns the value of Weapon.
+func (s *EquipmentStatsSlotTypes) GetWeapon() OptInt {
+	return s.Weapon
+}
+
+// GetArmor returns the value of Armor.
+func (s *EquipmentStatsSlotTypes) GetArmor() OptInt {
+	return s.Armor
+}
+
+// GetAccessory returns the value of Accessory.
+func (s *EquipmentStatsSlotTypes) GetAccessory() OptInt {
+	return s.Accessory
+}
+
+// GetCyberware returns the value of Cyberware.
+func (s *EquipmentStatsSlotTypes) GetCyberware() OptInt {
+	return s.Cyberware
+}
+
+// SetWeapon sets the value of Weapon.
+func (s *EquipmentStatsSlotTypes) SetWeapon(val OptInt) {
+	s.Weapon = val
+}
+
+// SetArmor sets the value of Armor.
+func (s *EquipmentStatsSlotTypes) SetArmor(val OptInt) {
+	s.Armor = val
+}
+
+// SetAccessory sets the value of Accessory.
+func (s *EquipmentStatsSlotTypes) SetAccessory(val OptInt) {
+	s.Accessory = val
+}
+
+// SetCyberware sets the value of Cyberware.
+func (s *EquipmentStatsSlotTypes) SetCyberware(val OptInt) {
+	s.Cyberware = val
+}
+
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
 // Ref: #/components/schemas/Error
@@ -120,7 +342,9 @@ type Error struct {
 	Domain  OptString `json:"domain"`
 	// Additional error context.
 	Details *ErrorDetails `json:"details"`
-	Code    int32         `json:"code"`
+	// Entity tag for optimistic locking.
+	ETag OptString `json:"ETag"`
+	Code int32     `json:"code"`
 }
 
 // GetMessage returns the value of Message.
@@ -136,6 +360,11 @@ func (s *Error) GetDomain() OptString {
 // GetDetails returns the value of Details.
 func (s *Error) GetDetails() *ErrorDetails {
 	return s.Details
+}
+
+// GetETag returns the value of ETag.
+func (s *Error) GetETag() OptString {
+	return s.ETag
 }
 
 // GetCode returns the value of Code.
@@ -158,12 +387,18 @@ func (s *Error) SetDetails(val *ErrorDetails) {
 	s.Details = val
 }
 
+// SetETag sets the value of ETag.
+func (s *Error) SetETag(val OptString) {
+	s.ETag = val
+}
+
 // SetCode sets the value of Code.
 func (s *Error) SetCode(val int32) {
 	s.Code = val
 }
 
 func (*Error) exampleDomainBatchHealthCheckRes() {}
+func (*Error) getPlayerEquipmentRes()            {}
 
 // Additional error context.
 type ErrorDetails struct{}
@@ -200,6 +435,7 @@ func (*ErrorHeaders) exampleDomainBatchHealthCheckRes() {}
 func (*ErrorHeaders) exampleDomainHealthCheckRes()      {}
 func (*ErrorHeaders) exampleDomainHealthWebSocketRes()  {}
 func (*ErrorHeaders) getExampleRes()                    {}
+func (*ErrorHeaders) useItemRes()                       {}
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%. Hot path optimization required.
@@ -960,6 +1196,71 @@ func (s *GetExampleNotModified) SetETag(val OptString) {
 
 func (*GetExampleNotModified) getExampleRes() {}
 
+type GetPlayerEquipmentOK struct {
+	// All equipment slots and their contents.
+	EquipmentSlots []EquipmentSlot `json:"equipment_slots"`
+	StatsSummary   EquipmentStats  `json:"stats_summary"`
+}
+
+// GetEquipmentSlots returns the value of EquipmentSlots.
+func (s *GetPlayerEquipmentOK) GetEquipmentSlots() []EquipmentSlot {
+	return s.EquipmentSlots
+}
+
+// GetStatsSummary returns the value of StatsSummary.
+func (s *GetPlayerEquipmentOK) GetStatsSummary() EquipmentStats {
+	return s.StatsSummary
+}
+
+// SetEquipmentSlots sets the value of EquipmentSlots.
+func (s *GetPlayerEquipmentOK) SetEquipmentSlots(val []EquipmentSlot) {
+	s.EquipmentSlots = val
+}
+
+// SetStatsSummary sets the value of StatsSummary.
+func (s *GetPlayerEquipmentOK) SetStatsSummary(val EquipmentStats) {
+	s.StatsSummary = val
+}
+
+// GetPlayerEquipmentOKHeaders wraps GetPlayerEquipmentOK with response headers.
+type GetPlayerEquipmentOKHeaders struct {
+	CacheControl    OptString
+	XEquipmentSlots OptInt
+	Response        GetPlayerEquipmentOK
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *GetPlayerEquipmentOKHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetXEquipmentSlots returns the value of XEquipmentSlots.
+func (s *GetPlayerEquipmentOKHeaders) GetXEquipmentSlots() OptInt {
+	return s.XEquipmentSlots
+}
+
+// GetResponse returns the value of Response.
+func (s *GetPlayerEquipmentOKHeaders) GetResponse() GetPlayerEquipmentOK {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *GetPlayerEquipmentOKHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetXEquipmentSlots sets the value of XEquipmentSlots.
+func (s *GetPlayerEquipmentOKHeaders) SetXEquipmentSlots(val OptInt) {
+	s.XEquipmentSlots = val
+}
+
+// SetResponse sets the value of Response.
+func (s *GetPlayerEquipmentOKHeaders) SetResponse(val GetPlayerEquipmentOK) {
+	s.Response = val
+}
+
+func (*GetPlayerEquipmentOKHeaders) getPlayerEquipmentRes() {}
+
 type HealthBatchSuccess struct {
 	// Health status for each requested service.
 	Results []HealthResponse `json:"results"`
@@ -1198,6 +1499,223 @@ func (s *HealthResponseStatus) UnmarshalText(data []byte) error {
 	}
 }
 
+// BACKEND NOTE: Item usage effect representation for inventory consumables.
+// Ref: #/components/schemas/ItemEffect
+type ItemEffect struct {
+	// Type of item effect.
+	EffectType ItemEffectEffectType `json:"effect_type"`
+	// Attribute affected by the effect.
+	TargetAttribute ItemEffectTargetAttribute `json:"target_attribute"`
+	// Effect value (positive for buffs, negative for debuffs).
+	Value float32 `json:"value"`
+	// Effect duration in seconds (null for permanent).
+	DurationSeconds OptNilInt `json:"duration_seconds"`
+	// Whether the value is a percentage modifier.
+	IsPercentage OptBool `json:"is_percentage"`
+	// Maximum number of stacks for this effect.
+	Stacks OptInt `json:"stacks"`
+}
+
+// GetEffectType returns the value of EffectType.
+func (s *ItemEffect) GetEffectType() ItemEffectEffectType {
+	return s.EffectType
+}
+
+// GetTargetAttribute returns the value of TargetAttribute.
+func (s *ItemEffect) GetTargetAttribute() ItemEffectTargetAttribute {
+	return s.TargetAttribute
+}
+
+// GetValue returns the value of Value.
+func (s *ItemEffect) GetValue() float32 {
+	return s.Value
+}
+
+// GetDurationSeconds returns the value of DurationSeconds.
+func (s *ItemEffect) GetDurationSeconds() OptNilInt {
+	return s.DurationSeconds
+}
+
+// GetIsPercentage returns the value of IsPercentage.
+func (s *ItemEffect) GetIsPercentage() OptBool {
+	return s.IsPercentage
+}
+
+// GetStacks returns the value of Stacks.
+func (s *ItemEffect) GetStacks() OptInt {
+	return s.Stacks
+}
+
+// SetEffectType sets the value of EffectType.
+func (s *ItemEffect) SetEffectType(val ItemEffectEffectType) {
+	s.EffectType = val
+}
+
+// SetTargetAttribute sets the value of TargetAttribute.
+func (s *ItemEffect) SetTargetAttribute(val ItemEffectTargetAttribute) {
+	s.TargetAttribute = val
+}
+
+// SetValue sets the value of Value.
+func (s *ItemEffect) SetValue(val float32) {
+	s.Value = val
+}
+
+// SetDurationSeconds sets the value of DurationSeconds.
+func (s *ItemEffect) SetDurationSeconds(val OptNilInt) {
+	s.DurationSeconds = val
+}
+
+// SetIsPercentage sets the value of IsPercentage.
+func (s *ItemEffect) SetIsPercentage(val OptBool) {
+	s.IsPercentage = val
+}
+
+// SetStacks sets the value of Stacks.
+func (s *ItemEffect) SetStacks(val OptInt) {
+	s.Stacks = val
+}
+
+// Type of item effect.
+type ItemEffectEffectType string
+
+const (
+	ItemEffectEffectTypeBuff      ItemEffectEffectType = "buff"
+	ItemEffectEffectTypeDebuff    ItemEffectEffectType = "debuff"
+	ItemEffectEffectTypeHeal      ItemEffectEffectType = "heal"
+	ItemEffectEffectTypeDamage    ItemEffectEffectType = "damage"
+	ItemEffectEffectTypeStatBoost ItemEffectEffectType = "stat_boost"
+)
+
+// AllValues returns all ItemEffectEffectType values.
+func (ItemEffectEffectType) AllValues() []ItemEffectEffectType {
+	return []ItemEffectEffectType{
+		ItemEffectEffectTypeBuff,
+		ItemEffectEffectTypeDebuff,
+		ItemEffectEffectTypeHeal,
+		ItemEffectEffectTypeDamage,
+		ItemEffectEffectTypeStatBoost,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ItemEffectEffectType) MarshalText() ([]byte, error) {
+	switch s {
+	case ItemEffectEffectTypeBuff:
+		return []byte(s), nil
+	case ItemEffectEffectTypeDebuff:
+		return []byte(s), nil
+	case ItemEffectEffectTypeHeal:
+		return []byte(s), nil
+	case ItemEffectEffectTypeDamage:
+		return []byte(s), nil
+	case ItemEffectEffectTypeStatBoost:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ItemEffectEffectType) UnmarshalText(data []byte) error {
+	switch ItemEffectEffectType(data) {
+	case ItemEffectEffectTypeBuff:
+		*s = ItemEffectEffectTypeBuff
+		return nil
+	case ItemEffectEffectTypeDebuff:
+		*s = ItemEffectEffectTypeDebuff
+		return nil
+	case ItemEffectEffectTypeHeal:
+		*s = ItemEffectEffectTypeHeal
+		return nil
+	case ItemEffectEffectTypeDamage:
+		*s = ItemEffectEffectTypeDamage
+		return nil
+	case ItemEffectEffectTypeStatBoost:
+		*s = ItemEffectEffectTypeStatBoost
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Attribute affected by the effect.
+type ItemEffectTargetAttribute string
+
+const (
+	ItemEffectTargetAttributeHealth       ItemEffectTargetAttribute = "health"
+	ItemEffectTargetAttributeStamina      ItemEffectTargetAttribute = "stamina"
+	ItemEffectTargetAttributeStrength     ItemEffectTargetAttribute = "strength"
+	ItemEffectTargetAttributeAgility      ItemEffectTargetAttribute = "agility"
+	ItemEffectTargetAttributeIntelligence ItemEffectTargetAttribute = "intelligence"
+	ItemEffectTargetAttributeCharisma     ItemEffectTargetAttribute = "charisma"
+	ItemEffectTargetAttributeLuck         ItemEffectTargetAttribute = "luck"
+)
+
+// AllValues returns all ItemEffectTargetAttribute values.
+func (ItemEffectTargetAttribute) AllValues() []ItemEffectTargetAttribute {
+	return []ItemEffectTargetAttribute{
+		ItemEffectTargetAttributeHealth,
+		ItemEffectTargetAttributeStamina,
+		ItemEffectTargetAttributeStrength,
+		ItemEffectTargetAttributeAgility,
+		ItemEffectTargetAttributeIntelligence,
+		ItemEffectTargetAttributeCharisma,
+		ItemEffectTargetAttributeLuck,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ItemEffectTargetAttribute) MarshalText() ([]byte, error) {
+	switch s {
+	case ItemEffectTargetAttributeHealth:
+		return []byte(s), nil
+	case ItemEffectTargetAttributeStamina:
+		return []byte(s), nil
+	case ItemEffectTargetAttributeStrength:
+		return []byte(s), nil
+	case ItemEffectTargetAttributeAgility:
+		return []byte(s), nil
+	case ItemEffectTargetAttributeIntelligence:
+		return []byte(s), nil
+	case ItemEffectTargetAttributeCharisma:
+		return []byte(s), nil
+	case ItemEffectTargetAttributeLuck:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ItemEffectTargetAttribute) UnmarshalText(data []byte) error {
+	switch ItemEffectTargetAttribute(data) {
+	case ItemEffectTargetAttributeHealth:
+		*s = ItemEffectTargetAttributeHealth
+		return nil
+	case ItemEffectTargetAttributeStamina:
+		*s = ItemEffectTargetAttributeStamina
+		return nil
+	case ItemEffectTargetAttributeStrength:
+		*s = ItemEffectTargetAttributeStrength
+		return nil
+	case ItemEffectTargetAttributeAgility:
+		*s = ItemEffectTargetAttributeAgility
+		return nil
+	case ItemEffectTargetAttributeIntelligence:
+		*s = ItemEffectTargetAttributeIntelligence
+		return nil
+	case ItemEffectTargetAttributeCharisma:
+		*s = ItemEffectTargetAttributeCharisma
+		return nil
+	case ItemEffectTargetAttributeLuck:
+		*s = ItemEffectTargetAttributeLuck
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type ListExamplesBadRequest Error
 
 func (*ListExamplesBadRequest) listExamplesRes() {}
@@ -1343,6 +1861,296 @@ type ListExamplesUnprocessableEntity Error
 
 func (*ListExamplesUnprocessableEntity) listExamplesRes() {}
 
+type ModifyEquipmentBadRequest Error
+
+func (*ModifyEquipmentBadRequest) modifyEquipmentRes() {}
+
+type ModifyEquipmentConflict Error
+
+func (*ModifyEquipmentConflict) modifyEquipmentRes() {}
+
+type ModifyEquipmentOK struct {
+	// Updated equipment slots.
+	EquipmentSlots []EquipmentSlot `json:"equipment_slots"`
+	StatsChanges   EquipmentStats  `json:"stats_changes"`
+	// Number of operations completed.
+	OperationsPerformed int `json:"operations_performed"`
+}
+
+// GetEquipmentSlots returns the value of EquipmentSlots.
+func (s *ModifyEquipmentOK) GetEquipmentSlots() []EquipmentSlot {
+	return s.EquipmentSlots
+}
+
+// GetStatsChanges returns the value of StatsChanges.
+func (s *ModifyEquipmentOK) GetStatsChanges() EquipmentStats {
+	return s.StatsChanges
+}
+
+// GetOperationsPerformed returns the value of OperationsPerformed.
+func (s *ModifyEquipmentOK) GetOperationsPerformed() int {
+	return s.OperationsPerformed
+}
+
+// SetEquipmentSlots sets the value of EquipmentSlots.
+func (s *ModifyEquipmentOK) SetEquipmentSlots(val []EquipmentSlot) {
+	s.EquipmentSlots = val
+}
+
+// SetStatsChanges sets the value of StatsChanges.
+func (s *ModifyEquipmentOK) SetStatsChanges(val EquipmentStats) {
+	s.StatsChanges = val
+}
+
+// SetOperationsPerformed sets the value of OperationsPerformed.
+func (s *ModifyEquipmentOK) SetOperationsPerformed(val int) {
+	s.OperationsPerformed = val
+}
+
+func (*ModifyEquipmentOK) modifyEquipmentRes() {}
+
+type ModifyEquipmentReq struct {
+	// Equipment modification operations.
+	Operations []ModifyEquipmentReqOperationsItem `json:"operations"`
+}
+
+// GetOperations returns the value of Operations.
+func (s *ModifyEquipmentReq) GetOperations() []ModifyEquipmentReqOperationsItem {
+	return s.Operations
+}
+
+// SetOperations sets the value of Operations.
+func (s *ModifyEquipmentReq) SetOperations(val []ModifyEquipmentReqOperationsItem) {
+	s.Operations = val
+}
+
+type ModifyEquipmentReqOperationsItem struct {
+	Action   ModifyEquipmentReqOperationsItemAction   `json:"action"`
+	SlotType ModifyEquipmentReqOperationsItemSlotType `json:"slot_type"`
+	// Required for equip action - item to equip.
+	InventoryItemID OptUUID `json:"inventory_item_id"`
+}
+
+// GetAction returns the value of Action.
+func (s *ModifyEquipmentReqOperationsItem) GetAction() ModifyEquipmentReqOperationsItemAction {
+	return s.Action
+}
+
+// GetSlotType returns the value of SlotType.
+func (s *ModifyEquipmentReqOperationsItem) GetSlotType() ModifyEquipmentReqOperationsItemSlotType {
+	return s.SlotType
+}
+
+// GetInventoryItemID returns the value of InventoryItemID.
+func (s *ModifyEquipmentReqOperationsItem) GetInventoryItemID() OptUUID {
+	return s.InventoryItemID
+}
+
+// SetAction sets the value of Action.
+func (s *ModifyEquipmentReqOperationsItem) SetAction(val ModifyEquipmentReqOperationsItemAction) {
+	s.Action = val
+}
+
+// SetSlotType sets the value of SlotType.
+func (s *ModifyEquipmentReqOperationsItem) SetSlotType(val ModifyEquipmentReqOperationsItemSlotType) {
+	s.SlotType = val
+}
+
+// SetInventoryItemID sets the value of InventoryItemID.
+func (s *ModifyEquipmentReqOperationsItem) SetInventoryItemID(val OptUUID) {
+	s.InventoryItemID = val
+}
+
+type ModifyEquipmentReqOperationsItemAction string
+
+const (
+	ModifyEquipmentReqOperationsItemActionEquip   ModifyEquipmentReqOperationsItemAction = "equip"
+	ModifyEquipmentReqOperationsItemActionUnequip ModifyEquipmentReqOperationsItemAction = "unequip"
+)
+
+// AllValues returns all ModifyEquipmentReqOperationsItemAction values.
+func (ModifyEquipmentReqOperationsItemAction) AllValues() []ModifyEquipmentReqOperationsItemAction {
+	return []ModifyEquipmentReqOperationsItemAction{
+		ModifyEquipmentReqOperationsItemActionEquip,
+		ModifyEquipmentReqOperationsItemActionUnequip,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ModifyEquipmentReqOperationsItemAction) MarshalText() ([]byte, error) {
+	switch s {
+	case ModifyEquipmentReqOperationsItemActionEquip:
+		return []byte(s), nil
+	case ModifyEquipmentReqOperationsItemActionUnequip:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ModifyEquipmentReqOperationsItemAction) UnmarshalText(data []byte) error {
+	switch ModifyEquipmentReqOperationsItemAction(data) {
+	case ModifyEquipmentReqOperationsItemActionEquip:
+		*s = ModifyEquipmentReqOperationsItemActionEquip
+		return nil
+	case ModifyEquipmentReqOperationsItemActionUnequip:
+		*s = ModifyEquipmentReqOperationsItemActionUnequip
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type ModifyEquipmentReqOperationsItemSlotType string
+
+const (
+	ModifyEquipmentReqOperationsItemSlotTypeWeaponPrimary   ModifyEquipmentReqOperationsItemSlotType = "weapon_primary"
+	ModifyEquipmentReqOperationsItemSlotTypeWeaponSecondary ModifyEquipmentReqOperationsItemSlotType = "weapon_secondary"
+	ModifyEquipmentReqOperationsItemSlotTypeHelmet          ModifyEquipmentReqOperationsItemSlotType = "helmet"
+	ModifyEquipmentReqOperationsItemSlotTypeArmor           ModifyEquipmentReqOperationsItemSlotType = "armor"
+	ModifyEquipmentReqOperationsItemSlotTypeGloves          ModifyEquipmentReqOperationsItemSlotType = "gloves"
+	ModifyEquipmentReqOperationsItemSlotTypeBoots           ModifyEquipmentReqOperationsItemSlotType = "boots"
+	ModifyEquipmentReqOperationsItemSlotTypeAmulet          ModifyEquipmentReqOperationsItemSlotType = "amulet"
+	ModifyEquipmentReqOperationsItemSlotTypeRing1           ModifyEquipmentReqOperationsItemSlotType = "ring1"
+	ModifyEquipmentReqOperationsItemSlotTypeRing2           ModifyEquipmentReqOperationsItemSlotType = "ring2"
+	ModifyEquipmentReqOperationsItemSlotTypeBelt            ModifyEquipmentReqOperationsItemSlotType = "belt"
+	ModifyEquipmentReqOperationsItemSlotTypeCape            ModifyEquipmentReqOperationsItemSlotType = "cape"
+)
+
+// AllValues returns all ModifyEquipmentReqOperationsItemSlotType values.
+func (ModifyEquipmentReqOperationsItemSlotType) AllValues() []ModifyEquipmentReqOperationsItemSlotType {
+	return []ModifyEquipmentReqOperationsItemSlotType{
+		ModifyEquipmentReqOperationsItemSlotTypeWeaponPrimary,
+		ModifyEquipmentReqOperationsItemSlotTypeWeaponSecondary,
+		ModifyEquipmentReqOperationsItemSlotTypeHelmet,
+		ModifyEquipmentReqOperationsItemSlotTypeArmor,
+		ModifyEquipmentReqOperationsItemSlotTypeGloves,
+		ModifyEquipmentReqOperationsItemSlotTypeBoots,
+		ModifyEquipmentReqOperationsItemSlotTypeAmulet,
+		ModifyEquipmentReqOperationsItemSlotTypeRing1,
+		ModifyEquipmentReqOperationsItemSlotTypeRing2,
+		ModifyEquipmentReqOperationsItemSlotTypeBelt,
+		ModifyEquipmentReqOperationsItemSlotTypeCape,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ModifyEquipmentReqOperationsItemSlotType) MarshalText() ([]byte, error) {
+	switch s {
+	case ModifyEquipmentReqOperationsItemSlotTypeWeaponPrimary:
+		return []byte(s), nil
+	case ModifyEquipmentReqOperationsItemSlotTypeWeaponSecondary:
+		return []byte(s), nil
+	case ModifyEquipmentReqOperationsItemSlotTypeHelmet:
+		return []byte(s), nil
+	case ModifyEquipmentReqOperationsItemSlotTypeArmor:
+		return []byte(s), nil
+	case ModifyEquipmentReqOperationsItemSlotTypeGloves:
+		return []byte(s), nil
+	case ModifyEquipmentReqOperationsItemSlotTypeBoots:
+		return []byte(s), nil
+	case ModifyEquipmentReqOperationsItemSlotTypeAmulet:
+		return []byte(s), nil
+	case ModifyEquipmentReqOperationsItemSlotTypeRing1:
+		return []byte(s), nil
+	case ModifyEquipmentReqOperationsItemSlotTypeRing2:
+		return []byte(s), nil
+	case ModifyEquipmentReqOperationsItemSlotTypeBelt:
+		return []byte(s), nil
+	case ModifyEquipmentReqOperationsItemSlotTypeCape:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ModifyEquipmentReqOperationsItemSlotType) UnmarshalText(data []byte) error {
+	switch ModifyEquipmentReqOperationsItemSlotType(data) {
+	case ModifyEquipmentReqOperationsItemSlotTypeWeaponPrimary:
+		*s = ModifyEquipmentReqOperationsItemSlotTypeWeaponPrimary
+		return nil
+	case ModifyEquipmentReqOperationsItemSlotTypeWeaponSecondary:
+		*s = ModifyEquipmentReqOperationsItemSlotTypeWeaponSecondary
+		return nil
+	case ModifyEquipmentReqOperationsItemSlotTypeHelmet:
+		*s = ModifyEquipmentReqOperationsItemSlotTypeHelmet
+		return nil
+	case ModifyEquipmentReqOperationsItemSlotTypeArmor:
+		*s = ModifyEquipmentReqOperationsItemSlotTypeArmor
+		return nil
+	case ModifyEquipmentReqOperationsItemSlotTypeGloves:
+		*s = ModifyEquipmentReqOperationsItemSlotTypeGloves
+		return nil
+	case ModifyEquipmentReqOperationsItemSlotTypeBoots:
+		*s = ModifyEquipmentReqOperationsItemSlotTypeBoots
+		return nil
+	case ModifyEquipmentReqOperationsItemSlotTypeAmulet:
+		*s = ModifyEquipmentReqOperationsItemSlotTypeAmulet
+		return nil
+	case ModifyEquipmentReqOperationsItemSlotTypeRing1:
+		*s = ModifyEquipmentReqOperationsItemSlotTypeRing1
+		return nil
+	case ModifyEquipmentReqOperationsItemSlotTypeRing2:
+		*s = ModifyEquipmentReqOperationsItemSlotTypeRing2
+		return nil
+	case ModifyEquipmentReqOperationsItemSlotTypeBelt:
+		*s = ModifyEquipmentReqOperationsItemSlotTypeBelt
+		return nil
+	case ModifyEquipmentReqOperationsItemSlotTypeCape:
+		*s = ModifyEquipmentReqOperationsItemSlotTypeCape
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// NewNilUUID returns new NilUUID with value set to v.
+func NewNilUUID(v uuid.UUID) NilUUID {
+	return NilUUID{
+		Value: v,
+	}
+}
+
+// NilUUID is nullable uuid.UUID.
+type NilUUID struct {
+	Value uuid.UUID
+	Null  bool
+}
+
+// SetTo sets value to v.
+func (o *NilUUID) SetTo(v uuid.UUID) {
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o NilUUID) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *NilUUID) SetToNull() {
+	o.Null = true
+	var v uuid.UUID
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o NilUUID) Get() (v uuid.UUID, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o NilUUID) Or(d uuid.UUID) uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptBool returns new OptBool with value set to v.
 func NewOptBool(v bool) OptBool {
 	return OptBool{
@@ -1429,6 +2237,52 @@ func (o OptDateTime) Get() (v time.Time, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptDateTime) Or(d time.Time) time.Time {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptEquipmentStatsSlotTypes returns new OptEquipmentStatsSlotTypes with value set to v.
+func NewOptEquipmentStatsSlotTypes(v EquipmentStatsSlotTypes) OptEquipmentStatsSlotTypes {
+	return OptEquipmentStatsSlotTypes{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptEquipmentStatsSlotTypes is optional EquipmentStatsSlotTypes.
+type OptEquipmentStatsSlotTypes struct {
+	Value EquipmentStatsSlotTypes
+	Set   bool
+}
+
+// IsSet returns true if OptEquipmentStatsSlotTypes was set.
+func (o OptEquipmentStatsSlotTypes) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptEquipmentStatsSlotTypes) Reset() {
+	var v EquipmentStatsSlotTypes
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptEquipmentStatsSlotTypes) SetTo(v EquipmentStatsSlotTypes) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptEquipmentStatsSlotTypes) Get() (v EquipmentStatsSlotTypes, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptEquipmentStatsSlotTypes) Or(d EquipmentStatsSlotTypes) EquipmentStatsSlotTypes {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1711,6 +2565,69 @@ func (o OptListExamplesSortOrder) Or(d ListExamplesSortOrder) ListExamplesSortOr
 	return d
 }
 
+// NewOptNilInt returns new OptNilInt with value set to v.
+func NewOptNilInt(v int) OptNilInt {
+	return OptNilInt{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilInt is optional nullable int.
+type OptNilInt struct {
+	Value int
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilInt was set.
+func (o OptNilInt) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilInt) Reset() {
+	var v int
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilInt) SetTo(v int) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilInt) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilInt) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v int
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilInt) Get() (v int, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilInt) Or(d int) int {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptString returns new OptString with value set to v.
 func NewOptString(v string) OptString {
 	return OptString{
@@ -1757,6 +2674,52 @@ func (o OptString) Or(d string) string {
 	return d
 }
 
+// NewOptUUID returns new OptUUID with value set to v.
+func NewOptUUID(v uuid.UUID) OptUUID {
+	return OptUUID{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptUUID is optional uuid.UUID.
+type OptUUID struct {
+	Value uuid.UUID
+	Set   bool
+}
+
+// IsSet returns true if OptUUID was set.
+func (o OptUUID) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptUUID) Reset() {
+	var v uuid.UUID
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptUUID) SetTo(v uuid.UUID) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptUUID) Get() (v uuid.UUID, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptUUID) Or(d uuid.UUID) uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptUpdateExampleRequestStatus returns new OptUpdateExampleRequestStatus with value set to v.
 func NewOptUpdateExampleRequestStatus(v UpdateExampleRequestStatus) OptUpdateExampleRequestStatus {
 	return OptUpdateExampleRequestStatus{
@@ -1797,6 +2760,52 @@ func (o OptUpdateExampleRequestStatus) Get() (v UpdateExampleRequestStatus, ok b
 
 // Or returns value if set, or given parameter if does not.
 func (o OptUpdateExampleRequestStatus) Or(d UpdateExampleRequestStatus) UpdateExampleRequestStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptUseItemReq returns new OptUseItemReq with value set to v.
+func NewOptUseItemReq(v UseItemReq) OptUseItemReq {
+	return OptUseItemReq{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptUseItemReq is optional UseItemReq.
+type OptUseItemReq struct {
+	Value UseItemReq
+	Set   bool
+}
+
+// IsSet returns true if OptUseItemReq was set.
+func (o OptUseItemReq) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptUseItemReq) Reset() {
+	var v UseItemReq
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptUseItemReq) SetTo(v UseItemReq) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptUseItemReq) Get() (v UseItemReq, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptUseItemReq) Or(d UseItemReq) UseItemReq {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1960,6 +2969,104 @@ func (*UpdateExampleTooManyRequests) updateExampleRes() {}
 type UpdateExampleUnprocessableEntity Error
 
 func (*UpdateExampleUnprocessableEntity) updateExampleRes() {}
+
+type UseItemBadRequest Error
+
+func (*UseItemBadRequest) useItemRes() {}
+
+type UseItemNotFound Error
+
+func (*UseItemNotFound) useItemRes() {}
+
+type UseItemOK struct {
+	ItemID       uuid.UUID `json:"item_id"`
+	QuantityUsed int       `json:"quantity_used"`
+	// Effects applied by item usage.
+	EffectsApplied []ItemEffect `json:"effects_applied"`
+	// Remaining item quantity after use.
+	RemainingQuantity int `json:"remaining_quantity"`
+	// When item can be used again.
+	CooldownUntil OptDateTime `json:"cooldown_until"`
+}
+
+// GetItemID returns the value of ItemID.
+func (s *UseItemOK) GetItemID() uuid.UUID {
+	return s.ItemID
+}
+
+// GetQuantityUsed returns the value of QuantityUsed.
+func (s *UseItemOK) GetQuantityUsed() int {
+	return s.QuantityUsed
+}
+
+// GetEffectsApplied returns the value of EffectsApplied.
+func (s *UseItemOK) GetEffectsApplied() []ItemEffect {
+	return s.EffectsApplied
+}
+
+// GetRemainingQuantity returns the value of RemainingQuantity.
+func (s *UseItemOK) GetRemainingQuantity() int {
+	return s.RemainingQuantity
+}
+
+// GetCooldownUntil returns the value of CooldownUntil.
+func (s *UseItemOK) GetCooldownUntil() OptDateTime {
+	return s.CooldownUntil
+}
+
+// SetItemID sets the value of ItemID.
+func (s *UseItemOK) SetItemID(val uuid.UUID) {
+	s.ItemID = val
+}
+
+// SetQuantityUsed sets the value of QuantityUsed.
+func (s *UseItemOK) SetQuantityUsed(val int) {
+	s.QuantityUsed = val
+}
+
+// SetEffectsApplied sets the value of EffectsApplied.
+func (s *UseItemOK) SetEffectsApplied(val []ItemEffect) {
+	s.EffectsApplied = val
+}
+
+// SetRemainingQuantity sets the value of RemainingQuantity.
+func (s *UseItemOK) SetRemainingQuantity(val int) {
+	s.RemainingQuantity = val
+}
+
+// SetCooldownUntil sets the value of CooldownUntil.
+func (s *UseItemOK) SetCooldownUntil(val OptDateTime) {
+	s.CooldownUntil = val
+}
+
+func (*UseItemOK) useItemRes() {}
+
+type UseItemReq struct {
+	// Quantity to use (for stackable items).
+	Quantity OptInt `json:"quantity"`
+	// Target player/character ID (if applicable).
+	Target OptUUID `json:"target"`
+}
+
+// GetQuantity returns the value of Quantity.
+func (s *UseItemReq) GetQuantity() OptInt {
+	return s.Quantity
+}
+
+// GetTarget returns the value of Target.
+func (s *UseItemReq) GetTarget() OptUUID {
+	return s.Target
+}
+
+// SetQuantity sets the value of Quantity.
+func (s *UseItemReq) SetQuantity(val OptInt) {
+	s.Quantity = val
+}
+
+// SetTarget sets the value of Target.
+func (s *UseItemReq) SetTarget(val OptUUID) {
+	s.Target = val
+}
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.

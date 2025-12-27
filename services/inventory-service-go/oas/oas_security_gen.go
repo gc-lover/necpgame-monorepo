@@ -54,8 +54,11 @@ var operationRolesBearerAuth = map[string][]string{
 	ExampleDomainHealthCheckOperation:      []string{},
 	ExampleDomainHealthWebSocketOperation:  []string{},
 	GetExampleOperation:                    []string{},
+	GetPlayerEquipmentOperation:            []string{},
 	ListExamplesOperation:                  []string{},
+	ModifyEquipmentOperation:               []string{},
 	UpdateExampleOperation:                 []string{},
+	UseItemOperation:                       []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {

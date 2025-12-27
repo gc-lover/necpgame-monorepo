@@ -1028,3 +1028,69 @@ func decodeUpdateExampleParams(args [1]string, argsEscaped bool, r *http.Request
 	}
 	return params, nil
 }
+
+// UseItemParams is parameters of useItem operation.
+type UseItemParams struct {
+	// Item unique identifier.
+	ItemID uuid.UUID
+}
+
+func unpackUseItemParams(packed middleware.Parameters) (params UseItemParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "item_id",
+			In:   "path",
+		}
+		params.ItemID = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeUseItemParams(args [1]string, argsEscaped bool, r *http.Request) (params UseItemParams, _ error) {
+	// Decode path: item_id.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "item_id",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ItemID = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "item_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}

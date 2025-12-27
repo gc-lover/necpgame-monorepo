@@ -12,6 +12,9 @@ const (
 	ExampleDomainHealthCheckOperation      OperationName = "ExampleDomainHealthCheck"
 	ExampleDomainHealthWebSocketOperation  OperationName = "ExampleDomainHealthWebSocket"
 	GetExampleOperation                    OperationName = "GetExample"
+	GetPlayerEquipmentOperation            OperationName = "GetPlayerEquipment"
 	ListExamplesOperation                  OperationName = "ListExamples"
+	ModifyEquipmentOperation               OperationName = "ModifyEquipment"
 	UpdateExampleOperation                 OperationName = "UpdateExample"
+	UseItemOperation                       OperationName = "UseItem"
 )

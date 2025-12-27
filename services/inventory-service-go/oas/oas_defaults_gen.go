@@ -21,3 +21,11 @@ func (s *Example) setDefaults() {
 		s.Priority.SetTo(val)
 	}
 }
+
+// setDefaults set default value of fields.
+func (s *UseItemReq) setDefaults() {
+	{
+		val := int(1)
+		s.Quantity.SetTo(val)
+	}
+}
