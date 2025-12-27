@@ -71,6 +71,10 @@ class ApplySeattleQuestsMigrationScript(BaseScript):
             col_name = col['column']['name']
             col_value = col['column']['value']
 
+            # Skip id and quest_id columns - id is auto-generated UUID
+            if col_name in ['id', 'quest_id']:
+                continue
+
             # Handle JSON columns
             if col_name in ['metadata', 'rewards', 'objectives']:
                 try:

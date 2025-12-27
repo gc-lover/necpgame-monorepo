@@ -15,9 +15,8 @@ class SeoulQuestImporter:
     """Import Seoul quests to database."""
 
     def __init__(self):
-        self.script_dir = Path("scripts")
-        self.import_script = self.script_dir / "import-quest-to-db.py"
-        self.quests_dir = Path("knowledge/canon/narrative/quests")
+        self.import_script = Path("import-quest-to-db.py")
+        self.quests_dir = Path("../knowledge/canon/narrative/quests")
         self.success_count = 0
         self.fail_count = 0
         self.failed_files = []
@@ -25,7 +24,9 @@ class SeoulQuestImporter:
     def find_seoul_quests(self) -> list:
         """Find all Seoul quest import files."""
         pattern = "*seoul*_import.yaml"
+        print(f"Looking for files in: {self.quests_dir}")
         seoul_files = list(self.quests_dir.glob(pattern))
+        print(f"Found {len(seoul_files)} files: {[f.name for f in seoul_files]}")
         seoul_files.sort()
         return seoul_files
 
@@ -97,7 +98,7 @@ def main():
     """Main function."""
     print("Starting Seoul quests batch import...")
 
-    if not Path("scripts/import-quest-to-db.py").exists():
+    if not Path("import-quest-to-db.py").exists():
         print("ERROR: import-quest-to-db.py not found in scripts directory")
         sys.exit(1)
 
