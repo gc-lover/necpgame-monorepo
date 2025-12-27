@@ -11,7 +11,16 @@ from pathlib import Path
 
 def batch_import_houston_quests():
     """Import all Houston quest definition files to database."""
-    quest_dir = Path("../knowledge/canon/narrative/quests")
+    # Script can be run from project root or scripts directory
+    current_dir = Path.cwd()
+
+    # If we're in scripts directory, go up one level
+    if current_dir.name == "scripts":
+        base_dir = current_dir.parent
+    else:
+        base_dir = current_dir
+
+    quest_dir = base_dir / "knowledge" / "canon" / "narrative" / "quests"
     imported_count = 0
     failed_count = 0
 
@@ -27,18 +36,18 @@ def batch_import_houston_quests():
             # Run import command
             cmd = [
                 sys.executable,
-                "scripts/import-quest-to-db.py",
+                str(base_dir / "scripts" / "import-quest-to-db.py"),
                 "--quest-file", str(quest_file)
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True, cwd=Path.cwd())
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd=base_dir)
 
             if result.returncode == 0:
                 print(f"[OK] Successfully imported {quest_file.name}")
                 imported_count += 1
             else:
                 print(f"[ERROR] Failed to import {quest_file.name}")
-                print(f"Error: {result.stderr}")
+                print(f"Error output: {result.stderr}")
                 failed_count += 1
 
         except Exception as e:

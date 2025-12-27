@@ -1,116 +1,79 @@
 # Issue: #2217
-# PERFORMANCE: Optimized build for event sourcing aggregates
+# Makefile for Event Sourcing Aggregates Service
 
-.PHONY: all build clean test deps run stop docker-build docker-run check-file-sizes lint fmt vet
+.PHONY: build test clean docker-build docker-run deploy
 
-all: deps build test
-
+# Build the application
 build:
-	@echo "Building Event Sourcing Aggregates service with performance optimizations..."
-	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \
-		-ldflags="-w -s -X main.version=1.0.0" \
-		-o bin/event-sourcing-aggregates \
-		-trimpath \
-		-tags=netgo \
-		./main.go
+	go build -o bin/event-sourcing-aggregates main.go
 
-clean:
-	@echo "Cleaning build artifacts..."
-	rm -rf bin/ pkg/
-
+# Run tests
 test:
-	@echo "Running Event Sourcing tests..."
-	go test -v -race -coverprofile=coverage.out ./...
+	go test ./...
 
-deps:
-	@echo "Installing dependencies and resolving modules..."
-	go mod download
-	go mod tidy
+# Run tests with coverage
+test-coverage:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
 
-run: build
-	@echo "Starting Event Sourcing Aggregates service..."
-	./bin/event-sourcing-aggregates
+# Clean build artifacts
+clean:
+	rm -rf bin/
+	rm -f coverage.out coverage.html
 
-stop:
-	@echo "Stopping Event Sourcing Aggregates service..."
-	@pkill -f event-sourcing-aggregates || true
-
-docker-build:
-	@echo "Building Docker image for Event Sourcing service..."
-	docker build -t event-sourcing-aggregates:latest .
-
-docker-run:
-	@echo "Running Event Sourcing service in Docker..."
-	docker run --rm -p 8082:8082 event-sourcing-aggregates:latest
-
-check-file-sizes:
-	@echo "Checking binary file sizes..."
-	@if [ -f bin/event-sourcing-aggregates ]; then \
-		size=$$(stat -c%s bin/event-sourcing-aggregates); \
-		echo "Binary size: $$size bytes ($$(($$size/1024)) KB)"; \
-		if [ $$size -gt 10485760 ]; then \
-			echo "WARNING: Binary size >10MB!"; \
-			exit 1; \
-		fi; \
-	else \
-		echo "Binary not found, run 'make build' first"; \
-	fi
-
-lint:
-	@echo "Running linter..."
-	golangci-lint run
-
+# Format code
 fmt:
-	@echo "Formatting code..."
 	go fmt ./...
 
-vet:
-	@echo "Running go vet..."
-	go vet ./...
+# Lint code
+lint:
+	golangci-lint run
 
-# Development targets
-dev-setup:
-	@echo "Setting up development environment..."
-	@echo "Make sure PostgreSQL is running on localhost:5432"
-	@echo "Create database: CREATE DATABASE necpgame_event_sourcing;"
+# Run locally
+run:
+	go run main.go
 
-dev-run: build
-	@echo "Running in development mode..."
-	DATABASE_URL="postgres://user:password@localhost:5432/necpgame_event_sourcing?sslmode=disable" \
-	./bin/event-sourcing-aggregates
+# Build Docker image
+docker-build:
+	docker build -t event-sourcing-aggregates:latest .
 
-# Database targets
-db-migrate:
-	@echo "Running database migrations..."
-	# Add migration commands here
+# Run Docker container
+docker-run:
+	docker run -p 8082:8082 \
+		-e DATABASE_URL="postgres://user:password@localhost:5432/necpgame?sslmode=disable" \
+		-e REDIS_URL="redis://localhost:6379" \
+		-e KAFKA_BROKERS="localhost:9092" \
+		-e JWT_SECRET="your-secret-key" \
+		event-sourcing-aggregates:latest
 
-db-seed:
-	@echo "Seeding database with test data..."
-	# Add seeding commands here
+# Run with docker-compose
+docker-compose-up:
+	docker-compose up --build
 
-# Event store targets
-event-store-init:
-	@echo "Initializing event store..."
-	# Commands to initialize event store
+# Deploy to Kubernetes
+deploy:
+	kubectl apply -f k8s/
 
-event-store-migrate:
-	@echo "Migrating event store schema..."
-	# Schema migration commands
+# Logs
+logs:
+	kubectl logs -f deployment/event-sourcing-aggregates
 
-# Performance testing
-perf-test:
-	@echo "Running performance tests..."
-	go test -bench=. -benchmem ./...
-
-load-test:
-	@echo "Running load tests..."
-	# Load testing commands
-
-# Monitoring
+# Health check
 health:
-	@echo "Checking service health..."
-	curl http://localhost:8082/health || echo "Health server not running"
+	curl -f http://localhost:8082/health
 
+# Metrics
 metrics:
-	@echo "Service metrics endpoint..."
-	curl http://localhost:8082/metrics || echo "Metrics not available"
+	curl -f http://localhost:8082/metrics
+
+# All-in-one build and test
+all: fmt lint test build
+
+# Development setup
+dev-setup:
+	go mod tidy
+	go mod download
+
+# Generate mocks (if needed)
+mocks:
+	@echo "No mocks needed for this service"

@@ -16,9 +16,20 @@ class HoustonQuestConverter:
     """
 
     def __init__(self):
-        self.source_dir = Path("knowledge/canon/lore/timeline-author/quests/america/houston")
-        self.output_dir = Path("knowledge/canon/narrative/quests")
+        # Script can be run from project root or scripts directory
+        current_dir = Path.cwd()
+
+        # If we're in scripts directory, go up one level
+        if current_dir.name == "scripts":
+            self.base_dir = current_dir.parent
+        else:
+            self.base_dir = current_dir
+
+        self.source_dir = self.base_dir / "knowledge" / "canon" / "lore" / "timeline-author" / "quests" / "america" / "houston"
+        self.output_dir = self.base_dir / "knowledge" / "canon" / "narrative" / "quests"
         self.output_dir.mkdir(parents=True, exist_ok=True)
+
+        print(f"Looking in: {self.source_dir}")
 
     def convert_all_quests(self) -> List[str]:
         """Convert all Houston quest-definition files to import format."""
@@ -272,4 +283,9 @@ def main():
     converter = HoustonQuestConverter()
     converted_files = converter.convert_all_quests()
 
-    print(f"\nConversion completed. Converted {len(converted_files)}
+    print(f"\nConversion completed. Converted {len(converted_files)} files.")
+    print("Run batch-import-houston-quests.py to import them to database.")
+
+
+if __name__ == "__main__":
+    main()
