@@ -190,3 +190,4 @@ func (s *Server) getSocialImpactByRegion(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(impact)
 }
 
+

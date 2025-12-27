@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-faster/jx"
 	"specialized-domain-service-go/pkg/api"
 )
 
@@ -45,12 +44,6 @@ func NewHandler() *Handler {
 		pool:    &responsePool,
 	}
 }
-
-// Implement generated API interface methods here
-// NOTE: This file contains stubs that need to be implemented based on your OpenAPI spec
-// After ogen generates the API types, run the handler generator script to populate this file
-
-// Implementing handlers based on generated API interfaces
 
 // ReloadQuestContent implements POST /api/v1/quests/content/reload
 func (h *Handler) ReloadQuestContent(ctx context.Context, req *api.ReloadQuestContentRequest) (api.ReloadQuestContentRes, error) {
@@ -96,7 +89,6 @@ func (h *Handler) ReloadQuestContent(ctx context.Context, req *api.ReloadQuestCo
 }
 
 // QuestHealthCheck implements health check endpoint
-// PERFORMANCE: <1ms target, cached data only
 func (h *Handler) QuestHealthCheck(ctx context.Context) (*api.HealthResponse, error) {
 	// PERFORMANCE: Strict timeout for health checks
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Millisecond)
@@ -125,10 +117,6 @@ func (h *Handler) QuestHealthCheck(ctx context.Context) (*api.HealthResponse, er
 	h.logger.Printf("Health check passed")
 	return resp, nil
 }
-
-// GetQuests implements GET /api/v1/quests
-func (h *Handler) GetQuests(ctx context.Context, params api.GetQuestsParams) (api.GetQuestsRes, error) {
-	// PERFORMANCE: Context timeout for database operations
 	ctx, cancel := context.WithTimeout(ctx, 25*time.Second)
 	defer cancel()
 

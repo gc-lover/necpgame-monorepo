@@ -227,3 +227,4 @@ ON CONFLICT (city_id) DO NOTHING;
 -- Scalability: Supports 140+ cities with full cyberpunk characteristics
 -- Integration: Provides foundation for world-regions-service and narrative systems
 
+

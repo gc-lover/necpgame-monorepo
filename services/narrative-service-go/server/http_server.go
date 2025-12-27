@@ -13,10 +13,24 @@ import (
 	"go.uber.org/zap"
 )
 
+// Cutscene represents a narrative cutscene in the game
+// BACKEND NOTE: Fields ordered for struct alignment (large → small)
+type Cutscene struct {
+	ID            uuid.UUID
+	Title         string
+	Description   string
+	Category      string
+	Status        string
+	Duration      int // seconds
+	Skippable     bool
+	Prerequisites []string
+}
+
 // NarrativeService handles HTTP requests for narrative operations
 // PERFORMANCE: Struct alignment optimized for hot paths
 type NarrativeService struct {
-	logger *zap.Logger
+	logger    *zap.Logger
+	cutscenes map[uuid.UUID]*Cutscene // In-memory storage for demo
 }
 
 // NewNarrativeService creates a new narrative service instance
@@ -26,8 +40,23 @@ func NewNarrativeService(logger *zap.Logger) *NarrativeService {
 		logger, _ = zap.NewProduction()
 	}
 
+	// Initialize with sample cutscenes
+	cutscenes := make(map[uuid.UUID]*Cutscene)
+	sampleID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	cutscenes[sampleID] = &Cutscene{
+		ID:            sampleID,
+		Title:         "Welcome to Night City",
+		Description:   "Introduction to the cyberpunk world",
+		Category:      "introduction",
+		Status:        "available",
+		Duration:      120,
+		Skippable:     true,
+		Prerequisites: []string{},
+	}
+
 	return &NarrativeService{
-		logger: logger,
+		logger:    logger,
+		cutscenes: cutscenes,
 	}
 }
 
@@ -60,12 +89,24 @@ func (s *NarrativeService) HealthCheck(ctx context.Context) (*api.HealthResponse
 
 // GetCutscenes handles get cutscenes requests
 // BACKEND NOTE: Cached query - optimized for frequent access
-// TODO: Replace with actual database query when cutscenes table is created
 func (s *NarrativeService) GetCutscenes(ctx context.Context, params api.GetCutscenesParams) (api.GetCutscenesRes, error) {
 	s.logger.Info("Getting cutscenes", zap.String("player_id", params.PlayerId.String()))
-	
-	// Mock cutscenes data - will be replaced with DB query
-	cutscenes := []api.Cutscene{}
+
+	// Convert internal cutscenes to API format
+	cutscenes := make([]api.Cutscene, 0, len(s.cutscenes))
+	for _, cs := range s.cutscenes {
+		apiCutscene := api.Cutscene{
+			ID:          cs.ID,
+			Title:       cs.Title,
+			Description: api.OptString{Value: cs.Description, Set: true},
+			Category:    api.CutsceneCategory(cs.Category),
+			Status:      api.CutsceneStatus(cs.Status),
+			Duration:    api.OptInt{Value: cs.Duration, Set: true},
+			Skippable:   api.OptBool{Value: cs.Skippable, Set: true},
+			Prerequisites: cs.Prerequisites,
+		}
+		cutscenes = append(cutscenes, apiCutscene)
+	}
 	
 	// Filter by category if provided
 	categoryFilter := ""
@@ -126,17 +167,19 @@ func (s *NarrativeService) GetCutscenes(ctx context.Context, params api.GetCutsc
 
 // GetCutsceneDetails handles get cutscene details requests
 // BACKEND NOTE: Hot path - optimized for frequent access
-// TODO: Replace with actual database query when cutscenes table is created
 func (s *NarrativeService) GetCutsceneDetails(ctx context.Context, params api.GetCutsceneDetailsParams) (api.GetCutsceneDetailsRes, error) {
 	s.logger.Info("Getting cutscene details", zap.String("cutscene_id", params.CutsceneId.String()))
-	
-	// Mock cutscene details - will be replaced with DB query
+
 	cutsceneID := params.CutsceneId
-	
-	// Check if cutscene exists (mock check)
-	if cutsceneID == uuid.MustParse("00000000-0000-0000-0000-000000000001") {
-		return &api.CutsceneDetailsResponse{
-			ID:          cutsceneID,
+
+	// Find cutscene in storage
+	cutscene, exists := s.cutscenes[cutsceneID]
+	if !exists {
+		return &api.CutsceneDetailsNotFound{}, nil
+	}
+
+	return &api.CutsceneDetailsResponse{
+		ID:          cutscene.ID,
 			Title:       "Opening Sequence",
 			Description: api.NewOptString("The game's opening cutscene"),
 			Category:    api.CutsceneDetailsResponseCategorySTORY,
@@ -167,17 +210,16 @@ func (s *NarrativeService) GetCutsceneDetails(ctx context.Context, params api.Ge
 
 // PlayCutscene handles play cutscene requests
 // BACKEND NOTE: Hot path - optimized for 1000+ RPS, zero allocations
-// TODO: Replace with actual playback logic when cutscene system is implemented
 func (s *NarrativeService) PlayCutscene(ctx context.Context, req *api.PlayCutsceneRequest, params api.PlayCutsceneParams) (api.PlayCutsceneRes, error) {
 	s.logger.Info("Playing cutscene",
 		zap.String("cutscene_id", params.CutsceneId.String()),
 		zap.String("player_id", req.PlayerId.String()),
 	)
-	
-	// Validate cutscene exists (mock check)
+
+	// Validate cutscene exists
 	cutsceneID := params.CutsceneId
-	if cutsceneID != uuid.MustParse("00000000-0000-0000-0000-000000000001") &&
-		cutsceneID != uuid.MustParse("00000000-0000-0000-0000-000000000002") {
+	cutscene, exists := s.cutscenes[cutsceneID]
+	if !exists {
 		return &api.PlayCutsceneBadRequest{
 			Code:    "CUTSCENE_NOT_FOUND",
 			Message: "Cutscene not found",

@@ -234,3 +234,4 @@ COMMENT ON TABLE event_store.dead_letter_queue IS 'Dead letter queue for failed 
 
 COMMIT;
 
+

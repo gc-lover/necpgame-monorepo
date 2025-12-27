@@ -90,3 +90,4 @@ INSERT INTO social.guild_members (user_id, guild_id, role, joined_at) VALUES
 ON CONFLICT (user_id, guild_id) DO NOTHING;
 
 COMMIT;
+

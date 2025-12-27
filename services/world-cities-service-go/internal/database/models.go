@@ -70,3 +70,4 @@ type CityListOptions struct {
 	SortOrder string // "asc", "desc"
 }
 
+
