@@ -290,7 +290,7 @@ func (h *EasterEggsHandlers) GetHintsForEasterEgg(w http.ResponseWriter, r *http
 
 // RecordDiscoveryAttempt handles POST /api/v1/easter-eggs/{id}/attempt
 func (h *EasterEggsHandlers) RecordDiscoveryAttempt(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	_ = r.Context() // Not used in this function
 	start := time.Now()
 
 	id := chi.URLParam(r, "id")

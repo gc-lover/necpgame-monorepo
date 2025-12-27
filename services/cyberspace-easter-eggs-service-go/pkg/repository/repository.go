@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 
 	"cyberspace-easter-eggs-service-go/pkg/models"
 )
