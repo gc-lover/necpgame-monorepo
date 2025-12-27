@@ -32,7 +32,7 @@ func main() {
 	)
 
 	// PERFORMANCE: Context with timeout for initialization
-	initCtx, initCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	_, initCancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer initCancel()
 
 	// Create server instance with PERFORMANCE optimizations
