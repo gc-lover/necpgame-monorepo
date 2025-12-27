@@ -21,11 +21,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
-	"cyberspace-easter-eggs-service-go/internal/config"
-	"cyberspace-easter-eggs-service-go/internal/handlers"
-	"cyberspace-easter-eggs-service-go/internal/metrics"
-	"cyberspace-easter-eggs-service-go/internal/repository"
-	"cyberspace-easter-eggs-service-go/internal/service"
+	"internal/config"
+	"internal/handlers"
+	"internal/metrics"
+	"internal/repository"
+	"internal/service"
 )
 
 func main() {
