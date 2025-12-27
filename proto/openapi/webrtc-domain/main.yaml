@@ -371,8 +371,8 @@ paths:
         required: true
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/CreateExampleRequest'
+        schema:
+          $ref: '#/components/schemas/CreateVoiceChannelRequest'
       responses:
         '201':
           $ref: '#/components/responses/ExampleCreated'
@@ -497,19 +497,19 @@ paths:
         **Performance:** <25ms P95, includes validation and conflict resolution
 
         '
-      operationId: updateExample
+      operationId: updateVoiceChannel
       tags:
-      - Example Domain
+      - Voice Channels
       security:
       - BearerAuth: []
       parameters:
-      - name: example_id
+      - name: channel_id
         in: path
         required: true
         schema:
           type: string
           format: uuid
-        description: Example unique identifier
+        description: Voice channel unique identifier
       - name: If-Match
         in: header
         schema:
@@ -596,19 +596,19 @@ paths:
         **Performance:** <15ms P95, includes cleanup operations
 
         '
-      operationId: deleteExample
+      operationId: deleteVoiceChannel
       tags:
-      - Example Domain
+      - Voice Channels
       security:
       - BearerAuth: []
       parameters:
-      - name: example_id
+      - name: channel_id
         in: path
         required: true
         schema:
           type: string
           format: uuid
-        description: Example unique identifier
+        description: Voice channel unique identifier
       responses:
         '204':
           $ref: '#/components/responses/ExampleDeleted'
@@ -1540,13 +1540,25 @@ components:
           type: string
           minLength: 1
           maxLength: 100
-          description: Desired example name
-          example: My New Example
+          description: Voice channel display name
+          example: Guild Party Chat
+        type:
+          type: string
+          enum: [guild, party, global, private]
+          description: Voice channel type
+          example: guild
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+          default: 10
+          description: Maximum number of participants
+          example: 10
         description:
           type: string
-          maxLength: 1000
-          description: Example description
-          example: A new example following enterprise-grade patterns.
+          maxLength: 500
+          description: Voice channel description
+          example: Main voice channel for guild coordination
         tags:
           type: array
           items:
@@ -1604,7 +1616,7 @@ components:
       - example
       properties:
         example:
-          $ref: '#/components/schemas/Example'
+          $ref: '#/components/schemas/VoiceChannel'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ExampleListResponse:
       type: object
@@ -1616,7 +1628,7 @@ components:
         examples:
           type: array
           items:
-            $ref: '#/components/schemas/Example'
+            $ref: '#/components/schemas/VoiceChannel'
           description: List of examples
         has_more:
           type: boolean
