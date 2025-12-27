@@ -38,208 +38,208 @@ def generate_miami_npcs():
             "dialogue_topics": ["beach-safety", "ocean-conditions", "local-beaches"]
         },
         {
-            "id": "houston-oil-worker-2020",
-            "name": "Jack \"Black Gold\" Thompson",
-            "role": "Oil Rig Worker",
-            "faction": "Labor",
-            "location": "Houston, Texas",
+            "id": "miami-cuban-exile-2020",
+            "name": "Rosa \"La Reina\" Delgado",
+            "role": "Cuban Exile Community Leader",
+            "faction": "Civilians",
+            "location": "Miami, Florida",
             "appearance": {
-                "age": 52,
+                "age": 65,
+                "gender": "female",
+                "ethnicity": "hispanic",
+                "height": "5'4\"",
+                "build": "dignified",
+                "hair": "gray with hints of black",
+                "eyes": "dark brown",
+                "clothing_style": "traditional Cuban dress",
+                "distinctive_features": "gold cross necklace, strong presence"
+            },
+            "personality": "wise, passionate, community-oriented",
+            "background": "Leader of the Cuban exile community in Little Havana",
+            "quest_connections": ["quest-002-cuban-little-havana"],
+            "dialogue_topics": ["cuban-history", "exile-stories", "cultural-preservation"]
+        },
+        {
+            "id": "miami-drug-lord-2020",
+            "name": "El Diablo Blanco",
+            "role": "Underground Drug Dealer",
+            "faction": "Criminal",
+            "location": "Miami, Florida",
+            "appearance": {
+                "age": 40,
+                "gender": "male",
+                "ethnicity": "mixed",
+                "height": "6'0\"",
+                "build": "intimidating",
+                "hair": "shaved head",
+                "eyes": "cold blue",
+                "clothing_style": "expensive suit",
+                "distinctive_features": "gold chains, dangerous aura"
+            },
+            "personality": "ruthless, calculating, charming",
+            "background": "Kingpin of Miami's drug trade network",
+            "quest_connections": ["quest-003-drug-run"],
+            "dialogue_topics": ["underground-economy", "cartel-politics", "survival-skills"]
+        },
+        {
+            "id": "miami-street-artist-2020",
+            "name": "Color Bomb",
+            "role": "Street Artist",
+            "faction": "Artists",
+            "location": "Miami, Florida",
+            "appearance": {
+                "age": 26,
+                "gender": "non-binary",
+                "ethnicity": "mixed",
+                "height": "5'8\"",
+                "build": "slender",
+                "hair": "colorful mohawk",
+                "eyes": "bright green",
+                "clothing_style": "artistic street wear",
+                "distinctive_features": "paint-stained hands, creative energy"
+            },
+            "personality": "creative, rebellious, expressive",
+            "background": "Rising star of Wynwood Walls street art scene",
+            "quest_connections": ["quest-004-wynwood-walls"],
+            "dialogue_topics": ["street-art", "urban-expression", "art-movements"]
+        },
+        {
+            "id": "miami-heat-fan-2020",
+            "name": "South Beach Slammer",
+            "role": "Basketball Fanatic",
+            "faction": "Civilians",
+            "location": "Miami, Florida",
+            "appearance": {
+                "age": 35,
+                "gender": "male",
+                "ethnicity": "african-american",
+                "height": "6'3\"",
+                "build": "athletic",
+                "hair": "short dreads",
+                "eyes": "brown",
+                "clothing_style": "Miami Heat jersey",
+                "distinctive_features": "basketball tattoo, energetic"
+            },
+            "personality": "passionate, loyal, competitive",
+            "background": "Die-hard Miami Heat fan and former college player",
+            "quest_connections": ["quest-005-miami-heat-game"],
+            "dialogue_topics": ["basketball", "heat-legends", "sports-culture"]
+        },
+        {
+            "id": "miami-everglades-guide-2020",
+            "name": "Swamp Spirit",
+            "role": "Everglades Guide",
+            "faction": "Nature",
+            "location": "Miami, Florida",
+            "appearance": {
+                "age": 45,
+                "gender": "female",
+                "ethnicity": "native american",
+                "height": "5'7\"",
+                "build": "fit",
+                "hair": "long black braid",
+                "eyes": "dark brown",
+                "clothing_style": "practical outdoor gear",
+                "distinctive_features": "nature wisdom, calming presence"
+            },
+            "personality": "wise, connected to nature, protective",
+            "background": "Native guide with deep knowledge of Everglades ecosystem",
+            "quest_connections": ["quest-006-everglades-gators"],
+            "dialogue_topics": ["everglades-wildlife", "native-traditions", "environmental-protection"]
+        },
+        {
+            "id": "miami-cuban-chef-2020",
+            "name": "Papa Joe's Daughter",
+            "role": "Cuban Sandwich Master",
+            "faction": "Merchants",
+            "location": "Miami, Florida",
+            "appearance": {
+                "age": 32,
+                "gender": "female",
+                "ethnicity": "hispanic",
+                "height": "5'6\"",
+                "build": "curvy",
+                "hair": "dark curly",
+                "eyes": "brown",
+                "clothing_style": "chef uniform",
+                "distinctive_features": "family pride, culinary passion"
+            },
+            "personality": "proud, skilled, family-oriented",
+            "background": "Third-generation owner of legendary Cuban sandwich shop",
+            "quest_connections": ["quest-007-cuban-sandwich"],
+            "dialogue_topics": ["cuban-cuisine", "family-recipes", "cultural-heritage"]
+        },
+        {
+            "id": "miami-speedboat-captain-2020",
+            "name": "Thunder Wave",
+            "role": "Speedboat Racer",
+            "faction": "Racers",
+            "location": "Miami, Florida",
+            "appearance": {
+                "age": 38,
                 "gender": "male",
                 "ethnicity": "caucasian",
                 "height": "5'11\"",
                 "build": "muscular",
-                "hair": "graying brown",
+                "hair": "wind-blown blonde",
                 "eyes": "blue",
-                "clothing_style": "work boots and hard hat",
-                "distinctive_features": "oil-stained hands, weathered face"
+                "clothing_style": "racing gear",
+                "distinctive_features": "speed tattoos, adventurous spirit"
             },
-            "personality": "tough, proud of working class heritage",
-            "background": "Veteran oil rig worker from the Gulf of Mexico",
-            "quest_connections": ["quest-002-oil-capital"],
-            "dialogue_topics": ["oil-industry", "gulf-coast", "working-class"]
+            "personality": "adventurous, competitive, thrill-seeking",
+            "background": "Professional speedboat racer and ocean adventurer",
+            "quest_connections": ["quest-008-speedboat-race"],
+            "dialogue_topics": ["speedboat-racing", "ocean-adventures", "thrill-sports"]
         },
         {
-            "id": "houston-weather-survivor-2020",
-            "name": "Tropical Storm Sally",
-            "role": "Weather Survivor",
-            "faction": "Civilians",
-            "location": "Houston, Texas",
+            "id": "miami-art-collector-2020",
+            "name": "Gallery Ghost",
+            "role": "Art Basel Insider",
+            "faction": "Elites",
+            "location": "Miami, Florida",
             "appearance": {
-                "age": 35,
-                "gender": "female",
-                "ethnicity": "mixed",
-                "height": "5'8\"",
-                "build": "fit",
-                "hair": "long curly",
-                "eyes": "hazel",
-                "clothing_style": "practical outdoor wear",
-                "distinctive_features": "sunny disposition despite weather"
-            },
-            "personality": "resilient, optimistic, weather-wise",
-            "background": "Local who has survived multiple hurricanes",
-            "quest_connections": ["quest-003-humidity-hell"],
-            "dialogue_topics": ["weather-survival", "hurricane-stories", "climate-adaptation"]
-        },
-        {
-            "id": "houston-rodeo-champion-2020",
-            "name": "Buckaroo Bill",
-            "role": "Rodeo Champion",
-            "faction": "Entertainers",
-            "location": "Houston, Texas",
-            "appearance": {
-                "age": 45,
-                "gender": "male",
-                "ethnicity": "caucasian",
-                "height": "6'2\"",
-                "build": "lean muscular",
-                "hair": "long blonde",
-                "eyes": "blue",
-                "clothing_style": "western wear",
-                "distinctive_features": "rodeo belt buckle, cowboy hat"
-            },
-            "personality": "confident, competitive, traditional",
-            "background": "Professional rodeo rider with championship titles",
-            "quest_connections": ["quest-004-rodeo-livestock-show"],
-            "dialogue_topics": ["rodeo-life", "western-heritage", "competition"]
-        },
-        {
-            "id": "houston-texmex-chef-2020",
-            "name": "Rosa Maria Sanchez",
-            "role": "Tex-Mex Fusion Chef",
-            "faction": "Merchants",
-            "location": "Houston, Texas",
-            "appearance": {
-                "age": 42,
-                "gender": "female",
-                "ethnicity": "hispanic",
-                "height": "5'5\"",
-                "build": "curvy",
-                "hair": "dark brown",
-                "eyes": "brown",
-                "clothing_style": "chef apron",
-                "distinctive_features": "warm smile, cooking passion"
-            },
-            "personality": "creative, hospitable, food enthusiast",
-            "background": "Innovative chef blending Texan and Mexican cuisines",
-            "quest_connections": ["quest-005-tex-mex-diversity"],
-            "dialogue_topics": ["culinary-fusion", "tex-mex-culture", "food-innovation"]
-        },
-        {
-            "id": "houston-astros-fan-2020",
-            "name": "Orbit Ollie",
-            "role": "Baseball Fanatic",
-            "faction": "Civilians",
-            "location": "Houston, Texas",
-            "appearance": {
-                "age": 32,
-                "gender": "male",
-                "ethnicity": "asian",
-                "height": "5'9\"",
-                "build": "average",
-                "hair": "short black",
-                "eyes": "brown",
-                "clothing_style": "Astros jersey",
-                "distinctive_features": "team spirit, enthusiastic"
-            },
-            "personality": "passionate, loyal, energetic",
-            "background": "Dedicated Astros fan since childhood",
-            "quest_connections": ["quest-006-astros-baseball"],
-            "dialogue_topics": ["baseball", "astros-history", "sports-loyalty"]
-        },
-        {
-            "id": "houston-hurricane-victim-2020",
-            "name": "Captain Harvey",
-            "role": "Storm Survivor",
-            "faction": "Civilians",
-            "location": "Houston, Texas",
-            "appearance": {
-                "age": 58,
+                "age": 55,
                 "gender": "male",
                 "ethnicity": "caucasian",
                 "height": "5'10\"",
-                "build": "solid",
-                "hair": "white",
-                "eyes": "gray",
-                "clothing_style": "practical work clothes",
-                "distinctive_features": "weathered by storms, resilient gaze"
+                "build": "distinguished",
+                "hair": "silver",
+                "eyes": "piercing blue",
+                "clothing_style": "expensive suit",
+                "distinctive_features": "artistic air, sophisticated manner"
             },
-            "personality": "stoic, experienced, community-minded",
-            "background": "Survivor of Hurricane Harvey and other major storms",
-            "quest_connections": ["quest-007-hurricane-harvey"],
-            "dialogue_topics": ["storm-survival", "community-resilience", "climate-change"]
+            "personality": "cultured, mysterious, influential",
+            "background": "Elite art collector with connections to Art Basel",
+            "quest_connections": ["quest-009-art-basel"],
+            "dialogue_topics": ["contemporary-art", "art-market", "cultural-events"]
         },
         {
-            "id": "houston-texans-cheerleader-2020",
-            "name": "Lone Star Lucy",
-            "role": "Football Cheerleader",
-            "faction": "Entertainers",
-            "location": "Houston, Texas",
+            "id": "miami-hurricane-survivor-2020",
+            "name": "Storm Watcher",
+            "role": "Weather Researcher",
+            "faction": "Scientists",
+            "location": "Miami, Florida",
             "appearance": {
-                "age": 24,
+                "age": 48,
                 "gender": "female",
                 "ethnicity": "mixed",
-                "height": "5'6\"",
-                "build": "athletic",
-                "hair": "blonde",
-                "eyes": "blue",
-                "clothing_style": "cheer uniform",
-                "distinctive_features": "energetic, team spirit"
+                "height": "5'9\"",
+                "build": "solid",
+                "hair": "short practical",
+                "eyes": "determined brown",
+                "clothing_style": "weather gear",
+                "distinctive_features": "weather instruments, survival gear"
             },
-            "personality": "cheerful, athletic, motivating",
-            "background": "Professional cheerleader for the Houston Texans",
-            "quest_connections": ["quest-008-texans-football"],
-            "dialogue_topics": ["football", "cheerleading", "team-spirit"]
-        },
-        {
-            "id": "houston-brunch-enthusiast-2020",
-            "name": "Mimosa Mary",
-            "role": "Brunch Culture Expert",
-            "faction": "Civilians",
-            "location": "Houston, Texas",
-            "appearance": {
-                "age": 30,
-                "gender": "female",
-                "ethnicity": "caucasian",
-                "height": "5'7\"",
-                "build": "slim",
-                "hair": "strawberry blonde",
-                "eyes": "green",
-                "clothing_style": "stylish casual",
-                "distinctive_features": "fashionable, brunch lover"
-            },
-            "personality": "social, foodie, trendsetter",
-            "background": "Social media influencer focused on Houston brunch scene",
-            "quest_connections": ["quest-009-tex-mex-breakfast"],
-            "dialogue_topics": ["brunch-culture", "houston-foodie", "social-media"]
-        },
-        {
-            "id": "houston-medical-innovator-2020",
-            "name": "Dr. Future Health",
-            "role": "Medical Center Director",
-            "faction": "Corporations",
-            "location": "Houston, Texas",
-            "appearance": {
-                "age": 50,
-                "gender": "male",
-                "ethnicity": "indian",
-                "height": "5'8\"",
-                "build": "fit",
-                "hair": "black with gray",
-                "eyes": "dark brown",
-                "clothing_style": "professional suit",
-                "distinctive_features": "medical badge, authoritative presence"
-            },
-            "personality": "innovative, compassionate, visionary",
-            "background": "Director of cutting-edge medical research at Texas Medical Center",
-            "quest_connections": ["quest-010-medical-center"],
-            "dialogue_topics": ["medical-innovation", "health-research", "texas-medicine"]
+            "personality": "scientific, prepared, community-focused",
+            "background": "Meteorologist who studies and predicts hurricanes",
+            "quest_connections": ["quest-010-hurricane-survival"],
+            "dialogue_topics": ["hurricane-science", "weather-prediction", "disaster-preparedness"]
         }
     ]
 
-    return houston_npcs
+    return miami_npcs
 
-def generate_houston_dialogues(npcs):
+def generate_miami_dialogues(npcs):
     """Generate dialogue nodes for Houston NPCs"""
 
     dialogues = []
@@ -255,7 +255,7 @@ def generate_houston_dialogues(npcs):
                 {
                     "id": "greeting",
                     "title": f"Знакомство с {npc['name']}",
-                    "body": f"Приветствую в Houston! Я {npc['name']}, {npc['role'].lower()}. Чем могу помочь?",
+                    "body": f"Приветствую в Miami! Я {npc['name']}, {npc['role'].lower()}. Чем могу помочь?",
                     "mechanics_links": [],
                     "assets": []
                 }
@@ -281,7 +281,7 @@ def generate_houston_dialogues(npcs):
                         "id": "quest_help",
                         "title": f"Помощь с квестом {quest_id}",
                         "body": f"Я могу рассказать о {quest_id.replace('quest-', 'квесте ')} и дать советы.",
-                        "mechanics_links": [f"knowledge/canon/lore/timeline-author/quests/america/houston/2020-2029/{quest_id}.yaml"],
+                        "mechanics_links": [f"knowledge/canon/lore/timeline-author/quests/america/miami/2020-2029/{quest_id}.yaml"],
                         "assets": []
                     }
                 ],
@@ -315,7 +315,7 @@ def create_liquibase_npcs(npcs, output_file):
                                 'id': f"canon-npc-{npc['id']}",
                                 'version': '2.0.0',
                                 'source_file': f"scripts/generate_houston_npcs_dialogues.py",
-                                'city': 'Houston',
+                                'city': 'Miami',
                                 'period': '2020-2029'
                             }, ensure_ascii=False)}},
                             {'column': {'name': 'name', 'value': npc['name']}},
@@ -377,7 +377,7 @@ def create_liquibase_dialogues(dialogues, output_file):
                                 'npc_id': dialogue['npc_id'],
                                 'type': dialogue['type'],
                                 'source_file': f"scripts/generate_houston_npcs_dialogues.py",
-                                'city': 'Houston',
+                                'city': 'Miami',
                                 'period': '2020-2029'
                             }, ensure_ascii=False)}}
                         ]
@@ -405,22 +405,22 @@ def main():
     print("Generating Houston NPCs and Dialogues...")
 
     # Generate NPCs
-    houston_npcs = generate_houston_npcs()
-    print(f"Generated {len(houston_npcs)} Houston NPCs")
+    miami_npcs = generate_miami_npcs()
+    print(f"Generated {len(miami_npcs)} Miami NPCs")
 
     # Generate dialogues
-    houston_dialogues = generate_houston_dialogues(houston_npcs)
-    print(f"Generated {len(houston_dialogues)} Houston dialogue nodes")
+    miami_dialogues = generate_miami_dialogues(miami_npcs)
+    print(f"Generated {len(miami_dialogues)} Miami dialogue nodes")
 
     # Output files
-    npcs_output = Path('infrastructure/liquibase/data/narrative/npcs/data_npcs_houston-2020-2029_support.yaml')
-    dialogues_output = Path('infrastructure/liquibase/data/narrative/dialogues/data_dialogues_houston-2020-2029_support.yaml')
+    npcs_output = Path('infrastructure/liquibase/data/narrative/npcs/data_npcs_miami-2020-2029_support.yaml')
+    dialogues_output = Path('infrastructure/liquibase/data/narrative/dialogues/data_dialogues_miami-2020-2029_support.yaml')
 
     # Create Liquibase files
-    create_liquibase_npcs(houston_npcs, npcs_output)
-    create_liquibase_dialogues(houston_dialogues, dialogues_output)
+    create_liquibase_npcs(miami_npcs, npcs_output)
+    create_liquibase_dialogues(miami_dialogues, dialogues_output)
 
-    print("Houston NPCs and dialogues generation completed successfully!")
+    print("Miami NPCs and dialogues generation completed successfully!")
 
 if __name__ == '__main__':
     main()
