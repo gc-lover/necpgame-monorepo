@@ -1,0 +1,370 @@
+# Issue: #140899116
+metadata:
+  id: quest-branching-liquibase-poc
+  title: 'Quest Branching Liquibase PoC - Анализ ветвления квестов'
+  document_type: analysis
+  category: quest_systems
+  status: completed
+  version: '1.0.0'
+  last_updated: 2025-12-27T12:21:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-27T12:21:00Z
+  owners:
+    - role: backend_lead
+      contact: backend@necp.game
+  tags:
+    - quest-branching
+    - liquibase
+    - database-design
+    - mmorpg
+  topics:
+    - database-architecture
+    - quest-systems
+    - branching-logic
+  related_systems:
+    - narrative-service
+    - gameplay-service
+  related_documents:
+    - id: quest-definition-schema
+      relation: implements
+    - id: narrative-workflow-analysis
+      relation: references
+  source: knowledge/analysis/quest-branching-liquibase-analysis.yaml
+  visibility: internal
+  audience:
+    - backend
+    - database
+    - architect
+  risk_level: medium
+
+summary:
+  problem: |
+    Текущая система квестов не поддерживает ветвление (branching) - альтернативные пути выполнения,
+    зависимые от выбора игрока. Нужно проанализировать возможные подходы реализации ветвления
+    в базе данных с использованием Liquibase миграций.
+
+  goal: |
+    Создать Proof of Concept для системы ветвления квестов, которая позволит:
+    - Хранить альтернативные пути выполнения квестов
+    - Отслеживать выборы игрока и их последствия
+    - Поддерживать сложные деревья решений
+    - Масштабироваться для тысяч игроков
+
+  essence: |
+    Ветвление квестов - это система альтернативных нарративных путей, где выбор игрока
+    влияет на развитие сюжета, награды и доступные квесты. Реализация должна быть эффективной
+    для MMORPG с тысячами одновременных игроков.
+
+  key_points:
+    - Ветвление должно храниться в JSONB для гибкости
+    - Нужен механизм отслеживания состояния ветвления для каждого игрока
+    - Производительность критически важна для игрового опыта
+    - Liquibase миграции должны поддерживать постепенное развертывание
+
+quest_branching_analysis:
+  current_state:
+    limitations:
+      - Нет поддержки альтернативных путей
+      - Фиксированные награды и исходы
+      - Отсутствие механизма выбора игрока
+      - Статическая структура квестов
+
+  requirements:
+    branching_types:
+      - choice_based: Выбор из нескольких опций
+      - condition_based: Ветвление на основе условий (уровень, предметы, репутация)
+      - time_based: Временные ограничения влияют на исход
+      - reputation_based: Репутация влияет на доступные опции
+
+    player_tracking:
+      - Сохранение выбора игрока
+      - История ветвлений для аналитики
+      - Возможность переигрывания альтернативных путей
+      - Синхронизация между сессиями
+
+    performance_requirements:
+      - <10ms на запрос состояния ветвления
+      - Поддержка 1000+ одновременных игроков
+      - Эффективное хранение для миллионов записей
+      - Минимальный overhead на базу данных
+
+  proposed_solutions:
+
+    solution_1_embedded_jsonb:
+      name: "Встроенное JSONB ветвление"
+      description: "Хранение всей логики ветвления в JSONB поле quest_definitions"
+      pros:
+        - Простота реализации
+        - Гибкость структуры
+        - Легко расширять
+        - Минимальные изменения схемы
+      cons:
+        - Сложные запросы для поиска
+        - Трудно индексировать
+        - Риск повреждения данных
+        - Сложная валидация
+
+      schema_changes:
+        - add_column:
+            table: gameplay.quest_definitions
+            column:
+              name: branching_logic
+              type: JSONB
+              nullable: true
+              comment: "JSON structure for quest branching logic"
+
+        - add_column:
+            table: gameplay.player_quest_progress
+            column:
+              name: branching_state
+              type: JSONB
+              nullable: true
+              comment: "Current branching state for player"
+
+      liquibase_migration: |
+        --liquibase formatted sql
+
+        --changeset backend:quest-branching-jsonb dbms:postgresql
+        --comment: Add branching logic support to quest system
+
+        ALTER TABLE gameplay.quest_definitions
+        ADD COLUMN IF NOT EXISTS branching_logic JSONB;
+
+        ALTER TABLE gameplay.player_quest_progress
+        ADD COLUMN IF NOT EXISTS branching_state JSONB;
+
+        -- Indexes for performance
+        CREATE INDEX IF NOT EXISTS idx_quest_definitions_branching_logic
+        ON gameplay.quest_definitions USING GIN (branching_logic);
+
+        CREATE INDEX IF NOT EXISTS idx_player_quest_progress_branching_state
+        ON gameplay.player_quest_progress USING GIN (branching_state);
+
+        --changeset backend:quest-branching-sample-data dbms:postgresql
+        --comment: Sample branching quest data
+
+        INSERT INTO gameplay.quest_definitions (
+          id, quest_id, title, description, status, level_min, level_max,
+          rewards, objectives, branching_logic, created_at, updated_at
+        ) VALUES (
+          'quest-branching-demo-001',
+          'quest-branching-demo',
+          'Демонстрация ветвления',
+          'Квест с альтернативными путями',
+          'active',
+          1, 50,
+          '{"xp": 1000, "items": ["sword_common", "shield_common"]}'::jsonb,
+          '["Выбрать путь воина или мага"]'::jsonb,
+          '{
+            "version": "1.0",
+            "entry_point": "choice_1",
+            "nodes": {
+              "choice_1": {
+                "type": "choice",
+                "title": "Выберите класс",
+                "description": "Ваше решение определит дальнейший путь",
+                "options": [
+                  {
+                    "id": "warrior_path",
+                    "title": "Путь Воина",
+                    "description": "Сила и защита",
+                    "requirements": {},
+                    "rewards": {"xp": 500, "items": ["sword_iron"]},
+                    "next_node": "warrior_quest"
+                  },
+                  {
+                    "id": "mage_path",
+                    "title": "Путь Мага",
+                    "description": "Магия и знания",
+                    "requirements": {},
+                    "rewards": {"xp": 500, "items": ["staff_oak"]},
+                    "next_node": "mage_quest"
+                  }
+                ]
+              },
+              "warrior_quest": {
+                "type": "quest",
+                "title": "Испытание Воина",
+                "objectives": ["Убить 10 монстров", "Найти сокровище"],
+                "rewards": {"xp": 2000, "items": ["armor_iron"]}
+              },
+              "mage_quest": {
+                "type": "quest",
+                "title": "Испытание Мага",
+                "objectives": ["Собрать реагенты", "Создать зелье"],
+                "rewards": {"xp": 2000, "items": ["robe_mage"]}
+              }
+            }
+          }'::jsonb,
+          CURRENT_TIMESTAMP,
+          CURRENT_TIMESTAMP
+        );
+
+    solution_2_normalized_tables:
+      name: "Нормализованные таблицы ветвления"
+      description: "Отдельные таблицы для узлов ветвления и переходов"
+      pros:
+        - Лучшая производительность запросов
+        - Легче индексировать
+        - ACID транзакции
+        - Простая валидация
+      cons:
+        - Сложная схема БД
+        - Много JOIN операций
+        - Труднее расширять
+        - Больше миграций
+
+      schema_changes:
+        - create_table: gameplay.quest_branches
+        - create_table: gameplay.quest_branch_nodes
+        - create_table: gameplay.quest_branch_transitions
+        - create_table: gameplay.player_branch_choices
+
+      liquibase_migration: |
+        --liquibase formatted sql
+
+        --changeset backend:quest-branching-tables dbms:postgresql
+        --comment: Create normalized branching tables
+
+        CREATE TABLE IF NOT EXISTS gameplay.quest_branches (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          quest_id VARCHAR(100) NOT NULL,
+          version VARCHAR(20) NOT NULL DEFAULT '1.0',
+          is_active BOOLEAN NOT NULL DEFAULT true,
+          created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+          UNIQUE(quest_id, version)
+        );
+
+        CREATE TABLE IF NOT EXISTS gameplay.quest_branch_nodes (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          branch_id UUID NOT NULL REFERENCES gameplay.quest_branches(id),
+          node_id VARCHAR(100) NOT NULL,
+          node_type VARCHAR(50) NOT NULL, -- choice, condition, quest, end
+          title VARCHAR(200) NOT NULL,
+          description TEXT,
+          data JSONB, -- node-specific data
+          created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+          UNIQUE(branch_id, node_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS gameplay.quest_branch_transitions (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          branch_id UUID NOT NULL REFERENCES gameplay.quest_branches(id),
+          from_node_id VARCHAR(100) NOT NULL,
+          to_node_id VARCHAR(100) NOT NULL,
+          transition_type VARCHAR(50) NOT NULL, -- choice, condition, auto
+          conditions JSONB, -- transition requirements
+          created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS gameplay.player_branch_choices (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          player_id UUID NOT NULL,
+          quest_id VARCHAR(100) NOT NULL,
+          branch_id UUID NOT NULL REFERENCES gameplay.quest_branches(id),
+          node_id VARCHAR(100) NOT NULL,
+          choice_data JSONB NOT NULL,
+          chosen_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+          UNIQUE(player_id, quest_id, node_id)
+        );
+
+        -- Indexes
+        CREATE INDEX IF NOT EXISTS idx_quest_branches_quest_id
+        ON gameplay.quest_branches(quest_id);
+
+        CREATE INDEX IF NOT EXISTS idx_quest_branch_nodes_branch_id
+        ON gameplay.quest_branch_nodes(branch_id);
+
+        CREATE INDEX IF NOT EXISTS idx_quest_branch_transitions_branch_id
+        ON gameplay.quest_branch_transitions(branch_id);
+
+        CREATE INDEX IF NOT EXISTS idx_player_branch_choices_player_quest
+        ON gameplay.player_branch_choices(player_id, quest_id);
+
+    solution_3_hybrid_approach:
+      name: "Гибридный подход"
+      description: "Комбинация JSONB для простых случаев и нормализованных таблиц для сложных"
+      pros:
+        - Баланс между гибкостью и производительностью
+        - Простые ветвления в JSONB
+        - Сложные в отдельных таблицах
+        - Лучшая масштабируемость
+      cons:
+        - Сложная логика приложения
+        - Две разные системы хранения
+        - Сложнее поддерживать
+
+  recommendations:
+
+    preferred_solution: "solution_1_embedded_jsonb"
+    reasoning: |
+      Для MMORPG с динамичным контентом JSONB решение дает необходимую гибкость.
+      Производительность можно оптимизировать через GIN индексы и кеширование.
+      Это решение проще в поддержке и развитии.
+
+    migration_strategy:
+      phases:
+        - phase_1: "Добавить JSONB колонки (без данных)"
+        - phase_2: "Создать API для работы с ветвлениями"
+        - phase_3: "Миграция существующих квестов"
+        - phase_4: "Тестирование с реальными данными"
+        - phase_5: "Включение для игроков"
+
+    performance_optimizations:
+      - redis_cache: "Кешировать состояния ветвления на 1 час"
+      - database_indexes: "GIN индексы на JSONB поля"
+      - query_optimization: "Использовать jsonb_object_keys для поиска"
+      - batch_processing: "Обрабатывать выборы игроков пакетами"
+
+  implementation_plan:
+
+    backend_changes:
+      - add_models: "QuestBranching, PlayerBranchChoice модели"
+      - update_api: "Новые эндпоинты для ветвлений"
+      - add_validation: "JSON Schema валидация ветвлений"
+      - implement_logic: "Логика обработки выборов"
+
+    database_changes:
+      - liquibase_migrations: "Добавить колонки и индексы"
+      - data_migration: "Миграция существующих квестов"
+      - backup_strategy: "Полный бэкап перед изменениями"
+
+    testing_requirements:
+      - unit_tests: "Тестирование логики ветвления"
+      - integration_tests: "Тестирование с базой данных"
+      - performance_tests: "Нагрузочное тестирование"
+      - player_testing: "Бета-тестирование с реальными игроками"
+
+conclusion:
+  feasibility: "Высокая - JSONB решение реализуемо в рамках текущей архитектуры"
+  estimated_effort: "2-3 недели разработки + 1 неделя тестирования"
+  risks:
+    - performance_degradation: "Митингация через кеширование и оптимизацию"
+    - data_corruption: "Митингация через валидацию и транзакции"
+    - complexity: "Митингация через четкую документацию"
+  next_steps:
+    - create_prototype: "Создать рабочий прототип"
+    - performance_testing: "Провести нагрузочное тестирование"
+    - design_review: "Обсудить с командой архитектуры"
+
+implementation:
+  github_issue: 140899116
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/analysis/queued.yaml#quest-branching-liquibase-poc
+  blockers: []
+  completed_at: 2025-12-27T12:21:00Z
+
+history:
+  - version: '1.0.0'
+    date: 2025-12-27
+    author: backend_agent
+    changes: 'Создан анализ ветвления квестов в Liquibase с тремя подходами и рекомендациями'
+
+validation:
+  checksum: ''
+  schema_version: '1.0'
