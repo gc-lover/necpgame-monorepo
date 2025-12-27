@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"combat-hacking-service-go/pkg/models"
 	"combat-hacking-service-go/pkg/repository"
@@ -446,5 +447,246 @@ func (h *Handlers) CancelActiveHack(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// Issue: #143875347, #143875814, #143875915, #143875916, #143875917, #143875918, #143875919, #143875920
+// Enemy Hacking Handlers
+// Issue: #143875915
+
+// ScanEnemyCyberware handles enemy cyberware scanning
+func (h *Handlers) ScanEnemyCyberware(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.EnemyScanRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode enemy scan request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.ScanEnemyCyberware(req)
+	if err != nil {
+		h.logger.Printf("Failed to scan enemy cyberware: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// HackEnemyCyberware handles enemy cyberware hacking
+func (h *Handlers) HackEnemyCyberware(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.EnemyHackRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode enemy hack request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.HackEnemyCyberware(req)
+	if err != nil {
+		h.logger.Printf("Failed to hack enemy cyberware: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// Device Hacking Handlers
+// Issue: #143875916
+
+// ScanDevice handles device scanning
+func (h *Handlers) ScanDevice(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.DeviceScanRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode device scan request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.ScanDeviceCyberware(req)
+	if err != nil {
+		h.logger.Printf("Failed to scan device: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// HackDevice handles device hacking
+func (h *Handlers) HackDevice(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.DeviceHackRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode device hack request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.HackDevice(req)
+	if err != nil {
+		h.logger.Printf("Failed to hack device: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// Network Hacking Handlers
+// Issue: #143875917
+
+// InfiltrateNetwork handles network infiltration
+func (h *Handlers) InfiltrateNetwork(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.NetworkInfiltrationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode network infiltration request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.InfiltrateNetwork(req)
+	if err != nil {
+		h.logger.Printf("Failed to infiltrate network: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// ExtractData handles data extraction
+func (h *Handlers) ExtractData(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.DataExtractionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode data extraction request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.ExtractData(req)
+	if err != nil {
+		h.logger.Printf("Failed to extract data: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// Combat Support Handlers
+// Issue: #143875918
+
+// ActivateCombatSupport handles combat support activation
+func (h *Handlers) ActivateCombatSupport(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.CombatSupportRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode combat support request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.ActivateCombatSupport(req)
+	if err != nil {
+		h.logger.Printf("Failed to activate combat support: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// Anti-Cheat Handlers
+// Issue: #143875919
+
+// ValidateHackingAttempt handles hacking validation
+func (h *Handlers) ValidateHackingAttempt(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.HackingValidationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Printf("Failed to decode validation request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	result, err := h.repo.ValidateHackingAttempt(req)
+	if err != nil {
+		h.logger.Printf("Failed to validate hacking attempt: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// GetActiveHacks handles active hacks retrieval
+// Issue: #143875920
+func (h *Handlers) GetActiveHacks(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	playerID := r.URL.Query().Get("player_id")
+	if playerID == "" {
+		http.Error(w, "Missing player_id parameter", http.StatusBadRequest)
+		return
+	}
+
+	activeHacks := h.repo.GetActiveHacks(playerID)
+	response := models.ActiveHacksResponse{
+		PlayerID: playerID,
+		ActiveHacks: activeHacks,
+		TotalCount: len(activeHacks),
+		LastUpdated: time.Now().Unix(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+// Issue: #143875347, #143875814, #143875915, #143875916, #143875917, #143875918, #143875919, #143875920, #143875915, #143875916, #143875917, #143875918, #143875919, #143875920
 

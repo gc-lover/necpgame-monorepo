@@ -374,6 +374,44 @@ func (r *Repository) GetActivePhantoms() map[string]*models.PhantomEntity {
 	return phantoms
 }
 
+// GetActiveHacks returns all active hacks for a player
+func (r *Repository) GetActiveHacks(playerID string) []models.ActiveHack {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var activeHacks []models.ActiveHack
+
+	// Add blind zones
+	for id, zone := range r.blindZones {
+		activeHacks = append(activeHacks, models.ActiveHack{
+			HackID: id,
+			HackType: "blind_zone",
+			TargetID: "",
+			Status: "active",
+			Duration: zone.Duration,
+			TimeRemaining: zone.Duration, // Simplified
+			Position: zone.Position,
+		})
+	}
+
+	// Add phantom entities
+	for id, phantom := range r.phantomEntities {
+		if phantom.PlayerID == playerID {
+			activeHacks = append(activeHacks, models.ActiveHack{
+				HackID: id,
+				HackType: "phantom",
+				TargetID: "",
+				Status: "active",
+				Duration: phantom.Duration,
+				TimeRemaining: phantom.Duration, // Simplified
+				Position: phantom.Position,
+			})
+		}
+	}
+
+	return activeHacks
+}
+
 // Enemy hacking methods
 func (r *Repository) ScanEnemy(req models.EnemyScanRequest) (*models.EnemyScanResult, error) {
 	r.mu.Lock()

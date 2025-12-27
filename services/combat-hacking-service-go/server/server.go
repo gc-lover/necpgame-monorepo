@@ -21,7 +21,7 @@ func NewServer(h *handlers.Handlers, logger *log.Logger) *Server {
 
 	// Enemy hacking routes
 	mux.HandleFunc("/hacking/enemies/scan", h.ScanEnemyCyberware)
-	mux.HandleFunc("/hacking/enemies/attack", h.ExecuteEnemyHack)
+	mux.HandleFunc("/hacking/enemies/hack", h.HackEnemyCyberware)
 
 	// Device hacking routes
 	mux.HandleFunc("/hacking/devices/scan", h.ScanDevice)
@@ -29,10 +29,10 @@ func NewServer(h *handlers.Handlers, logger *log.Logger) *Server {
 
 	// Network hacking routes
 	mux.HandleFunc("/hacking/networks/infiltrate", h.InfiltrateNetwork)
-	mux.HandleFunc("/hacking/networks/extract-data", h.ExtractNetworkData)
+	mux.HandleFunc("/hacking/networks/extract", h.ExtractData)
 
 	// Combat support route
-	mux.HandleFunc("/hacking/combat/support", h.RequestCombatSupport)
+	mux.HandleFunc("/hacking/combat/support", h.ActivateCombatSupport)
 
 	// Anti-cheat validation route
 	mux.HandleFunc("/hacking/validate", h.ValidateHackingAttempt)
