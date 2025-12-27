@@ -10,18 +10,16 @@ from typing import Dict, Type
 import argparse
 
 # Import all generators
-from migrations.generators import (
-    QuestMigrationGenerator,
-    NpcsMigrationGenerator,
-    NpcsV2MigrationGenerator,
-    DialoguesMigrationGenerator,
-    LoreMigrationGenerator,
-    EnemiesMigrationGenerator,
-    InteractivesMigrationGenerator,
-    ItemsMigrationGenerator,
-    CultureMigrationGenerator,
-    DocumentationMigrationGenerator
-)
+from migrations.generators.quests_generator import QuestMigrationGenerator
+from migrations.generators.npcs_generator import NpcsMigrationGenerator
+from migrations.generators.npcs_v2_generator import NpcsV2MigrationGenerator
+from migrations.generators.dialogues_generator import DialoguesMigrationGenerator
+from migrations.generators.lore_generator import LoreMigrationGenerator
+from migrations.generators.enemies_generator import EnemiesMigrationGenerator
+from migrations.generators.interactives_generator import InteractivesMigrationGenerator
+from migrations.generators.items_generator import ItemsMigrationGenerator
+from migrations.generators.culture_generator import CultureMigrationGenerator
+from migrations.generators.documentation_generator import DocumentationMigrationGenerator
 
 # Mapping of content types to generator classes
 GENERATOR_MAPPING: Dict[str, Type] = {

@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Dict, Any, List
 from datetime import datetime
 
-from ..base import BaseContentMigrationGenerator
-from ..utils import JsonSerializer
+from migrations.base import BaseContentMigrationGenerator
+from migrations.utils import JsonSerializer
 
 
 class NpcsV2MigrationGenerator(BaseContentMigrationGenerator):
