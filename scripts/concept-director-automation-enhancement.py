@@ -38,7 +38,6 @@ sys.path.insert(0, str(project_root))
 from scripts.core.base_script import BaseScript
 
 # Try to import ML libraries, fallback to basic implementations
-ML_AVAILABLE = False
 try:
     import numpy as np
     from sklearn.ensemble import RandomForestRegressor
@@ -46,6 +45,7 @@ try:
     from sklearn.model_selection import train_test_split
     ML_AVAILABLE = True
 except ImportError:
+    ML_AVAILABLE = False
     print("Warning: ML libraries not available, using rule-based prioritization")
 
 
@@ -147,13 +147,8 @@ class MLPrioritizationEngine:
         self.baseline_stats = {}
 
         if ML_AVAILABLE:
-            try:
-                self.model = None
-                self.scaler = StandardScaler()
-            except NameError:
-                self.model = None
-                self.scaler = None
-                ML_AVAILABLE = False
+            self.model = None
+            self.scaler = StandardScaler()
         else:
             self.model = None
             self.scaler = None
@@ -1122,17 +1117,23 @@ This task has been identified as high priority for immediate attention.
         mock_data = []
         task_types = ['API', 'BACKEND', 'DATA', 'MIGRATION', 'UE5']
         impacts = ['low', 'medium', 'high']
+        dep_options = [[], ['task_a'], ['task_a', 'task_b']]
+        tag_options = [[], ['complex'], ['urgent'], ['simple']]
 
         for i in range(200):
+            # Use random.choice instead of np.random.choice for lists
+            deps_choice = random.choice([0, 1, 2])
+            tags_choice = random.choice([0, 1, 2, 3])
+
             task = {
-                'type': np.random.choice(task_types),
-                'age_days': np.random.randint(1, 60),
-                'dependencies': np.random.choice([[], ['task_a'], ['task_a', 'task_b']], p=[0.7, 0.2, 0.1]),
-                'business_impact': np.random.choice(impacts),
-                'estimated_hours': np.random.randint(4, 80),
-                'description': f"Mock task {i} description" * np.random.randint(1, 5),
-                'tags': np.random.choice([[], ['complex'], ['urgent'], ['simple']], p=[0.6, 0.2, 0.1, 0.1]),
-                'actual_priority': np.random.random()  # This would be the ground truth priority
+                'type': random.choice(task_types),
+                'age_days': random.randint(1, 60),
+                'dependencies': dep_options[deps_choice],
+                'business_impact': random.choice(impacts),
+                'estimated_hours': random.randint(4, 80),
+                'description': f"Mock task {i} description" * random.randint(1, 5),
+                'tags': tag_options[tags_choice],
+                'actual_priority': random.random()  # This would be the ground truth priority
             }
             mock_data.append(task)
 
