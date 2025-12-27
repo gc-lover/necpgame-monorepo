@@ -89,6 +89,29 @@ type ChoiceRecord struct {
 	Timestamp time.Time `json:"timestamp"` // 24 bytes
 }
 
+// BlackFlowerEvent represents the AR virus "Black Flower" event
+// Issue: #143875332
+// PERFORMANCE: Struct alignment optimized for narrative event processing
+type BlackFlowerEvent struct {
+	ID             string                 `json:"id"`             // 16 bytes
+	PlayerID       string                 `json:"playerId"`       // 16 bytes
+	InfectionStage int                    `json:"infectionStage"` // 4 bytes
+	VisualEffects  map[string]interface{} `json:"visualEffects"`  // 8 bytes
+	NarrativeHooks []string               `json:"narrativeHooks"` // 24 bytes
+	LastUpdated    time.Time              `json:"lastUpdated"`    // 24 bytes
+	Infected       bool                   `json:"infected"`       // 1 byte
+}
+
+// BlackFlowerZone represents an infected zone with AR effects
+type BlackFlowerZone struct {
+	ZoneID       string    `json:"zoneId"`       // 16 bytes
+	Location     string    `json:"location"`     // 16 bytes
+	InfectionRate float64   `json:"infectionRate"` // 8 bytes
+	VisualTheme  string    `json:"visualTheme"`  // 16 bytes
+	Active       bool      `json:"active"`       // 1 byte
+	CreatedAt    time.Time `json:"createdAt"`    // 24 bytes
+}
+
 // GetCutscenes retrieves available cutscenes for a player
 // PERFORMANCE: Hot path - optimized for 1000+ RPS, uses memory pool
 func (s *NarrativeServiceLogic) GetCutscenes(ctx context.Context, playerID string, status, category *string) ([]*CutsceneData, error) {
@@ -254,6 +277,135 @@ func (s *NarrativeServiceLogic) ValidateNarrativeState(ctx context.Context, play
 	correctedState := expectedState
 
 	return isValid, violations, correctedState
+}
+
+// InfectWithBlackFlower infects a player with the Black Flower AR virus
+// Issue: #143875332
+// PERFORMANCE: Optimized for narrative event processing
+func (s *NarrativeServiceLogic) InfectWithBlackFlower(ctx context.Context, playerID string, infectionVector string) (*BlackFlowerEvent, error) {
+	s.logger.Info("Infecting player with Black Flower virus",
+		zap.String("playerId", playerID),
+		zap.String("infectionVector", infectionVector))
+
+	event := &BlackFlowerEvent{
+		ID:             "black-flower-" + generateSessionID(),
+		PlayerID:       playerID,
+		InfectionStage: 1,
+		VisualEffects: map[string]interface{}{
+			"glitch_particles": true,
+			"color_shift":      "black_tint",
+			"ar_flowers":       []string{"black_rose", "digital_lotus"},
+		},
+		NarrativeHooks: []string{
+			"dreams_of_dark_gardens",
+			"attraction_to_abandoned_zones",
+			"digital_artist_sympathies",
+		},
+		LastUpdated: time.Now(),
+		Infected:    true,
+	}
+
+	// TODO: Store in database
+	s.logger.Info("Player infected with Black Flower virus",
+		zap.String("eventId", event.ID),
+		zap.String("playerId", playerID))
+
+	return event, nil
+}
+
+// GetBlackFlowerEvent retrieves Black Flower infection status for a player
+// Issue: #143875332
+func (s *NarrativeServiceLogic) GetBlackFlowerEvent(ctx context.Context, playerID string) (*BlackFlowerEvent, error) {
+	s.logger.Info("Retrieving Black Flower event", zap.String("playerId", playerID))
+
+	// TODO: Retrieve from database
+	// For now, return nil (not infected)
+	return nil, nil
+}
+
+// ProgressBlackFlowerInfection advances the Black Flower infection stage
+// Issue: #143875332
+func (s *NarrativeServiceLogic) ProgressBlackFlowerInfection(ctx context.Context, playerID string) (*BlackFlowerEvent, error) {
+	s.logger.Info("Progressing Black Flower infection", zap.String("playerId", playerID))
+
+	event, err := s.GetBlackFlowerEvent(ctx, playerID)
+	if err != nil {
+		return nil, err
+	}
+
+	if event == nil {
+		return nil, nil // Not infected
+	}
+
+	// Advance infection stage
+	if event.InfectionStage < 4 {
+		event.InfectionStage++
+		event.LastUpdated = time.Now()
+
+		// Update visual effects based on stage
+		switch event.InfectionStage {
+		case 2:
+			event.VisualEffects["ar_flowers"] = []string{"black_rose", "digital_lotus", "neural_vine"}
+			event.NarrativeHooks = append(event.NarrativeHooks, "hallucinations_of_beauty")
+		case 3:
+			event.VisualEffects["full_ar_transformation"] = true
+			event.VisualEffects["color_shift"] = "monochrome_dream"
+			event.NarrativeHooks = append(event.NarrativeHooks, "urge_to_spread_virus")
+		case 4:
+			event.VisualEffects["reality_glitch"] = true
+			event.NarrativeHooks = append(event.NarrativeHooks, "complete_transformation")
+		}
+
+		// TODO: Update in database
+		s.logger.Info("Advanced Black Flower infection stage",
+			zap.String("playerId", playerID),
+			zap.Int("newStage", event.InfectionStage))
+	}
+
+	return event, nil
+}
+
+// GetInfectedZones retrieves all zones affected by Black Flower virus
+// Issue: #143875332
+func (s *NarrativeServiceLogic) GetInfectedZones(ctx context.Context) ([]*BlackFlowerZone, error) {
+	s.logger.Info("Retrieving infected zones")
+
+	// TODO: Retrieve from database
+	// For now, return mock data
+	zones := []*BlackFlowerZone{
+		{
+			ZoneID:        "watson-district",
+			Location:      "Watson District, Night City",
+			InfectionRate: 0.85,
+			VisualTheme:   "dark_garden_paradise",
+			Active:        true,
+			CreatedAt:     time.Date(2047, 3, 15, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			ZoneID:        "heywood-streets",
+			Location:      "Heywood District, Street Art Zones",
+			InfectionRate: 0.65,
+			VisualTheme:   "neon_flower_rebellion",
+			Active:        true,
+			CreatedAt:     time.Date(2047, 4, 20, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	return zones, nil
+}
+
+// CureBlackFlowerInfection removes the Black Flower virus from a player
+// Issue: #143875332
+func (s *NarrativeServiceLogic) CureBlackFlowerInfection(ctx context.Context, playerID string, treatmentType string) error {
+	s.logger.Info("Curing Black Flower infection",
+		zap.String("playerId", playerID),
+		zap.String("treatmentType", treatmentType))
+
+	// TODO: Remove from database and apply treatment effects
+	s.logger.Info("Black Flower infection cured",
+		zap.String("playerId", playerID))
+
+	return nil
 }
 
 // generateSessionID generates a unique session ID

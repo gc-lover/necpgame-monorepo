@@ -122,3 +122,21 @@ class ConfigManager:
         if not github_config:
             return {}
         return github_config.get('check_options', {})
+
+
+@dataclass
+class DatabaseConfig:
+    """Database configuration for import scripts"""
+    host: str = "localhost"
+    port: int = 5432
+    database: str = "necpgame"
+    user: str = "postgres"
+    password: str = "password"
+
+    def __init__(self):
+        # Load from environment variables if available
+        self.host = os.getenv("DB_HOST", self.host)
+        self.port = int(os.getenv("DB_PORT", self.port))
+        self.database = os.getenv("DB_NAME", self.database)
+        self.user = os.getenv("DB_USER", self.user)
+        self.password = os.getenv("DB_PASSWORD", self.password)

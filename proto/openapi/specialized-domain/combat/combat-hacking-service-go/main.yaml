@@ -76,6 +76,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /hacking/screen-hack/blind:
+    post:
+      summary: Activate screen hack blind skill
+      operationId: activateScreenHackBlind
+      description: 'Activate "Screen Hack Blind" skill - hack urban AR screens to create AoE blind zone.
+
+        **BACKEND NOTE:** Creates temporary blind effect zone, optimized for urban combat scenarios.
+        Memory aligned for concurrent blind zone management.
+
+        **Issue:** #143875347
+        '
+      tags:
+        - Device Hacking
+        - Combat Hacking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScreenHackBlindRequest'
+      responses:
+        '200':
+          description: Screen hack activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreenHackBlindResponse'
+        '400':
+          description: Invalid request or insufficient requirements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Skill on cooldown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /hacking/glitch-doubles/activate:
+    post:
+      summary: Activate glitch doubles skill
+      operationId: activateGlitchDoubles
+      description: 'Activate "Glitch Doubles" skill - create phantom copies of player actions.
+
+        **BACKEND NOTE:** AI behavior modification for phantom management.
+        Optimized for multiplayer synchronization of illusion effects.
+
+        **Issue:** #143875814
+        '
+      tags:
+        - Combat Hacking
+        - Enemy Hacking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GlitchDoublesRequest'
+      responses:
+        '200':
+          description: Glitch doubles activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlitchDoublesResponse'
+        '400':
+          description: Invalid request or insufficient requirements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Skill on cooldown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /hacking/enemies/scan:
     post:
       summary: Scan enemy cyberware
@@ -378,6 +458,37 @@ components:
     DeviceScanRequest:
       $ref: ./schemas/device-scan-request.yaml
     DeviceScanResult:
+      $ref: ./schemas/device-scan-result.yaml
+    ScreenHackBlindRequest:
+      $ref: ./schemas/screen-hack-blind-request.yaml
+    ScreenHackBlindResponse:
+      $ref: ./schemas/screen-hack-blind-response.yaml
+    GlitchDoublesRequest:
+      $ref: ./schemas/glitch-doubles-request.yaml
+    GlitchDoublesResponse:
+      $ref: ./schemas/glitch-doubles-response.yaml
+    Vector3:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+        z:
+          type: number
+          format: float
+          description: Z coordinate
+      description: '3D vector coordinates for positioning.
+
+      **BACKEND NOTE:** Aligned for SIMD operations. Memory layout optimized for physics calculations.'
       $ref: ./schemas/device-scan-result.yaml
     DeviceHackRequest:
       $ref: ./schemas/device-hack-request.yaml

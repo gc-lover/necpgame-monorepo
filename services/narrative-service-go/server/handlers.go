@@ -238,3 +238,119 @@ func (h *NarrativeHandler) ValidateNarrativeState(ctx context.Context, playerID 
 
 	return isValid, violations, correctedState
 }
+
+// InfectWithBlackFlower handles POST /narrative/black-flower/infect requests
+// Issue: #143875332
+func (h *NarrativeHandler) InfectWithBlackFlower(ctx context.Context, playerID, infectionVector string) (*BlackFlowerEvent, error) {
+	h.logger.Info("Handling Black Flower infection request",
+		zap.String("playerId", playerID),
+		zap.String("infectionVector", infectionVector))
+
+	// PERFORMANCE: Context timeout for narrative operations
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	event, err := h.service.InfectWithBlackFlower(ctx, playerID, infectionVector)
+	if err != nil {
+		h.logger.Error("Failed to infect with Black Flower", zap.Error(err),
+			zap.String("playerId", playerID))
+		return nil, err
+	}
+
+	h.logger.Info("Player infected with Black Flower virus",
+		zap.String("eventId", event.ID),
+		zap.String("playerId", playerID))
+
+	return event, nil
+}
+
+// GetBlackFlowerStatus handles GET /narrative/black-flower/status requests
+// Issue: #143875332
+func (h *NarrativeHandler) GetBlackFlowerStatus(ctx context.Context, playerID string) (*BlackFlowerEvent, error) {
+	h.logger.Info("Handling get Black Flower status request", zap.String("playerId", playerID))
+
+	// PERFORMANCE: Context timeout for status queries
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	event, err := h.service.GetBlackFlowerEvent(ctx, playerID)
+	if err != nil {
+		h.logger.Error("Failed to get Black Flower status", zap.Error(err),
+			zap.String("playerId", playerID))
+		return nil, err
+	}
+
+	if event != nil {
+		h.logger.Info("Retrieved Black Flower status",
+			zap.String("playerId", playerID),
+			zap.Int("infectionStage", event.InfectionStage))
+	}
+
+	return event, nil
+}
+
+// ProgressBlackFlowerInfection handles POST /narrative/black-flower/progress requests
+// Issue: #143875332
+func (h *NarrativeHandler) ProgressBlackFlowerInfection(ctx context.Context, playerID string) (*BlackFlowerEvent, error) {
+	h.logger.Info("Handling progress Black Flower infection request", zap.String("playerId", playerID))
+
+	// PERFORMANCE: Context timeout for progression operations
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	event, err := h.service.ProgressBlackFlowerInfection(ctx, playerID)
+	if err != nil {
+		h.logger.Error("Failed to progress Black Flower infection", zap.Error(err),
+			zap.String("playerId", playerID))
+		return nil, err
+	}
+
+	if event != nil {
+		h.logger.Info("Progressed Black Flower infection",
+			zap.String("playerId", playerID),
+			zap.Int("newStage", event.InfectionStage))
+	}
+
+	return event, nil
+}
+
+// GetInfectedZones handles GET /narrative/black-flower/zones requests
+// Issue: #143875332
+func (h *NarrativeHandler) GetInfectedZones(ctx context.Context) ([]*BlackFlowerZone, error) {
+	h.logger.Info("Handling get infected zones request")
+
+	// PERFORMANCE: Context timeout for zone queries
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	zones, err := h.service.GetInfectedZones(ctx)
+	if err != nil {
+		h.logger.Error("Failed to get infected zones", zap.Error(err))
+		return nil, err
+	}
+
+	h.logger.Info("Retrieved infected zones", zap.Int("zoneCount", len(zones)))
+	return zones, nil
+}
+
+// CureBlackFlowerInfection handles POST /narrative/black-flower/cure requests
+// Issue: #143875332
+func (h *NarrativeHandler) CureBlackFlowerInfection(ctx context.Context, playerID, treatmentType string) error {
+	h.logger.Info("Handling cure Black Flower infection request",
+		zap.String("playerId", playerID),
+		zap.String("treatmentType", treatmentType))
+
+	// PERFORMANCE: Context timeout for treatment operations
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	err := h.service.CureBlackFlowerInfection(ctx, playerID, treatmentType)
+	if err != nil {
+		h.logger.Error("Failed to cure Black Flower infection", zap.Error(err),
+			zap.String("playerId", playerID))
+		return err
+	}
+
+	h.logger.Info("Black Flower infection cured", zap.String("playerId", playerID))
+	return nil
+}
