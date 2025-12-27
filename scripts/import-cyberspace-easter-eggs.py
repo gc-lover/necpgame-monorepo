@@ -4,7 +4,7 @@ NECPGAME Cyberspace Easter Eggs Import Script
 Imports easter eggs from YAML to database via REST API
 
 Usage:
-    python scripts/import-cyberspace-easter-eggs.py --yaml-path knowledge/canon/interactive-objects/cyberspace-easter-eggs.yaml --api-url http://localhost:8080/v1/cyberspace/admin/import
+    python scripts/import-cyberspace-easter-eggs.py --yaml-path knowledge/canon/interactive-objects/cyberspace-easter-eggs.yaml --api-url http://localhost:8080/api/v1/admin/import
 
 Author: Backend Agent
 Issue: #2262
