@@ -43,3 +43,4 @@ CMD ["./stock-protection-service"]
 
 
 
+

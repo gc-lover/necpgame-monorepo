@@ -229,3 +229,4 @@ ON CONFLICT (city_id) DO NOTHING;
 
 
 
+

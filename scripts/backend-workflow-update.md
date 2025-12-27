@@ -242,3 +242,4 @@ python scripts/generate-all-domains-go.py --domains new-domain
 
 
 
+
