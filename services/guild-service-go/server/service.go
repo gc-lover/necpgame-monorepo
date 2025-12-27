@@ -10,15 +10,17 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/internal/repository"
 	"go.uber.org/zap"
 )
 
 // GuildService implements GuildServiceInterface
 type GuildService struct {
-	logger  *zap.Logger
-	mu      sync.RWMutex
-	guilds  map[uuid.UUID]*Guild // In-memory cache for hot guilds
-	members map[uuid.UUID]map[uuid.UUID]*GuildMember // guildID -> userID -> member
+	logger    *zap.Logger
+	mu        sync.RWMutex
+	guilds    map[uuid.UUID]*Guild // In-memory cache for hot guilds
+	members   map[uuid.UUID]map[uuid.UUID]*GuildMember // guildID -> userID -> member
+	repository interface{} // Database repository
 }
 
 // NewGuildService creates a new guild service instance
@@ -28,6 +30,11 @@ func NewGuildService(logger *zap.Logger) *GuildService {
 		guilds:  make(map[uuid.UUID]*Guild),
 		members: make(map[uuid.UUID]map[uuid.UUID]*GuildMember),
 	}
+}
+
+// UpdateRepository sets the database repository for data persistence
+func (s *GuildService) UpdateRepository(repo interface{}) {
+	s.repository = repo
 }
 
 // CreateGuild creates a new guild

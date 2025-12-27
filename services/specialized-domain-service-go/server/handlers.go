@@ -6,12 +6,17 @@ package server
 import (
 	"context"
 	"fmt"
-	"net/http"
+	"log"
 	"sync"
 	"time"
 
 	"specialized-domain-service-go/pkg/api"
 )
+
+// Logger interface for logging
+type Logger interface {
+	Printf(format string, args ...interface{})
+}
 
 // PERFORMANCE: Memory pool for response objects to reduce GC pressure
 var responsePool = sync.Pool{
@@ -34,6 +39,7 @@ type Handler struct {
 func NewHandler() *Handler {
 	return &Handler{
 		service: NewService(),
+		logger:  log.Default(),
 		pool:    &responsePool,
 	}
 }
@@ -46,36 +52,44 @@ func NewHandler() *Handler {
 // Use: python scripts/generate-api-handlers.py specialized-domain
 
 // ReloadQuestContent implements POST /api/v1/quests/content/reload
-func (h *Handler) ReloadQuestContent(ctx context.Context, req api.ReloadQuestContentRequest) (api.ReloadQuestContentRes, error) {
+func (h *Handler) ReloadQuestContent(ctx context.Context, req *api.ReloadQuestContentRequest) (api.ReloadQuestContentRes, error) {
 	// PERFORMANCE: Context timeout for database operations
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	// Validate request
-	if req.QuestID == "" {
+	if req.GetQuestID() == "" {
 		return &api.ReloadQuestContentResponse{
-			Message: "Quest ID is required",
+			Message: api.OptString{Value: "Quest ID is required", Set: true},
 		}, fmt.Errorf("quest_id is required")
 	}
 
-	if req.YamlContent == nil {
+	yamlContent := req.GetYamlContent()
+	if yamlContent == nil {
 		return &api.ReloadQuestContentResponse{
-			Message: "YAML content is required",
+			Message: api.OptString{Value: "YAML content is required", Set: true},
 		}, fmt.Errorf("yaml_content is required")
 	}
 
+	// Convert YamlContent to map[string]interface{}
+	yamlMap := make(map[string]interface{})
+	for k, v := range yamlContent {
+		// Simple conversion - in production would need proper JSON parsing
+		yamlMap[k] = string(v)
+	}
+
 	// Import quest content to database
-	err := h.service.ImportQuestContent(ctx, req.QuestID, req.YamlContent)
+	err := h.service.ImportQuestContent(ctx, req.GetQuestID(), yamlMap)
 	if err != nil {
 		return &api.ReloadQuestContentResponse{
-			Message: fmt.Sprintf("Failed to import quest: %v", err),
+			Message: api.OptString{Value: fmt.Sprintf("Failed to import quest: %v", err), Set: true},
 		}, err
 	}
 
 	return &api.ReloadQuestContentResponse{
-		QuestID:   req.QuestID,
-		Message:   "Quest imported successfully",
-		ImportedAt: time.Now().Format(time.RFC3339),
+		QuestID:   api.OptString{Value: req.GetQuestID(), Set: true},
+		Message:   api.OptString{Value: "Quest imported successfully", Set: true},
+		ImportedAt: api.OptDateTime{Value: time.Now(), Set: true},
 	}, nil
 }
 

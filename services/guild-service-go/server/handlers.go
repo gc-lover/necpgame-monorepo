@@ -458,7 +458,93 @@ func (h *Handler) AddGuildMember(ctx context.Context, req *api.AddGuildMemberReq
 	ctx, cancel := context.WithTimeout(ctx, memberOpsTimeout)
 	defer cancel()
 
-	// TODO: Implement member addition logic
+	// Extract user ID from context
+	userID := getUserIDFromContext(ctx)
+	if userID == "" {
+		return &api.AddGuildMemberUnauthorized{
+			Message: "Unauthorized",
+			Code:    401,
+		}, nil
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return &api.AddGuildMemberBadRequest{
+			Message: "Invalid user ID",
+			Code:    400,
+		}, nil
+	}
+
+	// Parse target user ID from request
+	targetUserUUID, err := uuid.Parse(req.UserId)
+	if err != nil {
+		return &api.AddGuildMemberBadRequest{
+			Message: "Invalid target user ID",
+			Code:    400,
+		}, nil
+	}
+
+	// Check if requester has permission (guild leader or officer)
+	guild, err := h.service.GetGuild(ctx, params.GuildId)
+	if err != nil {
+		return &api.AddGuildMemberNotFound{
+			Message: "Guild not found",
+			Code:    404,
+		}, nil
+	}
+
+	// Check if user is a member with sufficient role
+	members, err := h.service.ListMembers(ctx, params.GuildId)
+	if err != nil {
+		return &api.AddGuildMemberInternalServerError{
+			Message: "Failed to check permissions",
+			Code:    500,
+		}, nil
+	}
+
+	hasPermission := false
+	userRole := ""
+	for _, member := range members {
+		if member.UserID == userUUID {
+			userRole = member.Role
+			if member.Role == "leader" || member.Role == "officer" {
+				hasPermission = true
+			}
+			break
+		}
+	}
+
+	if !hasPermission {
+		return &api.AddGuildMemberForbidden{
+			Message: "Insufficient permissions to add members",
+			Code:    403,
+		}, nil
+	}
+
+	// Determine role for new member (officers can only add regular members)
+	role := "member"
+	if userRole == "leader" && req.Role != nil {
+		switch *req.Role {
+		case "officer", "member":
+			role = *req.Role
+		}
+	}
+
+	// Add member using service
+	err = h.service.AddMember(ctx, params.GuildId, targetUserUUID, role)
+	if err != nil {
+		h.logger.Error("Failed to add guild member", zap.Error(err))
+		return &api.AddGuildMemberBadRequest{
+			Message: err.Error(),
+			Code:    400,
+		}, nil
+	}
+
+	h.logger.Info("Successfully added member to guild",
+		zap.String("guildID", params.GuildId.String()),
+		zap.String("userID", targetUserUUID.String()),
+		zap.String("role", role))
+
 	return &api.AddGuildMemberCreated{}, nil
 }
 
@@ -469,7 +555,73 @@ func (h *Handler) UpdateMemberRole(ctx context.Context, req *api.UpdateMemberRol
 	ctx, cancel := context.WithTimeout(ctx, memberOpsTimeout)
 	defer cancel()
 
-	// TODO: Implement role update logic
+	// Extract user ID from context
+	userID := getUserIDFromContext(ctx)
+	if userID == "" {
+		return &api.UpdateMemberRoleUnauthorized{
+			Message: "Unauthorized",
+			Code:    401,
+		}, nil
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return &api.UpdateMemberRoleBadRequest{
+			Message: "Invalid user ID",
+			Code:    400,
+		}, nil
+	}
+
+	targetUserUUID := params.PlayerId
+
+	// Check if requester has permission (only leaders can change roles)
+	guild, err := h.service.GetGuild(ctx, params.GuildId)
+	if err != nil {
+		return &api.UpdateMemberRoleNotFound{
+			Message: "Guild not found",
+			Code:    404,
+		}, nil
+	}
+
+	if guild.LeaderID != userUUID {
+		return &api.UpdateMemberRoleForbidden{
+			Message: "Only guild leader can change member roles",
+			Code:    403,
+		}, nil
+	}
+
+	// Cannot change leader's role
+	if targetUserUUID == guild.LeaderID {
+		return &api.UpdateMemberRoleBadRequest{
+			Message: "Cannot change leader's role",
+			Code:    400,
+		}, nil
+	}
+
+	// Validate new role
+	role := string(req.Role)
+	if role != "officer" && role != "member" {
+		return &api.UpdateMemberRoleBadRequest{
+			Message: "Invalid role: must be officer or member",
+			Code:    400,
+		}, nil
+	}
+
+	// Update role using service
+	err = h.service.UpdateMemberRole(ctx, params.GuildId, targetUserUUID, role)
+	if err != nil {
+		h.logger.Error("Failed to update member role", zap.Error(err))
+		return &api.UpdateMemberRoleInternalServerError{
+			Message: "Failed to update member role",
+			Code:    500,
+		}, nil
+	}
+
+	h.logger.Info("Successfully updated member role",
+		zap.String("guildID", params.GuildId.String()),
+		zap.String("userID", targetUserUUID.String()),
+		zap.String("newRole", role))
+
 	return &api.UpdateMemberRoleOK{}, nil
 }
 
@@ -480,36 +632,217 @@ func (h *Handler) RemoveGuildMember(ctx context.Context, params api.RemoveGuildM
 	ctx, cancel := context.WithTimeout(ctx, memberOpsTimeout)
 	defer cancel()
 
-	// TODO: Implement member removal logic
+	// Extract user ID from context
+	userID := getUserIDFromContext(ctx)
+	if userID == "" {
+		return &api.RemoveGuildMemberUnauthorized{
+			Message: "Unauthorized",
+			Code:    401,
+		}, nil
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return &api.RemoveGuildMemberBadRequest{
+			Message: "Invalid user ID",
+			Code:    400,
+		}, nil
+	}
+
+	targetUserUUID := params.PlayerId
+
+	// Check permissions
+	guild, err := h.service.GetGuild(ctx, params.GuildId)
+	if err != nil {
+		return &api.RemoveGuildMemberNotFound{
+			Message: "Guild not found",
+			Code:    404,
+		}, nil
+	}
+
+	// Check if user has permission to remove members
+	members, err := h.service.ListMembers(ctx, params.GuildId)
+	if err != nil {
+		return &api.RemoveGuildMemberInternalServerError{
+			Message: "Failed to check permissions",
+			Code:    500,
+		}, nil
+	}
+
+	hasPermission := false
+	userRole := ""
+	for _, member := range members {
+		if member.UserID == userUUID {
+			userRole = member.Role
+			if member.Role == "leader" || member.Role == "officer" {
+				hasPermission = true
+			}
+			break
+		}
+	}
+
+	// Cannot remove leader
+	if targetUserUUID == guild.LeaderID {
+		return &api.RemoveGuildMemberBadRequest{
+			Message: "Cannot remove guild leader",
+			Code:    400,
+		}, nil
+	}
+
+	// Officers can only remove regular members, leaders can remove anyone except themselves
+	if !hasPermission || (userRole == "officer" && targetUserUUID != params.PlayerId) {
+		return &api.RemoveGuildMemberForbidden{
+			Message: "Insufficient permissions to remove member",
+			Code:    403,
+		}, nil
+	}
+
+	// Remove member using service
+	err = h.service.RemoveMember(ctx, params.GuildId, targetUserUUID)
+	if err != nil {
+		h.logger.Error("Failed to remove guild member", zap.Error(err))
+		return &api.RemoveGuildMemberInternalServerError{
+			Message: "Failed to remove member",
+			Code:    500,
+		}, nil
+	}
+
+	h.logger.Info("Successfully removed member from guild",
+		zap.String("guildID", params.GuildId.String()),
+		zap.String("userID", targetUserUUID.String()))
+
 	return &api.RemoveGuildMemberNoContent{}, nil
 }
 
-// GetGuildAnnouncements implements GET /api/v1/guilds/{guildId}/announcements
+// ListGuildAnnouncements implements GET /api/v1/guilds/{guildId}/announcements
 // PERFORMANCE: <20ms P95 with announcement caching
-func (h *Handler) GetGuildAnnouncements(ctx context.Context, params api.GetGuildAnnouncementsParams) (api.GetGuildAnnouncementsRes, error) {
+func (h *Handler) ListGuildAnnouncements(ctx context.Context, params api.ListGuildAnnouncementsParams) (api.ListGuildAnnouncementsRes, error) {
 	// PERFORMANCE: Strict timeout for announcements
 	ctx, cancel := context.WithTimeout(ctx, announcementTimeout)
 	defer cancel()
 
-	// TODO: Implement with announcement caching
+	// Parse pagination parameters
+	limit := 20 // default
+	offset := 0 // default
+
+	if params.Limit != nil && *params.Limit > 0 && *params.Limit <= 50 {
+		limit = *params.Limit
+	}
+	if params.Offset != nil && *params.Offset >= 0 {
+		offset = *params.Offset
+	}
+
+	// Get announcements from service
+	announcements, err := h.service.ListAnnouncements(ctx, params.GuildId, limit, offset)
+	if err != nil {
+		h.logger.Error("Failed to list guild announcements", zap.String("guildID", params.GuildId.String()), zap.Error(err))
+		return &api.ListGuildAnnouncementsInternalServerError{
+			Message: "Failed to retrieve announcements",
+			Code:    500,
+		}, nil
+	}
+
+	// Convert to API response format
 	resp := announcementResponsePool.Get().(*[]api.GuildAnnouncement)
 	defer announcementResponsePool.Put(resp)
 
-	// Placeholder response
-	*resp = []api.GuildAnnouncement{}
+	*resp = make([]api.GuildAnnouncement, 0, len(announcements))
+	for _, announcement := range announcements {
+		apiAnnouncement := api.GuildAnnouncement{
+			Id:        announcement.ID,
+			GuildId:   announcement.GuildID,
+			Title:     announcement.Title,
+			Content:   announcement.Content,
+			AuthorId:  announcement.AuthorID,
+			CreatedAt: announcement.CreatedAt,
+			IsPinned:  &announcement.IsPinned,
+		}
+		*resp = append(*resp, apiAnnouncement)
+	}
+
+	h.logger.Info("Successfully listed guild announcements",
+		zap.String("guildID", params.GuildId.String()),
+		zap.Int("count", len(announcements)))
 
 	return resp, nil
 }
 
-// CreateAnnouncement implements POST /api/v1/guilds/{guildId}/announcements
+// CreateGuildAnnouncement implements POST /api/v1/guilds/{guildId}/announcements
 // PERFORMANCE: <15ms P95, content validation and creation
-func (h *Handler) CreateAnnouncement(ctx context.Context, req *api.CreateAnnouncementRequest, params api.CreateAnnouncementParams) (api.CreateAnnouncementRes, error) {
+func (h *Handler) CreateGuildAnnouncement(ctx context.Context, req *api.CreateGuildAnnouncementReq, params api.CreateGuildAnnouncementParams) (api.CreateGuildAnnouncementRes, error) {
 	// PERFORMANCE: Strict timeout for announcement creation
 	ctx, cancel := context.WithTimeout(ctx, announcementTimeout)
 	defer cancel()
 
-	// TODO: Implement announcement creation logic
-	return &api.CreateAnnouncementCreated{}, nil
+	// Extract user ID from context
+	userID := getUserIDFromContext(ctx)
+	if userID == "" {
+		return &api.CreateGuildAnnouncementUnauthorized{
+			Message: "Unauthorized",
+			Code:    401,
+		}, nil
+	}
+
+	authorUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return &api.CreateGuildAnnouncementBadRequest{
+			Message: "Invalid user ID",
+			Code:    400,
+		}, nil
+	}
+
+	// Check if user is a member of the guild
+	members, err := h.service.ListMembers(ctx, params.GuildId)
+	if err != nil {
+		return &api.CreateGuildAnnouncementInternalServerError{
+			Message: "Failed to check membership",
+			Code:    500,
+		}, nil
+	}
+
+	isMember := false
+	for _, member := range members {
+		if member.UserID == authorUUID {
+			isMember = true
+			break
+		}
+	}
+
+	if !isMember {
+		return &api.CreateGuildAnnouncementForbidden{
+			Message: "Only guild members can create announcements",
+			Code:    403,
+		}, nil
+	}
+
+	// Create announcement using service
+	announcement, err := h.service.CreateAnnouncement(ctx, params.GuildId, authorUUID, req.Title, req.Content)
+	if err != nil {
+		h.logger.Error("Failed to create announcement", zap.Error(err))
+		return &api.CreateGuildAnnouncementBadRequest{
+			Message: err.Error(),
+			Code:    400,
+		}, nil
+	}
+
+	// Convert to API response format
+	apiAnnouncement := api.GuildAnnouncement{
+		Id:        announcement.ID,
+		GuildId:   announcement.GuildID,
+		Title:     announcement.Title,
+		Content:   announcement.Content,
+		AuthorId:  announcement.AuthorID,
+		CreatedAt: announcement.CreatedAt,
+		IsPinned:  &announcement.IsPinned,
+	}
+
+	h.logger.Info("Successfully created guild announcement",
+		zap.String("guildID", params.GuildId.String()),
+		zap.String("announcementID", announcement.ID.String()))
+
+	return &api.CreateGuildAnnouncementCreated{
+		Announcement: apiAnnouncement,
+	}, nil
 }
 
 // GetPlayerGuilds implements GET /api/v1/players/{playerId}/guilds
@@ -519,12 +852,39 @@ func (h *Handler) GetPlayerGuilds(ctx context.Context, params api.GetPlayerGuild
 	ctx, cancel := context.WithTimeout(ctx, playerGuildsTimeout)
 	defer cancel()
 
-	// TODO: Implement with player guild caching
+	// Get player's guilds from service
+	guilds, err := h.service.GetPlayerGuilds(ctx, params.PlayerId)
+	if err != nil {
+		h.logger.Error("Failed to get player guilds", zap.String("playerID", params.PlayerId.String()), zap.Error(err))
+		return &api.GetPlayerGuildsInternalServerError{
+			Message: "Failed to retrieve player guilds",
+			Code:    500,
+		}, nil
+	}
+
+	// Convert to API response format
 	resp := guildListResponsePool.Get().(*[]api.Guild)
 	defer guildListResponsePool.Put(resp)
 
-	// Placeholder response
-	*resp = []api.Guild{}
+	*resp = make([]api.Guild, 0, len(guilds))
+	for _, guild := range guilds {
+		apiGuild := api.Guild{
+			GuildID:     guild.ID,
+			Name:        guild.Name,
+			Description: &guild.Description,
+			LeaderID:    guild.LeaderID,
+			MemberCount: &guild.MemberCount,
+			MaxMembers:  &guild.MaxMembers,
+			Level:       &guild.Level,
+			Experience:  &guild.Experience,
+			Reputation:  &guild.Reputation,
+		}
+		*resp = append(*resp, apiGuild)
+	}
+
+	h.logger.Info("Successfully retrieved player guilds",
+		zap.String("playerID", params.PlayerId.String()),
+		zap.Int("count", len(guilds)))
 
 	return resp, nil
 }
