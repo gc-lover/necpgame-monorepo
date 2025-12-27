@@ -10,8 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"reset-service-go-service-go/pkg/api"
+
+	"github.com/google/uuid"
 )
 
 // Logger interface for logging
@@ -62,14 +63,14 @@ var triggerPool = sync.Pool{
 // Handler implements the generated API server interface
 // PERFORMANCE: Struct aligned for memory efficiency (large fields first)
 type Handler struct {
-	service    *Service        // 8 bytes (pointer)
-	logger     Logger         // 8 bytes (interface)
-	pool       *sync.Pool     // 8 bytes (pointer)
-	startTime  time.Time      // 8 bytes (value)
-	uptime     int64          // 8 bytes (value)
-	historyPool *sync.Pool    // 8 bytes (pointer)
-	statsPool  *sync.Pool     // 8 bytes (pointer)
-	triggerPool *sync.Pool    // 8 bytes (pointer)
+	service     *Service   // 8 bytes (pointer)
+	logger      Logger     // 8 bytes (interface)
+	pool        *sync.Pool // 8 bytes (pointer)
+	startTime   time.Time  // 8 bytes (value)
+	uptime      int64      // 8 bytes (value)
+	historyPool *sync.Pool // 8 bytes (pointer)
+	statsPool   *sync.Pool // 8 bytes (pointer)
+	triggerPool *sync.Pool // 8 bytes (pointer)
 	// Add padding if needed for alignment
 	_pad [0]byte
 }
@@ -100,10 +101,10 @@ func (h *Handler) ResetServiceHealthCheck(ctx context.Context, params api.ResetS
 
 	// Reset response fields
 	*resp = api.HealthResponse{
-		Domain:    "reset-service",
-		Status:    api.HealthResponseStatusHealthy,
-		Version:   api.NewOptString("1.0.0"),
-		Timestamp: time.Now(),
+		Domain:        "reset-service",
+		Status:        api.HealthResponseStatusHealthy,
+		Version:       api.NewOptString("1.0.0"),
+		Timestamp:     time.Now(),
 		UptimeSeconds: api.NewOptInt(int(h.uptime)),
 	}
 
@@ -129,10 +130,10 @@ func (h *Handler) GetResetHistory(ctx context.Context, params api.GetResetHistor
 	// Mock data for demonstration (in real implementation, this would come from database)
 	mockResets := []api.GetResetHistoryOKResetsItem{
 		{
-			ResetID:   uuid.MustParse("12345678-9abc-def0-1234-56789abcdef0"),
-			ResetType: api.GetResetHistoryOKResetsItemResetTypeCharacterReset,
-			Status:    api.GetResetHistoryOKResetsItemStatusCompleted,
-			CreatedAt: time.Now().Add(-time.Hour),
+			ResetID:     uuid.MustParse("12345678-9abc-def0-1234-56789abcdef0"),
+			ResetType:   api.GetResetHistoryOKResetsItemResetTypeCharacterReset,
+			Status:      api.GetResetHistoryOKResetsItemStatusCompleted,
+			CreatedAt:   time.Now().Add(-time.Hour),
 			CompletedAt: api.NewOptDateTime(time.Now().Add(-30 * time.Minute)),
 		},
 		{
@@ -181,9 +182,9 @@ func (h *Handler) GetResetStats(ctx context.Context) (api.GetResetStatsRes, erro
 
 	// Reset response fields
 	*resp = api.GetResetStatsOK{
-		TotalResets:          42,
-		SuccessfulResets:     38,
-		FailedResets:         4,
+		TotalResets:           42,
+		SuccessfulResets:      38,
+		FailedResets:          4,
 		AverageCompletionTime: 45.5, // seconds
 	}
 
