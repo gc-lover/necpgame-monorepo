@@ -16,7 +16,6 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -429,16 +428,12 @@ func (h *MLAIHandler) CreateModel(ctx context.Context, req *api.CreateModelReque
 	// Validate input data
 	if err := h.service.validator.ValidateModelName(req.Name); err != nil {
 		h.logger.Error("Model name validation failed", zap.String("name", req.Name), zap.Error(err))
-		return &api.Error{
-			Message: err.Error(),
-		}, nil
+		return nil, fmt.Errorf("invalid model name: %w", err)
 	}
 
 	if err := h.service.validator.ValidateModelType(string(req.Type)); err != nil {
 		h.logger.Error("Model type validation failed", zap.String("type", string(req.Type)), zap.Error(err))
-		return &api.Error{
-			Message: err.Error(),
-		}, nil
+		return nil, fmt.Errorf("invalid model type: %w", err)
 	}
 
 	// Create new model
