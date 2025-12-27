@@ -613,6 +613,101 @@ func (s *Service) HealthCheck(ctx context.Context) error {
 	return s.repo.HealthCheck(ctx)
 }
 
+// ListVoiceChannels lists voice channels with optional guild filtering
+func (s *Service) ListVoiceChannels(ctx context.Context, guildID *uuid.UUID) ([]*models.VoiceChannelResponse, error) {
+	channels, err := s.repo.ListVoiceChannels(ctx, guildID)
+	if err != nil {
+		return nil, err
+	}
+
+	responses := make([]*models.VoiceChannelResponse, len(channels))
+	for i, channel := range channels {
+		responses[i] = &models.VoiceChannelResponse{
+			ID:           channel.ID.String(),
+			Name:         channel.Name,
+			Type:         channel.Type,
+			GuildID:      channel.GuildID,
+			OwnerID:      channel.OwnerID.String(),
+			MaxUsers:     channel.MaxUsers,
+			CurrentUsers: channel.CurrentUsers,
+			IsActive:     channel.IsActive,
+			CreatedAt:    channel.CreatedAt,
+		}
+	}
+
+	return responses, nil
+}
+
+// UpdateVoiceChannel updates voice channel settings
+func (s *Service) UpdateVoiceChannel(ctx context.Context, channelID uuid.UUID, req *models.VoiceChannelRequest, userID uuid.UUID) (*models.VoiceChannelResponse, error) {
+	channel, err := s.repo.GetVoiceChannel(ctx, channelID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get voice channel: %w", err)
+	}
+
+	// Check permissions (owner only for now)
+	if channel.OwnerID != userID {
+		return nil, fmt.Errorf("insufficient permissions to update channel")
+	}
+
+	// Apply updates
+	if req.Name != "" {
+		channel.Name = req.Name
+	}
+	if req.MaxUsers > 0 {
+		channel.MaxUsers = req.MaxUsers
+	}
+	channel.UpdatedAt = time.Now()
+
+	err = s.repo.UpdateVoiceChannel(ctx, channel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update voice channel: %w", err)
+	}
+
+	response := &models.VoiceChannelResponse{
+		ID:           channel.ID.String(),
+		Name:         channel.Name,
+		Type:         channel.Type,
+		GuildID:      channel.GuildID,
+		OwnerID:      channel.OwnerID.String(),
+		MaxUsers:     channel.MaxUsers,
+		CurrentUsers: channel.CurrentUsers,
+		IsActive:     channel.IsActive,
+		CreatedAt:    channel.CreatedAt,
+	}
+
+	return response, nil
+}
+
+// DeleteVoiceChannel deletes a voice channel
+func (s *Service) DeleteVoiceChannel(ctx context.Context, channelID uuid.UUID, userID uuid.UUID) error {
+	channel, err := s.repo.GetVoiceChannel(ctx, channelID)
+	if err != nil {
+		return fmt.Errorf("failed to get voice channel: %w", err)
+	}
+
+	// Check permissions (owner only for now)
+	if channel.OwnerID != userID {
+		return fmt.Errorf("insufficient permissions to delete channel")
+	}
+
+	// Check if channel has active users
+	if channel.CurrentUsers > 0 {
+		return fmt.Errorf("cannot delete channel with active users")
+	}
+
+	err = s.repo.DeleteVoiceChannel(ctx, channelID)
+	if err != nil {
+		return fmt.Errorf("failed to delete voice channel: %w", err)
+	}
+
+	s.logger.Info("Voice channel deleted",
+		zap.String("channel_id", channelID.String()),
+		zap.String("owner_id", userID.String()))
+
+	return nil
+}
+
 // PERFORMANCE: Service methods use context timeouts for all operations
 // Concurrent safety ensured through proper locking in repository layer
 // Memory pooling implemented for frequently allocated objects
