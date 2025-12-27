@@ -1,0 +1,687 @@
+import yaml
+from pathlib import Path
+from datetime import datetime
+
+def create_social_mechanics_summary():
+    """Create comprehensive social mechanics summary"""
+    document = {
+        'metadata': {
+            'id': 'mechanics-social-summary',
+            'title': 'Mechanics - Social Systems Summary',
+            'document_type': 'mechanics',
+            'category': 'social',
+            'subcategory': 'system-summary',
+            'status': 'final',
+            'version': '1.0.0',
+            'last_updated': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'concept_approved': True,
+            'concept_reviewed_at': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'owners': [
+                {
+                    'role': 'social_systems_designer',
+                    'contact': 'social@necp.game'
+                }
+            ],
+            'tags': [
+                'social',
+                'mechanics',
+                'systems',
+                'summary'
+            ],
+            'topics': [
+                'player-interaction',
+                'social-dynamics',
+                'community-features',
+                'relationship-management'
+            ],
+            'related_systems': [
+                'social-service',
+                'reputation-service',
+                'communication-service',
+                'guild-service'
+            ],
+            'related_documents': [
+                {
+                    'id': 'mechanics-social-overview',
+                    'relation': 'summarizes'
+                },
+                {
+                    'id': 'mechanics-social-reputation-influence-system',
+                    'relation': 'details'
+                }
+            ],
+            'source': 'scripts/generate_social_mechanics_summary.py',
+            'visibility': 'internal',
+            'audience': [
+                'design',
+                'backend',
+                'qa',
+                'management'
+            ],
+            'risk_level': 'low'
+        },
+        'executive_summary': {
+            'purpose': 'Предоставить всесторонний обзор всех социальных механик игры для обеспечения coherent и сбалансированной социальной экосистемы.',
+            'scope': 'Анализ всех социальных систем: репутация, влияние, сети, альянсы, конфликты, статус, коммуникации, события, доверие, групповые динамики.',
+            'key_findings': [
+                'Социальные системы тесно интегрированы с игровым миром',
+                'Баланс между кооперацией и конкуренцией критически важен',
+                'Экономические аспекты социальных взаимодействий требуют тщательной настройки',
+                'Масштабируемость систем подразумевает 10,000+ одновременных игроков'
+            ],
+            'impact': 'Социальные механики формируют 40-60% игрового опыта и реиграбельности.'
+        },
+        'core_social_systems': {
+            'reputation_influence_system': {
+                'description': 'Система репутации определяет социальное положение игрока и влияние на других игроков.',
+                'key_components': [
+                    'personal_reputation_score',
+                    'influence_radius',
+                    'social_capital_accumulation',
+                    'reputation_decay_mechanics'
+                ],
+                'integration_points': [
+                    'trading_discounts',
+                    'quest_access_modifiers',
+                    'social_event_invitations',
+                    'faction_relationships'
+                ],
+                'balancing_factors': [
+                    'reputation_gain_rates',
+                    'influence_decay_rates',
+                    'maximum_influence_cap',
+                    'reputation_thresholds'
+                ]
+            },
+            'network_expansion_mechanics': {
+                'description': 'Механики расширения социальной сети через различные виды взаимодействий.',
+                'expansion_methods': [
+                    {
+                        'method': 'direct_interaction',
+                        'description': 'Личные встречи и разговоры',
+                        'effectiveness': 'high',
+                        'scaling': 'linear'
+                    },
+                    {
+                        'method': 'group_activities',
+                        'description': 'Совместные квесты и события',
+                        'effectiveness': 'medium',
+                        'scaling': 'exponential'
+                    },
+                    {
+                        'method': 'economic_transactions',
+                        'description': 'Торговые взаимодействия',
+                        'effectiveness': 'low',
+                        'scaling': 'transaction_based'
+                    },
+                    {
+                        'method': 'shared_interests',
+                        'description': 'Общие цели и фракции',
+                        'effectiveness': 'variable',
+                        'scaling': 'interest_alignment'
+                    }
+                ],
+                'network_metrics': [
+                    'connection_strength',
+                    'network_density',
+                    'influence_propagation',
+                    'information_flow_efficiency'
+                ]
+            },
+            'alliance_formation_system': {
+                'description': 'Система формирования и управления альянсами между игроками и группами.',
+                'alliance_types': [
+                    {
+                        'type': 'temporary_alliances',
+                        'duration': 'event_based',
+                        'commitment_level': 'low',
+                        'benefits': 'situational_bonuses'
+                    },
+                    {
+                        'type': 'strategic_partnerships',
+                        'duration': 'medium_term',
+                        'commitment_level': 'medium',
+                        'benefits': 'resource_sharing'
+                    },
+                    {
+                        'type': 'permanent_alliances',
+                        'duration': 'long_term',
+                        'commitment_level': 'high',
+                        'benefits': 'mutual_defense + shared_assets'
+                    }
+                ],
+                'formation_mechanics': [
+                    'alliance_proposal_system',
+                    'voting_mechanisms',
+                    'trust_requirements',
+                    'benefit_distribution'
+                ]
+            },
+            'conflict_resolution_mechanics': {
+                'description': 'Механики разрешения социальных конфликтов без насилия.',
+                'resolution_methods': [
+                    {
+                        'method': 'negotiation',
+                        'description': 'Переговоры с посредниками',
+                        'effectiveness': 'high',
+                        'requirements': 'communication_skills'
+                    },
+                    {
+                        'method': 'mediation',
+                        'description': 'Третья сторона как посредник',
+                        'effectiveness': 'medium',
+                        'requirements': 'neutral_party'
+                    },
+                    {
+                        'method': 'reputation_arbitration',
+                        'description': 'Решение на основе репутации',
+                        'effectiveness': 'variable',
+                        'requirements': 'high_reputation_participants'
+                    },
+                    {
+                        'method': 'economic_compensation',
+                        'description': 'Финансовое урегулирование',
+                        'effectiveness': 'low',
+                        'requirements': 'economic_resources'
+                    }
+                ],
+                'conflict_types': [
+                    'trade_disputes',
+                    'territory_conflicts',
+                    'alliance_betrayals',
+                    'reputation_damage'
+                ]
+            }
+        },
+        'advanced_social_features': {
+            'status_progression_system': {
+                'description': 'Система социального статуса и прогрессии в социальной иерархии.',
+                'status_tiers': [
+                    {
+                        'tier': 'novice',
+                        'requirements': 'basic_interactions',
+                        'benefits': 'minor_trading_bonuses'
+                    },
+                    {
+                        'tier': 'established',
+                        'requirements': 'consistent_positive_interactions',
+                        'benefits': 'quest_access + alliance_opportunities'
+                    },
+                    {
+                        'tier': 'influential',
+                        'requirements': 'large_network + high_reputation',
+                        'benefits': 'policy_influence + exclusive_events'
+                    },
+                    {
+                        'tier': 'legendary',
+                        'requirements': 'exceptional_social_achievements',
+                        'benefits': 'world_events_influence + permanent_benefits'
+                    }
+                ],
+                'progression_mechanics': [
+                    'social_achievement_tracking',
+                    'influence_milestones',
+                    'network_growth_targets',
+                    'reputation_thresholds'
+                ]
+            },
+            'communication_channels': {
+                'description': 'Многоуровневая система коммуникации между игроками.',
+                'channel_types': [
+                    {
+                        'type': 'local_chat',
+                        'range': 'area_based',
+                        'privacy': 'public',
+                        'features': 'proximity_filtering'
+                    },
+                    {
+                        'type': 'private_messaging',
+                        'range': 'global',
+                        'privacy': 'encrypted',
+                        'features': 'offline_delivery'
+                    },
+                    {
+                        'type': 'guild_communication',
+                        'range': 'guild_members',
+                        'privacy': 'guild_only',
+                        'features': 'rank_based_permissions'
+                    },
+                    {
+                        'type': 'alliance_networks',
+                        'range': 'alliance_members',
+                        'privacy': 'alliance_encrypted',
+                        'features': 'federated_messaging'
+                    },
+                    {
+                        'type': 'global_broadcasts',
+                        'range': 'server_wide',
+                        'privacy': 'public',
+                        'features': 'importance_filtering'
+                    }
+                ],
+                'communication_features': [
+                    'voice_communication',
+                    'text_formatting',
+                    'media_sharing',
+                    'translation_services',
+                    'moderation_tools'
+                ]
+            },
+            'event_participation_system': {
+                'description': 'Система участия в социальных событиях и мероприятиях.',
+                'event_categories': [
+                    {
+                        'category': 'celebrations',
+                        'examples': 'weddings, anniversaries',
+                        'social_impact': 'relationship_strengthening'
+                    },
+                    {
+                        'category': 'competitions',
+                        'examples': 'tournaments, contests',
+                        'social_impact': 'status_competition'
+                    },
+                    {
+                        'category': 'ceremonies',
+                        'examples': 'promotions, inductions',
+                        'social_impact': 'hierarchy_reinforcement'
+                    },
+                    {
+                        'category': 'gatherings',
+                        'examples': 'festivals, parties',
+                        'social_impact': 'community_building'
+                    }
+                ],
+                'participation_mechanics': [
+                    'invitation_systems',
+                    'rsvp_management',
+                    'attendance_tracking',
+                    'contribution_mechanics'
+                ]
+            },
+            'trust_building_mechanics': {
+                'description': 'Механики построения и поддержания доверия между игроками.',
+                'trust_factors': [
+                    {
+                        'factor': 'consistency',
+                        'description': 'Надежность в выполнении обещаний',
+                        'weight': 'high'
+                    },
+                    {
+                        'factor': 'transparency',
+                        'description': 'Открытость в намерениях',
+                        'weight': 'medium'
+                    },
+                    {
+                        'factor': 'reciprocity',
+                        'description': 'Взаимный обмен услугами',
+                        'weight': 'high'
+                    },
+                    {
+                        'factor': 'competence',
+                        'description': 'Демонстрация навыков',
+                        'weight': 'medium'
+                    }
+                ],
+                'trust_mechanics': [
+                    'promise_tracking',
+                    'reputation_history',
+                    'reference_systems',
+                    'trust_score_calculation'
+                ]
+            },
+            'influence_propagation': {
+                'description': 'Механики распространения влияния через социальные сети.',
+                'propagation_models': [
+                    {
+                        'model': 'direct_influence',
+                        'description': 'Прямое влияние на непосредственных контактов',
+                        'range': '1st_degree_connections',
+                        'decay': 'linear'
+                    },
+                    {
+                        'model': 'network_cascade',
+                        'description': 'Каскадное распространение через сеть',
+                        'range': '2nd-3rd_degree_connections',
+                        'decay': 'exponential'
+                    },
+                    {
+                        'model': 'opinion_leaders',
+                        'description': 'Влияние через ключевых фигур',
+                        'range': 'network_clusters',
+                        'decay': 'selective'
+                    }
+                ],
+                'influence_types': [
+                    'political_influence',
+                    'economic_influence',
+                    'cultural_influence',
+                    'military_influence'
+                ]
+            },
+            'group_dynamics_mechanics': {
+                'description': 'Механики групповой динамики в больших социальных структурах.',
+                'dynamics_aspects': [
+                    {
+                        'aspect': 'group_cohesion',
+                        'description': 'Сплоченность группы',
+                        'factors': 'shared_goals + mutual_trust'
+                    },
+                    {
+                        'aspect': 'leadership_emergence',
+                        'description': 'Появление лидеров',
+                        'factors': 'influence + competence'
+                    },
+                    {
+                        'aspect': 'conflict_management',
+                        'description': 'Управление внутренними конфликтами',
+                        'factors': 'communication + fairness'
+                    },
+                    {
+                        'aspect': 'group_evolution',
+                        'description': 'Эволюция группы со временем',
+                        'factors': 'adaptation + growth'
+                    }
+                ],
+                'group_types': [
+                    'informal_social_groups',
+                    'professional_guilds',
+                    'political_factions',
+                    'economic_cartels'
+                ]
+            }
+        },
+        'integration_with_game_world': {
+            'economic_social_integration': {
+                'description': 'Интеграция социальных механик с экономической системой.',
+                'integration_points': [
+                    {
+                        'point': 'trade_relationships',
+                        'description': 'Социальные связи влияют на торговые условия',
+                        'mechanics': 'reputation_based_discounts'
+                    },
+                    {
+                        'point': 'resource_sharing',
+                        'description': 'Совместное использование ресурсов',
+                        'mechanics': 'alliance_resource_pools'
+                    },
+                    {
+                        'point': 'market_influence',
+                        'description': 'Социальное влияние на рыночные цены',
+                        'mechanics': 'influence_based_market_modifiers'
+                    }
+                ]
+            },
+            'political_social_integration': {
+                'description': 'Интеграция социальных механик с политической системой мира.',
+                'integration_points': [
+                    {
+                        'point': 'faction_alliances',
+                        'description': 'Социальные альянсы влияют на фракционные отношения',
+                        'mechanics': 'alliance_based_faction_bonuses'
+                    },
+                    {
+                        'point': 'policy_influence',
+                        'description': 'Игроки влияют на политику через социальные сети',
+                        'mechanics': 'voting_power_through_networks'
+                    },
+                    {
+                        'point': 'diplomatic_relations',
+                        'description': 'Социальные связи формируют дипломатию',
+                        'mechanics': 'relationship_based_diplomacy'
+                    }
+                ]
+            },
+            'narrative_social_integration': {
+                'description': 'Интеграция социальных механик с нарративной системой.',
+                'integration_points': [
+                    {
+                        'point': 'character_relationships',
+                        'description': 'Социальные связи влияют на личные истории',
+                        'mechanics': 'relationship_driven_quest_branches'
+                    },
+                    {
+                        'point': 'world_events',
+                        'description': 'Социальные сети влияют на мировые события',
+                        'mechanics': 'network_influence_on_world_state'
+                    },
+                    {
+                        'point': 'emergent_stories',
+                        'description': 'Возникающие истории из социальных взаимодействий',
+                        'mechanics': 'player_driven_narrative_generation'
+                    }
+                ]
+            }
+        },
+        'technical_architecture': {
+            'social_data_model': {
+                'core_entities': [
+                    'player_profiles',
+                    'relationship_records',
+                    'social_groups',
+                    'communication_logs',
+                    'reputation_scores'
+                ],
+                'relationship_types': [
+                    'friendship',
+                    'alliance',
+                    'rivalry',
+                    'mentor_student',
+                    'trading_partner'
+                ],
+                'data_structures': [
+                    'social_graph_database',
+                    'relationship_strength_matrix',
+                    'influence_propagation_networks',
+                    'communication_metadata_store'
+                ]
+            },
+            'social_service_architecture': {
+                'microservices': [
+                    {
+                        'service': 'social-graph-service',
+                        'responsibility': 'Управление социальными связями',
+                        'scalability': 'high'
+                    },
+                    {
+                        'service': 'reputation-service',
+                        'responsibility': 'Расчет и хранение репутации',
+                        'scalability': 'medium'
+                    },
+                    {
+                        'service': 'communication-service',
+                        'responsibility': 'Обработка коммуникаций',
+                        'scalability': 'high'
+                    },
+                    {
+                        'service': 'alliance-service',
+                        'responsibility': 'Управление альянсами',
+                        'scalability': 'medium'
+                    }
+                ],
+                'performance_requirements': {
+                    'query_response_time': '<50ms for_social_queries',
+                    'concurrent_connections': '10,000+ simultaneous_users',
+                    'data_consistency': 'eventual_consistency_model',
+                    'backup_frequency': 'real-time_replication'
+                }
+            },
+            'privacy_security': {
+                'data_protection': [
+                    'end_to_end_encryption',
+                    'access_control_lists',
+                    'data_anonymization',
+                    'audit_logging'
+                ],
+                'privacy_controls': [
+                    'relationship_visibility_settings',
+                    'communication_privacy_options',
+                    'data_sharing_consents',
+                    'deletion_rights'
+                ],
+                'moderation_tools': [
+                    'automated_content_filtering',
+                    'report_systems',
+                    'moderator_dashboards',
+                    'sanction_management'
+                ]
+            }
+        },
+        'balancing_considerations': {
+            'social_power_balance': [
+                {
+                    'concern': 'influence_inequality',
+                    'solution': 'progressive_scaling_difficulty',
+                    'implementation': 'exponential_cost_increase'
+                },
+                {
+                    'concern': 'social_exploitation',
+                    'solution': 'trust_decay_mechanics',
+                    'implementation': 'time_based_reputation_decay'
+                },
+                {
+                    'concern': 'group_domination',
+                    'solution': 'diversity_requirements',
+                    'implementation': 'minimum_member_diversity'
+                },
+                {
+                    'concern': 'communication_abuse',
+                    'solution': 'rate_limiting + moderation',
+                    'implementation': 'automated_spam_detection'
+                }
+            ],
+            'engagement_balance': [
+                {
+                    'metric': 'social_interaction_frequency',
+                    'target': 'daily_active_social_users >70%',
+                    'balancing_method': 'reward_systems'
+                },
+                {
+                    'metric': 'group_formation_rate',
+                    'target': 'new_groups_per_day >100',
+                    'balancing_method': 'formation_bonuses'
+                },
+                {
+                    'metric': 'relationship_depth',
+                    'target': 'average_connections_per_player >50',
+                    'balancing_method': 'network_growth_incentives'
+                }
+            ]
+        },
+        'implementation_roadmap': {
+            'phase_1_foundation': [
+                'Базовая система репутации',
+                'Простые коммуникации',
+                'Основные социальные связи',
+                'Базовое тестирование'
+            ],
+            'phase_2_core_mechanics': [
+                'Расширенные коммуникации',
+                'Система альянсов',
+                'Социальные события',
+                'Промежуточное тестирование'
+            ],
+            'phase_3_advanced_features': [
+                'Групповая динамика',
+                'Распространение влияния',
+                'Социально-экономическая интеграция',
+                'Расширенное тестирование'
+            ],
+            'phase_4_optimization': [
+                'Оптимизация производительности',
+                'Финальные баланс-корректировки',
+                'Масштабируемость под 10k+ игроков',
+                'Запуск в продакшн'
+            ]
+        },
+        'success_metrics': {
+            'player_engagement': [
+                {
+                    'metric': 'daily_social_interactions',
+                    'target': '5+ per_active_player',
+                    'measurement': 'telemetry_tracking'
+                },
+                {
+                    'metric': 'social_group_participation',
+                    'target': '60% of_players_in_groups',
+                    'measurement': 'group_membership_tracking'
+                },
+                {
+                    'metric': 'relationship_network_density',
+                    'target': 'average_50_connections_per_player',
+                    'measurement': 'social_graph_analysis'
+                },
+                {
+                    'metric': 'communication_volume',
+                    'target': '1000+ messages_per_hour',
+                    'measurement': 'message_throughput_monitoring'
+                }
+            ],
+            'system_performance': [
+                {
+                    'metric': 'social_query_response_time',
+                    'target': '<100ms average',
+                    'measurement': 'performance_monitoring'
+                },
+                {
+                    'metric': 'relationship_calculation_latency',
+                    'target': '<50ms',
+                    'measurement': 'service_metrics'
+                },
+                {
+                    'metric': 'communication_delivery_rate',
+                    'target': '>99.9% success_rate',
+                    'measurement': 'delivery_confirmations'
+                },
+                {
+                    'metric': 'system_scalability',
+                    'target': 'supports_10k_concurrent_users',
+                    'measurement': 'load_testing_results'
+                }
+            ],
+            'community_health': [
+                {
+                    'metric': 'positive_interaction_ratio',
+                    'target': '>80% positive_social_actions',
+                    'measurement': 'sentiment_analysis'
+                },
+                {
+                    'metric': 'conflict_resolution_rate',
+                    'target': '>90% conflicts_resolved_peacefully',
+                    'measurement': 'dispute_tracking'
+                },
+                {
+                    'metric': 'group_retention_rate',
+                    'target': '>70% group_survival_rate_30_days',
+                    'measurement': 'group_lifecycle_tracking'
+                }
+            ]
+        },
+        'conclusion': {
+            'system_coherence': 'Все социальные механики образуют coherent экосистему, где каждый элемент усиливает другие.',
+            'implementation_priority': 'Высокий - социальные системы должны быть реализованы параллельно с базовыми игровыми механиками.',
+            'future_expansion': [
+                'AI-driven социальные рекомендации',
+                'Кросс-серверные социальные связи',
+                'Социально-экономические симуляции',
+                'Интеграция с реальными социальными сетями'
+            ],
+            'continuous_improvement': 'Социальные системы требуют постоянного мониторинга и итеративных улучшений на основе player feedback.'
+        }
+    }
+
+    return document
+
+def main():
+    """Generate comprehensive social mechanics summary"""
+    document = create_social_mechanics_summary()
+
+    output_dir = Path('knowledge/mechanics')
+    output_file = output_dir / 'social-summary.yaml'
+
+    with open(output_file, 'w', encoding='utf-8') as f:
+        yaml.dump(document, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+
+    print(f"Generated comprehensive social mechanics summary: {output_file}")
+
+if __name__ == '__main__':
+    main()
