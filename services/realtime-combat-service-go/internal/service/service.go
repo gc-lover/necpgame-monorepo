@@ -376,3 +376,424 @@ func (s *CombatService) GetCombatEvents(ctx context.Context, sessionID string, l
 
 	return events, nil
 }
+
+// ENTERPRISE COMBO & SYNERGY METHODS BELOW
+
+// ProcessComboInput processes a combo input from a player
+func (s *CombatService) ProcessComboInput(ctx context.Context, playerID, sessionID string, input ComboInput) (*ComboResult, error) {
+	// PERFORMANCE: Add context timeout
+	ctx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+	defer cancel()
+
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start).Milliseconds()
+		s.logger.Debugw("ProcessComboInput completed",
+			"player_id", playerID,
+			"session_id", sessionID,
+			"duration_ms", duration,
+		)
+	}()
+
+	// PERFORMANCE: Acquire worker
+	select {
+	case <-s.comboWorkers:
+		defer func() { s.comboWorkers <- struct{}{} }()
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-time.After(50 * time.Millisecond):
+		return nil, fmt.Errorf("combo system busy")
+	}
+
+	// Get or create active combo for player
+	comboKey := fmt.Sprintf("%s_%s", playerID, sessionID)
+	s.comboEngine.mu.Lock()
+	activeCombo, exists := s.comboEngine.activeCombos[comboKey]
+	if !exists {
+		activeCombo = &ActiveCombo{
+			PlayerID:  playerID,
+			ComboID:   "",
+			Sequence:  []ComboInput{},
+			StartTime: time.Now(),
+		}
+		s.comboEngine.activeCombos[comboKey] = activeCombo
+	}
+	s.comboEngine.mu.Unlock()
+
+	// Add input to sequence
+	activeCombo.Sequence = append(activeCombo.Sequence, input)
+	activeCombo.LastInput = time.Now()
+	activeCombo.ChainLength = len(activeCombo.Sequence)
+
+	// Check for combo completion
+	result := s.checkComboCompletion(activeCombo)
+
+	// Update combo state
+	if result.Success {
+		activeCombo.StaminaUsed += result.StaminaCost
+		s.metrics.IncrementComboCompleted(result.ComboID)
+	} else if len(activeCombo.Sequence) >= 10 { // Reset after too many failed inputs
+		delete(s.comboEngine.activeCombos, comboKey)
+	}
+
+	return result, nil
+}
+
+// ActivateSynergy attempts to activate a synergy
+func (s *CombatService) ActivateSynergy(ctx context.Context, playerID, synergyID string) (*SynergyResult, error) {
+	// PERFORMANCE: Add context timeout
+	ctx, cancel := context.WithTimeout(ctx, 200*time.Millisecond)
+	defer cancel()
+
+	start := time.Now()
+	defer func() {
+		duration := time.Since(start).Milliseconds()
+		s.logger.Debugw("ActivateSynergy completed",
+			"player_id", playerID,
+			"synergy_id", synergyID,
+			"duration_ms", duration,
+		)
+	}()
+
+	// PERFORMANCE: Acquire worker
+	select {
+	case <-s.synergyWorkers:
+		defer func() { s.synergyWorkers <- struct{}{} }()
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-time.After(100 * time.Millisecond):
+		return nil, fmt.Errorf("synergy system busy")
+	}
+
+	// Check synergy requirements
+	s.synergyEngine.mu.RLock()
+	synergyDef, exists := s.synergyEngine.synergyDefinitions[synergyID]
+	s.synergyEngine.mu.RUnlock()
+
+	if !exists {
+		return &SynergyResult{Success: false, Error: "synergy not found"}, nil
+	}
+
+	// Validate requirements (simplified - would check player state)
+	canActivate := s.validateSynergyRequirements(ctx, playerID, synergyDef)
+
+	if !canActivate {
+		return &SynergyResult{Success: false, Error: "requirements not met"}, nil
+	}
+
+	// Check for existing active synergy
+	synergyKey := fmt.Sprintf("%s_%s", playerID, synergyID)
+	s.synergyEngine.mu.Lock()
+	if existing, exists := s.synergyEngine.activeSynergies[synergyKey]; exists {
+		if existing.Stacks >= synergyDef.Effects[0].MaxStacks {
+			s.synergyEngine.mu.Unlock()
+			return &SynergyResult{Success: false, Error: "synergy max stacks reached"}, nil
+		}
+		existing.Stacks++
+		existing.ExpiresAt = time.Now().Add(time.Duration(synergyDef.Duration) * time.Second)
+		s.synergyEngine.mu.Unlock()
+		return &SynergyResult{
+			Success:      true,
+			SynergyID:    synergyID,
+			Effects:      existing.Effects,
+			Duration:     synergyDef.Duration,
+			Stacks:       existing.Stacks,
+		}, nil
+	}
+
+	// Create new active synergy
+	activeSynergy := &ActiveSynergy{
+		PlayerID:    playerID,
+		SynergyID:   synergyID,
+		ActivatedAt: time.Now(),
+		ExpiresAt:   time.Now().Add(time.Duration(synergyDef.Duration) * time.Second),
+		Stacks:      1,
+		Effects:     synergyDef.Effects,
+	}
+	s.synergyEngine.activeSynergies[synergyKey] = activeSynergy
+	s.synergyEngine.mu.Unlock()
+
+	s.metrics.IncrementSynergyActivated(synergyID)
+	return &SynergyResult{
+		Success:   true,
+		SynergyID: synergyID,
+		Effects:   synergyDef.Effects,
+		Duration:  synergyDef.Duration,
+		Stacks:    1,
+	}, nil
+}
+
+// GetActiveCombos returns active combos for a player
+func (s *CombatService) GetActiveCombos(ctx context.Context, playerID string) ([]*ActiveCombo, error) {
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+
+	s.comboEngine.mu.RLock()
+	defer s.comboEngine.mu.RUnlock()
+
+	var combos []*ActiveCombo
+	for _, combo := range s.comboEngine.activeCombos {
+		if combo.PlayerID == playerID {
+			combos = append(combos, combo)
+		}
+	}
+
+	return combos, nil
+}
+
+// GetActiveSynergies returns active synergies for a player
+func (s *CombatService) GetActiveSynergies(ctx context.Context, playerID string) ([]*ActiveSynergy, error) {
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+
+	s.synergyEngine.mu.RLock()
+	defer s.synergyEngine.mu.RUnlock()
+
+	var synergies []*ActiveSynergy
+	for _, synergy := range s.synergyEngine.activeSynergies {
+		if synergy.PlayerID == playerID {
+			synergies = append(synergies, synergy)
+		}
+	}
+
+	return synergies, nil
+}
+
+// GetComboDefinitions returns available combo definitions
+func (s *CombatService) GetComboDefinitions(ctx context.Context, difficulty string) ([]*ComboDefinition, error) {
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+
+	s.comboEngine.mu.RLock()
+	defer s.comboEngine.mu.RUnlock()
+
+	var combos []*ComboDefinition
+	for _, combo := range s.comboEngine.comboDefinitions {
+		if difficulty == "" || combo.Difficulty == difficulty {
+			combos = append(combos, combo)
+		}
+	}
+
+	return combos, nil
+}
+
+// GetSynergyDefinitions returns available synergy definitions
+func (s *CombatService) GetSynergyDefinitions(ctx context.Context, rarity string) ([]*SynergyDefinition, error) {
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+
+	s.synergyEngine.mu.RLock()
+	defer s.synergyEngine.mu.RUnlock()
+
+	var synergies []*SynergyDefinition
+	for _, synergy := range s.synergyEngine.synergyDefinitions {
+		if rarity == "" || synergy.Rarity == rarity {
+			synergies = append(synergies, synergy)
+		}
+	}
+
+	return synergies, nil
+}
+
+// ComboResult represents the result of processing a combo input
+type ComboResult struct {
+	Success      bool          `json:"success"`
+	ComboID      string        `json:"combo_id,omitempty"`
+	ComboName    string        `json:"combo_name,omitempty"`
+	Rewards      []ComboReward `json:"rewards,omitempty"`
+	StaminaCost  int           `json:"stamina_cost"`
+	ChainLength  int           `json:"chain_length"`
+	Error        string        `json:"error,omitempty"`
+}
+
+// SynergyResult represents the result of activating a synergy
+type SynergyResult struct {
+	Success   bool             `json:"success"`
+	SynergyID string           `json:"synergy_id,omitempty"`
+	Effects   []SynergyEffect  `json:"effects,omitempty"`
+	Duration  int              `json:"duration"`
+	Stacks    int              `json:"stacks"`
+	Error     string           `json:"error,omitempty"`
+}
+
+// PRIVATE HELPER METHODS
+
+func (s *CombatService) loadDefaultCombos() {
+	// Load default combo definitions
+	combos := []*ComboDefinition{
+		{
+			ID:          "basic_combo_1",
+			Name:        "Triple Strike",
+			Description: "Quick three-hit combo",
+			Sequence: []ComboInput{
+				{Type: "attack", Direction: "forward"},
+				{Type: "attack", Direction: "forward"},
+				{Type: "attack", Direction: "forward", Modifier: "charged"},
+			},
+			Rewards: []ComboReward{
+				{Type: "damage", Value: 1.5, Chance: 1.0},
+				{Type: "stamina", Value: 10, Chance: 0.8},
+			},
+			Difficulty:  "basic",
+			TimeWindow:  800,
+			MaxChain:    3,
+			StaminaCost: 15,
+		},
+		{
+			ID:          "advanced_combo_1",
+			Name:        "Whirlwind Assault",
+			Description: "Spinning attack combo with directional changes",
+			Sequence: []ComboInput{
+				{Type: "attack", Direction: "left"},
+				{Type: "dodge", Direction: "right"},
+				{Type: "attack", Direction: "right"},
+				{Type: "special", Modifier: "charged"},
+			},
+			Rewards: []ComboReward{
+				{Type: "damage", Value: 2.0, Chance: 1.0},
+				{Type: "effect", Value: "stun", Chance: 0.3},
+			},
+			Difficulty:  "advanced",
+			TimeWindow:  600,
+			MaxChain:    4,
+			StaminaCost: 25,
+		},
+	}
+
+	s.comboEngine.mu.Lock()
+	for _, combo := range combos {
+		s.comboEngine.comboDefinitions[combo.ID] = combo
+	}
+	s.comboEngine.mu.Unlock()
+}
+
+func (s *CombatService) loadDefaultSynergies() {
+	// Load default synergy definitions
+	synergies := []*SynergyDefinition{
+		{
+			ID:          "berserker_synergy",
+			Name:        "Berserker Rage",
+			Description: "Low health + high damage abilities create devastating synergy",
+			Requirements: []SynergyRequirement{
+				{Type: "status", Target: "health_percent", Operator: "lte", Value: 0.25},
+				{Type: "ability", Target: "heavy_attack", Operator: "has"},
+			},
+			Effects: []SynergyEffect{
+				{Type: "damage_boost", Target: "self", Value: 1.5, Duration: 10, Stackable: false},
+				{Type: "speed_boost", Target: "self", Value: 0.3, Duration: 10, Stackable: false},
+			},
+			Duration:       10,
+			Cooldown:       60,
+			ActivationType: "automatic",
+			Rarity:         "rare",
+		},
+		{
+			ID:          "shadow_dancer_synergy",
+			Name:        "Shadow Dancer",
+			Description: "Stealth + mobility abilities create elusive synergy",
+			Requirements: []SynergyRequirement{
+				{Type: "ability", Target: "stealth", Operator: "active"},
+				{Type: "ability", Target: "dash", Operator: "has"},
+			},
+			Effects: []SynergyEffect{
+				{Type: "defense_boost", Target: "self", Value: 0.5, Duration: 15, Stackable: true, MaxStacks: 3},
+				{Type: "speed_boost", Target: "self", Value: 0.4, Duration: 15, Stackable: true, MaxStacks: 3},
+			},
+			Duration:       15,
+			Cooldown:       45,
+			ActivationType: "conditional",
+			Rarity:         "epic",
+		},
+	}
+
+	s.synergyEngine.mu.Lock()
+	for _, synergy := range synergies {
+		s.synergyEngine.synergyDefinitions[synergy.ID] = synergy
+	}
+	s.synergyEngine.mu.Unlock()
+}
+
+func (s *CombatService) checkComboCompletion(activeCombo *ActiveCombo) *ComboResult {
+	s.comboEngine.mu.RLock()
+	defer s.comboEngine.mu.RUnlock()
+
+	// Check each combo definition
+	for _, comboDef := range s.comboEngine.comboDefinitions {
+		if s.matchesComboSequence(activeCombo.Sequence, comboDef.Sequence, comboDef.TimeWindow) {
+			return &ComboResult{
+				Success:     true,
+				ComboID:     comboDef.ID,
+				ComboName:   comboDef.Name,
+				Rewards:     comboDef.Rewards,
+				StaminaCost: comboDef.StaminaCost,
+				ChainLength: len(activeCombo.Sequence),
+			}
+		}
+	}
+
+	return &ComboResult{
+		Success:     false,
+		ChainLength: len(activeCombo.Sequence),
+	}
+}
+
+func (s *CombatService) matchesComboSequence(playerInputs, comboSequence []ComboInput, timeWindow int) bool {
+	if len(playerInputs) != len(comboSequence) {
+		return false
+	}
+
+	for i, input := range playerInputs {
+		required := comboSequence[i]
+		if input.Type != required.Type ||
+		   (required.Direction != "" && input.Direction != required.Direction) ||
+		   (required.Modifier != "" && input.Modifier != required.Modifier) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (s *CombatService) validateSynergyRequirements(ctx context.Context, playerID string, synergy *SynergyDefinition) bool {
+	// Simplified validation - would check actual player state
+	for _, req := range synergy.Requirements {
+		// This would validate against actual player abilities, items, status, etc.
+		// For now, return true for demonstration
+		_ = req
+	}
+	return true
+}
+
+// CleanupExpiredCombos removes expired combo states
+func (s *CombatService) CleanupExpiredCombos() {
+	s.comboEngine.mu.Lock()
+	defer s.comboEngine.mu.Unlock()
+
+	expired := make([]string, 0)
+	for key, combo := range s.comboEngine.activeCombos {
+		if time.Since(combo.LastInput) > 10*time.Second {
+			expired = append(expired, key)
+		}
+	}
+
+	for _, key := range expired {
+		delete(s.comboEngine.activeCombos, key)
+	}
+}
+
+// CleanupExpiredSynergies removes expired synergy effects
+func (s *CombatService) CleanupExpiredSynergies() {
+	s.synergyEngine.mu.Lock()
+	defer s.synergyEngine.mu.Unlock()
+
+	expired := make([]string, 0)
+	for key, synergy := range s.synergyEngine.activeSynergies {
+		if time.Now().After(synergy.ExpiresAt) {
+			expired = append(expired, key)
+		}
+	}
+
+	for _, key := range expired {
+		delete(s.synergyEngine.activeSynergies, key)
+	}
+}

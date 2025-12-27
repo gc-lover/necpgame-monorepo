@@ -27,7 +27,7 @@ def batch_import_houston_quests():
             # Run import command
             cmd = [
                 sys.executable,
-                "import-quest-to-db.py",
+                "scripts/import-quest-to-db.py",
                 "--quest-file", str(quest_file)
             ]
 

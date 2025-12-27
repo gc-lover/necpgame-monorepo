@@ -16,8 +16,8 @@ class HoustonQuestConverter:
     """
 
     def __init__(self):
-        self.source_dir = Path("../knowledge/canon/lore/timeline-author/quests/america/houston")
-        self.output_dir = Path("../knowledge/canon/narrative/quests")
+        self.source_dir = Path("knowledge/canon/lore/timeline-author/quests/america/houston")
+        self.output_dir = Path("knowledge/canon/narrative/quests")
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def convert_all_quests(self) -> List[str]:
@@ -32,7 +32,10 @@ class HoustonQuestConverter:
 
         quest_files.sort()
 
+        print(f"Looking in: {self.source_dir}")
         print(f"Found {len(quest_files)} Houston quest files to convert")
+        for f in quest_files[:5]:  # Show first 5
+            print(f"  {f}")
 
         for quest_file in quest_files:
             try:
@@ -269,9 +272,4 @@ def main():
     converter = HoustonQuestConverter()
     converted_files = converter.convert_all_quests()
 
-    print(f"\nConversion completed. Converted {len(converted_files)} files.")
-    print("Run batch-import-houston-quests.py to import them to database.")
-
-
-if __name__ == "__main__":
-    main()
+    print(f"\nConversion completed. Converted {len(converted_files)}
