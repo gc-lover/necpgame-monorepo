@@ -17,6 +17,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/gc-lover/necpgame-monorepo/services/combat-damage-service-go/pkg/api"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-damage-service-go/server"
@@ -62,8 +63,8 @@ func main() {
 	// Create router with ogen
 	r := srv.CreateRouter()
 
-	// Start server
-	srv := &http.Server{
+	// Start HTTP server
+	httpSrv := &http.Server{
 		Addr:         ":" + cfg.Port,
 		Handler:      r,
 		ReadTimeout:  cfg.ReadTimeout,
@@ -73,7 +74,7 @@ func main() {
 	// Graceful shutdown
 	go func() {
 		logger.Info("Starting combat-damage-service-go server", zap.String("port", cfg.Port))
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Server failed to start", zap.Error(err))
 		}
 	}()
@@ -88,7 +89,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
+		if err := httpSrv.Shutdown(ctx); err != nil {
 		logger.Fatal("Server forced to shutdown", zap.Error(err))
 	}
 
@@ -199,7 +200,7 @@ func setupRouter(handlers *server.Handlers, tokenAuth *jwtauth.JWTAuth, logger *
 	// API routes with authentication
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(jwtauth.Verifier(tokenAuth))
-		r.Use(jwtauth.Authenticator)
+		r.Use(jwtauth.Authenticator(tokenAuth))
 
 		// Combat damage routes
 		r.Post("/combat/damage/calculate", handlers.CalculateDamage)
