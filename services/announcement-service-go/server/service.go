@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/announcement-service-go/internal/config"
 	"github.com/gc-lover/necpgame-monorepo/services/announcement-service-go/pkg/api"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -26,9 +27,9 @@ type AnnouncementService struct {
 }
 
 // NewAnnouncementService creates a new announcement service instance
-func NewAnnouncementService(logger *zap.Logger) *AnnouncementService {
+func NewAnnouncementService(logger *zap.Logger, dbConfig *config.DatabaseConfig) *AnnouncementService {
 	return &AnnouncementService{
-		repo:      NewRepository(logger),
+		repo:      NewRepository(logger, dbConfig),
 		cache:     NewCache(logger),
 		validator: NewValidator(logger),
 		metrics:   NewMetrics(logger),
@@ -107,11 +108,25 @@ func (s *AnnouncementService) CreateAnnouncement(ctx context.Context, req *api.C
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
+	// Extract user ID from context
+	userID := getUserIDFromContext(ctx)
+	var createdByUUID uuid.UUID
+	if userID != "" && userID != "unknown" {
+		var err error
+		createdByUUID, err = uuid.Parse(userID)
+		if err != nil {
+			s.logger.Warn("Failed to parse user ID from context", zap.String("user_id", userID), zap.Error(err))
+			createdByUUID = uuid.Nil
+		}
+	} else {
+		createdByUUID = uuid.Nil
+	}
+
 	// Create announcement object
 	now := time.Now()
 	announcement := &api.Announcement{
 		ID:               api.NewOptUUID(uuid.New()),
-		CreatedBy:        api.NewOptUUID(uuid.Nil), // TODO: Get from context
+		CreatedBy:        api.NewOptUUID(createdByUUID),
 		Title:            req.Title,
 		Content:          req.Content,
 		AnnouncementType: req.AnnouncementType,
@@ -287,6 +302,28 @@ func (s *AnnouncementService) ScheduleAnnouncement(ctx context.Context, id uuid.
 	s.logger.Info("Announcement scheduled", zap.String("id", id.String()), zap.Time("scheduled_at", req.ScheduledPublishAt.Value))
 
 	return announcement, nil
+}
+
+// getUserIDFromContext extracts user ID from context
+// BACKEND NOTE: Standard way to extract user ID from JWT context
+// The user ID is typically set by authentication middleware
+func getUserIDFromContext(ctx context.Context) string {
+	// Try to get user_id from context (set by auth middleware)
+	if userID, ok := ctx.Value("user_id").(string); ok && userID != "" {
+		return userID
+	}
+	
+	// Try alternative key names
+	if userID, ok := ctx.Value("userID").(string); ok && userID != "" {
+		return userID
+	}
+	
+	if userID, ok := ctx.Value("userId").(string); ok && userID != "" {
+		return userID
+	}
+	
+	// If not found, return empty string (will be converted to uuid.Nil)
+	return ""
 }
 
 

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/announcement-service-go/internal/config"
 	"github.com/gc-lover/necpgame-monorepo/services/announcement-service-go/pkg/api"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,22 +24,20 @@ type Repository struct {
 }
 
 // NewRepository creates a new repository with database connection
-func NewRepository(logger *zap.Logger) *Repository {
+func NewRepository(logger *zap.Logger, dbConfig *config.DatabaseConfig) *Repository {
 	// PERFORMANCE: Connection pooling configured for MMO load
-	// In production, this would be injected via dependency injection
-	connStr := "postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable" // TODO: Use config
-	config, err := pgxpool.ParseConfig(connStr)
+	poolConfig, err := pgxpool.ParseConfig(dbConfig.DSN)
 	if err != nil {
 		logger.Fatal("Failed to parse PostgreSQL config", zap.Error(err))
 	}
 
-	// TODO: Configure connection pool settings for performance
-	config.MaxConns = 50
-	config.MinConns = 10
-	config.MaxConnLifetime = time.Hour
-	config.MaxConnIdleTime = time.Minute * 30
+	// Configure connection pool settings for performance
+	poolConfig.MaxConns = int32(dbConfig.MaxConns)
+	poolConfig.MinConns = int32(dbConfig.MinConns)
+	poolConfig.MaxConnLifetime = time.Hour
+	poolConfig.MaxConnIdleTime = time.Minute * 30
 
-	db, err := pgxpool.NewWithConfig(context.Background(), config)
+	db, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
 		logger.Fatal("Failed to connect to PostgreSQL", zap.Error(err))
 	}

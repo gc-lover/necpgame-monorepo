@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/announcement-service-go/internal/config"
 	"github.com/gc-lover/necpgame-monorepo/services/announcement-service-go/pkg/api"
 	"github.com/gc-lover/necpgame-monorepo/services/announcement-service-go/server"
 	"go.uber.org/zap"
@@ -25,7 +26,13 @@ func main() {
 		}
 	}()
 
-	handler := server.NewHandler(logger)
+	// Load configuration
+	cfg, err := config.Load()
+	if err != nil {
+		logger.Fatal("Failed to load configuration", zap.Error(err))
+	}
+
+	handler := server.NewHandler(logger, &cfg.Database)
 
 	srv, err := api.NewServer(handler, handler)
 	if err != nil {
@@ -33,7 +40,7 @@ func main() {
 	}
 
 	httpServer := &http.Server{
-		Addr:         ":8094",
+		Addr:         cfg.Server.Address,
 		Handler:      srv,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,

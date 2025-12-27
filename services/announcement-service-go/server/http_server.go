@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/announcement-service-go/internal/config"
 	"github.com/gc-lover/necpgame-monorepo/services/announcement-service-go/pkg/api"
 	"go.uber.org/zap"
 )
@@ -20,9 +21,9 @@ type Handler struct {
 }
 
 // NewHandler creates a new handler with performance optimizations
-func NewHandler(logger *zap.Logger) *Handler {
+func NewHandler(logger *zap.Logger, dbConfig *config.DatabaseConfig) *Handler {
 	return &Handler{
-		service: NewAnnouncementService(logger),
+		service: NewAnnouncementService(logger, dbConfig),
 		logger:  logger,
 	}
 }
