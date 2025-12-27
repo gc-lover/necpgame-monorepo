@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -27,9 +28,6 @@ func NewCombatAbilitiesHandler(service *Service, logger *zap.Logger) *CombatAbil
 
 // HealthCheck handles service health check
 func (h *CombatAbilitiesHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := contextWithTimeout(r.Context(), 10*time.Millisecond)
-	defer cancel()
-
 	h.respondJSON(w, http.StatusOK, map[string]interface{}{
 		"status":    "healthy",
 		"service":   "combat-abilities-service-go",
