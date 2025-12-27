@@ -1825,6 +1825,200 @@ components:
           maximum: 10
           description: New priority
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    GuildVoiceChannelRequest:
+      type: object
+      required:
+        - name
+        - guild_id
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Voice channel name
+          example: "General Voice"
+        type:
+          type: string
+          enum: ["guild"]
+          default: "guild"
+          description: Channel type (must be 'guild')
+        guild_id:
+          type: string
+          format: uuid
+          description: Guild unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        max_users:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Maximum number of users
+          example: 25
+        is_default_channel:
+          type: boolean
+          default: false
+          description: Whether this is the guild's default voice channel
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum: ["leader", "officer", "member", "recruit"]
+          maxItems: 10
+          description: Guild roles allowed to join this channel
+          example: ["leader", "officer", "member"]
+        is_moderated:
+          type: boolean
+          default: false
+          description: Whether channel has moderation enabled
+        require_approval:
+          type: boolean
+          default: false
+          description: Whether users need approval to join
+      description: "BACKEND NOTE: Guild voice channel creation request with permission validation."
+
+    GuildVoiceChannelResponse:
+      type: object
+      required:
+        - id
+        - name
+        - guild_id
+        - owner_id
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          example: "General Voice"
+        type:
+          type: string
+          enum: ["guild"]
+          example: "guild"
+        guild_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        owner_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        max_users:
+          type: integer
+          example: 25
+        current_users:
+          type: integer
+          example: 3
+        is_active:
+          type: boolean
+          example: true
+        is_default_channel:
+          type: boolean
+          example: true
+        guild_permissions:
+          $ref: "#/components/schemas/GuildPermissions"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-12-27T16:16:05Z"
+      description: "BACKEND NOTE: Guild voice channel response with permission details."
+
+    GuildVoiceChannelUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Update channel name
+        max_users:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Update maximum users
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum: ["leader", "officer", "member", "recruit"]
+          maxItems: 10
+          description: Update allowed roles
+        is_moderated:
+          type: boolean
+          description: Update moderation status
+        require_approval:
+          type: boolean
+          description: Update approval requirement
+        blocked_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 50
+          description: Users blocked from this channel
+      description: "BACKEND NOTE: Partial update request for guild voice channels."
+
+    GuildVoiceChannelListResponse:
+      type: object
+      required:
+        - channels
+        - total_count
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/GuildVoiceChannelResponse"
+          description: List of guild voice channels
+        total_count:
+          type: integer
+          description: Total number of channels
+          example: 5
+        has_more:
+          type: boolean
+          description: Whether there are more results
+          example: false
+      description: "BACKEND NOTE: Paginated guild voice channels list."
+
+    GuildPermissions:
+      type: object
+      properties:
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum: ["leader", "officer", "member", "recruit"]
+          description: Roles allowed to join
+          example: ["leader", "officer", "member"]
+        blocked_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Users blocked from channel
+        muted_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Users muted in channel
+        deafened_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Users deafened in channel
+        is_moderated:
+          type: boolean
+          description: Moderation enabled
+          example: true
+        require_approval:
+          type: boolean
+          description: Approval required to join
+          example: false
+      description: "BACKEND NOTE: Guild-specific voice channel permissions and access control."
+
     ExampleResponse:
       type: object
       required:

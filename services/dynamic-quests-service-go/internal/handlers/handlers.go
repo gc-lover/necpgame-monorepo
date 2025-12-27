@@ -588,6 +588,21 @@ func (h *Handlers) GetParisOfTheSouthQuest(w http.ResponseWriter, r *http.Reques
 	h.respondJSON(w, http.StatusOK, quest)
 }
 
+// GetEconomicCrisisQuest handles GET /quests/buenos-aires/economic-crisis
+// Issue: #140929878
+func (h *Handlers) GetEconomicCrisisQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get Economic Crisis quest request")
+
+	quest, err := h.service.GetEconomicCrisisQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get Economic Crisis quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
 // GetOilLegacyQuest handles GET /quests/dallas/oil-legacy
 // Issue: #140928929
 func (h *Handlers) GetOilLegacyQuest(w http.ResponseWriter, r *http.Request) {

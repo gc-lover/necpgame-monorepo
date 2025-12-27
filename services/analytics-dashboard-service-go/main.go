@@ -22,6 +22,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"github.com/redis/go-redis/v9"
+	_ "github.com/lib/pq" // PostgreSQL driver
 
 	"analytics-dashboard-service-go/pkg/api"
 	"analytics-dashboard-service-go/pkg/models"

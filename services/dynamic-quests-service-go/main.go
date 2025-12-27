@@ -123,13 +123,14 @@ func main() {
 				r.Get("/everything-bigger", h.GetEverythingBiggerQuest) // GET /api/v1/quests/dallas/everything-bigger
 			})
 
-			// Buenos Aires Quests - Issues: #140929841, #140929844, #140929848, #140929854, #140929855
+			// Buenos Aires Quests - Issues: #140929841, #140929844, #140929848, #140929854, #140929855, #140929878
 			r.Route("/buenos-aires", func(r chi.Router) {
 				r.Get("/tango-dance", h.GetTangoDanceQuest)      // GET /api/v1/quests/buenos-aires/tango-dance
 				r.Get("/la-boca-caminito", h.GetLaBocaCaminitoQuest) // GET /api/v1/quests/buenos-aires/la-boca-caminito
 				r.Get("/asado-bbq", h.GetAsadoBBQQuest)         // GET /api/v1/quests/buenos-aires/asado-bbq
 				r.Get("/recoleta-cemetery", h.GetRecoletaCemeteryQuest) // GET /api/v1/quests/buenos-aires/recoleta-cemetery
 				r.Get("/paris-of-the-south", h.GetParisOfTheSouthQuest) // GET /api/v1/quests/buenos-aires/paris-of-the-south
+				r.Get("/economic-crisis", h.GetEconomicCrisisQuest) // GET /api/v1/quests/buenos-aires/economic-crisis
 			})
 		})
 

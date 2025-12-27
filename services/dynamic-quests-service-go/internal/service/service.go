@@ -3169,6 +3169,444 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 	return quest, nil
 }
 
+// GetEconomicCrisisQuest returns the Economic Crisis quest for Buenos Aires
+// Issue: #140929878
+func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Economic Crisis quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "canon-quest-economic-crisis-buenos-aires-2020-2029",
+		Title:            "Буэнос-Айрес: Экономический Кризис",
+		Description:      "В 2020-х годах корпорации установили тотальный контроль над экономикой Аргентины. Все транзакции проходят через импланты, инфляция манипулируется искусственно, а независимые предприниматели преследуются как 'экономические террористы'. Создайте альтернативную экономику, основанную на доверии и сообществе.",
+		QuestType:        "narrative_side",
+		MinLevel:         25,
+		MaxLevel:         0, // No max level
+		EstimatedDuration: 480,
+		Difficulty:       "legendary",
+		Themes:           []string{"economic_freedom", "corporate_control", "trust_economy", "resistance", "community"},
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "investigate_corporate_control",
+				Sequence:    1,
+				Title:       "Расследование корпоративного контроля",
+				Description: "Как вы начнете борьбу с экономическим контролем корпораций?",
+				Context:     "Вы узнаете, что корпорации контролируют всю экономику через импланты и манипулируют инфляцией. Независимые предприниматели исчезают один за другим.",
+				Choices: []models.Choice{
+					{
+						ID:             "hack_corporate_systems",
+						Text:           "Взломать корпоративные системы",
+						Description:    "Получить доказательства манипуляций с внутренней стороны",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "corporate_economic_control",
+								Value:       float64(-20),
+								Probability: 1.0,
+								Description: "Снижение репутации корпораций",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(350),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "high",
+						MoralAlignment: "chaotic",
+					},
+					{
+						ID:             "interview_business_owners",
+						Text:           "Опросить пострадавших предпринимателей",
+						Description:    "Собрать свидетельства от жертв корпоративного контроля",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "independent_business_alliance",
+								Value:       float64(15),
+								Probability: 1.0,
+								Description: "Увеличение репутации независимых предпринимателей",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(250),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "medium",
+						MoralAlignment: "good",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "build_resistance_network",
+				Sequence:    2,
+				Title:       "Создание сети сопротивления",
+				Description: "Как вы объедините независимых предпринимателей?",
+				Context:     "Вы нашли несколько выживших независимых бизнесменов. Они готовы бороться, но боятся репрессий корпораций.",
+				Choices: []models.Choice{
+					{
+						ID:             "create_secret_alliance",
+						Text:           "Создать тайный альянс предпринимателей",
+						Description:    "Объединить бизнесменов в подпольную организацию",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "economic_freedom_fighters",
+								Value:       float64(25),
+								Probability: 1.0,
+								Description: "Увеличение репутации борцов за экономическую свободу",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(400),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "establish_community_trust",
+						Text:           "Установить систему доверия сообщества",
+						Description:    "Создать альтернативную экономику на основе взаимного доверия",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "community_trust_builders",
+								Value:       float64(20),
+								Probability: 1.0,
+								Description: "Увеличение репутации строителей доверия",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(380),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "create_alternative_currency",
+				Sequence:    3,
+				Title:       "Создание альтернативной валюты",
+				Description: "Как вы создадите валюту, свободную от корпоративного контроля?",
+				Context:     "Ваша сеть растет, но для торговли нужна валюта, не зависящая от корпоративных имплантов.",
+				Choices: []models.Choice{
+					{
+						ID:             "digital_trust_tokens",
+						Text:           "Создать цифровые токены доверия",
+						Description:    "Ввести криптовалюту, основанную на репутации в сообществе",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "independent_business_alliance",
+								Value:       float64(30),
+								Probability: 1.0,
+								Description: "Значительное увеличение репутации независимых бизнесменов",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(500),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "high",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "barter_system",
+						Text:           "Восстановить систему бартера",
+						Description:    "Вернуться к прямому обмену товарами и услугами",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "traditional_economists",
+								Value:       float64(25),
+								Probability: 1.0,
+								Description: "Увеличение репутации традиционных экономистов",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(450),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "establish_underground_markets",
+				Sequence:    4,
+				Title:       "Организация подпольных рынков",
+				Description: "Как вы организуете торговлю вне корпоративного контроля?",
+				Context:     "Альтернативная валюта работает. Теперь нужно создать места, где люди могут торговать свободно.",
+				Choices: []models.Choice{
+					{
+						ID:             "mobile_trading_networks",
+						Text:           "Создать мобильные торговые сети",
+						Description:    "Организовать передвижные рынки, которые трудно отследить",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "economic_freedom_fighters",
+								Value:       float64(35),
+								Probability: 1.0,
+								Description: "Значительное увеличение репутации борцов за свободу",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(600),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "medium",
+						MoralAlignment: "chaotic",
+					},
+					{
+						ID:             "community_cooperatives",
+						Text:           "Организовать кооперативы сообщества",
+						Description:    "Создать коллективные предприятия с совместным владением",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "community_trust_builders",
+								Value:       float64(40),
+								Probability: 1.0,
+								Description: "Максимальное увеличение репутации строителей доверия",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(550),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "final_economic_revolution",
+				Sequence:    5,
+				Title:       "Экономическая революция",
+				Description: "Как вы завершите борьбу за экономическую свободу?",
+				Context:     "Корпорации знают о вашем движении и готовят финальный удар. Все зависит от вашей стратегии.",
+				Choices: []models.Choice{
+					{
+						ID:             "public_expose",
+						Text:           "Общественное разоблачение",
+						Description:    "Опубликовать все доказательства корпоративных преступлений",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "corporate_economic_control",
+								Value:       float64(-40),
+								Probability: 1.0,
+								Description: "Максимальное снижение репутации корпораций",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(800),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "high",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "peaceful_transition",
+						Text:           "Мирный переход",
+						Description:    "Предложить корпорациям компромисс и совместное развитие",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "independent_business_alliance",
+								Value:       float64(30),
+								Probability: 1.0,
+								Description: "Увеличение репутации независимых бизнесменов",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(700),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "economic_revolution_success",
+				Title:       "Экономическая Революция",
+				Description: "Вы успешно создали альтернативную экономику и свергли корпоративный контроль над финансами Аргентины.",
+				Requirements: []string{"hack_corporate_systems", "create_secret_alliance", "digital_trust_tokens", "mobile_trading_networks", "public_expose"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 32000},
+					{Type: "currency", Value: 28000},
+					{Type: "item", ItemID: "community_trust_token", Rarity: "legendary"},
+					{Type: "item", ItemID: "economic_freedom_manifesto", Rarity: "epic"},
+					{Type: "item", ItemID: "underground_market_access", Rarity: "rare"},
+					{Type: "achievement", Value: "Economic Revolutionary"},
+				},
+				Narrative: "Ваша революция изменила лицо аргентинской экономики. Теперь люди торгуют на основе доверия, а не корпоративного контроля.",
+			},
+			{
+				ID:          "trust_based_economy",
+				Title:       "Экономика Доверия",
+				Description: "Вы создали устойчивую экономику, основанную на взаимном доверии и традиционных ценностях.",
+				Requirements: []string{"interview_business_owners", "establish_community_trust", "barter_system", "community_cooperatives", "peaceful_transition"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 30000},
+					{Type: "currency", Value: 25000},
+					{Type: "item", ItemID: "trust_economy_foundation", Rarity: "legendary"},
+					{Type: "item", ItemID: "cooperative_network_access", Rarity: "epic"},
+					{Type: "achievement", Value: "Trust Economy Pioneer"},
+				},
+				Narrative: "Ваша экономика доверия стала моделью для других городов. Корпорации вынуждены считаться с силой сообщества.",
+			},
+			{
+				ID:          "hybrid_economic_system",
+				Title:       "Гибридная Экономическая Система",
+				Description: "Вы нашли баланс между корпоративным контролем и альтернативной экономикой.",
+				Requirements: []string{"hack_corporate_systems", "establish_community_trust", "digital_trust_tokens", "community_cooperatives", "peaceful_transition"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 28000},
+					{Type: "currency", Value: 22000},
+					{Type: "item", ItemID: "economic_balance_accord", Rarity: "epic"},
+					{Type: "item", ItemID: "dual_currency_system", Rarity: "rare"},
+					{Type: "achievement", Value: "Economic Bridge Builder"},
+				},
+				Narrative: "Две экономические системы теперь сосуществуют. Корпорации контролируют крупный бизнес, а сообщество - повседневную торговлю.",
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "independent_business_alliance",
+				Change:      40,
+				Description: "Поддержка независимых предпринимателей и малого бизнеса",
+				ChoiceID:    "interview_business_owners",
+			},
+			{
+				Faction:     "economic_freedom_fighters",
+				Change:      35,
+				Description: "Борьба за экономическую свободу от корпоративного контроля",
+				ChoiceID:    "create_secret_alliance",
+			},
+			{
+				Faction:     "community_trust_builders",
+				Change:      30,
+				Description: "Создание экономики на основе взаимного доверия",
+				ChoiceID:    "establish_community_trust",
+			},
+			{
+				Faction:     "corporate_economic_control",
+				Change:      -30,
+				Description: "Противодействие корпоративному контролю над экономикой",
+				ChoiceID:    "hack_corporate_systems",
+			},
+			{
+				Faction:     "traditional_economists",
+				Change:      25,
+				Description: "Восстановление традиционных экономических практик",
+				ChoiceID:    "barter_system",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Buenos Aires, Argentina - Economic Underground",
+			TimePeriod:  "2020-2029",
+			Weather:     "tense, economically unstable atmosphere",
+			Situation:   "Fight against corporate economic control and create an alternative economy based on community trust.",
+			Objectives: []string{
+				"Investigate corporate economic control mechanisms",
+				"Gather independent business owners and artisans",
+				"Create alternative currency based on community trust",
+				"Establish underground markets and trading networks",
+				"Expose corporate manipulation and restore economic freedom",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "business_owner_maria",
+				Name:        "Мария 'Независимая' Гонсалес",
+				Role:        "Владелица семейного магазина",
+				Description:    "Последняя независимая предпринимательница в районе, потеряла бизнес из-за корпоративных репрессий",
+				Importance:  "primary",
+			},
+			{
+				ID:          "corporate_economist_sarah",
+				Name:        "Сара 'Корпоративная' Чен",
+				Role:        "Экономический аналитик корпорации",
+				Description:    "Представитель корпорации, отвечающая за контроль над местной экономикой",
+				Importance:  "antagonist",
+			},
+			{
+				ID:          "trust_economist_carlos",
+				Name:        "Карлос 'Доверие' Родригес",
+				Role:        "Экономист альтернативных систем",
+				Description:    "Эксперт по экономике доверия и бартерным системам",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "underground_trader_ana",
+				Name:        "Ана 'Подпольная' Фернандес",
+				Role:        "Координатор подпольной торговли",
+				Description:    "Опытный торговец, знающий все тайные рынки города",
+				Importance:  "ally",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	return quest, nil
+}
+
 // GetRedWingsHockeyQuest returns the Red Wings Hockey quest for Detroit
 func (s *Service) GetRedWingsHockeyQuest(ctx context.Context) (*models.DynamicQuest, error) {
 	s.logger.Info("Retrieving Red Wings Hockey quest definition")
