@@ -641,6 +641,187 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /voice-channels/{channel_id}/join:
+    post:
+      summary: Join voice channel with WebRTC signaling
+      description: '**Real-time voice channel join with WebRTC handshake**
+
+
+        Initiates WebRTC peer connection establishment with signaling protocol.
+
+        Returns STUN/TURN server credentials and channel participant list.
+
+
+        **Performance:** <100ms average connection establishment
+
+        '
+      operationId: joinVoiceChannel
+      tags:
+      - Voice Signaling
+      parameters:
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinChannelRequest'
+      responses:
+        '200':
+          description: Successfully joined voice channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinChannelResponse'
+        '400':
+          description: Invalid join request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Access denied to voice channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /voice-channels/{channel_id}/signal:
+    post:
+      summary: WebRTC signaling message exchange
+      description: '**Core WebRTC signaling endpoint for offer/answer/ICE exchange**
+
+
+        Handles SDP offers, answers, and ICE candidates between peers.
+
+        Validates signaling messages and enforces anti-cheat measures.
+
+
+        **Performance:** <10ms P99 signaling message processing
+
+        '
+      operationId: exchangeSignalingMessage
+      tags:
+      - Voice Signaling
+      parameters:
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignalingMessage'
+      responses:
+        '200':
+          description: Signaling message processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignalingResponse'
+        '400':
+          description: Invalid signaling message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /voice-channels/{channel_id}/leave:
+    post:
+      summary: Leave voice channel
+      description: '**Clean voice channel disconnection**
+
+
+        Removes participant from voice channel and cleans up signaling state.
+
+        Updates channel participant count and notifies remaining peers.
+
+
+        **Performance:** <25ms disconnection processing
+
+        '
+      operationId: leaveVoiceChannel
+      tags:
+      - Voice Channels
+      parameters:
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      responses:
+        '200':
+          description: Successfully left voice channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveChannelResponse'
+        '404':
+          description: Channel not found or already left
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /voice-quality/{channel_id}/report:
+    post:
+      summary: Report voice quality metrics
+      description: '**Real-time voice quality monitoring and optimization**
+
+
+        Collects latency, packet loss, and audio quality metrics from clients.
+
+        Enables adaptive bitrate adjustment and quality optimization.
+
+
+        **Performance:** <5ms metrics processing with batch aggregation
+
+        '
+      operationId: reportVoiceQuality
+      tags:
+      - Voice Quality
+      parameters:
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoiceQualityReport'
+      responses:
+        '200':
+          description: Quality metrics recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceQualityResponse'
+        '400':
+          description: Invalid quality report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   responses:
     HealthBatchSuccess:
@@ -973,11 +1154,13 @@ components:
           maximum: 599
           example: 500
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    Example:
+    VoiceChannel:
       type: object
       required:
       - id
       - name
+      - type
+      - max_participants
       - created_at
       - status
       - is_active
@@ -985,49 +1168,62 @@ components:
         id:
           type: string
           format: uuid
-          description: Example unique identifier
+          description: Voice channel unique identifier
           example: 550e8400-e29b-41d4-a716-446655440000
         name:
           type: string
           minLength: 1
           maxLength: 100
-          description: Example display name
-          example: Sample Example
+          description: Voice channel display name
+          example: Guild Party Chat
+        type:
+          type: string
+          enum: [guild, party, global, private]
+          description: Voice channel type
+          example: guild
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+          description: Maximum number of participants
+          example: 10
+        current_participants:
+          type: integer
+          minimum: 0
+          description: Current number of active participants
+          example: 3
         description:
           type: string
-          maxLength: 1000
-          description: Detailed description
-          example: This is a comprehensive example demonstrating best practices.
+          maxLength: 500
+          description: Voice channel description
+          example: Main voice channel for guild coordination
         created_at:
           type: string
           format: date-time
           description: Creation timestamp
-          example: '2025-12-21T10:00:00Z'
+          example: '2025-12-27T16:00:00Z'
         updated_at:
           type: string
           format: date-time
           description: Last update timestamp
-          example: '2025-12-21T10:00:00Z'
+          example: '2025-12-27T16:30:00Z'
         status:
           type: string
           enum:
           - active
           - inactive
-          - pending
-          - archived
+          - full
+          - closed
           default: active
-          description: Current status
+          description: Voice channel status
           example: active
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Associated tags
-          example:
-          - demo
-          - template
+        is_active:
+          type: boolean
+          default: true
+          description: Whether channel is currently active
+          example: true
+        quality_settings:
+          $ref: '#/components/schemas/VoiceQualitySettings'
           - best-practice
         is_active:
           type: boolean

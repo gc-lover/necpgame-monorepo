@@ -661,15 +661,67 @@ func (s *Server) GetPrestigeLeaderboard(ctx context.Context, params api.GetPrest
 		}
 	}
 
-	// TODO: Query prestige leaderboard from database
-	// For now, return mock leaderboard data
-	leaderboard := s.getMockPrestigeLeaderboard(limit, (page-1)*limit)
+	// Query prestige leaderboard from database
+	offset := (page - 1) * limit
+
+	// Get total count
+	var totalCount int
+	err := s.db.QueryRow(ctx, `
+		SELECT COUNT(*) FROM gameplay.apartments a
+		WHERE a.owner_id IS NOT NULL AND a.prestige_score > 0
+	`).Scan(&totalCount)
+
+	if err != nil {
+		s.logger.Error("Failed to get prestige leaderboard count", zap.Error(err))
+		return nil, fmt.Errorf("database query failed: %w", err)
+	}
+
+	// Query leaderboard with ranking
+	rows, err := s.db.Query(ctx, `
+		SELECT a.owner_id, a.prestige_score, a.location,
+		       ROW_NUMBER() OVER (ORDER BY a.prestige_score DESC, a.created_at ASC) as rank
+		FROM gameplay.apartments a
+		WHERE a.owner_id IS NOT NULL AND a.prestige_score > 0
+		ORDER BY a.prestige_score DESC, a.created_at ASC
+		LIMIT $1 OFFSET $2
+	`, limit, offset)
+
+	if err != nil {
+		s.logger.Error("Failed to query prestige leaderboard", zap.Error(err))
+		return nil, fmt.Errorf("database query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var entries []api.PrestigeLeaderboardEntry
+	for rows.Next() {
+		var entry api.PrestigeLeaderboardEntry
+		var ownerID uuid.UUID
+		var location string
+
+		err := rows.Scan(&ownerID, &entry.PrestigeLevel, &location, &entry.Rank)
+		if err != nil {
+			s.logger.Error("Failed to scan leaderboard entry", zap.Error(err))
+			continue
+		}
+
+		entry.PlayerID = ownerID
+		// TODO: Get player name from player profile service
+		entry.PlayerName = fmt.Sprintf("Player_%s", ownerID.String()[:8]) // Temporary placeholder
+		entry.Location = api.NewOptString(location)
+
+		entries = append(entries, entry)
+	}
+
+	if err := rows.Err(); err != nil {
+		s.logger.Error("Rows iteration error", zap.Error(err))
+		return nil, fmt.Errorf("rows iteration failed: %w", err)
+	}
 
 	return &api.PrestigeLeaderboardResponse{
-		Entries:    leaderboard,
-		TotalCount: len(leaderboard),
-		Page:       api.NewOptInt(page),
-		Limit:      api.NewOptInt(limit),
+		Entries:     entries,
+		TotalCount:  totalCount,
+		Page:        api.NewOptInt(page),
+		Limit:       api.NewOptInt(limit),
 		GeneratedAt: time.Now(),
 	}, nil
 }
@@ -1325,11 +1377,98 @@ func (s *Server) getMockPrestigeLeaderboard(limit, offset int) []api.PrestigeLea
 }
 
 func (s *Server) processApartmentVisit(apartmentID, visitorID uuid.UUID) apartmentVisitResult {
+	// Check apartment access settings and ownership
+	var ownerID *uuid.UUID
+	var accessSettings string
+
+	err := s.db.QueryRow(context.Background(), `
+		SELECT owner_id, access_settings FROM gameplay.apartments WHERE id = $1
+	`, apartmentID).Scan(&ownerID, &accessSettings)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return apartmentVisitResult{
+				Success: false,
+				Error:   "Apartment not found",
+			}
+		}
+		s.logger.Error("Failed to check apartment access", zap.Error(err))
+		return apartmentVisitResult{
+			Success: false,
+			Error:   "Database error",
+		}
+	}
+
+	// Check access permissions
+	canVisit := false
+	canInteract := false
+	maxDurationMinutes := 15 // Default for public visits
+
+	switch accessSettings {
+	case "PUBLIC":
+		canVisit = true
+		canInteract = true
+		maxDurationMinutes = 60
+	case "FRIENDS_ONLY":
+		// TODO: Check if visitor is in owner's friends list
+		// For now, allow visit but limited interaction
+		canVisit = true
+		canInteract = false
+		maxDurationMinutes = 30
+	case "GUILD_ONLY":
+		// TODO: Check if visitor is in same guild as owner
+		// For now, deny access
+		canVisit = false
+		canInteract = false
+	case "PRIVATE":
+		fallthrough
+	default:
+		// Private apartments - only owner can visit
+		if ownerID != nil && *ownerID == visitorID {
+			canVisit = true
+			canInteract = true
+			maxDurationMinutes = 0 // Unlimited for owner
+		} else {
+			canVisit = false
+			canInteract = false
+		}
+	}
+
+	if !canVisit {
+		return apartmentVisitResult{
+			Success: false,
+			Error:   "Access denied to this apartment",
+		}
+	}
+
+	// Create visit record
+	var visitID uuid.UUID
+	err = s.db.QueryRow(context.Background(), `
+		INSERT INTO gameplay.apartment_visits (apartment_id, visitor_id, visit_time, duration_minutes)
+		VALUES ($1, $2, CURRENT_TIMESTAMP, $3)
+		RETURNING id
+	`, apartmentID, visitorID, maxDurationMinutes).Scan(&visitID)
+
+	if err != nil {
+		s.logger.Error("Failed to create visit record", zap.Error(err))
+		return apartmentVisitResult{
+			Success: false,
+			Error:   "Failed to record visit",
+		}
+	}
+
+	s.logger.Info("Apartment visit recorded",
+		zap.String("apartment_id", apartmentID.String()),
+		zap.String("visitor_id", visitorID.String()),
+		zap.String("access_level", accessSettings),
+		zap.Bool("can_interact", canInteract),
+		zap.Int("max_duration", maxDurationMinutes))
+
 	return apartmentVisitResult{
 		Success:            true,
-		VisitID:            uuid.New(),
-		CanInteract:        true,
-		MaxDurationMinutes: 30,
+		VisitID:            visitID,
+		CanInteract:        canInteract,
+		MaxDurationMinutes: maxDurationMinutes,
 	}
 }
 
