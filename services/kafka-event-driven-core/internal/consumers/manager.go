@@ -4,6 +4,7 @@ package consumers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -395,8 +396,8 @@ func (m *Manager) ReleaseWorker() {
 	}
 }
 
-// HealthCheck performs comprehensive health check
-func (m *Manager) HealthCheck(ctx context.Context) error {
+// HealthCheckWithContext performs comprehensive health check with context
+func (m *Manager) HealthCheckWithContext(ctx context.Context) error {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -663,6 +664,4 @@ func (cb *CircuitBreaker) GetState() string {
 func (cb *CircuitBreaker) Reset() {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
-	cb.state = "closed"
-	cb.failures = 0
-}
+	cb.s

@@ -18,8 +18,28 @@ def load_yaml_file(file_path):
     """Load YAML file and return data"""
     try:
         import yaml
+
+        # Read the file and extract only the easter_eggs section
         with open(file_path, 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
+            content = f.read()
+
+        # Find the easter_eggs section
+        lines = content.split('\n')
+        easter_eggs_start = -1
+        for i, line in enumerate(lines):
+            if line.strip() == 'easter_eggs:':
+                easter_eggs_start = i
+                break
+
+        if easter_eggs_start == -1:
+            print("ERROR: Could not find 'easter_eggs:' section in YAML file")
+            sys.exit(1)
+
+        # Extract only the easter_eggs section
+        easter_eggs_content = '\n'.join(lines[easter_eggs_start:])
+        easter_eggs_content = 'easter_eggs:\n' + '\n'.join(lines[easter_eggs_start + 1:])
+
+        return yaml.safe_load(easter_eggs_content)
     except ImportError:
         print("ERROR: PyYAML not installed. Run: pip install PyYAML")
         sys.exit(1)

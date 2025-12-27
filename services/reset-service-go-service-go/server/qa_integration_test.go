@@ -42,7 +42,7 @@ func TestHealthCheckQA(t *testing.T) {
 			require.NotNil(t, svc)
 
 			// Create test request
-			req := httptest.NewRequest(http.MethodGet, "/api/v1/reset/health", nil)
+			req := httptest.NewRequest(http.MethodGet, "/health", nil)
 			w := httptest.NewRecorder()
 
 			// Get handler and serve
@@ -106,7 +106,7 @@ func TestGetResetHistoryQA(t *testing.T) {
 			require.NotNil(t, svc)
 
 			// Create request with query parameters
-			url := fmt.Sprintf("/api/v1/api/v1/reset/history?limit=%d&offset=%d", tt.limit, tt.offset)
+			url := fmt.Sprintf("/api/v1/history?limit=%d&offset=%d", tt.limit, tt.offset)
 			req := httptest.NewRequest(http.MethodGet, url, nil)
 			w := httptest.NewRecorder()
 
@@ -131,7 +131,7 @@ func TestGetResetStatsQA(t *testing.T) {
 	svc := NewResetservicegoService()
 	require.NotNil(t, svc)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/reset/stats", nil)
+	req := httptest.NewRequest(http.MethodGet, "/stats", nil)
 	w := httptest.NewRecorder()
 
 	handler := svc.Handler()
@@ -196,7 +196,7 @@ func TestTriggerResetQA(t *testing.T) {
 			bodyBytes, err := json.Marshal(reqBody)
 			require.NoError(t, err)
 
-			req := httptest.NewRequest(http.MethodPost, "/api/v1/reset/trigger",
+			req := httptest.NewRequest(http.MethodPost, "/trigger",
 				bytes.NewReader(bodyBytes))
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
@@ -243,7 +243,7 @@ func TestConcurrentLoadQA(t *testing.T) {
 				if j%2 == 0 {
 					req = httptest.NewRequest(http.MethodGet, "/health", nil)
 				} else {
-					req = httptest.NewRequest(http.MethodGet, "/api/v1/reset/stats", nil)
+					req = httptest.NewRequest(http.MethodGet, "/stats", nil)
 				}
 
 				w := httptest.NewRecorder()
@@ -347,7 +347,7 @@ func TestPerformanceBenchmarksQA(t *testing.T) {
 
 	// Benchmark reset stats endpoint
 	t.Run("ResetStatsLatency", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/reset/stats", nil)
+		req := httptest.NewRequest(http.MethodGet, "/stats", nil)
 
 		start := time.Now()
 		iterations := 500
@@ -383,9 +383,9 @@ func TestAPIDefinitionComplianceQA(t *testing.T) {
 		expected int
 	}{
 		{http.MethodGet, "/health", http.StatusOK},
-		{http.MethodGet, "/api/v1/reset/history", http.StatusOK},
-		{http.MethodGet, "/api/v1/reset/stats", http.StatusOK},
-		{http.MethodPost, "/api/v1/reset/trigger", http.StatusInternalServerError}, // Requires body
+		{http.MethodGet, "/history", http.StatusOK},
+		{http.MethodGet, "/stats", http.StatusOK},
+		{http.MethodPost, "/trigger", http.StatusInternalServerError}, // Requires body
 	}
 
 	for _, ep := range endpoints {
@@ -432,14 +432,14 @@ func TestErrorHandlingQA(t *testing.T) {
 		{
 			name:        "Invalid JSON in POST",
 			method:      http.MethodPost,
-			path:        "/api/v1/reset/trigger",
+			path:        "/trigger",
 			body:        `{"invalid": json}`,
 			expectError: true,
 		},
 		{
 			name:        "Missing required fields",
 			method:      http.MethodPost,
-			path:        "/api/v1/reset/trigger",
+			path:        "/trigger",
 			body:        `{"resetType":"character_reset"}`,
 			expectError: true,
 		},
@@ -517,7 +517,7 @@ func TestMemoryPoolEfficiencyQA(t *testing.T) {
 func BenchmarkHealthCheck(b *testing.B) {
 	svc := NewResetservicegoService()
 	handler := svc.Handler()
-	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+		req := httptest.NewRequest(http.MethodGet, "/health", nil)
 
 	b.ResetTimer()
 	b.ReportAllocs()
@@ -532,7 +532,7 @@ func BenchmarkHealthCheck(b *testing.B) {
 func BenchmarkResetStats(b *testing.B) {
 	svc := NewResetservicegoService()
 	handler := svc.Handler()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/reset/stats", nil)
+	req := httptest.NewRequest(http.MethodGet, "/stats", nil)
 
 	b.ResetTimer()
 	b.ReportAllocs()
