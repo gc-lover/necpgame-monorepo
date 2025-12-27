@@ -28,6 +28,8 @@ def apply_sql_migration(conn, sql_file):
         return False
 
 def main():
+    print(f"Current working directory: {Path.cwd()}")
+
     # Database connection
     conn_params = {
         'host': 'localhost',

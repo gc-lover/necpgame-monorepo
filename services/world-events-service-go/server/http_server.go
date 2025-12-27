@@ -5,10 +5,14 @@
 package server
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/golang-jwt/jwt/v4"
+	"go.uber.org/zap"
 
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-service-go/pkg/api"
 )
