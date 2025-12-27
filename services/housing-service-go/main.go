@@ -25,7 +25,7 @@ func main() {
 		}
 	}()
 
-	handler := server.NewHandler(logger)
+	handler := server.NewServer(nil, logger, nil) // TODO: Add proper DB and auth
 
 	srv, err := api.NewServer(handler, handler)
 	if err != nil {

@@ -76,5 +76,12 @@ func NewOptDateTime(v DateTime) OptDateTime {
 	return NewOpt(v)
 }
 
+// Suppress unused import warnings for generated code
+var (
+	_ = time.Now
+	_ = unsafe.Pointer(nil)
+	_ = uuid.New
+)
+
 
 

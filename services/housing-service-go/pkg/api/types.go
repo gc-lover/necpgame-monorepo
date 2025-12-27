@@ -130,5 +130,11 @@ type HealthResponse struct {
 	Version   OptString   `json:"version"`
 }
 
+// Suppress unused import warnings for generated code
+var (
+	_ = time.Now
+	_ = uuid.New
+)
+
 
 
