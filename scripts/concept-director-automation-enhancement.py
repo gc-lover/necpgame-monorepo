@@ -31,11 +31,13 @@ import yaml
 import random
 import statistics
 
-# Add project root to path for imports
+# Add project root and scripts to path for imports
 project_root = Path(__file__).parent.parent
+scripts_dir = project_root / "scripts"
 sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(scripts_dir))
 
-from scripts.core.base_script import BaseScript
+from core.base_script import BaseScript
 
 # Try to import ML libraries, fallback to basic implementations
 try:
@@ -439,6 +441,19 @@ class ConceptDirectorAutomation(BaseScript):
             action='store_true',
             default=True,
             help='Enable ML-powered prioritization'
+        )
+
+        self.parser.add_argument(
+            '--auto-update-github',
+            action='store_true',
+            help='Automatically update GitHub with recommendations'
+        )
+
+        self.parser.add_argument(
+            '--prediction-days',
+            type=int,
+            default=14,
+            help='Days to predict bottlenecks ahead'
         )
 
     def run(self) -> None:
