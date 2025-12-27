@@ -303,7 +303,14 @@ INSERT INTO gameplay.quest_objectives (
 ('tokyo-part3-midnight-market-2098', 'mm-001', 'Найти рынок', 'Обнаружить вход на Полуночный рынок', 'navigation', true, 1, NOW(), NOW()),
 ('tokyo-part3-midnight-market-2098', 'mm-002', 'Установить контакты', 'Завести знакомства с торговцами', 'social', true, 2, NOW(), NOW()),
 ('tokyo-part3-midnight-market-2098', 'mm-003', 'Совершить сделку', 'Купить или продать товар', 'trading', true, 3, NOW(), NOW()),
-('tokyo-part3-midnight-market-2098', 'mm-004', 'Избежать патрулей', 'Уйти незамеченным от корпоративных патрулей', 'stealth', true, 4, NOW(), NOW());
+('tokyo-part3-midnight-market-2098', 'mm-004', 'Избежать патрулей', 'Уйти незамеченным от корпоративных патрулей', 'stealth', true, 4, NOW(), NOW()),
+
+-- Football Hooligans objectives
+('london-football-hooligans-2061-2077', 'fh-001', 'Расследовать конфликт', 'Исследовать конфликт хулиганов в Ист-Энде', 'investigation', true, 1, NOW(), NOW()),
+('london-football-hooligans-2061-2077', 'fh-002', 'Встретиться с лидерами', 'Поговорить с представителями обеих банд', 'social', true, 2, NOW(), NOW()),
+('london-football-hooligans-2061-2077', 'fh-003', 'Выбрать сторону', 'Присоединиться к Neon Devils или Iron Wolves', 'decision', true, 3, NOW(), NOW()),
+('london-football-hooligans-2061-2077', 'fh-004', 'Участвовать в матче', 'Играть в подпольном футболе с кибер-усилениями', 'combat', true, 4, NOW(), NOW()),
+('london-football-hooligans-2061-2077', 'fh-005', 'Разрешить конфликт', 'Разобраться с корпоративным вмешательством', 'resolution', true, 5, NOW(), NOW());
 
 -- Insert quest rewards
 INSERT INTO gameplay.quest_rewards (
