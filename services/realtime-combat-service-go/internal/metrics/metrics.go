@@ -8,14 +8,16 @@ import (
 
 // Collector holds all Prometheus metrics
 type Collector struct {
-	sessionsCreated    prometheus.Counter
-	sessionsStarted    prometheus.Counter
-	sessionsEnded      prometheus.Counter
-	damageEvents       prometheus.Counter
-	actionEvents       prometheus.Counter
-	errors             prometheus.Counter
-	activeSessions     prometheus.Gauge
-	requestDuration    prometheus.Histogram
+	sessionsCreated       prometheus.Counter
+	sessionsStarted       prometheus.Counter
+	sessionsEnded         prometheus.Counter
+	damageEvents          prometheus.Counter
+	actionEvents          prometheus.Counter
+	errors                prometheus.Counter
+	activeSessions        prometheus.Gauge
+	requestDuration       prometheus.Histogram
+	comboCompleted        prometheus.Counter
+	synergyActivated      prometheus.Counter
 }
 
 // NewCollector creates a new metrics collector
@@ -53,6 +55,14 @@ func NewCollector() *Collector {
 			Name: "combat_request_duration_seconds",
 			Help: "Request duration in seconds",
 			Buckets: prometheus.DefBuckets,
+		}),
+		comboCompleted: promauto.NewCounter(prometheus.CounterOpts{
+			Name: "combat_combos_completed_total",
+			Help: "Total number of combat combos completed",
+		}),
+		synergyActivated: promauto.NewCounter(prometheus.CounterOpts{
+			Name: "combat_synergies_activated_total",
+			Help: "Total number of combat synergies activated",
 		}),
 	}
 }
@@ -92,4 +102,14 @@ func (c *Collector) IncrementErrors() {
 // ObserveRequestDuration observes request duration
 func (c *Collector) ObserveRequestDuration(duration float64) {
 	c.requestDuration.Observe(duration)
+}
+
+// IncrementComboCompleted increments the combo completed counter
+func (c *Collector) IncrementComboCompleted(comboID string) {
+	c.comboCompleted.Inc()
+}
+
+// IncrementSynergyActivated increments the synergy activated counter
+func (c *Collector) IncrementSynergyActivated(synergyID string) {
+	c.synergyActivated.Inc()
 }

@@ -81,35 +81,6 @@ class GoServiceGenerator:
             self.logger.error(f"Failed to generate service for domain {domain}: {e}")
             raise
 
-    def _bundle_openapi_spec(self, domain: str, service_dir: Path, openapi_dir: Path, dry_run: bool) -> Optional[Path]:
-        """Bundle OpenAPI spec using redocly in service directory"""
-        main_yaml = openapi_dir / domain / "main.yaml"
-        if not main_yaml.exists():
-            raise FileNotFoundError(f"Main YAML not found: {main_yaml}")
-
-        # PERFORMANCE: Create bundled file in service directory, not project root
-        bundled_file = service_dir / "openapi-bundled.yaml"
-
-        if not dry_run:
-            # Use redocly to bundle the spec
-            try:
-                self.command_runner.run([
-                    'npx', '--yes', '@redocly/cli', 'bundle',
-                    str(main_yaml), '-o', str(bundled_file)
-                ])
-                self.logger.info(f"Bundled OpenAPI spec: {bundled_file}")
-            except Exception as e:
-                self.logger.error(f"Failed to bundle OpenAPI spec: {e}")
-                raise
-
-        return bundled_file
-
-            self.logger.info(f"Successfully generated {service_name}")
-
-        except Exception as e:
-            self.logger.error(f"Failed to generate service for domain {domain}: {e}")
-            raise
-
 
 def main():
     """Main entry point for the script"""
@@ -146,10 +117,6 @@ def main():
         return 1
 
     return 0
-
-
-if __name__ == "__main__":
-    exit(main())
 
     def _bundle_openapi_spec(self, domain: str, service_dir: Path, openapi_dir: Path, dry_run: bool) -> Optional[Path]:
         """Bundle OpenAPI spec using redocly in service directory"""

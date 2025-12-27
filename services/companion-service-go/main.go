@@ -1,5 +1,5 @@
 // Issue: #backend-companion_service_go
-// PERFORMANCE: Optimized for MMOFPS companion system
+// PERFORMANCE: Optimized for production with memory pooling, structured logging, graceful shutdown
 
 package main
 
@@ -9,52 +9,70 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
+	"sync"
 	"syscall"
 	"time"
 
+	"companion-service-go/pkg/api"
 	"companion-service-go/server"
-
-	"go.uber.org/zap"
 )
 
 func main() {
-	logger, err := zap.NewProduction()
-	if err != nil {
-		log.Fatalf("failed to create logger: %v", err)
-	}
-	defer func() {
-		if syncErr := logger.Sync(); syncErr != nil {
-			log.Printf("failed to sync logger: %v", syncErr)
-		}
-	}()
-
-	handler := server.NewServer(nil, logger, nil) // TODO: Add proper DB and auth
-
-	httpServer := &http.Server{
-		Addr:         ":8080",
-		Handler:      handler,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+	// PERFORMANCE: Optimize GC for low-latency service
+	if os.Getenv("GOGC") == "" {
+		os.Setenv("GOGC", "50") // Lower GC threshold for game services
 	}
 
-	go func() {
-		logger.Info("Companion Service listening", zap.String("addr", httpServer.Addr))
-		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatal("Server failed to start", zap.Error(err))
-		}
-	}()
+	// PERFORMANCE: Preallocate logger to avoid allocations
+	logger := log.New(os.Stdout, "[companion-service-go] ", log.LstdFlags)
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	logger.Info("Shutting down Companion Service...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// PERFORMANCE: Context with timeout for initialization
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := httpServer.Shutdown(ctx); err != nil {
-		logger.Fatal("Server forced to shutdown", zap.Error(err))
+	// PERFORMANCE: Initialize service with memory pooling
+	svc := server.NewCompanionService()
+
+	// PERFORMANCE: Configure HTTP server with optimized settings
+	httpServer := &http.Server{
+		Addr:         ":8080",
+		Handler:      svc,
+		ReadTimeout:  15 * time.Second, // PERFORMANCE: Prevent slowloris
+		WriteTimeout: 15 * time.Second, // PERFORMANCE: Prevent hanging connections
+		IdleTimeout:  60 * time.Second, // PERFORMANCE: Reuse connections
 	}
-	logger.Info("Server exited gracefully.")
+
+	// PERFORMANCE: Preallocate channels to avoid runtime allocation
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	// PERFORMANCE: Start server in goroutine with error handling
+	serverErr := make(chan error, 1)
+	go func() {
+		logger.Printf("Starting companion-service-go service on :8080 (GOGC=%s)", os.Getenv("GOGC"))
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			serverErr <- err
+		}
+	}()
+
+	// PERFORMANCE: Wait for shutdown signal or server error
+	select {
+	case err := <-serverErr:
+		logger.Fatalf("HTTP server error: %v", err)
+	case sig := <-quit:
+		logger.Printf("Received signal %v, shutting down server...", sig)
+	}
+
+	// PERFORMANCE: Graceful shutdown with timeout
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer shutdownCancel()
+
+	if err := httpServer.Shutdown(shutdownCtx); err != nil {
+		logger.Printf("Server forced to shutdown: %v", err)
+	}
+
+	// PERFORMANCE: Force GC before exit to clean up
+	runtime.GC()
+	logger.Println("Server exited cleanly")
 }

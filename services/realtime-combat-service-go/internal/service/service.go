@@ -319,6 +319,17 @@ func (s *CombatService) EndCombatSession(ctx context.Context, sessionID string) 
 	return nil
 }
 
+// UpdateCombatSession updates a combat session
+func (s *CombatService) UpdateCombatSession(ctx context.Context, session *repository.CombatSession) error {
+	if err := s.repo.UpdateCombatSession(ctx, session); err != nil {
+		s.metrics.IncrementErrors()
+		return fmt.Errorf("failed to update combat session: %w", err)
+	}
+
+	s.logger.Infof("Updated combat session: %s", session.ID)
+	return nil
+}
+
 // ApplyDamage applies damage to a player in combat
 func (s *CombatService) ApplyDamage(ctx context.Context, sessionID, attackerID, victimID string, damage int, damageType string) error {
 	// Store damage event

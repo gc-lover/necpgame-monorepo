@@ -1,5 +1,5 @@
 // Service layer with dynamic quest business logic
-// Issue: #2244
+// Issue: #2244, #143576873
 // Agent: Backend
 
 package service
@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap"
 
 	"necpgame/services/dynamic-quests-service-go/internal/repository"
+	"necpgame/services/dynamic-quests-service-go/pkg/models"
 )
 
 // Service handles dynamic quest business logic
@@ -44,11 +45,12 @@ type ReputationChange struct {
 
 // ChoiceResult represents the result of processing a choice
 type ChoiceResult struct {
-	NewState          string            `json:"new_state"`
-	ReputationChanges ReputationChange  `json:"reputation_changes"`
-	NextChoicePoint   string            `json:"next_choice_point,omitempty"`
-	QuestCompleted    bool              `json:"quest_completed"`
-	EndingAchieved    string            `json:"ending_achieved,omitempty"`
+	NewState          string                     `json:"new_state"`
+	ReputationChanges ReputationChange           `json:"reputation_changes"`
+	NextChoicePoint   string                     `json:"next_choice_point,omitempty"`
+	QuestCompleted    bool                       `json:"quest_completed"`
+	EndingAchieved    string                     `json:"ending_achieved,omitempty"`
+	Consequences      []models.ConsequenceResult `json:"consequences,omitempty"`
 }
 
 // StartQuest starts a quest for a player
