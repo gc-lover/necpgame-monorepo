@@ -172,7 +172,7 @@ class QuestImportScript(BaseScript):
         if 'experience' in rewards:
             rewards_json['xp'] = rewards['experience']
         if 'money' in rewards:
-            rewards_json.update(rewards['money'])
+            rewards_json['money'] = rewards['money']
         if 'reputation' in rewards:
             rewards_json['reputation'] = rewards['reputation']
         if 'unlocks' in rewards:
