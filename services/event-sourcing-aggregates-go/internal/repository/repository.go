@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -54,11 +53,9 @@ type ReadModel struct {
 
 // EventSourcingRepository handles event store operations
 type EventSourcingRepository struct {
-	db       *sql.DB
-	redis    *redis.Client
-	kafkaProducer *kafka.Producer
-	kafkaConsumer *kafka.Consumer
-	logger   *zap.SugaredLogger
+	db     *sql.DB
+	redis  *redis.Client
+	logger *zap.SugaredLogger
 }
 
 // NewConnection creates a new database connection
