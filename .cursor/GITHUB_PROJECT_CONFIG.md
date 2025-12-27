@@ -58,10 +58,12 @@ mcp_github_list_project_items({
 
 **Оптимизированные скрипты для агентов:**
 
+- `python scripts/update-github-fields.py --item-id {id} --type {TYPE} --check {0|1}` - управление полями проекта
 - `python scripts/validate-domains-openapi.py` - валидация OpenAPI доменов
-- `python scripts/generate-all-domains-go.py` - генерация enterprise-grade сервисов
-- `python scripts/batch-optimize-openapi-struct-alignment.py` - оптимизация структур OpenAPI
-- `python scripts/reorder-liquibase-columns.py` - оптимизация колонок БД
+- `python scripts/migrations/validate-all-migrations.py` - валидация enterprise-grade миграций
+- `python scripts/openapi/validate-domains-openapi.py --domain {domain}` - валидация конкретного домена
+- `python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{domain}/main.yaml` - генерация Go сервиса
+- `python scripts/migrations/reorder-liquibase-columns.py` - оптимизация колонок БД
 
 **Важно:** Если параметры проекта изменятся, обновить их здесь и во всех командах агентов.
 

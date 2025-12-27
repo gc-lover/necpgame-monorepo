@@ -18,6 +18,10 @@ class QuestMigrationGenerator(BaseContentMigrationGenerator):
     """
 
     def __init__(self):
+        # Load config first to get output directory
+        from core.config import ConfigManager
+        config = ConfigManager()
+
         super().__init__(
             name="generate-quests-migrations",
             description="Generate Liquibase YAML migrations for quests from knowledge base",
@@ -27,7 +31,7 @@ class QuestMigrationGenerator(BaseContentMigrationGenerator):
                 "knowledge/canon/lore/timeline-author/quests",
                 "knowledge/content/quests"
             ],
-            output_dir="infrastructure/liquibase/data/gameplay/quests",
+            output_dir=str(Path(config.get('paths', 'migrations_output_dir')) / "gameplay" / "quests"),
             table_name="gameplay.quest_definitions"
         )
 

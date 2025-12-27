@@ -26,7 +26,7 @@ class EnemiesMigrationGenerator(BaseContentMigrationGenerator):
                 "knowledge/canon/ai-enemies",
                 "knowledge/content/enemies"
             ],
-            output_dir="infrastructure/liquibase/data/knowledge/enemies",
+            output_dir=str(Path(self.project_config.get('paths', 'migrations_output_dir')) / "knowledge" / "enemies"),
             table_name="knowledge.enemies"
         )
 

@@ -47,6 +47,19 @@ CHECK_OPTIONS: {
 
 После обновления конфига обнови `scripts/update-github-fields.py` с реальными ID.
 
+### Шаг 5: Использовать скрипт
+
+```bash
+# Обновление полей при взятии задачи
+python scripts/update-github-fields.py --item-id 123 --type API --check 0
+
+# Обновление полей при передаче задачи
+python scripts/update-github-fields.py --item-id 123 --type BACKEND --check 1
+
+# Доступные типы: API, MIGRATION, DATA, BACKEND, UE5
+# Check: 0 (не проверена), 1 (проверена)
+```
+
 ### Шаг 5: Протестировать
 
 ```bash

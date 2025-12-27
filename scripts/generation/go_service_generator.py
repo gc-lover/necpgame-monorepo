@@ -6,8 +6,13 @@ Generates Go microservices from OpenAPI specifications
 SOLID: Single Responsibility - generates Go service structure
 """
 
+import sys
 from pathlib import Path
 from typing import Optional
+
+# Add scripts directory to Python path for imports
+scripts_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(scripts_dir))
 
 from core.command_runner import CommandRunner
 from core.config import ConfigManager

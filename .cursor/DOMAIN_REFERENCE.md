@@ -195,13 +195,15 @@
 ### Backend: Генерация из доменов
 
 ```bash
-# Генерация из enterprise-grade домена
-npx --yes @redocly/cli bundle proto/openapi/{domain}/main.yaml -o openapi-bundled.yaml
-ogen --target pkg/api --package api --clean openapi-bundled.yaml
+# Генерация Go сервиса из enterprise-grade домена
+python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{domain}/main.yaml
+
+# Валидация домена перед генерацией
+python scripts/openapi/validate-domains-openapi.py --domain {domain}
 
 # Examples:
-ogen --target pkg/api --package api --clean proto/openapi/system-domain/main.yaml
-ogen --target pkg/api --package api --clean proto/openapi/specialized-domain/main.yaml
+python scripts/generation/enhanced_service_generator.py --spec proto/openapi/system-domain/main.yaml
+python scripts/generation/enhanced_service_generator.py --spec proto/openapi/specialized-domain/main.yaml
 ```
 
 ### API Designer: Создание в доменах

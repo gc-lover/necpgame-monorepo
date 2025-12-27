@@ -8,9 +8,14 @@ PERFORMANCE: Memory pooling, zero allocations, preallocation
 """
 
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Any, Set, Optional, Tuple
 from dataclasses import dataclass, field
+
+# Add scripts directory to Python path for imports
+scripts_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(scripts_dir))
 
 from core.logger import Logger
 

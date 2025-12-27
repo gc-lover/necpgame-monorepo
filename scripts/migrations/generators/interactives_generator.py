@@ -26,7 +26,7 @@ class InteractivesMigrationGenerator(BaseContentMigrationGenerator):
                 "knowledge/canon/interactive-objects",
                 "knowledge/content/interactives"
             ],
-            output_dir="infrastructure/liquibase/data/knowledge/interactives",
+            output_dir=str(Path(self.project_config.get('paths', 'migrations_output_dir')) / "knowledge" / "interactives"),
             table_name="knowledge.interactives"
         )
 

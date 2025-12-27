@@ -25,7 +25,7 @@ class NpcsMigrationGenerator(BaseContentMigrationGenerator):
             input_dirs=[
                 "knowledge/canon/narrative/npc-lore"
             ],
-            output_dir="infrastructure/liquibase/data/narrative/npcs",
+            output_dir=str(Path(self.project_config.get('paths', 'migrations_output_dir')) / "narrative" / "npcs"),
             table_name="narrative.npc_definitions"
         )
 

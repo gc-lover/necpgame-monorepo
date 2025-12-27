@@ -31,7 +31,7 @@ class DocumentationMigrationGenerator(BaseContentMigrationGenerator):
                 "knowledge/implementation",
                 "knowledge/mechanics"
             ],
-            output_dir="infrastructure/liquibase/data/project/documentation",
+            output_dir=str(Path(self.project_config.get('paths', 'migrations_output_dir')) / "project" / "documentation"),
             table_name="project.documentation"
         )
 

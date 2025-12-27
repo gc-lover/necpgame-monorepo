@@ -7,9 +7,14 @@ SOLID: Single Responsibility - generates complete services from OpenAPI analysis
 PERFORMANCE: Memory pooling, zero allocations, parallel generation
 """
 
+import sys
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
+
+# Add scripts directory to Python path for imports
+scripts_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(scripts_dir))
 
 from core.command_runner import CommandRunner
 from core.config import ConfigManager

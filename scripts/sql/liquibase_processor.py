@@ -7,7 +7,12 @@ SOLID: Single Responsibility - processes SQL and optimizes column order
 """
 
 import re
+import sys
 from typing import List, Dict, Any, Tuple, Optional
+
+# Add scripts directory to Python path for imports
+scripts_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(scripts_dir))
 
 from core.logger import Logger
 

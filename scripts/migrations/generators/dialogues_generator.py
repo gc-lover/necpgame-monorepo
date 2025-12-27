@@ -25,7 +25,7 @@ class DialoguesMigrationGenerator(BaseContentMigrationGenerator):
             input_dirs=[
                 "knowledge/canon/narrative/dialogues"
             ],
-            output_dir="infrastructure/liquibase/data/narrative/dialogues",
+            output_dir=str(Path(self.project_config.get('paths', 'migrations_output_dir')) / "narrative" / "dialogues"),
             table_name="narrative.dialogue_nodes"
         )
 

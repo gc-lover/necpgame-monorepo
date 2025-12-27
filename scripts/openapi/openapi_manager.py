@@ -6,8 +6,13 @@ PERFORMANCE: Memory pooling, zero allocations, preallocation
 """
 
 import threading
+import sys
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
+
+# Add scripts directory to Python path for imports
+scripts_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(scripts_dir))
 
 from core.command_runner import CommandRunner
 from core.file_manager import FileManager

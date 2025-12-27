@@ -26,7 +26,7 @@ class LoreMigrationGenerator(BaseContentMigrationGenerator):
                 "knowledge/canon/lore",
                 "knowledge/canon/culture"
             ],
-            output_dir="infrastructure/liquibase/data/knowledge/lore",
+            output_dir=str(Path(self.project_config.get('paths', 'migrations_output_dir')) / "knowledge" / "lore"),
             table_name="knowledge.lore_entries"
         )
 

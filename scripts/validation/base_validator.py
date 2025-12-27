@@ -4,7 +4,12 @@ NECPGAME Base Validator
 SOLID: Base class for all validators
 """
 
+import sys
 from typing import List, Dict, Any, Tuple
+
+# Add scripts directory to Python path for imports
+scripts_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(scripts_dir))
 
 from core.logger import Logger
 

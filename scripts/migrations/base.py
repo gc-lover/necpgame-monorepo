@@ -12,6 +12,11 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
+# Add scripts directory to Python path for imports
+scripts_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(scripts_dir))
+
+from core.config import ConfigManager
 from .utils import JsonSerializer
 
 
@@ -73,6 +78,9 @@ class BaseContentMigrationGenerator(ABC):
 
     def __init__(self, name: str, description: str, content_type: str,
                  input_dirs: List[str], output_dir: str, table_name: str):
+        # Load project config FIRST (before creating ContentMigrationConfig)
+        self.project_config = ConfigManager()
+
         # Create config from parameters
         self.config = ContentMigrationConfig(
             name=name,

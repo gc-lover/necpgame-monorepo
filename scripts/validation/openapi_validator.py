@@ -4,8 +4,13 @@ NECPGAME OpenAPI Validator
 SOLID: Single Responsibility - validates OpenAPI specifications
 """
 
+import sys
 from pathlib import Path
 from typing import Dict, Any, List
+
+# Add scripts directory to Python path for imports
+scripts_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(scripts_dir))
 
 from core.config import ConfigManager
 from openapi.openapi_manager import OpenAPIManager

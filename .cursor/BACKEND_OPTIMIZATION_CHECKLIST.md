@@ -97,10 +97,11 @@
 /backend-validate-optimizations #123
 
 # Или вручную для отдельных сервисов:
-./scripts/validate-backend-optimizations.sh services/{service}-go
+python scripts/migrations/validate-all-migrations.py  # проверяет enterprise-grade миграции
+python scripts/openapi/validate-domains-openapi.py    # проверяет OpenAPI домены
 
 # Или для генерации всех enterprise-grade сервисов:
-python scripts/generate-all-domains-go.py  # включает автоматическую валидацию
+python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{domain}/main.yaml  # включает валидацию
 ```
 
 **Output:**

@@ -241,6 +241,9 @@ Backend берет задачу →
 
 ### 3. Agent commands
 
+- `python scripts/migrations/validate-all-migrations.py` - валидация enterprise-grade миграций
+- `python scripts/openapi/validate-domains-openapi.py` - валидация OpenAPI доменов
+- `python scripts/validation/validate-script-types.py` - валидация типов в скриптах
 - `/backend-validate-optimizations #123` - перед передачей (ОБЯЗАТЕЛЬНО)
 - `/backend-refactor-service {service}` - для existing
 - `/database-refactor-schema {table}` - для existing tables

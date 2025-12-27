@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Dict, Type
 import argparse
 
+# Add scripts directory to Python path for imports
+scripts_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(scripts_dir))
+
 # Import all generators
 from migrations.generators.quests_generator import QuestMigrationGenerator
 from migrations.generators.npcs_generator import NpcsMigrationGenerator

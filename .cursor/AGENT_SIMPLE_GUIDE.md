@@ -104,12 +104,37 @@ mcp_github_update_project_item({
 
 **Оптимизированные скрипты (ТОЛЬКО PYTHON!):**
 
-- `python scripts/validate-domains-openapi.py --domain {domain}` - валидация OpenAPI домена перед генерацией
-- `python scripts/generate-all-domains-go.py --parallel 3 --memory-pool` - параллельная генерация всех enterprise-grade сервисов
-- `python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{domain}/main.yaml` - оптимизация struct alignment для performance
-- `python scripts/reorder-liquibase-columns.py infrastructure/liquibase/migrations/{file}.sql` - оптимизация порядка колонок БД
-- `python scripts/validate-all-migrations.py` - валидация всех enterprise-grade миграций
+#### Автоматическое управление задачами:
 - `python scripts/update-github-fields.py --item-id {id} --type {TYPE} --check {0|1}` - управление полями GitHub Project
+- Используй всегда при взятии/передаче задач!
+
+#### Валидация кода и спецификаций:
+- `python scripts/validation/validate-emoji-ban.py $(find . -name "*.py")` - запрет эмодзи в коде
+- `python scripts/validation/validate-script-types.py` - валидация типов в скриптах
+- `python scripts/validation/validate-all-quests.py` - валидация всех квестов
+- `python scripts/validation/validate_combat_implants.py` - валидация боевых имплантов
+- `python scripts/validation/validate-kafka-schemas.py` - валидация Kafka схем
+
+#### Работа с OpenAPI спецификациями:
+- `python scripts/openapi/validate-domains-openapi.py` - валидация всех OpenAPI доменов
+- `python scripts/openapi/validate_admin_api.py` - валидация admin API
+- `python scripts/openapi/clean-openapi-validation.py` - очистка вывода валидации
+- `python scripts/openapi/validate-domains-openapi.py --domain {domain}` - валидация конкретного домена
+
+#### Генерация кода и сервисов:
+- `python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{domain}/main.yaml` - генерация Go сервиса
+- `python scripts/generation/run-quests-generator.py --config quests-config.yaml` - генерация квестов
+- `python scripts/generation/go_service_generator.py` - генератор Go микросервисов
+
+#### Работа с миграциями БД:
+- `python scripts/migrations/validate-all-migrations.py` - валидация всех миграций
+- `python scripts/migrations/apply-migrations.py --env dev` - применение миграций
+- `python scripts/migrations/validate-quest-migrations.py` - валидация миграций квестов
+- `python scripts/migrations/reorder-liquibase-columns.py V1_01__table.sql` - оптимизация порядка колонок
+
+#### Работа с контентом (квесты, NPC, диалоги):
+- `python scripts/migrations/validate-quest-imports.py` - валидация импортов квестов
+- `python scripts/migrations/run_generator.py --type quests` - генерация миграций контента
 
 **КРИТИЧНО:** Forbidden создавать новые .sh/.ps1/.bat скрипты!
 

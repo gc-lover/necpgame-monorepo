@@ -89,17 +89,17 @@ Issue: #{number}
 
 - **Действие:** Импорт через API домена `POST /api/v1/gameplay/quests/content/reload`
 - **Используемый домен:** `specialized-domain` (механики квестов)
-- **Скрипт:** `scripts/import-quest.ps1` или `scripts/import-quest.sh`
-- **Валидация:** Проверить что квест в БД через API домена
+- **Валидация:** `python scripts/migrations/validate-quest-imports.py`
 - **Передача:** Status `Todo`, Agent `QA`
 
 #### Сценарий C: Таблицы есть + >10 квестов (массовый импорт через миграции)
 
 - **Действие:** Генерация SQL миграций через оптимизированные Python скрипты
 - **Скрипты:**
-  - `python scripts/validate-domains-openapi.py --domain specialized-domain` - валидация API домена квестов
-  - `python scripts/generate-all-domains-go.py --domains specialized-domain` - генерация API для импорта квестов
-  - `python scripts/validate-all-migrations.py` - валидация сгенерированных миграций
+  - `python scripts/migrations/run_generator.py --type quests --output-dir infrastructure/liquibase/data/` - генерация миграций квестов
+  - `python scripts/migrations/validate-quest-migrations.py` - валидация миграций квестов
+  - `python scripts/migrations/validate-all-migrations.py` - валидация всех миграций
+  - `python scripts/openapi/validate-domains-openapi.py --domain specialized-domain` - валидация API домена
 - **Формат:** 1 файл YAML = 1 миграция (с версией из `metadata.version`)
 - **Миграции в enterprise-grade структуре:**
     - Квесты: `infrastructure/liquibase/migrations/data/quests/V*__data_quest_*.sql` (→ `specialized-domain`)

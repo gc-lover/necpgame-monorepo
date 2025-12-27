@@ -27,7 +27,7 @@ class ItemsMigrationGenerator(BaseContentMigrationGenerator):
                 "knowledge/mechanics/gear",
                 "knowledge/mechanics/weapons"
             ],
-            output_dir="infrastructure/liquibase/data/gameplay/items",
+            output_dir=str(Path(self.project_config.get('paths', 'migrations_output_dir')) / "gameplay" / "items"),
             table_name="gameplay.items"
         )
 
