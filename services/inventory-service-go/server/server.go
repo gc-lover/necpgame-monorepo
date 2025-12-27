@@ -138,11 +138,11 @@ func (s *Server) ListExamples(ctx context.Context, params oas.ListExamplesParams
 
 	if err != nil {
 		s.logger.Error("Failed to list examples", zap.Error(err))
-		return &oas.ErrorHeaders{}, fmt.Errorf("failed to list examples: %w", err)
+		return &oas.ListExamplesBadRequest{}, fmt.Errorf("failed to list examples: %w", err)
 	}
 	defer rows.Close()
 
-	var examples []oas.ExampleResponse
+	var examples []oas.Example
 	for rows.Next() {
 		var id uuid.UUID
 		var name, description string
@@ -162,14 +162,23 @@ func (s *Server) ListExamples(ctx context.Context, params oas.ListExamplesParams
 			IsActive:    isActive,
 		}
 
-		examples = append(examples, oas.ExampleResponse{
-			Example: example,
-		})
+		examples = append(examples, example)
 	}
 
-	return &oas.ListExamplesOK{
-		Examples: examples,
-	}, nil
+	response := oas.ExampleListResponse{
+		Examples:   examples,
+		TotalCount: len(examples),
+	}
+
+	headers := oas.ExampleListSuccessHeaders{
+		Response: response,
+		XTotalCount: oas.OptInt{
+			Value: len(examples),
+			Set:   true,
+		},
+	}
+
+	return &headers, nil
 }
 
 // UpdateExample - update example by ID
@@ -189,7 +198,7 @@ func (s *Server) UpdateExample(ctx context.Context, req *oas.UpdateExampleReques
 
 	if err != nil {
 		s.logger.Error("Failed to update example", zap.Error(err))
-		return &oas.UpdateExampleInternalServerError{}, fmt.Errorf("failed to update example: %w", err)
+		return &oas.ErrorHeaders{}, fmt.Errorf("failed to update example: %w", err)
 	}
 
 	headers := oas.ExampleUpdatedHeaders{
@@ -207,10 +216,10 @@ func (s *Server) DeleteExample(ctx context.Context, params oas.DeleteExamplePara
 
 	if err != nil {
 		s.logger.Error("Failed to delete example", zap.Error(err))
-		return &oas.DeleteExampleInternalServerError{}, fmt.Errorf("failed to delete example: %w", err)
+		return &oas.DeleteExampleBadRequest{}, fmt.Errorf("failed to delete example: %w", err)
 	}
 
-	return &oas.DeleteExampleResponse{Deleted: true}, nil
+	return &oas.ExampleDeleted{}, nil
 }
 
 // ExampleDomainHealthCheck - health check
@@ -218,8 +227,8 @@ func (s *Server) ExampleDomainHealthCheck(ctx context.Context, params oas.Exampl
 	// Check database connectivity
 	if err := s.db.Ping(ctx); err != nil {
 		response := oas.HealthResponse{
-			Status:  oas.HealthResponseStatusUnhealthy,
-			Message: oas.OptString{Value: "Database connection failed", Set: true},
+			Status:    oas.HealthResponseStatusUnhealthy,
+			Timestamp: time.Now(),
 		}
 		return &response, nil
 	}
@@ -238,11 +247,11 @@ func (s *Server) ExampleDomainHealthCheck(ctx context.Context, params oas.Exampl
 
 // ExampleDomainBatchHealthCheck - batch health check
 func (s *Server) ExampleDomainBatchHealthCheck(ctx context.Context, req *oas.ExampleDomainBatchHealthCheckReq) (oas.ExampleDomainBatchHealthCheckRes, error) {
-	// Simple implementation - check database for each domain
-	results := make([]oas.HealthResponse, len(req.Domains))
-	for i, domain := range req.Domains {
+	// Simple implementation - check database for each service
+	results := make([]oas.HealthResponse, len(req.Services))
+	for i, service := range req.Services {
 		healthy := true
-		if domain == "database" {
+		if service == oas.ExampleDomainBatchHealthCheckReqServicesItemExampleDomain {
 			if err := s.db.Ping(ctx); err != nil {
 				healthy = false
 			}
@@ -259,16 +268,33 @@ func (s *Server) ExampleDomainBatchHealthCheck(ctx context.Context, req *oas.Exa
 		}
 	}
 
-	return &oas.ExampleDomainBatchHealthCheckResponse{
-		Results: results,
-	}, nil
+	response := oas.HealthBatchSuccess{
+		Results:    results,
+		TotalTimeMs: 15,
+	}
+
+	headers := oas.HealthBatchSuccessHeaders{
+		Response: response,
+		XProcessingTime: oas.OptInt{
+			Value: 15,
+			Set:   true,
+		},
+	}
+
+	return &headers, nil
 }
 
 // ExampleDomainHealthWebSocket - websocket health endpoint
 func (s *Server) ExampleDomainHealthWebSocket(ctx context.Context, params oas.ExampleDomainHealthWebSocketParams) (oas.ExampleDomainHealthWebSocketRes, error) {
 	// WebSocket implementation would go here
 	// For now, return not implemented
-	return &oas.ExampleDomainHealthWebSocketInternalServerError{}, nil
+	return &oas.ErrorHeaders{}, nil
+}
+
+// GetPlayerEquipment - get player equipment (placeholder implementation)
+func (s *Server) GetPlayerEquipment(ctx context.Context, params oas.GetPlayerEquipmentParams) (oas.GetPlayerEquipmentRes, error) {
+	// Placeholder implementation - would fetch player equipment from database
+	return &oas.GetPlayerEquipmentBadRequest{}, nil
 }
 
 // Implement SecurityHandler interface
