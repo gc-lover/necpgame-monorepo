@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Sao Paulo Part 2 Quests Import Script
+Sao Paulo Part 3 Quests Import Script
 Imports Sao Paulo quest data from YAML files to Liquibase YAML format for database insertion.
-Processes Part 2 (files 6-10).
+Processes Part 3 (files 11-15).
 """
 
 import os
@@ -59,7 +59,7 @@ def create_liquibase_yaml(quests, output_file):
         'databaseChangeLog': [
             {
                 'changeSet': {
-                    'id': f'data_quests_sao_paulo_part2_import_{datetime.now().strftime("%Y%m%d%H%M%S")}',
+                    'id': f'data_quests_sao_paulo_part3_import_{datetime.now().strftime("%Y%m%d%H%M%S")}',
                     'author': 'sao_paulo_quests_importer',
                     'changes': [
                         {
@@ -87,14 +87,14 @@ def create_liquibase_yaml(quests, output_file):
     print(f"Created Liquibase YAML file: {output_file}")
 
 def main():
-    """Main function to import Sao Paulo Part 2 quests."""
+    """Main function to import Sao Paulo Part 3 quests."""
     input_dir = Path('knowledge/canon/lore/timeline-author/quests/america/sao-paulo/2020-2029')
-    output_file = Path('infrastructure/liquibase/data/gameplay/quests/data_quests_sao_paulo_part2_import.yaml')
+    output_file = Path('infrastructure/liquibase/data/gameplay/quests/data_quests_sao_paulo_part3_import.yaml')
 
     quests = []
 
-    # Process next 5 quest files (Part 2: files 6-10)
-    quest_files = sorted([f for f in input_dir.glob('quest-*.yaml')])[5:10]
+    # Process next 5 quest files (Part 3: files 11-15)
+    quest_files = sorted([f for f in input_dir.glob('quest-*.yaml')])[10:15]
 
     for quest_file in quest_files:
         print(f"Processing {quest_file.name}")
@@ -109,7 +109,7 @@ def main():
 
     if quests:
         create_liquibase_yaml(quests, output_file)
-        print(f"Successfully processed {len(quests)} Sao Paulo Part 2 quests")
+        print(f"Successfully processed {len(quests)} Sao Paulo Part 3 quests")
     else:
         print("No quests were processed")
 
