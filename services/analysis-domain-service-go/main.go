@@ -23,6 +23,9 @@ import (
 	"go.uber.org/zap"
 
 	"analysis-domain-service-go/api"
+	"analysis-domain-service-go/pkg/models"
+	"analysis-domain-service-go/pkg/repository"
+	"analysis-domain-service-go/pkg/service"
 )
 
 // Service represents the analysis domain service
@@ -83,10 +86,14 @@ func (s *Service) createRouter() chi.Router {
 		// Bearer token authentication middleware would be added here
 		r.Use(s.authMiddleware)
 
+		// Initialize repository and service layers
+		repo := repository.NewRepository(db)
+		svc := service.NewService(repo, logger)
+
 		// Initialize OpenAPI handler
 		handler := &AnalysisHandler{
-			service: s,
-			logger:  s.logger,
+			service: svc,
+			logger:  logger,
 		}
 
 		// Mount generated OpenAPI routes
@@ -160,7 +167,7 @@ func (s *Service) Stop(ctx context.Context) error {
 
 // AnalysisHandler implements the generated OpenAPI interface
 type AnalysisHandler struct {
-	service *Service
+	service service.ServiceInterface
 	logger  *zap.Logger
 }
 
@@ -169,31 +176,58 @@ type AnalysisHandler struct {
 // comprehensive business logic for analysis operations
 
 func (h *AnalysisHandler) GetAnalysisNetworkMonitoringLatency(ctx context.Context, params api.GetAnalysisNetworkMonitoringLatencyParams) (*api.NetworkLatencyResponse, error) {
-	h.logger.Info("Processing network latency monitoring request")
+	h.logger.Info("Processing network latency monitoring request",
+		zap.String("region", params.Region))
 
-	// Placeholder implementation - would query real network metrics
+	// Get network metrics from service
+	metrics, err := h.service.GetNetworkLatency(ctx, params.Region)
+	if err != nil {
+		h.logger.Error("Failed to get network latency",
+			zap.String("region", params.Region),
+			zap.Error(err))
+		return nil, err
+	}
+
 	return &api.NetworkLatencyResponse{
-		AverageLatencyMs: 25.5,
-		PeakLatencyMs:    150.0,
-		Region:           params.Region,
-		Timestamp:        time.Now(),
+		AverageLatencyMs: metrics.AverageLatencyMs,
+		PeakLatencyMs:    metrics.PeakLatencyMs,
+		Region:           metrics.Region,
+		Timestamp:        metrics.Timestamp,
 	}, nil
 }
 
 func (h *AnalysisHandler) GetAnalysisNetworkArchitectureBottlenecks(ctx context.Context, params api.GetAnalysisNetworkArchitectureBottlenecksParams) (*api.NetworkBottlenecksResponse, error) {
 	h.logger.Info("Processing network bottlenecks analysis request")
 
-	// Placeholder implementation
+	// Get network bottlenecks from service
+	bottlenecks, err := h.service.GetNetworkBottlenecks(ctx)
+	if err != nil {
+		h.logger.Error("Failed to get network bottlenecks", zap.Error(err))
+		return nil, err
+	}
+
+	// Convert to API format
+	apiBottlenecks := make([]api.BottleneckInfo, len(bottlenecks))
+	for i, bottleneck := range bottlenecks {
+		severity := api.BottleneckSeverityMedium // Default
+		switch bottleneck.Severity {
+		case "high":
+			severity = api.BottleneckSeverityHigh
+		case "low":
+			severity = api.BottleneckSeverityLow
+		}
+
+		apiBottlenecks[i] = api.BottleneckInfo{
+			Component:   bottleneck.Component,
+			Severity:    severity,
+			Description: bottleneck.Description,
+			Impact:      bottleneck.Impact,
+		}
+	}
+
 	return &api.NetworkBottlenecksResponse{
-		Bottlenecks: []api.BottleneckInfo{
-			{
-				Component:   "Database Connection Pool",
-				Severity:    api.BottleneckSeverityHigh,
-				Description: "Connection pool saturation detected",
-				Impact:      "Increased query latency",
-			},
-		},
-		Timestamp: time.Now(),
+		Bottlenecks: apiBottlenecks,
+		Timestamp:   time.Now(),
 	}, nil
 }
 
@@ -232,17 +266,26 @@ func (h *AnalysisHandler) GetAnalysisNetworkSecurityThreats(ctx context.Context,
 }
 
 func (h *AnalysisHandler) GetAnalysisPlayerBehaviorMetrics(ctx context.Context, params api.GetAnalysisPlayerBehaviorMetricsParams) (*api.PlayerBehaviorMetricsResponse, error) {
-	h.logger.Info("Processing player behavior metrics request")
+	h.logger.Info("Processing player behavior metrics request",
+		zap.String("period", params.Period))
 
-	// Placeholder implementation
+	// Get player behavior metrics from service
+	metrics, err := h.service.GetPlayerBehaviorMetrics(ctx, params.Period)
+	if err != nil {
+		h.logger.Error("Failed to get player behavior metrics",
+			zap.String("period", params.Period),
+			zap.Error(err))
+		return nil, err
+	}
+
 	return &api.PlayerBehaviorMetricsResponse{
 		Metrics: api.PlayerMetrics{
-			ActiveUsers:     15420,
-			SessionDuration: 45.5,
-			RetentionRate:   68.2,
+			ActiveUsers:     metrics.ActiveUsers,
+			SessionDuration: metrics.SessionDuration,
+			RetentionRate:   metrics.RetentionRate,
 		},
 		Period:    params.Period,
-		Timestamp: time.Now(),
+		Timestamp: metrics.Timestamp,
 	}, nil
 }
 
@@ -274,52 +317,111 @@ func (h *AnalysisHandler) GetAnalysisPlayerBehaviorChurn(ctx context.Context, pa
 func (h *AnalysisHandler) GetAnalysisPerformanceDashboard(ctx context.Context, params api.GetAnalysisPerformanceDashboardParams) (*api.PerformanceDashboardResponse, error) {
 	h.logger.Info("Processing performance dashboard request")
 
-	// Placeholder implementation
+	// Get performance dashboard from service
+	dashboard, err := h.service.GetPerformanceDashboard(ctx)
+	if err != nil {
+		h.logger.Error("Failed to get performance dashboard", zap.Error(err))
+		return nil, err
+	}
+
+	// Get alerts
+	alerts, err := h.service.GetPerformanceAlerts(ctx)
+	if err != nil {
+		h.logger.Warn("Failed to get performance alerts, continuing without alerts", zap.Error(err))
+		alerts = []*models.SystemPerformance{}
+	}
+
+	// Convert alerts to API format
+	apiAlerts := make([]api.SystemAlert, len(alerts))
+	for i, alert := range alerts {
+		alertType := api.AlertTypeInfo // Default
+		if alert.ErrorRate > 2.0 {
+			alertType = api.AlertTypeError
+		} else if alert.CPUUsage > 80 || alert.MemoryUsage > 85 {
+			alertType = api.AlertTypeWarning
+		}
+
+		apiAlerts[i] = api.SystemAlert{
+			Type:      alertType,
+			Message:   fmt.Sprintf("High resource usage detected for %s", alert.ServiceName),
+			Timestamp: alert.Timestamp,
+		}
+	}
+
 	return &api.PerformanceDashboardResponse{
 		Metrics: api.SystemMetrics{
-			CpuUsage:    45.2,
-			MemoryUsage: 67.8,
-			DiskUsage:   34.1,
-			NetworkIO:   125.5,
+			CpuUsage:    dashboard.CPUUsage,
+			MemoryUsage: dashboard.MemoryUsage,
+			DiskUsage:   dashboard.DiskUsage,
+			NetworkIO:   dashboard.NetworkIO,
 		},
-		Alerts: []api.SystemAlert{
-			{
-				Type:        api.AlertTypeWarning,
-				Message:     "High memory usage detected",
-				Timestamp:   time.Now(),
-			},
-		},
-		Timestamp: time.Now(),
+		Alerts:    apiAlerts,
+		Timestamp: dashboard.Timestamp,
 	}, nil
 }
 
 func (h *AnalysisHandler) GetAnalysisResearchInsights(ctx context.Context, params api.GetAnalysisResearchInsightsParams) (*api.ResearchInsightsResponse, error) {
-	h.logger.Info("Processing research insights request")
+	h.logger.Info("Processing research insights request",
+		zap.String("category", params.Category))
 
-	// Placeholder implementation
+	// Get research insights from service
+	insights, err := h.service.GetResearchInsights(ctx, params.Category)
+	if err != nil {
+		h.logger.Error("Failed to get research insights",
+			zap.String("category", params.Category),
+			zap.Error(err))
+		return nil, err
+	}
+
+	// Convert to API format
+	apiInsights := make([]api.Insight, len(insights))
+	for i, insight := range insights {
+		apiInsights[i] = api.Insight{
+			Topic:      insight.Topic,
+			Insight:    insight.Insight,
+			Confidence: insight.Confidence,
+			DataPoints: insight.DataPoints,
+		}
+	}
+
 	return &api.ResearchInsightsResponse{
-		Insights: []api.Insight{
-			{
-				Topic:       "Player Engagement",
-				Insight:     "Players prefer PvP over PvE by 3:1 ratio",
-				Confidence:  0.92,
-				DataPoints:  15420,
-			},
-		},
+		Insights:  apiInsights,
 		Category:  params.Category,
 		Timestamp: time.Now(),
 	}, nil
 }
 
 func (h *AnalysisHandler) PostAnalysisResearchHypothesis(ctx context.Context, req *api.TestHypothesisRequest) (*api.HypothesisTestResponse, error) {
-	h.logger.Info("Processing hypothesis testing request")
+	h.logger.Info("Processing hypothesis testing request",
+		zap.String("hypothesis_id", req.HypothesisId))
 
-	// Placeholder implementation
+	// Run hypothesis test through service
+	test, err := h.service.TestHypothesis(ctx, req.HypothesisId, req.TestData)
+	if err != nil {
+		h.logger.Error("Failed to test hypothesis",
+			zap.String("hypothesis_id", req.HypothesisId),
+			zap.Error(err))
+		return nil, err
+	}
+
+	// Convert result to API format
+	var result api.TestResult
+	switch test.Status {
+	case "completed":
+		if test.Confidence > 0.8 {
+			result = api.TestResultSupported
+		} else {
+			result = api.TestResultNotSupported
+		}
+	default:
+		result = api.TestResultInconclusive
+	}
+
 	return &api.HypothesisTestResponse{
-		HypothesisId: req.HypothesisId,
-		Result:       api.TestResultSupported,
-		Confidence:   0.87,
-		Data:         req.TestData,
+		HypothesisId: test.ID,
+		Result:       result,
+		Confidence:   test.Confidence,
+		Data:         test.TestData,
 		Timestamp:    time.Now(),
 	}, nil
 }
