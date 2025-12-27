@@ -2680,6 +2680,382 @@ func (s *Service) GetEverythingBiggerQuest(ctx context.Context) (*models.Dynamic
 	return quest, nil
 }
 
+// GetTangoDanceQuest returns the Tango Dance quest for Buenos Aires
+// Issue: #140929841
+func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Tango Dance quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "canon-quest-buenos-aires-2029-001-tango",
+		Title:            "Буэнос-Айрес: Танго",
+		Description:      "Погрузитесь в мир аргентинского танго - от уличных выступлений до ночной милонги",
+		QuestType:        "side",
+		MinLevel:         1,
+		MaxLevel:         0, // No max level
+		EstimatedDuration: 180,
+		Difficulty:       "easy",
+		Themes:           []string{"culture", "dance", "social", "history"},
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "san_telmo_visit",
+				Sequence:    1,
+				Title:       "Посещение района San Telmo",
+				Description: "Исследуйте исторический район, родину танго",
+				Context:     "Первый шаг в мир аргентинского танго",
+				Choices: []models.Choice{
+					{
+						ID:             "explore_historically",
+						Text:           "Исторический тур",
+						Description:    "Изучите историю танго в музее",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(5),
+								Probability: 1.0,
+								Description: "Увеличение культурной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "watch_street_performers",
+						Text:           "Наблюдать уличных артистов",
+						Description:    "Посмотрите на импровизированные выступления",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(8),
+								Probability: 1.0,
+								Description: "Увеличение социальной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "plaza_dorrego_performance",
+				Sequence:    2,
+				Title:       "Уличные танцоры на Plaza Dorrego",
+				Description: "Наблюдайте за профессиональными выступлениями",
+				Context:     "Продолжите знакомство с танго в живом исполнении",
+				Choices: []models.Choice{
+					{
+						ID:             "join_as_spectator",
+						Text:           "Остаться зрителем",
+						Description:    "Наслаждайтесь выступлением со стороны",
+						Consequences: []models.Consequence{
+							{
+								Type:        "skill_boost",
+								Target:      "cultural_awareness",
+								Value:       float64(10),
+								Probability: 1.0,
+								Description: "Улучшение навыка культурного восприятия",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "ask_for_quick_lesson",
+						Text:           "Попросить быстрый урок",
+						Description:    "Попробуйте сделать несколько шагов",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(12),
+								Probability: 1.0,
+								Description: "Увеличение культурной репутации",
+							},
+							{
+								Type:        "currency",
+								Target:      "player_wallet",
+								Value:       float64(-5),
+								Probability: 1.0,
+								Description: "Оплата урока",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "tango_school_enrollment",
+				Sequence:    3,
+				Title:       "Запись в школу танго",
+				Description: "Найдите наставника и начните обучение",
+				Context:     "Время перейти от наблюдения к практике",
+				Choices: []models.Choice{
+					{
+						ID:             "traditional_master",
+						Text:           "Традиционный мастер",
+						Description:    "Учиться у опытного тангеро старой школы",
+						Consequences: []models.Consequence{
+							{
+								Type:        "skill_boost",
+								Target:      "dance_skill",
+								Value:       float64(15),
+								Probability: 1.0,
+								Description: "Улучшение навыка танцев",
+							},
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(10),
+								Probability: 1.0,
+								Description: "Увеличение культурной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "modern_instructor",
+						Text:           "Современный инструктор",
+						Description:    "Учиться у прогрессивного преподавателя",
+						Consequences: []models.Consequence{
+							{
+								Type:        "skill_boost",
+								Target:      "dance_skill",
+								Value:       float64(12),
+								Probability: 1.0,
+								Description: "Улучшение навыка танцев",
+							},
+							{
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(8),
+								Probability: 1.0,
+								Description: "Увеличение социальной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "evening_milonga",
+				Sequence:    4,
+				Title:       "Вечерняя милонга",
+				Description: "Присоединитесь к ночному танцевальному мероприятию",
+				Context:     "Кульминация - настоящее погружение в мир танго",
+				Choices: []models.Choice{
+					{
+						ID:             "dance_with_locals",
+						Text:           "Танцевать с местными",
+						Description:    "Выйти на паркет и танцевать с аргентинцами",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(20),
+								Probability: 1.0,
+								Description: "Значительное увеличение социальной репутации",
+							},
+							{
+								Type:        "skill_boost",
+								Target:      "dance_skill",
+								Value:       float64(20),
+								Probability: 1.0,
+								Description: "Значительное улучшение навыка танцев",
+							},
+						},
+						RiskLevel:      "medium",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "observe_and_learn",
+						Text:           "Наблюдать и учиться",
+						Description:    "Изучать танец со стороны, делая заметки",
+						Consequences: []models.Consequence{
+							{
+								Type:        "skill_boost",
+								Target:      "cultural_awareness",
+								Value:       float64(15),
+								Probability: 1.0,
+								Description: "Улучшение навыка культурного восприятия",
+							},
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(15),
+								Probability: 1.0,
+								Description: "Увеличение культурной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "dawn_tango_reflection",
+				Sequence:    5,
+				Title:       "Рассвет и размышления о танго",
+				Description: "Завершите ночь танцев глубокими размышлениями",
+				Context:     "Финальное понимание культурного значения танго",
+				Choices: []models.Choice{
+					{
+						ID:             "embrace_tango_spirit",
+						Text:           "Принять дух танго",
+						Description:    "Полностью погрузиться в философию танго",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(25),
+								Probability: 1.0,
+								Description: "Значительное увеличение культурной репутации",
+							},
+							{
+								Type:        "achievement",
+								Target:      "tango_master",
+								Value:       float64(1),
+								Probability: 1.0,
+								Description: "Получение достижения 'Мастер танго'",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "cultural_appreciation",
+						Text:           "Культурное понимание",
+						Description:    "Оценить танго как часть культурного наследия",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(18),
+								Probability: 1.0,
+								Description: "Увеличение культурной репутации",
+							},
+							{
+								Type:        "skill_boost",
+								Target:      "cultural_awareness",
+								Value:       float64(20),
+								Probability: 1.0,
+								Description: "Значительное улучшение культурного восприятия",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "tango_aficionado",
+				Title:       "Афисионадо танго",
+				Description: "Стали истинным ценителем аргентинского танго",
+				Requirements: []string{"traditional_master", "dance_with_locals", "embrace_tango_spirit"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 2000},
+					{Type: "currency", Value: -40},
+					{Type: "achievement", Value: "tango_aficionado"},
+				},
+				Narrative: "Вы полностью погрузились в мир танго, став частью этой живой традиции.",
+			},
+			{
+				ID:          "cultural_explorer",
+				Title:       "Культурный исследователь",
+				Description: "Глубоко поняли культурное значение танго",
+				Requirements: []string{"explore_historically", "observe_and_learn", "cultural_appreciation"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 1800},
+					{Type: "currency", Value: -25},
+					{Type: "achievement", Value: "cultural_explorer"},
+				},
+				Narrative: "Ваше путешествие в мир танго было путешествием к пониманию аргентинской культуры.",
+			},
+			{
+				ID:          "social_dancer",
+				Title:       "Социальный танцор",
+				Description: "Освоили основы и наслаждаетесь танцем",
+				Requirements: []string{"ask_for_quick_lesson", "dance_with_locals"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 1600},
+					{Type: "currency", Value: -30},
+					{Type: "achievement", Value: "social_dancer"},
+				},
+				Narrative: "Танго стало для вас способом общения и самовыражения в социальной среде.",
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "cultural_buenos_aires",
+				Change:      20,
+				Description: "Уважение за интерес к аргентинской культуре",
+				ChoiceID:    "embrace_tango_spirit",
+			},
+			{
+				Faction:     "social_buenos_aires",
+				Change:      15,
+				Description: "Социальные связи через танго",
+				ChoiceID:    "dance_with_locals",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Buenos Aires, Argentina",
+			TimePeriod:  "2020-2029",
+			Weather:     "warm summer evening",
+			Situation:   "The soul of Argentine tango calls to you from the historic streets of Buenos Aires",
+			Objectives: []string{
+				"Explore the birthplace of tango in San Telmo",
+				"Witness authentic tango performances on Plaza Dorrego",
+				"Find a tango instructor and begin your journey",
+				"Participate in an evening milonga",
+				"Reflect on the cultural significance of tango at dawn",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "master_tanguero",
+				Name:        "Маэстро Карлос 'Эль Рей' Родригес",
+				Role:        "Мастер танго",
+				Description: "Легендарный тангеро, хранитель традиций танго",
+				Importance:  "primary",
+			},
+			{
+				ID:          "young_instructor",
+				Name:        "Мария 'Ла Принсеса' Гонсалес",
+				Role:        "Современный инструктор",
+				Description: "Прогрессивный преподаватель, сочетающий традицию и современность",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "cultural_historian",
+				Name:        "Доктор Анна 'Ла Професора' Мендес",
+				Role:        "Историк культуры",
+				Description: "Эксперт по истории аргентинского танго",
+				Importance:  "ally",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
 // GetLakeMichiganQuest returns the Lake Michigan quest for Chicago
 // Issue: #140928958
 func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQuest, error) {
