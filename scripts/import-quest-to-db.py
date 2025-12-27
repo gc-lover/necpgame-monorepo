@@ -159,10 +159,17 @@ class QuestImportScript(BaseScript):
         quest_id = str(uuid.uuid4().int)[:16]  # 16-digit ID for readability
 
         # Prepare metadata JSON
+        project_root = self.config.get_project_root().resolve()
+        try:
+            source_file = str(quest_file.relative_to(project_root))
+        except ValueError:
+            # If relative_to fails, use absolute path
+            source_file = str(quest_file)
+
         metadata_json = {
             'id': metadata['id'],
             'version': metadata.get('version', '1.0.0'),
-            'source_file': str(quest_file.relative_to(self.config.get_project_root()))
+            'source_file': source_file
         }
 
         # Prepare rewards JSON

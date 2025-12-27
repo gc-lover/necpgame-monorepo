@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"reset-service-go-service-go/pkg/api"
-	"github.com/ogen-go/ogen/ogenerrors"
 )
 
 // MockSecurityHandler - простой mock security handler для тестирования
@@ -23,7 +22,8 @@ type ResetservicegoService struct {
 }
 
 func NewResetservicegoService() *ResetservicegoService {
-	server, err := api.NewServer(NewHandler(), nil) // nil for security handler - testing only
+	mockSecurity := &MockSecurityHandler{}
+	server, err := api.NewServer(NewHandler(), mockSecurity)
 	if err != nil {
 		panic(err) // In production, handle this properly
 	}

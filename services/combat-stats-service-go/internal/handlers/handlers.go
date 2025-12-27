@@ -13,6 +13,7 @@ import (
 
 	"combat-stats-service-go/internal/service"
 	"combat-stats-service-go/internal/metrics"
+	"combat-stats-service-go/internal/repository"
 )
 
 // CombatStatsHandlers handles HTTP requests
@@ -162,7 +163,7 @@ func (h *CombatStatsHandlers) RecordCombatEvent(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	combatEvent := &service.CombatEvent{
+	combatEvent := &repository.CombatEvent{
 		EventID:   event.EventID,
 		EventType: event.EventType,
 		PlayerID:  event.PlayerID,
