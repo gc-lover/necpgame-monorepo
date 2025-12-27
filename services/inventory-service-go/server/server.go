@@ -67,7 +67,7 @@ func (s *Server) CreateExample(ctx context.Context, req *oas.CreateExampleReques
 
 	if err != nil {
 		s.logger.Error("Failed to create example", zap.Error(err))
-		return &oas.CreateExampleInternalServerError{}, fmt.Errorf("failed to create example: %w", err)
+		return &oas.CreateExampleBadRequest{}, fmt.Errorf("failed to create example: %w", err)
 	}
 
 	// Create the response with proper structure
@@ -138,7 +138,7 @@ func (s *Server) ListExamples(ctx context.Context, params oas.ListExamplesParams
 
 	if err != nil {
 		s.logger.Error("Failed to list examples", zap.Error(err))
-		return &oas.ListExamplesInternalServerError{}, fmt.Errorf("failed to list examples: %w", err)
+		return &oas.ErrorHeaders{}, fmt.Errorf("failed to list examples: %w", err)
 	}
 	defer rows.Close()
 
@@ -167,7 +167,7 @@ func (s *Server) ListExamples(ctx context.Context, params oas.ListExamplesParams
 		})
 	}
 
-	return &oas.ListExamplesResponse{
+	return &oas.ListExamplesOK{
 		Examples: examples,
 	}, nil
 }
