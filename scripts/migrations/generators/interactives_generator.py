@@ -3,10 +3,17 @@ Interactives migration generator following SOLID principles.
 """
 
 import json
+import sys
+import uuid
 from pathlib import Path
 from typing import Dict, Any, List
 from datetime import datetime
 
+# Add scripts directory to Python path for imports
+scripts_dir = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(scripts_dir))
+
+from core.config import ConfigManager
 from migrations.base import BaseContentMigrationGenerator
 from migrations.utils import JsonSerializer
 
@@ -18,6 +25,10 @@ class InteractivesMigrationGenerator(BaseContentMigrationGenerator):
     """
 
     def __init__(self):
+        # Load config first to get output directory
+        project_config = ConfigManager()
+        output_dir = str(Path(project_config.get('paths', 'migrations_output_dir')) / "knowledge" / "interactives")
+
         super().__init__(
             name="generate-interactives-migrations",
             description="Generate Liquibase YAML migrations for interactives from knowledge base",
@@ -26,19 +37,44 @@ class InteractivesMigrationGenerator(BaseContentMigrationGenerator):
                 "knowledge/canon/interactive-objects",
                 "knowledge/content/interactives"
             ],
-            output_dir=str(Path(self.project_config.get('paths', 'migrations_output_dir')) / "knowledge" / "interactives"),
+            output_dir=output_dir,
             table_name="knowledge.interactives"
         )
 
     def get_content_fields(self) -> List[str]:
         """Required fields for valid interactive content."""
-        return ['interactive_definition']
+        return ['content']  # New structure uses 'content' field
 
     def extract_specific_data(self, spec: Dict[str, Any], yaml_file: Path) -> Dict[str, Any]:
         """Extract interactive-specific data."""
         metadata = spec.get('metadata', {})
-        interactive_def = spec.get('interactive_definition', {})
+        content = spec.get('content', {})
 
+        # Handle different content structures
+        if 'interactives' in content:
+            # New structure: content.interactives
+            interactives_list = content.get('interactives', [])
+            if interactives_list:
+                # For now, process first interactive - can be extended for multiple
+                interactive_data = interactives_list[0] if isinstance(interactives_list, list) else interactives_list
+        return {
+            'id': str(uuid.uuid4()),
+            'interactive_id': f"{yaml_file.stem}-{interactive_data.get('name', 'unknown')}",
+            'name': interactive_data.get('display_name', interactive_data.get('name', yaml_file.stem)),
+            'description': interactive_data.get('description', ''),
+            'category': interactive_data.get('category', 'container'),
+            'location': None,  # Will be set from mechanics if available
+            'interactable': True,
+            'reusable': True,
+            'requires_key': False,
+            'interaction_type': 'examine',
+            'properties': json.dumps(interactive_data.get('mechanics', {}), default=JsonSerializer.json_serializer, ensure_ascii=False),
+            'requirements': json.dumps({}, default=JsonSerializer.json_serializer, ensure_ascii=False),
+            'rewards': json.dumps({}, default=JsonSerializer.json_serializer, ensure_ascii=False)
+        }
+
+        # Fallback for old structure
+        interactive_def = spec.get('interactive_definition', {})
         return {
             'interactive_id': metadata.get('id', f"interactive-{yaml_file.stem}"),
             'name': metadata.get('name', yaml_file.stem.replace('_', ' ').title()),
