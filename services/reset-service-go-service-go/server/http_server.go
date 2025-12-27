@@ -14,7 +14,8 @@ type MockSecurityHandler struct{}
 
 func (m *MockSecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
 	// Для всех операций разрешаем доступ (для тестирования)
-	return ctx, nil
+	// Мокаем пользователя с admin ролями
+	return context.WithValue(ctx, "user_id", "test-user"), nil
 }
 
 type ResetservicegoService struct {
