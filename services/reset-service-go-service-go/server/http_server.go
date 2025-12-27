@@ -18,6 +18,19 @@ func (m *MockSecurityHandler) HandleBearerAuth(ctx context.Context, operationNam
 	return context.WithValue(ctx, "user_id", "test-user"), nil
 }
 
+// MockServer переопределяет security проверки
+type MockServer struct {
+	*api.Server
+}
+
+func (ms *MockServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Добавляем mock Authorization header для тестирования
+	if r.Header.Get("Authorization") == "" {
+		r.Header.Set("Authorization", "Bearer mock-jwt-token-for-testing")
+	}
+	ms.Server.ServeHTTP(w, r)
+}
+
 // MockServer - переопределение Server для тестирования без аутентификации
 type MockServer struct {
 	*api.Server
@@ -65,25 +78,12 @@ func NewResetservicegoService() *ResetservicegoService {
 		panic(err) // In production, handle this properly
 	}
 
-	// Оборачиваем в middleware для добавления mock токенов
-	server = &wrappedServer{
-		Server:   server,
-		wrapper: MockAuthMiddleware,
-	}
+	// Оборачиваем в MockServer для добавления mock токенов
+	mockServer := &MockServer{Server: server}
 
 	return &ResetservicegoService{
-		api: server,
+		api: mockServer,
 	}
-}
-
-// wrappedServer оборачивает Server с middleware
-type wrappedServer struct {
-	*api.Server
-	wrapper func(http.Handler) http.Handler
-}
-
-func (ws *wrappedServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ws.wrapper(ws.Server).ServeHTTP(w, r)
 }
 
 func (s *ResetservicegoService) Handler() http.Handler {
