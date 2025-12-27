@@ -38,6 +38,7 @@ sys.path.insert(0, str(project_root))
 from scripts.core.base_script import BaseScript
 
 # Try to import ML libraries, fallback to basic implementations
+ML_AVAILABLE = False
 try:
     import numpy as np
     from sklearn.ensemble import RandomForestRegressor
@@ -45,7 +46,6 @@ try:
     from sklearn.model_selection import train_test_split
     ML_AVAILABLE = True
 except ImportError:
-    ML_AVAILABLE = False
     print("Warning: ML libraries not available, using rule-based prioritization")
 
 
@@ -139,69 +139,135 @@ class GitHubProjectsClient:
 
 
 class MLPrioritizationEngine:
-    """ML-powered task prioritization engine."""
+    """ML-powered task prioritization engine with fallback to rule-based."""
 
     def __init__(self):
-        self.model = None
-        self.scaler = StandardScaler()
         self.is_trained = False
+        self.weights = {}
+        self.baseline_stats = {}
+
+        if ML_AVAILABLE:
+            try:
+                self.model = None
+                self.scaler = StandardScaler()
+            except NameError:
+                self.model = None
+                self.scaler = None
+                ML_AVAILABLE = False
+        else:
+            self.model = None
+            self.scaler = None
 
     def train(self, historical_data: List[Dict[str, Any]]) -> None:
-        """Train the ML model on historical task data."""
+        """Train the prioritization model on historical task data."""
         if not historical_data:
-            # Use default model if no historical data
-            self._create_default_model()
+            self._create_rule_based_model()
             return
 
-        # Prepare training data
-        features = []
-        targets = []
+        if ML_AVAILABLE and len(historical_data) >= 10:
+            self._train_ml_model(historical_data)
+        else:
+            self._train_rule_based_model(historical_data)
 
-        for task in historical_data:
-            feature_vector = self._extract_features(task)
-            priority_score = task.get('actual_priority', 0.5)
+    def _train_ml_model(self, historical_data: List[Dict[str, Any]]) -> None:
+        """Train ML model using sklearn."""
+        try:
+            # Prepare training data
+            features = []
+            targets = []
 
-            features.append(feature_vector)
-            targets.append(priority_score)
+            for task in historical_data:
+                feature_vector = self._extract_features(task)
+                priority_score = task.get('actual_priority', 0.5)
 
-        if len(features) < 10:
-            # Not enough data for training
-            self._create_default_model()
-            return
+                features.append(feature_vector)
+                targets.append(priority_score)
 
-        # Train the model
-        X = np.array(features)
-        y = np.array(targets)
+            # Train the model
+            X = np.array(features)
+            y = np.array(targets)
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        self.model = RandomForestRegressor(
-            n_estimators=100,
-            max_depth=10,
-            random_state=42
-        )
+            self.model = RandomForestRegressor(
+                n_estimators=50,  # Reduced for performance
+                max_depth=8,
+                random_state=42
+            )
 
-        # Scale features
-        X_train_scaled = self.scaler.fit_transform(X_train)
-        X_test_scaled = self.scaler.transform(X_test)
+            # Scale features
+            X_train_scaled = self.scaler.fit_transform(X_train)
+            X_test_scaled = self.scaler.transform(X_test)
 
-        self.model.fit(X_train_scaled, y_train)
+            self.model.fit(X_train_scaled, y_train)
+            self.is_trained = True
+
+            # Calculate accuracy on test set
+            test_score = self.model.score(X_test_scaled, y_test)
+            print(f"ML Model trained with R² score: {test_score:.3f}")
+
+        except Exception as e:
+            print(f"ML training failed, falling back to rule-based: {e}")
+            self._create_rule_based_model()
+
+    def _train_rule_based_model(self, historical_data: List[Dict[str, Any]]) -> None:
+        """Train rule-based model by analyzing patterns in historical data."""
+        # Analyze successful prioritization patterns
+        high_priority_tasks = [t for t in historical_data if t.get('actual_priority', 0) > 0.7]
+
+        # Calculate average feature weights from successful patterns
+        self.weights = {
+            'task_type': self._calculate_feature_weight(high_priority_tasks, 'type'),
+            'business_impact': self._calculate_feature_weight(high_priority_tasks, 'business_impact'),
+            'age_factor': 0.1,  # Age bonus weight
+            'dependency_factor': 0.05,  # Dependency bonus weight
+            'complexity_factor': 0.15  # Complexity bonus weight
+        }
+
+        # Calculate baseline statistics
+        priorities = [t.get('actual_priority', 0.5) for t in historical_data]
+        self.baseline_stats = {
+            'mean_priority': statistics.mean(priorities) if priorities else 0.5,
+            'std_priority': statistics.stdev(priorities) if len(priorities) > 1 else 0.1
+        }
+
         self.is_trained = True
+        print("Rule-based model trained on historical patterns")
 
-        # Calculate accuracy on test set
-        test_score = self.model.score(X_test_scaled, y_test)
-        print(f"ML Model trained with R² score: {test_score:.3f}")
+    def _calculate_feature_weight(self, tasks: List[Dict[str, Any]], feature: str) -> float:
+        """Calculate weight for a specific feature based on successful tasks."""
+        if not tasks:
+            return 0.5
+
+        feature_counts = {}
+        total_tasks = len(tasks)
+
+        for task in tasks:
+            value = task.get(feature, 'unknown')
+            feature_counts[value] = feature_counts.get(value, 0) + 1
+
+        # Return the most common value's frequency as weight
+        if feature_counts:
+            max_count = max(feature_counts.values())
+            return max_count / total_tasks
+
+        return 0.5
 
     def predict_priority(self, task: Dict[str, Any]) -> float:
         """Predict priority score for a task."""
-        if not self.is_trained or self.model is None:
+        if not self.is_trained:
             return self._calculate_rule_based_priority(task)
 
-        features = self._extract_features(task)
-        features_scaled = self.scaler.transform([features])
+        if ML_AVAILABLE and self.model is not None and self.scaler is not None:
+            try:
+                features = self._extract_features(task)
+                features_scaled = self.scaler.transform([features])
+                prediction = self.model.predict(features_scaled)[0]
+                return max(0.0, min(1.0, prediction))
+            except Exception as e:
+                print(f"ML prediction failed, using rule-based: {e}")
 
-        prediction = self.model.predict(features_scaled)[0]
-        return max(0.0, min(1.0, prediction))
+        return self._calculate_rule_based_priority(task)
 
     def _extract_features(self, task: Dict[str, Any]) -> List[float]:
         """Extract feature vector from task data."""
@@ -209,35 +275,64 @@ class MLPrioritizationEngine:
 
         # Task type priority weights
         type_weights = {
-            'API': 0.9, 'BACKEND': 0.8, 'UE5': 0.8,
-            'DATA': 0.7, 'MIGRATION': 0.6
+            'API': 0.9,
+            'BACKEND': 0.8,
+            'UE5': 0.8,
+            'DATA': 0.7,
+            'MIGRATION': 0.6
         }
         task_type = task.get('type', 'UNKNOWN')
         features.append(type_weights.get(task_type, 0.5))
 
-        # Age in days
+        # Age in days (normalized)
         age_days = task.get('age_days', 0)
-        features.append(min(age_days / 30.0, 1.0))  # Normalize to 0-1
+        features.append(min(age_days / 30.0, 1.0))
 
-        # Dependencies count
+        # Dependencies count (normalized)
         dependencies = task.get('dependencies', [])
-        features.append(min(len(dependencies) / 5.0, 1.0))  # Normalize
+        features.append(min(len(dependencies) / 5.0, 1.0))
 
         # Business impact
         impact_map = {'high': 1.0, 'medium': 0.6, 'low': 0.3}
         impact = task.get('business_impact', 'medium')
         features.append(impact_map.get(impact, 0.5))
 
-        # Complexity score (estimated)
-        complexity_indicators = [
-            len(task.get('description', '')) > 500,
-            'complex' in task.get('tags', []),
-            task.get('estimated_hours', 0) > 40
-        ]
-        complexity_score = sum(complexity_indicators) / len(complexity_indicators)
+        # Complexity score
+        complexity_score = self._assess_task_complexity(task)
         features.append(complexity_score)
 
         return features
+
+    def _assess_task_complexity(self, task: Dict[str, Any]) -> float:
+        """Assess task complexity on a 0-1 scale."""
+        complexity = 0.0
+
+        # Description length
+        desc_length = len(task.get('description', ''))
+        if desc_length > 1000:
+            complexity += 0.3
+        elif desc_length > 500:
+            complexity += 0.2
+        elif desc_length > 100:
+            complexity += 0.1
+
+        # Estimated hours
+        hours = task.get('estimated_hours', 0)
+        if hours > 80:
+            complexity += 0.4
+        elif hours > 40:
+            complexity += 0.2
+
+        # Dependencies
+        deps = len(task.get('dependencies', []))
+        complexity += min(deps * 0.1, 0.3)
+
+        # Tags indicating complexity
+        tags = str(task.get('tags', []))
+        if any(tag in tags.lower() for tag in ['complex', 'difficult', 'advanced']):
+            complexity += 0.2
+
+        return min(complexity, 1.0)
 
     def _calculate_rule_based_priority(self, task: Dict[str, Any]) -> float:
         """Rule-based priority calculation as fallback."""
@@ -255,12 +350,27 @@ class MLPrioritizationEngine:
         if task.get('business_impact') == 'high':
             priority += 0.15
 
+        # Complexity bonus
+        complexity = self._assess_task_complexity(task)
+        priority += complexity * 0.1
+
         return min(1.0, priority)
 
-    def _create_default_model(self) -> None:
-        """Create a default model when no training data is available."""
-        self.model = None
-        self.is_trained = False
+    def _create_rule_based_model(self) -> None:
+        """Create a default rule-based model when no training data is available."""
+        self.weights = {
+            'task_type': 0.8,
+            'business_impact': 0.7,
+            'age_factor': 0.1,
+            'dependency_factor': 0.05,
+            'complexity_factor': 0.15
+        }
+        self.baseline_stats = {
+            'mean_priority': 0.5,
+            'std_priority': 0.2
+        }
+        self.is_trained = True
+        print("Using default rule-based prioritization model")
 
 
 class ConceptDirectorAutomation(BaseScript):
@@ -293,43 +403,43 @@ class ConceptDirectorAutomation(BaseScript):
         else:
             self.logger.warning("GitHub token not found, running in offline mode")
 
-    def add_script_args(self, parser: argparse.ArgumentParser) -> None:
+    def add_script_args(self) -> None:
         """Add command-line arguments specific to this script."""
-        parser.add_argument(
+        self.parser.add_argument(
             '--action',
             choices=['analyze', 'prioritize', 'optimize', 'validate', 'report', 'train-ml', 'predict-bottlenecks'],
             required=True,
             help='Action to perform'
         )
 
-        parser.add_argument(
+        self.parser.add_argument(
             '--scope',
             choices=['all', 'combat', 'economy', 'social', 'narrative', 'ui', 'world', 'backend', 'api', 'data'],
             default='all',
             help='Scope of analysis'
         )
 
-        parser.add_argument(
+        self.parser.add_argument(
             '--output-format',
             choices=['json', 'yaml', 'markdown', 'html'],
             default='yaml',
             help='Output format for results'
         )
 
-        parser.add_argument(
+        self.parser.add_argument(
             '--priority-threshold',
             type=float,
             default=0.7,
             help='Priority threshold for task filtering (0.0-1.0)'
         )
 
-        parser.add_argument(
+        self.parser.add_argument(
             '--github-integration',
             action='store_true',
             help='Enable GitHub Projects integration'
         )
 
-        parser.add_argument(
+        self.parser.add_argument(
             '--ml-enabled',
             action='store_true',
             default=True,
