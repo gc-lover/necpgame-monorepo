@@ -1,0 +1,335 @@
+import yaml
+from pathlib import Path
+from datetime import datetime
+
+LEAGUE_SYSTEM_DOCUMENT = {
+    'name': 'meta-league-system-advanced-ranking',
+    'title': 'Meta - League System Advanced Ranking',
+    'description': 'Расширенная система ранкинга в лиговой системе'
+}
+
+def create_league_system_document_template(doc_data):
+    """Create a detailed league system document template"""
+    template = {
+        'metadata': {
+            'id': f'canon-mechanics-{doc_data["name"]}',
+            'title': doc_data['title'],
+            'document_type': 'canon',
+            'category': 'mechanics',
+            'subcategory': 'meta-league-system',
+            'status': 'draft',
+            'version': '1.0.0',
+            'last_updated': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'concept_approved': False,
+            'concept_reviewed_at': '',
+            'owners': [
+                {
+                    'role': 'backend_director',
+                    'contact': 'backend@necp.game'
+                }
+            ],
+            'tags': [
+                'meta',
+                'league-system',
+                'ranking',
+                'competitive'
+            ],
+            'topics': [
+                'competitive-gaming',
+                'ranking-systems',
+                'tournament-mechanics'
+            ],
+            'related_systems': [
+                'competition-service',
+                'ranking-service',
+                'reward-service'
+            ],
+            'related_documents': [
+                {
+                    'id': 'canon-mechanics-league-system-mechanics',
+                    'relation': 'extends'
+                },
+                {
+                    'id': 'canon-mechanics-branded-tournaments-1813',
+                    'relation': 'references'
+                }
+            ],
+            'source': f'shared/docs/knowledge/mechanics/meta/{doc_data["name"]}.yaml',
+            'visibility': 'internal',
+            'audience': [
+                'backend',
+                'design',
+                'balance'
+            ],
+            'risk_level': 'medium'
+        },
+        'summary': {
+            'problem': f'Необходимо детализировать {doc_data["description"].lower()} для создания справедливой и увлекательной соревновательной системы.',
+            'goal': f'Описать технические аспекты, баланс и игровые механики {doc_data["description"].lower()}.',
+            'essence': doc_data["description"],
+            'key_points': [
+                'Технические требования к реализации',
+                'Баланс и игровой дизайн',
+                'Мотивация игроков',
+                'Справедливость системы'
+            ]
+        },
+        'technical_specification': {
+            'system_requirements': {
+                'ranking_algorithm': 'elo_based_with_seasonal_adjustments',
+                'performance_tracking': 'detailed_match_statistics_collection',
+                'fairness_enforcement': 'anti_cheat_and_suspicious_activity_detection',
+                'scalability': 'support_for_millions_of_concurrent_rankings'
+            },
+            'data_structures': {
+                'player_ranking': {
+                    'player_id': 'uuid',
+                    'current_rating': 'integer_elo_rating',
+                    'rating_deviation': 'uncertainty_measure',
+                    'volatility': 'rating_stability_measure',
+                    'season_best': 'highest_rating_this_season',
+                    'global_rank': 'worldwide_ranking_position',
+                    'regional_rank': 'regional_ranking_position'
+                },
+                'match_result': {
+                    'match_id': 'uuid',
+                    'participants': 'array_of_player_ids',
+                    'scores': 'array_of_final_scores',
+                    'duration': 'match_length_in_seconds',
+                    'completion_status': 'enum(completed/forfeit/disconnected)',
+                    'rating_changes': 'array_of_rating_adjustments'
+                }
+            },
+            'algorithms': {
+                'elo_calculation': 'standard_elo_with_custom_modifiers',
+                'placement_matches': 'initial_rating_determination_system',
+                'decay_mechanism': 'rating_reduction_for_inactivity',
+                'boost_protection': 'win_streak_limiting_mechanisms'
+            }
+        },
+        'advanced_ranking_system': {
+            'rating_tiers': [
+                {
+                    'tier': 'bronze',
+                    'rating_range': '0-1199',
+                    'division_count': 3,
+                    'promotion_requirements': 'win_streak_or_rating_threshold',
+                    'demotion_protection': 'minimum_games_before_demoting'
+                },
+                {
+                    'tier': 'silver',
+                    'rating_range': '1200-1599',
+                    'division_count': 3,
+                    'promotion_requirements': 'consistent_performance',
+                    'season_rewards': 'basic_cosmetic_unlocks'
+                },
+                {
+                    'tier': 'gold',
+                    'rating_range': '1600-1999',
+                    'division_count': 3,
+                    'promotion_requirements': 'high_win_rate_requirement',
+                    'season_rewards': 'rare_cosmetic_unlocks'
+                },
+                {
+                    'tier': 'platinum',
+                    'rating_range': '2000-2399',
+                    'division_count': 3,
+                    'promotion_requirements': 'elite_performance_metrics',
+                    'season_rewards': 'epic_cosmetic_unlocks'
+                },
+                {
+                    'tier': 'diamond',
+                    'rating_range': '2400-2799',
+                    'division_count': 3,
+                    'promotion_requirements': 'master_level_achievement',
+                    'season_rewards': 'legendary_cosmetic_unlocks'
+                },
+                {
+                    'tier': 'master',
+                    'rating_range': '2800+',
+                    'division_count': 1,
+                    'promotion_requirements': 'peak_performance_maintenance',
+                    'season_rewards': 'unique_legendary_rewards'
+                }
+            ],
+            'seasonal_mechanics': {
+                'season_duration': '3_months_with_ranked_reset',
+                'ranked_reset': 'ratings_adjusted_but_not_reset_to_zero',
+                'seasonal_rewards': 'tier_based_cosmetic_and_title_unlocks',
+                'placement_matches': '10_placement_matches_for_new_players',
+                'decay_protection': 'rating_floor_to_prevent_extreme_demotion'
+            },
+            'performance_metrics': [
+                {
+                    'metric': 'win_rate',
+                    'weight': 'high',
+                    'calculation': 'wins_divided_by_total_games',
+                    'thresholds': 'tier_specific_minimum_requirements'
+                },
+                {
+                    'metric': 'average_score',
+                    'weight': 'medium',
+                    'calculation': 'mean_score_across_all_matches',
+                    'normalization': 'adjusted_for_opponent_difficulty'
+                },
+                {
+                    'metric': 'consistency',
+                    'weight': 'medium',
+                    'calculation': 'standard_deviation_of_performance',
+                    'reward': 'bonus_for_stable_high_performance'
+                },
+                {
+                    'metric': 'team_contribution',
+                    'weight': 'high',
+                    'calculation': 'individual_impact_on_team_success',
+                    'measurement': 'advanced_statistics_tracking'
+                }
+            ]
+        },
+        'anti_cheat_measures': {
+            'suspicious_activity_detection': [
+                'statistical_anomaly_detection',
+                'behavioral_pattern_analysis',
+                'peer_reporting_system',
+                'automated_ban_recommendations'
+            ],
+            'fairness_enforcement': {
+                'boosting_detection': 'account_linkage_analysis',
+                'smurfing_prevention': 'new_account_rating_protection',
+                'matchmaking_integrity': 'fair_opponent_matching',
+                'report_investigation': 'human_review_of_suspicious_cases'
+            },
+            'rating_protection': {
+                'rating_floor_ceiling': 'prevent_extreme_rating_changes',
+                'decay_limiting': 'maximum_rating_loss_per_period',
+                'boost_protection': 'win_streak_rating_cap',
+                'recovery_mechanisms': 'rating_restoration_after_investigation'
+            }
+        },
+        'reward_and_motivation_system': {
+            'seasonal_rewards': [
+                {
+                    'tier': 'bronze',
+                    'rewards': ['basic_cosmetic_items', 'small_currency_bonus'],
+                    'unlock_condition': 'maintain_bronze_rank_for_season'
+                },
+                {
+                    'tier': 'silver',
+                    'rewards': ['uncommon_cosmetic_items', 'medium_currency_bonus', 'basic_titles'],
+                    'unlock_condition': 'reach_silver_tier'
+                },
+                {
+                    'tier': 'gold',
+                    'rewards': ['rare_cosmetic_items', 'large_currency_bonus', 'special_titles'],
+                    'unlock_condition': 'reach_gold_tier'
+                },
+                {
+                    'tier': 'platinum',
+                    'rewards': ['epic_cosmetic_items', 'premium_currency', 'exclusive_titles', 'special_access'],
+                    'unlock_condition': 'reach_platinum_tier'
+                },
+                {
+                    'tier': 'diamond',
+                    'rewards': ['legendary_cosmetic_items', 'maximum_currency', 'unique_titles', 'vip_access'],
+                    'unlock_condition': 'reach_diamond_tier'
+                },
+                {
+                    'tier': 'master',
+                    'rewards': ['mythic_cosmetic_items', 'exclusive_rewards', 'hall_of_fame_access'],
+                    'unlock_condition': 'reach_master_tier'
+                }
+            ],
+            'progression_incentives': {
+                'milestone_rewards': 'bonus_rewards_at_rating_milestones',
+                'streak_bonuses': 'consecutive_win_streak_rewards',
+                'improvement_rewards': 'rating_gain_speed_bonuses',
+                'loyalty_rewards': 'long_term_participation_benefits'
+            },
+            'competitive_features': {
+                'leaderboards': 'global_and_regional_rankings',
+                'tournaments': 'seasonal_competitive_events',
+                'special_events': 'limited_time_ranked_modes',
+                'team_competition': 'guild_vs_guild_rankings'
+            }
+        },
+        'social_and_community_aspects': {
+            'ranking_display': [
+                'public_profile_rankings',
+                'match_history_visibility',
+                'achievement_showcase',
+                'competitive_statistics'
+            ],
+            'community_features': [
+                'ranked_discussions',
+                'mentor_programs',
+                'coaching_services',
+                'competitive_analysis_tools'
+            ],
+            'toxicity_prevention': [
+                'sportsmanship_rating',
+                'behavioral_penalties',
+                'community_reporting',
+                'positive_reinforcement'
+            ]
+        },
+        'implementation_notes': {
+            'backend_requirements': [
+                'High-performance rating calculations',
+                'Real-time matchmaking integration',
+                'Comprehensive statistics tracking',
+                'Anti-cheat system integration'
+            ],
+            'frontend_requirements': [
+                'Clear ranking display interfaces',
+                'Progress tracking visualizations',
+                'Reward showcase systems',
+                'Social features integration'
+            ],
+            'balancing_requirements': [
+                'Rating algorithm tuning',
+                'Tier distribution optimization',
+                'Reward value balancing',
+                'Community feedback integration'
+            ]
+        },
+        'future_enhancements': {
+            'planned_features': [
+                'Cross-platform ranking unification',
+                'AI_powered_matchmaking_improvements',
+                'Advanced_statistics_dashboards',
+                'Custom_tournament_creation_tools'
+            ],
+            'research_areas': [
+                'Advanced_rating_systems',
+                'Competitive_balance_algorithms',
+                'Player_retention_through_competition',
+                'Esports_economy_integration'
+            ]
+        }
+    }
+
+    return template
+
+def main():
+    """Generate 1 meta league system document"""
+    meta_dir = Path('knowledge/mechanics/meta')
+
+    doc_data = LEAGUE_SYSTEM_DOCUMENT
+    doc_file = meta_dir / f'{doc_data["name"]}.yaml'
+
+    # Check if document already exists
+    if doc_file.exists():
+        print(f"Document already exists: {doc_data['name']}")
+        return
+
+    print(f"Generating document: {doc_data['title']}")
+
+    template = create_league_system_document_template(doc_data)
+
+    with open(doc_file, 'w', encoding='utf-8') as f:
+        yaml.dump(template, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+
+    print("Generated 1 meta league system document")
+
+if __name__ == '__main__':
+    main()
