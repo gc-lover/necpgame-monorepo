@@ -2325,6 +2325,412 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 	return quest, nil
 }
 
+// GetRecoletaCemeteryQuest returns the Recoleta Cemetery quest for Buenos Aires
+// Issue: #140929854
+func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Recoleta Cemetery quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "canon-quest-buenos-aires-2029-004-recoleta",
+		Title:            "Буэнос-Айрес: Кладбище Реколета",
+		Description:      "Исследуйте 'город мёртвых' - кладбище Реколета с более чем 6400 мавзолеями, узнайте о культурном наследии Эвиты Перон и познакомьтесь с кошачьими хранителями.",
+		QuestType:        "side",
+		MinLevel:         1,
+		MaxLevel:         0, // No max level
+		EstimatedDuration: 90,
+		Difficulty:       "easy",
+		Themes:           []string{"heritage", "memorial", "architecture", "cultural"},
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "cemetery_entrance",
+				Sequence:    1,
+				Title:       "Вход на кладбище",
+				Description: "Как вы подойдете к этому священному месту?",
+				Context:     "Вы стоите у входа на кладбище Реколета, одного из самых красивых кладбищ мира.",
+				Choices: []models.Choice{
+					{
+						ID:             "respectful_entrance",
+						Text:           "Войти с уважением и почтением",
+						Description:    "Показать уважение к месту упокоения",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "heritage",
+								Value:       float64(10),
+								Probability: 1.0,
+								Description: "Увеличение репутации наследия",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(30),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "curious_entrance",
+						Text:           "Войти с любопытством и интересом",
+						Description:    "Показать искренний интерес к истории",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(8),
+								Probability: 1.0,
+								Description: "Увеличение культурной репутации",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(25),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "mausoleum_exploration",
+				Sequence:    2,
+				Title:       "Исследование мавзолеев",
+				Description: "Как вы будете изучать мавзолеи?",
+				Context:     "Вы гуляете среди величественных мраморных мавзолеев, каждый из которых рассказывает историю семьи.",
+				Choices: []models.Choice{
+					{
+						ID:             "read_inscriptions",
+						Text:           "Читать надписи и изучать истории семей",
+						Description:    "Узнать о людях, чьи жизни запечатлены здесь",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "heritage",
+								Value:       float64(12),
+								Probability: 1.0,
+								Description: "Увеличение репутации наследия",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(50),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "admire_architecture",
+						Text:           "Восхищаться архитектурой и искусством",
+						Description:    "Оценить красоту и мастерство скульпторов",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(10),
+								Probability: 1.0,
+								Description: "Увеличение культурной репутации",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(45),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "evita_tomb_encounter",
+				Sequence:    3,
+				Title:       "Гробница Эвиты Перон",
+				Description: "Как вы подойдете к гробнице Эвиты?",
+				Context:     "Вы нашли гробницу Эвиты Перон - самой посещаемой на кладбище. Здесь стоит хранитель памяти.",
+				Choices: []models.Choice{
+					{
+						ID:             "pay_respects",
+						Text:           "Почтить память и выразить уважение",
+						Description:    "Показать глубокое уважение к исторической фигуре",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "heritage",
+								Value:       float64(15),
+								Probability: 1.0,
+								Description: "Увеличение репутации наследия",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(80),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "learn_history",
+						Text:           "Узнать о ее жизни и наследии",
+						Description:    "Поговорить с хранителем о истории Эвиты",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(12),
+								Probability: 1.0,
+								Description: "Увеличение культурной репутации",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(70),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "cat_guardian_interaction",
+				Sequence:    4,
+				Title:       "Кошачьи хранители",
+				Description: "Как вы будете взаимодействовать с кошками-стражами?",
+				Context:     "На узких улицах склепов вы встречаете кошек, которые считаются хранителями кладбища.",
+				Choices: []models.Choice{
+					{
+						ID:             "befriend_cats",
+						Text:           "Подружиться с кошками",
+						Description:    "Показать доброту и уважение к местным традициям",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "heritage",
+								Value:       float64(8),
+								Probability: 1.0,
+								Description: "Увеличение репутации наследия",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(60),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "observe_tradition",
+						Text:           "Наблюдать за традицией кошачьей охраны",
+						Description:    "Изучить роль кошек в истории кладбища",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(10),
+								Probability: 1.0,
+								Description: "Увеличение культурной репутации",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(55),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "memory_ritual_conclusion",
+				Sequence:    5,
+				Title:       "Ритуал памяти",
+				Description: "Как вы завершите свою экскурсию?",
+				Context:     "Вы завершаете экскурсию по кладбищу Реколета и можете выполнить мини-ритуал памяти.",
+				Choices: []models.Choice{
+					{
+						ID:             "reflect_quietly",
+						Text:           "Размышлять в тишине о бренности жизни",
+						Description:    "Найти момент для личных размышлений",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "heritage",
+								Value:       float64(10),
+								Probability: 1.0,
+								Description: "Увеличение репутации наследия",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(90),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "leave_respectful",
+						Text:           "Уйти с уважением к этому месту",
+						Description:    "Показать полное уважение к традиции",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(8),
+								Probability: 1.0,
+								Description: "Увеличение культурной репутации",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(75),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "heritage_guardian",
+				Title:       "Хранитель Наследия",
+				Description: "Вы глубоко прониклись уважением к истории и культурному наследию кладбища Реколета.",
+				Requirements: []string{"respectful_entrance", "read_inscriptions", "pay_respects", "befriend_cats", "reflect_quietly"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 1500},
+					{Type: "achievement", Value: "Recoleta Guardian"},
+					{Type: "item", ItemID: "recoleta_memorial_token", Rarity: "rare"},
+				},
+				Narrative: "Реколета стала частью вашей души. Вы чувствуете связь с поколениями, которые нашли здесь свой последний приют.",
+			},
+			{
+				ID:          "cultural_explorer",
+				Title:       "Культурный Исследователь",
+				Description: "Вы изучили архитектуру, историю и традиции кладбища Реколета.",
+				Requirements: []string{"curious_entrance", "admire_architecture", "learn_history", "observe_tradition", "leave_respectful"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 1400},
+					{Type: "achievement", Value: "Recoleta Scholar"},
+					{Type: "item", ItemID: "recoleta_history_book", Rarity: "uncommon"},
+				},
+				Narrative: "Вы уносите с собой не только фотографии, но и глубокое понимание культурного значения этого уникального места.",
+			},
+			{
+				ID:          "memory_keeper",
+				Title:       "Хранитель Памяти",
+				Description: "Вы нашли особое значение в ритуалах памяти и уважении к прошлому.",
+				Requirements: []string{"respectful_entrance", "pay_respects", "befriend_cats", "reflect_quietly"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 1450},
+					{Type: "achievement", Value: "Memory Keeper"},
+					{Type: "item", ItemID: "recoleta_ritual_item", Rarity: "rare"},
+				},
+				Narrative: "Память о прошлом стала вашим компасом. Вы чувствуете ответственность за сохранение этих историй.",
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "buenos_aires_heritage",
+				Change:      20,
+				Description: "Уважение к культурному наследию Буэнос-Айреса",
+				ChoiceID:    "pay_respects",
+			},
+			{
+				Faction:     "recoleta_tradition",
+				Change:      15,
+				Description: "Понимание традиций кладбища Реколета",
+				ChoiceID:    "befriend_cats",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Recoleta Cemetery, Buenos Aires, Argentina",
+			TimePeriod:  "2020-2029",
+			Weather:     "calm, reflective atmosphere",
+			Situation:   "Explore the 'City of the Dead' - Recoleta Cemetery with over 6400 mausoleums, learn about Evita Peron's cultural heritage and meet the feline guardians.",
+			Objectives: []string{
+				"Enter Recoleta Cemetery and get a route map",
+				"Examine marble mausoleums and learn about family histories",
+				"Find Evita Peron's tomb and speak with the memory keeper",
+				"Explore the narrow streets of crypts with 'feline guardians'",
+				"Complete the excursion with a mini memory ritual",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "memory_keeper_elena",
+				Name:        "Элена 'Хранительница Памяти' Гонсалес",
+				Role:        "Хранительница памяти",
+				Description: "Пожилая женщина, посвятившая жизнь сохранению историй кладбища Реколета",
+				Importance:  "primary",
+			},
+			{
+				ID:          "cat_caretaker_miguel",
+				Name:        "Мигель 'Кошачий Хранитель' Сантьяго",
+				Role:        "Ухаживающий за кошками",
+				Description: "Местный волонтер, заботящийся о популяции кошек на кладбище",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "architectural_guide",
+				Name:        "Доктор Карлос 'Архитектор' Мендоса",
+				Role:        "Историк архитектуры",
+				Description: "Эксперт по мавзолеям и истории кладбищенской архитектуры",
+				Importance:  "ally",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	return quest, nil
+}
+
 // GetRedWingsHockeyQuest returns the Red Wings Hockey quest for Detroit
 func (s *Service) GetRedWingsHockeyQuest(ctx context.Context) (*models.DynamicQuest, error) {
 	s.logger.Info("Retrieving Red Wings Hockey quest definition")
