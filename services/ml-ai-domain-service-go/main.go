@@ -624,11 +624,22 @@ func (h *MLAIHandler) GetPredictionAnalytics(ctx context.Context, params api.Get
 func (h *MLAIHandler) GetTrainingStatus(ctx context.Context, params api.GetTrainingStatusParams) (*api.TrainingStatusResponse, error) {
 	h.logger.Info("Processing training status request", zap.String("jobId", params.JobId.String()))
 
+	// Validate job ID format (UUID)
+	if params.JobId == uuid.Nil {
+		h.logger.Error("Invalid training job ID", zap.String("jobId", params.JobId.String()))
+		return &api.TrainingStatusResponse{
+			JobID:    params.JobId,
+			Status:   api.TrainingStatusResponseStatusFailed,
+			Progress: 0.0,
+		}, fmt.Errorf("invalid job ID format")
+	}
+
 	h.service.trainingMu.RLock()
 	job, exists := h.service.trainingJobs[params.JobId]
 	h.service.trainingMu.RUnlock()
 
 	if !exists {
+		h.logger.Warn("Training status requested for non-existent job", zap.String("jobId", params.JobId.String()))
 		// Return default status if job not found
 		return &api.TrainingStatusResponse{
 			JobID:    params.JobId,
