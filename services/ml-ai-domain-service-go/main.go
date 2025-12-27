@@ -1137,6 +1137,7 @@ func (h *MLAIHandler) StartTraining(ctx context.Context, req *api.TrainingReques
 	// Set timeout for training initialization (10 seconds - training jobs are async)
 	trainCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
+	_ = trainCtx // Context ready for future training job initialization
 
 	// Validate input data
 	if err := h.service.validator.ValidateModelName(req.ModelName); err != nil {
@@ -1200,6 +1201,7 @@ func (h *MLAIHandler) UpdateModel(ctx context.Context, req *api.UpdateModelReque
 	// Set timeout for model update (15 seconds - may involve model reloading)
 	updateCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
+	_ = updateCtx // Context ready for future model update operations
 
 	modelIDStr := params.ModelId.String()
 
