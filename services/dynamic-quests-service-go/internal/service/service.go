@@ -2731,6 +2731,444 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 	return quest, nil
 }
 
+// GetParisOfTheSouthQuest returns the Paris of the South quest for Buenos Aires
+// Issue: #140929855
+func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Paris of the South quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "canon-quest-paris-of-the-south-buenos-aires-2020-2029",
+		Title:            "Буэнос-Айрес: Париж Южной Америки",
+		Description:      "Буэнос-Айрес, известный как 'Париж Южной Америки', находится под угрозой глобальной стандартизации. Корпорации сносят исторические здания belle epoque, заменяют европейские кафе на азиатские фастфуды. Сохраните уникальное сочетание европейской элегантности и латиноамериканской страсти.",
+		QuestType:        "narrative_side",
+		MinLevel:         20,
+		MaxLevel:         0, // No max level
+		EstimatedDuration: 360,
+		Difficulty:       "hard",
+		Themes:           []string{"cultural_preservation", "resistance", "heritage", "globalization", "identity"},
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "investigate_corporate_threat",
+				Sequence:    1,
+				Title:       "Расследование корпоративной угрозы",
+				Description: "Как вы начнете борьбу с глобальной стандартизацией?",
+				Context:     "Вы узнаете о планах корпораций снести исторический квартал Recoleta и заменить его на азиатский торговый комплекс.",
+				Choices: []models.Choice{
+					{
+						ID:             "gather_evidence",
+						Text:           "Собрать доказательства культурной ценности",
+						Description:    "Документировать историческую и архитектурную ценность зданий",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural_heritage_defenders",
+								Value:       float64(15),
+								Probability: 1.0,
+								Description: "Увеличение репутации защитников наследия",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(200),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "medium",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "contact_locals",
+						Text:           "Связаться с местными жителями",
+						Description:    "Найти людей, которые помнят старую Европу",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "european_tradition_preservation",
+								Value:       float64(12),
+								Probability: 1.0,
+								Description: "Увеличение репутации хранителей традиций",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(180),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "form_resistance_group",
+				Sequence:    2,
+				Title:       "Формирование группы сопротивления",
+				Description: "Как вы объедините защитников культурного наследия?",
+				Context:     "Вы нашли несколько людей, готовых бороться за сохранение европейской идентичности Буэнос-Айреса.",
+				Choices: []models.Choice{
+					{
+						ID:             "architectural_experts",
+						Text:           "Привлечь архитекторов и историков",
+						Description:    "Собрать команду профессионалов для защиты зданий",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "architectural_conservationists",
+								Value:       float64(20),
+								Probability: 1.0,
+								Description: "Увеличение репутации архитекторов-консерваторов",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(300),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "medium",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "cultural_activists",
+						Text:           "Организовать культурных активистов",
+						Description:    "Собрать художников, музыкантов и артистов",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural_diversity_advocates",
+								Value:       float64(18),
+								Probability: 1.0,
+								Description: "Увеличение репутации защитников культурного разнообразия",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(280),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "defend_historic_building",
+				Sequence:    3,
+				Title:       "Защита исторического здания",
+				Description: "Как вы защитите здание от сноса?",
+				Context:     "Корпорация начинает демонтаж исторического здания в стиле belle epoque. Ваша группа готова действовать.",
+				Choices: []models.Choice{
+					{
+						ID:             "legal_protest",
+						Text:           "Организовать юридический протест",
+						Description:    "Подать иски и собрать юридические доказательства",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "corporate_globalization",
+								Value:       float64(-15),
+								Probability: 1.0,
+								Description: "Снижение репутации у корпораций",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(400),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "high",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "public_campaign",
+						Text:           "Запустить общественную кампанию",
+						Description:    "Организовать митинги и медиа-кампанию",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural_heritage_defenders",
+								Value:       float64(25),
+								Probability: 1.0,
+								Description: "Значительное увеличение репутации защитников",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(350),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "cultural_renaissance",
+				Sequence:    4,
+				Title:       "Культурное возрождение",
+				Description: "Как вы возродите европейскую культуру в городе?",
+				Context:     "Здание спасено, но нужно показать жителям ценность европейского наследия.",
+				Choices: []models.Choice{
+					{
+						ID:             "underground_cafes",
+						Text:           "Организовать подпольные кафе",
+						Description:    "Создать тайные места с европейской атмосферой",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "european_tradition_preservation",
+								Value:       float64(30),
+								Probability: 1.0,
+								Description: "Значительное увеличение репутации хранителей традиций",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(500),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "high",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "art_exhibitions",
+						Text:           "Устроить художественные выставки",
+						Description:    "Показать европейское искусство и архитектуру",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural_diversity_advocates",
+								Value:       float64(22),
+								Probability: 1.0,
+								Description: "Увеличение репутации защитников разнообразия",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(450),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "final_stand",
+				Sequence:    5,
+				Title:       "Последний рубеж",
+				Description: "Как вы завершите борьбу за культурную идентичность?",
+				Context:     "Корпорации готовят финальную атаку на европейскую идентичность города. Все зависит от вашего решения.",
+				Choices: []models.Choice{
+					{
+						ID:             "symbolic_restoration",
+						Text:           "Символическое восстановление",
+						Description:    "Восстановить ключевые элементы европейской архитектуры",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "architectural_conservationists",
+								Value:       float64(35),
+								Probability: 1.0,
+								Description: "Максимальное увеличение репутации архитекторов",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(600),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "high",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "cultural_manifesto",
+						Text:           "Культурный манифест",
+						Description:    "Опубликовать манифест о важности культурного разнообразия",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural_diversity_advocates",
+								Value:       float64(40),
+								Probability: 1.0,
+								Description: "Максимальное увеличение репутации защитников разнообразия",
+							},
+							{
+								Type:        "xp",
+								Value:       float64(550),
+								Probability: 1.0,
+								Description: "Получение опыта",
+							},
+						},
+						Requirements:   []models.Requirement{},
+						Unlocks:        []string{},
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "cultural_victory",
+				Title:       "Культурная победа",
+				Description: "Вы успешно защитили европейскую идентичность Буэнос-Айреса от глобальной стандартизации.",
+				Requirements: []string{"gather_evidence", "architectural_experts", "legal_protest", "underground_cafes", "symbolic_restoration"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 24000},
+					{Type: "currency", Value: 20000},
+					{Type: "item", ItemID: "belle_epoque_blueprint", Rarity: "legendary"},
+					{Type: "item", ItemID: "parisian_cafe_access", Rarity: "epic"},
+					{Type: "item", ItemID: "cultural_heritage_badge", Rarity: "rare"},
+					{Type: "achievement", Value: "Cultural Preservation Hero"},
+				},
+				Narrative: "Буэнос-Айрес сохранил свою уникальную идентичность 'Парижа Южной Америки'. Европейская элегантность и латиноамериканская страсть продолжают жить в гармонии.",
+			},
+			{
+				ID:          "resistance_legend",
+				Title:       "Легенда сопротивления",
+				Description: "Ваша борьба стала символом сопротивления глобализации и вдохновила другие города.",
+				Requirements: []string{"contact_locals", "cultural_activists", "public_campaign", "art_exhibitions", "cultural_manifesto"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 22000},
+					{Type: "currency", Value: 18000},
+					{Type: "item", ItemID: "resistance_manifesto", Rarity: "legendary"},
+					{Type: "item", ItemID: "cultural_network_access", Rarity: "epic"},
+					{Type: "achievement", Value: "Globalization Resistance Icon"},
+				},
+				Narrative: "Ваша история борьбы за культурное разнообразие стала легендой. Города по всему миру берут пример с Буэнос-Айреса.",
+			},
+			{
+				ID:          "balanced_compromise",
+				Title:       "Сбалансированный компромисс",
+				Description: "Вы нашли баланс между сохранением наследия и необходимостью прогресса.",
+				Requirements: []string{"gather_evidence", "cultural_activists", "public_campaign", "art_exhibitions", "symbolic_restoration"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 20000},
+					{Type: "currency", Value: 15000},
+					{Type: "item", ItemID: "heritage_compromise_agreement", Rarity: "epic"},
+					{Type: "item", ItemID: "cultural_bridge_token", Rarity: "rare"},
+					{Type: "achievement", Value: "Cultural Bridge Builder"},
+				},
+				Narrative: "Буэнос-Айрес нашел баланс между европейским наследием и современными вызовами. Город продолжает развиваться, сохраняя свою уникальность.",
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "cultural_heritage_defenders",
+				Change:      35,
+				Description: "Защита культурного наследия от корпоративной стандартизации",
+				ChoiceID:    "gather_evidence",
+			},
+			{
+				Faction:     "european_tradition_preservation",
+				Change:      30,
+				Description: "Сохранение европейских традиций в латиноамериканском контексте",
+				ChoiceID:    "contact_locals",
+			},
+			{
+				Faction:     "architectural_conservationists",
+				Change:      25,
+				Description: "Защита исторической архитектуры belle epoque",
+				ChoiceID:    "architectural_experts",
+			},
+			{
+				Faction:     "corporate_globalization",
+				Change:      -25,
+				Description: "Противодействие корпоративной глобализации",
+				ChoiceID:    "legal_protest",
+			},
+			{
+				Faction:     "cultural_diversity_advocates",
+				Change:      40,
+				Description: "Защита культурного разнообразия как ценности",
+				ChoiceID:    "cultural_activists",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Buenos Aires, Argentina - Historic Districts",
+			TimePeriod:  "2020-2029",
+			Weather:     "variable, symbolic of cultural change",
+			Situation:   "Defend the European cultural heritage of Buenos Aires against corporate globalization and standardization.",
+			Objectives: []string{
+				"Document cultural heritage value of historic buildings",
+				"Unite heritage defenders and cultural activists",
+				"Defend historic buildings from demolition",
+				"Organize underground cultural events and exhibitions",
+				"Preserve European identity through symbolic restoration",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "architect_elena",
+				Name:        "Элена 'Архитектор' Мендоса",
+				Role:        "Историк архитектуры",
+				Description:    "Эксперт по зданиям belle epoque, страстный защитник европейского наследия",
+				Importance:  "primary",
+			},
+			{
+				ID:          "cultural_activist_carlos",
+				Name:        "Карлос 'Культурный Воин' Родригес",
+				Role:        "Культурный активист",
+				Description:    "Организатор подпольных культурных мероприятий, борец с глобализацией",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "corporate_rep_sarah",
+				Name:        "Сара 'Корпоративный Разработчик' Чен",
+				Role:        "Корпоративный представитель",
+				Description:    "Представитель азиатской корпорации, продвигающей стандартизацию",
+				Importance:  "antagonist",
+			},
+			{
+				ID:          "elderly_resident_maria",
+				Name:        "Донья Мария Вальдес",
+				Role:        "Старожил квартала",
+				Description:    "Пожилая женщина, помнящая довоенный Буэнос-Айрес и европейские традиции",
+				Importance:  "ally",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	return quest, nil
+}
+
 // GetRedWingsHockeyQuest returns the Red Wings Hockey quest for Detroit
 func (s *Service) GetRedWingsHockeyQuest(ctx context.Context) (*models.DynamicQuest, error) {
 	s.logger.Info("Retrieving Red Wings Hockey quest definition")

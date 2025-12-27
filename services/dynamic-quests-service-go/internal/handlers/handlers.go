@@ -573,6 +573,21 @@ func (h *Handlers) GetRecoletaCemeteryQuest(w http.ResponseWriter, r *http.Reque
 	h.respondJSON(w, http.StatusOK, quest)
 }
 
+// GetParisOfTheSouthQuest handles GET /quests/buenos-aires/paris-of-the-south
+// Issue: #140929855
+func (h *Handlers) GetParisOfTheSouthQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get Paris of the South quest request")
+
+	quest, err := h.service.GetParisOfTheSouthQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get Paris of the South quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
 // GetOilLegacyQuest handles GET /quests/dallas/oil-legacy
 // Issue: #140928929
 func (h *Handlers) GetOilLegacyQuest(w http.ResponseWriter, r *http.Request) {
