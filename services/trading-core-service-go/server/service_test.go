@@ -22,15 +22,21 @@ func TestTradingCoreService_HealthCheck(t *testing.T) {
 		t.Fatalf("HealthCheck failed: %v", err)
 	}
 
-	if response.Status != api.HealthResponseStatusHealthy {
-		t.Errorf("Expected healthy status, got %s", response.Status)
+	// Type assert to access fields (since TradingCoreHealthCheckRes is an interface)
+	healthResp, ok := response.(*api.HealthResponse)
+	if !ok {
+		t.Fatalf("Expected *api.HealthResponse, got %T", response)
 	}
 
-	if response.Service != "trading-core-service" {
-		t.Errorf("Expected service name 'trading-core-service', got %s", response.Service)
+	if healthResp.Status != api.HealthResponseStatusHealthy {
+		t.Errorf("Expected healthy status, got %s", healthResp.Status)
 	}
 
-	if response.Timestamp == 0 {
+	if healthResp.Service != "trading-core-service" {
+		t.Errorf("Expected service name 'trading-core-service', got %s", healthResp.Service)
+	}
+
+	if healthResp.Timestamp.IsZero() {
 		t.Error("Timestamp should not be zero")
 	}
 }
