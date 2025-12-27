@@ -21,6 +21,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
+	"github.com/redis/go-redis/v9"
 
 	"analytics-dashboard-service-go/pkg/api"
 	"analytics-dashboard-service-go/pkg/models"
@@ -286,7 +287,7 @@ type AnalyticsHandler struct {
 // Implement all required methods from the generated interface
 // PERFORMANCE: All methods include context timeouts and error handling
 
-func (h *AnalyticsHandler) GetGameAnalyticsOverview(ctx context.Context, params api.GetGameAnalyticsOverviewParams) (*api.GameAnalyticsOverview, error) {
+func (h *AnalyticsHandler) GetGameAnalyticsOverview(ctx context.Context, params api.GetGameAnalyticsOverviewParams) (*models.GameAnalyticsOverview, error) {
 	h.logger.Info("Processing game analytics overview request",
 		zap.String("period", params.Period))
 
@@ -305,7 +306,7 @@ func (h *AnalyticsHandler) GetGameAnalyticsOverview(ctx context.Context, params 
 	return overview, nil
 }
 
-func (h *AnalyticsHandler) GetPlayerBehaviorAnalytics(ctx context.Context, params api.GetPlayerBehaviorAnalyticsParams) (*api.PlayerBehaviorAnalytics, error) {
+func (h *AnalyticsHandler) GetPlayerBehaviorAnalytics(ctx context.Context, params api.GetPlayerBehaviorAnalyticsParams) (*models.PlayerBehaviorAnalytics, error) {
 	h.logger.Info("Processing player behavior analytics request",
 		zap.String("period", params.Period),
 		zap.String("segment", params.Segment))
@@ -322,7 +323,7 @@ func (h *AnalyticsHandler) GetPlayerBehaviorAnalytics(ctx context.Context, param
 	return analytics, nil
 }
 
-func (h *AnalyticsHandler) GetEconomicAnalytics(ctx context.Context, params api.GetEconomicAnalyticsParams) (*api.EconomicAnalytics, error) {
+func (h *AnalyticsHandler) GetEconomicAnalytics(ctx context.Context, params api.GetEconomicAnalyticsParams) (*models.EconomicAnalytics, error) {
 	h.logger.Info("Processing economic analytics request",
 		zap.String("period", params.Period))
 
@@ -338,7 +339,7 @@ func (h *AnalyticsHandler) GetEconomicAnalytics(ctx context.Context, params api.
 	return analytics, nil
 }
 
-func (h *AnalyticsHandler) GetCombatAnalytics(ctx context.Context, params api.GetCombatAnalyticsParams) (*api.CombatAnalytics, error) {
+func (h *AnalyticsHandler) GetCombatAnalytics(ctx context.Context, params api.GetCombatAnalyticsParams) (*models.CombatAnalytics, error) {
 	h.logger.Info("Processing combat analytics request",
 		zap.String("period", params.Period),
 		zap.String("game_mode", params.GameMode))
@@ -355,7 +356,7 @@ func (h *AnalyticsHandler) GetCombatAnalytics(ctx context.Context, params api.Ge
 	return analytics, nil
 }
 
-func (h *AnalyticsHandler) GetSocialAnalytics(ctx context.Context, params api.GetSocialAnalyticsParams) (*api.SocialAnalytics, error) {
+func (h *AnalyticsHandler) GetSocialAnalytics(ctx context.Context, params api.GetSocialAnalyticsParams) (*models.SocialAnalytics, error) {
 	h.logger.Info("Processing social analytics request",
 		zap.String("period", params.Period))
 
@@ -371,7 +372,7 @@ func (h *AnalyticsHandler) GetSocialAnalytics(ctx context.Context, params api.Ge
 	return analytics, nil
 }
 
-func (h *AnalyticsHandler) GetRevenueAnalytics(ctx context.Context, params api.GetRevenueAnalyticsParams) (*api.RevenueAnalytics, error) {
+func (h *AnalyticsHandler) GetRevenueAnalytics(ctx context.Context, params api.GetRevenueAnalyticsParams) (*models.RevenueAnalytics, error) {
 	h.logger.Info("Processing revenue analytics request",
 		zap.String("period", params.Period))
 
@@ -387,7 +388,7 @@ func (h *AnalyticsHandler) GetRevenueAnalytics(ctx context.Context, params api.G
 	return analytics, nil
 }
 
-func (h *AnalyticsHandler) GetSystemPerformanceAnalytics(ctx context.Context, params api.GetSystemPerformanceAnalyticsParams) (*api.SystemPerformanceAnalytics, error) {
+func (h *AnalyticsHandler) GetSystemPerformanceAnalytics(ctx context.Context, params api.GetSystemPerformanceAnalyticsParams) (*models.SystemPerformanceAnalytics, error) {
 	h.logger.Info("Processing system performance analytics request",
 		zap.String("period", params.Period))
 
@@ -403,7 +404,7 @@ func (h *AnalyticsHandler) GetSystemPerformanceAnalytics(ctx context.Context, pa
 	return analytics, nil
 }
 
-func (h *AnalyticsHandler) GetAnalyticsAlerts(ctx context.Context, params api.GetAnalyticsAlertsParams) (*api.AnalyticsAlerts, error) {
+func (h *AnalyticsHandler) GetAnalyticsAlerts(ctx context.Context, params api.GetAnalyticsAlertsParams) (*models.AnalyticsAlerts, error) {
 	h.logger.Info("Processing analytics alerts request",
 		zap.String("severity", params.Severity))
 
@@ -419,7 +420,7 @@ func (h *AnalyticsHandler) GetAnalyticsAlerts(ctx context.Context, params api.Ge
 	return alerts, nil
 }
 
-func (h *AnalyticsHandler) GenerateAnalyticsReport(ctx context.Context, params api.GenerateAnalyticsReportParams) (*api.AnalyticsReport, error) {
+func (h *AnalyticsHandler) GenerateAnalyticsReport(ctx context.Context, params api.GenerateAnalyticsReportParams) (*models.AnalyticsReport, error) {
 	h.logger.Info("Processing analytics report generation request",
 		zap.String("report_type", params.ReportType))
 

@@ -110,7 +110,7 @@ func (h *Handlers) CreateQuest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.service.repo.CreateQuestDefinition(ctx, &quest); err != nil {
+	if err := h.service.CreateQuestDefinition(ctx, &quest); err != nil {
 		h.logger.Errorf("Failed to create quest: %v", err)
 		h.respondError(w, http.StatusInternalServerError, "Failed to create quest")
 		return
@@ -127,7 +127,7 @@ func (h *Handlers) GetQuest(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	questID := chi.URLParam(r, "questId")
 
-	quest, err := h.service.repo.GetQuestDefinition(ctx, questID)
+	quest, err := h.service.GetQuestDefinition(ctx, questID)
 	if err != nil {
 		h.logger.Errorf("Failed to get quest: %v", err)
 		h.respondError(w, http.StatusNotFound, "Quest not found")
@@ -150,7 +150,7 @@ func (h *Handlers) UpdateQuest(w http.ResponseWriter, r *http.Request) {
 
 	quest.QuestID = questID // Ensure ID matches URL param
 
-	if err := h.service.repo.CreateQuestDefinition(ctx, &quest); err != nil {
+	if err := h.service.CreateQuestDefinition(ctx, &quest); err != nil {
 		h.logger.Errorf("Failed to update quest: %v", err)
 		h.respondError(w, http.StatusInternalServerError, "Failed to update quest")
 		return

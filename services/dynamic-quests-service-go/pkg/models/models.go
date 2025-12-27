@@ -208,6 +208,7 @@ type QuestAnalytics struct {
 	EndingDistribution map[string]int64  `json:"ending_distribution"` // EndingID -> count
 	DifficultyRatings map[string]float64 `json:"difficulty_ratings"` // Difficulty -> average rating
 	PlayerRetention   map[string]int64   `json:"player_retention"`   // Stage -> players remaining
+	LastUpdated       time.Time          `json:"last_updated"`
 }
 
 // QuestTemplate represents a template for generating dynamic quests

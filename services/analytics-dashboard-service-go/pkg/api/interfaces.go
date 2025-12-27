@@ -6,7 +6,6 @@ package api
 
 import (
 	"context"
-	"time"
 
 	"analytics-dashboard-service-go/pkg/models"
 )

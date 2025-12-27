@@ -800,6 +800,16 @@ func (s *Service) ImportQuestsFromYAML(ctx context.Context, yamlData []byte) err
 	return nil
 }
 
+// CreateQuestDefinition creates a new quest definition
+func (s *Service) CreateQuestDefinition(ctx context.Context, quest *repository.QuestDefinition) error {
+	return s.repo.CreateQuestDefinition(ctx, quest)
+}
+
+// GetQuestDefinition retrieves a quest definition by ID
+func (s *Service) GetQuestDefinition(ctx context.Context, questID string) (*repository.QuestDefinition, error) {
+	return s.repo.GetQuestDefinition(ctx, questID)
+}
+
 // Helper functions for conversion
 func (s *Service) convertObjectivesToChoicePoints(objectives []struct {
 	ID    string `yaml:"id"`

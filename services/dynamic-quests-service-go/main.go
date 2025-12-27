@@ -83,7 +83,7 @@ func main() {
 	r.Get("/health", h.Health)
 	r.Get("/ready", h.Ready)
 	r.Handle("/metrics", promhttp.Handler())
-	r.Get("/debug/pprof/*", middleware.Profiler())
+	r.Handle("/debug/pprof/*", middleware.Profiler())
 
 	// API routes with versioning
 	r.Route("/api/v1", func(r chi.Router) {

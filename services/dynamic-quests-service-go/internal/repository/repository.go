@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+
+	"necpgame/services/dynamic-quests-service-go/pkg/models"
 )
 
 // BranchingLogic represents the JSONB structure for quest branching
@@ -138,6 +140,59 @@ func (r *Repository) CreateQuestDefinition(ctx context.Context, quest *QuestDefi
 	}
 
 	r.logger.Infof("Quest definition created/updated: %s", quest.QuestID)
+	return nil
+}
+
+// CreateDynamicQuest creates a new dynamic quest from models.DynamicQuest
+func (r *Repository) CreateDynamicQuest(ctx context.Context, quest *models.DynamicQuest) error {
+	choicePointsData, _ := json.Marshal(quest.ChoicePoints)
+	endingVariationsData, _ := json.Marshal(quest.EndingVariations)
+	reputationImpactsData, _ := json.Marshal(quest.ReputationImpacts)
+	narrativeSetupData, _ := json.Marshal(quest.NarrativeSetup)
+	keyCharactersData, _ := json.Marshal(quest.KeyCharacters)
+	themesData, _ := json.Marshal(quest.Themes)
+
+	query := `
+		INSERT INTO gameplay.dynamic_quests (
+			quest_id, title, description, quest_type, min_level, max_level,
+			estimated_duration, difficulty, choice_points, ending_variations,
+			reputation_impacts, branching_logic, narrative_setup, key_characters,
+			themes, status, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+		ON CONFLICT (quest_id) DO UPDATE SET
+			title = EXCLUDED.title,
+			description = EXCLUDED.description,
+			quest_type = EXCLUDED.quest_type,
+			min_level = EXCLUDED.min_level,
+			max_level = EXCLUDED.max_level,
+			estimated_duration = EXCLUDED.estimated_duration,
+			difficulty = EXCLUDED.difficulty,
+			choice_points = EXCLUDED.choice_points,
+			ending_variations = EXCLUDED.ending_variations,
+			reputation_impacts = EXCLUDED.reputation_impacts,
+			branching_logic = EXCLUDED.branching_logic,
+			narrative_setup = EXCLUDED.narrative_setup,
+			key_characters = EXCLUDED.key_characters,
+			themes = EXCLUDED.themes,
+			status = EXCLUDED.status,
+			updated_at = EXCLUDED.updated_at
+	`
+
+	branchingLogicData, _ := json.Marshal(map[string]interface{}{}) // Empty for now
+
+	_, err := r.db.ExecContext(ctx, query,
+		quest.QuestID, quest.Title, quest.Description, quest.QuestType,
+		quest.MinLevel, quest.MaxLevel, quest.EstimatedDuration, quest.Difficulty,
+		choicePointsData, endingVariationsData, reputationImpactsData,
+		branchingLogicData, narrativeSetupData, keyCharactersData, themesData,
+		quest.Status, quest.CreatedAt, quest.UpdatedAt)
+
+	if err != nil {
+		r.logger.Errorf("Failed to create dynamic quest: %v", err)
+		return fmt.Errorf("failed to create dynamic quest: %w", err)
+	}
+
+	r.logger.Infof("Dynamic quest created/updated: %s", quest.QuestID)
 	return nil
 }
 
