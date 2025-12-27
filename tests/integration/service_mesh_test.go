@@ -5,7 +5,6 @@
 package integration
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -238,9 +237,6 @@ func TestEventStreamingIntegration(t *testing.T) {
 
 	// Test Kafka event streaming integration
 	// This validates that services can publish and consume events
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 
 	// Placeholder for event streaming tests
 	// In production, this would:

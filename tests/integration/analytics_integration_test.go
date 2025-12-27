@@ -6,7 +6,6 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -249,9 +248,6 @@ func TestCrossServiceCommunication(t *testing.T) {
 
 	// Test that services can communicate with each other
 	// This is a placeholder for more complex cross-service tests
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 
 	// Test analytics service response format
 	resp, err := http.Get("http://localhost:8091/health")
