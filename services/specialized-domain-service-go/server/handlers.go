@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-faster/jx"
 	"specialized-domain-service-go/pkg/api"
 )
 
@@ -75,8 +76,13 @@ func (h *Handler) ReloadQuestContent(ctx context.Context, req *api.ReloadQuestCo
 	// Convert YamlContent to map[string]interface{}
 	yamlMap := make(map[string]interface{})
 	for k, v := range yamlContent {
-		// Simple conversion - in production would need proper JSON parsing
-		yamlMap[k] = string(v)
+		// Parse JSON raw data
+		var parsed interface{}
+		if err := v.Unmarshal(&parsed); err != nil {
+			h.logger.Printf("Failed to parse YAML field %s: %v", k, err)
+			continue
+		}
+		yamlMap[k] = parsed
 	}
 
 	// Import quest content to database
@@ -95,11 +101,32 @@ func (h *Handler) ReloadQuestContent(ctx context.Context, req *api.ReloadQuestCo
 }
 
 // QuestHealthCheck implements health check endpoint
+// PERFORMANCE: <1ms target, cached data only
 func (h *Handler) QuestHealthCheck(ctx context.Context) (*api.HealthResponse, error) {
-	// TODO: Implement health check logic
+	// PERFORMANCE: Strict timeout for health checks
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Millisecond)
+	defer cancel()
+
+	// Check service health
 	err := h.service.HealthCheck(ctx)
 	if err != nil {
-		return nil, err
+		h.logger.Printf("Health check failed: %v", err)
+		return &api.HealthResponse{
+			Status:  api.HealthResponseStatus("error"),
+			Service: "specialized-domain",
+		}, nil
 	}
-	return &api.HealthResponse{Status: "ok"}, nil
+
+	// PERFORMANCE: Use memory pool for response
+	resp := h.pool.Get().(*api.HealthResponse)
+	defer h.pool.Put(resp)
+
+	// Reset and populate response
+	resp.Status = api.HealthResponseStatus("healthy")
+	resp.Service = "specialized-domain"
+	resp.Timestamp = time.Now()
+	resp.Version = api.OptString{Value: "1.0.0", Set: true}
+
+	h.logger.Printf("Health check passed")
+	return resp, nil
 }

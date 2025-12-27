@@ -1,19 +1,149 @@
 // Issue: #backend-specialized_domain
+// SECURITY: JWT authentication, rate limiting, CORS
 
 package server
 
 import (
+	"context"
 	"net/http"
+	"strings"
+	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"specialized-domain-service-go/pkg/api"
 )
+
+// JWTClaims represents JWT token claims
+type JWTClaims struct {
+	UserID   string `json:"user_id"`
+	Username string `json:"username"`
+	Role     string `json:"role"`
+	jwt.RegisteredClaims
+}
+
+// SecurityMiddleware provides authentication and authorization
+type SecurityMiddleware struct {
+	jwtSecret []byte
+}
+
+// NewSecurityMiddleware creates a new security middleware
+func NewSecurityMiddleware(jwtSecret string) *SecurityMiddleware {
+	return &SecurityMiddleware{
+		jwtSecret: []byte(jwtSecret),
+	}
+}
+
+// Authenticate validates JWT token and sets user context
+func (sm *SecurityMiddleware) Authenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Extract token from Authorization header
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, "Missing authorization header", http.StatusUnauthorized)
+			return
+		}
+
+		// Check Bearer token format
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			http.Error(w, "Invalid authorization format", http.StatusUnauthorized)
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+		// Parse and validate token
+		token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return sm.jwtSecret, nil
+		})
+
+		if err != nil || !token.Valid {
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		claims, ok := token.Claims.(*JWTClaims)
+		if !ok {
+			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+			return
+		}
+
+		// Check token expiration
+		if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
+			http.Error(w, "Token expired", http.StatusUnauthorized)
+			return
+		}
+
+		// Add user info to request context
+		ctx := context.WithValue(r.Context(), "user_id", claims.UserID)
+		ctx = context.WithValue(ctx, "username", claims.Username)
+		ctx = context.WithValue(ctx, "role", claims.Role)
+
+		// Call next handler with updated context
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// CORSMiddleware adds CORS headers
+func CORSMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// RateLimitMiddleware provides basic rate limiting
+func RateLimitMiddleware(next http.Handler) http.Handler {
+	// Simple in-memory rate limiter (production should use Redis)
+	requests := make(map[string][]time.Time)
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		clientIP := r.RemoteAddr
+		now := time.Now()
+
+		// Clean old requests
+		var recent []time.Time
+		for _, t := range requests[clientIP] {
+			if now.Sub(t) < time.Minute {
+				recent = append(recent, t)
+			}
+		}
+		requests[clientIP] = recent
+
+		// Check rate limit (100 requests per minute)
+		if len(recent) >= 100 {
+			http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+			return
+		}
+
+		// Add current request
+		requests[clientIP] = append(requests[clientIP], now)
+
+		next.ServeHTTP(w, r)
+	})
+}
 
 type SpecializeddomainService struct {
 	api *api.Server
 }
 
+// NewSpecializeddomainService creates a new service with security middleware
 func NewSpecializeddomainService() *SpecializeddomainService {
-	server, _ := api.NewServer(&Handler{}, nil) // TODO: Add proper security handler
+	handler := &Handler{}
+
+	// SECURITY: Apply middleware chain
+	security := NewSecurityMiddleware("your-jwt-secret-key-change-in-production")
+	mux := CORSMiddleware(RateLimitMiddleware(security.Authenticate(handler)))
+
+	server, _ := api.NewServer(mux, nil)
+
 	return &SpecializeddomainService{
 		api: server,
 	}
