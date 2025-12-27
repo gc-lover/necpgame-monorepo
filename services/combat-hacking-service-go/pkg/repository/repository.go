@@ -145,6 +145,211 @@ func (r *Repository) CreateGlitchDoubles(req models.GlitchDoublesRequest) ([]*mo
 	return phantoms, nil
 }
 
+// Enemy Hacking Operations
+// Issue: #143875915
+
+// ScanEnemyCyberware performs cyberware scanning on an enemy
+func (r *Repository) ScanEnemyCyberware(req models.EnemyScanRequest) (*models.EnemyScanResult, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// Generate scan result based on request
+	result := &models.EnemyScanResult{
+		Success: true,
+		TargetID: req.TargetID,
+		ScanDuration: 3, // seconds
+		DetectionRisk: 0.15,
+		Vulnerabilities: []models.VulnerabilityInfo{
+			{
+				Type: "implant",
+				Severity: "medium",
+				ExploitTime: 5,
+				Description: "Neural implant vulnerable to overload",
+			},
+		},
+	}
+
+	r.enemyScans[req.TargetID] = result
+	return result, nil
+}
+
+// HackEnemyCyberware attempts to hack enemy cyberware
+func (r *Repository) HackEnemyCyberware(req models.EnemyHackRequest) (*models.EnemyHackResult, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// Determine hack success based on skill level and vulnerability
+	var success bool
+	var effectType string
+	var duration int
+	var damage int
+
+	switch req.SkillLevel {
+	case 1, 2:
+		success = true
+		effectType = "stun"
+		duration = 3
+	case 3:
+		success = true
+		effectType = "damage"
+		duration = 5
+		damage = 150
+	}
+
+	result := &models.EnemyHackResult{
+		Success: success,
+		TargetID: req.TargetID,
+		EffectType: effectType,
+		Duration: duration,
+		Damage: damage,
+		DetectionRisk: 0.25,
+	}
+
+	return result, nil
+}
+
+// Device Hacking Operations
+// Issue: #143875916
+
+// ScanDeviceCyberware performs device scanning
+func (r *Repository) ScanDeviceCyberware(req models.DeviceScanRequest) (*models.DeviceScanResult, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	result := &models.DeviceScanResult{
+		Success: true,
+		DeviceID: req.DeviceID,
+		DeviceType: req.DeviceType,
+		SecurityLevel: "basic",
+		ScanDuration: 2,
+		Vulnerabilities: []models.DeviceVulnerability{
+			{
+				Type: "password",
+				Difficulty: "easy",
+				ExploitTime: 3,
+				Description: "Weak password protection",
+			},
+		},
+	}
+
+	r.deviceScans[req.DeviceID] = result
+	return result, nil
+}
+
+// HackDevice attempts to hack a device
+func (r *Repository) HackDevice(req models.DeviceHackRequest) (*models.DeviceHackResult, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	var success bool
+	var effectType string
+	var duration int
+	var dataExtracted string
+
+	switch req.VulnerabilityType {
+	case "password":
+		success = true
+		effectType = "control"
+		duration = 30
+	case "backdoor":
+		success = true
+		effectType = "data_steal"
+		duration = 10
+		dataExtracted = "security_logs"
+	}
+
+	result := &models.DeviceHackResult{
+		Success: success,
+		DeviceID: req.DeviceID,
+		EffectType: effectType,
+		Duration: duration,
+		DataExtracted: dataExtracted,
+		DetectionRisk: 0.20,
+	}
+
+	return result, nil
+}
+
+// Network Hacking Operations
+// Issue: #143875917
+
+// InfiltrateNetwork attempts network infiltration
+func (r *Repository) InfiltrateNetwork(req models.NetworkInfiltrationRequest) (*models.NetworkInfiltrationResult, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	result := &models.NetworkInfiltrationResult{
+		Success: true,
+		NetworkID: req.NetworkID,
+		AccessLevel: "user",
+		ICELevel: 2,
+		Duration: 300, // 5 minutes
+		DetectionRisk: 0.35,
+	}
+
+	r.networkAccess[req.NetworkID] = result
+	return result, nil
+}
+
+// ExtractData performs data extraction from network
+func (r *Repository) ExtractData(req models.DataExtractionRequest) (*models.DataExtractionResult, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	result := &models.DataExtractionResult{
+		Success: true,
+		DataType: req.DataType,
+		DataSize: 50, // MB
+		Value: 2500,  // in-game currency
+		Sensitivity: "medium",
+		DetectionRisk: 0.40,
+		ExtractionTime: 45, // seconds
+	}
+
+	return result, nil
+}
+
+// Combat Support Operations
+// Issue: #143875918
+
+// ActivateCombatSupport provides combat support hacking
+func (r *Repository) ActivateCombatSupport(req models.CombatSupportRequest) (*models.CombatSupportResult, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	result := &models.CombatSupportResult{
+		Success: true,
+		SupportType: req.SupportType,
+		EffectArea: models.Vector3{X: 0, Y: 0, Z: 0}, // Would be calculated from player position
+		Duration: 15,
+		AffectedTargets: len(req.TargetIDs),
+		DetectionRisk: 0.30,
+	}
+
+	return result, nil
+}
+
+// Anti-Cheat Operations
+// Issue: #143875919
+
+// ValidateHackingAttempt validates a hacking attempt for anti-cheat
+func (r *Repository) ValidateHackingAttempt(req models.HackingValidationRequest) (*models.HackingValidationResult, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// Simple validation logic - in real implementation would be more sophisticated
+	result := &models.HackingValidationResult{
+		Valid: true,
+		PlayerID: req.PlayerID,
+		ActionType: req.ActionType,
+		Confidence: 0.95,
+		AnomalyScore: 0.05,
+		Flags: []string{}, // No anomalies detected
+	}
+
+	return result, nil
+}
+
 // GetActiveBlindZones returns all currently active blind zones
 func (r *Repository) GetActiveBlindZones() map[string]*models.BlindZone {
 	r.mu.RLock()

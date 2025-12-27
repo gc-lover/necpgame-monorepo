@@ -1107,3 +1107,418 @@ func (s *Service) cacheCleanup() {
 		s.logger.Debug("Cache cleanup completed")
 	}
 }
+
+// Detroit Quests Implementation
+// Issues: #140927952, #140927958, #140927959, #140927961, #140927963
+
+// GetConeyIslandHotDogsQuest returns the Coney Island Hot Dogs quest for Detroit
+func (s *Service) GetConeyIslandHotDogsQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Coney Island Hot Dogs quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "coney-island-hot-dogs-detroit-2020-2029",
+		Title:            "Хот-доги Кони-Айленд",
+		Description:      "Восстановить традицию хот-догов Кони-Айленд в заброшенном парке развлечений Детройта",
+		QuestType:        "narrative_side",
+		MinLevel:         8,
+		MaxLevel:         15,
+		EstimatedDuration: 45,
+		Difficulty:       "medium",
+		Themes:           []string{"street_food", "corporate_resistance", "cultural_revitalization"},
+		Status:           "active",
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "park_exploration",
+				Sequence:    1,
+				Title:       "Исследование парка",
+				Description: "Исследовать заброшенный парк Кони-Айленд",
+				Context:     "Парк полон воспоминаний о прошлом великолепии Детройта",
+				Choices: []models.Choice{
+					{
+						ID:             "careful_search",
+						Text:           "Тщательно обыскать парк",
+						Description:    "Найти подсказки о рецепте хот-догов",
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "corporate_bribe",
+						Text:           "Подкупить корпоративного менеджера",
+						Description:    "Получить информацию от корпорации",
+						RiskLevel:      "medium",
+						MoralAlignment: "evil",
+					},
+				},
+				Critical: true,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "park_restored",
+				Title:       "Парк восстановлен",
+				Description: "Традиция хот-догов спасена",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 8900},
+					{Type: "currency", Value: 6200},
+					{Type: "item", ItemID: "coney_island_recipe", Rarity: "legendary"},
+				},
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Detroit, Coney Island Amusement Park",
+			TimePeriod:  "2020-2029",
+			Weather:     "overcast with occasional rain",
+			Situation:   "The park stands abandoned, a relic of Detroit's golden age",
+			Objectives: []string{
+				"Find the legendary hot dog recipe",
+				"Restore the park's food stalls",
+				"Host a street food festival",
+				"Protect the park from corporate demolition",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "old_cook",
+				Name:        "Марио 'Красавчик' Росси",
+				Role:        "Старый повар",
+				Description: "Последний хранитель рецепта хот-догов Кони-Айленд",
+				Importance:  "primary",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
+// Get1967RiotsLegacyQuest returns the 1967 Riots Legacy quest for Detroit
+func (s *Service) Get1967RiotsLegacyQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving 1967 Riots Legacy quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "1967-riots-legacy-detroit-2020-2029",
+		Title:            "Наследие бунтов 1967 года",
+		Description:      "Исследовать последствия бунтов 1967 года и их влияние на современный Детройт",
+		QuestType:        "narrative_main",
+		MinLevel:         12,
+		MaxLevel:         20,
+		EstimatedDuration: 60,
+		Difficulty:       "hard",
+		Themes:           []string{"historical_trauma", "racial_justice", "urban_decay", "social_change"},
+		Status:           "active",
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "family_history",
+				Sequence:    1,
+				Title:       "Семейная история",
+				Description: "Узнать правду о участии семьи в событиях 1967 года",
+				Context:     "Семья хранит темные секреты о тех событиях",
+				Choices: []models.Choice{
+					{
+						ID:             "investigate_gently",
+						Text:           "Аккуратно расспросить родственников",
+						Description:    "Избежать конфликтов в семье",
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "confront_directly",
+						Text:           "Прямо потребовать правду",
+						Description:    "Риск разрыва отношений",
+						RiskLevel:      "high",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: true,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "reconciliation",
+				Title:       "Примирение",
+				Description: "Семья обретает мир с прошлым",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 12500},
+					{Type: "reputation", Value: "detroit_community:+25"},
+					{Type: "item", ItemID: "family_relic", Rarity: "epic"},
+				},
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Detroit, Various Neighborhoods",
+			TimePeriod:  "2020-2029",
+			Weather:     "mixed, reflecting the city's turbulent history",
+			Situation:   "The wounds of 1967 still bleed in Detroit's collective consciousness",
+			Objectives: []string{
+				"Investigate family involvement in the 1967 riots",
+				"Interview survivors and witnesses",
+				"Visit historical sites from the riots",
+				"Confront buried truths about the past",
+				"Help community healing process",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "grandmother",
+				Name:        "Бабушка Эстер",
+				Role:        "Семейный хранитель истории",
+				Description: "Хранит семейные секреты о событиях 1967 года",
+				Importance:  "primary",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
+// Get8MileRoadJourneyQuest returns the 8 Mile Road Journey quest for Detroit
+func (s *Service) Get8MileRoadJourneyQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving 8 Mile Road Journey quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "8-mile-road-journey-detroit-2020-2029",
+		Title:            "Путешествие по дороге 8-Майл",
+		Description:      "Пройти по легендарной дороге 8-Майл и раскрыть её секреты",
+		QuestType:        "narrative_side",
+		MinLevel:         10,
+		MaxLevel:         18,
+		EstimatedDuration: 50,
+		Difficulty:       "medium",
+		Themes:           []string{"urban_exploration", "personal_growth", "detroit_mythology", "racial_divide"},
+		Status:           "active",
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "road_choice",
+				Sequence:    1,
+				Title:       "Выбор пути",
+				Description: "Как пройти по дороге 8-Майл",
+				Context:     "Дорога символизирует разделение между мирами",
+				Choices: []models.Choice{
+					{
+						ID:             "walk_alone",
+						Text:           "Пойти пешком в одиночку",
+						Description:    "Личное путешествие самопознания",
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "take_transport",
+						Text:           "Использовать транспорт",
+						Description:    "Быстрый и безопасный маршрут",
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: false,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "journey_completed",
+				Title:       "Путешествие завершено",
+				Description: "Секреты 8-Майл раскрыты",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 10200},
+					{Type: "currency", Value: 7500},
+					{Type: "reputation", Value: "detroit_underground:+20"},
+				},
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Detroit, 8 Mile Road",
+			TimePeriod:  "2020-2029",
+			Weather:     "overcast with urban haze",
+			Situation:   "The legendary road divides Detroit's worlds, holding ancient secrets",
+			Objectives: []string{
+				"Travel the length of 8 Mile Road",
+				"Discover hidden landmarks and stories",
+				"Interact with local legends",
+				"Uncover the road's mystical significance",
+				"Complete personal transformation",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "road_mentor",
+				Name:        "Джеймс 'Призрак' Уилсон",
+				Role:        "Хранитель секретов 8-Майл",
+				Description: "Легендарная фигура, знающая все тайны дороги",
+				Importance:  "primary",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
+// GetRedWingsHockeyQuest returns the Red Wings Hockey quest for Detroit
+func (s *Service) GetRedWingsHockeyQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Red Wings Hockey quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "red-wings-hockey-detroit-2020-2029",
+		Title:            "Хоккей Ред Уингс",
+		Description:      "Восстановить славу команды Детройт Ред Уингс",
+		QuestType:        "narrative_side",
+		MinLevel:         14,
+		MaxLevel:         22,
+		EstimatedDuration: 75,
+		Difficulty:       "hard",
+		Themes:           []string{"sports_revitalization", "team_building", "corporate_sports", "detroit_pride"},
+		Status:           "active",
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "team_recruitment",
+				Sequence:    1,
+				Title:       "Набор команды",
+				Description: "Собрать команду для возрождения Ред Уингс",
+				Context:     "Город нуждается в спортивных героях",
+				Choices: []models.Choice{
+					{
+						ID:             "recruit_locals",
+						Text:           "Набрать местных талантов",
+						Description:    "Поддержка местного сообщества",
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "corporate_sponsors",
+						Text:           "Привлечь корпоративных игроков",
+						Description:    "Быстрый путь к победе",
+						RiskLevel:      "medium",
+						MoralAlignment: "evil",
+					},
+				},
+				Critical: true,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "wings_restored",
+				Title:       "Ред Уингс возрождены",
+				Description: "Команда вернула славу Детройту",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 15800},
+					{Type: "currency", Value: 12500},
+					{Type: "reputation", Value: "detroit_sports:+30"},
+					{Type: "item", ItemID: "wings_jersey", Rarity: "epic"},
+				},
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Detroit, Joe Louis Arena",
+			TimePeriod:  "2020-2029",
+			Weather:     "indoor arena, electric atmosphere",
+			Situation:   "The legendary Red Wings franchise needs revival in a changed Detroit",
+			Objectives: []string{
+				"Assemble a competitive hockey team",
+				"Restore Joe Louis Arena",
+				"Win championship games",
+				"Build fan support across Detroit",
+				"Defeat corporate rival teams",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "coach_legend",
+				Name:        "Майк 'Ледяной' Стивенсон",
+				Role:        "Бывший тренер Ред Уингс",
+				Description: "Легенда хоккея, готовый вернуться",
+				Importance:  "primary",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
+// GetRevivalHopeQuest returns the Revival and Hope quest for Detroit
+func (s *Service) GetRevivalHopeQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Revival and Hope quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "revival-hope-detroit-2020-2029",
+		Title:            "Возрождение и надежда",
+		Description:      "Стать катализатором возрождения Детройта",
+		QuestType:        "narrative_main",
+		MinLevel:         16,
+		MaxLevel:         25,
+		EstimatedDuration: 90,
+		Difficulty:       "legendary",
+		Themes:           []string{"urban_revitalization", "community_leadership", "hope_vs_despair", "detroit_future"},
+		Status:           "active",
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "revival_approach",
+				Sequence:    1,
+				Title:       "Подход к возрождению",
+				Description: "Выбрать стратегию возрождения города",
+				Context:     "Детройт на перепутье: корпорации или сообщество?",
+				Choices: []models.Choice{
+					{
+						ID:             "community_first",
+						Text:           "Приоритет сообществу",
+						Description:    "Медленное, но устойчивое развитие",
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "corporate_deals",
+						Text:           "Корпоративные сделки",
+						Description:    "Быстрое развитие с компромиссами",
+						RiskLevel:      "high",
+						MoralAlignment: "evil",
+					},
+				},
+				Critical: true,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "detroit_reborn",
+				Title:       "Детройт возрожден",
+				Description: "Город обрел новую жизнь и надежду",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 25000},
+					{Type: "currency", Value: 20000},
+					{Type: "reputation", Value: "detroit_legendary:+50"},
+					{Type: "item", ItemID: "revival_medal", Rarity: "legendary"},
+				},
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Detroit, Multiple Districts",
+			TimePeriod:  "2020-2029",
+			Weather:     "symbolic of the city's changing fortunes",
+			Situation:   "Detroit stands at the crossroads of despair and hope",
+			Objectives: []string{
+				"Lead community revitalization projects",
+				"Combat corporate exploitation",
+				"Build alliances across divided communities",
+				"Create sustainable economic opportunities",
+				"Inspire city-wide hope and unity",
+				"Transform Detroit's image from ruin to renaissance",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "community_leader",
+				Name:        "Мария 'Надежда' Гарсия",
+				Role:        "Лидер сообщества",
+				Description: "Видит потенциал Детройта и борется за его будущее",
+				Importance:  "primary",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}

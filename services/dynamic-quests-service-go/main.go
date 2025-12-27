@@ -93,6 +93,15 @@ func main() {
 			r.Get("/{questId}", h.GetQuest)              // GET /api/v1/quests/{id}
 			r.Put("/{questId}", h.UpdateQuest)           // PUT /api/v1/quests/{id}
 			r.Delete("/{questId}", h.DeleteQuest)        // DELETE /api/v1/quests/{id}
+
+			// Detroit Quests - Issues: #140927952, #140927958, #140927959, #140927961, #140927963
+			r.Route("/detroit", func(r chi.Router) {
+				r.Get("/coney-island-hot-dogs", h.GetConeyIslandHotDogsQuest) // GET /api/v1/quests/detroit/coney-island-hot-dogs
+				r.Get("/1967-riots-legacy", h.Get1967RiotsLegacyQuest)       // GET /api/v1/quests/detroit/1967-riots-legacy
+				r.Get("/8-mile-road-journey", h.Get8MileRoadJourneyQuest)    // GET /api/v1/quests/detroit/8-mile-road-journey
+				r.Get("/red-wings-hockey", h.GetRedWingsHockeyQuest)         // GET /api/v1/quests/detroit/red-wings-hockey
+				r.Get("/revival-hope", h.GetRevivalHopeQuest)                // GET /api/v1/quests/detroit/revival-hope
+			})
 		})
 
 		r.Route("/quests/{questId}", func(r chi.Router) {

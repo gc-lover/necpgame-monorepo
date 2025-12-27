@@ -350,6 +350,79 @@ func (h *Handlers) GenerateDynamicQuest(w http.ResponseWriter, r *http.Request) 
 	h.respondJSON(w, http.StatusOK, response)
 }
 
+// Detroit Quests Handlers
+// Issues: #140927952, #140927958, #140927959, #140927961, #140927963
+
+// GetConeyIslandHotDogsQuest handles GET /quests/detroit/coney-island-hot-dogs
+func (h *Handlers) GetConeyIslandHotDogsQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get Coney Island Hot Dogs quest request")
+
+	quest, err := h.service.GetConeyIslandHotDogsQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get Coney Island Hot Dogs quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
+// Get1967RiotsLegacyQuest handles GET /quests/detroit/1967-riots-legacy
+func (h *Handlers) Get1967RiotsLegacyQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get 1967 Riots Legacy quest request")
+
+	quest, err := h.service.Get1967RiotsLegacyQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get 1967 Riots Legacy quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
+// Get8MileRoadJourneyQuest handles GET /quests/detroit/8-mile-road-journey
+func (h *Handlers) Get8MileRoadJourneyQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get 8 Mile Road Journey quest request")
+
+	quest, err := h.service.Get8MileRoadJourneyQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get 8 Mile Road Journey quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
+// GetRedWingsHockeyQuest handles GET /quests/detroit/red-wings-hockey
+func (h *Handlers) GetRedWingsHockeyQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get Red Wings Hockey quest request")
+
+	quest, err := h.service.GetRedWingsHockeyQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get Red Wings Hockey quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
+// GetRevivalHopeQuest handles GET /quests/detroit/revival-hope
+func (h *Handlers) GetRevivalHopeQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get Revival and Hope quest request")
+
+	quest, err := h.service.GetRevivalHopeQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get Revival and Hope quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
 // respondJSON sends a JSON response
 func (h *Handlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
