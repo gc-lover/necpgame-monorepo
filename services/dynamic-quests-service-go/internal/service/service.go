@@ -1915,6 +1915,416 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 	return quest, nil
 }
 
+// GetAsadoBBQQuest returns the Asado BBQ quest for Buenos Aires
+// Issue: #140929848
+func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Asado BBQ quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "canon-quest-buenos-aires-2029-003-asado",
+		Title:            "Буэнос-Айрес: Асадо",
+		Description:      "Присоединитесь к традиционному аргентинскому барбекю - священному социальному ритуалу, где мясо, вино и дружба создают незабываемую атмосферу",
+		QuestType:        "side",
+		MinLevel:         2,
+		MaxLevel:         0, // No max level
+		EstimatedDuration: 240,
+		Difficulty:       "easy",
+		Themes:           []string{"cuisine", "social", "culture", "tradition", "food"},
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "asado_invitation",
+				Sequence:    1,
+				Title:       "Приглашение на асадо",
+				Description: "Получите приглашение на традиционное аргентинское барбекю",
+				Context:     "Начало вашего погружения в культуру аргентинской кухни",
+				Choices: []models.Choice{
+					{
+						ID:             "accept_formal",
+						Text:           "Принять формальное приглашение",
+						Description:    "Получить официальное приглашение от семьи",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(10),
+								Probability: 1.0,
+								Description: "Увеличение социальной репутации",
+							},
+							{
+								Type:        "skill_boost",
+								Target:      "cultural_awareness",
+								Value:       float64(5),
+								Probability: 1.0,
+								Description: "Улучшение навыка культурного восприятия",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "join_spontaneous",
+						Text:           "Присоединиться спонтанно",
+						Description:    "Услышать о мероприятии и присоединиться",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(15),
+								Probability: 1.0,
+								Description: "Увеличение социальной репутации",
+							},
+							{
+								Type:        "skill_boost",
+								Target:      "social_connections",
+								Value:       float64(8),
+								Probability: 1.0,
+								Description: "Улучшение навыка социальных связей",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "grill_preparation",
+				Sequence:    2,
+				Title:       "Подготовка паррильи",
+				Description: "Помогите настроить традиционный аргентинский гриль",
+				Context:     "Ключевой момент - правильная подготовка огня",
+				Choices: []models.Choice{
+					{
+						ID:             "arrange_coals",
+						Text:           "Уложить угли правильно",
+						Description:    "Создать идеальный жар для разных типов мяса",
+						Consequences: []models.Consequence{
+							{
+								Type:        "skill_boost",
+								Target:      "cooking_skill",
+								Value:       float64(12),
+								Probability: 1.0,
+								Description: "Улучшение навыка приготовления пищи",
+							},
+							{
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(10),
+								Probability: 1.0,
+								Description: "Увеличение социальной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "learn_fire_technique",
+						Text:           "Изучить технику огня",
+						Description:    "Освоить традиционные методы разжигания огня",
+						Consequences: []models.Consequence{
+							{
+								Type:        "skill_boost",
+								Target:      "survival_skill",
+								Value:       float64(8),
+								Probability: 1.0,
+								Description: "Улучшение навыка выживания",
+							},
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(12),
+								Probability: 1.0,
+								Description: "Увеличение культурной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "meat_selection",
+				Sequence:    3,
+				Title:       "Выбор и подготовка мяса",
+				Description: "Помогите выбрать лучшие куски говядины пампасов",
+				Context:     "Сердце асадо - правильный выбор мяса",
+				Choices: []models.Choice{
+					{
+						ID:             "select_premium",
+						Text:           "Выбрать премиум куски",
+						Description:    "Отобрать лучшие стейки и колбаски",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(15),
+								Probability: 1.0,
+								Description: "Увеличение социальной репутации",
+							},
+							{
+								Type:        "currency",
+								Target:      "player_wallet",
+								Value:       float64(-15),
+								Probability: 1.0,
+								Description: "Вклад в покупку мяса",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "prepare_traditional",
+						Text:           "Подготовить традиционно",
+						Description:    "Нарезать и замариновать мясо по традициям",
+						Consequences: []models.Consequence{
+							{
+								Type:        "skill_boost",
+								Target:      "cooking_skill",
+								Value:       float64(15),
+								Probability: 1.0,
+								Description: "Улучшение навыка приготовления пищи",
+							},
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(18),
+								Probability: 1.0,
+								Description: "Увеличение культурной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "wine_service",
+				Sequence:    4,
+				Title:       "Сервис вин и закусок",
+				Description: "Подайте знаменитое вино Мальбек и традиционные закуски",
+				Context:     "Вино - обязательный элемент настоящего асадо",
+				Choices: []models.Choice{
+					{
+						ID:             "serve_malbec",
+						Text:           "Подать Мальбек",
+						Description:    "Выбрать и разлить идеальное аргентинское вино",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(20),
+								Probability: 1.0,
+								Description: "Значительное увеличение социальной репутации",
+							},
+							{
+								Type:        "skill_boost",
+								Target:      "social_grace",
+								Value:       float64(10),
+								Probability: 1.0,
+								Description: "Улучшение навыка светского общения",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "prepare_chimichurri",
+						Text:           "Приготовить чиммичурри",
+						Description:    "Сделать традиционный аргентинский соус",
+						Consequences: []models.Consequence{
+							{
+								Type:        "skill_boost",
+								Target:      "cooking_skill",
+								Value:       float64(18),
+								Probability: 1.0,
+								Description: "Значительное улучшение навыка приготовления пищи",
+							},
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(22),
+								Probability: 1.0,
+								Description: "Значительное увеличение культурной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "social_gathering",
+				Sequence:    5,
+				Title:       "Социальное общение",
+				Description: "Проведите время в разговорах и историях у костра",
+				Context:     "Кульминация асадо - укрепление социальных связей",
+				Choices: []models.Choice{
+					{
+						ID:             "share_stories",
+						Text:           "Делиться историями",
+						Description:    "Рассказать о своих приключениях и выслушать других",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(25),
+								Probability: 1.0,
+								Description: "Значительное увеличение социальной репутации",
+							},
+							{
+								Type:        "skill_boost",
+								Target:      "social_connections",
+								Value:       float64(15),
+								Probability: 1.0,
+								Description: "Значительное улучшение навыка социальных связей",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "learn_traditions",
+						Text:           "Изучить традиции",
+						Description:    "Узнать больше об истории и культуре асадо",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(20),
+								Probability: 1.0,
+								Description: "Значительное увеличение культурной репутации",
+							},
+							{
+								Type:        "skill_boost",
+								Target:      "cultural_awareness",
+								Value:       float64(18),
+								Probability: 1.0,
+								Description: "Значительное улучшение культурного восприятия",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "asado_master",
+				Title:       "Мастер Асадо",
+				Description: "Стали настоящим экспертом в аргентинском барбекю",
+				Requirements: []string{"arrange_coals", "prepare_traditional", "prepare_chimichurri", "share_stories"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 2000},
+					{Type: "achievement", Value: "asado_master"},
+					{Type: "buff", Value: "hp_buff:+35", Duration: "12h"},
+				},
+				Narrative: "Вы стали частью великой традиции асадо, где мясо, вино и дружба создают настоящую магию.",
+			},
+			{
+				ID:          "social_connector",
+				Title:       "Социальный коннектор",
+				Description: "Укрепили связи и создали новые дружбы",
+				Requirements: []string{"join_spontaneous", "select_premium", "serve_malbec", "share_stories"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 1800},
+					{Type: "achievement", Value: "social_connector"},
+					{Type: "buff", Value: "social_buff:+25", Duration: "24h"},
+				},
+				Narrative: "Асадо стало мостом между культурами, а вы - тем, кто помогает людям находить общий язык.",
+			},
+			{
+				ID:          "cultural_enthusiast",
+				Title:       "Культурный энтузиаст",
+				Description: "Глубоко прониклись аргентинскими традициями",
+				Requirements: []string{"learn_fire_technique", "prepare_traditional", "learn_traditions"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 1600},
+					{Type: "achievement", Value: "cultural_enthusiast"},
+					{Type: "buff", Value: "cultural_buff:+30", Duration: "18h"},
+				},
+				Narrative: "Традиции асадо открыли вам дверь в богатую культуру Аргентины и ее людей.",
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "buenos_aires_families",
+				Change:      25,
+				Description: "Уважение аргентинских семей за участие в традиции",
+				ChoiceID:    "share_stories",
+			},
+			{
+				Faction:     "argentinian_culture",
+				Change:      20,
+				Description: "Уважение за интерес к аргентинской культуре",
+				ChoiceID:    "learn_traditions",
+			},
+			{
+				Faction:     "social_buenos_aires",
+				Change:      18,
+				Description: "Улучшение социальных связей в городе",
+				ChoiceID:    "serve_malbec",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Buenos Aires Backyard, Argentina",
+			TimePeriod:  "2020-2029",
+			Weather:     "warm summer evening with gentle breeze",
+			Situation:   "The sacred tradition of asado calls you to join the gathering of family and friends around the parrilla",
+			Objectives: []string{
+				"Receive invitation and prepare ingredients for the traditional barbecue",
+				"Help the parrillero set up the grill and control cooking temperatures",
+				"Select and serve Malbec wine with traditional accompaniments",
+				"Engage in social conversation and storytelling around the fire",
+				"Complete the ritual with a group toast and family photo",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "parrilla_master",
+				Name:        "Карлос 'Эль Паррильеро' Сантьяго",
+				Role:        "Мастер гриля",
+				Description: "Опытный повар, знающий все секреты идеального асадо",
+				Importance:  "primary",
+			},
+			{
+				ID:          "family_host",
+				Name:        "Мария 'Ла Ама де Каса' Гонсалес",
+				Role:        "Хозяйка дома",
+				Description: "Теплая и гостеприимная мать семейства, организатор традиций",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "wine_expert",
+				Name:        "Антонио 'Виньеро' Мендес",
+				Role:        "Знаток вин",
+				Description: "Эксперт по аргентинским винам, особенно Мальбеку",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "storyteller",
+				Name:        "Хорхе 'Эль Куэнтиста' Лопес",
+				Role:        "Рассказчик",
+				Description: "Мастер устных историй и традиций старой Аргентины",
+				Importance:  "ally",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
 // GetRedWingsHockeyQuest returns the Red Wings Hockey quest for Detroit
 func (s *Service) GetRedWingsHockeyQuest(ctx context.Context) (*models.DynamicQuest, error) {
 	s.logger.Info("Retrieving Red Wings Hockey quest definition")

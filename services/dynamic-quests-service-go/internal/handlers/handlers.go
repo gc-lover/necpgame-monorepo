@@ -543,6 +543,21 @@ func (h *Handlers) GetLaBocaCaminitoQuest(w http.ResponseWriter, r *http.Request
 	h.respondJSON(w, http.StatusOK, quest)
 }
 
+// GetAsadoBBQQuest handles GET /quests/buenos-aires/asado-bbq
+// Issue: #140929848
+func (h *Handlers) GetAsadoBBQQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get Asado BBQ quest request")
+
+	quest, err := h.service.GetAsadoBBQQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get Asado BBQ quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
 // GetOilLegacyQuest handles GET /quests/dallas/oil-legacy
 // Issue: #140928929
 func (h *Handlers) GetOilLegacyQuest(w http.ResponseWriter, r *http.Request) {

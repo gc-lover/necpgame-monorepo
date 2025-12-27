@@ -104,7 +104,7 @@ import (
 func main() {{
     logger := log.New(os.Stdout, "[{domain}] ", log.LstdFlags)
 
-    svc := server.New{domain.title()}Service()
+    svc := server.New{domain_title}Service()
 
     server := &http.Server{{
         Addr:    ":8080",
@@ -338,6 +338,7 @@ func (r *Repository) HealthCheck(ctx context.Context) error {{
 
         return template.format(
             domain=context.domain,
+            domain_title=context.domain.title(),
             service_name=context.service_name,
             performance_config=performance_config,
             optimizations="\\n".join(f"    // {opt}" for opt in optimizations),
