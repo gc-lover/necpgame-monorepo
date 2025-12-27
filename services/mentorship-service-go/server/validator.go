@@ -253,6 +253,55 @@ func (v *Validator) ValidateCompleteLessonRequest(ctx context.Context, req *api.
 	return nil
 }
 
+// ValidateStartLessonRequest validates lesson start request
+func (v *Validator) ValidateStartLessonRequest(ctx context.Context, req *api.StartLessonRequest) error {
+	v.logger.Debug("Validating StartLessonRequest")
+
+	if req == nil {
+		return errors.New("request cannot be nil")
+	}
+
+	// Required fields validation
+	if req.LessonType == "" {
+		return errors.New("lesson_type cannot be empty")
+	}
+	if req.Format == "" {
+		return errors.New("format cannot be empty")
+	}
+
+	// Lesson type validation
+	validLessonTypes := map[string]bool{
+		"regular":     true,
+		"assessment":  true,
+		"review":      true,
+		"practice":    true,
+	}
+	if !validLessonTypes[req.LessonType] {
+		return fmt.Errorf("invalid lesson_type: %s (must be one of: regular, assessment, review, practice)", req.LessonType)
+	}
+
+	// Format validation
+	validFormats := map[string]bool{
+		"online":  true,
+		"offline": true,
+		"hybrid":  true,
+	}
+	if !validFormats[req.Format] {
+		return fmt.Errorf("invalid format: %s (must be one of: online, offline, hybrid)", req.Format)
+	}
+
+	// Optional UUID validation
+	if req.ScheduleID.IsSet() && req.ScheduleID.Value != uuid.Nil {
+		// Valid UUID, no additional check needed since it's already parsed
+	}
+	if req.ContentID.IsSet() && req.ContentID.Value != uuid.Nil {
+		// Valid UUID, no additional check needed since it's already parsed
+	}
+
+	v.logger.Debug("StartLessonRequest validation passed")
+	return nil
+}
+
 // validateSkillProgress validates skill progress JSON structure
 func (v *Validator) validateSkillProgress(skillProgress map[string]interface{}) error {
 	// Basic structure validation - ensure it's a valid JSON object

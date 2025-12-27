@@ -155,7 +155,10 @@ func (h *Handler) StartLesson(ctx context.Context, params api.StartLessonParams,
 
 	lesson, err := h.service.StartLesson(ctx, params.ContractID, req)
 	if err != nil {
-		return api.StartLessonCreated{}, nil // TODO: Proper error handling
+		h.logger.Error("Failed to start lesson",
+			zap.String("contract_id", params.ContractID.String()),
+			zap.Error(err))
+		return nil, err
 	}
 
 	return api.StartLessonCreated{Data: *lesson}, nil

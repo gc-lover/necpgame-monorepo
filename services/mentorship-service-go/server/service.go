@@ -182,6 +182,13 @@ func (s *MentorshipService) GetLessons(ctx context.Context, contractID uuid.UUID
 // StartLesson starts a lesson
 func (s *MentorshipService) StartLesson(ctx context.Context, contractID uuid.UUID, req *api.StartLessonRequest) (*api.Lesson, error) {
 	s.metrics.RecordRequest("StartLesson")
+	s.logger.Info("Starting lesson", zap.String("contract_id", contractID.String()))
+
+	// Validate start lesson request
+	if err := s.validator.ValidateStartLessonRequest(ctx, req); err != nil {
+		s.metrics.RecordError("StartLesson")
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
 
 	lesson := &api.Lesson{
 		ID:         api.NewOptUUID(uuid.New()),
@@ -191,7 +198,7 @@ func (s *MentorshipService) StartLesson(ctx context.Context, contractID uuid.UUI
 		Format:     req.Format,
 		ContentID:  req.ContentID,
 		StartedAt:  api.NewOptDateTime(time.Now()),
-		Status:     "IN_PROGRESS",
+		Status:     "started",
 		CreatedAt:  api.NewOptDateTime(time.Now()),
 		UpdatedAt:  api.NewOptDateTime(time.Now()),
 	}
@@ -201,6 +208,8 @@ func (s *MentorshipService) StartLesson(ctx context.Context, contractID uuid.UUI
 		return nil, fmt.Errorf("failed to start lesson: %w", err)
 	}
 
+	s.metrics.RecordSuccess("StartLesson")
+	s.logger.Info("Lesson started successfully", zap.String("lesson_id", lesson.ID.Value.String()))
 	return lesson, nil
 }
 
