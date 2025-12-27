@@ -118,8 +118,15 @@ class TokyoPart1QuestImportScript(BaseScript):
 
         # Generate unique IDs
         quest_id = str(uuid.uuid4())
-        metadata_hash = hashlib.sha256(json.dumps(metadata, sort_keys=True).encode()).hexdigest()
-        content_hash = hashlib.sha256(json.dumps(quest_definition, sort_keys=True).encode()).hexdigest()
+
+        # Convert datetime objects to strings for JSON serialization
+        def serialize_for_json(obj):
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            return obj
+
+        metadata_hash = hashlib.sha256(json.dumps(metadata, sort_keys=True, default=serialize_for_json).encode()).hexdigest()
+        content_hash = hashlib.sha256(json.dumps(quest_definition, sort_keys=True, default=serialize_for_json).encode()).hexdigest()
 
         # Prepare data for insertion
         quest_definition_json = json.dumps(quest_definition, ensure_ascii=False, indent=2)
@@ -195,8 +202,6 @@ INSERT INTO gameplay.quests (
 {rollback_sql}
 
 """
-
---rollback DELETE FROM gameplay.quests WHERE metadata_id = '{metadata["id"]}';
 
         return sql
 
@@ -286,4 +291,4 @@ def main():
 
 
 if __name__ == '__main__':
-   
+    main()
