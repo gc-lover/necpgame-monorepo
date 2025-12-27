@@ -13,8 +13,7 @@ func TestNewResetservicegoService(t *testing.T) {
 	service := NewResetservicegoService()
 
 	assert.NotNil(t, service)
-	assert.NotNil(t, service.logger)
-	assert.NotNil(t, service.metrics)
+	assert.NotNil(t, service.api)
 }
 
 // TestServiceHealthCheck tests health check functionality
@@ -25,7 +24,7 @@ func TestServiceHealthCheck(t *testing.T) {
 	assert.NotPanics(t, func() {
 		// This would normally be tested via HTTP endpoint
 		// but we're testing the service initialization
-		service.logger.Info("Service health check test passed")
+		assert.NotNil(t, service.api)
 	})
 }
 
