@@ -665,6 +665,309 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /guilds/{guild_id}/voice-channels:
+    get:
+      summary: List voice channels for a guild
+      description: '**Guild voice channels listing endpoint**
+
+        Retrieves all voice channels configured for a specific guild.
+        Includes channel settings, permissions, and current status.
+
+        **Integration:** Connects to WebRTC Signaling Service for real-time voice communication
+        **Permissions:** Guild members can view, officers can manage
+        **Performance:** <10ms P95 with Redis caching'
+      operationId: listGuildVoiceChannels
+      tags:
+      - Guild Voice System
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild unique identifier
+      - name: include_active_users
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include current active users in each channel
+      responses:
+        '200':
+          description: Guild voice channels retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - channels
+                properties:
+                  channels:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GuildVoiceChannel'
+                  total_count:
+                    type: integer
+                    example: 5
+        '403':
+          description: Forbidden - not a guild member
+        '404':
+          description: Guild not found
+    post:
+      summary: Create voice channel for a guild
+      description: '**Guild voice channel creation endpoint**
+
+        Creates a new voice channel for guild communication.
+        Automatically integrates with WebRTC Signaling Service.
+
+        **Permissions:** Guild officers and above
+        **Limits:** Max 20 channels per guild, configurable per tier
+        **Integration:** Automatically provisions WebRTC signaling resources'
+      operationId: createGuildVoiceChannel
+      tags:
+      - Guild Voice System
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildVoiceChannelRequest'
+      responses:
+        '201':
+          description: Guild voice channel created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildVoiceChannel'
+        '400':
+          description: Invalid request - validation failed
+        '403':
+          description: Forbidden - insufficient permissions
+        '409':
+          description: Conflict - channel name already exists
+  /guilds/{guild_id}/voice-channels/{channel_id}:
+    get:
+      summary: Get specific guild voice channel
+      description: '**Guild voice channel retrieval endpoint**
+
+        Retrieves detailed information about a specific voice channel.
+        Includes current participants and channel settings.
+
+        **Performance:** <5ms P95 with Redis caching'
+      operationId: getGuildVoiceChannel
+      tags:
+      - Guild Voice System
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild unique identifier
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      responses:
+        '200':
+          description: Guild voice channel retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildVoiceChannel'
+        '403':
+          description: Forbidden - not a guild member
+        '404':
+          description: Channel or guild not found
+    put:
+      summary: Update guild voice channel
+      description: '**Guild voice channel update endpoint**
+
+        Updates voice channel settings, permissions, or configuration.
+        Changes are synchronized with WebRTC Signaling Service.
+
+        **Permissions:** Channel owner or guild officers
+        **Sync:** Real-time updates to all channel participants'
+      operationId: updateGuildVoiceChannel
+      tags:
+      - Guild Voice System
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild unique identifier
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuildVoiceChannelRequest'
+      responses:
+        '200':
+          description: Guild voice channel updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildVoiceChannel'
+        '403':
+          description: Forbidden - insufficient permissions
+        '404':
+          description: Channel or guild not found
+    delete:
+      summary: Delete guild voice channel
+      description: '**Guild voice channel deletion endpoint**
+
+        Permanently removes a voice channel and disconnects all participants.
+        Cleans up WebRTC signaling resources.
+
+        **Permissions:** Channel owner or guild officers
+        **Cleanup:** Disconnects users, removes signaling resources'
+      operationId: deleteGuildVoiceChannel
+      tags:
+      - Guild Voice System
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild unique identifier
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Voice channel unique identifier
+      responses:
+        '204':
+          description: Guild voice channel deleted successfully
+        '403':
+          description: Forbidden - insufficient permissions
+        '404':
+          description: Channel or guild not found
+  /guilds/{guild_id}/voice-channels/{channel_id}/join:
+    post:
+      summary: Join guild voice channel
+      description: '**Voice channel join endpoint**
+
+        Initiates WebRTC connection for voice communication.
+        Provides signaling tokens and channel access credentials.
+
+        **Integration:** Direct connection to WebRTC Signaling Service
+        **Permissions:** Guild member with channel access
+        **Real-time:** WebSocket signaling for peer-to-peer connection'
+      operationId: joinGuildVoiceChannel
+      tags:
+      - Guild Voice System
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild unique identifier
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                client_capabilities:
+                  type: object
+                  description: Client WebRTC capabilities (optional)
+      responses:
+        '200':
+          description: Successfully joined voice channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceChannelJoinResponse'
+        '403':
+          description: Forbidden - channel access denied
+        '404':
+          description: Channel or guild not found
+        '429':
+          description: Channel at capacity
+  /guilds/{guild_id}/voice-channels/{channel_id}/leave:
+    post:
+      summary: Leave guild voice channel
+      description: '**Voice channel leave endpoint**
+
+        Disconnects from voice channel and cleans up resources.
+        Notifies other participants of departure.
+
+        **Cleanup:** Releases channel slot, updates participant count'
+      operationId: leaveGuildVoiceChannel
+      tags:
+      - Guild Voice System
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild unique identifier
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Voice channel unique identifier
+      responses:
+        '200':
+          description: Successfully left voice channel
+        '404':
+          description: Channel or guild not found
 components:
   responses:
     HealthBatchSuccess:
@@ -997,6 +1300,285 @@ components:
           maximum: 599
           example: 500
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    GuildVoiceChannel:
+      type: object
+      required:
+      - id
+      - name
+      - guild_id
+      - owner_id
+      - max_users
+      - current_users
+      - is_active
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Voice channel unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Voice channel display name
+          example: General Voice
+        guild_id:
+          type: string
+          format: uuid
+          description: Associated guild identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        owner_id:
+          type: string
+          format: uuid
+          description: Channel owner (guild officer)
+          example: 550e8400-e29b-41d4-a716-446655440002
+        max_users:
+          type: integer
+          minimum: 1
+          maximum: 99
+          default: 50
+          description: Maximum users allowed in channel
+          example: 50
+        current_users:
+          type: integer
+          minimum: 0
+          description: Currently active users
+          example: 12
+        is_active:
+          type: boolean
+          description: Whether channel is operational
+          example: true
+        is_default_channel:
+          type: boolean
+          description: Whether this is the default guild channel
+          example: false
+        channel_permissions:
+          $ref: '#/components/schemas/GuildVoiceChannelPermissions'
+        webrtc_config:
+          $ref: '#/components/schemas/WebRTCChannelConfig'
+        created_at:
+          type: string
+          format: date-time
+          description: Channel creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: 'Guild voice channel with WebRTC signaling integration.'
+    GuildVoiceChannelPermissions:
+      type: object
+      properties:
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          description: Guild roles that can access this channel
+          example:
+          - member
+          - officer
+          - leader
+        blocked_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Specific users blocked from channel
+        muted_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Users muted in this channel
+        deafened_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Users deafened in this channel
+        is_moderated:
+          type: boolean
+          description: Whether channel has moderation enabled
+          example: true
+        require_approval:
+          type: boolean
+          description: Whether new users need approval to join
+          example: false
+      description: 'Voice channel permissions and access control.'
+    WebRTCChannelConfig:
+      type: object
+      properties:
+        signaling_service_url:
+          type: string
+          description: WebRTC signaling service endpoint
+          example: https://webrtc.necpgame.com
+        channel_token:
+          type: string
+          description: Temporary access token for WebRTC signaling
+        ice_servers:
+          type: array
+          items:
+            type: object
+            properties:
+              urls:
+                type: array
+                items:
+                  type: string
+                example:
+                - stun:stun.necpgame.com:19302
+                - turn:turn.necpgame.com:443
+              username:
+                type: string
+                description: TURN server username (optional)
+              credential:
+                type: string
+                description: TURN server credential (optional)
+          description: ICE servers for WebRTC connection
+        max_bitrate:
+          type: integer
+          description: Maximum audio bitrate in kbps
+          example: 64
+        codec_preferences:
+          type: array
+          items:
+            type: string
+            enum:
+            - opus
+            - speex
+            - g711
+          description: Preferred audio codecs
+          example:
+          - opus
+      description: 'WebRTC configuration for voice channel.'
+    CreateGuildVoiceChannelRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Voice channel name
+          example: Raid Voice
+        max_users:
+          type: integer
+          minimum: 1
+          maximum: 99
+          default: 50
+          description: Maximum users (optional, defaults to 50)
+        is_default_channel:
+          type: boolean
+          description: Make this the default guild channel
+          example: false
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          description: Roles that can access this channel
+          example:
+          - member
+          - officer
+        is_moderated:
+          type: boolean
+          description: Enable moderation features
+          example: true
+        require_approval:
+          type: boolean
+          description: Require approval for new users
+          example: false
+      description: 'Request to create a new guild voice channel.'
+    UpdateGuildVoiceChannelRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: New channel name
+        max_users:
+          type: integer
+          minimum: 1
+          maximum: 99
+          description: New user limit
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          description: Updated allowed roles
+        is_moderated:
+          type: boolean
+          description: Update moderation setting
+        require_approval:
+          type: boolean
+          description: Update approval requirement
+      description: 'Request to update guild voice channel settings.'
+    VoiceChannelJoinResponse:
+      type: object
+      required:
+      - channel_info
+      - webrtc_credentials
+      properties:
+        channel_info:
+          $ref: '#/components/schemas/GuildVoiceChannel'
+        webrtc_credentials:
+          type: object
+          required:
+          - signaling_token
+          - peer_id
+          properties:
+            signaling_token:
+              type: string
+              description: JWT token for WebRTC signaling authentication
+              example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+            peer_id:
+              type: string
+              format: uuid
+              description: Unique peer identifier for WebRTC connection
+              example: 550e8400-e29b-41d4-a716-446655440003
+            ice_servers:
+              type: array
+              items:
+                type: object
+                properties:
+                  urls:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - stun:stun.necpgame.com:19302
+                  username:
+                    type: string
+                  credential:
+                    type: string
+              description: ICE servers for connection
+            session_id:
+              type: string
+              format: uuid
+              description: Voice session identifier
+        active_participants:
+          type: array
+          items:
+            type: object
+            properties:
+              user_id:
+                type: string
+                format: uuid
+              username:
+                type: string
+                example: cyber_runner2077
+              joined_at:
+                type: string
+                format: date-time
+              is_muted:
+                type: boolean
+              is_deafened:
+                type: boolean
+          description: Currently active participants
+      description: 'Response containing voice channel access credentials and current state.'
     Guild:
       type: object
       required:

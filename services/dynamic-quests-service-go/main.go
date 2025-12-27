@@ -122,6 +122,11 @@ func main() {
 				r.Get("/oil-legacy", h.GetOilLegacyQuest)        // GET /api/v1/quests/dallas/oil-legacy
 				r.Get("/everything-bigger", h.GetEverythingBiggerQuest) // GET /api/v1/quests/dallas/everything-bigger
 			})
+
+			// Buenos Aires Quests - Issue: #140929841
+			r.Route("/buenos-aires", func(r chi.Router) {
+				r.Get("/tango-dance", h.GetTangoDanceQuest) // GET /api/v1/quests/buenos-aires/tango-dance
+			})
 		})
 
 		r.Route("/quests/{questId}", func(r chi.Router) {
