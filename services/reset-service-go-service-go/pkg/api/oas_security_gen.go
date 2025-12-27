@@ -40,10 +40,9 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 }
 
 var operationRolesBearerAuth = map[string][]string{
-	GetResetHistoryOperation:         []string{},
-	GetResetStatsOperation:           []string{},
-	ResetServiceHealthCheckOperation: []string{},
-	TriggerResetOperation:            []string{},
+	GetResetHistoryOperation: []string{},
+	GetResetStatsOperation:   []string{},
+	TriggerResetOperation:    []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {

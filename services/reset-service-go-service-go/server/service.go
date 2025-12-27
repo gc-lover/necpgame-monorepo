@@ -27,8 +27,11 @@ type Service struct {
 
 // NewService creates a new service instance with PERFORMANCE optimizations
 func NewService() *Service {
+	repo := NewRepository()
+	// For testing/development, skip DB initialization
+	// In production, call repo.InitDB(dsn) with real DSN
 	return &Service{
-		repo:    NewRepository(),
+		repo:    repo,
 		workers: workerPool,
 		pool: &sync.Pool{
 			New: func() interface{} {
