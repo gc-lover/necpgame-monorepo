@@ -334,7 +334,7 @@ def main():
         region_path.mkdir(exist_ok=True)
 
         # Create region overview file if it doesn't exist
-        region_file = region_path.parent / f'{region_name}-2020-2093.yaml'
+        region_file = regions_dir / f'{region_name}-2020-2093.yaml'
         if not region_file.exists():
             print(f"Generating region overview: {region_name}")
             region_template = create_region_template(region_name, region_data)
