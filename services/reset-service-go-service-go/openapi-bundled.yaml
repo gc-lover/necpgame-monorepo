@@ -145,972 +145,282 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /health/batch:
-    post:
-      summary: Batch health check for multiple domain services
-      description: '**Performance optimization:** Check multiple domain health in single request
-
-
-        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-
-        Eliminates network overhead in health monitoring scenarios.
-
-
-        **Use case:** Service mesh health checks, Kubernetes readiness probes
-
-        '
-      operationId: exampleDomainBatchHealthCheck
-      tags:
-      - Health Monitoring
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-              - services
-              properties:
-                services:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                    - example-domain
-                    - system-domain
-                    - specialized-domain
-                    maxItems: 10
-                  description: List of services to check
-      responses:
-        '200':
-          $ref: '#/components/responses/HealthBatchSuccess'
-        '400':
-          description: Invalid request - malformed service list
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-                description: Seconds to wait before retrying
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /health/ws:
+  /stats:
     get:
-      summary: Real-time health monitoring WebSocket
-      description: '**Performance optimization:** Real-time health updates without polling
+      summary: Get reset operation statistics
+      description: '**Reset service statistics endpoint**
 
 
-        Eliminates periodic HTTP requests, reduces server load by ~90%.
+        Provides aggregated statistics about reset operations performed.
 
-        Perfect for dashboard monitoring and alerting systems.
+        Includes counts, success rates, and performance metrics.
 
 
-        **Protocol:** WebSocket with JSON payloads
-
-        **Heartbeat:** 30 second intervals
-
-        **Reconnection:** Automatic with exponential backoff
+        **Performance:** <25ms P95, aggregated data
 
         '
-      operationId: exampleDomainHealthWebSocket
-      tags:
-      - Health Monitoring
-      parameters:
-      - name: services
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - example-domain
-            - system-domain
-            - specialized-domain
-        description: Services to monitor (optional, monitors all if not specified)
-      responses:
-        '200':
-          description: WebSocket upgrade information returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  websocket_url:
-                    type: string
-                    example: ws://localhost:8080/api/v1/example-domain/health/ws
-                  supported_protocols:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                    - health-monitoring-v1
-        '101':
-          description: WebSocket connection established successfully
-          headers:
-            Upgrade:
-              schema:
-                type: string
-                example: websocket
-            Connection:
-              schema:
-                type: string
-                example: Upgrade
-            Sec-WebSocket-Accept:
-              schema:
-                type: string
-                description: WebSocket handshake acceptance key
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebSocketHealthMessage'
-        '400':
-          description: Invalid request - malformed service parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized - authentication required for WebSocket
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - WebSocket connection limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /character:
-    post:
-      summary: Create new example
-      description: '**Enterprise-grade creation endpoint**
-
-
-        Validates business rules, applies security checks, and ensures data consistency.
-
-        Supports optimistic locking for concurrent operations.
-
-
-        **Performance:** <50ms P95, includes validation and business logic
-
-        '
-      operationId: createExample
-      tags:
-      - Example Domain
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateExampleRequest'
-      responses:
-        '201':
-          $ref: '#/components/responses/ExampleCreated'
-        '400':
-          description: Invalid request - malformed or missing data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - example with this identifier already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - creation rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /examples/{example_id}:
-    get:
-      summary: Get specific example by ID
-      description: '**Enterprise-grade retrieval endpoint**
-
-
-        Optimized with proper caching strategies and database indexing.
-
-        Supports conditional requests with ETags.
-
-
-        **Performance:** <5ms P95 with Redis caching
-
-        '
-      operationId: getExample
-      tags:
-      - Example Domain
-      parameters:
-      - name: example_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Example unique identifier
-      - name: include_related
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include related data in response
-      - name: If-None-Match
-        in: header
-        schema:
-          type: string
-        description: Conditional request - return 304 if ETag matches
-      - name: If-Modified-Since
-        in: header
-        schema:
-          type: string
-          format: date-time
-        description: Conditional request - return 304 if not modified since this time
-      responses:
-        '200':
-          $ref: '#/components/responses/ExampleRetrieved'
-        '304':
-          description: Not modified - resource has not changed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=300, private
-        '400':
-          description: Invalid request - malformed example ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    put:
-      summary: Update existing example
-      description: '**Enterprise-grade update endpoint**
-
-
-        Supports partial updates, optimistic locking, and audit trails.
-
-        Ensures data consistency with event sourcing patterns.
-
-
-        **Performance:** <25ms P95, includes validation and conflict resolution
-
-        '
-      operationId: updateExample
-      tags:
-      - Example Domain
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: example_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Example unique identifier
-      - name: If-Match
-        in: header
-        schema:
-          type: string
-        description: ETag for optimistic locking - prevents concurrent updates
-      - name: If-Unmodified-Since
-        in: header
-        schema:
-          type: string
-          format: date-time
-        description: Conditional update - proceed only if not modified since this time
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateExampleRequest'
-      responses:
-        '200':
-          $ref: '#/components/responses/ExampleUpdated'
-        '400':
-          description: Invalid request - malformed data or example ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - version conflict (optimistic locking) or precondition failed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '412':
-          description: Precondition failed - If-Match or If-Unmodified-Since condition not met
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - update rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    delete:
-      summary: Delete example
-      description: '**Enterprise-grade deletion endpoint**
-
-
-        Supports soft deletes with audit trails and cleanup scheduling.
-
-        Ensures referential integrity and cascading deletes.
-
-
-        **Performance:** <15ms P95, includes cleanup operations
-
-        '
-      operationId: deleteExample
-      tags:
-      - Example Domain
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: example_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Example unique identifier
-      responses:
-        '204':
-          $ref: '#/components/responses/ExampleDeleted'
-        '400':
-          description: Invalid request - malformed example ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - example cannot be deleted (referential integrity)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - deletion rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /inventory:
-    post:
-      summary: Request inventory reset
-      description: '**Enterprise-grade inventory reset endpoint**
-
-
-        Initiates inventory reset operation with selective item preservation and cleanup.
-
-        Supports different reset scopes and inventory organization options.
-
-
-        **Performance:** <50ms P95, includes inventory validation
-
-        **Business rules:** Item preservation rules, reset scope validation
-
-        '
-      operationId: requestInventoryReset
-      tags:
-      - Inventory Reset
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-              - reset_scope
-              - confirmation_token
-              properties:
-                reset_scope:
-                  type: string
-                  enum:
-                  - all_items
-                  - equipped_only
-                  - consumables_only
-                  - materials_only
-                  - by_rarity
-                  description: Scope of inventory reset
-                  example: all_items
-                confirmation_token:
-                  type: string
-                  description: User confirmation token
-                  example: CONFIRM-INVENTORY-RESET-123456
-                preserve_rarities:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                    - common
-                    - uncommon
-                    - rare
-                    - epic
-                    - legendary
-                    - mythic
-                  description: Item rarities to preserve during reset
-                  example:
-                  - legendary
-                  - mythic
-                preserve_equipped:
-                  type: boolean
-                  default: true
-                  description: Whether to preserve currently equipped items
-                  example: true
-                max_preserve_count:
-                  type: integer
-                  minimum: 0
-                  maximum: 100
-                  default: 50
-                  description: Maximum number of items to preserve
-      responses:
-        '200':
-          description: Inventory reset request accepted
-          headers:
-            Location:
-              schema:
-                type: string
-                example: /api/v1/reset/inventory/reset-1234567890
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - reset_id
-                - items_to_remove
-                - items_to_preserve
-                - estimated_completion_time
-                properties:
-                  reset_id:
-                    type: string
-                    format: uuid
-                    example: reset-1234567890
-                  items_to_remove:
-                    type: integer
-                    minimum: 0
-                    example: 25
-                  items_to_preserve:
-                    type: integer
-                    minimum: 0
-                    example: 5
-                  estimated_completion_time:
-                    type: integer
-                    minimum: 0
-                    example: 30
-                    description: Estimated completion time in seconds
-        '202':
-          description: Inventory reset request accepted (asynchronous processing)
-          headers:
-            Location:
-              schema:
-                type: string
-                example: /api/v1/reset/inventory/reset-1234567890
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - reset_id
-                - items_to_remove
-                - items_to_preserve
-                - estimated_completion
-                properties:
-                  reset_id:
-                    type: string
-                    format: uuid
-                    example: 550e8400-e29b-41d4-a716-446655440001
-                  items_to_remove:
-                    type: integer
-                    description: Number of items that will be removed
-                    example: 245
-                  items_to_preserve:
-                    type: integer
-                    description: Number of items that will be preserved
-                    example: 12
-                  estimated_completion:
-                    type: string
-                    format: date-time
-                    example: '2025-12-22T10:32:00Z'
-        '400':
-          description: Invalid inventory reset request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /achievements:
-    post:
-      summary: Request achievement reset
-      description: '**Enterprise-grade achievement reset endpoint**
-
-
-        Initiates achievement progress reset with selective preservation options.
-
-        Supports different reset scopes for achievement categories and progress levels.
-
-
-        **Performance:** <30ms P95, includes achievement validation
-
-        **Business rules:** Achievement preservation rules, reset scope limitations
-
-        '
-      operationId: requestAchievementReset
-      tags:
-      - Achievement Reset
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-              - reset_scope
-              - confirmation_token
-              properties:
-                reset_scope:
-                  type: string
-                  enum:
-                  - all_achievements
-                  - category_specific
-                  - progress_only
-                  - unlocks_only
-                  description: Scope of achievement reset
-                  example: progress_only
-                confirmation_token:
-                  type: string
-                  description: User confirmation token
-                  example: CONFIRM-ACHIEVEMENT-RESET-123456
-                preserve_categories:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                    - combat
-                    - exploration
-                    - social
-                    - collection
-                    - progression
-                    - seasonal
-                  description: Achievement categories to preserve
-                  example:
-                  - seasonal
-                  - progression
-                preserve_completed:
-                  type: boolean
-                  default: true
-                  description: Whether to preserve completed achievements
-                  example: true
-      responses:
-        '200':
-          description: Achievement reset request accepted
-          headers:
-            Location:
-              schema:
-                type: string
-                example: /api/v1/reset/achievements/reset-1234567890
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - reset_id
-                - achievements_to_reset
-                - achievements_to_preserve
-                - estimated_completion_time
-                properties:
-                  reset_id:
-                    type: string
-                    format: uuid
-                    example: reset-1234567890
-                  achievements_to_reset:
-                    type: integer
-                    minimum: 0
-                    example: 15
-                  achievements_to_preserve:
-                    type: integer
-                    minimum: 0
-                    example: 3
-                  estimated_completion_time:
-                    type: integer
-                    minimum: 0
-                    example: 15
-                    description: Estimated completion time in seconds
-        '202':
-          description: Achievement reset request accepted (asynchronous processing)
-          headers:
-            Location:
-              schema:
-                type: string
-                example: /api/v1/reset/achievements/reset-1234567890
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - reset_id
-                - achievements_to_reset
-                - achievements_to_preserve
-                - estimated_completion
-                properties:
-                  reset_id:
-                    type: string
-                    format: uuid
-                    example: 550e8400-e29b-41d4-a716-446655440002
-                  achievements_to_reset:
-                    type: integer
-                    description: Number of achievements that will be reset
-                    example: 45
-                  achievements_to_preserve:
-                    type: integer
-                    description: Number of achievements that will be preserved
-                    example: 23
-                  estimated_completion:
-                    type: string
-                    format: date-time
-                    example: '2025-12-22T10:33:00Z'
-        '400':
-          description: Invalid achievement reset request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /resets/{reset_id}:
-    get:
-      summary: Get reset operation status
-      description: '**Enterprise-grade reset status endpoint**
-
-
-        Retrieves detailed status of ongoing or completed reset operations.
-
-        Provides progress tracking and completion confirmation.
-
-
-        **Performance:** <15ms P95 (HOT PATH), Redis cached
-
-        **Security:** Users can only access their own reset operations
-
-        '
-      operationId: getResetStatus
+      operationId: getResetStats
       tags:
       - Game State Reset
-      parameters:
-      - name: reset_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Reset operation unique identifier
+      security:
+      - BearerAuth: []
       responses:
         '200':
-          description: Reset status retrieved successfully
+          description: Reset statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - total_resets
+                - successful_resets
+                - failed_resets
+                - average_completion_time
+                properties:
+                  total_resets:
+                    type: integer
+                    minimum: 0
+                    example: 15420
+                  successful_resets:
+                    type: integer
+                    minimum: 0
+                    example: 15234
+                  failed_resets:
+                    type: integer
+                    minimum: 0
+                    example: 186
+                  average_completion_time:
+                    type: number
+                    format: float
+                    minimum: 0
+                    example: 45.5
+                    description: Average completion time in seconds
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /history:
+    get:
+      summary: Get reset operation history
+      description: '**Reset service history endpoint**
+
+
+        Retrieves paginated history of reset operations.
+
+        Supports filtering by type, status, and time range.
+
+
+        **Performance:** <50ms P95, with database indexing
+
+        '
+      operationId: getResetHistory
+      tags:
+      - Game State Reset
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of records to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of records to skip
+      - name: reset_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - character_reset
+          - inventory_reset
+          - achievement_reset
+          - full_reset
+        description: Filter by reset type
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - queued
+          - processing
+          - completed
+          - failed
+          - cancelled
+        description: Filter by status
+      responses:
+        '200':
+          description: Reset history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - resets
+                - total_count
+                - has_more
+                properties:
+                  resets:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                      - reset_id
+                      - reset_type
+                      - status
+                      - created_at
+                      properties:
+                        reset_id:
+                          type: string
+                          format: uuid
+                          example: 550e8400-e29b-41d4-a716-446655440000
+                        reset_type:
+                          type: string
+                          enum:
+                          - character_reset
+                          - inventory_reset
+                          - achievement_reset
+                          - full_reset
+                          example: character_reset
+                        status:
+                          type: string
+                          enum:
+                          - queued
+                          - processing
+                          - completed
+                          - failed
+                          - cancelled
+                          example: completed
+                        created_at:
+                          type: string
+                          format: date-time
+                          example: '2025-12-22T10:30:00Z'
+                        completed_at:
+                          type: string
+                          format: date-time
+                          example: '2025-12-22T10:35:00Z'
+                  total_count:
+                    type: integer
+                    minimum: 0
+                    example: 150
+                  has_more:
+                    type: boolean
+                    example: true
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /trigger:
+    post:
+      summary: Trigger reset operation
+      description: '**Reset service trigger endpoint**
+
+
+        Initiates a reset operation with specified parameters.
+
+        Supports different reset types and scopes.
+
+
+        **Performance:** <100ms P95, includes validation and queuing
+
+        **Security:** Requires confirmation token for destructive operations
+
+        '
+      operationId: triggerReset
+      tags:
+      - Game State Reset
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - reset_type
+              - confirmation_token
+              properties:
+                reset_type:
+                  type: string
+                  enum:
+                  - daily
+                  - weekly
+                  description: Type of reset to trigger
+                  example: daily
+                confirmation_token:
+                  type: string
+                  description: User confirmation token
+                  example: CONFIRM-RESET-DAILY-123456
+      responses:
+        '200':
+          description: Reset operation triggered successfully
           content:
             application/json:
               schema:
                 type: object
                 required:
                 - reset_id
-                - reset_type
-                - status
-                - created_at
-                - progress
+                - message
                 properties:
                   reset_id:
                     type: string
                     format: uuid
                     example: 550e8400-e29b-41d4-a716-446655440000
-                  reset_type:
+                  message:
                     type: string
-                    enum:
-                    - character_reset
-                    - inventory_reset
-                    - achievement_reset
-                    - full_reset
-                    example: character_reset
-                  status:
-                    type: string
-                    enum:
-                    - queued
-                    - processing
-                    - completed
-                    - failed
-                    - cancelled
-                    example: completed
-                  created_at:
-                    type: string
-                    format: date-time
-                    example: '2025-12-22T10:30:00Z'
-                  started_at:
-                    type: string
-                    format: date-time
-                    example: '2025-12-22T10:30:05Z'
-                  completed_at:
-                    type: string
-                    format: date-time
-                    example: '2025-12-22T10:35:00Z'
-                  progress:
-                    type: object
-                    required:
-                    - percentage
-                    - current_step
-                    - total_steps
-                    properties:
-                      percentage:
-                        type: number
-                        format: float
-                        minimum: 0
-                        maximum: 100
-                        example: 85.5
-                      current_step:
-                        type: string
-                        example: Processing character attributes
-                      total_steps:
-                        type: integer
-                        example: 12
-                  rollback_available:
-                    type: boolean
-                    description: Whether reset can be rolled back
-                    example: true
-                  rollback_deadline:
-                    type: string
-                    format: date-time
-                    description: Deadline for rollback operations
-                    example: '2025-12-23T10:30:00Z'
-        '404':
-          description: Reset operation not found
+                    example: "Daily reset triggered successfully"
+        '400':
+          description: Invalid reset request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Reset already in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
 components:
-  responses:
-    HealthBatchSuccess:
-      description: Batch health results retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 15
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - results
-            - total_time_ms
-            properties:
-              results:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HealthResponse'
-                description: Health status for each requested service
-              total_time_ms:
-                type: integer
-                description: Total processing time in milliseconds
-                example: 15
-                minimum: 0
-    ExampleListSuccess:
-      description: Examples retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 150
-            description: Total number of examples matching criteria
-        X-Page-Count:
-          schema:
-            type: integer
-            example: 8
-            description: Total number of pages
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleListResponse'
-    ExampleCreated:
-      description: Example created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
-            description: URL of the created example
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleRetrieved:
-      description: Example retrieved successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-            description: Cache control directives
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:00:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 5
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleUpdated:
-      description: Example updated successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v2"'
-            description: New entity tag after update
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:05:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 25
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleDeleted:
-      description: Example deleted successfully
-      headers:
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 15
-            description: Processing time in milliseconds
   securitySchemes:
     BearerAuth:
       type: http
@@ -1118,107 +428,22 @@ components:
       bearerFormat: JWT
       description: 'JWT Bearer token authentication.
 
-
         **Token Format:** `Bearer {token}`
 
         **Token Claims:**
-
         - `sub`: User/Player ID
-
         - `exp`: Expiration timestamp
-
         - `iat`: Issued at timestamp
-
         - `iss`: Token issuer
-
         - `aud`: Token audience
-
         - `roles`: User roles array
-
         - `permissions`: User permissions array
 
-
         **Security Features:**
-
         - RS256 signature algorithm
-
         - Token rotation required every 24 hours
-
         - Automatic refresh tokens
-
         - Revocation support via Redis
-
-        '
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: 'API Key authentication for service-to-service communication.
-
-
-        **Use Cases:**
-
-        - Internal service communication
-
-        - Third-party integrations
-
-        - Development and testing
-
-
-        **Security:**
-
-        - HMAC-SHA256 signed
-
-        - Rate limited per key
-
-        - Scoped permissions
-
-        '
-    OAuth2:
-      type: oauth2
-      flows:
-        authorizationCode:
-          authorizationUrl: https://auth.necpgame.com/oauth/authorize
-          tokenUrl: https://auth.necpgame.com/oauth/token
-          refreshUrl: https://auth.necpgame.com/oauth/refresh
-          scopes:
-            read: Read access to resources
-            write: Write access to resources
-            admin: Administrative access
-            profile: Access to user profile
-            guilds: Access to guild management
-        clientCredentials:
-          tokenUrl: https://auth.necpgame.com/oauth/token
-          scopes:
-            service: Service-to-service communication
-            monitoring: Monitoring and metrics access
-    MutualTLS:
-      type: apiKey
-      in: header
-      name: X-Client-Certificate
-      description: 'Mutual TLS authentication for high-security operations.
-
-
-        **Requirements:**
-
-        - Valid client certificate
-
-        - Certificate signed by trusted CA
-
-        - Certificate not revoked (OCSP/CRL check)
-
-
-        **Use Cases:**
-
-        - Administrative operations
-
-        - Financial transactions
-
-        - Critical system operations
-
-
-        **Header:** `X-Client-Certificate: {certificate_fingerprint}`
-
         '
   schemas:
     HealthResponse:
@@ -1230,7 +455,7 @@ components:
       properties:
         domain:
           type: string
-          example: example-domain
+          example: reset-service-go
           maxLength: 50
         status:
           type: string
@@ -1252,36 +477,9 @@ components:
         uptime_seconds:
           type: integer
           example: 3600
-        active_connections:
+        active_resets:
           type: integer
-          example: 1500
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    WebSocketHealthMessage:
-      type: object
-      required:
-      - type
-      - timestamp
-      - health
-      properties:
-        type:
-          type: string
-          enum:
-          - health_update
-          - health_alert
-          - service_down
-          example: health_update
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          maxLength: 255
-        message_timestamp:
-          type: string
-          format: date-time
-          description: Timestamp of the health message
-          maxLength: 1000
-        health:
-          $ref: '#/components/schemas/HealthResponse'
+          example: 5
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Error:
       type: object
@@ -1295,14 +493,14 @@ components:
           example: Internal server error
         domain:
           type: string
-          example: example-domain
+          example: reset-service-go
           maxLength: 50
         details:
           type: object
           description: Additional error context
           example:
-            field: name
-            reason: required
+            field: reset_type
+            reason: invalid_value
         code:
           type: integer
           format: int32
@@ -1310,178 +508,3 @@ components:
           maximum: 599
           example: 500
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    Example:
-      type: object
-      required:
-      - id
-      - name
-      - created_at
-      - status
-      - is_active
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Example unique identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Example display name
-          example: Sample Example
-        description:
-          type: string
-          maxLength: 1000
-          description: Detailed description
-          example: This is a comprehensive example demonstrating best practices.
-        created_at:
-          type: string
-          format: date-time
-          description: Creation timestamp
-          example: '2025-12-21T10:00:00Z'
-        updated_at:
-          type: string
-          format: date-time
-          description: Last update timestamp
-          example: '2025-12-21T10:00:00Z'
-        status:
-          type: string
-          enum:
-          - active
-          - inactive
-          - pending
-          - archived
-          default: active
-          description: Current status
-          example: active
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Associated tags
-          example:
-          - demo
-          - template
-          - best-practice
-        is_active:
-          type: boolean
-          description: Whether this example is active
-          example: true
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-          example: 7
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot
-        path optimization required.'
-    CreateExampleRequest:
-      type: object
-      required:
-      - name
-      - description
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Desired example name
-          example: My New Example
-        description:
-          type: string
-          maxLength: 1000
-          description: Example description
-          example: A new example following enterprise-grade patterns.
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Initial tags
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    UpdateExampleRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: New example name
-          example: Updated Example Name
-        description:
-          type: string
-          maxLength: 1000
-          description: New description
-        status:
-          type: string
-          enum:
-          - active
-          - inactive
-          - pending
-          - archived
-          description: New status
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Replace all tags
-        is_active:
-          type: boolean
-          description: Update active status
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: New priority
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    ExampleResponse:
-      type: object
-      required:
-      - example
-      properties:
-        example:
-          $ref: '#/components/schemas/Example'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    ExampleListResponse:
-      type: object
-      required:
-      - examples
-      - total_count
-      - has_more
-      properties:
-        examples:
-          type: array
-          items:
-            $ref: '#/components/schemas/Example'
-          description: List of examples
-        has_more:
-          type: boolean
-          description: Whether there are more results available
-          example: true
-        total_count:
-          type: integer
-          description: Total number of examples matching criteria
-          example: 150
-        page:
-          type: integer
-          description: Current page number
-          example: 1
-        limit:
-          type: integer
-          description: Items per page
-          example: 20
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Paginated
-        responses optimized for memory efficiency.'

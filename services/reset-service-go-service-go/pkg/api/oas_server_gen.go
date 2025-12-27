@@ -8,83 +8,24 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
-	// CreateExample implements createExample operation.
+	// GetResetHistory implements getResetHistory operation.
 	//
-	// **Enterprise-grade creation endpoint**
-	// Validates business rules, applies security checks, and ensures data consistency.
-	// Supports optimistic locking for concurrent operations.
-	// **Performance:** <50ms P95, includes validation and business logic.
+	// **Reset service history endpoint**
+	// Retrieves paginated history of reset operations.
+	// Supports filtering by type, status, and time range.
+	// **Performance:** <50ms P95, with database indexing.
 	//
-	// POST /character
-	CreateExample(ctx context.Context, req *CreateExampleRequest) (CreateExampleRes, error)
-	// DeleteExample implements deleteExample operation.
+	// GET /history
+	GetResetHistory(ctx context.Context, params GetResetHistoryParams) (GetResetHistoryRes, error)
+	// GetResetStats implements getResetStats operation.
 	//
-	// **Enterprise-grade deletion endpoint**
-	// Supports soft deletes with audit trails and cleanup scheduling.
-	// Ensures referential integrity and cascading deletes.
-	// **Performance:** <15ms P95, includes cleanup operations.
+	// **Reset service statistics endpoint**
+	// Provides aggregated statistics about reset operations performed.
+	// Includes counts, success rates, and performance metrics.
+	// **Performance:** <25ms P95, aggregated data.
 	//
-	// DELETE /examples/{example_id}
-	DeleteExample(ctx context.Context, params DeleteExampleParams) (DeleteExampleRes, error)
-	// ExampleDomainBatchHealthCheck implements exampleDomainBatchHealthCheck operation.
-	//
-	// **Performance optimization:** Check multiple domain health in single request
-	// Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-	// Eliminates network overhead in health monitoring scenarios.
-	// **Use case:** Service mesh health checks, Kubernetes readiness probes.
-	//
-	// POST /health/batch
-	ExampleDomainBatchHealthCheck(ctx context.Context, req *ExampleDomainBatchHealthCheckReq) (ExampleDomainBatchHealthCheckRes, error)
-	// ExampleDomainHealthWebSocket implements exampleDomainHealthWebSocket operation.
-	//
-	// **Performance optimization:** Real-time health updates without polling
-	// Eliminates periodic HTTP requests, reduces server load by ~90%.
-	// Perfect for dashboard monitoring and alerting systems.
-	// **Protocol:** WebSocket with JSON payloads
-	// **Heartbeat:** 30 second intervals
-	// **Reconnection:** Automatic with exponential backoff.
-	//
-	// GET /health/ws
-	ExampleDomainHealthWebSocket(ctx context.Context, params ExampleDomainHealthWebSocketParams) (ExampleDomainHealthWebSocketRes, error)
-	// GetExample implements getExample operation.
-	//
-	// **Enterprise-grade retrieval endpoint**
-	// Optimized with proper caching strategies and database indexing.
-	// Supports conditional requests with ETags.
-	// **Performance:** <5ms P95 with Redis caching.
-	//
-	// GET /examples/{example_id}
-	GetExample(ctx context.Context, params GetExampleParams) (GetExampleRes, error)
-	// GetResetStatus implements getResetStatus operation.
-	//
-	// **Enterprise-grade reset status endpoint**
-	// Retrieves detailed status of ongoing or completed reset operations.
-	// Provides progress tracking and completion confirmation.
-	// **Performance:** <15ms P95 (HOT PATH), Redis cached
-	// **Security:** Users can only access their own reset operations.
-	//
-	// GET /resets/{reset_id}
-	GetResetStatus(ctx context.Context, params GetResetStatusParams) (GetResetStatusRes, error)
-	// RequestAchievementReset implements requestAchievementReset operation.
-	//
-	// **Enterprise-grade achievement reset endpoint**
-	// Initiates achievement progress reset with selective preservation options.
-	// Supports different reset scopes for achievement categories and progress levels.
-	// **Performance:** <30ms P95, includes achievement validation
-	// **Business rules:** Achievement preservation rules, reset scope limitations.
-	//
-	// POST /achievements
-	RequestAchievementReset(ctx context.Context, req *RequestAchievementResetReq) (RequestAchievementResetRes, error)
-	// RequestInventoryReset implements requestInventoryReset operation.
-	//
-	// **Enterprise-grade inventory reset endpoint**
-	// Initiates inventory reset operation with selective item preservation and cleanup.
-	// Supports different reset scopes and inventory organization options.
-	// **Performance:** <50ms P95, includes inventory validation
-	// **Business rules:** Item preservation rules, reset scope validation.
-	//
-	// POST /inventory
-	RequestInventoryReset(ctx context.Context, req *RequestInventoryResetReq) (RequestInventoryResetRes, error)
+	// GET /stats
+	GetResetStats(ctx context.Context) (GetResetStatsRes, error)
 	// ResetServiceHealthCheck implements resetServiceHealthCheck operation.
 	//
 	// **Enterprise-grade health check endpoint**
@@ -95,15 +36,16 @@ type Handler interface {
 	//
 	// GET /health
 	ResetServiceHealthCheck(ctx context.Context, params ResetServiceHealthCheckParams) (ResetServiceHealthCheckRes, error)
-	// UpdateExample implements updateExample operation.
+	// TriggerReset implements triggerReset operation.
 	//
-	// **Enterprise-grade update endpoint**
-	// Supports partial updates, optimistic locking, and audit trails.
-	// Ensures data consistency with event sourcing patterns.
-	// **Performance:** <25ms P95, includes validation and conflict resolution.
+	// **Reset service trigger endpoint**
+	// Initiates a reset operation with specified parameters.
+	// Supports different reset types and scopes.
+	// **Performance:** <100ms P95, includes validation and queuing
+	// **Security:** Requires confirmation token for destructive operations.
 	//
-	// PUT /examples/{example_id}
-	UpdateExample(ctx context.Context, req *UpdateExampleRequest, params UpdateExampleParams) (UpdateExampleRes, error)
+	// POST /trigger
+	TriggerReset(ctx context.Context, req *TriggerResetReq) (TriggerResetRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

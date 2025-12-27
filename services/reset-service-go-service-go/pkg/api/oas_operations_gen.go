@@ -6,14 +6,8 @@ package api
 type OperationName = string
 
 const (
-	CreateExampleOperation                 OperationName = "CreateExample"
-	DeleteExampleOperation                 OperationName = "DeleteExample"
-	ExampleDomainBatchHealthCheckOperation OperationName = "ExampleDomainBatchHealthCheck"
-	ExampleDomainHealthWebSocketOperation  OperationName = "ExampleDomainHealthWebSocket"
-	GetExampleOperation                    OperationName = "GetExample"
-	GetResetStatusOperation                OperationName = "GetResetStatus"
-	RequestAchievementResetOperation       OperationName = "RequestAchievementReset"
-	RequestInventoryResetOperation         OperationName = "RequestInventoryReset"
-	ResetServiceHealthCheckOperation       OperationName = "ResetServiceHealthCheck"
-	UpdateExampleOperation                 OperationName = "UpdateExample"
+	GetResetHistoryOperation         OperationName = "GetResetHistory"
+	GetResetStatsOperation           OperationName = "GetResetStats"
+	ResetServiceHealthCheckOperation OperationName = "ResetServiceHealthCheck"
+	TriggerResetOperation            OperationName = "TriggerReset"
 )

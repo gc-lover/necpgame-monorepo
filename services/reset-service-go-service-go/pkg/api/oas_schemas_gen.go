@@ -34,84 +34,6 @@ func (s *BearerAuth) SetRoles(val []string) {
 	s.Roles = val
 }
 
-type CreateExampleBadRequest Error
-
-func (*CreateExampleBadRequest) createExampleRes() {}
-
-type CreateExampleConflict Error
-
-func (*CreateExampleConflict) createExampleRes() {}
-
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-// Ref: #/components/schemas/CreateExampleRequest
-type CreateExampleRequest struct {
-	// Desired example name.
-	Name string `json:"name"`
-	// Example description.
-	Description string `json:"description"`
-	// Initial tags.
-	Tags []string `json:"tags"`
-	// Processing priority.
-	Priority OptInt `json:"priority"`
-}
-
-// GetName returns the value of Name.
-func (s *CreateExampleRequest) GetName() string {
-	return s.Name
-}
-
-// GetDescription returns the value of Description.
-func (s *CreateExampleRequest) GetDescription() string {
-	return s.Description
-}
-
-// GetTags returns the value of Tags.
-func (s *CreateExampleRequest) GetTags() []string {
-	return s.Tags
-}
-
-// GetPriority returns the value of Priority.
-func (s *CreateExampleRequest) GetPriority() OptInt {
-	return s.Priority
-}
-
-// SetName sets the value of Name.
-func (s *CreateExampleRequest) SetName(val string) {
-	s.Name = val
-}
-
-// SetDescription sets the value of Description.
-func (s *CreateExampleRequest) SetDescription(val string) {
-	s.Description = val
-}
-
-// SetTags sets the value of Tags.
-func (s *CreateExampleRequest) SetTags(val []string) {
-	s.Tags = val
-}
-
-// SetPriority sets the value of Priority.
-func (s *CreateExampleRequest) SetPriority(val OptInt) {
-	s.Priority = val
-}
-
-type CreateExampleUnprocessableEntity Error
-
-func (*CreateExampleUnprocessableEntity) createExampleRes() {}
-
-type DeleteExampleBadRequest Error
-
-func (*DeleteExampleBadRequest) deleteExampleRes() {}
-
-type DeleteExampleConflict Error
-
-func (*DeleteExampleConflict) deleteExampleRes() {}
-
-type DeleteExampleNotFound Error
-
-func (*DeleteExampleNotFound) deleteExampleRes() {}
-
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
 // Ref: #/components/schemas/Error
@@ -163,10 +85,7 @@ func (s *Error) SetCode(val int32) {
 	s.Code = val
 }
 
-func (*Error) exampleDomainBatchHealthCheckRes() {}
-func (*Error) getResetStatusRes()                {}
-func (*Error) requestAchievementResetRes()       {}
-func (*Error) requestInventoryResetRes()         {}
+func (*Error) getResetHistoryRes() {}
 
 // Additional error context.
 type ErrorDetails struct{}
@@ -197,731 +116,136 @@ func (s *ErrorHeaders) SetResponse(val Error) {
 	s.Response = val
 }
 
-func (*ErrorHeaders) createExampleRes()                 {}
-func (*ErrorHeaders) deleteExampleRes()                 {}
-func (*ErrorHeaders) exampleDomainBatchHealthCheckRes() {}
-func (*ErrorHeaders) exampleDomainHealthWebSocketRes()  {}
-func (*ErrorHeaders) getExampleRes()                    {}
-func (*ErrorHeaders) resetServiceHealthCheckRes()       {}
+func (*ErrorHeaders) getResetHistoryRes()         {}
+func (*ErrorHeaders) getResetStatsRes()           {}
+func (*ErrorHeaders) resetServiceHealthCheckRes() {}
+func (*ErrorHeaders) triggerResetRes()            {}
 
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%. Hot path optimization required.
-// Ref: #/components/schemas/Example
-type Example struct {
-	// Example unique identifier.
-	ID uuid.UUID `json:"id"`
-	// Example display name.
-	Name string `json:"name"`
-	// Detailed description.
-	Description OptString `json:"description"`
-	// Creation timestamp.
-	CreatedAt time.Time `json:"created_at"`
-	// Last update timestamp.
-	UpdatedAt OptDateTime `json:"updated_at"`
-	// Current status.
-	Status ExampleStatus `json:"status"`
-	// Associated tags.
-	Tags []string `json:"tags"`
-	// Whether this example is active.
-	IsActive bool `json:"is_active"`
-	// Processing priority.
-	Priority OptInt `json:"priority"`
+type GetResetHistoryOK struct {
+	Resets     []GetResetHistoryOKResetsItem `json:"resets"`
+	TotalCount int                           `json:"total_count"`
+	HasMore    bool                          `json:"has_more"`
 }
 
-// GetID returns the value of ID.
-func (s *Example) GetID() uuid.UUID {
-	return s.ID
+// GetResets returns the value of Resets.
+func (s *GetResetHistoryOK) GetResets() []GetResetHistoryOKResetsItem {
+	return s.Resets
 }
 
-// GetName returns the value of Name.
-func (s *Example) GetName() string {
-	return s.Name
+// GetTotalCount returns the value of TotalCount.
+func (s *GetResetHistoryOK) GetTotalCount() int {
+	return s.TotalCount
 }
 
-// GetDescription returns the value of Description.
-func (s *Example) GetDescription() OptString {
-	return s.Description
+// GetHasMore returns the value of HasMore.
+func (s *GetResetHistoryOK) GetHasMore() bool {
+	return s.HasMore
 }
 
-// GetCreatedAt returns the value of CreatedAt.
-func (s *Example) GetCreatedAt() time.Time {
-	return s.CreatedAt
+// SetResets sets the value of Resets.
+func (s *GetResetHistoryOK) SetResets(val []GetResetHistoryOKResetsItem) {
+	s.Resets = val
 }
 
-// GetUpdatedAt returns the value of UpdatedAt.
-func (s *Example) GetUpdatedAt() OptDateTime {
-	return s.UpdatedAt
+// SetTotalCount sets the value of TotalCount.
+func (s *GetResetHistoryOK) SetTotalCount(val int) {
+	s.TotalCount = val
 }
 
-// GetStatus returns the value of Status.
-func (s *Example) GetStatus() ExampleStatus {
-	return s.Status
+// SetHasMore sets the value of HasMore.
+func (s *GetResetHistoryOK) SetHasMore(val bool) {
+	s.HasMore = val
 }
 
-// GetTags returns the value of Tags.
-func (s *Example) GetTags() []string {
-	return s.Tags
-}
-
-// GetIsActive returns the value of IsActive.
-func (s *Example) GetIsActive() bool {
-	return s.IsActive
-}
-
-// GetPriority returns the value of Priority.
-func (s *Example) GetPriority() OptInt {
-	return s.Priority
-}
-
-// SetID sets the value of ID.
-func (s *Example) SetID(val uuid.UUID) {
-	s.ID = val
-}
-
-// SetName sets the value of Name.
-func (s *Example) SetName(val string) {
-	s.Name = val
-}
-
-// SetDescription sets the value of Description.
-func (s *Example) SetDescription(val OptString) {
-	s.Description = val
-}
-
-// SetCreatedAt sets the value of CreatedAt.
-func (s *Example) SetCreatedAt(val time.Time) {
-	s.CreatedAt = val
-}
-
-// SetUpdatedAt sets the value of UpdatedAt.
-func (s *Example) SetUpdatedAt(val OptDateTime) {
-	s.UpdatedAt = val
-}
-
-// SetStatus sets the value of Status.
-func (s *Example) SetStatus(val ExampleStatus) {
-	s.Status = val
-}
-
-// SetTags sets the value of Tags.
-func (s *Example) SetTags(val []string) {
-	s.Tags = val
-}
-
-// SetIsActive sets the value of IsActive.
-func (s *Example) SetIsActive(val bool) {
-	s.IsActive = val
-}
-
-// SetPriority sets the value of Priority.
-func (s *Example) SetPriority(val OptInt) {
-	s.Priority = val
-}
-
-// ExampleCreatedHeaders wraps ExampleResponse with response headers.
-type ExampleCreatedHeaders struct {
-	CacheControl OptString
-	ETag         OptString
-	Location     OptString
-	Response     ExampleResponse
-}
-
-// GetCacheControl returns the value of CacheControl.
-func (s *ExampleCreatedHeaders) GetCacheControl() OptString {
-	return s.CacheControl
-}
-
-// GetETag returns the value of ETag.
-func (s *ExampleCreatedHeaders) GetETag() OptString {
-	return s.ETag
-}
-
-// GetLocation returns the value of Location.
-func (s *ExampleCreatedHeaders) GetLocation() OptString {
-	return s.Location
-}
-
-// GetResponse returns the value of Response.
-func (s *ExampleCreatedHeaders) GetResponse() ExampleResponse {
-	return s.Response
-}
-
-// SetCacheControl sets the value of CacheControl.
-func (s *ExampleCreatedHeaders) SetCacheControl(val OptString) {
-	s.CacheControl = val
-}
-
-// SetETag sets the value of ETag.
-func (s *ExampleCreatedHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetLocation sets the value of Location.
-func (s *ExampleCreatedHeaders) SetLocation(val OptString) {
-	s.Location = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ExampleCreatedHeaders) SetResponse(val ExampleResponse) {
-	s.Response = val
-}
-
-func (*ExampleCreatedHeaders) createExampleRes() {}
-
-// Ref: #/components/responses/ExampleDeleted
-type ExampleDeleted struct {
-	XProcessingTime OptInt
-}
-
-// GetXProcessingTime returns the value of XProcessingTime.
-func (s *ExampleDeleted) GetXProcessingTime() OptInt {
-	return s.XProcessingTime
-}
-
-// SetXProcessingTime sets the value of XProcessingTime.
-func (s *ExampleDeleted) SetXProcessingTime(val OptInt) {
-	s.XProcessingTime = val
-}
-
-func (*ExampleDeleted) deleteExampleRes() {}
-
-type ExampleDomainBatchHealthCheckReq struct {
-	// List of services to check.
-	Services []ExampleDomainBatchHealthCheckReqServicesItem `json:"services"`
-}
-
-// GetServices returns the value of Services.
-func (s *ExampleDomainBatchHealthCheckReq) GetServices() []ExampleDomainBatchHealthCheckReqServicesItem {
-	return s.Services
-}
-
-// SetServices sets the value of Services.
-func (s *ExampleDomainBatchHealthCheckReq) SetServices(val []ExampleDomainBatchHealthCheckReqServicesItem) {
-	s.Services = val
-}
-
-type ExampleDomainBatchHealthCheckReqServicesItem string
-
-const (
-	ExampleDomainBatchHealthCheckReqServicesItemExampleDomain     ExampleDomainBatchHealthCheckReqServicesItem = "example-domain"
-	ExampleDomainBatchHealthCheckReqServicesItemSystemDomain      ExampleDomainBatchHealthCheckReqServicesItem = "system-domain"
-	ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain ExampleDomainBatchHealthCheckReqServicesItem = "specialized-domain"
-)
-
-// AllValues returns all ExampleDomainBatchHealthCheckReqServicesItem values.
-func (ExampleDomainBatchHealthCheckReqServicesItem) AllValues() []ExampleDomainBatchHealthCheckReqServicesItem {
-	return []ExampleDomainBatchHealthCheckReqServicesItem{
-		ExampleDomainBatchHealthCheckReqServicesItemExampleDomain,
-		ExampleDomainBatchHealthCheckReqServicesItemSystemDomain,
-		ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s ExampleDomainBatchHealthCheckReqServicesItem) MarshalText() ([]byte, error) {
-	switch s {
-	case ExampleDomainBatchHealthCheckReqServicesItemExampleDomain:
-		return []byte(s), nil
-	case ExampleDomainBatchHealthCheckReqServicesItemSystemDomain:
-		return []byte(s), nil
-	case ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ExampleDomainBatchHealthCheckReqServicesItem) UnmarshalText(data []byte) error {
-	switch ExampleDomainBatchHealthCheckReqServicesItem(data) {
-	case ExampleDomainBatchHealthCheckReqServicesItemExampleDomain:
-		*s = ExampleDomainBatchHealthCheckReqServicesItemExampleDomain
-		return nil
-	case ExampleDomainBatchHealthCheckReqServicesItemSystemDomain:
-		*s = ExampleDomainBatchHealthCheckReqServicesItemSystemDomain
-		return nil
-	case ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain:
-		*s = ExampleDomainBatchHealthCheckReqServicesItemSpecializedDomain
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-type ExampleDomainHealthWebSocketBadRequest Error
-
-func (*ExampleDomainHealthWebSocketBadRequest) exampleDomainHealthWebSocketRes() {}
-
-type ExampleDomainHealthWebSocketOK struct {
-	WebsocketURL       OptString `json:"websocket_url"`
-	SupportedProtocols []string  `json:"supported_protocols"`
-}
-
-// GetWebsocketURL returns the value of WebsocketURL.
-func (s *ExampleDomainHealthWebSocketOK) GetWebsocketURL() OptString {
-	return s.WebsocketURL
-}
-
-// GetSupportedProtocols returns the value of SupportedProtocols.
-func (s *ExampleDomainHealthWebSocketOK) GetSupportedProtocols() []string {
-	return s.SupportedProtocols
-}
-
-// SetWebsocketURL sets the value of WebsocketURL.
-func (s *ExampleDomainHealthWebSocketOK) SetWebsocketURL(val OptString) {
-	s.WebsocketURL = val
-}
-
-// SetSupportedProtocols sets the value of SupportedProtocols.
-func (s *ExampleDomainHealthWebSocketOK) SetSupportedProtocols(val []string) {
-	s.SupportedProtocols = val
-}
-
-func (*ExampleDomainHealthWebSocketOK) exampleDomainHealthWebSocketRes() {}
-
-type ExampleDomainHealthWebSocketServicesItem string
-
-const (
-	ExampleDomainHealthWebSocketServicesItemExampleDomain     ExampleDomainHealthWebSocketServicesItem = "example-domain"
-	ExampleDomainHealthWebSocketServicesItemSystemDomain      ExampleDomainHealthWebSocketServicesItem = "system-domain"
-	ExampleDomainHealthWebSocketServicesItemSpecializedDomain ExampleDomainHealthWebSocketServicesItem = "specialized-domain"
-)
-
-// AllValues returns all ExampleDomainHealthWebSocketServicesItem values.
-func (ExampleDomainHealthWebSocketServicesItem) AllValues() []ExampleDomainHealthWebSocketServicesItem {
-	return []ExampleDomainHealthWebSocketServicesItem{
-		ExampleDomainHealthWebSocketServicesItemExampleDomain,
-		ExampleDomainHealthWebSocketServicesItemSystemDomain,
-		ExampleDomainHealthWebSocketServicesItemSpecializedDomain,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s ExampleDomainHealthWebSocketServicesItem) MarshalText() ([]byte, error) {
-	switch s {
-	case ExampleDomainHealthWebSocketServicesItemExampleDomain:
-		return []byte(s), nil
-	case ExampleDomainHealthWebSocketServicesItemSystemDomain:
-		return []byte(s), nil
-	case ExampleDomainHealthWebSocketServicesItemSpecializedDomain:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ExampleDomainHealthWebSocketServicesItem) UnmarshalText(data []byte) error {
-	switch ExampleDomainHealthWebSocketServicesItem(data) {
-	case ExampleDomainHealthWebSocketServicesItemExampleDomain:
-		*s = ExampleDomainHealthWebSocketServicesItemExampleDomain
-		return nil
-	case ExampleDomainHealthWebSocketServicesItemSystemDomain:
-		*s = ExampleDomainHealthWebSocketServicesItemSystemDomain
-		return nil
-	case ExampleDomainHealthWebSocketServicesItemSpecializedDomain:
-		*s = ExampleDomainHealthWebSocketServicesItemSpecializedDomain
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-type ExampleDomainHealthWebSocketUnauthorized Error
-
-func (*ExampleDomainHealthWebSocketUnauthorized) exampleDomainHealthWebSocketRes() {}
-
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-// Ref: #/components/schemas/ExampleResponse
-type ExampleResponse struct {
-	Example Example `json:"example"`
-}
-
-// GetExample returns the value of Example.
-func (s *ExampleResponse) GetExample() Example {
-	return s.Example
-}
-
-// SetExample sets the value of Example.
-func (s *ExampleResponse) SetExample(val Example) {
-	s.Example = val
-}
-
-// ExampleRetrievedHeaders wraps ExampleResponse with response headers.
-type ExampleRetrievedHeaders struct {
-	CacheControl    OptString
-	ETag            OptString
-	LastModified    OptDateTime
-	XProcessingTime OptInt
-	Response        ExampleResponse
-}
-
-// GetCacheControl returns the value of CacheControl.
-func (s *ExampleRetrievedHeaders) GetCacheControl() OptString {
-	return s.CacheControl
-}
-
-// GetETag returns the value of ETag.
-func (s *ExampleRetrievedHeaders) GetETag() OptString {
-	return s.ETag
-}
-
-// GetLastModified returns the value of LastModified.
-func (s *ExampleRetrievedHeaders) GetLastModified() OptDateTime {
-	return s.LastModified
-}
-
-// GetXProcessingTime returns the value of XProcessingTime.
-func (s *ExampleRetrievedHeaders) GetXProcessingTime() OptInt {
-	return s.XProcessingTime
-}
-
-// GetResponse returns the value of Response.
-func (s *ExampleRetrievedHeaders) GetResponse() ExampleResponse {
-	return s.Response
-}
-
-// SetCacheControl sets the value of CacheControl.
-func (s *ExampleRetrievedHeaders) SetCacheControl(val OptString) {
-	s.CacheControl = val
-}
-
-// SetETag sets the value of ETag.
-func (s *ExampleRetrievedHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetLastModified sets the value of LastModified.
-func (s *ExampleRetrievedHeaders) SetLastModified(val OptDateTime) {
-	s.LastModified = val
-}
-
-// SetXProcessingTime sets the value of XProcessingTime.
-func (s *ExampleRetrievedHeaders) SetXProcessingTime(val OptInt) {
-	s.XProcessingTime = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ExampleRetrievedHeaders) SetResponse(val ExampleResponse) {
-	s.Response = val
-}
-
-func (*ExampleRetrievedHeaders) getExampleRes() {}
-
-// Current status.
-type ExampleStatus string
-
-const (
-	ExampleStatusActive   ExampleStatus = "active"
-	ExampleStatusInactive ExampleStatus = "inactive"
-	ExampleStatusPending  ExampleStatus = "pending"
-	ExampleStatusArchived ExampleStatus = "archived"
-)
-
-// AllValues returns all ExampleStatus values.
-func (ExampleStatus) AllValues() []ExampleStatus {
-	return []ExampleStatus{
-		ExampleStatusActive,
-		ExampleStatusInactive,
-		ExampleStatusPending,
-		ExampleStatusArchived,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s ExampleStatus) MarshalText() ([]byte, error) {
-	switch s {
-	case ExampleStatusActive:
-		return []byte(s), nil
-	case ExampleStatusInactive:
-		return []byte(s), nil
-	case ExampleStatusPending:
-		return []byte(s), nil
-	case ExampleStatusArchived:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ExampleStatus) UnmarshalText(data []byte) error {
-	switch ExampleStatus(data) {
-	case ExampleStatusActive:
-		*s = ExampleStatusActive
-		return nil
-	case ExampleStatusInactive:
-		*s = ExampleStatusInactive
-		return nil
-	case ExampleStatusPending:
-		*s = ExampleStatusPending
-		return nil
-	case ExampleStatusArchived:
-		*s = ExampleStatusArchived
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// ExampleUpdatedHeaders wraps ExampleResponse with response headers.
-type ExampleUpdatedHeaders struct {
-	ETag            OptString
-	LastModified    OptDateTime
-	XProcessingTime OptInt
-	Response        ExampleResponse
-}
-
-// GetETag returns the value of ETag.
-func (s *ExampleUpdatedHeaders) GetETag() OptString {
-	return s.ETag
-}
-
-// GetLastModified returns the value of LastModified.
-func (s *ExampleUpdatedHeaders) GetLastModified() OptDateTime {
-	return s.LastModified
-}
-
-// GetXProcessingTime returns the value of XProcessingTime.
-func (s *ExampleUpdatedHeaders) GetXProcessingTime() OptInt {
-	return s.XProcessingTime
-}
-
-// GetResponse returns the value of Response.
-func (s *ExampleUpdatedHeaders) GetResponse() ExampleResponse {
-	return s.Response
-}
-
-// SetETag sets the value of ETag.
-func (s *ExampleUpdatedHeaders) SetETag(val OptString) {
-	s.ETag = val
-}
-
-// SetLastModified sets the value of LastModified.
-func (s *ExampleUpdatedHeaders) SetLastModified(val OptDateTime) {
-	s.LastModified = val
-}
-
-// SetXProcessingTime sets the value of XProcessingTime.
-func (s *ExampleUpdatedHeaders) SetXProcessingTime(val OptInt) {
-	s.XProcessingTime = val
-}
-
-// SetResponse sets the value of Response.
-func (s *ExampleUpdatedHeaders) SetResponse(val ExampleResponse) {
-	s.Response = val
-}
-
-func (*ExampleUpdatedHeaders) updateExampleRes() {}
-
-type GetExampleBadRequest Error
-
-func (*GetExampleBadRequest) getExampleRes() {}
-
-type GetExampleNotFound Error
-
-func (*GetExampleNotFound) getExampleRes() {}
-
-// GetExampleNotModified is response for GetExample operation.
-type GetExampleNotModified struct {
-	CacheControl OptString
-	ETag         OptString
-}
-
-// GetCacheControl returns the value of CacheControl.
-func (s *GetExampleNotModified) GetCacheControl() OptString {
-	return s.CacheControl
-}
-
-// GetETag returns the value of ETag.
-func (s *GetExampleNotModified) GetETag() OptString {
-	return s.ETag
-}
-
-// SetCacheControl sets the value of CacheControl.
-func (s *GetExampleNotModified) SetCacheControl(val OptString) {
-	s.CacheControl = val
-}
-
-// SetETag sets the value of ETag.
-func (s *GetExampleNotModified) SetETag(val OptString) {
-	s.ETag = val
-}
-
-func (*GetExampleNotModified) getExampleRes() {}
+func (*GetResetHistoryOK) getResetHistoryRes() {}
 
-type GetResetStatusOK struct {
-	ResetID     uuid.UUID                 `json:"reset_id"`
-	ResetType   GetResetStatusOKResetType `json:"reset_type"`
-	Status      GetResetStatusOKStatus    `json:"status"`
-	CreatedAt   time.Time                 `json:"created_at"`
-	StartedAt   OptDateTime               `json:"started_at"`
-	CompletedAt OptDateTime               `json:"completed_at"`
-	Progress    GetResetStatusOKProgress  `json:"progress"`
-	// Whether reset can be rolled back.
-	RollbackAvailable OptBool `json:"rollback_available"`
-	// Deadline for rollback operations.
-	RollbackDeadline OptDateTime `json:"rollback_deadline"`
+type GetResetHistoryOKResetsItem struct {
+	ResetID     uuid.UUID                            `json:"reset_id"`
+	ResetType   GetResetHistoryOKResetsItemResetType `json:"reset_type"`
+	Status      GetResetHistoryOKResetsItemStatus    `json:"status"`
+	CreatedAt   time.Time                            `json:"created_at"`
+	CompletedAt OptDateTime                          `json:"completed_at"`
 }
 
 // GetResetID returns the value of ResetID.
-func (s *GetResetStatusOK) GetResetID() uuid.UUID {
+func (s *GetResetHistoryOKResetsItem) GetResetID() uuid.UUID {
 	return s.ResetID
 }
 
 // GetResetType returns the value of ResetType.
-func (s *GetResetStatusOK) GetResetType() GetResetStatusOKResetType {
+func (s *GetResetHistoryOKResetsItem) GetResetType() GetResetHistoryOKResetsItemResetType {
 	return s.ResetType
 }
 
 // GetStatus returns the value of Status.
-func (s *GetResetStatusOK) GetStatus() GetResetStatusOKStatus {
+func (s *GetResetHistoryOKResetsItem) GetStatus() GetResetHistoryOKResetsItemStatus {
 	return s.Status
 }
 
 // GetCreatedAt returns the value of CreatedAt.
-func (s *GetResetStatusOK) GetCreatedAt() time.Time {
+func (s *GetResetHistoryOKResetsItem) GetCreatedAt() time.Time {
 	return s.CreatedAt
 }
 
-// GetStartedAt returns the value of StartedAt.
-func (s *GetResetStatusOK) GetStartedAt() OptDateTime {
-	return s.StartedAt
-}
-
 // GetCompletedAt returns the value of CompletedAt.
-func (s *GetResetStatusOK) GetCompletedAt() OptDateTime {
+func (s *GetResetHistoryOKResetsItem) GetCompletedAt() OptDateTime {
 	return s.CompletedAt
 }
 
-// GetProgress returns the value of Progress.
-func (s *GetResetStatusOK) GetProgress() GetResetStatusOKProgress {
-	return s.Progress
-}
-
-// GetRollbackAvailable returns the value of RollbackAvailable.
-func (s *GetResetStatusOK) GetRollbackAvailable() OptBool {
-	return s.RollbackAvailable
-}
-
-// GetRollbackDeadline returns the value of RollbackDeadline.
-func (s *GetResetStatusOK) GetRollbackDeadline() OptDateTime {
-	return s.RollbackDeadline
-}
-
 // SetResetID sets the value of ResetID.
-func (s *GetResetStatusOK) SetResetID(val uuid.UUID) {
+func (s *GetResetHistoryOKResetsItem) SetResetID(val uuid.UUID) {
 	s.ResetID = val
 }
 
 // SetResetType sets the value of ResetType.
-func (s *GetResetStatusOK) SetResetType(val GetResetStatusOKResetType) {
+func (s *GetResetHistoryOKResetsItem) SetResetType(val GetResetHistoryOKResetsItemResetType) {
 	s.ResetType = val
 }
 
 // SetStatus sets the value of Status.
-func (s *GetResetStatusOK) SetStatus(val GetResetStatusOKStatus) {
+func (s *GetResetHistoryOKResetsItem) SetStatus(val GetResetHistoryOKResetsItemStatus) {
 	s.Status = val
 }
 
 // SetCreatedAt sets the value of CreatedAt.
-func (s *GetResetStatusOK) SetCreatedAt(val time.Time) {
+func (s *GetResetHistoryOKResetsItem) SetCreatedAt(val time.Time) {
 	s.CreatedAt = val
 }
 
-// SetStartedAt sets the value of StartedAt.
-func (s *GetResetStatusOK) SetStartedAt(val OptDateTime) {
-	s.StartedAt = val
-}
-
 // SetCompletedAt sets the value of CompletedAt.
-func (s *GetResetStatusOK) SetCompletedAt(val OptDateTime) {
+func (s *GetResetHistoryOKResetsItem) SetCompletedAt(val OptDateTime) {
 	s.CompletedAt = val
 }
 
-// SetProgress sets the value of Progress.
-func (s *GetResetStatusOK) SetProgress(val GetResetStatusOKProgress) {
-	s.Progress = val
-}
-
-// SetRollbackAvailable sets the value of RollbackAvailable.
-func (s *GetResetStatusOK) SetRollbackAvailable(val OptBool) {
-	s.RollbackAvailable = val
-}
-
-// SetRollbackDeadline sets the value of RollbackDeadline.
-func (s *GetResetStatusOK) SetRollbackDeadline(val OptDateTime) {
-	s.RollbackDeadline = val
-}
-
-func (*GetResetStatusOK) getResetStatusRes() {}
-
-type GetResetStatusOKProgress struct {
-	Percentage  float32 `json:"percentage"`
-	CurrentStep string  `json:"current_step"`
-	TotalSteps  int     `json:"total_steps"`
-}
-
-// GetPercentage returns the value of Percentage.
-func (s *GetResetStatusOKProgress) GetPercentage() float32 {
-	return s.Percentage
-}
-
-// GetCurrentStep returns the value of CurrentStep.
-func (s *GetResetStatusOKProgress) GetCurrentStep() string {
-	return s.CurrentStep
-}
-
-// GetTotalSteps returns the value of TotalSteps.
-func (s *GetResetStatusOKProgress) GetTotalSteps() int {
-	return s.TotalSteps
-}
-
-// SetPercentage sets the value of Percentage.
-func (s *GetResetStatusOKProgress) SetPercentage(val float32) {
-	s.Percentage = val
-}
-
-// SetCurrentStep sets the value of CurrentStep.
-func (s *GetResetStatusOKProgress) SetCurrentStep(val string) {
-	s.CurrentStep = val
-}
-
-// SetTotalSteps sets the value of TotalSteps.
-func (s *GetResetStatusOKProgress) SetTotalSteps(val int) {
-	s.TotalSteps = val
-}
-
-type GetResetStatusOKResetType string
+type GetResetHistoryOKResetsItemResetType string
 
 const (
-	GetResetStatusOKResetTypeCharacterReset   GetResetStatusOKResetType = "character_reset"
-	GetResetStatusOKResetTypeInventoryReset   GetResetStatusOKResetType = "inventory_reset"
-	GetResetStatusOKResetTypeAchievementReset GetResetStatusOKResetType = "achievement_reset"
-	GetResetStatusOKResetTypeFullReset        GetResetStatusOKResetType = "full_reset"
+	GetResetHistoryOKResetsItemResetTypeCharacterReset   GetResetHistoryOKResetsItemResetType = "character_reset"
+	GetResetHistoryOKResetsItemResetTypeInventoryReset   GetResetHistoryOKResetsItemResetType = "inventory_reset"
+	GetResetHistoryOKResetsItemResetTypeAchievementReset GetResetHistoryOKResetsItemResetType = "achievement_reset"
+	GetResetHistoryOKResetsItemResetTypeFullReset        GetResetHistoryOKResetsItemResetType = "full_reset"
 )
 
-// AllValues returns all GetResetStatusOKResetType values.
-func (GetResetStatusOKResetType) AllValues() []GetResetStatusOKResetType {
-	return []GetResetStatusOKResetType{
-		GetResetStatusOKResetTypeCharacterReset,
-		GetResetStatusOKResetTypeInventoryReset,
-		GetResetStatusOKResetTypeAchievementReset,
-		GetResetStatusOKResetTypeFullReset,
+// AllValues returns all GetResetHistoryOKResetsItemResetType values.
+func (GetResetHistoryOKResetsItemResetType) AllValues() []GetResetHistoryOKResetsItemResetType {
+	return []GetResetHistoryOKResetsItemResetType{
+		GetResetHistoryOKResetsItemResetTypeCharacterReset,
+		GetResetHistoryOKResetsItemResetTypeInventoryReset,
+		GetResetHistoryOKResetsItemResetTypeAchievementReset,
+		GetResetHistoryOKResetsItemResetTypeFullReset,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s GetResetStatusOKResetType) MarshalText() ([]byte, error) {
+func (s GetResetHistoryOKResetsItemResetType) MarshalText() ([]byte, error) {
 	switch s {
-	case GetResetStatusOKResetTypeCharacterReset:
+	case GetResetHistoryOKResetsItemResetTypeCharacterReset:
 		return []byte(s), nil
-	case GetResetStatusOKResetTypeInventoryReset:
+	case GetResetHistoryOKResetsItemResetTypeInventoryReset:
 		return []byte(s), nil
-	case GetResetStatusOKResetTypeAchievementReset:
+	case GetResetHistoryOKResetsItemResetTypeAchievementReset:
 		return []byte(s), nil
-	case GetResetStatusOKResetTypeFullReset:
+	case GetResetHistoryOKResetsItemResetTypeFullReset:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -929,58 +253,58 @@ func (s GetResetStatusOKResetType) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *GetResetStatusOKResetType) UnmarshalText(data []byte) error {
-	switch GetResetStatusOKResetType(data) {
-	case GetResetStatusOKResetTypeCharacterReset:
-		*s = GetResetStatusOKResetTypeCharacterReset
+func (s *GetResetHistoryOKResetsItemResetType) UnmarshalText(data []byte) error {
+	switch GetResetHistoryOKResetsItemResetType(data) {
+	case GetResetHistoryOKResetsItemResetTypeCharacterReset:
+		*s = GetResetHistoryOKResetsItemResetTypeCharacterReset
 		return nil
-	case GetResetStatusOKResetTypeInventoryReset:
-		*s = GetResetStatusOKResetTypeInventoryReset
+	case GetResetHistoryOKResetsItemResetTypeInventoryReset:
+		*s = GetResetHistoryOKResetsItemResetTypeInventoryReset
 		return nil
-	case GetResetStatusOKResetTypeAchievementReset:
-		*s = GetResetStatusOKResetTypeAchievementReset
+	case GetResetHistoryOKResetsItemResetTypeAchievementReset:
+		*s = GetResetHistoryOKResetsItemResetTypeAchievementReset
 		return nil
-	case GetResetStatusOKResetTypeFullReset:
-		*s = GetResetStatusOKResetTypeFullReset
+	case GetResetHistoryOKResetsItemResetTypeFullReset:
+		*s = GetResetHistoryOKResetsItemResetTypeFullReset
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-type GetResetStatusOKStatus string
+type GetResetHistoryOKResetsItemStatus string
 
 const (
-	GetResetStatusOKStatusQueued     GetResetStatusOKStatus = "queued"
-	GetResetStatusOKStatusProcessing GetResetStatusOKStatus = "processing"
-	GetResetStatusOKStatusCompleted  GetResetStatusOKStatus = "completed"
-	GetResetStatusOKStatusFailed     GetResetStatusOKStatus = "failed"
-	GetResetStatusOKStatusCancelled  GetResetStatusOKStatus = "cancelled"
+	GetResetHistoryOKResetsItemStatusQueued     GetResetHistoryOKResetsItemStatus = "queued"
+	GetResetHistoryOKResetsItemStatusProcessing GetResetHistoryOKResetsItemStatus = "processing"
+	GetResetHistoryOKResetsItemStatusCompleted  GetResetHistoryOKResetsItemStatus = "completed"
+	GetResetHistoryOKResetsItemStatusFailed     GetResetHistoryOKResetsItemStatus = "failed"
+	GetResetHistoryOKResetsItemStatusCancelled  GetResetHistoryOKResetsItemStatus = "cancelled"
 )
 
-// AllValues returns all GetResetStatusOKStatus values.
-func (GetResetStatusOKStatus) AllValues() []GetResetStatusOKStatus {
-	return []GetResetStatusOKStatus{
-		GetResetStatusOKStatusQueued,
-		GetResetStatusOKStatusProcessing,
-		GetResetStatusOKStatusCompleted,
-		GetResetStatusOKStatusFailed,
-		GetResetStatusOKStatusCancelled,
+// AllValues returns all GetResetHistoryOKResetsItemStatus values.
+func (GetResetHistoryOKResetsItemStatus) AllValues() []GetResetHistoryOKResetsItemStatus {
+	return []GetResetHistoryOKResetsItemStatus{
+		GetResetHistoryOKResetsItemStatusQueued,
+		GetResetHistoryOKResetsItemStatusProcessing,
+		GetResetHistoryOKResetsItemStatusCompleted,
+		GetResetHistoryOKResetsItemStatusFailed,
+		GetResetHistoryOKResetsItemStatusCancelled,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s GetResetStatusOKStatus) MarshalText() ([]byte, error) {
+func (s GetResetHistoryOKResetsItemStatus) MarshalText() ([]byte, error) {
 	switch s {
-	case GetResetStatusOKStatusQueued:
+	case GetResetHistoryOKResetsItemStatusQueued:
 		return []byte(s), nil
-	case GetResetStatusOKStatusProcessing:
+	case GetResetHistoryOKResetsItemStatusProcessing:
 		return []byte(s), nil
-	case GetResetStatusOKStatusCompleted:
+	case GetResetHistoryOKResetsItemStatusCompleted:
 		return []byte(s), nil
-	case GetResetStatusOKStatusFailed:
+	case GetResetHistoryOKResetsItemStatusFailed:
 		return []byte(s), nil
-	case GetResetStatusOKStatusCancelled:
+	case GetResetHistoryOKResetsItemStatusCancelled:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -988,104 +312,205 @@ func (s GetResetStatusOKStatus) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *GetResetStatusOKStatus) UnmarshalText(data []byte) error {
-	switch GetResetStatusOKStatus(data) {
-	case GetResetStatusOKStatusQueued:
-		*s = GetResetStatusOKStatusQueued
+func (s *GetResetHistoryOKResetsItemStatus) UnmarshalText(data []byte) error {
+	switch GetResetHistoryOKResetsItemStatus(data) {
+	case GetResetHistoryOKResetsItemStatusQueued:
+		*s = GetResetHistoryOKResetsItemStatusQueued
 		return nil
-	case GetResetStatusOKStatusProcessing:
-		*s = GetResetStatusOKStatusProcessing
+	case GetResetHistoryOKResetsItemStatusProcessing:
+		*s = GetResetHistoryOKResetsItemStatusProcessing
 		return nil
-	case GetResetStatusOKStatusCompleted:
-		*s = GetResetStatusOKStatusCompleted
+	case GetResetHistoryOKResetsItemStatusCompleted:
+		*s = GetResetHistoryOKResetsItemStatusCompleted
 		return nil
-	case GetResetStatusOKStatusFailed:
-		*s = GetResetStatusOKStatusFailed
+	case GetResetHistoryOKResetsItemStatusFailed:
+		*s = GetResetHistoryOKResetsItemStatusFailed
 		return nil
-	case GetResetStatusOKStatusCancelled:
-		*s = GetResetStatusOKStatusCancelled
+	case GetResetHistoryOKResetsItemStatusCancelled:
+		*s = GetResetHistoryOKResetsItemStatusCancelled
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
 
-type HealthBatchSuccess struct {
-	// Health status for each requested service.
-	Results []HealthResponse `json:"results"`
-	// Total processing time in milliseconds.
-	TotalTimeMs int `json:"total_time_ms"`
+type GetResetHistoryResetType string
+
+const (
+	GetResetHistoryResetTypeCharacterReset   GetResetHistoryResetType = "character_reset"
+	GetResetHistoryResetTypeInventoryReset   GetResetHistoryResetType = "inventory_reset"
+	GetResetHistoryResetTypeAchievementReset GetResetHistoryResetType = "achievement_reset"
+	GetResetHistoryResetTypeFullReset        GetResetHistoryResetType = "full_reset"
+)
+
+// AllValues returns all GetResetHistoryResetType values.
+func (GetResetHistoryResetType) AllValues() []GetResetHistoryResetType {
+	return []GetResetHistoryResetType{
+		GetResetHistoryResetTypeCharacterReset,
+		GetResetHistoryResetTypeInventoryReset,
+		GetResetHistoryResetTypeAchievementReset,
+		GetResetHistoryResetTypeFullReset,
+	}
 }
 
-// GetResults returns the value of Results.
-func (s *HealthBatchSuccess) GetResults() []HealthResponse {
-	return s.Results
+// MarshalText implements encoding.TextMarshaler.
+func (s GetResetHistoryResetType) MarshalText() ([]byte, error) {
+	switch s {
+	case GetResetHistoryResetTypeCharacterReset:
+		return []byte(s), nil
+	case GetResetHistoryResetTypeInventoryReset:
+		return []byte(s), nil
+	case GetResetHistoryResetTypeAchievementReset:
+		return []byte(s), nil
+	case GetResetHistoryResetTypeFullReset:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
 }
 
-// GetTotalTimeMs returns the value of TotalTimeMs.
-func (s *HealthBatchSuccess) GetTotalTimeMs() int {
-	return s.TotalTimeMs
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetResetHistoryResetType) UnmarshalText(data []byte) error {
+	switch GetResetHistoryResetType(data) {
+	case GetResetHistoryResetTypeCharacterReset:
+		*s = GetResetHistoryResetTypeCharacterReset
+		return nil
+	case GetResetHistoryResetTypeInventoryReset:
+		*s = GetResetHistoryResetTypeInventoryReset
+		return nil
+	case GetResetHistoryResetTypeAchievementReset:
+		*s = GetResetHistoryResetTypeAchievementReset
+		return nil
+	case GetResetHistoryResetTypeFullReset:
+		*s = GetResetHistoryResetTypeFullReset
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
-// SetResults sets the value of Results.
-func (s *HealthBatchSuccess) SetResults(val []HealthResponse) {
-	s.Results = val
+type GetResetHistoryStatus string
+
+const (
+	GetResetHistoryStatusQueued     GetResetHistoryStatus = "queued"
+	GetResetHistoryStatusProcessing GetResetHistoryStatus = "processing"
+	GetResetHistoryStatusCompleted  GetResetHistoryStatus = "completed"
+	GetResetHistoryStatusFailed     GetResetHistoryStatus = "failed"
+	GetResetHistoryStatusCancelled  GetResetHistoryStatus = "cancelled"
+)
+
+// AllValues returns all GetResetHistoryStatus values.
+func (GetResetHistoryStatus) AllValues() []GetResetHistoryStatus {
+	return []GetResetHistoryStatus{
+		GetResetHistoryStatusQueued,
+		GetResetHistoryStatusProcessing,
+		GetResetHistoryStatusCompleted,
+		GetResetHistoryStatusFailed,
+		GetResetHistoryStatusCancelled,
+	}
 }
 
-// SetTotalTimeMs sets the value of TotalTimeMs.
-func (s *HealthBatchSuccess) SetTotalTimeMs(val int) {
-	s.TotalTimeMs = val
+// MarshalText implements encoding.TextMarshaler.
+func (s GetResetHistoryStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case GetResetHistoryStatusQueued:
+		return []byte(s), nil
+	case GetResetHistoryStatusProcessing:
+		return []byte(s), nil
+	case GetResetHistoryStatusCompleted:
+		return []byte(s), nil
+	case GetResetHistoryStatusFailed:
+		return []byte(s), nil
+	case GetResetHistoryStatusCancelled:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
 }
 
-// HealthBatchSuccessHeaders wraps HealthBatchSuccess with response headers.
-type HealthBatchSuccessHeaders struct {
-	CacheControl    OptString
-	XProcessingTime OptInt
-	Response        HealthBatchSuccess
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetResetHistoryStatus) UnmarshalText(data []byte) error {
+	switch GetResetHistoryStatus(data) {
+	case GetResetHistoryStatusQueued:
+		*s = GetResetHistoryStatusQueued
+		return nil
+	case GetResetHistoryStatusProcessing:
+		*s = GetResetHistoryStatusProcessing
+		return nil
+	case GetResetHistoryStatusCompleted:
+		*s = GetResetHistoryStatusCompleted
+		return nil
+	case GetResetHistoryStatusFailed:
+		*s = GetResetHistoryStatusFailed
+		return nil
+	case GetResetHistoryStatusCancelled:
+		*s = GetResetHistoryStatusCancelled
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
-// GetCacheControl returns the value of CacheControl.
-func (s *HealthBatchSuccessHeaders) GetCacheControl() OptString {
-	return s.CacheControl
+type GetResetStatsOK struct {
+	TotalResets      int `json:"total_resets"`
+	SuccessfulResets int `json:"successful_resets"`
+	FailedResets     int `json:"failed_resets"`
+	// Average completion time in seconds.
+	AverageCompletionTime float32 `json:"average_completion_time"`
 }
 
-// GetXProcessingTime returns the value of XProcessingTime.
-func (s *HealthBatchSuccessHeaders) GetXProcessingTime() OptInt {
-	return s.XProcessingTime
+// GetTotalResets returns the value of TotalResets.
+func (s *GetResetStatsOK) GetTotalResets() int {
+	return s.TotalResets
 }
 
-// GetResponse returns the value of Response.
-func (s *HealthBatchSuccessHeaders) GetResponse() HealthBatchSuccess {
-	return s.Response
+// GetSuccessfulResets returns the value of SuccessfulResets.
+func (s *GetResetStatsOK) GetSuccessfulResets() int {
+	return s.SuccessfulResets
 }
 
-// SetCacheControl sets the value of CacheControl.
-func (s *HealthBatchSuccessHeaders) SetCacheControl(val OptString) {
-	s.CacheControl = val
+// GetFailedResets returns the value of FailedResets.
+func (s *GetResetStatsOK) GetFailedResets() int {
+	return s.FailedResets
 }
 
-// SetXProcessingTime sets the value of XProcessingTime.
-func (s *HealthBatchSuccessHeaders) SetXProcessingTime(val OptInt) {
-	s.XProcessingTime = val
+// GetAverageCompletionTime returns the value of AverageCompletionTime.
+func (s *GetResetStatsOK) GetAverageCompletionTime() float32 {
+	return s.AverageCompletionTime
 }
 
-// SetResponse sets the value of Response.
-func (s *HealthBatchSuccessHeaders) SetResponse(val HealthBatchSuccess) {
-	s.Response = val
+// SetTotalResets sets the value of TotalResets.
+func (s *GetResetStatsOK) SetTotalResets(val int) {
+	s.TotalResets = val
 }
 
-func (*HealthBatchSuccessHeaders) exampleDomainBatchHealthCheckRes() {}
+// SetSuccessfulResets sets the value of SuccessfulResets.
+func (s *GetResetStatsOK) SetSuccessfulResets(val int) {
+	s.SuccessfulResets = val
+}
+
+// SetFailedResets sets the value of FailedResets.
+func (s *GetResetStatsOK) SetFailedResets(val int) {
+	s.FailedResets = val
+}
+
+// SetAverageCompletionTime sets the value of AverageCompletionTime.
+func (s *GetResetStatsOK) SetAverageCompletionTime(val float32) {
+	s.AverageCompletionTime = val
+}
+
+func (*GetResetStatsOK) getResetStatsRes() {}
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
 // Ref: #/components/schemas/HealthResponse
 type HealthResponse struct {
-	Domain            string               `json:"domain"`
-	Status            HealthResponseStatus `json:"status"`
-	Timestamp         time.Time            `json:"timestamp"`
-	Version           OptString            `json:"version"`
-	UptimeSeconds     OptInt               `json:"uptime_seconds"`
-	ActiveConnections OptInt               `json:"active_connections"`
+	Domain        string               `json:"domain"`
+	Status        HealthResponseStatus `json:"status"`
+	Timestamp     time.Time            `json:"timestamp"`
+	Version       OptString            `json:"version"`
+	UptimeSeconds OptInt               `json:"uptime_seconds"`
+	ActiveResets  OptInt               `json:"active_resets"`
 }
 
 // GetDomain returns the value of Domain.
@@ -1113,9 +538,9 @@ func (s *HealthResponse) GetUptimeSeconds() OptInt {
 	return s.UptimeSeconds
 }
 
-// GetActiveConnections returns the value of ActiveConnections.
-func (s *HealthResponse) GetActiveConnections() OptInt {
-	return s.ActiveConnections
+// GetActiveResets returns the value of ActiveResets.
+func (s *HealthResponse) GetActiveResets() OptInt {
+	return s.ActiveResets
 }
 
 // SetDomain sets the value of Domain.
@@ -1143,9 +568,9 @@ func (s *HealthResponse) SetUptimeSeconds(val OptInt) {
 	s.UptimeSeconds = val
 }
 
-// SetActiveConnections sets the value of ActiveConnections.
-func (s *HealthResponse) SetActiveConnections(val OptInt) {
-	s.ActiveConnections = val
+// SetActiveResets sets the value of ActiveResets.
+func (s *HealthResponse) SetActiveResets(val OptInt) {
+	s.ActiveResets = val
 }
 
 func (*HealthResponse) resetServiceHealthCheckRes() {}
@@ -1248,52 +673,6 @@ func (s *HealthResponseStatus) UnmarshalText(data []byte) error {
 	}
 }
 
-// NewOptBool returns new OptBool with value set to v.
-func NewOptBool(v bool) OptBool {
-	return OptBool{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptBool is optional bool.
-type OptBool struct {
-	Value bool
-	Set   bool
-}
-
-// IsSet returns true if OptBool was set.
-func (o OptBool) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptBool) Reset() {
-	var v bool
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptBool) SetTo(v bool) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptBool) Get() (v bool, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptBool) Or(d bool) bool {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptDateTime returns new OptDateTime with value set to v.
 func NewOptDateTime(v time.Time) OptDateTime {
 	return OptDateTime{
@@ -1334,6 +713,98 @@ func (o OptDateTime) Get() (v time.Time, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptDateTime) Or(d time.Time) time.Time {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetResetHistoryResetType returns new OptGetResetHistoryResetType with value set to v.
+func NewOptGetResetHistoryResetType(v GetResetHistoryResetType) OptGetResetHistoryResetType {
+	return OptGetResetHistoryResetType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetResetHistoryResetType is optional GetResetHistoryResetType.
+type OptGetResetHistoryResetType struct {
+	Value GetResetHistoryResetType
+	Set   bool
+}
+
+// IsSet returns true if OptGetResetHistoryResetType was set.
+func (o OptGetResetHistoryResetType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetResetHistoryResetType) Reset() {
+	var v GetResetHistoryResetType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetResetHistoryResetType) SetTo(v GetResetHistoryResetType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetResetHistoryResetType) Get() (v GetResetHistoryResetType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetResetHistoryResetType) Or(d GetResetHistoryResetType) GetResetHistoryResetType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetResetHistoryStatus returns new OptGetResetHistoryStatus with value set to v.
+func NewOptGetResetHistoryStatus(v GetResetHistoryStatus) OptGetResetHistoryStatus {
+	return OptGetResetHistoryStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetResetHistoryStatus is optional GetResetHistoryStatus.
+type OptGetResetHistoryStatus struct {
+	Value GetResetHistoryStatus
+	Set   bool
+}
+
+// IsSet returns true if OptGetResetHistoryStatus was set.
+func (o OptGetResetHistoryStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetResetHistoryStatus) Reset() {
+	var v GetResetHistoryStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetResetHistoryStatus) SetTo(v GetResetHistoryStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetResetHistoryStatus) Get() (v GetResetHistoryStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetResetHistoryStatus) Or(d GetResetHistoryStatus) GetResetHistoryStatus {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -1524,729 +995,6 @@ func (o OptString) Or(d string) string {
 	return d
 }
 
-// NewOptUpdateExampleRequestStatus returns new OptUpdateExampleRequestStatus with value set to v.
-func NewOptUpdateExampleRequestStatus(v UpdateExampleRequestStatus) OptUpdateExampleRequestStatus {
-	return OptUpdateExampleRequestStatus{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptUpdateExampleRequestStatus is optional UpdateExampleRequestStatus.
-type OptUpdateExampleRequestStatus struct {
-	Value UpdateExampleRequestStatus
-	Set   bool
-}
-
-// IsSet returns true if OptUpdateExampleRequestStatus was set.
-func (o OptUpdateExampleRequestStatus) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptUpdateExampleRequestStatus) Reset() {
-	var v UpdateExampleRequestStatus
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptUpdateExampleRequestStatus) SetTo(v UpdateExampleRequestStatus) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptUpdateExampleRequestStatus) Get() (v UpdateExampleRequestStatus, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptUpdateExampleRequestStatus) Or(d UpdateExampleRequestStatus) UpdateExampleRequestStatus {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-type RequestAchievementResetAccepted struct {
-	ResetID uuid.UUID `json:"reset_id"`
-	// Number of achievements that will be reset.
-	AchievementsToReset int `json:"achievements_to_reset"`
-	// Number of achievements that will be preserved.
-	AchievementsToPreserve int       `json:"achievements_to_preserve"`
-	EstimatedCompletion    time.Time `json:"estimated_completion"`
-}
-
-// GetResetID returns the value of ResetID.
-func (s *RequestAchievementResetAccepted) GetResetID() uuid.UUID {
-	return s.ResetID
-}
-
-// GetAchievementsToReset returns the value of AchievementsToReset.
-func (s *RequestAchievementResetAccepted) GetAchievementsToReset() int {
-	return s.AchievementsToReset
-}
-
-// GetAchievementsToPreserve returns the value of AchievementsToPreserve.
-func (s *RequestAchievementResetAccepted) GetAchievementsToPreserve() int {
-	return s.AchievementsToPreserve
-}
-
-// GetEstimatedCompletion returns the value of EstimatedCompletion.
-func (s *RequestAchievementResetAccepted) GetEstimatedCompletion() time.Time {
-	return s.EstimatedCompletion
-}
-
-// SetResetID sets the value of ResetID.
-func (s *RequestAchievementResetAccepted) SetResetID(val uuid.UUID) {
-	s.ResetID = val
-}
-
-// SetAchievementsToReset sets the value of AchievementsToReset.
-func (s *RequestAchievementResetAccepted) SetAchievementsToReset(val int) {
-	s.AchievementsToReset = val
-}
-
-// SetAchievementsToPreserve sets the value of AchievementsToPreserve.
-func (s *RequestAchievementResetAccepted) SetAchievementsToPreserve(val int) {
-	s.AchievementsToPreserve = val
-}
-
-// SetEstimatedCompletion sets the value of EstimatedCompletion.
-func (s *RequestAchievementResetAccepted) SetEstimatedCompletion(val time.Time) {
-	s.EstimatedCompletion = val
-}
-
-// RequestAchievementResetAcceptedHeaders wraps RequestAchievementResetAccepted with response headers.
-type RequestAchievementResetAcceptedHeaders struct {
-	Location OptString
-	Response RequestAchievementResetAccepted
-}
-
-// GetLocation returns the value of Location.
-func (s *RequestAchievementResetAcceptedHeaders) GetLocation() OptString {
-	return s.Location
-}
-
-// GetResponse returns the value of Response.
-func (s *RequestAchievementResetAcceptedHeaders) GetResponse() RequestAchievementResetAccepted {
-	return s.Response
-}
-
-// SetLocation sets the value of Location.
-func (s *RequestAchievementResetAcceptedHeaders) SetLocation(val OptString) {
-	s.Location = val
-}
-
-// SetResponse sets the value of Response.
-func (s *RequestAchievementResetAcceptedHeaders) SetResponse(val RequestAchievementResetAccepted) {
-	s.Response = val
-}
-
-func (*RequestAchievementResetAcceptedHeaders) requestAchievementResetRes() {}
-
-type RequestAchievementResetOK struct {
-	ResetID                uuid.UUID `json:"reset_id"`
-	AchievementsToReset    int       `json:"achievements_to_reset"`
-	AchievementsToPreserve int       `json:"achievements_to_preserve"`
-	// Estimated completion time in seconds.
-	EstimatedCompletionTime int `json:"estimated_completion_time"`
-}
-
-// GetResetID returns the value of ResetID.
-func (s *RequestAchievementResetOK) GetResetID() uuid.UUID {
-	return s.ResetID
-}
-
-// GetAchievementsToReset returns the value of AchievementsToReset.
-func (s *RequestAchievementResetOK) GetAchievementsToReset() int {
-	return s.AchievementsToReset
-}
-
-// GetAchievementsToPreserve returns the value of AchievementsToPreserve.
-func (s *RequestAchievementResetOK) GetAchievementsToPreserve() int {
-	return s.AchievementsToPreserve
-}
-
-// GetEstimatedCompletionTime returns the value of EstimatedCompletionTime.
-func (s *RequestAchievementResetOK) GetEstimatedCompletionTime() int {
-	return s.EstimatedCompletionTime
-}
-
-// SetResetID sets the value of ResetID.
-func (s *RequestAchievementResetOK) SetResetID(val uuid.UUID) {
-	s.ResetID = val
-}
-
-// SetAchievementsToReset sets the value of AchievementsToReset.
-func (s *RequestAchievementResetOK) SetAchievementsToReset(val int) {
-	s.AchievementsToReset = val
-}
-
-// SetAchievementsToPreserve sets the value of AchievementsToPreserve.
-func (s *RequestAchievementResetOK) SetAchievementsToPreserve(val int) {
-	s.AchievementsToPreserve = val
-}
-
-// SetEstimatedCompletionTime sets the value of EstimatedCompletionTime.
-func (s *RequestAchievementResetOK) SetEstimatedCompletionTime(val int) {
-	s.EstimatedCompletionTime = val
-}
-
-// RequestAchievementResetOKHeaders wraps RequestAchievementResetOK with response headers.
-type RequestAchievementResetOKHeaders struct {
-	Location OptString
-	Response RequestAchievementResetOK
-}
-
-// GetLocation returns the value of Location.
-func (s *RequestAchievementResetOKHeaders) GetLocation() OptString {
-	return s.Location
-}
-
-// GetResponse returns the value of Response.
-func (s *RequestAchievementResetOKHeaders) GetResponse() RequestAchievementResetOK {
-	return s.Response
-}
-
-// SetLocation sets the value of Location.
-func (s *RequestAchievementResetOKHeaders) SetLocation(val OptString) {
-	s.Location = val
-}
-
-// SetResponse sets the value of Response.
-func (s *RequestAchievementResetOKHeaders) SetResponse(val RequestAchievementResetOK) {
-	s.Response = val
-}
-
-func (*RequestAchievementResetOKHeaders) requestAchievementResetRes() {}
-
-type RequestAchievementResetReq struct {
-	// Scope of achievement reset.
-	ResetScope RequestAchievementResetReqResetScope `json:"reset_scope"`
-	// User confirmation token.
-	ConfirmationToken string `json:"confirmation_token"`
-	// Achievement categories to preserve.
-	PreserveCategories []RequestAchievementResetReqPreserveCategoriesItem `json:"preserve_categories"`
-	// Whether to preserve completed achievements.
-	PreserveCompleted OptBool `json:"preserve_completed"`
-}
-
-// GetResetScope returns the value of ResetScope.
-func (s *RequestAchievementResetReq) GetResetScope() RequestAchievementResetReqResetScope {
-	return s.ResetScope
-}
-
-// GetConfirmationToken returns the value of ConfirmationToken.
-func (s *RequestAchievementResetReq) GetConfirmationToken() string {
-	return s.ConfirmationToken
-}
-
-// GetPreserveCategories returns the value of PreserveCategories.
-func (s *RequestAchievementResetReq) GetPreserveCategories() []RequestAchievementResetReqPreserveCategoriesItem {
-	return s.PreserveCategories
-}
-
-// GetPreserveCompleted returns the value of PreserveCompleted.
-func (s *RequestAchievementResetReq) GetPreserveCompleted() OptBool {
-	return s.PreserveCompleted
-}
-
-// SetResetScope sets the value of ResetScope.
-func (s *RequestAchievementResetReq) SetResetScope(val RequestAchievementResetReqResetScope) {
-	s.ResetScope = val
-}
-
-// SetConfirmationToken sets the value of ConfirmationToken.
-func (s *RequestAchievementResetReq) SetConfirmationToken(val string) {
-	s.ConfirmationToken = val
-}
-
-// SetPreserveCategories sets the value of PreserveCategories.
-func (s *RequestAchievementResetReq) SetPreserveCategories(val []RequestAchievementResetReqPreserveCategoriesItem) {
-	s.PreserveCategories = val
-}
-
-// SetPreserveCompleted sets the value of PreserveCompleted.
-func (s *RequestAchievementResetReq) SetPreserveCompleted(val OptBool) {
-	s.PreserveCompleted = val
-}
-
-type RequestAchievementResetReqPreserveCategoriesItem string
-
-const (
-	RequestAchievementResetReqPreserveCategoriesItemCombat      RequestAchievementResetReqPreserveCategoriesItem = "combat"
-	RequestAchievementResetReqPreserveCategoriesItemExploration RequestAchievementResetReqPreserveCategoriesItem = "exploration"
-	RequestAchievementResetReqPreserveCategoriesItemSocial      RequestAchievementResetReqPreserveCategoriesItem = "social"
-	RequestAchievementResetReqPreserveCategoriesItemCollection  RequestAchievementResetReqPreserveCategoriesItem = "collection"
-	RequestAchievementResetReqPreserveCategoriesItemProgression RequestAchievementResetReqPreserveCategoriesItem = "progression"
-	RequestAchievementResetReqPreserveCategoriesItemSeasonal    RequestAchievementResetReqPreserveCategoriesItem = "seasonal"
-)
-
-// AllValues returns all RequestAchievementResetReqPreserveCategoriesItem values.
-func (RequestAchievementResetReqPreserveCategoriesItem) AllValues() []RequestAchievementResetReqPreserveCategoriesItem {
-	return []RequestAchievementResetReqPreserveCategoriesItem{
-		RequestAchievementResetReqPreserveCategoriesItemCombat,
-		RequestAchievementResetReqPreserveCategoriesItemExploration,
-		RequestAchievementResetReqPreserveCategoriesItemSocial,
-		RequestAchievementResetReqPreserveCategoriesItemCollection,
-		RequestAchievementResetReqPreserveCategoriesItemProgression,
-		RequestAchievementResetReqPreserveCategoriesItemSeasonal,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s RequestAchievementResetReqPreserveCategoriesItem) MarshalText() ([]byte, error) {
-	switch s {
-	case RequestAchievementResetReqPreserveCategoriesItemCombat:
-		return []byte(s), nil
-	case RequestAchievementResetReqPreserveCategoriesItemExploration:
-		return []byte(s), nil
-	case RequestAchievementResetReqPreserveCategoriesItemSocial:
-		return []byte(s), nil
-	case RequestAchievementResetReqPreserveCategoriesItemCollection:
-		return []byte(s), nil
-	case RequestAchievementResetReqPreserveCategoriesItemProgression:
-		return []byte(s), nil
-	case RequestAchievementResetReqPreserveCategoriesItemSeasonal:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *RequestAchievementResetReqPreserveCategoriesItem) UnmarshalText(data []byte) error {
-	switch RequestAchievementResetReqPreserveCategoriesItem(data) {
-	case RequestAchievementResetReqPreserveCategoriesItemCombat:
-		*s = RequestAchievementResetReqPreserveCategoriesItemCombat
-		return nil
-	case RequestAchievementResetReqPreserveCategoriesItemExploration:
-		*s = RequestAchievementResetReqPreserveCategoriesItemExploration
-		return nil
-	case RequestAchievementResetReqPreserveCategoriesItemSocial:
-		*s = RequestAchievementResetReqPreserveCategoriesItemSocial
-		return nil
-	case RequestAchievementResetReqPreserveCategoriesItemCollection:
-		*s = RequestAchievementResetReqPreserveCategoriesItemCollection
-		return nil
-	case RequestAchievementResetReqPreserveCategoriesItemProgression:
-		*s = RequestAchievementResetReqPreserveCategoriesItemProgression
-		return nil
-	case RequestAchievementResetReqPreserveCategoriesItemSeasonal:
-		*s = RequestAchievementResetReqPreserveCategoriesItemSeasonal
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Scope of achievement reset.
-type RequestAchievementResetReqResetScope string
-
-const (
-	RequestAchievementResetReqResetScopeAllAchievements  RequestAchievementResetReqResetScope = "all_achievements"
-	RequestAchievementResetReqResetScopeCategorySpecific RequestAchievementResetReqResetScope = "category_specific"
-	RequestAchievementResetReqResetScopeProgressOnly     RequestAchievementResetReqResetScope = "progress_only"
-	RequestAchievementResetReqResetScopeUnlocksOnly      RequestAchievementResetReqResetScope = "unlocks_only"
-)
-
-// AllValues returns all RequestAchievementResetReqResetScope values.
-func (RequestAchievementResetReqResetScope) AllValues() []RequestAchievementResetReqResetScope {
-	return []RequestAchievementResetReqResetScope{
-		RequestAchievementResetReqResetScopeAllAchievements,
-		RequestAchievementResetReqResetScopeCategorySpecific,
-		RequestAchievementResetReqResetScopeProgressOnly,
-		RequestAchievementResetReqResetScopeUnlocksOnly,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s RequestAchievementResetReqResetScope) MarshalText() ([]byte, error) {
-	switch s {
-	case RequestAchievementResetReqResetScopeAllAchievements:
-		return []byte(s), nil
-	case RequestAchievementResetReqResetScopeCategorySpecific:
-		return []byte(s), nil
-	case RequestAchievementResetReqResetScopeProgressOnly:
-		return []byte(s), nil
-	case RequestAchievementResetReqResetScopeUnlocksOnly:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *RequestAchievementResetReqResetScope) UnmarshalText(data []byte) error {
-	switch RequestAchievementResetReqResetScope(data) {
-	case RequestAchievementResetReqResetScopeAllAchievements:
-		*s = RequestAchievementResetReqResetScopeAllAchievements
-		return nil
-	case RequestAchievementResetReqResetScopeCategorySpecific:
-		*s = RequestAchievementResetReqResetScopeCategorySpecific
-		return nil
-	case RequestAchievementResetReqResetScopeProgressOnly:
-		*s = RequestAchievementResetReqResetScopeProgressOnly
-		return nil
-	case RequestAchievementResetReqResetScopeUnlocksOnly:
-		*s = RequestAchievementResetReqResetScopeUnlocksOnly
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-type RequestInventoryResetAccepted struct {
-	ResetID uuid.UUID `json:"reset_id"`
-	// Number of items that will be removed.
-	ItemsToRemove int `json:"items_to_remove"`
-	// Number of items that will be preserved.
-	ItemsToPreserve     int       `json:"items_to_preserve"`
-	EstimatedCompletion time.Time `json:"estimated_completion"`
-}
-
-// GetResetID returns the value of ResetID.
-func (s *RequestInventoryResetAccepted) GetResetID() uuid.UUID {
-	return s.ResetID
-}
-
-// GetItemsToRemove returns the value of ItemsToRemove.
-func (s *RequestInventoryResetAccepted) GetItemsToRemove() int {
-	return s.ItemsToRemove
-}
-
-// GetItemsToPreserve returns the value of ItemsToPreserve.
-func (s *RequestInventoryResetAccepted) GetItemsToPreserve() int {
-	return s.ItemsToPreserve
-}
-
-// GetEstimatedCompletion returns the value of EstimatedCompletion.
-func (s *RequestInventoryResetAccepted) GetEstimatedCompletion() time.Time {
-	return s.EstimatedCompletion
-}
-
-// SetResetID sets the value of ResetID.
-func (s *RequestInventoryResetAccepted) SetResetID(val uuid.UUID) {
-	s.ResetID = val
-}
-
-// SetItemsToRemove sets the value of ItemsToRemove.
-func (s *RequestInventoryResetAccepted) SetItemsToRemove(val int) {
-	s.ItemsToRemove = val
-}
-
-// SetItemsToPreserve sets the value of ItemsToPreserve.
-func (s *RequestInventoryResetAccepted) SetItemsToPreserve(val int) {
-	s.ItemsToPreserve = val
-}
-
-// SetEstimatedCompletion sets the value of EstimatedCompletion.
-func (s *RequestInventoryResetAccepted) SetEstimatedCompletion(val time.Time) {
-	s.EstimatedCompletion = val
-}
-
-// RequestInventoryResetAcceptedHeaders wraps RequestInventoryResetAccepted with response headers.
-type RequestInventoryResetAcceptedHeaders struct {
-	Location OptString
-	Response RequestInventoryResetAccepted
-}
-
-// GetLocation returns the value of Location.
-func (s *RequestInventoryResetAcceptedHeaders) GetLocation() OptString {
-	return s.Location
-}
-
-// GetResponse returns the value of Response.
-func (s *RequestInventoryResetAcceptedHeaders) GetResponse() RequestInventoryResetAccepted {
-	return s.Response
-}
-
-// SetLocation sets the value of Location.
-func (s *RequestInventoryResetAcceptedHeaders) SetLocation(val OptString) {
-	s.Location = val
-}
-
-// SetResponse sets the value of Response.
-func (s *RequestInventoryResetAcceptedHeaders) SetResponse(val RequestInventoryResetAccepted) {
-	s.Response = val
-}
-
-func (*RequestInventoryResetAcceptedHeaders) requestInventoryResetRes() {}
-
-type RequestInventoryResetOK struct {
-	ResetID         uuid.UUID `json:"reset_id"`
-	ItemsToRemove   int       `json:"items_to_remove"`
-	ItemsToPreserve int       `json:"items_to_preserve"`
-	// Estimated completion time in seconds.
-	EstimatedCompletionTime int `json:"estimated_completion_time"`
-}
-
-// GetResetID returns the value of ResetID.
-func (s *RequestInventoryResetOK) GetResetID() uuid.UUID {
-	return s.ResetID
-}
-
-// GetItemsToRemove returns the value of ItemsToRemove.
-func (s *RequestInventoryResetOK) GetItemsToRemove() int {
-	return s.ItemsToRemove
-}
-
-// GetItemsToPreserve returns the value of ItemsToPreserve.
-func (s *RequestInventoryResetOK) GetItemsToPreserve() int {
-	return s.ItemsToPreserve
-}
-
-// GetEstimatedCompletionTime returns the value of EstimatedCompletionTime.
-func (s *RequestInventoryResetOK) GetEstimatedCompletionTime() int {
-	return s.EstimatedCompletionTime
-}
-
-// SetResetID sets the value of ResetID.
-func (s *RequestInventoryResetOK) SetResetID(val uuid.UUID) {
-	s.ResetID = val
-}
-
-// SetItemsToRemove sets the value of ItemsToRemove.
-func (s *RequestInventoryResetOK) SetItemsToRemove(val int) {
-	s.ItemsToRemove = val
-}
-
-// SetItemsToPreserve sets the value of ItemsToPreserve.
-func (s *RequestInventoryResetOK) SetItemsToPreserve(val int) {
-	s.ItemsToPreserve = val
-}
-
-// SetEstimatedCompletionTime sets the value of EstimatedCompletionTime.
-func (s *RequestInventoryResetOK) SetEstimatedCompletionTime(val int) {
-	s.EstimatedCompletionTime = val
-}
-
-// RequestInventoryResetOKHeaders wraps RequestInventoryResetOK with response headers.
-type RequestInventoryResetOKHeaders struct {
-	Location OptString
-	Response RequestInventoryResetOK
-}
-
-// GetLocation returns the value of Location.
-func (s *RequestInventoryResetOKHeaders) GetLocation() OptString {
-	return s.Location
-}
-
-// GetResponse returns the value of Response.
-func (s *RequestInventoryResetOKHeaders) GetResponse() RequestInventoryResetOK {
-	return s.Response
-}
-
-// SetLocation sets the value of Location.
-func (s *RequestInventoryResetOKHeaders) SetLocation(val OptString) {
-	s.Location = val
-}
-
-// SetResponse sets the value of Response.
-func (s *RequestInventoryResetOKHeaders) SetResponse(val RequestInventoryResetOK) {
-	s.Response = val
-}
-
-func (*RequestInventoryResetOKHeaders) requestInventoryResetRes() {}
-
-type RequestInventoryResetReq struct {
-	// Scope of inventory reset.
-	ResetScope RequestInventoryResetReqResetScope `json:"reset_scope"`
-	// User confirmation token.
-	ConfirmationToken string `json:"confirmation_token"`
-	// Item rarities to preserve during reset.
-	PreserveRarities []RequestInventoryResetReqPreserveRaritiesItem `json:"preserve_rarities"`
-	// Whether to preserve currently equipped items.
-	PreserveEquipped OptBool `json:"preserve_equipped"`
-	// Maximum number of items to preserve.
-	MaxPreserveCount OptInt `json:"max_preserve_count"`
-}
-
-// GetResetScope returns the value of ResetScope.
-func (s *RequestInventoryResetReq) GetResetScope() RequestInventoryResetReqResetScope {
-	return s.ResetScope
-}
-
-// GetConfirmationToken returns the value of ConfirmationToken.
-func (s *RequestInventoryResetReq) GetConfirmationToken() string {
-	return s.ConfirmationToken
-}
-
-// GetPreserveRarities returns the value of PreserveRarities.
-func (s *RequestInventoryResetReq) GetPreserveRarities() []RequestInventoryResetReqPreserveRaritiesItem {
-	return s.PreserveRarities
-}
-
-// GetPreserveEquipped returns the value of PreserveEquipped.
-func (s *RequestInventoryResetReq) GetPreserveEquipped() OptBool {
-	return s.PreserveEquipped
-}
-
-// GetMaxPreserveCount returns the value of MaxPreserveCount.
-func (s *RequestInventoryResetReq) GetMaxPreserveCount() OptInt {
-	return s.MaxPreserveCount
-}
-
-// SetResetScope sets the value of ResetScope.
-func (s *RequestInventoryResetReq) SetResetScope(val RequestInventoryResetReqResetScope) {
-	s.ResetScope = val
-}
-
-// SetConfirmationToken sets the value of ConfirmationToken.
-func (s *RequestInventoryResetReq) SetConfirmationToken(val string) {
-	s.ConfirmationToken = val
-}
-
-// SetPreserveRarities sets the value of PreserveRarities.
-func (s *RequestInventoryResetReq) SetPreserveRarities(val []RequestInventoryResetReqPreserveRaritiesItem) {
-	s.PreserveRarities = val
-}
-
-// SetPreserveEquipped sets the value of PreserveEquipped.
-func (s *RequestInventoryResetReq) SetPreserveEquipped(val OptBool) {
-	s.PreserveEquipped = val
-}
-
-// SetMaxPreserveCount sets the value of MaxPreserveCount.
-func (s *RequestInventoryResetReq) SetMaxPreserveCount(val OptInt) {
-	s.MaxPreserveCount = val
-}
-
-type RequestInventoryResetReqPreserveRaritiesItem string
-
-const (
-	RequestInventoryResetReqPreserveRaritiesItemCommon    RequestInventoryResetReqPreserveRaritiesItem = "common"
-	RequestInventoryResetReqPreserveRaritiesItemUncommon  RequestInventoryResetReqPreserveRaritiesItem = "uncommon"
-	RequestInventoryResetReqPreserveRaritiesItemRare      RequestInventoryResetReqPreserveRaritiesItem = "rare"
-	RequestInventoryResetReqPreserveRaritiesItemEpic      RequestInventoryResetReqPreserveRaritiesItem = "epic"
-	RequestInventoryResetReqPreserveRaritiesItemLegendary RequestInventoryResetReqPreserveRaritiesItem = "legendary"
-	RequestInventoryResetReqPreserveRaritiesItemMythic    RequestInventoryResetReqPreserveRaritiesItem = "mythic"
-)
-
-// AllValues returns all RequestInventoryResetReqPreserveRaritiesItem values.
-func (RequestInventoryResetReqPreserveRaritiesItem) AllValues() []RequestInventoryResetReqPreserveRaritiesItem {
-	return []RequestInventoryResetReqPreserveRaritiesItem{
-		RequestInventoryResetReqPreserveRaritiesItemCommon,
-		RequestInventoryResetReqPreserveRaritiesItemUncommon,
-		RequestInventoryResetReqPreserveRaritiesItemRare,
-		RequestInventoryResetReqPreserveRaritiesItemEpic,
-		RequestInventoryResetReqPreserveRaritiesItemLegendary,
-		RequestInventoryResetReqPreserveRaritiesItemMythic,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s RequestInventoryResetReqPreserveRaritiesItem) MarshalText() ([]byte, error) {
-	switch s {
-	case RequestInventoryResetReqPreserveRaritiesItemCommon:
-		return []byte(s), nil
-	case RequestInventoryResetReqPreserveRaritiesItemUncommon:
-		return []byte(s), nil
-	case RequestInventoryResetReqPreserveRaritiesItemRare:
-		return []byte(s), nil
-	case RequestInventoryResetReqPreserveRaritiesItemEpic:
-		return []byte(s), nil
-	case RequestInventoryResetReqPreserveRaritiesItemLegendary:
-		return []byte(s), nil
-	case RequestInventoryResetReqPreserveRaritiesItemMythic:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *RequestInventoryResetReqPreserveRaritiesItem) UnmarshalText(data []byte) error {
-	switch RequestInventoryResetReqPreserveRaritiesItem(data) {
-	case RequestInventoryResetReqPreserveRaritiesItemCommon:
-		*s = RequestInventoryResetReqPreserveRaritiesItemCommon
-		return nil
-	case RequestInventoryResetReqPreserveRaritiesItemUncommon:
-		*s = RequestInventoryResetReqPreserveRaritiesItemUncommon
-		return nil
-	case RequestInventoryResetReqPreserveRaritiesItemRare:
-		*s = RequestInventoryResetReqPreserveRaritiesItemRare
-		return nil
-	case RequestInventoryResetReqPreserveRaritiesItemEpic:
-		*s = RequestInventoryResetReqPreserveRaritiesItemEpic
-		return nil
-	case RequestInventoryResetReqPreserveRaritiesItemLegendary:
-		*s = RequestInventoryResetReqPreserveRaritiesItemLegendary
-		return nil
-	case RequestInventoryResetReqPreserveRaritiesItemMythic:
-		*s = RequestInventoryResetReqPreserveRaritiesItemMythic
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Scope of inventory reset.
-type RequestInventoryResetReqResetScope string
-
-const (
-	RequestInventoryResetReqResetScopeAllItems        RequestInventoryResetReqResetScope = "all_items"
-	RequestInventoryResetReqResetScopeEquippedOnly    RequestInventoryResetReqResetScope = "equipped_only"
-	RequestInventoryResetReqResetScopeConsumablesOnly RequestInventoryResetReqResetScope = "consumables_only"
-	RequestInventoryResetReqResetScopeMaterialsOnly   RequestInventoryResetReqResetScope = "materials_only"
-	RequestInventoryResetReqResetScopeByRarity        RequestInventoryResetReqResetScope = "by_rarity"
-)
-
-// AllValues returns all RequestInventoryResetReqResetScope values.
-func (RequestInventoryResetReqResetScope) AllValues() []RequestInventoryResetReqResetScope {
-	return []RequestInventoryResetReqResetScope{
-		RequestInventoryResetReqResetScopeAllItems,
-		RequestInventoryResetReqResetScopeEquippedOnly,
-		RequestInventoryResetReqResetScopeConsumablesOnly,
-		RequestInventoryResetReqResetScopeMaterialsOnly,
-		RequestInventoryResetReqResetScopeByRarity,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s RequestInventoryResetReqResetScope) MarshalText() ([]byte, error) {
-	switch s {
-	case RequestInventoryResetReqResetScopeAllItems:
-		return []byte(s), nil
-	case RequestInventoryResetReqResetScopeEquippedOnly:
-		return []byte(s), nil
-	case RequestInventoryResetReqResetScopeConsumablesOnly:
-		return []byte(s), nil
-	case RequestInventoryResetReqResetScopeMaterialsOnly:
-		return []byte(s), nil
-	case RequestInventoryResetReqResetScopeByRarity:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *RequestInventoryResetReqResetScope) UnmarshalText(data []byte) error {
-	switch RequestInventoryResetReqResetScope(data) {
-	case RequestInventoryResetReqResetScopeAllItems:
-		*s = RequestInventoryResetReqResetScopeAllItems
-		return nil
-	case RequestInventoryResetReqResetScopeEquippedOnly:
-		*s = RequestInventoryResetReqResetScopeEquippedOnly
-		return nil
-	case RequestInventoryResetReqResetScopeConsumablesOnly:
-		*s = RequestInventoryResetReqResetScopeConsumablesOnly
-		return nil
-	case RequestInventoryResetReqResetScopeMaterialsOnly:
-		*s = RequestInventoryResetReqResetScopeMaterialsOnly
-		return nil
-	case RequestInventoryResetReqResetScopeByRarity:
-		*s = RequestInventoryResetReqResetScopeByRarity
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
 type ResetServiceHealthCheckAcceptEncoding string
 
 const (
@@ -2343,130 +1091,90 @@ func (s *ResetServiceHealthCheckOKContentEncoding) UnmarshalText(data []byte) er
 	}
 }
 
-type UpdateExampleBadRequest Error
+type TriggerResetBadRequest Error
 
-func (*UpdateExampleBadRequest) updateExampleRes() {}
+func (*TriggerResetBadRequest) triggerResetRes() {}
 
-type UpdateExampleConflict ErrorHeaders
+type TriggerResetConflict Error
 
-func (*UpdateExampleConflict) updateExampleRes() {}
+func (*TriggerResetConflict) triggerResetRes() {}
 
-type UpdateExampleNotFound Error
-
-func (*UpdateExampleNotFound) updateExampleRes() {}
-
-type UpdateExamplePreconditionFailed ErrorHeaders
-
-func (*UpdateExamplePreconditionFailed) updateExampleRes() {}
-
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-// Ref: #/components/schemas/UpdateExampleRequest
-type UpdateExampleRequest struct {
-	// New example name.
-	Name OptString `json:"name"`
-	// New description.
-	Description OptString `json:"description"`
-	// New status.
-	Status OptUpdateExampleRequestStatus `json:"status"`
-	// Replace all tags.
-	Tags []string `json:"tags"`
-	// Update active status.
-	IsActive OptBool `json:"is_active"`
-	// New priority.
-	Priority OptInt `json:"priority"`
+type TriggerResetOK struct {
+	ResetID uuid.UUID `json:"reset_id"`
+	Message string    `json:"message"`
 }
 
-// GetName returns the value of Name.
-func (s *UpdateExampleRequest) GetName() OptString {
-	return s.Name
+// GetResetID returns the value of ResetID.
+func (s *TriggerResetOK) GetResetID() uuid.UUID {
+	return s.ResetID
 }
 
-// GetDescription returns the value of Description.
-func (s *UpdateExampleRequest) GetDescription() OptString {
-	return s.Description
+// GetMessage returns the value of Message.
+func (s *TriggerResetOK) GetMessage() string {
+	return s.Message
 }
 
-// GetStatus returns the value of Status.
-func (s *UpdateExampleRequest) GetStatus() OptUpdateExampleRequestStatus {
-	return s.Status
+// SetResetID sets the value of ResetID.
+func (s *TriggerResetOK) SetResetID(val uuid.UUID) {
+	s.ResetID = val
 }
 
-// GetTags returns the value of Tags.
-func (s *UpdateExampleRequest) GetTags() []string {
-	return s.Tags
+// SetMessage sets the value of Message.
+func (s *TriggerResetOK) SetMessage(val string) {
+	s.Message = val
 }
 
-// GetIsActive returns the value of IsActive.
-func (s *UpdateExampleRequest) GetIsActive() OptBool {
-	return s.IsActive
+func (*TriggerResetOK) triggerResetRes() {}
+
+type TriggerResetReq struct {
+	// Type of reset to trigger.
+	ResetType TriggerResetReqResetType `json:"reset_type"`
+	// User confirmation token.
+	ConfirmationToken string `json:"confirmation_token"`
 }
 
-// GetPriority returns the value of Priority.
-func (s *UpdateExampleRequest) GetPriority() OptInt {
-	return s.Priority
+// GetResetType returns the value of ResetType.
+func (s *TriggerResetReq) GetResetType() TriggerResetReqResetType {
+	return s.ResetType
 }
 
-// SetName sets the value of Name.
-func (s *UpdateExampleRequest) SetName(val OptString) {
-	s.Name = val
+// GetConfirmationToken returns the value of ConfirmationToken.
+func (s *TriggerResetReq) GetConfirmationToken() string {
+	return s.ConfirmationToken
 }
 
-// SetDescription sets the value of Description.
-func (s *UpdateExampleRequest) SetDescription(val OptString) {
-	s.Description = val
+// SetResetType sets the value of ResetType.
+func (s *TriggerResetReq) SetResetType(val TriggerResetReqResetType) {
+	s.ResetType = val
 }
 
-// SetStatus sets the value of Status.
-func (s *UpdateExampleRequest) SetStatus(val OptUpdateExampleRequestStatus) {
-	s.Status = val
+// SetConfirmationToken sets the value of ConfirmationToken.
+func (s *TriggerResetReq) SetConfirmationToken(val string) {
+	s.ConfirmationToken = val
 }
 
-// SetTags sets the value of Tags.
-func (s *UpdateExampleRequest) SetTags(val []string) {
-	s.Tags = val
-}
-
-// SetIsActive sets the value of IsActive.
-func (s *UpdateExampleRequest) SetIsActive(val OptBool) {
-	s.IsActive = val
-}
-
-// SetPriority sets the value of Priority.
-func (s *UpdateExampleRequest) SetPriority(val OptInt) {
-	s.Priority = val
-}
-
-// New status.
-type UpdateExampleRequestStatus string
+// Type of reset to trigger.
+type TriggerResetReqResetType string
 
 const (
-	UpdateExampleRequestStatusActive   UpdateExampleRequestStatus = "active"
-	UpdateExampleRequestStatusInactive UpdateExampleRequestStatus = "inactive"
-	UpdateExampleRequestStatusPending  UpdateExampleRequestStatus = "pending"
-	UpdateExampleRequestStatusArchived UpdateExampleRequestStatus = "archived"
+	TriggerResetReqResetTypeDaily  TriggerResetReqResetType = "daily"
+	TriggerResetReqResetTypeWeekly TriggerResetReqResetType = "weekly"
 )
 
-// AllValues returns all UpdateExampleRequestStatus values.
-func (UpdateExampleRequestStatus) AllValues() []UpdateExampleRequestStatus {
-	return []UpdateExampleRequestStatus{
-		UpdateExampleRequestStatusActive,
-		UpdateExampleRequestStatusInactive,
-		UpdateExampleRequestStatusPending,
-		UpdateExampleRequestStatusArchived,
+// AllValues returns all TriggerResetReqResetType values.
+func (TriggerResetReqResetType) AllValues() []TriggerResetReqResetType {
+	return []TriggerResetReqResetType{
+		TriggerResetReqResetTypeDaily,
+		TriggerResetReqResetTypeWeekly,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s UpdateExampleRequestStatus) MarshalText() ([]byte, error) {
+func (s TriggerResetReqResetType) MarshalText() ([]byte, error) {
 	switch s {
-	case UpdateExampleRequestStatusActive:
+	case TriggerResetReqResetTypeDaily:
 		return []byte(s), nil
-	case UpdateExampleRequestStatusInactive:
-		return []byte(s), nil
-	case UpdateExampleRequestStatusPending:
-		return []byte(s), nil
-	case UpdateExampleRequestStatusArchived:
+	case TriggerResetReqResetTypeWeekly:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -2474,176 +1182,13 @@ func (s UpdateExampleRequestStatus) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *UpdateExampleRequestStatus) UnmarshalText(data []byte) error {
-	switch UpdateExampleRequestStatus(data) {
-	case UpdateExampleRequestStatusActive:
-		*s = UpdateExampleRequestStatusActive
+func (s *TriggerResetReqResetType) UnmarshalText(data []byte) error {
+	switch TriggerResetReqResetType(data) {
+	case TriggerResetReqResetTypeDaily:
+		*s = TriggerResetReqResetTypeDaily
 		return nil
-	case UpdateExampleRequestStatusInactive:
-		*s = UpdateExampleRequestStatusInactive
-		return nil
-	case UpdateExampleRequestStatusPending:
-		*s = UpdateExampleRequestStatusPending
-		return nil
-	case UpdateExampleRequestStatusArchived:
-		*s = UpdateExampleRequestStatusArchived
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-type UpdateExampleTooManyRequests ErrorHeaders
-
-func (*UpdateExampleTooManyRequests) updateExampleRes() {}
-
-type UpdateExampleUnprocessableEntity Error
-
-func (*UpdateExampleUnprocessableEntity) updateExampleRes() {}
-
-// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
-// 30-50%.
-// Ref: #/components/schemas/WebSocketHealthMessage
-type WebSocketHealthMessage struct {
-	Type      WebSocketHealthMessageType `json:"type"`
-	Timestamp time.Time                  `json:"timestamp"`
-	// Timestamp of the health message.
-	MessageTimestamp OptDateTime    `json:"message_timestamp"`
-	Health           HealthResponse `json:"health"`
-}
-
-// GetType returns the value of Type.
-func (s *WebSocketHealthMessage) GetType() WebSocketHealthMessageType {
-	return s.Type
-}
-
-// GetTimestamp returns the value of Timestamp.
-func (s *WebSocketHealthMessage) GetTimestamp() time.Time {
-	return s.Timestamp
-}
-
-// GetMessageTimestamp returns the value of MessageTimestamp.
-func (s *WebSocketHealthMessage) GetMessageTimestamp() OptDateTime {
-	return s.MessageTimestamp
-}
-
-// GetHealth returns the value of Health.
-func (s *WebSocketHealthMessage) GetHealth() HealthResponse {
-	return s.Health
-}
-
-// SetType sets the value of Type.
-func (s *WebSocketHealthMessage) SetType(val WebSocketHealthMessageType) {
-	s.Type = val
-}
-
-// SetTimestamp sets the value of Timestamp.
-func (s *WebSocketHealthMessage) SetTimestamp(val time.Time) {
-	s.Timestamp = val
-}
-
-// SetMessageTimestamp sets the value of MessageTimestamp.
-func (s *WebSocketHealthMessage) SetMessageTimestamp(val OptDateTime) {
-	s.MessageTimestamp = val
-}
-
-// SetHealth sets the value of Health.
-func (s *WebSocketHealthMessage) SetHealth(val HealthResponse) {
-	s.Health = val
-}
-
-// WebSocketHealthMessageHeaders wraps WebSocketHealthMessage with response headers.
-type WebSocketHealthMessageHeaders struct {
-	Connection         OptString
-	SecWebSocketAccept OptString
-	Upgrade            OptString
-	Response           WebSocketHealthMessage
-}
-
-// GetConnection returns the value of Connection.
-func (s *WebSocketHealthMessageHeaders) GetConnection() OptString {
-	return s.Connection
-}
-
-// GetSecWebSocketAccept returns the value of SecWebSocketAccept.
-func (s *WebSocketHealthMessageHeaders) GetSecWebSocketAccept() OptString {
-	return s.SecWebSocketAccept
-}
-
-// GetUpgrade returns the value of Upgrade.
-func (s *WebSocketHealthMessageHeaders) GetUpgrade() OptString {
-	return s.Upgrade
-}
-
-// GetResponse returns the value of Response.
-func (s *WebSocketHealthMessageHeaders) GetResponse() WebSocketHealthMessage {
-	return s.Response
-}
-
-// SetConnection sets the value of Connection.
-func (s *WebSocketHealthMessageHeaders) SetConnection(val OptString) {
-	s.Connection = val
-}
-
-// SetSecWebSocketAccept sets the value of SecWebSocketAccept.
-func (s *WebSocketHealthMessageHeaders) SetSecWebSocketAccept(val OptString) {
-	s.SecWebSocketAccept = val
-}
-
-// SetUpgrade sets the value of Upgrade.
-func (s *WebSocketHealthMessageHeaders) SetUpgrade(val OptString) {
-	s.Upgrade = val
-}
-
-// SetResponse sets the value of Response.
-func (s *WebSocketHealthMessageHeaders) SetResponse(val WebSocketHealthMessage) {
-	s.Response = val
-}
-
-func (*WebSocketHealthMessageHeaders) exampleDomainHealthWebSocketRes() {}
-
-type WebSocketHealthMessageType string
-
-const (
-	WebSocketHealthMessageTypeHealthUpdate WebSocketHealthMessageType = "health_update"
-	WebSocketHealthMessageTypeHealthAlert  WebSocketHealthMessageType = "health_alert"
-	WebSocketHealthMessageTypeServiceDown  WebSocketHealthMessageType = "service_down"
-)
-
-// AllValues returns all WebSocketHealthMessageType values.
-func (WebSocketHealthMessageType) AllValues() []WebSocketHealthMessageType {
-	return []WebSocketHealthMessageType{
-		WebSocketHealthMessageTypeHealthUpdate,
-		WebSocketHealthMessageTypeHealthAlert,
-		WebSocketHealthMessageTypeServiceDown,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s WebSocketHealthMessageType) MarshalText() ([]byte, error) {
-	switch s {
-	case WebSocketHealthMessageTypeHealthUpdate:
-		return []byte(s), nil
-	case WebSocketHealthMessageTypeHealthAlert:
-		return []byte(s), nil
-	case WebSocketHealthMessageTypeServiceDown:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *WebSocketHealthMessageType) UnmarshalText(data []byte) error {
-	switch WebSocketHealthMessageType(data) {
-	case WebSocketHealthMessageTypeHealthUpdate:
-		*s = WebSocketHealthMessageTypeHealthUpdate
-		return nil
-	case WebSocketHealthMessageTypeHealthAlert:
-		*s = WebSocketHealthMessageTypeHealthAlert
-		return nil
-	case WebSocketHealthMessageTypeServiceDown:
-		*s = WebSocketHealthMessageTypeServiceDown
+	case TriggerResetReqResetTypeWeekly:
+		*s = TriggerResetReqResetTypeWeekly
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

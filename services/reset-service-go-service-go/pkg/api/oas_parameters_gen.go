@@ -3,13 +3,9 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
-	"net/url"
-	"time"
 
 	"github.com/go-faster/errors"
-	"github.com/google/uuid"
 	"github.com/ogen-go/ogen/conv"
 	"github.com/ogen-go/ogen/middleware"
 	"github.com/ogen-go/ogen/ogenerrors"
@@ -17,314 +13,213 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-// DeleteExampleParams is parameters of deleteExample operation.
-type DeleteExampleParams struct {
-	// Example unique identifier.
-	ExampleID uuid.UUID
+// GetResetHistoryParams is parameters of getResetHistory operation.
+type GetResetHistoryParams struct {
+	// Number of records to return.
+	Limit OptInt `json:",omitempty,omitzero"`
+	// Number of records to skip.
+	Offset OptInt `json:",omitempty,omitzero"`
+	// Filter by reset type.
+	ResetType OptGetResetHistoryResetType `json:",omitempty,omitzero"`
+	// Filter by status.
+	Status OptGetResetHistoryStatus `json:",omitempty,omitzero"`
 }
 
-func unpackDeleteExampleParams(packed middleware.Parameters) (params DeleteExampleParams) {
+func unpackGetResetHistoryParams(packed middleware.Parameters) (params GetResetHistoryParams) {
 	{
 		key := middleware.ParameterKey{
-			Name: "example_id",
-			In:   "path",
-		}
-		params.ExampleID = packed[key].(uuid.UUID)
-	}
-	return params
-}
-
-func decodeDeleteExampleParams(args [1]string, argsEscaped bool, r *http.Request) (params DeleteExampleParams, _ error) {
-	// Decode path: example_id.
-	if err := func() error {
-		param := args[0]
-		if argsEscaped {
-			unescaped, err := url.PathUnescape(args[0])
-			if err != nil {
-				return errors.Wrap(err, "unescape path")
-			}
-			param = unescaped
-		}
-		if len(param) > 0 {
-			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "example_id",
-				Value:   param,
-				Style:   uri.PathStyleSimple,
-				Explode: false,
-			})
-
-			if err := func() error {
-				val, err := d.DecodeValue()
-				if err != nil {
-					return err
-				}
-
-				c, err := conv.ToUUID(val)
-				if err != nil {
-					return err
-				}
-
-				params.ExampleID = c
-				return nil
-			}(); err != nil {
-				return err
-			}
-		} else {
-			return validate.ErrFieldRequired
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "example_id",
-			In:   "path",
-			Err:  err,
-		}
-	}
-	return params, nil
-}
-
-// ExampleDomainHealthWebSocketParams is parameters of exampleDomainHealthWebSocket operation.
-type ExampleDomainHealthWebSocketParams struct {
-	// Services to monitor (optional, monitors all if not specified).
-	Services []ExampleDomainHealthWebSocketServicesItem `json:",omitempty"`
-}
-
-func unpackExampleDomainHealthWebSocketParams(packed middleware.Parameters) (params ExampleDomainHealthWebSocketParams) {
-	{
-		key := middleware.ParameterKey{
-			Name: "services",
+			Name: "limit",
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.Services = v.([]ExampleDomainHealthWebSocketServicesItem)
+			params.Limit = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "offset",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Offset = v.(OptInt)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "reset_type",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.ResetType = v.(OptGetResetHistoryResetType)
+		}
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "status",
+			In:   "query",
+		}
+		if v, ok := packed[key]; ok {
+			params.Status = v.(OptGetResetHistoryStatus)
 		}
 	}
 	return params
 }
 
-func decodeExampleDomainHealthWebSocketParams(args [0]string, argsEscaped bool, r *http.Request) (params ExampleDomainHealthWebSocketParams, _ error) {
+func decodeGetResetHistoryParams(args [0]string, argsEscaped bool, r *http.Request) (params GetResetHistoryParams, _ error) {
 	q := uri.NewQueryDecoder(r.URL.Query())
-	// Decode query: services.
+	// Set default value for query: limit.
+	{
+		val := int(20)
+		params.Limit.SetTo(val)
+	}
+	// Decode query: limit.
 	if err := func() error {
 		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "services",
+			Name:    "limit",
 			Style:   uri.QueryStyleForm,
 			Explode: true,
 		}
 
 		if err := q.HasParam(cfg); err == nil {
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				return d.DecodeArray(func(d uri.Decoder) error {
-					var paramsDotServicesVal ExampleDomainHealthWebSocketServicesItem
-					if err := func() error {
-						val, err := d.DecodeValue()
-						if err != nil {
-							return err
-						}
-
-						c, err := conv.ToString(val)
-						if err != nil {
-							return err
-						}
-
-						paramsDotServicesVal = ExampleDomainHealthWebSocketServicesItem(c)
-						return nil
-					}(); err != nil {
-						return err
-					}
-					params.Services = append(params.Services, paramsDotServicesVal)
-					return nil
-				})
-			}); err != nil {
-				return err
-			}
-			if err := func() error {
-				var failures []validate.FieldError
-				for i, elem := range params.Services {
-					if err := func() error {
-						if err := elem.Validate(); err != nil {
-							return err
-						}
-						return nil
-					}(); err != nil {
-						failures = append(failures, validate.FieldError{
-							Name:  fmt.Sprintf("[%d]", i),
-							Error: err,
-						})
-					}
-				}
-				if len(failures) > 0 {
-					return &validate.Error{Fields: failures}
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "services",
-			In:   "query",
-			Err:  err,
-		}
-	}
-	return params, nil
-}
-
-// GetExampleParams is parameters of getExample operation.
-type GetExampleParams struct {
-	// Example unique identifier.
-	ExampleID uuid.UUID
-	// Include related data in response.
-	IncludeRelated OptBool `json:",omitempty,omitzero"`
-	// Conditional request - return 304 if ETag matches.
-	IfNoneMatch OptString `json:",omitempty,omitzero"`
-	// Conditional request - return 304 if not modified since this time.
-	IfModifiedSince OptDateTime `json:",omitempty,omitzero"`
-}
-
-func unpackGetExampleParams(packed middleware.Parameters) (params GetExampleParams) {
-	{
-		key := middleware.ParameterKey{
-			Name: "example_id",
-			In:   "path",
-		}
-		params.ExampleID = packed[key].(uuid.UUID)
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "include_related",
-			In:   "query",
-		}
-		if v, ok := packed[key]; ok {
-			params.IncludeRelated = v.(OptBool)
-		}
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "If-None-Match",
-			In:   "header",
-		}
-		if v, ok := packed[key]; ok {
-			params.IfNoneMatch = v.(OptString)
-		}
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "If-Modified-Since",
-			In:   "header",
-		}
-		if v, ok := packed[key]; ok {
-			params.IfModifiedSince = v.(OptDateTime)
-		}
-	}
-	return params
-}
-
-func decodeGetExampleParams(args [1]string, argsEscaped bool, r *http.Request) (params GetExampleParams, _ error) {
-	q := uri.NewQueryDecoder(r.URL.Query())
-	h := uri.NewHeaderDecoder(r.Header)
-	// Decode path: example_id.
-	if err := func() error {
-		param := args[0]
-		if argsEscaped {
-			unescaped, err := url.PathUnescape(args[0])
-			if err != nil {
-				return errors.Wrap(err, "unescape path")
-			}
-			param = unescaped
-		}
-		if len(param) > 0 {
-			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "example_id",
-				Value:   param,
-				Style:   uri.PathStyleSimple,
-				Explode: false,
-			})
-
-			if err := func() error {
-				val, err := d.DecodeValue()
-				if err != nil {
-					return err
-				}
-
-				c, err := conv.ToUUID(val)
-				if err != nil {
-					return err
-				}
-
-				params.ExampleID = c
-				return nil
-			}(); err != nil {
-				return err
-			}
-		} else {
-			return validate.ErrFieldRequired
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "example_id",
-			In:   "path",
-			Err:  err,
-		}
-	}
-	// Set default value for query: include_related.
-	{
-		val := bool(false)
-		params.IncludeRelated.SetTo(val)
-	}
-	// Decode query: include_related.
-	if err := func() error {
-		cfg := uri.QueryParameterDecodingConfig{
-			Name:    "include_related",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.HasParam(cfg); err == nil {
-			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotIncludeRelatedVal bool
+				var paramsDotLimitVal int
 				if err := func() error {
 					val, err := d.DecodeValue()
 					if err != nil {
 						return err
 					}
 
-					c, err := conv.ToBool(val)
+					c, err := conv.ToInt(val)
 					if err != nil {
 						return err
 					}
 
-					paramsDotIncludeRelatedVal = c
+					paramsDotLimitVal = c
 					return nil
 				}(); err != nil {
 					return err
 				}
-				params.IncludeRelated.SetTo(paramsDotIncludeRelatedVal)
+				params.Limit.SetTo(paramsDotLimitVal)
 				return nil
 			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Limit.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           1,
+							MaxSet:        true,
+							Max:           100,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
 				return err
 			}
 		}
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "include_related",
+			Name: "limit",
 			In:   "query",
 			Err:  err,
 		}
 	}
-	// Decode header: If-None-Match.
+	// Set default value for query: offset.
+	{
+		val := int(0)
+		params.Offset.SetTo(val)
+	}
+	// Decode query: offset.
 	if err := func() error {
-		cfg := uri.HeaderParameterDecodingConfig{
-			Name:    "If-None-Match",
-			Explode: false,
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "offset",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
 		}
-		if err := h.HasParam(cfg); err == nil {
-			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotIfNoneMatchVal string
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotOffsetVal int
+				if err := func() error {
+					val, err := d.DecodeValue()
+					if err != nil {
+						return err
+					}
+
+					c, err := conv.ToInt(val)
+					if err != nil {
+						return err
+					}
+
+					paramsDotOffsetVal = c
+					return nil
+				}(); err != nil {
+					return err
+				}
+				params.Offset.SetTo(paramsDotOffsetVal)
+				return nil
+			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.Offset.Get(); ok {
+					if err := func() error {
+						if err := (validate.Int{
+							MinSet:        true,
+							Min:           0,
+							MaxSet:        false,
+							Max:           0,
+							MinExclusive:  false,
+							MaxExclusive:  false,
+							MultipleOfSet: false,
+							MultipleOf:    0,
+							Pattern:       nil,
+						}).Validate(int64(value)); err != nil {
+							return errors.Wrap(err, "int")
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "offset",
+			In:   "query",
+			Err:  err,
+		}
+	}
+	// Decode query: reset_type.
+	if err := func() error {
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "reset_type",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotResetTypeVal GetResetHistoryResetType
 				if err := func() error {
 					val, err := d.DecodeValue()
 					if err != nil {
@@ -336,127 +231,93 @@ func decodeGetExampleParams(args [1]string, argsEscaped bool, r *http.Request) (
 						return err
 					}
 
-					paramsDotIfNoneMatchVal = c
+					paramsDotResetTypeVal = GetResetHistoryResetType(c)
 					return nil
 				}(); err != nil {
 					return err
 				}
-				params.IfNoneMatch.SetTo(paramsDotIfNoneMatchVal)
+				params.ResetType.SetTo(paramsDotResetTypeVal)
 				return nil
 			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				if value, ok := params.ResetType.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
+				}
+				return nil
+			}(); err != nil {
 				return err
 			}
 		}
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "If-None-Match",
-			In:   "header",
+			Name: "reset_type",
+			In:   "query",
 			Err:  err,
 		}
 	}
-	// Decode header: If-Modified-Since.
+	// Decode query: status.
 	if err := func() error {
-		cfg := uri.HeaderParameterDecodingConfig{
-			Name:    "If-Modified-Since",
-			Explode: false,
+		cfg := uri.QueryParameterDecodingConfig{
+			Name:    "status",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
 		}
-		if err := h.HasParam(cfg); err == nil {
-			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotIfModifiedSinceVal time.Time
+
+		if err := q.HasParam(cfg); err == nil {
+			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
+				var paramsDotStatusVal GetResetHistoryStatus
 				if err := func() error {
 					val, err := d.DecodeValue()
 					if err != nil {
 						return err
 					}
 
-					c, err := conv.ToDateTime(val)
+					c, err := conv.ToString(val)
 					if err != nil {
 						return err
 					}
 
-					paramsDotIfModifiedSinceVal = c
+					paramsDotStatusVal = GetResetHistoryStatus(c)
 					return nil
 				}(); err != nil {
 					return err
 				}
-				params.IfModifiedSince.SetTo(paramsDotIfModifiedSinceVal)
+				params.Status.SetTo(paramsDotStatusVal)
 				return nil
 			}); err != nil {
 				return err
 			}
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "If-Modified-Since",
-			In:   "header",
-			Err:  err,
-		}
-	}
-	return params, nil
-}
-
-// GetResetStatusParams is parameters of getResetStatus operation.
-type GetResetStatusParams struct {
-	// Reset operation unique identifier.
-	ResetID uuid.UUID
-}
-
-func unpackGetResetStatusParams(packed middleware.Parameters) (params GetResetStatusParams) {
-	{
-		key := middleware.ParameterKey{
-			Name: "reset_id",
-			In:   "path",
-		}
-		params.ResetID = packed[key].(uuid.UUID)
-	}
-	return params
-}
-
-func decodeGetResetStatusParams(args [1]string, argsEscaped bool, r *http.Request) (params GetResetStatusParams, _ error) {
-	// Decode path: reset_id.
-	if err := func() error {
-		param := args[0]
-		if argsEscaped {
-			unescaped, err := url.PathUnescape(args[0])
-			if err != nil {
-				return errors.Wrap(err, "unescape path")
-			}
-			param = unescaped
-		}
-		if len(param) > 0 {
-			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "reset_id",
-				Value:   param,
-				Style:   uri.PathStyleSimple,
-				Explode: false,
-			})
-
 			if err := func() error {
-				val, err := d.DecodeValue()
-				if err != nil {
-					return err
+				if value, ok := params.Status.Get(); ok {
+					if err := func() error {
+						if err := value.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						return err
+					}
 				}
-
-				c, err := conv.ToUUID(val)
-				if err != nil {
-					return err
-				}
-
-				params.ResetID = c
 				return nil
 			}(); err != nil {
 				return err
 			}
-		} else {
-			return validate.ErrFieldRequired
 		}
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "reset_id",
-			In:   "path",
+			Name: "status",
+			In:   "query",
 			Err:  err,
 		}
 	}
@@ -533,173 +394,6 @@ func decodeResetServiceHealthCheckParams(args [0]string, argsEscaped bool, r *ht
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "Accept-Encoding",
-			In:   "header",
-			Err:  err,
-		}
-	}
-	return params, nil
-}
-
-// UpdateExampleParams is parameters of updateExample operation.
-type UpdateExampleParams struct {
-	// Example unique identifier.
-	ExampleID uuid.UUID
-	// ETag for optimistic locking - prevents concurrent updates.
-	IfMatch OptString `json:",omitempty,omitzero"`
-	// Conditional update - proceed only if not modified since this time.
-	IfUnmodifiedSince OptDateTime `json:",omitempty,omitzero"`
-}
-
-func unpackUpdateExampleParams(packed middleware.Parameters) (params UpdateExampleParams) {
-	{
-		key := middleware.ParameterKey{
-			Name: "example_id",
-			In:   "path",
-		}
-		params.ExampleID = packed[key].(uuid.UUID)
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "If-Match",
-			In:   "header",
-		}
-		if v, ok := packed[key]; ok {
-			params.IfMatch = v.(OptString)
-		}
-	}
-	{
-		key := middleware.ParameterKey{
-			Name: "If-Unmodified-Since",
-			In:   "header",
-		}
-		if v, ok := packed[key]; ok {
-			params.IfUnmodifiedSince = v.(OptDateTime)
-		}
-	}
-	return params
-}
-
-func decodeUpdateExampleParams(args [1]string, argsEscaped bool, r *http.Request) (params UpdateExampleParams, _ error) {
-	h := uri.NewHeaderDecoder(r.Header)
-	// Decode path: example_id.
-	if err := func() error {
-		param := args[0]
-		if argsEscaped {
-			unescaped, err := url.PathUnescape(args[0])
-			if err != nil {
-				return errors.Wrap(err, "unescape path")
-			}
-			param = unescaped
-		}
-		if len(param) > 0 {
-			d := uri.NewPathDecoder(uri.PathDecoderConfig{
-				Param:   "example_id",
-				Value:   param,
-				Style:   uri.PathStyleSimple,
-				Explode: false,
-			})
-
-			if err := func() error {
-				val, err := d.DecodeValue()
-				if err != nil {
-					return err
-				}
-
-				c, err := conv.ToUUID(val)
-				if err != nil {
-					return err
-				}
-
-				params.ExampleID = c
-				return nil
-			}(); err != nil {
-				return err
-			}
-		} else {
-			return validate.ErrFieldRequired
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "example_id",
-			In:   "path",
-			Err:  err,
-		}
-	}
-	// Decode header: If-Match.
-	if err := func() error {
-		cfg := uri.HeaderParameterDecodingConfig{
-			Name:    "If-Match",
-			Explode: false,
-		}
-		if err := h.HasParam(cfg); err == nil {
-			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotIfMatchVal string
-				if err := func() error {
-					val, err := d.DecodeValue()
-					if err != nil {
-						return err
-					}
-
-					c, err := conv.ToString(val)
-					if err != nil {
-						return err
-					}
-
-					paramsDotIfMatchVal = c
-					return nil
-				}(); err != nil {
-					return err
-				}
-				params.IfMatch.SetTo(paramsDotIfMatchVal)
-				return nil
-			}); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "If-Match",
-			In:   "header",
-			Err:  err,
-		}
-	}
-	// Decode header: If-Unmodified-Since.
-	if err := func() error {
-		cfg := uri.HeaderParameterDecodingConfig{
-			Name:    "If-Unmodified-Since",
-			Explode: false,
-		}
-		if err := h.HasParam(cfg); err == nil {
-			if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-				var paramsDotIfUnmodifiedSinceVal time.Time
-				if err := func() error {
-					val, err := d.DecodeValue()
-					if err != nil {
-						return err
-					}
-
-					c, err := conv.ToDateTime(val)
-					if err != nil {
-						return err
-					}
-
-					paramsDotIfUnmodifiedSinceVal = c
-					return nil
-				}(); err != nil {
-					return err
-				}
-				params.IfUnmodifiedSince.SetTo(paramsDotIfUnmodifiedSinceVal)
-				return nil
-			}); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		return params, &ogenerrors.DecodeParamError{
-			Name: "If-Unmodified-Since",
 			In:   "header",
 			Err:  err,
 		}

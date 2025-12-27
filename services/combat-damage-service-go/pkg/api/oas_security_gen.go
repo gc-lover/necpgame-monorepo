@@ -15,12 +15,6 @@ import (
 type SecurityHandler interface {
 	// HandleBearerAuth handles BearerAuth security.
 	// JWT Bearer token authentication.
-	// **Token Format:** `Bearer {token}`
-	// **Token Claims:** - `sub`: User/Player ID - `exp`: Expiration timestamp - `iat`: Issued at
-	// timestamp - `iss`: Token issuer - `aud`: Token audience - `roles`: User roles array -
-	// `permissions`: User permissions array
-	// **Security Features:** - RS256 signature algorithm - Token rotation required every 24 hours -
-	// Automatic refresh tokens - Revocation support via Redis.
 	HandleBearerAuth(ctx context.Context, operationName OperationName, t BearerAuth) (context.Context, error)
 }
 
@@ -40,10 +34,12 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 }
 
 var operationRolesBearerAuth = map[string][]string{
-	GetResetHistoryOperation:         []string{},
-	GetResetStatsOperation:           []string{},
-	ResetServiceHealthCheckOperation: []string{},
-	TriggerResetOperation:            []string{},
+	ApplyEffectsOperation:     []string{},
+	CalculateDamageOperation:  []string{},
+	GetActiveEffectsOperation: []string{},
+	HealthCheckOperation:      []string{},
+	RemoveEffectOperation:     []string{},
+	ValidateDamageOperation:   []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {
@@ -67,12 +63,6 @@ func (s *Server) securityBearerAuth(ctx context.Context, operationName Operation
 type SecuritySource interface {
 	// BearerAuth provides BearerAuth security value.
 	// JWT Bearer token authentication.
-	// **Token Format:** `Bearer {token}`
-	// **Token Claims:** - `sub`: User/Player ID - `exp`: Expiration timestamp - `iat`: Issued at
-	// timestamp - `iss`: Token issuer - `aud`: Token audience - `roles`: User roles array -
-	// `permissions`: User permissions array
-	// **Security Features:** - RS256 signature algorithm - Token rotation required every 24 hours -
-	// Automatic refresh tokens - Revocation support via Redis.
 	BearerAuth(ctx context.Context, operationName OperationName) (BearerAuth, error)
 }
 

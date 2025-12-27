@@ -9,13 +9,11 @@ import (
 
 	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
-	"github.com/ogen-go/ogen/conv"
 	"github.com/ogen-go/ogen/ogenerrors"
-	"github.com/ogen-go/ogen/uri"
 	"github.com/ogen-go/ogen/validate"
 )
 
-func decodeGetResetHistoryResponse(resp *http.Response) (res GetResetHistoryRes, _ error) {
+func decodeApplyEffectsResponse(resp *http.Response) (res ApplyEffectsRes, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -31,7 +29,7 @@ func decodeGetResetHistoryResponse(resp *http.Response) (res GetResetHistoryRes,
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response GetResetHistoryOK
+			var response EffectsResult
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
@@ -92,100 +90,7 @@ func decodeGetResetHistoryResponse(resp *http.Response) (res GetResetHistoryRes,
 				}
 				return res, err
 			}
-			// Validate response.
-			if err := func() error {
-				if err := response.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return res, errors.Wrap(err, "validate")
-			}
 			return &response, nil
-		default:
-			return res, validate.InvalidContentType(ct)
-		}
-	case 429:
-		// Code 429.
-		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
-		if err != nil {
-			return res, errors.Wrap(err, "parse media type")
-		}
-		switch {
-		case ct == "application/json":
-			buf, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return res, err
-			}
-			d := jx.DecodeBytes(buf)
-
-			var response Error
-			if err := func() error {
-				if err := response.Decode(d); err != nil {
-					return err
-				}
-				if err := d.Skip(); err != io.EOF {
-					return errors.New("unexpected trailing data")
-				}
-				return nil
-			}(); err != nil {
-				err = &ogenerrors.DecodeBodyError{
-					ContentType: ct,
-					Body:        buf,
-					Err:         err,
-				}
-				return res, err
-			}
-			// Validate response.
-			if err := func() error {
-				if err := response.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return res, errors.Wrap(err, "validate")
-			}
-			var wrapper ErrorHeaders
-			wrapper.Response = response
-			h := uri.NewHeaderDecoder(resp.Header)
-			// Parse "Retry-After" header.
-			{
-				cfg := uri.HeaderParameterDecodingConfig{
-					Name:    "Retry-After",
-					Explode: false,
-				}
-				if err := func() error {
-					if err := h.HasParam(cfg); err == nil {
-						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-							var wrapperDotRetryAfterVal int
-							if err := func() error {
-								val, err := d.DecodeValue()
-								if err != nil {
-									return err
-								}
-
-								c, err := conv.ToInt(val)
-								if err != nil {
-									return err
-								}
-
-								wrapperDotRetryAfterVal = c
-								return nil
-							}(); err != nil {
-								return err
-							}
-							wrapper.RetryAfter.SetTo(wrapperDotRetryAfterVal)
-							return nil
-						}); err != nil {
-							return err
-						}
-					}
-					return nil
-				}(); err != nil {
-					return res, errors.Wrap(err, "parse Retry-After header")
-				}
-			}
-			return &wrapper, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -193,7 +98,7 @@ func decodeGetResetHistoryResponse(resp *http.Response) (res GetResetHistoryRes,
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
 
-func decodeGetResetStatsResponse(resp *http.Response) (res GetResetStatsRes, _ error) {
+func decodeCalculateDamageResponse(resp *http.Response) (res CalculateDamageRes, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -209,7 +114,7 @@ func decodeGetResetStatsResponse(resp *http.Response) (res GetResetStatsRes, _ e
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response GetResetStatsOK
+			var response DamageResult
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
@@ -239,8 +144,128 @@ func decodeGetResetStatsResponse(resp *http.Response) (res GetResetStatsRes, _ e
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 400:
+		// Code 400.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response CalculateDamageBadRequest
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
 	case 429:
 		// Code 429.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response CalculateDamageTooManyRequests
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	}
+	return res, validate.UnexpectedStatusCodeWithResponse(resp)
+}
+
+func decodeGetActiveEffectsResponse(resp *http.Response) (res GetActiveEffectsRes, _ error) {
+	switch resp.StatusCode {
+	case 200:
+		// Code 200.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response ActiveEffects
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			// Validate response.
+			if err := func() error {
+				if err := response.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return res, errors.Wrap(err, "validate")
+			}
+			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 404:
+		// Code 404.
 		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 		if err != nil {
 			return res, errors.Wrap(err, "parse media type")
@@ -270,56 +295,7 @@ func decodeGetResetStatsResponse(resp *http.Response) (res GetResetStatsRes, _ e
 				}
 				return res, err
 			}
-			// Validate response.
-			if err := func() error {
-				if err := response.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return res, errors.Wrap(err, "validate")
-			}
-			var wrapper ErrorHeaders
-			wrapper.Response = response
-			h := uri.NewHeaderDecoder(resp.Header)
-			// Parse "Retry-After" header.
-			{
-				cfg := uri.HeaderParameterDecodingConfig{
-					Name:    "Retry-After",
-					Explode: false,
-				}
-				if err := func() error {
-					if err := h.HasParam(cfg); err == nil {
-						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-							var wrapperDotRetryAfterVal int
-							if err := func() error {
-								val, err := d.DecodeValue()
-								if err != nil {
-									return err
-								}
-
-								c, err := conv.ToInt(val)
-								if err != nil {
-									return err
-								}
-
-								wrapperDotRetryAfterVal = c
-								return nil
-							}(); err != nil {
-								return err
-							}
-							wrapper.RetryAfter.SetTo(wrapperDotRetryAfterVal)
-							return nil
-						}); err != nil {
-							return err
-						}
-					}
-					return nil
-				}(); err != nil {
-					return res, errors.Wrap(err, "parse Retry-After header")
-				}
-			}
-			return &wrapper, nil
+			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -327,7 +303,7 @@ func decodeGetResetStatsResponse(resp *http.Response) (res GetResetStatsRes, _ e
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
 
-func decodeResetServiceHealthCheckResponse(resp *http.Response) (res ResetServiceHealthCheckRes, _ error) {
+func decodeHealthCheckResponse(resp *http.Response) (res HealthCheckRes, _ error) {
 	switch resp.StatusCode {
 	case 200:
 		// Code 200.
@@ -369,220 +345,7 @@ func decodeResetServiceHealthCheckResponse(resp *http.Response) (res ResetServic
 			}(); err != nil {
 				return res, errors.Wrap(err, "validate")
 			}
-			var wrapper HealthResponseHeaders
-			wrapper.Response = response
-			h := uri.NewHeaderDecoder(resp.Header)
-			// Parse "Cache-Control" header.
-			{
-				cfg := uri.HeaderParameterDecodingConfig{
-					Name:    "Cache-Control",
-					Explode: false,
-				}
-				if err := func() error {
-					if err := h.HasParam(cfg); err == nil {
-						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-							var wrapperDotCacheControlVal string
-							if err := func() error {
-								val, err := d.DecodeValue()
-								if err != nil {
-									return err
-								}
-
-								c, err := conv.ToString(val)
-								if err != nil {
-									return err
-								}
-
-								wrapperDotCacheControlVal = c
-								return nil
-							}(); err != nil {
-								return err
-							}
-							wrapper.CacheControl.SetTo(wrapperDotCacheControlVal)
-							return nil
-						}); err != nil {
-							return err
-						}
-					}
-					return nil
-				}(); err != nil {
-					return res, errors.Wrap(err, "parse Cache-Control header")
-				}
-			}
-			// Parse "Content-Encoding" header.
-			{
-				cfg := uri.HeaderParameterDecodingConfig{
-					Name:    "Content-Encoding",
-					Explode: false,
-				}
-				if err := func() error {
-					if err := h.HasParam(cfg); err == nil {
-						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-							var wrapperDotContentEncodingVal ResetServiceHealthCheckOKContentEncoding
-							if err := func() error {
-								val, err := d.DecodeValue()
-								if err != nil {
-									return err
-								}
-
-								c, err := conv.ToString(val)
-								if err != nil {
-									return err
-								}
-
-								wrapperDotContentEncodingVal = ResetServiceHealthCheckOKContentEncoding(c)
-								return nil
-							}(); err != nil {
-								return err
-							}
-							wrapper.ContentEncoding.SetTo(wrapperDotContentEncodingVal)
-							return nil
-						}); err != nil {
-							return err
-						}
-						if err := func() error {
-							if value, ok := wrapper.ContentEncoding.Get(); ok {
-								if err := func() error {
-									if err := value.Validate(); err != nil {
-										return err
-									}
-									return nil
-								}(); err != nil {
-									return err
-								}
-							}
-							return nil
-						}(); err != nil {
-							return err
-						}
-					}
-					return nil
-				}(); err != nil {
-					return res, errors.Wrap(err, "parse Content-Encoding header")
-				}
-			}
-			// Parse "ETag" header.
-			{
-				cfg := uri.HeaderParameterDecodingConfig{
-					Name:    "ETag",
-					Explode: false,
-				}
-				if err := func() error {
-					if err := h.HasParam(cfg); err == nil {
-						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-							var wrapperDotETagVal string
-							if err := func() error {
-								val, err := d.DecodeValue()
-								if err != nil {
-									return err
-								}
-
-								c, err := conv.ToString(val)
-								if err != nil {
-									return err
-								}
-
-								wrapperDotETagVal = c
-								return nil
-							}(); err != nil {
-								return err
-							}
-							wrapper.ETag.SetTo(wrapperDotETagVal)
-							return nil
-						}); err != nil {
-							return err
-						}
-					}
-					return nil
-				}(); err != nil {
-					return res, errors.Wrap(err, "parse ETag header")
-				}
-			}
-			return &wrapper, nil
-		default:
-			return res, validate.InvalidContentType(ct)
-		}
-	case 429:
-		// Code 429.
-		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
-		if err != nil {
-			return res, errors.Wrap(err, "parse media type")
-		}
-		switch {
-		case ct == "application/json":
-			buf, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return res, err
-			}
-			d := jx.DecodeBytes(buf)
-
-			var response Error
-			if err := func() error {
-				if err := response.Decode(d); err != nil {
-					return err
-				}
-				if err := d.Skip(); err != io.EOF {
-					return errors.New("unexpected trailing data")
-				}
-				return nil
-			}(); err != nil {
-				err = &ogenerrors.DecodeBodyError{
-					ContentType: ct,
-					Body:        buf,
-					Err:         err,
-				}
-				return res, err
-			}
-			// Validate response.
-			if err := func() error {
-				if err := response.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return res, errors.Wrap(err, "validate")
-			}
-			var wrapper ErrorHeaders
-			wrapper.Response = response
-			h := uri.NewHeaderDecoder(resp.Header)
-			// Parse "Retry-After" header.
-			{
-				cfg := uri.HeaderParameterDecodingConfig{
-					Name:    "Retry-After",
-					Explode: false,
-				}
-				if err := func() error {
-					if err := h.HasParam(cfg); err == nil {
-						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-							var wrapperDotRetryAfterVal int
-							if err := func() error {
-								val, err := d.DecodeValue()
-								if err != nil {
-									return err
-								}
-
-								c, err := conv.ToInt(val)
-								if err != nil {
-									return err
-								}
-
-								wrapperDotRetryAfterVal = c
-								return nil
-							}(); err != nil {
-								return err
-							}
-							wrapper.RetryAfter.SetTo(wrapperDotRetryAfterVal)
-							return nil
-						}); err != nil {
-							return err
-						}
-					}
-					return nil
-				}(); err != nil {
-					return res, errors.Wrap(err, "parse Retry-After header")
-				}
-			}
-			return &wrapper, nil
+			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
@@ -600,7 +363,7 @@ func decodeResetServiceHealthCheckResponse(resp *http.Response) (res ResetServic
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response HealthResponse
+			var response Error
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
@@ -616,15 +379,6 @@ func decodeResetServiceHealthCheckResponse(resp *http.Response) (res ResetServic
 					Err:         err,
 				}
 				return res, err
-			}
-			// Validate response.
-			if err := func() error {
-				if err := response.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return res, errors.Wrap(err, "validate")
 			}
 			return &response, nil
 		default:
@@ -634,133 +388,13 @@ func decodeResetServiceHealthCheckResponse(resp *http.Response) (res ResetServic
 	return res, validate.UnexpectedStatusCodeWithResponse(resp)
 }
 
-func decodeTriggerResetResponse(resp *http.Response) (res TriggerResetRes, _ error) {
+func decodeRemoveEffectResponse(resp *http.Response) (res RemoveEffectRes, _ error) {
 	switch resp.StatusCode {
-	case 200:
-		// Code 200.
-		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
-		if err != nil {
-			return res, errors.Wrap(err, "parse media type")
-		}
-		switch {
-		case ct == "application/json":
-			buf, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return res, err
-			}
-			d := jx.DecodeBytes(buf)
-
-			var response TriggerResetOK
-			if err := func() error {
-				if err := response.Decode(d); err != nil {
-					return err
-				}
-				if err := d.Skip(); err != io.EOF {
-					return errors.New("unexpected trailing data")
-				}
-				return nil
-			}(); err != nil {
-				err = &ogenerrors.DecodeBodyError{
-					ContentType: ct,
-					Body:        buf,
-					Err:         err,
-				}
-				return res, err
-			}
-			return &response, nil
-		default:
-			return res, validate.InvalidContentType(ct)
-		}
-	case 400:
-		// Code 400.
-		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
-		if err != nil {
-			return res, errors.Wrap(err, "parse media type")
-		}
-		switch {
-		case ct == "application/json":
-			buf, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return res, err
-			}
-			d := jx.DecodeBytes(buf)
-
-			var response TriggerResetBadRequest
-			if err := func() error {
-				if err := response.Decode(d); err != nil {
-					return err
-				}
-				if err := d.Skip(); err != io.EOF {
-					return errors.New("unexpected trailing data")
-				}
-				return nil
-			}(); err != nil {
-				err = &ogenerrors.DecodeBodyError{
-					ContentType: ct,
-					Body:        buf,
-					Err:         err,
-				}
-				return res, err
-			}
-			// Validate response.
-			if err := func() error {
-				if err := response.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return res, errors.Wrap(err, "validate")
-			}
-			return &response, nil
-		default:
-			return res, validate.InvalidContentType(ct)
-		}
-	case 409:
-		// Code 409.
-		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
-		if err != nil {
-			return res, errors.Wrap(err, "parse media type")
-		}
-		switch {
-		case ct == "application/json":
-			buf, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return res, err
-			}
-			d := jx.DecodeBytes(buf)
-
-			var response TriggerResetConflict
-			if err := func() error {
-				if err := response.Decode(d); err != nil {
-					return err
-				}
-				if err := d.Skip(); err != io.EOF {
-					return errors.New("unexpected trailing data")
-				}
-				return nil
-			}(); err != nil {
-				err = &ogenerrors.DecodeBodyError{
-					ContentType: ct,
-					Body:        buf,
-					Err:         err,
-				}
-				return res, err
-			}
-			// Validate response.
-			if err := func() error {
-				if err := response.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return res, errors.Wrap(err, "validate")
-			}
-			return &response, nil
-		default:
-			return res, validate.InvalidContentType(ct)
-		}
-	case 429:
-		// Code 429.
+	case 204:
+		// Code 204.
+		return &RemoveEffectNoContent{}, nil
+	case 404:
+		// Code 404.
 		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 		if err != nil {
 			return res, errors.Wrap(err, "parse media type")
@@ -790,6 +424,47 @@ func decodeTriggerResetResponse(resp *http.Response) (res TriggerResetRes, _ err
 				}
 				return res, err
 			}
+			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	}
+	return res, validate.UnexpectedStatusCodeWithResponse(resp)
+}
+
+func decodeValidateDamageResponse(resp *http.Response) (res ValidateDamageRes, _ error) {
+	switch resp.StatusCode {
+	case 200:
+		// Code 200.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
+			}
+			d := jx.DecodeBytes(buf)
+
+			var response DamageValidationResult
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
 			// Validate response.
 			if err := func() error {
 				if err := response.Validate(); err != nil {
@@ -799,47 +474,42 @@ func decodeTriggerResetResponse(resp *http.Response) (res TriggerResetRes, _ err
 			}(); err != nil {
 				return res, errors.Wrap(err, "validate")
 			}
-			var wrapper ErrorHeaders
-			wrapper.Response = response
-			h := uri.NewHeaderDecoder(resp.Header)
-			// Parse "Retry-After" header.
-			{
-				cfg := uri.HeaderParameterDecodingConfig{
-					Name:    "Retry-After",
-					Explode: false,
-				}
-				if err := func() error {
-					if err := h.HasParam(cfg); err == nil {
-						if err := h.DecodeParam(cfg, func(d uri.Decoder) error {
-							var wrapperDotRetryAfterVal int
-							if err := func() error {
-								val, err := d.DecodeValue()
-								if err != nil {
-									return err
-								}
-
-								c, err := conv.ToInt(val)
-								if err != nil {
-									return err
-								}
-
-								wrapperDotRetryAfterVal = c
-								return nil
-							}(); err != nil {
-								return err
-							}
-							wrapper.RetryAfter.SetTo(wrapperDotRetryAfterVal)
-							return nil
-						}); err != nil {
-							return err
-						}
-					}
-					return nil
-				}(); err != nil {
-					return res, errors.Wrap(err, "parse Retry-After header")
-				}
+			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	case 400:
+		// Code 400.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "application/json":
+			buf, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return res, err
 			}
-			return &wrapper, nil
+			d := jx.DecodeBytes(buf)
+
+			var response Error
+			if err := func() error {
+				if err := response.Decode(d); err != nil {
+					return err
+				}
+				if err := d.Skip(); err != io.EOF {
+					return errors.New("unexpected trailing data")
+				}
+				return nil
+			}(); err != nil {
+				err = &ogenerrors.DecodeBodyError{
+					ContentType: ct,
+					Body:        buf,
+					Err:         err,
+				}
+				return res, err
+			}
+			return &response, nil
 		default:
 			return res, validate.InvalidContentType(ct)
 		}

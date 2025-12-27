@@ -10,64 +10,8 @@ import (
 	ht "github.com/ogen-go/ogen/http"
 )
 
-func encodeCreateExampleRequest(
-	req *CreateExampleRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeExampleDomainBatchHealthCheckRequest(
-	req *ExampleDomainBatchHealthCheckReq,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeRequestAchievementResetRequest(
-	req *RequestAchievementResetReq,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeRequestInventoryResetRequest(
-	req *RequestInventoryResetReq,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeUpdateExampleRequest(
-	req *UpdateExampleRequest,
+func encodeTriggerResetRequest(
+	req *TriggerResetReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

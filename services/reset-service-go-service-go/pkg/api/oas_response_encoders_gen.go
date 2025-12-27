@@ -13,673 +13,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func encodeCreateExampleResponse(response CreateExampleRes, w http.ResponseWriter, span trace.Span) error {
+func encodeGetResetHistoryResponse(response GetResetHistoryRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *ExampleCreatedHeaders:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Cache-Control" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Cache-Control",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.CacheControl.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Cache-Control header")
-				}
-			}
-			// Encode "ETag" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "ETag",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.ETag.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode ETag header")
-				}
-			}
-			// Encode "Location" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Location",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.Location.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Location header")
-				}
-			}
-		}
-		w.WriteHeader(201)
-		span.SetStatus(codes.Ok, http.StatusText(201))
-
-		e := new(jx.Encoder)
-		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *CreateExampleBadRequest:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(400)
-		span.SetStatus(codes.Error, http.StatusText(400))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *CreateExampleConflict:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(409)
-		span.SetStatus(codes.Error, http.StatusText(409))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *CreateExampleUnprocessableEntity:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(422)
-		span.SetStatus(codes.Error, http.StatusText(422))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *ErrorHeaders:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Retry-After" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Retry-After",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.RetryAfter.Get(); ok {
-						return e.EncodeValue(conv.IntToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Retry-After header")
-				}
-			}
-		}
-		w.WriteHeader(429)
-		span.SetStatus(codes.Error, http.StatusText(429))
-
-		e := new(jx.Encoder)
-		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	default:
-		return errors.Errorf("unexpected response type: %T", response)
-	}
-}
-
-func encodeDeleteExampleResponse(response DeleteExampleRes, w http.ResponseWriter, span trace.Span) error {
-	switch response := response.(type) {
-	case *ExampleDeleted:
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "X-Processing-Time" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "X-Processing-Time",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.XProcessingTime.Get(); ok {
-						return e.EncodeValue(conv.IntToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode X-Processing-Time header")
-				}
-			}
-		}
-		w.WriteHeader(204)
-		span.SetStatus(codes.Ok, http.StatusText(204))
-
-		return nil
-
-	case *DeleteExampleBadRequest:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(400)
-		span.SetStatus(codes.Error, http.StatusText(400))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *DeleteExampleNotFound:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(404)
-		span.SetStatus(codes.Error, http.StatusText(404))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *DeleteExampleConflict:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(409)
-		span.SetStatus(codes.Error, http.StatusText(409))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *ErrorHeaders:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Retry-After" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Retry-After",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.RetryAfter.Get(); ok {
-						return e.EncodeValue(conv.IntToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Retry-After header")
-				}
-			}
-		}
-		w.WriteHeader(429)
-		span.SetStatus(codes.Error, http.StatusText(429))
-
-		e := new(jx.Encoder)
-		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	default:
-		return errors.Errorf("unexpected response type: %T", response)
-	}
-}
-
-func encodeExampleDomainBatchHealthCheckResponse(response ExampleDomainBatchHealthCheckRes, w http.ResponseWriter, span trace.Span) error {
-	switch response := response.(type) {
-	case *HealthBatchSuccessHeaders:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Cache-Control" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Cache-Control",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.CacheControl.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Cache-Control header")
-				}
-			}
-			// Encode "X-Processing-Time" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "X-Processing-Time",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.XProcessingTime.Get(); ok {
-						return e.EncodeValue(conv.IntToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode X-Processing-Time header")
-				}
-			}
-		}
-		w.WriteHeader(200)
-		span.SetStatus(codes.Ok, http.StatusText(200))
-
-		e := new(jx.Encoder)
-		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *Error:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(400)
-		span.SetStatus(codes.Error, http.StatusText(400))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *ErrorHeaders:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Retry-After" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Retry-After",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.RetryAfter.Get(); ok {
-						return e.EncodeValue(conv.IntToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Retry-After header")
-				}
-			}
-		}
-		w.WriteHeader(429)
-		span.SetStatus(codes.Error, http.StatusText(429))
-
-		e := new(jx.Encoder)
-		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	default:
-		return errors.Errorf("unexpected response type: %T", response)
-	}
-}
-
-func encodeExampleDomainHealthWebSocketResponse(response ExampleDomainHealthWebSocketRes, w http.ResponseWriter, span trace.Span) error {
-	switch response := response.(type) {
-	case *WebSocketHealthMessageHeaders:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Connection" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Connection",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.Connection.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Connection header")
-				}
-			}
-			// Encode "Sec-WebSocket-Accept" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Sec-WebSocket-Accept",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.SecWebSocketAccept.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Sec-WebSocket-Accept header")
-				}
-			}
-			// Encode "Upgrade" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Upgrade",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.Upgrade.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Upgrade header")
-				}
-			}
-		}
-		w.WriteHeader(101)
-		span.SetStatus(codes.Ok, http.StatusText(101))
-
-		e := new(jx.Encoder)
-		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *ExampleDomainHealthWebSocketOK:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(200)
-		span.SetStatus(codes.Ok, http.StatusText(200))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *ExampleDomainHealthWebSocketBadRequest:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(400)
-		span.SetStatus(codes.Error, http.StatusText(400))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *ExampleDomainHealthWebSocketUnauthorized:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(401)
-		span.SetStatus(codes.Error, http.StatusText(401))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *ErrorHeaders:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Retry-After" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Retry-After",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.RetryAfter.Get(); ok {
-						return e.EncodeValue(conv.IntToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Retry-After header")
-				}
-			}
-		}
-		w.WriteHeader(429)
-		span.SetStatus(codes.Error, http.StatusText(429))
-
-		e := new(jx.Encoder)
-		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	default:
-		return errors.Errorf("unexpected response type: %T", response)
-	}
-}
-
-func encodeGetExampleResponse(response GetExampleRes, w http.ResponseWriter, span trace.Span) error {
-	switch response := response.(type) {
-	case *ExampleRetrievedHeaders:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Cache-Control" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Cache-Control",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.CacheControl.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Cache-Control header")
-				}
-			}
-			// Encode "ETag" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "ETag",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.ETag.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode ETag header")
-				}
-			}
-			// Encode "Last-Modified" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Last-Modified",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.LastModified.Get(); ok {
-						return e.EncodeValue(conv.DateTimeToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Last-Modified header")
-				}
-			}
-			// Encode "X-Processing-Time" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "X-Processing-Time",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.XProcessingTime.Get(); ok {
-						return e.EncodeValue(conv.IntToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode X-Processing-Time header")
-				}
-			}
-		}
-		w.WriteHeader(200)
-		span.SetStatus(codes.Ok, http.StatusText(200))
-
-		e := new(jx.Encoder)
-		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *GetExampleNotModified:
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Cache-Control" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Cache-Control",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.CacheControl.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Cache-Control header")
-				}
-			}
-			// Encode "ETag" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "ETag",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.ETag.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode ETag header")
-				}
-			}
-		}
-		w.WriteHeader(304)
-		span.SetStatus(codes.Ok, http.StatusText(304))
-
-		return nil
-
-	case *GetExampleBadRequest:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(400)
-		span.SetStatus(codes.Error, http.StatusText(400))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *GetExampleNotFound:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(404)
-		span.SetStatus(codes.Error, http.StatusText(404))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *ErrorHeaders:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Retry-After" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Retry-After",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.RetryAfter.Get(); ok {
-						return e.EncodeValue(conv.IntToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Retry-After header")
-				}
-			}
-		}
-		w.WriteHeader(429)
-		span.SetStatus(codes.Error, http.StatusText(429))
-
-		e := new(jx.Encoder)
-		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	default:
-		return errors.Errorf("unexpected response type: %T", response)
-	}
-}
-
-func encodeGetResetStatusResponse(response GetResetStatusRes, w http.ResponseWriter, span trace.Span) error {
-	switch response := response.(type) {
-	case *GetResetStatusOK:
+	case *GetResetHistoryOK:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(200)
 		span.SetStatus(codes.Ok, http.StatusText(200))
@@ -694,90 +30,6 @@ func encodeGetResetStatusResponse(response GetResetStatusRes, w http.ResponseWri
 
 	case *Error:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(404)
-		span.SetStatus(codes.Error, http.StatusText(404))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	default:
-		return errors.Errorf("unexpected response type: %T", response)
-	}
-}
-
-func encodeRequestAchievementResetResponse(response RequestAchievementResetRes, w http.ResponseWriter, span trace.Span) error {
-	switch response := response.(type) {
-	case *RequestAchievementResetOKHeaders:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Location" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Location",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.Location.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Location header")
-				}
-			}
-		}
-		w.WriteHeader(200)
-		span.SetStatus(codes.Ok, http.StatusText(200))
-
-		e := new(jx.Encoder)
-		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *RequestAchievementResetAcceptedHeaders:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Location" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Location",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.Location.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Location header")
-				}
-			}
-		}
-		w.WriteHeader(202)
-		span.SetStatus(codes.Ok, http.StatusText(202))
-
-		e := new(jx.Encoder)
-		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *Error:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(400)
 		span.SetStatus(codes.Error, http.StatusText(400))
 
@@ -789,84 +41,84 @@ func encodeRequestAchievementResetResponse(response RequestAchievementResetRes, 
 
 		return nil
 
+	case *ErrorHeaders:
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		// Encoding response headers.
+		{
+			h := uri.NewHeaderEncoder(w.Header())
+			// Encode "Retry-After" header.
+			{
+				cfg := uri.HeaderParameterEncodingConfig{
+					Name:    "Retry-After",
+					Explode: false,
+				}
+				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+					if val, ok := response.RetryAfter.Get(); ok {
+						return e.EncodeValue(conv.IntToString(val))
+					}
+					return nil
+				}); err != nil {
+					return errors.Wrap(err, "encode Retry-After header")
+				}
+			}
+		}
+		w.WriteHeader(429)
+		span.SetStatus(codes.Error, http.StatusText(429))
+
+		e := new(jx.Encoder)
+		response.Response.Encode(e)
+		if _, err := e.WriteTo(w); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
 	default:
 		return errors.Errorf("unexpected response type: %T", response)
 	}
 }
 
-func encodeRequestInventoryResetResponse(response RequestInventoryResetRes, w http.ResponseWriter, span trace.Span) error {
+func encodeGetResetStatsResponse(response GetResetStatsRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *RequestInventoryResetOKHeaders:
+	case *GetResetStatsOK:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Location" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Location",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.Location.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Location header")
-				}
-			}
-		}
 		w.WriteHeader(200)
 		span.SetStatus(codes.Ok, http.StatusText(200))
 
 		e := new(jx.Encoder)
-		response.Response.Encode(e)
+		response.Encode(e)
 		if _, err := e.WriteTo(w); err != nil {
 			return errors.Wrap(err, "write")
 		}
 
 		return nil
 
-	case *RequestInventoryResetAcceptedHeaders:
+	case *ErrorHeaders:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		// Encoding response headers.
 		{
 			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "Location" header.
+			// Encode "Retry-After" header.
 			{
 				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Location",
+					Name:    "Retry-After",
 					Explode: false,
 				}
 				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.Location.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
+					if val, ok := response.RetryAfter.Get(); ok {
+						return e.EncodeValue(conv.IntToString(val))
 					}
 					return nil
 				}); err != nil {
-					return errors.Wrap(err, "encode Location header")
+					return errors.Wrap(err, "encode Retry-After header")
 				}
 			}
 		}
-		w.WriteHeader(202)
-		span.SetStatus(codes.Ok, http.StatusText(202))
+		w.WriteHeader(429)
+		span.SetStatus(codes.Error, http.StatusText(429))
 
 		e := new(jx.Encoder)
 		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *Error:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(400)
-		span.SetStatus(codes.Error, http.StatusText(400))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
 		if _, err := e.WriteTo(w); err != nil {
 			return errors.Wrap(err, "write")
 		}
@@ -992,71 +244,22 @@ func encodeResetServiceHealthCheckResponse(response ResetServiceHealthCheckRes, 
 	}
 }
 
-func encodeUpdateExampleResponse(response UpdateExampleRes, w http.ResponseWriter, span trace.Span) error {
+func encodeTriggerResetResponse(response TriggerResetRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *ExampleUpdatedHeaders:
+	case *TriggerResetOK:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "ETag" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "ETag",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.ETag.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode ETag header")
-				}
-			}
-			// Encode "Last-Modified" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "Last-Modified",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.LastModified.Get(); ok {
-						return e.EncodeValue(conv.DateTimeToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode Last-Modified header")
-				}
-			}
-			// Encode "X-Processing-Time" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "X-Processing-Time",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.XProcessingTime.Get(); ok {
-						return e.EncodeValue(conv.IntToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode X-Processing-Time header")
-				}
-			}
-		}
 		w.WriteHeader(200)
 		span.SetStatus(codes.Ok, http.StatusText(200))
 
 		e := new(jx.Encoder)
-		response.Response.Encode(e)
+		response.Encode(e)
 		if _, err := e.WriteTo(w); err != nil {
 			return errors.Wrap(err, "write")
 		}
 
 		return nil
 
-	case *UpdateExampleBadRequest:
+	case *TriggerResetBadRequest:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(400)
 		span.SetStatus(codes.Error, http.StatusText(400))
@@ -1069,89 +272,12 @@ func encodeUpdateExampleResponse(response UpdateExampleRes, w http.ResponseWrite
 
 		return nil
 
-	case *UpdateExampleNotFound:
+	case *TriggerResetConflict:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(404)
-		span.SetStatus(codes.Error, http.StatusText(404))
-
-		e := new(jx.Encoder)
-		response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *UpdateExampleConflict:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "ETag" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "ETag",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.ETag.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode ETag header")
-				}
-			}
-		}
 		w.WriteHeader(409)
 		span.SetStatus(codes.Error, http.StatusText(409))
 
 		e := new(jx.Encoder)
-		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *UpdateExamplePreconditionFailed:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// Encoding response headers.
-		{
-			h := uri.NewHeaderEncoder(w.Header())
-			// Encode "ETag" header.
-			{
-				cfg := uri.HeaderParameterEncodingConfig{
-					Name:    "ETag",
-					Explode: false,
-				}
-				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.ETag.Get(); ok {
-						return e.EncodeValue(conv.StringToString(val))
-					}
-					return nil
-				}); err != nil {
-					return errors.Wrap(err, "encode ETag header")
-				}
-			}
-		}
-		w.WriteHeader(412)
-		span.SetStatus(codes.Error, http.StatusText(412))
-
-		e := new(jx.Encoder)
-		response.Response.Encode(e)
-		if _, err := e.WriteTo(w); err != nil {
-			return errors.Wrap(err, "write")
-		}
-
-		return nil
-
-	case *UpdateExampleUnprocessableEntity:
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(422)
-		span.SetStatus(codes.Error, http.StatusText(422))
-
-		e := new(jx.Encoder)
 		response.Encode(e)
 		if _, err := e.WriteTo(w); err != nil {
 			return errors.Wrap(err, "write")
@@ -1159,7 +285,7 @@ func encodeUpdateExampleResponse(response UpdateExampleRes, w http.ResponseWrite
 
 		return nil
 
-	case *UpdateExampleTooManyRequests:
+	case *ErrorHeaders:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		// Encoding response headers.
 		{

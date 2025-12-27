@@ -28,83 +28,24 @@ func trimTrailingSlashes(u *url.URL) {
 
 // Invoker invokes operations described by OpenAPI v3 specification.
 type Invoker interface {
-	// CreateExample invokes createExample operation.
+	// GetResetHistory invokes getResetHistory operation.
 	//
-	// **Enterprise-grade creation endpoint**
-	// Validates business rules, applies security checks, and ensures data consistency.
-	// Supports optimistic locking for concurrent operations.
-	// **Performance:** <50ms P95, includes validation and business logic.
+	// **Reset service history endpoint**
+	// Retrieves paginated history of reset operations.
+	// Supports filtering by type, status, and time range.
+	// **Performance:** <50ms P95, with database indexing.
 	//
-	// POST /character
-	CreateExample(ctx context.Context, request *CreateExampleRequest) (CreateExampleRes, error)
-	// DeleteExample invokes deleteExample operation.
+	// GET /history
+	GetResetHistory(ctx context.Context, params GetResetHistoryParams) (GetResetHistoryRes, error)
+	// GetResetStats invokes getResetStats operation.
 	//
-	// **Enterprise-grade deletion endpoint**
-	// Supports soft deletes with audit trails and cleanup scheduling.
-	// Ensures referential integrity and cascading deletes.
-	// **Performance:** <15ms P95, includes cleanup operations.
+	// **Reset service statistics endpoint**
+	// Provides aggregated statistics about reset operations performed.
+	// Includes counts, success rates, and performance metrics.
+	// **Performance:** <25ms P95, aggregated data.
 	//
-	// DELETE /examples/{example_id}
-	DeleteExample(ctx context.Context, params DeleteExampleParams) (DeleteExampleRes, error)
-	// ExampleDomainBatchHealthCheck invokes exampleDomainBatchHealthCheck operation.
-	//
-	// **Performance optimization:** Check multiple domain health in single request
-	// Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-	// Eliminates network overhead in health monitoring scenarios.
-	// **Use case:** Service mesh health checks, Kubernetes readiness probes.
-	//
-	// POST /health/batch
-	ExampleDomainBatchHealthCheck(ctx context.Context, request *ExampleDomainBatchHealthCheckReq) (ExampleDomainBatchHealthCheckRes, error)
-	// ExampleDomainHealthWebSocket invokes exampleDomainHealthWebSocket operation.
-	//
-	// **Performance optimization:** Real-time health updates without polling
-	// Eliminates periodic HTTP requests, reduces server load by ~90%.
-	// Perfect for dashboard monitoring and alerting systems.
-	// **Protocol:** WebSocket with JSON payloads
-	// **Heartbeat:** 30 second intervals
-	// **Reconnection:** Automatic with exponential backoff.
-	//
-	// GET /health/ws
-	ExampleDomainHealthWebSocket(ctx context.Context, params ExampleDomainHealthWebSocketParams) (ExampleDomainHealthWebSocketRes, error)
-	// GetExample invokes getExample operation.
-	//
-	// **Enterprise-grade retrieval endpoint**
-	// Optimized with proper caching strategies and database indexing.
-	// Supports conditional requests with ETags.
-	// **Performance:** <5ms P95 with Redis caching.
-	//
-	// GET /examples/{example_id}
-	GetExample(ctx context.Context, params GetExampleParams) (GetExampleRes, error)
-	// GetResetStatus invokes getResetStatus operation.
-	//
-	// **Enterprise-grade reset status endpoint**
-	// Retrieves detailed status of ongoing or completed reset operations.
-	// Provides progress tracking and completion confirmation.
-	// **Performance:** <15ms P95 (HOT PATH), Redis cached
-	// **Security:** Users can only access their own reset operations.
-	//
-	// GET /resets/{reset_id}
-	GetResetStatus(ctx context.Context, params GetResetStatusParams) (GetResetStatusRes, error)
-	// RequestAchievementReset invokes requestAchievementReset operation.
-	//
-	// **Enterprise-grade achievement reset endpoint**
-	// Initiates achievement progress reset with selective preservation options.
-	// Supports different reset scopes for achievement categories and progress levels.
-	// **Performance:** <30ms P95, includes achievement validation
-	// **Business rules:** Achievement preservation rules, reset scope limitations.
-	//
-	// POST /achievements
-	RequestAchievementReset(ctx context.Context, request *RequestAchievementResetReq) (RequestAchievementResetRes, error)
-	// RequestInventoryReset invokes requestInventoryReset operation.
-	//
-	// **Enterprise-grade inventory reset endpoint**
-	// Initiates inventory reset operation with selective item preservation and cleanup.
-	// Supports different reset scopes and inventory organization options.
-	// **Performance:** <50ms P95, includes inventory validation
-	// **Business rules:** Item preservation rules, reset scope validation.
-	//
-	// POST /inventory
-	RequestInventoryReset(ctx context.Context, request *RequestInventoryResetReq) (RequestInventoryResetRes, error)
+	// GET /stats
+	GetResetStats(ctx context.Context) (GetResetStatsRes, error)
 	// ResetServiceHealthCheck invokes resetServiceHealthCheck operation.
 	//
 	// **Enterprise-grade health check endpoint**
@@ -115,15 +56,16 @@ type Invoker interface {
 	//
 	// GET /health
 	ResetServiceHealthCheck(ctx context.Context, params ResetServiceHealthCheckParams) (ResetServiceHealthCheckRes, error)
-	// UpdateExample invokes updateExample operation.
+	// TriggerReset invokes triggerReset operation.
 	//
-	// **Enterprise-grade update endpoint**
-	// Supports partial updates, optimistic locking, and audit trails.
-	// Ensures data consistency with event sourcing patterns.
-	// **Performance:** <25ms P95, includes validation and conflict resolution.
+	// **Reset service trigger endpoint**
+	// Initiates a reset operation with specified parameters.
+	// Supports different reset types and scopes.
+	// **Performance:** <100ms P95, includes validation and queuing
+	// **Security:** Requires confirmation token for destructive operations.
 	//
-	// PUT /examples/{example_id}
-	UpdateExample(ctx context.Context, request *UpdateExampleRequest, params UpdateExampleParams) (UpdateExampleRes, error)
+	// POST /trigger
+	TriggerReset(ctx context.Context, request *TriggerResetReq) (TriggerResetRes, error)
 }
 
 // Client implements OAS client.
@@ -171,377 +113,24 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 	return u
 }
 
-// CreateExample invokes createExample operation.
+// GetResetHistory invokes getResetHistory operation.
 //
-// **Enterprise-grade creation endpoint**
-// Validates business rules, applies security checks, and ensures data consistency.
-// Supports optimistic locking for concurrent operations.
-// **Performance:** <50ms P95, includes validation and business logic.
+// **Reset service history endpoint**
+// Retrieves paginated history of reset operations.
+// Supports filtering by type, status, and time range.
+// **Performance:** <50ms P95, with database indexing.
 //
-// POST /character
-func (c *Client) CreateExample(ctx context.Context, request *CreateExampleRequest) (CreateExampleRes, error) {
-	res, err := c.sendCreateExample(ctx, request)
+// GET /history
+func (c *Client) GetResetHistory(ctx context.Context, params GetResetHistoryParams) (GetResetHistoryRes, error) {
+	res, err := c.sendGetResetHistory(ctx, params)
 	return res, err
 }
 
-func (c *Client) sendCreateExample(ctx context.Context, request *CreateExampleRequest) (res CreateExampleRes, err error) {
+func (c *Client) sendGetResetHistory(ctx context.Context, params GetResetHistoryParams) (res GetResetHistoryRes, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("createExample"),
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/character"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, CreateExampleOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/character"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeCreateExampleRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, CreateExampleOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeCreateExampleResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// DeleteExample invokes deleteExample operation.
-//
-// **Enterprise-grade deletion endpoint**
-// Supports soft deletes with audit trails and cleanup scheduling.
-// Ensures referential integrity and cascading deletes.
-// **Performance:** <15ms P95, includes cleanup operations.
-//
-// DELETE /examples/{example_id}
-func (c *Client) DeleteExample(ctx context.Context, params DeleteExampleParams) (DeleteExampleRes, error) {
-	res, err := c.sendDeleteExample(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendDeleteExample(ctx context.Context, params DeleteExampleParams) (res DeleteExampleRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("deleteExample"),
-		semconv.HTTPRequestMethodKey.String("DELETE"),
-		semconv.URLTemplateKey.String("/examples/{example_id}"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, DeleteExampleOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [2]string
-	pathParts[0] = "/examples/"
-	{
-		// Encode "example_id" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "example_id",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.ExampleID))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "DELETE", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, DeleteExampleOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeDeleteExampleResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// ExampleDomainBatchHealthCheck invokes exampleDomainBatchHealthCheck operation.
-//
-// **Performance optimization:** Check multiple domain health in single request
-// Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-// Eliminates network overhead in health monitoring scenarios.
-// **Use case:** Service mesh health checks, Kubernetes readiness probes.
-//
-// POST /health/batch
-func (c *Client) ExampleDomainBatchHealthCheck(ctx context.Context, request *ExampleDomainBatchHealthCheckReq) (ExampleDomainBatchHealthCheckRes, error) {
-	res, err := c.sendExampleDomainBatchHealthCheck(ctx, request)
-	return res, err
-}
-
-func (c *Client) sendExampleDomainBatchHealthCheck(ctx context.Context, request *ExampleDomainBatchHealthCheckReq) (res ExampleDomainBatchHealthCheckRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("exampleDomainBatchHealthCheck"),
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/health/batch"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, ExampleDomainBatchHealthCheckOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/health/batch"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeExampleDomainBatchHealthCheckRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, ExampleDomainBatchHealthCheckOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeExampleDomainBatchHealthCheckResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// ExampleDomainHealthWebSocket invokes exampleDomainHealthWebSocket operation.
-//
-// **Performance optimization:** Real-time health updates without polling
-// Eliminates periodic HTTP requests, reduces server load by ~90%.
-// Perfect for dashboard monitoring and alerting systems.
-// **Protocol:** WebSocket with JSON payloads
-// **Heartbeat:** 30 second intervals
-// **Reconnection:** Automatic with exponential backoff.
-//
-// GET /health/ws
-func (c *Client) ExampleDomainHealthWebSocket(ctx context.Context, params ExampleDomainHealthWebSocketParams) (ExampleDomainHealthWebSocketRes, error) {
-	res, err := c.sendExampleDomainHealthWebSocket(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendExampleDomainHealthWebSocket(ctx context.Context, params ExampleDomainHealthWebSocketParams) (res ExampleDomainHealthWebSocketRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("exampleDomainHealthWebSocket"),
+		otelogen.OperationID("getResetHistory"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/health/ws"),
+		semconv.URLTemplateKey.String("/history"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -557,7 +146,7 @@ func (c *Client) sendExampleDomainHealthWebSocket(ctx context.Context, params Ex
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, ExampleDomainHealthWebSocketOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GetResetHistoryOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -575,31 +164,73 @@ func (c *Client) sendExampleDomainHealthWebSocket(ctx context.Context, params Ex
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/health/ws"
+	pathParts[0] = "/history"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeQueryParams"
 	q := uri.NewQueryEncoder()
 	{
-		// Encode "services" parameter.
+		// Encode "limit" parameter.
 		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "services",
+			Name:    "limit",
 			Style:   uri.QueryStyleForm,
 			Explode: true,
 		}
 
 		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if params.Services != nil {
-				return e.EncodeArray(func(e uri.Encoder) error {
-					for i, item := range params.Services {
-						if err := func() error {
-							return e.EncodeValue(conv.StringToString(string(item)))
-						}(); err != nil {
-							return errors.Wrapf(err, "[%d]", i)
-						}
-					}
-					return nil
-				})
+			if val, ok := params.Limit.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "offset" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "offset",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Offset.Get(); ok {
+				return e.EncodeValue(conv.IntToString(val))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "reset_type" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "reset_type",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.ResetType.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
+			}
+			return nil
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "status" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "status",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			if val, ok := params.Status.Get(); ok {
+				return e.EncodeValue(conv.StringToString(string(val)))
 			}
 			return nil
 		}); err != nil {
@@ -619,7 +250,7 @@ func (c *Client) sendExampleDomainHealthWebSocket(ctx context.Context, params Ex
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, ExampleDomainHealthWebSocketOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GetResetHistoryOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -655,7 +286,7 @@ func (c *Client) sendExampleDomainHealthWebSocket(ctx context.Context, params Ex
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeExampleDomainHealthWebSocketResponse(resp)
+	result, err := decodeGetResetHistoryResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -663,24 +294,24 @@ func (c *Client) sendExampleDomainHealthWebSocket(ctx context.Context, params Ex
 	return result, nil
 }
 
-// GetExample invokes getExample operation.
+// GetResetStats invokes getResetStats operation.
 //
-// **Enterprise-grade retrieval endpoint**
-// Optimized with proper caching strategies and database indexing.
-// Supports conditional requests with ETags.
-// **Performance:** <5ms P95 with Redis caching.
+// **Reset service statistics endpoint**
+// Provides aggregated statistics about reset operations performed.
+// Includes counts, success rates, and performance metrics.
+// **Performance:** <25ms P95, aggregated data.
 //
-// GET /examples/{example_id}
-func (c *Client) GetExample(ctx context.Context, params GetExampleParams) (GetExampleRes, error) {
-	res, err := c.sendGetExample(ctx, params)
+// GET /stats
+func (c *Client) GetResetStats(ctx context.Context) (GetResetStatsRes, error) {
+	res, err := c.sendGetResetStats(ctx)
 	return res, err
 }
 
-func (c *Client) sendGetExample(ctx context.Context, params GetExampleParams) (res GetExampleRes, err error) {
+func (c *Client) sendGetResetStats(ctx context.Context) (res GetResetStatsRes, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("getExample"),
+		otelogen.OperationID("getResetStats"),
 		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/examples/{example_id}"),
+		semconv.URLTemplateKey.String("/stats"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -696,315 +327,7 @@ func (c *Client) sendGetExample(ctx context.Context, params GetExampleParams) (r
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GetExampleOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [2]string
-	pathParts[0] = "/examples/"
-	{
-		// Encode "example_id" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "example_id",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.ExampleID))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeQueryParams"
-	q := uri.NewQueryEncoder()
-	{
-		// Encode "include_related" parameter.
-		cfg := uri.QueryParameterEncodingConfig{
-			Name:    "include_related",
-			Style:   uri.QueryStyleForm,
-			Explode: true,
-		}
-
-		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.IncludeRelated.Get(); ok {
-				return e.EncodeValue(conv.BoolToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode query")
-		}
-	}
-	u.RawQuery = q.Values().Encode()
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	stage = "EncodeHeaderParams"
-	h := uri.NewHeaderEncoder(r.Header)
-	{
-		cfg := uri.HeaderParameterEncodingConfig{
-			Name:    "If-None-Match",
-			Explode: false,
-		}
-		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.IfNoneMatch.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode header")
-		}
-	}
-	{
-		cfg := uri.HeaderParameterEncodingConfig{
-			Name:    "If-Modified-Since",
-			Explode: false,
-		}
-		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.IfModifiedSince.Get(); ok {
-				return e.EncodeValue(conv.DateTimeToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode header")
-		}
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GetExampleOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeGetExampleResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// GetResetStatus invokes getResetStatus operation.
-//
-// **Enterprise-grade reset status endpoint**
-// Retrieves detailed status of ongoing or completed reset operations.
-// Provides progress tracking and completion confirmation.
-// **Performance:** <15ms P95 (HOT PATH), Redis cached
-// **Security:** Users can only access their own reset operations.
-//
-// GET /resets/{reset_id}
-func (c *Client) GetResetStatus(ctx context.Context, params GetResetStatusParams) (GetResetStatusRes, error) {
-	res, err := c.sendGetResetStatus(ctx, params)
-	return res, err
-}
-
-func (c *Client) sendGetResetStatus(ctx context.Context, params GetResetStatusParams) (res GetResetStatusRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("getResetStatus"),
-		semconv.HTTPRequestMethodKey.String("GET"),
-		semconv.URLTemplateKey.String("/resets/{reset_id}"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, GetResetStatusOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [2]string
-	pathParts[0] = "/resets/"
-	{
-		// Encode "reset_id" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "reset_id",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.ResetID))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "GET", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, GetResetStatusOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeGetResetStatusResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// RequestAchievementReset invokes requestAchievementReset operation.
-//
-// **Enterprise-grade achievement reset endpoint**
-// Initiates achievement progress reset with selective preservation options.
-// Supports different reset scopes for achievement categories and progress levels.
-// **Performance:** <30ms P95, includes achievement validation
-// **Business rules:** Achievement preservation rules, reset scope limitations.
-//
-// POST /achievements
-func (c *Client) RequestAchievementReset(ctx context.Context, request *RequestAchievementResetReq) (RequestAchievementResetRes, error) {
-	res, err := c.sendRequestAchievementReset(ctx, request)
-	return res, err
-}
-
-func (c *Client) sendRequestAchievementReset(ctx context.Context, request *RequestAchievementResetReq) (res RequestAchievementResetRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("requestAchievementReset"),
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/achievements"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, RequestAchievementResetOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, GetResetStatsOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -1022,16 +345,13 @@ func (c *Client) sendRequestAchievementReset(ctx context.Context, request *Reque
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
 	var pathParts [1]string
-	pathParts[0] = "/achievements"
+	pathParts[0] = "/stats"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
+	r, err := ht.NewRequest(ctx, "GET", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeRequestAchievementResetRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
 	}
 
 	{
@@ -1039,7 +359,7 @@ func (c *Client) sendRequestAchievementReset(ctx context.Context, request *Reque
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, RequestAchievementResetOperation, r); {
+			switch err := c.securityBearerAuth(ctx, GetResetStatsOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -1075,120 +395,7 @@ func (c *Client) sendRequestAchievementReset(ctx context.Context, request *Reque
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeRequestAchievementResetResponse(resp)
-	if err != nil {
-		return res, errors.Wrap(err, "decode response")
-	}
-
-	return result, nil
-}
-
-// RequestInventoryReset invokes requestInventoryReset operation.
-//
-// **Enterprise-grade inventory reset endpoint**
-// Initiates inventory reset operation with selective item preservation and cleanup.
-// Supports different reset scopes and inventory organization options.
-// **Performance:** <50ms P95, includes inventory validation
-// **Business rules:** Item preservation rules, reset scope validation.
-//
-// POST /inventory
-func (c *Client) RequestInventoryReset(ctx context.Context, request *RequestInventoryResetReq) (RequestInventoryResetRes, error) {
-	res, err := c.sendRequestInventoryReset(ctx, request)
-	return res, err
-}
-
-func (c *Client) sendRequestInventoryReset(ctx context.Context, request *RequestInventoryResetReq) (res RequestInventoryResetRes, err error) {
-	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("requestInventoryReset"),
-		semconv.HTTPRequestMethodKey.String("POST"),
-		semconv.URLTemplateKey.String("/inventory"),
-	}
-	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
-
-	// Run stopwatch.
-	startTime := time.Now()
-	defer func() {
-		// Use floating point division here for higher precision (instead of Millisecond method).
-		elapsedDuration := time.Since(startTime)
-		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
-	}()
-
-	// Increment request counter.
-	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-
-	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, RequestInventoryResetOperation,
-		trace.WithAttributes(otelAttrs...),
-		clientSpanKind,
-	)
-	// Track stage for error reporting.
-	var stage string
-	defer func() {
-		if err != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, stage)
-			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
-		}
-		span.End()
-	}()
-
-	stage = "BuildURL"
-	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [1]string
-	pathParts[0] = "/inventory"
-	uri.AddPathParts(u, pathParts[:]...)
-
-	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "POST", u)
-	if err != nil {
-		return res, errors.Wrap(err, "create request")
-	}
-	if err := encodeRequestInventoryResetRequest(request, r); err != nil {
-		return res, errors.Wrap(err, "encode request")
-	}
-
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, RequestInventoryResetOperation, r); {
-			case err == nil: // if NO error
-				satisfied[0] |= 1 << 0
-			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
-				// Skip this security.
-			default:
-				return res, errors.Wrap(err, "security \"BearerAuth\"")
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
-		}
-	}
-
-	stage = "SendRequest"
-	resp, err := c.cfg.Client.Do(r)
-	if err != nil {
-		return res, errors.Wrap(err, "do request")
-	}
-	defer resp.Body.Close()
-
-	stage = "DecodeResponse"
-	result, err := decodeRequestInventoryResetResponse(resp)
+	result, err := decodeGetResetStatsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -1323,24 +530,25 @@ func (c *Client) sendResetServiceHealthCheck(ctx context.Context, params ResetSe
 	return result, nil
 }
 
-// UpdateExample invokes updateExample operation.
+// TriggerReset invokes triggerReset operation.
 //
-// **Enterprise-grade update endpoint**
-// Supports partial updates, optimistic locking, and audit trails.
-// Ensures data consistency with event sourcing patterns.
-// **Performance:** <25ms P95, includes validation and conflict resolution.
+// **Reset service trigger endpoint**
+// Initiates a reset operation with specified parameters.
+// Supports different reset types and scopes.
+// **Performance:** <100ms P95, includes validation and queuing
+// **Security:** Requires confirmation token for destructive operations.
 //
-// PUT /examples/{example_id}
-func (c *Client) UpdateExample(ctx context.Context, request *UpdateExampleRequest, params UpdateExampleParams) (UpdateExampleRes, error) {
-	res, err := c.sendUpdateExample(ctx, request, params)
+// POST /trigger
+func (c *Client) TriggerReset(ctx context.Context, request *TriggerResetReq) (TriggerResetRes, error) {
+	res, err := c.sendTriggerReset(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendUpdateExample(ctx context.Context, request *UpdateExampleRequest, params UpdateExampleParams) (res UpdateExampleRes, err error) {
+func (c *Client) sendTriggerReset(ctx context.Context, request *TriggerResetReq) (res TriggerResetRes, err error) {
 	otelAttrs := []attribute.KeyValue{
-		otelogen.OperationID("updateExample"),
-		semconv.HTTPRequestMethodKey.String("PUT"),
-		semconv.URLTemplateKey.String("/examples/{example_id}"),
+		otelogen.OperationID("triggerReset"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/trigger"),
 	}
 	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
 
@@ -1356,7 +564,7 @@ func (c *Client) sendUpdateExample(ctx context.Context, request *UpdateExampleRe
 	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
 
 	// Start a span for this request.
-	ctx, span := c.cfg.Tracer.Start(ctx, UpdateExampleOperation,
+	ctx, span := c.cfg.Tracer.Start(ctx, TriggerResetOperation,
 		trace.WithAttributes(otelAttrs...),
 		clientSpanKind,
 	)
@@ -1373,66 +581,17 @@ func (c *Client) sendUpdateExample(ctx context.Context, request *UpdateExampleRe
 
 	stage = "BuildURL"
 	u := uri.Clone(c.requestURL(ctx))
-	var pathParts [2]string
-	pathParts[0] = "/examples/"
-	{
-		// Encode "example_id" parameter.
-		e := uri.NewPathEncoder(uri.PathEncoderConfig{
-			Param:   "example_id",
-			Style:   uri.PathStyleSimple,
-			Explode: false,
-		})
-		if err := func() error {
-			return e.EncodeValue(conv.UUIDToString(params.ExampleID))
-		}(); err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		encoded, err := e.Result()
-		if err != nil {
-			return res, errors.Wrap(err, "encode path")
-		}
-		pathParts[1] = encoded
-	}
+	var pathParts [1]string
+	pathParts[0] = "/trigger"
 	uri.AddPathParts(u, pathParts[:]...)
 
 	stage = "EncodeRequest"
-	r, err := ht.NewRequest(ctx, "PUT", u)
+	r, err := ht.NewRequest(ctx, "POST", u)
 	if err != nil {
 		return res, errors.Wrap(err, "create request")
 	}
-	if err := encodeUpdateExampleRequest(request, r); err != nil {
+	if err := encodeTriggerResetRequest(request, r); err != nil {
 		return res, errors.Wrap(err, "encode request")
-	}
-
-	stage = "EncodeHeaderParams"
-	h := uri.NewHeaderEncoder(r.Header)
-	{
-		cfg := uri.HeaderParameterEncodingConfig{
-			Name:    "If-Match",
-			Explode: false,
-		}
-		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.IfMatch.Get(); ok {
-				return e.EncodeValue(conv.StringToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode header")
-		}
-	}
-	{
-		cfg := uri.HeaderParameterEncodingConfig{
-			Name:    "If-Unmodified-Since",
-			Explode: false,
-		}
-		if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-			if val, ok := params.IfUnmodifiedSince.Get(); ok {
-				return e.EncodeValue(conv.DateTimeToString(val))
-			}
-			return nil
-		}); err != nil {
-			return res, errors.Wrap(err, "encode header")
-		}
 	}
 
 	{
@@ -1440,7 +599,7 @@ func (c *Client) sendUpdateExample(ctx context.Context, request *UpdateExampleRe
 		var satisfied bitset
 		{
 			stage = "Security:BearerAuth"
-			switch err := c.securityBearerAuth(ctx, UpdateExampleOperation, r); {
+			switch err := c.securityBearerAuth(ctx, TriggerResetOperation, r); {
 			case err == nil: // if NO error
 				satisfied[0] |= 1 << 0
 			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
@@ -1476,7 +635,7 @@ func (c *Client) sendUpdateExample(ctx context.Context, request *UpdateExampleRe
 	defer resp.Body.Close()
 
 	stage = "DecodeResponse"
-	result, err := decodeUpdateExampleResponse(resp)
+	result, err := decodeTriggerResetResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
