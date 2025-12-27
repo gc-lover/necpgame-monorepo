@@ -5,6 +5,10 @@
 
 echo "[CHECK] Unified Pre-commit Validation: Starting checks..."
 
+# Ensure we're in the project root directory
+cd "$(git rev-parse --show-toplevel)" || exit 1
+echo "[INFO] Working directory: $(pwd)"
+
 # Get staged files
 STAGED_FILES=$(git diff --cached --name-only)
 
@@ -35,6 +39,13 @@ echo "[SUCCESS] Git Safety Check: No dangerous command traces found."
 
 # 2. Emoji Ban Check
 echo "[CHECK] Emoji Ban Check: Scanning for forbidden Unicode characters..."
+echo "[DEBUG] Checking for emoji validation script..."
+if [ -f "scripts/validate-emoji-ban.py" ]; then
+    echo "[DEBUG] Emoji validation script found"
+else
+    echo "[WARNING] Emoji validation script not found at: $(pwd)/scripts/validate-emoji-ban.py"
+fi
+
 if [ -f "scripts/validate-emoji-ban.py" ] && [ -n "$STAGED_FILES" ]; then
     # Filter files for emoji validation (Python files and OpenAPI specs)
     PYTHON_FILES=$(echo "$STAGED_FILES" | grep "\.py$" | grep -v -E "\.githooks/|\.cursor/|scripts/framework\.py|scripts/SCRIPT_MIGRATION_GUIDE\.md|fix_git_push\.py" || true)
