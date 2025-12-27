@@ -138,14 +138,15 @@ def main():
 
     print("\n=== QUEST IMPORT VALIDATION RESULTS ===")
     print(f"Total migrations found: {results['total_migrations']}")
-    print("\nBy city:")    for city, count in results['by_city'].items():
+    print("\nBy city:")
+    for city, count in results['by_city'].items():
         status = "[OK]" if count == validator.expected_quests.get(city, 0) else "[ERROR]"
         print(f"  {city}: {count} {status}")
 
     if results['validation_errors']:
         print("\nValidation errors:")
-    for error in results['validation_errors']:
-        print(f"  [ERROR] {error}")
+        for error in results['validation_errors']:
+            print(f"  [ERROR] {error}")
 
     overall_status = "[SUCCESS]" if results['success'] else "[FAILED]"
     print(f"\nOverall result: {overall_status}")
