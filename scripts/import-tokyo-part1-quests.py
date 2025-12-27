@@ -29,6 +29,7 @@ class TokyoPart1QuestImportScript(BaseScript):
             name="import-tokyo-part1-quests",
             description="Import Tokyo Part 1 quest YAML files to database"
         )
+        self.args = None
 
     def add_script_args(self):
         """Add script-specific arguments"""
@@ -68,22 +69,20 @@ class TokyoPart1QuestImportScript(BaseScript):
                 data = yaml.safe_load(f)
 
             # Validate required fields
-            required_fields = ['metadata', 'content']
+            required_fields = ['metadata', 'quest_definition']
             for field in required_fields:
                 if field not in data:
                     raise ValueError(f"Missing required field: {field}")
 
             metadata = data['metadata']
-            required_metadata = ['id', 'title', 'status', 'version']
+            required_metadata = ['id', 'title']
             for field in required_metadata:
                 if field not in metadata:
                     raise ValueError(f"Missing required metadata field: {field}")
 
-            content = data['content']
-            required_content = ['quest_definition', 'narrative_context']
-            for field in required_content:
-                if field not in content:
-                    raise ValueError(f"Missing required content field: {field}")
+            # For this quest format, content is optional, but quest_definition is required
+            if 'content' not in data and 'quest_definition' not in data:
+                raise ValueError("Missing both content and quest_definition fields")
 
             return data
 
@@ -104,23 +103,36 @@ class TokyoPart1QuestImportScript(BaseScript):
             SQL migration content
         """
         metadata = quest_data['metadata']
-        content = quest_data['content']
+        quest_definition = quest_data['quest_definition']
+        content = quest_data.get('content', {})
+
+        # Extract values from quest_definition
+        quest_type = quest_definition.get('quest_type', 'side')
+        level_min = quest_definition.get('level_min', 1)
+        level_max = quest_definition.get('level_max')
+        rewards = quest_definition.get('rewards', {})
+        experience = rewards.get('experience', 0)
+        money_data = rewards.get('money', {})
+        money_min = money_data.get('min', 0) if isinstance(money_data, dict) else money_data if isinstance(money_data, (int, float)) else 0
+        money_max = money_data.get('max', money_min) if isinstance(money_data, dict) else money_min
 
         # Generate unique IDs
         quest_id = str(uuid.uuid4())
         metadata_hash = hashlib.sha256(json.dumps(metadata, sort_keys=True).encode()).hexdigest()
-        content_hash = hashlib.sha256(json.dumps(content, sort_keys=True).encode()).hexdigest()
+        content_hash = hashlib.sha256(json.dumps(quest_definition, sort_keys=True).encode()).hexdigest()
 
         # Prepare data for insertion
-        quest_definition = json.dumps(content['quest_definition'], ensure_ascii=False, indent=2)
-        narrative_context = json.dumps(content['narrative_context'], ensure_ascii=False, indent=2)
-        gameplay_mechanics = json.dumps(content.get('gameplay_mechanics', {}), ensure_ascii=False, indent=2)
+        quest_definition_json = json.dumps(quest_definition, ensure_ascii=False, indent=2)
+        narrative_context = json.dumps(content.get('sections', []), ensure_ascii=False, indent=2)
+        gameplay_mechanics = json.dumps({}, ensure_ascii=False, indent=2)
 
         # Handle optional fields
-        additional_npcs = json.dumps(content.get('additional_npcs', []), ensure_ascii=False, indent=2)
-        environmental_challenges = json.dumps(content.get('environmental_challenges', []), ensure_ascii=False, indent=2)
-        visual_design = json.dumps(content.get('visual_design', {}), ensure_ascii=False, indent=2)
-        cultural_elements = json.dumps(content.get('cultural_elements', {}), ensure_ascii=False, indent=2)
+        additional_npcs = json.dumps([], ensure_ascii=False, indent=2)
+        environmental_challenges = json.dumps([], ensure_ascii=False, indent=2)
+        visual_design = json.dumps({}, ensure_ascii=False, indent=2)
+        cultural_elements = json.dumps({}, ensure_ascii=False, indent=2)
+
+        rollback_sql = "--rollback DELETE FROM gameplay.quests WHERE metadata_id = '{}';".format(metadata['id'])
 
         sql = f"""--liquibase formatted sql
 
@@ -156,17 +168,17 @@ INSERT INTO gameplay.quests (
     '{quest_id}',
     '{metadata['id']}',
     '{metadata['title']}',
-    '{metadata.get('english_title', metadata['title'])}',
-    '{metadata.get('type', 'urban_delivery_stealth')}',
-    '{metadata.get('location', 'Tokyo')}',
-    '{metadata.get('time_period', '2020-2029')}',
-    '{metadata.get('difficulty', 'easy')}',
-    '{metadata.get('estimated_duration', '30-60 минут')}',
-    {metadata.get('player_level_min', 1)},
-    {metadata.get('player_level_max', 20)},
-    '{metadata['status']}',
-    '{metadata['version']}',
-    '{quest_definition}',
+    '{metadata.get('title', '')}',
+    '{quest_type}',
+    'Tokyo',
+    '2020-2029',
+    'easy',
+    '30-60 минут',
+    {level_min},
+    {level_max if level_max else 'NULL'},
+    'active',
+    '1.0.0',
+    '{quest_definition_json}',
     '{narrative_context}',
     '{gameplay_mechanics}',
     '{additional_npcs}',
@@ -180,9 +192,11 @@ INSERT INTO gameplay.quests (
     '{str(file_path)}'
 );
 
---rollback DELETE FROM gameplay.quests WHERE metadata_id = '{metadata['id']}';
+{rollback_sql}
 
 """
+
+--rollback DELETE FROM gameplay.quests WHERE metadata_id = '{metadata["id"]}';
 
         return sql
 
@@ -215,7 +229,7 @@ INSERT INTO gameplay.quests (
 
                 # Generate migration filename
                 timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-                migration_filename = "08d"
+                migration_filename = f"{timestamp}__tokyo_part1_quest_{metadata['id']}.sql"
                 migration_path = output_dir / migration_filename
 
                 # Check if file exists
@@ -241,6 +255,8 @@ INSERT INTO gameplay.quests (
 
     def run(self):
         """Main execution method"""
+        if not hasattr(self, 'args') or self.args is None:
+            self.args = self.parse_args()
         args = self.args
 
         source_dir = Path(args.source_dir)
@@ -266,8 +282,8 @@ INSERT INTO gameplay.quests (
 def main():
     """Entry point"""
     script = TokyoPart1QuestImportScript()
-    script.execute()
+    script.main()
 
 
 if __name__ == '__main__':
-    main()
+   
