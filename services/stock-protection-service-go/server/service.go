@@ -401,3 +401,4 @@ func (s *StockProtectionService) ResumeTrading(w http.ResponseWriter, r *http.Re
 		"circuit_breaker": status,
 	})
 }
+

@@ -269,3 +269,4 @@ func calculateAverageVolume(points []PricePoint) float64 {
 
 	return total / float64(len(points))
 }
+

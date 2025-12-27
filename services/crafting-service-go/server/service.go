@@ -1,8 +1,12 @@
 package server
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"time"
+
+	"crafting-service-go/api"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -19,6 +23,21 @@ func NewCraftingService() *CraftingService {
 	return &CraftingService{
 		logger: log.New(log.Writer(), "[crafting-service] ", log.LstdFlags),
 	}
+}
+
+// CraftingHandler implements the generated OpenAPI interface
+type CraftingHandler struct {
+	service *CraftingService
+}
+
+// GetRecipesByCategory implements getRecipesByCategory operation
+func (h *CraftingHandler) GetRecipesByCategory(ctx context.Context, params api.GetRecipesByCategoryParams) (api.GetRecipesByCategoryRes, error) {
+	// TODO: Implement actual recipe retrieval logic from database
+	// For now, return empty list as placeholder
+	return &api.RecipeListResponse{
+		Recipes: []api.Recipe{},
+		Total:   0,
+	}, nil
 }
 
 // Handler returns the HTTP handler for the crafting service
@@ -42,8 +61,19 @@ func (s *CraftingService) Handler() http.Handler {
 	// Health check endpoint
 	r.Get("/health", s.healthCheck)
 
-	// API routes (to be generated from OpenAPI)
-	// TODO: Mount Ogen-generated routes
+	// Initialize OpenAPI handler
+	handler := &CraftingHandler{
+		service: s,
+	}
+
+	// Create OpenAPI server
+	srv, err := api.NewServer(handler, nil)
+	if err != nil {
+		s.logger.Fatal("Failed to create OpenAPI server", err)
+	}
+
+	// Mount OpenAPI server
+	r.Mount("/api/v1", srv)
 
 	return r
 }

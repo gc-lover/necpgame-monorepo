@@ -248,3 +248,4 @@ func (s *StockProtectionService) detectManipulations(trades []Trade, orders []Or
 func generateID() string {
 	return time.Now().Format("alert_20060102_150405_") + string(rune(time.Now().UnixNano()%1000))
 }
+

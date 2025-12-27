@@ -75,3 +75,4 @@ func main() {
 	runtime.GC()
 	logger.Println("Server exited cleanly")
 }
+

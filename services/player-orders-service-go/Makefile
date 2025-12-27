@@ -51,3 +51,4 @@ fmt:
 # Run with hot reload (requires air or similar)
 dev:
 	air
+

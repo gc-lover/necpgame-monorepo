@@ -69,3 +69,4 @@ type CityListOptions struct {
 	SortBy string // "name", "population_2020", "cyberpunk_level", etc.
 	SortOrder string // "asc", "desc"
 }
+

@@ -60,3 +60,4 @@ ENV GOGC=40
 
 # Run the application
 CMD ["./crafting-service"]
+

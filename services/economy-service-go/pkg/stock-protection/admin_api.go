@@ -256,3 +256,4 @@ func (api *AdminAPI) GetCircuitBreakerState(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(state)
 }
+

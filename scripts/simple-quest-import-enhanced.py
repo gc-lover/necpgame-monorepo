@@ -87,27 +87,39 @@ def _validate_quest_structure(quest_data: Dict[str, Any]) -> bool:
         print("ERROR: Missing metadata.title")
         return False
 
-    # Check if we have either quest_definition or content structure
+    # Check if we have quest_definition, content, or gameplay structure
     has_quest_def = 'quest_definition' in quest_data
     has_content = 'content' in quest_data
+    has_gameplay = 'gameplay' in quest_data
 
-    if not has_quest_def and not has_content:
-        print("ERROR: Missing required field: quest_definition or content")
+    if not has_quest_def and not has_content and not has_gameplay:
+        print("ERROR: Missing required field: quest_definition, content, or gameplay")
         return False
 
     return True
 
 
 def _generate_migration(quest_data: Dict[str, Any], quest_file: Path) -> Dict[str, Any]:
-    """Generate Liquibase migration data from quest YAML (supports both formats)"""
+    """Generate Liquibase migration data from quest YAML (supports multiple formats)"""
 
     metadata = quest_data['metadata']
     content = quest_data.get('content', {})
     summary = quest_data.get('summary', {})
+    gameplay = quest_data.get('gameplay', {})
+    narrative = quest_data.get('narrative', {})
 
-    # Handle both old format (quest_definition) and new format (content/summary)
+    # Handle multiple formats: quest_definition, content, or gameplay
     quest_def = quest_data.get('quest_definition', {})
-    if not quest_def and content:
+    if not quest_def and gameplay:
+        # Extract from gameplay structure
+        rewards = gameplay.get('rewards', {})
+        quest_def = {
+            'level_min': 1,  # Default if not specified
+            'level_max': None,
+            'rewards': rewards,
+            'objectives': narrative.get('objectives', gameplay.get('objectives', ['Complete quest']))
+        }
+    elif not quest_def and content:
         # Extract from content structure - use default values
         quest_def = {
             'level_min': None,
@@ -147,28 +159,44 @@ def _generate_migration(quest_data: Dict[str, Any], quest_file: Path) -> Dict[st
 
     if 'experience' in rewards:
         rewards_json['xp'] = rewards['experience']
+    elif 'xp' in rewards:
+        rewards_json['xp'] = rewards['xp']
+    
     if 'money' in rewards:
-        rewards_json.update(rewards['money'])
+        if isinstance(rewards['money'], dict):
+            rewards_json.update(rewards['money'])
+        else:
+            rewards_json['money'] = rewards['money']
+    
     if 'reputation' in rewards:
         rewards_json['reputation'] = rewards['reputation']
     if 'unlocks' in rewards:
         rewards_json['unlocks'] = rewards['unlocks']
+    if 'currency' in rewards:
+        if isinstance(rewards['currency'], dict):
+            rewards_json.update(rewards['currency'])
+        else:
+            rewards_json['currency'] = rewards['currency']
 
-    # If rewards is still empty, use defaults from quest_def
-    if not rewards_json and 'xp' in rewards:
-        rewards_json['xp'] = rewards['xp']
-    if not rewards_json and 'currency' in rewards:
-        rewards_json.update(rewards['currency'])
+    # If rewards is still empty, use defaults
+    if not rewards_json:
+        rewards_json = {'xp': 1000}
 
     # Prepare objectives JSON
     objectives = quest_def.get('objectives', [])
+    if not objectives and narrative:
+        objectives = narrative.get('objectives', [])
+    
     objectives_json = []
-
     for obj in objectives:
         if isinstance(obj, dict):
             objectives_json.append(obj.get('description', str(obj)))
         else:
             objectives_json.append(str(obj))
+    
+    # If still empty, use default
+    if not objectives_json:
+        objectives_json = ['Complete quest']
 
     # Generate changeset ID
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
@@ -187,7 +215,7 @@ def _generate_migration(quest_data: Dict[str, Any], quest_file: Path) -> Dict[st
                                     {'column': {'name': 'id', 'value': quest_id}},
                                     {'column': {'name': 'quest_id', 'value': metadata['id']}},
                                     {'column': {'name': 'title', 'value': metadata['title']}},
-                                    {'column': {'name': 'description', 'value': summary.get('essence', metadata.get('title', ''))}},
+                                    {'column': {'name': 'description', 'value': narrative.get('hook', summary.get('essence', metadata.get('title', '')))}},
                                     {'column': {'name': 'status', 'value': 'active'}},
                                     {'column': {'name': 'level_min', 'value': quest_def.get('level_min')}},
                                     {'column': {'name': 'level_max', 'value': quest_def.get('level_max')}},
@@ -221,3 +249,4 @@ def _generate_migration_filename(quest_data: Dict[str, Any], output_dir: Path) -
 
 if __name__ == '__main__':
     main()
+

@@ -233,3 +233,4 @@ COMMENT ON TABLE event_store.dead_letter_queue IS 'Dead letter queue for failed 
 -- Retention policy: Events kept for 7+ years, snapshots for 1+ years
 
 COMMIT;
+

@@ -50,14 +50,14 @@ type Service struct {
 
 // TrainingJob represents a model training job
 type TrainingJob struct {
-	JobID      uuid.UUID
-	ModelName  string
-	Status     string
-	Progress   float64
-	Accuracy   float64
-	StartTime  time.Time
-	EndTime    *time.Time
-	CreatedAt  time.Time
+	JobID     uuid.UUID
+	ModelName string
+	Status    string
+	Progress  float64
+	Accuracy  float64
+	StartTime time.Time
+	EndTime   *time.Time
+	CreatedAt time.Time
 }
 
 // PredictionRecord represents a prediction for analytics
@@ -293,10 +293,10 @@ func (h *MLAIHandler) GetBatchHealth(ctx context.Context) (*api.BatchHealthRespo
 
 	services := []api.ServiceHealth{
 		{
-			Name:        "ml-ai-domain",
-			Status:      api.ServiceHealthStatusHealthy,
+			Name:         "ml-ai-domain",
+			Status:       api.ServiceHealthStatusHealthy,
 			ResponseTime: float32(10.5),
-			LastCheck:   api.NewOptDateTime(time.Now()),
+			LastCheck:    api.NewOptDateTime(time.Now()),
 		},
 	}
 
@@ -329,14 +329,14 @@ func (h *MLAIHandler) CreateModel(ctx context.Context, req *api.CreateModelReque
 	h.service.mu.Unlock()
 
 	apiModel := api.MLModel{
-		ModelID:     modelID,
-		Name:        model.Name,
-		Type:        api.MLModelType(model.Type),
-		Status:      api.MLModelStatusTraining,
-		Version:     api.NewOptString(model.Version),
-		Accuracy:    api.NewOptFloat32(float32(model.Accuracy)),
-		CreatedAt:   model.LastUpdated,
-		UpdatedAt:   api.NewOptDateTime(model.LastUpdated),
+		ModelID:   modelID,
+		Name:      model.Name,
+		Type:      api.MLModelType(model.Type),
+		Status:    api.MLModelStatusTraining,
+		Version:   api.NewOptString(model.Version),
+		Accuracy:  api.NewOptFloat32(float32(model.Accuracy)),
+		CreatedAt: model.LastUpdated,
+		UpdatedAt: api.NewOptDateTime(model.LastUpdated),
 	}
 
 	return &api.ModelResponse{
@@ -360,14 +360,14 @@ func (h *MLAIHandler) GetModel(ctx context.Context, params api.GetModelParams) (
 
 	modelID, _ := uuid.Parse(model.ID)
 	apiModel := api.MLModel{
-		ModelID:     modelID,
-		Name:        model.Name,
-		Type:        api.MLModelType(model.Type),
-		Status:      api.MLModelStatus(model.Status),
-		Version:     api.NewOptString(model.Version),
-		Accuracy:    api.NewOptFloat32(float32(model.Accuracy)),
-		CreatedAt:   model.LastUpdated.Add(-24 * time.Hour),
-		UpdatedAt:   api.NewOptDateTime(model.LastUpdated),
+		ModelID:   modelID,
+		Name:      model.Name,
+		Type:      api.MLModelType(model.Type),
+		Status:    api.MLModelStatus(model.Status),
+		Version:   api.NewOptString(model.Version),
+		Accuracy:  api.NewOptFloat32(float32(model.Accuracy)),
+		CreatedAt: model.LastUpdated.Add(-24 * time.Hour),
+		UpdatedAt: api.NewOptDateTime(model.LastUpdated),
 	}
 
 	if model.Metadata != nil {
@@ -533,9 +533,9 @@ func (h *MLAIHandler) GetWebSocketHealth(ctx context.Context) (*api.WebSocketHea
 	h.logger.Info("Processing WebSocket health check request")
 
 	return &api.WebSocketHealthMessage{
-		Type:      api.WebSocketHealthMessageTypeHealthCheck,
-		Timestamp: time.Now(),
-		Uptime:    api.NewOptFloat32(3600.0),
+		Type:        api.WebSocketHealthMessageTypeHealthCheck,
+		Timestamp:   time.Now(),
+		Uptime:      api.NewOptFloat32(3600.0),
 		Connections: api.NewOptInt(0),
 	}, nil
 }
@@ -618,14 +618,14 @@ func (h *MLAIHandler) ListModels(ctx context.Context, params api.ListModelsParam
 	for _, model := range models {
 		modelID, _ := uuid.Parse(model.ID)
 		apiModel := api.MLModel{
-			ModelID:     modelID,
-			Name:        model.Name,
-			Type:        api.MLModelType(model.Type),
-			Status:      api.MLModelStatus(model.Status),
-			Version:     api.NewOptString(model.Version),
-			Accuracy:    api.NewOptFloat32(float32(model.Accuracy)),
-			CreatedAt:   model.LastUpdated,
-			UpdatedAt:   api.NewOptDateTime(model.LastUpdated),
+			ModelID:   modelID,
+			Name:      model.Name,
+			Type:      api.MLModelType(model.Type),
+			Status:    api.MLModelStatus(model.Status),
+			Version:   api.NewOptString(model.Version),
+			Accuracy:  api.NewOptFloat32(float32(model.Accuracy)),
+			CreatedAt: model.LastUpdated,
+			UpdatedAt: api.NewOptDateTime(model.LastUpdated),
 		}
 
 		if model.Metadata != nil {
@@ -844,14 +844,14 @@ func (h *MLAIHandler) UpdateModel(ctx context.Context, req *api.UpdateModelReque
 
 	modelID, _ := uuid.Parse(model.ID)
 	apiModel := api.MLModel{
-		ModelID:     modelID,
-		Name:        model.Name,
-		Type:        api.MLModelType(model.Type),
-		Status:      api.MLModelStatus(model.Status),
-		Version:     api.NewOptString(model.Version),
-		Accuracy:    api.NewOptFloat32(float32(model.Accuracy)),
-		CreatedAt:   model.LastUpdated.Add(-24 * time.Hour),
-		UpdatedAt:   api.NewOptDateTime(model.LastUpdated),
+		ModelID:   modelID,
+		Name:      model.Name,
+		Type:      api.MLModelType(model.Type),
+		Status:    api.MLModelStatus(model.Status),
+		Version:   api.NewOptString(model.Version),
+		Accuracy:  api.NewOptFloat32(float32(model.Accuracy)),
+		CreatedAt: model.LastUpdated.Add(-24 * time.Hour),
+		UpdatedAt: api.NewOptDateTime(model.LastUpdated),
 	}
 
 	if model.Metadata != nil {
