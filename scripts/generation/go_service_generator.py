@@ -38,38 +38,93 @@ class GoServiceGenerator:
     def generate_domain_service(self, domain: str, skip_bundle: bool = False,
                                 skip_test: bool = False, dry_run: bool = False) -> None:
         """Generate complete Go service for a domain with PERFORMANCE optimizations"""
-        domain_dir = self.config.get_openapi_dir() / domain
-        if not domain_dir.exists():
-            raise FileNotFoundError(f"Domain directory not found: {domain_dir}")
+        try:
+            # Get paths with error checking
+            openapi_dir = Path(self.config.config.get('openapi_dir', 'proto/openapi'))
+            services_dir = Path(self.config.config.get('services_dir', 'services'))
 
-        service_name = f"{domain}-service-go"
-        service_dir = self.config.get_services_dir() / service_name
+            domain_dir = openapi_dir / domain
+            if not domain_dir.exists():
+                raise FileNotFoundError(f"Domain directory not found: {domain_dir}")
 
-        if not dry_run:
-            service_dir.mkdir(parents=True, exist_ok=True)
+            service_name = f"{domain}-service-go"
+            service_dir = services_dir / service_name
 
-        # PERFORMANCE: Bundle OpenAPI spec with timeout
-        bundled_spec = None
-        if not skip_bundle:
-            bundled_spec = self._bundle_openapi_spec(domain, service_dir, dry_run)
+            self.logger.info(f"Generating service {service_name} in {service_dir}")
 
-        # PERFORMANCE: Generate Go code with memory optimization
-        if bundled_spec:
-            self._generate_go_code(service_dir, bundled_spec, domain, dry_run)
+            if not dry_run:
+                service_dir.mkdir(parents=True, exist_ok=True)
+                self.logger.info(f"Created service directory: {service_dir}")
 
-        # PERFORMANCE: Create service structure with preallocation
-        self._create_service_structure(service_dir, domain, dry_run)
+            # PERFORMANCE: Bundle OpenAPI spec with timeout
+            bundled_spec = None
+            if not skip_bundle:
+                bundled_spec = self._bundle_openapi_spec(domain, service_dir, openapi_dir, dry_run)
 
-        # PERFORMANCE: Initialize Go module with optimized settings
-        self._initialize_go_modules(service_dir, service_name, dry_run)
+            # PERFORMANCE: Generate Go code with memory optimization
+            if bundled_spec and bundled_spec.exists():
+                self._generate_go_code(service_dir, bundled_spec, domain, dry_run)
 
-        # PERFORMANCE: Test compilation with timeout and resource limits
-        if not skip_test and not dry_run:
-            self._test_compilation(service_dir, service_name)
+            # PERFORMANCE: Create service structure with preallocation
+            self._create_service_structure(service_dir, domain, dry_run)
 
-    def _bundle_openapi_spec(self, domain: str, service_dir: Path, dry_run: bool) -> Optional[Path]:
+            # PERFORMANCE: Initialize Go module with optimized settings
+            self._initialize_go_modules(service_dir, service_name, dry_run)
+
+            # PERFORMANCE: Test compilation with timeout and resource limits
+            if not skip_test and not dry_run:
+                self._test_compilation(service_dir, service_name)
+
+            self.logger.info(f"Successfully generated {service_name}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to generate service for domain {domain}: {e}")
+            raise
+
+
+def main():
+    """Main entry point for the script"""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate Go service from OpenAPI spec")
+    parser.add_argument("domain", help="Domain name (e.g., companion-domain)")
+    parser.add_argument("--skip-bundle", action="store_true", help="Skip OpenAPI bundling")
+    parser.add_argument("--skip-test", action="store_true", help="Skip compilation test")
+    parser.add_argument("--dry-run", action="store_true", help="Dry run - show what would be done")
+
+    args = parser.parse_args()
+
+    # Initialize components
+    config = ConfigManager()
+    logger = Logger(config)
+    file_manager = FileManager(logger)
+    command_runner = CommandRunner(logger)
+    openapi_manager = OpenAPIManager(file_manager, command_runner, logger)
+
+    # Create generator
+    generator = GoServiceGenerator(config, openapi_manager, file_manager, command_runner, logger)
+
+    try:
+        generator.generate_domain_service(
+            args.domain,
+            skip_bundle=args.skip_bundle,
+            skip_test=args.skip_test,
+            dry_run=args.dry_run
+        )
+        logger.info(f"Successfully generated service for domain: {args.domain}")
+    except Exception as e:
+        logger.error(f"Failed to generate service: {e}")
+        return 1
+
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())
+
+    def _bundle_openapi_spec(self, domain: str, service_dir: Path, openapi_dir: Path, dry_run: bool) -> Optional[Path]:
         """Bundle OpenAPI spec using redocly in service directory"""
-        main_yaml = self.config.get_openapi_dir() / domain / "main.yaml"
+        main_yaml = openapi_dir / domain / "main.yaml"
         if not main_yaml.exists():
             raise FileNotFoundError(f"Main YAML not found: {main_yaml}")
 
@@ -77,28 +132,19 @@ class GoServiceGenerator:
         bundled_file = service_dir / "openapi-bundled.yaml"
 
         if not dry_run:
-            bundled_file = self.openapi.bundle_spec(main_yaml, bundled_file)
+            # Use redocly to bundle the spec
+            try:
+                self.command_runner.run([
+                    'npx', '--yes', '@redocly/cli', 'bundle',
+                    str(main_yaml), '-o', str(bundled_file)
+                ])
+                self.logger.info(f"Bundled OpenAPI spec: {bundled_file}")
+            except Exception as e:
+                self.logger.error(f"Failed to bundle OpenAPI spec: {e}")
+                raise
 
         return bundled_file
 
-    def _get_ogen_path(self) -> str:
-        """Get full path to ogen binary"""
-        import os
-        import shutil
-
-        # Try common locations
-        possible_paths = [
-            r"C:\Users\zzzle\go\bin\ogen.exe",  # Windows
-            "/usr/local/go/bin/ogen",  # Linux/Mac
-            "ogen",  # In PATH
-        ]
-
-        for path in possible_paths:
-            if shutil.which(path) or os.path.exists(path):
-                return path
-
-        raise FileNotFoundError(
-            "ogen binary not found. Install with: go install github.com/ogen-go/ogen/cmd/ogen@latest")
 
     def _generate_go_code(self, service_dir: Path, bundled_spec: Path,
                           domain: str, dry_run: bool) -> None:
@@ -108,12 +154,26 @@ class GoServiceGenerator:
             pkg_dir.mkdir(parents=True, exist_ok=True)
 
         if not dry_run:
-            # Use full path to ogen binary
-            ogen_path = self._get_ogen_path()
-            self.command_runner.run([
-                ogen_path, '--target', str(pkg_dir),
-                '--package', 'api', '--clean', str(bundled_spec)
-            ])
+            try:
+                # Try to use ogen from PATH first
+                self.command_runner.run([
+                    'ogen', '--target', str(pkg_dir),
+                    '--package', 'api', '--clean', str(bundled_spec)
+                ])
+                self.logger.info(f"Generated Go API code in: {pkg_dir}")
+            except Exception as e:
+                # Try to install ogen if not found
+                self.logger.warning(f"ogen not found, trying to install: {e}")
+                try:
+                    self.command_runner.run(['go', 'install', 'github.com/ogen-go/ogen/cmd/ogen@latest'])
+                    self.command_runner.run([
+                        'ogen', '--target', str(pkg_dir),
+                        '--package', 'api', '--clean', str(bundled_spec)
+                    ])
+                    self.logger.info(f"Generated Go API code after installing ogen: {pkg_dir}")
+                except Exception as e2:
+                    self.logger.error(f"Failed to generate Go code even after installing ogen: {e2}")
+                    raise
 
     def _create_service_structure(self, service_dir: Path, domain: str, dry_run: bool) -> None:
         """Create standard Go service structure"""
@@ -181,12 +241,12 @@ func main() {{
 	defer cancel()
 
 	// PERFORMANCE: Initialize service with memory pooling
-	svc := server.New{domain.replace("-", "").title()}Service()
+	svc := server.New{domain.title().replace("-", "")}Service()
 
 	// PERFORMANCE: Configure HTTP server with optimized settings
 	httpServer := &http.Server{{
 		Addr:         ":8080",
-		Handler:      svc.Handler(),
+		Handler:      svc,
 		ReadTimeout:  15 * time.Second, // PERFORMANCE: Prevent slowloris
 		WriteTimeout: 15 * time.Second, // PERFORMANCE: Prevent hanging connections
 		IdleTimeout:  60 * time.Second, // PERFORMANCE: Reuse connections
@@ -239,18 +299,18 @@ import (
 	"{domain}-service-go/pkg/api"
 )
 
-type {domain.replace("-", "").title()}Service struct {{
+type {domain.title().replace("-", "")}Service struct {{
 	api *api.Server
 }}
 
-func New{domain.replace("-", "").title()}Service() *{domain.replace("-", "").title()}Service {{
-	return &{domain.replace("-", "").title()}Service{{
+func New{domain.title().replace("-", "")}Service() *{domain.title().replace("-", "")}Service {{
+	return &{domain.title().replace("-", "")}Service{{
 		api: api.NewServer(&Handler{{}}),
 	}}
 }}
 
-func (s *{domain.replace("-", "").title()}Service) Handler() http.Handler {{
-	return s.api
+func (s *{domain.title().replace("-", "")}Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {{
+	s.api.ServeHTTP(w, r)
 }}
 '''
 
@@ -358,7 +418,7 @@ func NewHandler() *Handler {{
 // Use: python scripts/generate-api-handlers.py {domain}
 
 // Example stub - replace with actual implementations:
-func (h *Handler) ExampleDomainHealthCheck(ctx context.Context, params api.ExampleDomainHealthCheckParams) (api.ExampleDomainHealthCheckRes, error) {{
+func (h *Handler) {domain.title().replace("-", "")}HealthCheck(ctx context.Context, params api.{domain.title().replace("-", "")}HealthCheckParams) (api.{domain.title().replace("-", "")}HealthCheckRes, error) {{
 	// TODO: Implement health check logic
 	return nil, fmt.Errorf("not implemented")
 }}

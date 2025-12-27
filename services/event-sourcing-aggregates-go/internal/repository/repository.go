@@ -96,52 +96,12 @@ func NewRedisClient(redisURL string) (*redis.Client, error) {
 	return client, nil
 }
 
-// NewKafkaProducer creates a new Kafka producer
-func NewKafkaProducer(brokers []string) (*kafka.Producer, error) {
-	config := &kafka.ConfigMap{
-		"bootstrap.servers": brokers[0], // Use first broker for simplicity
-		"acks":              "all",
-		"retries":           5,
-		"max.in.flight.requests.per.connection": 1,
-	}
-
-	producer, err := kafka.NewProducer(config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Kafka producer: %w", err)
-	}
-
-	return producer, nil
-}
-
-// NewKafkaConsumer creates a new Kafka consumer
-func NewKafkaConsumer(brokers []string, groupID string) (*kafka.Consumer, error) {
-	config := &kafka.ConfigMap{
-		"bootstrap.servers":        brokers[0], // Use first broker for simplicity
-		"group.id":                 groupID,
-		"auto.offset.reset":        "earliest",
-		"enable.auto.commit":       false,
-		"isolation.level":          "read_committed",
-		"max.poll.interval.ms":     300000,
-		"session.timeout.ms":       30000,
-		"heartbeat.interval.ms":    3000,
-	}
-
-	consumer, err := kafka.NewConsumer(config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Kafka consumer: %w", err)
-	}
-
-	return consumer, nil
-}
-
 // NewEventSourcingRepository creates a new event sourcing repository
-func NewEventSourcingRepository(db *sql.DB, redis *redis.Client, producer *kafka.Producer, consumer *kafka.Consumer, logger *zap.SugaredLogger) *EventSourcingRepository {
+func NewEventSourcingRepository(db *sql.DB, redis *redis.Client, logger *zap.SugaredLogger) *EventSourcingRepository {
 	return &EventSourcingRepository{
-		db:             db,
-		redis:          redis,
-		kafkaProducer:  producer,
-		kafkaConsumer:  consumer,
-		logger:         logger,
+		db:     db,
+		redis:  redis,
+		logger: logger,
 	}
 }
 
@@ -167,41 +127,8 @@ func (r *EventSourcingRepository) AppendEvent(ctx context.Context, event *Domain
 		return fmt.Errorf("failed to append event: %w", err)
 	}
 
-	// Publish to Kafka for async processing
-	eventJSON, _ := json.Marshal(event)
-	topic := fmt.Sprintf("events.%s", event.AggregateType)
-
-	kafkaMsg := &kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Key:            []byte(event.AggregateID.String()),
-		Value:          eventJSON,
-		Headers: []kafka.Header{
-			{Key: "event_type", Value: []byte(event.EventType)},
-			{Key: "aggregate_type", Value: []byte(event.AggregateType)},
-		},
-	}
-
-	deliveryChan := make(chan kafka.Event)
-	defer close(deliveryChan)
-
-	if err := r.kafkaProducer.Produce(kafkaMsg, deliveryChan); err != nil {
-		r.logger.Errorf("Failed to produce Kafka message: %v", err)
-		return fmt.Errorf("failed to produce Kafka message: %w", err)
-	}
-
-	// Wait for delivery confirmation
-	select {
-	case e := <-deliveryChan:
-		if ev, ok := e.(*kafka.Message); ok {
-			if ev.TopicPartition.Error != nil {
-				r.logger.Errorf("Kafka delivery failed: %v", ev.TopicPartition.Error)
-				return fmt.Errorf("kafka delivery failed: %w", ev.TopicPartition.Error)
-			}
-		}
-	case <-time.After(5 * time.Second):
-		r.logger.Error("Kafka delivery timeout")
-		return fmt.Errorf("kafka delivery timeout")
-	}
+	// Event stored successfully in PostgreSQL
+	// Kafka publishing can be added later if needed
 
 	r.logger.Infof("Appended event: %s for aggregate %s", event.EventType, event.AggregateID.String())
 	return nil
@@ -435,4 +362,98 @@ func (r *EventSourcingRepository) GetEventsByType(ctx context.Context, eventType
 	}
 
 	return events, nil
+}
+
+// GetEvents retrieves events for an aggregate from a specific version
+func (r *EventSourcingRepository) GetEvents(ctx context.Context, aggregateID uuid.UUID, fromVersion int) ([]*DomainEvent, error) {
+	query := `
+		SELECT event_id, aggregate_id, aggregate_type, event_type, event_version, payload,
+			   metadata, correlation_id, processed_at, processing_status, processing_error,
+			   created_at, updated_at
+		FROM events
+		WHERE aggregate_id = $1 AND event_version >= $2
+		ORDER BY event_version ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, aggregateID, fromVersion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query events: %w", err)
+	}
+	defer rows.Close()
+
+	var events []*DomainEvent
+	for rows.Next() {
+		var e DomainEvent
+		var payloadJSON, metadataJSON []byte
+		var processedAt sql.NullTime
+
+		err := rows.Scan(
+			&e.EventID, &e.AggregateID, &e.AggregateType, &e.EventType, &e.EventVersion,
+			&payloadJSON, &metadataJSON, &e.CorrelationID, &processedAt, &e.ProcessingStatus,
+			&e.ProcessingError, &e.CreatedAt, &e.UpdatedAt,
+		)
+		if err != nil {
+			r.logger.Errorf("Failed to scan event: %v", err)
+			continue
+		}
+
+		if processedAt.Valid {
+			e.ProcessedAt = &processedAt.Time
+		}
+
+		json.Unmarshal(payloadJSON, &e.Payload)
+		json.Unmarshal(metadataJSON, &e.Metadata)
+
+		events = append(events, &e)
+	}
+
+	return events, nil
+}
+
+// GetSnapshot retrieves the latest snapshot for an aggregate
+func (r *EventSourcingRepository) GetSnapshot(ctx context.Context, aggregateID uuid.UUID) (*AggregateSnapshot, error) {
+	query := `SELECT aggregate_id, aggregate_type, version, state, created_at FROM aggregate_snapshots WHERE aggregate_id = $1 ORDER BY version DESC LIMIT 1`
+
+	var s AggregateSnapshot
+	var stateData []byte
+
+	err := r.db.QueryRowContext(ctx, query, aggregateID).Scan(
+		&s.AggregateID, &s.AggregateType, &s.Version, &stateData, &s.CreatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil // No snapshot found
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get snapshot: %w", err)
+	}
+
+	json.Unmarshal(stateData, &s.State)
+	return &s, nil
+}
+
+// SaveSnapshot saves a snapshot for an aggregate
+func (r *EventSourcingRepository) SaveSnapshot(ctx context.Context, snapshot *AggregateSnapshot) error {
+	stateData, _ := json.Marshal(snapshot.State)
+
+	query := `
+		INSERT INTO aggregate_snapshots (aggregate_id, aggregate_type, version, state, created_at)
+		VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (aggregate_id)
+		DO UPDATE SET
+			version = EXCLUDED.version,
+			state = EXCLUDED.state,
+			created_at = EXCLUDED.created_at
+	`
+
+	_, err := r.db.ExecContext(ctx, query,
+		snapshot.AggregateID, snapshot.AggregateType, snapshot.Version,
+		stateData, snapshot.CreatedAt,
+	)
+
+	return err
+}
+
+// HealthCheck performs a health check
+func (r *EventSourcingRepository) HealthCheck(ctx context.Context) error {
+	return r.db.PingContext(ctx)
 }

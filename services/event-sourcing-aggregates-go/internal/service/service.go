@@ -3,11 +3,11 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
@@ -17,7 +17,7 @@ import (
 
 // EventSourcingService handles event sourcing business logic
 type EventSourcingService struct {
-	repo         *repository.EventSourcingRepository
+	repo         RepositoryInterface
 	metrics      *metrics.Collector
 	logger       *zap.SugaredLogger
 	eventProcessors map[string]EventProcessor
@@ -30,8 +30,17 @@ type EventProcessor interface {
 	GetAggregateType() string
 }
 
+// RepositoryInterface defines the repository interface
+type RepositoryInterface interface {
+	AppendEvent(ctx context.Context, event *repository.DomainEvent) error
+	GetEvents(ctx context.Context, aggregateID uuid.UUID, fromVersion int) ([]*repository.DomainEvent, error)
+	GetSnapshot(ctx context.Context, aggregateID uuid.UUID) (*repository.AggregateSnapshot, error)
+	SaveSnapshot(ctx context.Context, snapshot *repository.AggregateSnapshot) error
+	HealthCheck(ctx context.Context) error
+}
+
 // NewEventSourcingService creates a new event sourcing service
-func NewEventSourcingService(repo *repository.EventSourcingRepository, metrics *metrics.Collector, logger *zap.SugaredLogger) *EventSourcingService {
+func NewEventSourcingService(repo RepositoryInterface, metrics *metrics.Collector, logger *zap.SugaredLogger) *EventSourcingService {
 	return &EventSourcingService{
 		repo:            repo,
 		metrics:         metrics,
@@ -217,9 +226,7 @@ func (s *EventSourcingService) eventProcessingWorker(ctx context.Context, worker
 		default:
 			msg, err := consumer.ReadMessage(100 * time.Millisecond)
 			if err != nil {
-				if err.(kafka.Error).Code() != kafka.ErrTimedOut {
-					s.logger.Errorf("Worker %d: Error reading Kafka message: %v", workerID, err)
-				}
+				s.logger.Errorf("Worker %d: Error reading message: %v", workerID, err)
 				continue
 			}
 
