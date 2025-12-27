@@ -72,7 +72,8 @@ def batch_import_selected_tokyo_quests():
             print(f"[ERROR] Exception importing {quest_filename}: {e}")
             failed_count += 1
 
-    print("\n[SUMMARY] Import completed:")    print(f"  Successfully imported: {imported_count}")
+    print("\n[SUMMARY] Import completed:")
+    print(f"  Successfully imported: {imported_count}")
     print(f"  Failed: {failed_count}")
 
     if imported_count > 0:
