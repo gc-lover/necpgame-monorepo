@@ -11,22 +11,247 @@ BACKEND NOTE: Enterprise-grade automation script for concept design workflow
 Issue: #140875132
 Performance: Optimized for MMORPG-scale design operations
 Architecture: Modular design with plugin system for extensibility
+Enhanced Features:
+- Real GitHub Projects API integration
+- ML-powered task prioritization
+- Predictive bottleneck analysis
+- Design consistency validation
+- Adaptive workflow optimization
 """
 
 import argparse
 import json
 import os
 import sys
+import requests
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 import yaml
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from scripts.core.base_script import BaseScript
+
+
+class GitHubProjectsClient:
+    """Client for GitHub Projects API integration."""
+
+    def __init__(self, token: str, owner: str, project_number: int):
+        self.token = token
+        self.owner = owner
+        self.project_number = project_number
+        self.base_url = "https://api.github.com"
+        self.session = requests.Session()
+        self.session.headers.update({
+            'Authorization': f'Bearer {token}',
+            'Accept': 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28'
+        })
+
+    def get_project_items(self, status_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Get all items from the project with optional status filtering."""
+        url = f"{self.base_url}/users/{self.owner}/projects/{self.project_number}/items"
+
+        items = []
+        page = 1
+        per_page = 100
+
+        while True:
+            params = {'per_page': per_page, 'page': page}
+            response = self.session.get(url, params=params)
+
+            if response.status_code != 200:
+                raise Exception(f"Failed to get project items: {response.status_code} - {response.text}")
+
+            page_items = response.json()
+            if not page_items:
+                break
+
+            for item in page_items:
+                if item.get('content_type') == 'Issue':
+                    # Get full issue details
+                    issue_number = item['content']['number']
+                    issue_details = self.get_issue_details(issue_number)
+                    item['issue_details'] = issue_details
+
+                    # Filter by status if specified
+                    if status_filter:
+                        current_status = self._extract_field_value(item, 'Status')
+                        if current_status != status_filter:
+                            continue
+
+                    items.append(item)
+
+            page += 1
+
+        return items
+
+    def get_issue_details(self, issue_number: int) -> Dict[str, Any]:
+        """Get detailed information about an issue."""
+        url = f"{self.base_url}/repos/{self.owner}/necpgame-monorepo/issues/{issue_number}"
+        response = self.session.get(url)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {}
+
+    def update_project_item(self, item_id: str, field_updates: Dict[str, str]) -> bool:
+        """Update project item fields."""
+        url = f"{self.base_url}/users/{self.owner}/projects/{self.project_number}/items/{item_id}"
+
+        # Convert field updates to the expected format
+        updates = []
+        for field_id, value_id in field_updates.items():
+            updates.append({
+                "project_field_id": field_id,
+                "value": value_id
+            })
+
+        payload = {"field_updates": updates}
+        response = self.session.patch(url, json=payload)
+
+        return response.status_code == 200
+
+    def _extract_field_value(self, item: Dict[str, Any], field_name: str) -> Optional[str]:
+        """Extract field value from project item."""
+        fields = item.get('fields', [])
+        for field in fields:
+            if field.get('name') == field_name:
+                return field.get('value', {}).get('name')
+        return None
+
+
+class MLPrioritizationEngine:
+    """ML-powered task prioritization engine."""
+
+    def __init__(self):
+        self.model = None
+        self.scaler = StandardScaler()
+        self.is_trained = False
+
+    def train(self, historical_data: List[Dict[str, Any]]) -> None:
+        """Train the ML model on historical task data."""
+        if not historical_data:
+            # Use default model if no historical data
+            self._create_default_model()
+            return
+
+        # Prepare training data
+        features = []
+        targets = []
+
+        for task in historical_data:
+            feature_vector = self._extract_features(task)
+            priority_score = task.get('actual_priority', 0.5)
+
+            features.append(feature_vector)
+            targets.append(priority_score)
+
+        if len(features) < 10:
+            # Not enough data for training
+            self._create_default_model()
+            return
+
+        # Train the model
+        X = np.array(features)
+        y = np.array(targets)
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        self.model = RandomForestRegressor(
+            n_estimators=100,
+            max_depth=10,
+            random_state=42
+        )
+
+        # Scale features
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        X_test_scaled = self.scaler.transform(X_test)
+
+        self.model.fit(X_train_scaled, y_train)
+        self.is_trained = True
+
+        # Calculate accuracy on test set
+        test_score = self.model.score(X_test_scaled, y_test)
+        print(f"ML Model trained with R² score: {test_score:.3f}")
+
+    def predict_priority(self, task: Dict[str, Any]) -> float:
+        """Predict priority score for a task."""
+        if not self.is_trained or self.model is None:
+            return self._calculate_rule_based_priority(task)
+
+        features = self._extract_features(task)
+        features_scaled = self.scaler.transform([features])
+
+        prediction = self.model.predict(features_scaled)[0]
+        return max(0.0, min(1.0, prediction))
+
+    def _extract_features(self, task: Dict[str, Any]) -> List[float]:
+        """Extract feature vector from task data."""
+        features = []
+
+        # Task type priority weights
+        type_weights = {
+            'API': 0.9, 'BACKEND': 0.8, 'UE5': 0.8,
+            'DATA': 0.7, 'MIGRATION': 0.6
+        }
+        task_type = task.get('type', 'UNKNOWN')
+        features.append(type_weights.get(task_type, 0.5))
+
+        # Age in days
+        age_days = task.get('age_days', 0)
+        features.append(min(age_days / 30.0, 1.0))  # Normalize to 0-1
+
+        # Dependencies count
+        dependencies = task.get('dependencies', [])
+        features.append(min(len(dependencies) / 5.0, 1.0))  # Normalize
+
+        # Business impact
+        impact_map = {'high': 1.0, 'medium': 0.6, 'low': 0.3}
+        impact = task.get('business_impact', 'medium')
+        features.append(impact_map.get(impact, 0.5))
+
+        # Complexity score (estimated)
+        complexity_indicators = [
+            len(task.get('description', '')) > 500,
+            'complex' in task.get('tags', []),
+            task.get('estimated_hours', 0) > 40
+        ]
+        complexity_score = sum(complexity_indicators) / len(complexity_indicators)
+        features.append(complexity_score)
+
+        return features
+
+    def _calculate_rule_based_priority(self, task: Dict[str, Any]) -> float:
+        """Rule-based priority calculation as fallback."""
+        priority = 0.5
+
+        # Type-based priority
+        type_priority = {'API': 0.9, 'BACKEND': 0.8, 'UE5': 0.8, 'DATA': 0.7, 'MIGRATION': 0.6}
+        priority *= type_priority.get(task.get('type', 'UNKNOWN'), 0.5)
+
+        # Age bonus
+        if task.get('age_days', 0) > 7:
+            priority += 0.1
+
+        # Business impact
+        if task.get('business_impact') == 'high':
+            priority += 0.15
+
+        return min(1.0, priority)
+
+    def _create_default_model(self) -> None:
+        """Create a default model when no training data is available."""
+        self.model = None
+        self.is_trained = False
 
 
 class ConceptDirectorAutomation(BaseScript):
@@ -40,18 +265,37 @@ class ConceptDirectorAutomation(BaseScript):
             "Enhanced automation for Concept Director workflow optimization"
         )
 
+        # Initialize components
+        self.github_client = None
+        self.ml_engine = MLPrioritizationEngine()
+        self._load_configuration()
+
+    def _load_configuration(self) -> None:
+        """Load configuration for GitHub integration."""
+        # Try to get GitHub token from environment
+        token = os.getenv('GITHUB_TOKEN')
+        if token:
+            self.github_client = GitHubProjectsClient(
+                token=token,
+                owner='gc-lover',
+                project_number=1
+            )
+            self.logger.info("GitHub Projects integration enabled")
+        else:
+            self.logger.warning("GitHub token not found, running in offline mode")
+
     def add_script_args(self, parser: argparse.ArgumentParser) -> None:
         """Add command-line arguments specific to this script."""
         parser.add_argument(
             '--action',
-            choices=['analyze', 'prioritize', 'optimize', 'validate', 'report'],
+            choices=['analyze', 'prioritize', 'optimize', 'validate', 'report', 'train-ml', 'predict-bottlenecks'],
             required=True,
             help='Action to perform'
         )
 
         parser.add_argument(
             '--scope',
-            choices=['all', 'combat', 'economy', 'social', 'narrative', 'ui', 'world'],
+            choices=['all', 'combat', 'economy', 'social', 'narrative', 'ui', 'world', 'backend', 'api', 'data'],
             default='all',
             help='Scope of analysis'
         )
@@ -70,11 +314,28 @@ class ConceptDirectorAutomation(BaseScript):
             help='Priority threshold for task filtering (0.0-1.0)'
         )
 
+        parser.add_argument(
+            '--github-integration',
+            action='store_true',
+            help='Enable GitHub Projects integration'
+        )
+
+        parser.add_argument(
+            '--ml-enabled',
+            action='store_true',
+            default=True,
+            help='Enable ML-powered prioritization'
+        )
+
     def run(self) -> None:
         """Main execution method."""
         args = self.parse_args()
 
         try:
+            # Train ML model if enabled
+            if args.ml_enabled and args.action in ['prioritize', 'analyze', 'report']:
+                self._train_ml_model()
+
             if args.action == 'analyze':
                 self._analyze_workflow(args.scope, args.output_format)
             elif args.action == 'prioritize':
@@ -85,6 +346,11 @@ class ConceptDirectorAutomation(BaseScript):
                 self._validate_design_consistency(args.scope, args.output_format)
             elif args.action == 'report':
                 self._generate_comprehensive_report(args.scope, args.output_format)
+            elif args.action == 'train-ml':
+                self._train_ml_model()
+                self.logger.info("ML model training completed")
+            elif args.action == 'predict-bottlenecks':
+                self._predict_bottlenecks(args.scope, args.output_format)
             else:
                 raise ValueError(f"Unsupported action: {args.action}")
 
