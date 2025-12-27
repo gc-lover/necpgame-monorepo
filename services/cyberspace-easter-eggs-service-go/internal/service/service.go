@@ -10,9 +10,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"internal/metrics"
-	"pkg/models"
-	"pkg/repository"
+	"cyberspace-easter-eggs-service-go/internal/metrics"
+	"cyberspace-easter-eggs-service-go/pkg/models"
+	"cyberspace-easter-eggs-service-go/pkg/repository"
 )
 
 // EasterEggsServiceInterface defines the service interface

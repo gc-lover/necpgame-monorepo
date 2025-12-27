@@ -10,23 +10,23 @@ import (
 
 // Config holds all configuration for the service
 type Config struct {
-	Port         int
-	DatabaseURL  string
-	RedisURL     string
-	LogLevel     string
-	MetricsPort  int
-	Environment  string
+	Port        int
+	DatabaseURL string
+	RedisURL    string
+	LogLevel    string
+	MetricsPort int
+	Environment string
 }
 
 // Load loads configuration from environment variables with defaults
 func Load() (*Config, error) {
 	config := &Config{
-		Port:         getEnvAsInt("PORT", 8080),
-		DatabaseURL:  getEnv("DATABASE_URL", "postgres://user:password@localhost/easter_eggs?sslmode=disable"),
-		RedisURL:     getEnv("REDIS_URL", "redis://localhost:6379"),
-		LogLevel:     getEnv("LOG_LEVEL", "info"),
-		MetricsPort:  getEnvAsInt("METRICS_PORT", 9090),
-		Environment:  getEnv("ENVIRONMENT", "development"),
+		Port:        getEnvAsInt("PORT", 8080),
+		DatabaseURL: getEnv("DATABASE_URL", "postgres://user:password@localhost/easter_eggs?sslmode=disable"),
+		RedisURL:    getEnv("REDIS_URL", "redis://localhost:6379"),
+		LogLevel:    getEnv("LOG_LEVEL", "info"),
+		MetricsPort: getEnvAsInt("METRICS_PORT", 9090),
+		Environment: getEnv("ENVIRONMENT", "development"),
 	}
 
 	return config, nil
