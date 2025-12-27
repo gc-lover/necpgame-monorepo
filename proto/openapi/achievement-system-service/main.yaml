@@ -1,48 +1,48 @@
 openapi: 3.0.3
 info:
-  title: Inventory Management Service API - Enterprise-Grade Player Inventory Management
-  description: '**Enterprise-Grade Inventory Management Service API for NECPGAME**
+  title: Achievement System Service API - Enterprise-Grade Player Achievement Management
+  description: '**Enterprise-Grade Achievement System Service API for NECPGAME**
 
-    Comprehensive player inventory management system with advanced item operations, equipment management,
-    inventory optimization, and trading integration for the MMOFPS RPG ecosystem.
+    Comprehensive player achievement and progression tracking system with real-time unlocks,
+    milestone tracking, and social features for the MMOFPS RPG ecosystem.
 
     ## Key Features
 
-    - **Enterprise-grade architecture** with proper domain separation and CQRS patterns
+    - **Enterprise-grade architecture** with proper domain separation and event-driven unlocks
 
     - **Backend optimization hints** for struct alignment and performance (30-50% memory savings)
 
     - **Complete validation** with redocly and ogen code generation compatibility
 
-    - **Security-first approach** with JWT authentication and anti-cheat validation
+    - **Security-first approach** with JWT authentication and achievement validation
 
     - **Performance-optimized** response structures with field ordering for memory efficiency
 
     - **Comprehensive error handling** with proper HTTP status codes and detailed error responses
 
-    - **Event-sourced architecture** for inventory consistency and audit trails
+    - **Real-time achievement processing** with WebSocket notifications for unlocks
 
     ## Domain Purpose
 
-    The Inventory Management Service provides comprehensive inventory operations for NECPGAME players,
-    managing items, equipment, consumables, inventory capacity, item durability, and integration with
-    trading, crafting, and combat systems. Supports high-throughput operations critical for MMOFPS gameplay.
+    The Achievement System Service manages all aspects of player achievements, progression tracking,
+    milestone unlocks, and social recognition in NECPGAME. Supports real-time achievement processing
+    critical for player engagement and retention in competitive gaming environments.
 
     ## Performance Targets
 
-    - P99 Latency: <25ms for hot inventory operations (equipment swaps, item usage)
+    - P99 Latency: <15ms for achievement unlocks (CRITICAL for player experience)
 
-    - P99 Latency: <75ms for complex operations (inventory sorting, bulk operations)
+    - P99 Latency: <50ms for achievement queries and progress tracking
 
-    - Memory: <15KB per active inventory session with pooling optimization
+    - Memory: <10KB per active achievement session with pooling optimization
 
-    - Concurrent users: 50,000+ simultaneous inventory operations
+    - Concurrent users: 100,000+ simultaneous achievement tracking
 
-    - Item operations: 10,000+ operations/minute sustained throughput
+    - Achievement unlocks: 50,000+ events/minute sustained throughput
 
-    - Data consistency: Event-sourced with CQRS patterns and optimistic locking
+    - Real-time notifications: <100ms WebSocket delivery for unlocks
 
-    - Cache hit rate: 95%+ for frequently accessed items
+    - Cache hit rate: 98%+ for frequently accessed achievement data
     '
   version: 1.0.0
   contact:
@@ -53,41 +53,41 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-- url: https://api.necpgame.com/v1/inventory-management
+- url: https://api.necpgame.com/v1/achievement-system
   description: Production server
-- url: https://staging-api.necpgame.com/v1/inventory-management
+- url: https://staging-api.necpgame.com/v1/achievement-system
   description: Staging server
-- url: http://localhost:8080/api/v1/inventory-management
+- url: http://localhost:8080/api/v1/achievement-system
   description: Local development server
 security:
 - BearerAuth: []
 tags:
-- name: Inventory Management
-  description: Core inventory operations and item management
-- name: Equipment Management
-  description: Player equipment and gear management
-- name: Inventory Operations
-  description: Bulk operations, sorting, and organization
-- name: Trading Integration
-  description: Integration with trading and marketplace systems
+- name: Achievement Management
+  description: Core achievement operations and progress tracking
+- name: Achievement Unlocks
+  description: Real-time achievement unlocks and notifications
+- name: Progression Tracking
+  description: Player progression and milestone management
+- name: Social Features
+  description: Achievement sharing and social recognition
 - name: Health Monitoring
   description: System health and performance monitoring
 paths:
   /health:
     get:
-      summary: Inventory Management Service health check
+      summary: Example domain health check
       description: '**Enterprise-grade health check endpoint**
 
 
-        Provides real-time health status of the inventory management microservice.
+        Provides real-time health status of the example domain microservice.
 
-        Critical for service discovery, load balancing, and monitoring in MMOFPS environments.
+        Critical for service discovery, load balancing, and monitoring.
 
 
         **Performance:** <1ms response time, cached for 30 seconds
 
         '
-      operationId: inventoryManagementHealthCheck
+      operationId: exampleDomainHealthCheck
       tags:
       - Health Monitoring
       parameters:
@@ -657,26 +657,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  # Inventory Management Endpoints
-  /api/v1/inventory/{playerId}:
+  # Achievement System Endpoints
+  /api/v1/achievements/{playerId}:
     get:
-      summary: Get player inventory
-      description: '**HOT PATH:** Retrieve complete player inventory with items, equipment, and metadata
+      summary: Get player achievements
+      description: '**HOT PATH:** Retrieve complete player achievement profile with progress tracking
 
 
-        Critical for character screens, inventory management UI, and gameplay systems.
+        Critical for achievement screens, progression tracking, and player engagement.
 
-        Includes equipment slots, item stacks, durability, and enhancement status.
+        Includes unlocked achievements, progress bars, and completion statistics.
 
 
-        **Performance:** P99 <25ms, cached for 30 seconds, 10k+ concurrent requests
+        **Performance:** P99 <50ms, cached for 60 seconds, 100k+ concurrent requests
 
         **Memory optimization:** Struct field alignment for 30-50% memory savings
 
         '
-      operationId: getPlayerInventory
+      operationId: getPlayerAchievements
       tags:
-      - Inventory Management
+      - Achievement Management
       parameters:
       - name: playerId
         in: path
@@ -685,27 +685,28 @@ paths:
           type: string
           format: uuid
         description: Player unique identifier
-      - name: includeMetadata
-        in: query
-        schema:
-          type: boolean
-          default: true
-        description: Include item metadata and statistics
-      - name: filter
+      - name: category
         in: query
         schema:
           type: string
-          enum: [all, equipped, consumables, materials, quest_items]
+          enum: [all, combat, exploration, social, progression, special]
           default: all
-        description: Filter inventory items by category
+        description: Filter achievements by category
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum: [all, unlocked, locked, in_progress]
+          default: all
+        description: Filter by achievement status
       responses:
         '200':
-          description: Player inventory retrieved successfully
+          description: Player achievements retrieved successfully
           headers:
             Cache-Control:
               schema:
                 type: string
-                example: "max-age=30"
+                example: "max-age=60"
             ETag:
               schema:
                 type: string
@@ -713,82 +714,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InventoryResponse'
-        '404':
-          description: Player not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PlayerAchievementsResponse'
 
-    put:
-      summary: Update player inventory
-      description: '**Enterprise-grade inventory update with validation and consistency**
-
-
-        Updates player inventory with item movements, equipment changes, and stack modifications.
-
-        Includes anti-cheat validation, durability calculations, and event sourcing.
-
-
-        **Performance:** P99 <75ms, atomic operations, rollback on failure
-
-        **Consistency:** Event-sourced with optimistic locking
-
-        '
-      operationId: updatePlayerInventory
-      tags:
-      - Inventory Operations
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Player unique identifier
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InventoryUpdateRequest'
-      responses:
-        '200':
-          description: Inventory updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InventoryUpdateResponse'
-        '400':
-          description: Invalid inventory update request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Inventory conflict - concurrent modification
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /api/v1/inventory/{playerId}/items/{itemId}:
+  /api/v1/achievements/{playerId}/progress/{achievementId}:
     get:
-      summary: Get specific inventory item
-      description: '**High-performance item retrieval for UI and gameplay systems**
+      summary: Get specific achievement progress
+      description: '**High-performance progress tracking for UI and game systems**
 
 
-        Retrieve detailed information about a specific inventory item including stats,
-        durability, enhancements, and trading status.
+        Retrieve detailed progress information for a specific achievement including
+        current progress, requirements, and completion status.
 
 
-        **Performance:** P99 <15ms, Redis-cached, optimized for frequent access
+        **Performance:** P99 <25ms, Redis-cached, optimized for frequent access
 
         '
-      operationId: getInventoryItem
+      operationId: getAchievementProgress
       tags:
-      - Inventory Management
+      - Achievement Management
       parameters:
       - name: playerId
         in: path
@@ -796,7 +739,7 @@ paths:
         schema:
           type: string
           format: uuid
-      - name: itemId
+      - name: achievementId
         in: path
         required: true
         schema:
@@ -804,34 +747,28 @@ paths:
           format: uuid
       responses:
         '200':
-          description: Item retrieved successfully
+          description: Achievement progress retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ItemResponse'
-        '404':
-          description: Item not found in player inventory
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/AchievementProgressResponse'
 
     put:
-      summary: Update specific inventory item
-      description: '**Atomic item updates with validation and consistency**
+      summary: Update achievement progress
+      description: '**Real-time progress updates with validation and unlock detection**
 
 
-        Update item properties like durability, enhancements, or customizations.
+        Update player progress towards achievements with automatic unlock detection.
 
-        Includes validation, event logging, and anti-cheat checks.
+        Critical for gameplay events, quest completions, and player actions.
 
 
-        **Performance:** P99 <50ms, atomic operations
+        **Performance:** P99 <15ms, event-driven unlocks with WebSocket notifications
 
         '
-      operationId: updateInventoryItem
+      operationId: updateAchievementProgress
       tags:
-      - Inventory Operations
+      - Achievement Unlocks
       parameters:
       - name: playerId
         in: path
@@ -839,7 +776,7 @@ paths:
         schema:
           type: string
           format: uuid
-      - name: itemId
+      - name: achievementId
         in: path
         required: true
         schema:
@@ -850,32 +787,78 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ItemUpdateRequest'
+              $ref: '#/components/schemas/AchievementProgressUpdateRequest'
       responses:
         '200':
-          description: Item updated successfully
+          description: Progress updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ItemUpdateResponse'
+                $ref: '#/components/schemas/AchievementProgressUpdateResponse'
 
-  /api/v1/inventory/{playerId}/equipment:
+  /api/v1/achievements/{playerId}/unlocks:
     get:
-      summary: Get player equipment
-      description: '**HOT PATH:** Get current equipment loadout for combat and character display
+      summary: Get recent achievement unlocks
+      description: '**Real-time unlock notifications for player engagement**
 
 
-        Critical for battle preparation, character screens, and matchmaking.
+        Retrieve recently unlocked achievements with timestamps and rewards.
 
-        Includes weapon stats, armor values, and equipment effects.
+        Used for UI notifications, achievement popups, and progression tracking.
 
 
-        **Performance:** P99 <20ms, heavily cached, 50k+ concurrent requests
+        **Performance:** P99 <30ms, optimized for notification systems
 
         '
-      operationId: getPlayerEquipment
+      operationId: getRecentUnlocks
       tags:
-      - Equipment Management
+      - Achievement Unlocks
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        description: Maximum number of unlocks to return
+      - name: since
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Only return unlocks after this timestamp
+      responses:
+        '200':
+          description: Recent unlocks retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecentUnlocksResponse'
+
+  /api/v1/achievements/{playerId}/milestones:
+    get:
+      summary: Get player progression milestones
+      description: '**Progression tracking for long-term player engagement**
+
+
+        Retrieve milestone achievements and progression towards major goals.
+
+        Includes completion percentages and reward previews.
+
+
+        **Performance:** P99 <75ms, cached with background updates
+
+        '
+      operationId: getPlayerMilestones
+      tags:
+      - Progression Tracking
       parameters:
       - name: playerId
         in: path
@@ -885,132 +868,66 @@ paths:
           format: uuid
       responses:
         '200':
-          description: Equipment retrieved successfully
+          description: Milestones retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EquipmentResponse'
+                $ref: '#/components/schemas/PlayerMilestonesResponse'
 
-    put:
-      summary: Equip/unequip items
-      description: '**Combat-critical equipment changes with instant validation**
-
-
-        Equip or unequip items with immediate stat recalculation.
-
-        Critical for pre-combat loadout changes and mid-battle switches.
+  /api/v1/achievements/leaderboards/{achievementId}:
+    get:
+      summary: Get achievement leaderboard
+      description: '**Social competition and player engagement**
 
 
-        **Performance:** P99 <25ms, instant validation, no caching for consistency
+        Retrieve top players for specific achievements with rankings and completion times.
+
+        Critical for competitive features and social recognition.
+
+
+        **Performance:** P99 <100ms, Redis-backed leaderboards
 
         '
-      operationId: updatePlayerEquipment
+      operationId: getAchievementLeaderboard
       tags:
-      - Equipment Management
+      - Social Features
       parameters:
-      - name: playerId
+      - name: achievementId
         in: path
         required: true
         schema:
           type: string
           format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EquipmentUpdateRequest'
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 10
+          maximum: 100
+          default: 50
+        description: Number of leaderboard entries to return
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum: [all_time, monthly, weekly, daily]
+          default: all_time
+        description: Timeframe for leaderboard rankings
       responses:
         '200':
-          description: Equipment updated successfully
+          description: Leaderboard retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EquipmentUpdateResponse'
+                $ref: '#/components/schemas/AchievementLeaderboardResponse'
 
-  /api/v1/inventory/{playerId}/operations/sort:
+  /api/v1/achievements/admin/{playerId}/override:
     post:
-      summary: Sort inventory
-      description: '**Inventory organization with multiple sorting algorithms**
+      summary: Administrative achievement override
+      description: '**Admin-only:** Emergency achievement modifications for game support
 
 
-        Sort inventory by various criteria with automatic stack merging.
-
-        Includes smart categorization and visual organization.
-
-
-        **Performance:** P99 <100ms for large inventories, background processing
-
-        '
-      operationId: sortPlayerInventory
-      tags:
-      - Inventory Operations
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InventorySortRequest'
-      responses:
-        '200':
-          description: Inventory sorted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InventorySortResponse'
-
-  /api/v1/inventory/{playerId}/trading/lock:
-    post:
-      summary: Lock items for trading
-      description: '**Trading preparation with item locking and validation**
-
-
-        Lock items for marketplace trading with escrow protection.
-
-        Prevents item usage during trade negotiations.
-
-
-        **Performance:** P99 <30ms, atomic locking with timeout
-
-        '
-      operationId: lockItemsForTrading
-      tags:
-      - Trading Integration
-      parameters:
-      - name: playerId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TradingLockRequest'
-      responses:
-        '200':
-          description: Items locked for trading successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TradingLockResponse'
-
-  /api/v1/inventory/admin/{playerId}/override:
-    post:
-      summary: Administrative inventory override
-      description: '**Admin-only:** Emergency inventory modifications for game support
-
-
-        Allows game masters to add/remove/modify items for bug fixes or player support.
+        Allows game masters to unlock/modify achievements for bug fixes or player support.
 
         Includes full audit logging and approval workflows.
 
@@ -1018,9 +935,9 @@ paths:
         **Security:** Requires elevated admin permissions
 
         '
-      operationId: adminInventoryOverride
+      operationId: adminAchievementOverride
       tags:
-      - Inventory Management
+      - Achievement Management
       parameters:
       - name: playerId
         in: path
@@ -1033,14 +950,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AdminOverrideRequest'
+              $ref: '#/components/schemas/AdminAchievementOverrideRequest'
       responses:
         '200':
-          description: Inventory override applied successfully
+          description: Achievement override applied successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminOverrideResponse'
+                $ref: '#/components/schemas/AdminAchievementOverrideResponse'
         '403':
           description: Insufficient admin permissions
           content:
@@ -1296,11 +1213,11 @@ components:
       required:
       - status
       - timestamp
-      - service
+      - domain
       properties:
-        service:
+        domain:
           type: string
-          example: inventory-management
+          example: example-domain
           maxLength: 50
         status:
           type: string
@@ -1313,650 +1230,164 @@ components:
         timestamp:
           type: string
           format: date-time
-          example: '2025-12-27T18:00:00Z'
+          example: '2025-12-21T10:00:00Z'
           maxLength: 255
         version:
           type: string
           example: 1.0.0
           maxLength: 50
-        active_inventory_sessions:
+        uptime_seconds:
           type: integer
-          example: 25000
-          description: Current active inventory management sessions
-        cache_hit_rate:
-          type: number
-          format: float
-          example: 0.95
-          minimum: 0
-          maximum: 1
-          description: Redis cache hit rate percentage
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Memory savings: 30-50% for MMOFPS inventory operations.'
+          example: 3600
+        active_connections:
+          type: integer
+          example: 1500
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Memory savings: 30-50% for MMOFPS achievement operations.'
 
-    # Inventory Management Schemas
-    InventoryResponse:
+    # Achievement System Schemas
+    PlayerAchievementsResponse:
       type: object
       required:
       - player_id
-      - items
-      - capacity
-      - last_updated
+      - achievements
+      - statistics
       properties:
         player_id:
           type: string
           format: uuid
           example: "550e8400-e29b-41d4-a716-446655440000"
-          description: Player unique identifier
-        items:
+        achievements:
           type: array
           items:
-            $ref: '#/components/schemas/InventoryItem'
+            $ref: '#/components/schemas/Achievement'
           maxItems: 1000
-          description: Array of inventory items
-        capacity:
-          $ref: '#/components/schemas/InventoryCapacity'
-        equipment_slots:
-          $ref: '#/components/schemas/EquipmentSlots'
         statistics:
-          $ref: '#/components/schemas/InventoryStatistics'
+          $ref: '#/components/schemas/AchievementStatistics'
+        recent_unlocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementUnlock'
+          maxItems: 10
         last_updated:
           type: string
           format: date-time
-          example: "2025-12-27T18:00:00Z"
-        version:
-          type: integer
-          example: 42
-          description: Inventory version for optimistic locking
-      description: 'BACKEND NOTE: Struct aligned for performance. Items array first for memory efficiency.'
+      description: 'BACKEND NOTE: Struct aligned for performance. Achievements array first for memory efficiency.'
 
-    InventoryItem:
+    Achievement:
       type: object
       required:
       - id
-      - item_id
-      - quantity
-      - acquired_at
+      - name
+      - category
+      - status
       properties:
         id:
           type: string
           format: uuid
           example: "550e8400-e29b-41d4-a716-446655440001"
-          description: Inventory item instance ID
-        item_id:
-          type: string
-          format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440002"
-          description: Item template ID
         name:
           type: string
           maxLength: 100
-          example: "Mantis Blades"
-          description: Item display name
-        type:
+          example: "First Blood"
+        category:
           type: string
-          enum: [weapon, armor, consumable, material, quest_item, cosmetic]
-          example: weapon
-        rarity:
+          enum: [combat, exploration, social, progression, special]
+          example: combat
+        status:
           type: string
-          enum: [common, uncommon, rare, epic, legendary, unique]
-          example: epic
-        quantity:
-          type: integer
-          minimum: 1
-          maximum: 999
-          example: 1
-          description: Stack quantity
-        max_stack:
-          type: integer
-          minimum: 1
-          maximum: 999
-          example: 1
-          description: Maximum stack size
-        durability:
+          enum: [locked, unlocked, hidden]
+          example: unlocked
+        progress_current:
           type: integer
           minimum: 0
-          maximum: 100
-          example: 85
-          description: Current durability percentage
-        enhancements:
+          example: 1
+        progress_max:
+          type: integer
+          minimum: 1
+          example: 1
+        unlocked_at:
+          type: string
+          format: date-time
+        rewards:
           type: array
           items:
-            $ref: '#/components/schemas/ItemEnhancement'
+            $ref: '#/components/schemas/AchievementReward'
           maxItems: 5
-          description: Applied enhancements
-        trade_locked:
-          type: boolean
-          example: false
-          description: Whether item is locked for trading
-        equipped:
-          type: boolean
-          example: false
-          description: Whether item is currently equipped
-        acquired_at:
-          type: string
-          format: date-time
-          example: "2025-12-27T17:00:00Z"
-        metadata:
-          type: object
-          additionalProperties: true
-          description: Additional item metadata
-      description: 'BACKEND NOTE: Critical fields first for struct alignment. Memory optimized for MMOFPS item operations.'
+      description: 'BACKEND NOTE: Critical fields first for struct alignment.'
 
-    InventoryCapacity:
+    AchievementUnlock:
       type: object
       required:
-      - current
-      - maximum
-      - weight_current
-      - weight_maximum
+      - achievement_id
+      - unlocked_at
       properties:
-        current:
-          type: integer
-          minimum: 0
-          maximum: 1000
-          example: 45
-          description: Current number of item stacks
-        maximum:
-          type: integer
-          minimum: 50
-          maximum: 2000
-          example: 100
-          description: Maximum inventory slots
-        weight_current:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1000
-          example: 12.5
-          description: Current inventory weight
-        weight_maximum:
-          type: number
-          format: float
-          minimum: 10
-          maximum: 2000
-          example: 50.0
-          description: Maximum carry weight
-      description: 'BACKEND NOTE: Capacity fields optimized for quick validation checks.'
-
-    EquipmentSlots:
-      type: object
-      properties:
-        weapon_primary:
-          $ref: '#/components/schemas/EquippedItem'
-        weapon_secondary:
-          $ref: '#/components/schemas/EquippedItem'
-        armor_head:
-          $ref: '#/components/schemas/EquippedItem'
-        armor_chest:
-          $ref: '#/components/schemas/EquippedItem'
-        armor_arms:
-          $ref: '#/components/schemas/EquippedItem'
-        armor_legs:
-          $ref: '#/components/schemas/EquippedItem'
-        cyberware_neural:
-          $ref: '#/components/schemas/EquippedItem'
-        cyberware_subdermal:
-          $ref: '#/components/schemas/EquippedItem'
-        quick_access_1:
-          $ref: '#/components/schemas/EquippedItem'
-        quick_access_2:
-          $ref: '#/components/schemas/EquippedItem'
-      description: 'BACKEND NOTE: Equipment slots mapped for instant combat stat lookups.'
-
-    EquippedItem:
-      type: object
-      required:
-      - item_id
-      - equipped_at
-      properties:
-        item_id:
+        achievement_id:
           type: string
           format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440003"
         name:
           type: string
           maxLength: 100
-          example: "Militech M-10AF Lexington"
-        stats_modifier:
-          $ref: '#/components/schemas/ItemStatsModifier'
-        equipped_at:
+        unlocked_at:
           type: string
           format: date-time
-          example: "2025-12-27T16:30:00Z"
-      description: 'BACKEND NOTE: Minimal fields for fast equipment lookups in combat.'
+      description: 'BACKEND NOTE: Minimal fields for unlock notifications.'
 
-    ItemStatsModifier:
-      type: object
-      properties:
-        damage:
-          type: integer
-          example: 25
-        armor:
-          type: integer
-          example: 15
-        health:
-          type: integer
-          example: 50
-        stamina:
-          type: integer
-          example: 20
-        crit_chance:
-          type: number
-          format: float
-          example: 0.05
-        crit_damage:
-          type: number
-          format: float
-          example: 0.15
-      description: 'BACKEND NOTE: Stat modifiers optimized for combat calculations.'
-
-    ItemEnhancement:
+    AchievementReward:
       type: object
       required:
       - type
-      - level
-      - applied_at
+      - value
       properties:
         type:
           type: string
-          enum: [damage, armor, durability, special]
-          example: damage
-        level:
-          type: integer
-          minimum: 1
-          maximum: 10
-          example: 3
-        applied_at:
+          enum: [currency, item, title, xp]
+          example: currency
+        value:
           type: string
-          format: date-time
-          example: "2025-12-27T15:45:00Z"
-        effects:
-          type: object
-          additionalProperties: true
-          description: Enhancement-specific effects
-      description: 'BACKEND NOTE: Enhancement data structured for quick application.'
+          example: "1000"
+      description: 'BACKEND NOTE: Flexible reward system.'
 
-    InventoryStatistics:
+    AchievementStatistics:
       type: object
       properties:
-        total_items:
+        total_achievements:
+          type: integer
+          example: 150
+        unlocked_achievements:
           type: integer
           example: 45
-        total_value:
+        completion_percentage:
           type: number
           format: float
-          example: 12500.50
-        rare_items_count:
-          type: integer
-          example: 8
-        equipped_items_count:
-          type: integer
-          example: 6
-        trade_locked_count:
-          type: integer
-          example: 3
-      description: 'BACKEND NOTE: Statistics for UI display and analytics.'
+          example: 0.3
+      description: 'BACKEND NOTE: Statistics for UI display.'
 
-    # Request/Response Schemas
-    InventoryUpdateRequest:
+    AchievementProgressUpdateRequest:
       type: object
       required:
-      - operations
+      - progress_increment
       properties:
-        operations:
-          type: array
-          items:
-            $ref: '#/components/schemas/InventoryOperation'
-          maxItems: 50
-          description: Batch of inventory operations
-        version:
+        progress_increment:
           type: integer
-          example: 42
-          description: Expected inventory version for optimistic locking
-      description: 'BACKEND NOTE: Operations batched for atomic updates.'
-
-    InventoryOperation:
-      type: object
-      required:
-      - type
-      - item_id
-      properties:
-        type:
-          type: string
-          enum: [add, remove, move, update_quantity, update_durability]
-          example: add
-        item_id:
-          type: string
-          format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440004"
-        quantity:
-          type: integer
-          minimum: -999
-          maximum: 999
+          minimum: 1
           example: 1
-        target_slot:
-          type: integer
-          minimum: 0
-          maximum: 1000
-          description: Target inventory slot for move operations
-        durability_change:
-          type: integer
-          minimum: -100
-          maximum: 100
-          description: Durability modification
-      description: 'BACKEND NOTE: Operation types optimized for common inventory actions.'
+        source_event:
+          type: string
+          maxLength: 100
+          example: "player_kill"
+      description: 'BACKEND NOTE: Progress updates with event context.'
 
-    InventoryUpdateResponse:
+    RecentUnlocksResponse:
       type: object
       required:
-      - success
-      - version
-      - applied_operations
+      - unlocks
       properties:
-        success:
-          type: boolean
-          example: true
-        version:
-          type: integer
-          example: 43
-          description: New inventory version
-        applied_operations:
-          type: integer
-          example: 3
-          description: Number of operations successfully applied
-        failed_operations:
+        unlocks:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/AchievementUnlock'
           maxItems: 50
-          description: Failed operation details
-        inventory_changes:
-          $ref: '#/components/schemas/InventoryResponse'
-      description: 'BACKEND NOTE: Response optimized for client-side inventory sync.'
-
-    ItemResponse:
-      type: object
-      required:
-      - item
-      properties:
-        item:
-          $ref: '#/components/schemas/InventoryItem'
-        trading_info:
-          $ref: '#/components/schemas/ItemTradingInfo'
-      description: 'BACKEND NOTE: Item details with trading context.'
-
-    ItemTradingInfo:
-      type: object
-      properties:
-        market_value:
-          type: number
-          format: float
-          example: 2500.00
-        trade_locked_until:
-          type: string
-          format: date-time
-          description: When trading lock expires
-        auction_active:
-          type: boolean
-          example: false
-      description: 'BACKEND NOTE: Trading context for marketplace integration.'
-
-    EquipmentResponse:
-      type: object
-      required:
-      - slots
-      - stats_summary
-      properties:
-        slots:
-          $ref: '#/components/schemas/EquipmentSlots'
-        stats_summary:
-          $ref: '#/components/schemas/CharacterStatsSummary'
-      description: 'BACKEND NOTE: Equipment data optimized for character screens.'
-
-    CharacterStatsSummary:
-      type: object
-      properties:
-        total_damage:
-          type: integer
-          example: 85
-        total_armor:
-          type: integer
-          example: 120
-        total_health:
-          type: integer
-          example: 200
-        movement_speed:
-          type: number
-          format: float
-          example: 1.2
-        crit_chance:
-          type: number
-          format: float
-          example: 0.08
-      description: 'BACKEND NOTE: Computed stats for UI display.'
-
-    EquipmentUpdateRequest:
-      type: object
-      required:
-      - operations
-      properties:
-        operations:
-          type: array
-          items:
-            $ref: '#/components/schemas/EquipmentOperation'
-          maxItems: 10
-      description: 'BACKEND NOTE: Equipment changes batched for consistency.'
-
-    EquipmentOperation:
-      type: object
-      required:
-      - action
-      - slot
-      properties:
-        action:
-          type: string
-          enum: [equip, unequip]
-          example: equip
-        slot:
-          type: string
-          enum: [weapon_primary, weapon_secondary, armor_head, armor_chest, armor_arms, armor_legs, cyberware_neural, cyberware_subdermal, quick_access_1, quick_access_2]
-          example: weapon_primary
-        item_id:
-          type: string
-          format: uuid
-          description: Item to equip (required for equip action)
-      description: 'BACKEND NOTE: Equipment operations for instant loadout changes.'
-
-    EquipmentUpdateResponse:
-      type: object
-      required:
-      - success
-      - stats_updated
-      properties:
-        success:
-          type: boolean
-          example: true
-        stats_updated:
-          $ref: '#/components/schemas/CharacterStatsSummary'
-        equipment_changes:
-          $ref: '#/components/schemas/EquipmentSlots'
-      description: 'BACKEND NOTE: Response optimized for combat stat updates.'
-
-    InventorySortRequest:
-      type: object
-      required:
-      - sort_by
-      properties:
-        sort_by:
-          type: string
-          enum: [name, type, rarity, quantity, acquired_date]
-          example: rarity
-        sort_order:
-          type: string
-          enum: [asc, desc]
-          default: asc
-          example: desc
-        group_by_type:
-          type: boolean
-          default: true
-          example: true
-        merge_stacks:
-          type: boolean
-          default: true
-          example: true
-      description: 'BACKEND NOTE: Sorting options for inventory organization.'
-
-    InventorySortResponse:
-      type: object
-      required:
-      - success
-      - sorted_inventory
-      properties:
-        success:
-          type: boolean
-          example: true
-        sorted_inventory:
-          $ref: '#/components/schemas/InventoryResponse'
-        stacks_merged:
-          type: integer
-          example: 5
-          description: Number of item stacks merged
-      description: 'BACKEND NOTE: Sorted inventory for client-side updates.'
-
-    TradingLockRequest:
-      type: object
-      required:
-      - items
-      - duration_minutes
-      properties:
-        items:
-          type: array
-          items:
-            type: string
-            format: uuid
-          maxItems: 20
-          description: Item IDs to lock for trading
-        duration_minutes:
-          type: integer
-          minimum: 5
-          maximum: 1440
-          example: 60
-          description: Lock duration in minutes
-        marketplace_fee:
-          type: number
-          format: float
-          example: 25.00
-          description: Marketplace listing fee
-      description: 'BACKEND NOTE: Trading preparation with escrow protection.'
-
-    TradingLockResponse:
-      type: object
-      required:
-      - success
-      - locked_items
-      properties:
-        success:
-          type: boolean
-          example: true
-        locked_items:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: Successfully locked item IDs
-        unlock_time:
-          type: string
-          format: date-time
-          example: "2025-12-27T19:00:00Z"
-        escrow_amount:
-          type: number
-          format: float
-          example: 25.00
-      description: 'BACKEND NOTE: Trading lock confirmation for marketplace.'
-
-    AdminOverrideRequest:
-      type: object
-      required:
-      - admin_id
-      - reason
-      - operations
-      properties:
-        admin_id:
-          type: string
-          format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440005"
-        reason:
-          type: string
-          maxLength: 500
-          example: "Bug fix: Missing legendary weapon after quest completion"
-        operations:
-          type: array
-          items:
-            $ref: '#/components/schemas/InventoryOperation'
-          maxItems: 10
-        approval_required:
-          type: boolean
-          default: true
-          example: true
-      description: 'BACKEND NOTE: Admin overrides with audit trails for support.'
-
-    AdminOverrideResponse:
-      type: object
-      required:
-      - success
-      - audit_log_id
-      properties:
-        success:
-          type: boolean
-          example: true
-        audit_log_id:
-          type: string
-          format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440006"
-        applied_operations:
-          type: integer
-          example: 2
-        inventory_snapshot:
-          $ref: '#/components/schemas/InventoryResponse'
-      description: 'BACKEND NOTE: Admin action audit trail for compliance.'
-
-    ItemUpdateRequest:
-      type: object
-      required:
-      - updates
-      properties:
-        updates:
-          type: object
-          properties:
-            durability:
-              type: integer
-              minimum: 0
-              maximum: 100
-              description: New durability value
-            enhancements:
-              type: array
-              items:
-                $ref: '#/components/schemas/ItemEnhancement'
-              maxItems: 5
-              description: New enhancement list
-            custom_name:
-              type: string
-              maxLength: 100
-              description: Custom item name
-          description: Fields to update
-      description: 'BACKEND NOTE: Partial item updates for modifications.'
-
-    ItemUpdateResponse:
-      type: object
-      required:
-      - success
-      - updated_item
-      properties:
-        success:
-          type: boolean
-          example: true
-        updated_item:
-          $ref: '#/components/schemas/InventoryItem'
-      description: 'BACKEND NOTE: Updated item data for client sync.'
+      description: 'BACKEND NOTE: Recent unlocks for UI notifications.'
 
     WebSocketHealthMessage:
       type: object
@@ -1997,7 +1428,7 @@ components:
           example: Internal server error
         service:
           type: string
-          example: inventory-management
+          example: achievement-system
           maxLength: 50
           description: Service that generated the error
         details:
@@ -2012,37 +1443,8 @@ components:
           minimum: 100
           maximum: 599
           example: 500
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Memory savings: 30-50% for MMOFPS inventory operations.'
-
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: '**JWT Bearer token authentication for inventory management operations**
-
-
-        Required for all inventory operations. Tokens must include player permissions.
-
-        Token validation includes player ID, session validity, and anti-cheat measures.
-
-        '
-
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: '**JWT Bearer token authentication for inventory management operations**
-
-
-        Required for all inventory operations. Tokens must include player permissions.
-
-        Token validation includes player ID, session validity, and anti-cheat measures.
-
-        '
-
-security:
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Example:
       type: object
       required:
       - id
