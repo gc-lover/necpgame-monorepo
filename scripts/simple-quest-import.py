@@ -125,10 +125,11 @@ def _generate_migration(quest_data: Dict[str, Any], quest_file: Path) -> Dict[st
     quest_id = str(uuid.uuid4())[:16]  # 16-character ID
 
     # Prepare metadata JSON
+    project_root = Path(__file__).parent.parent
     metadata_json = {
         'id': metadata['id'],
         'version': metadata.get('version', '2.0.0'),
-        'source_file': str(quest_file.relative_to(Path(__file__).parent.parent))
+        'source_file': str(quest_file.relative_to(project_root))
     }
 
     # Prepare rewards JSON
