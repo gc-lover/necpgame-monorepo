@@ -90,7 +90,37 @@ func (s *GuildService) GetGuild(ctx context.Context, id uuid.UUID) (*Guild, erro
 }
 
 // ListGuilds lists guilds with pagination
-func (s *GuildService) ListGuilds(ctx context.Context, limit, offset int) ([]*Guild, error) {
+func (s *GuildService) ListGuilds(ctx context.Context, limit, offset int, sortBy string) ([]*Guild, error) {
+	if s.repository != nil {
+		// Use database repository for production
+		dbGuilds, err := s.repository.ListGuilds(ctx, limit, offset, sortBy)
+		if err != nil {
+			s.logger.Error("Failed to list guilds from database", zap.Error(err))
+			return nil, err
+		}
+
+		// Convert from repository model to service model
+		guilds := make([]*Guild, 0, len(dbGuilds))
+		for _, dbGuild := range dbGuilds {
+			guild := &Guild{
+				ID:          dbGuild.ID,
+				Name:        dbGuild.Name,
+				Description: dbGuild.Description,
+				LeaderID:    dbGuild.LeaderID,
+				CreatedAt:   dbGuild.CreatedAt,
+				UpdatedAt:   dbGuild.UpdatedAt,
+				MemberCount: dbGuild.MemberCount,
+				MaxMembers:  dbGuild.MaxMembers,
+				Level:       dbGuild.Level,
+				Experience:  dbGuild.Experience,
+			}
+			guilds = append(guilds, guild)
+		}
+
+		return guilds, nil
+	}
+
+	// Fallback to in-memory cache for development/testing
 	if limit <= 0 || limit > 100 {
 		limit = 50
 	}

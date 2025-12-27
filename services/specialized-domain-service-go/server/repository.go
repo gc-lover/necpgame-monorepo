@@ -10,8 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"specialized-domain-service-go/pkg/api"
-
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
