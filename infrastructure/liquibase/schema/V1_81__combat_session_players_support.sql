@@ -1,7 +1,10 @@
+-- Issue: #2232, #2210
 --liquibase formatted sql
 
 --changeset combat:session_players_support runOnChange:true
 --comment: Add support for players in combat sessions with position tracking and health management
+
+BEGIN;
 
 -- Create combat_session_players table
 CREATE TABLE IF NOT EXISTS gameplay.combat_session_players (
@@ -52,6 +55,8 @@ COMMENT ON COLUMN gameplay.combat_session_players.max_health IS 'Maximum health 
 -- Grant permissions
 GRANT SELECT, INSERT, UPDATE, DELETE ON gameplay.combat_session_players TO necpgame_app;
 GRANT USAGE ON SEQUENCE combat_session_players_id_seq TO necpgame_app;
+
+COMMIT;
 
 --rollback DROP TABLE IF EXISTS gameplay.combat_session_players;
 --rollback DROP TRIGGER IF EXISTS trigger_combat_session_players_updated_at ON gameplay.combat_session_players;

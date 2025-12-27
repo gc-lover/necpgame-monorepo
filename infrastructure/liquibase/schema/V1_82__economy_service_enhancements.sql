@@ -1,7 +1,10 @@
+-- Issue: #2237, #2232
 --liquibase formatted sql
 
 --changeset economy:service_enhancements runOnChange:true
 --comment: Enhanced economy service with auctions, crafting, and market analytics tables
+
+BEGIN;
 
 -- Auction bids table
 CREATE TABLE IF NOT EXISTS gameplay.auction_bids (
@@ -199,6 +202,8 @@ SELECT r.recipe_id, 'crystal_shard', 1 FROM gameplay.crafting_recipes r WHERE r.
 UNION ALL
 SELECT r.recipe_id, 'leather_hide', 4 FROM gameplay.crafting_recipes r WHERE r.name = 'Leather Armor'
 ON CONFLICT DO NOTHING;
+
+COMMIT;
 
 --rollback DROP TABLE IF EXISTS gameplay.auction_bids;
 --rollback DROP TABLE IF EXISTS gameplay.auctions;
