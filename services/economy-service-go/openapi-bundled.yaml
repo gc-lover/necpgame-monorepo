@@ -400,6 +400,482 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/responses/InternalServerError'
+  /auctions:
+    get:
+      tags:
+        - Auction House
+      summary: Get auctions list
+      description: |-
+        Get paginated list of auctions with filtering and sorting.
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS with Redis caching.
+      operationId: getAuctions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, sold, expired, cancelled]
+          description: Filter by auction status
+        - name: item_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by item ID
+        - name: seller_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by seller ID
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [ending_soon, price_asc, price_desc, newest]
+            default: ending_soon
+          description: Sort auctions
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of auctions to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Auctions list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auctions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuctionSummary'
+                  total:
+                    type: integer
+                  next_offset:
+                    type: integer
+                    nullable: true
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - Auction House
+      summary: Create auction
+      description: |-
+        Create a new auction listing.
+        **BACKEND NOTE:** Validates item ownership and locks item inventory.
+      operationId: createAuction
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuctionRequest'
+      responses:
+        '201':
+          description: Auction created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionDetail'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - item not owned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auctions/{auction_id}:
+    get:
+      tags:
+        - Auction House
+      summary: Get auction details
+      description: Get detailed information about a specific auction including bid history.
+      operationId: getAuctionDetails
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Auction ID
+      responses:
+        '200':
+          description: Auction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionDetail'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auctions/{auction_id}/bid:
+    post:
+      tags:
+        - Auction House
+      summary: Place bid on auction
+      description: |-
+        Place a bid on an active auction. Minimum bid increment is 5%.
+        **BACKEND NOTE:** Atomic operation with balance check and bid validation.
+      operationId: placeBid
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Auction ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceBidRequest'
+      responses:
+        '200':
+          description: Bid placed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionDetail'
+        '400':
+          description: Bad request - invalid bid amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - insufficient funds or own auction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Auction ended or bid too low
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auctions/{auction_id}/buyout:
+    post:
+      tags:
+        - Auction House
+      summary: Buyout auction
+      description: |-
+        Instantly purchase auction at buyout price.
+        **BACKEND NOTE:** Immediate completion with no bidding period.
+      operationId: buyoutAuction
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Auction ID
+      responses:
+        '200':
+          description: Auction bought out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionDetail'
+        '400':
+          description: Bad request - no buyout price
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - insufficient funds or own auction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Auction not active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auctions/{auction_id}/cancel:
+    post:
+      tags:
+        - Auction House
+      summary: Cancel auction
+      description: |-
+        Cancel auction (seller only, if no bids placed).
+        **BACKEND NOTE:** Only possible before first bid is placed.
+      operationId: cancelAuction
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: auction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Auction ID
+      responses:
+        '200':
+          description: Auction cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionDetail'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - not seller or bids already placed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Auction cannot be cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auctions/my:
+    get:
+      tags:
+        - Auction House
+      summary: Get my auctions
+      description: Get auctions created by the authenticated user (seller view).
+      operationId: getMyAuctions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, sold, expired, cancelled]
+          description: Filter by auction status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of auctions to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: User's auctions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auctions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuctionSummary'
+                  total:
+                    type: integer
+                  next_offset:
+                    type: integer
+                    nullable: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auctions/my-bids:
+    get:
+      tags:
+        - Auction House
+      summary: Get my bids
+      description: Get auctions where the authenticated user has placed bids (bidder view).
+      operationId: getMyBids
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of auctions to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Auctions with user's bids
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auctions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuctionWithBid'
+                  total:
+                    type: integer
+                  next_offset:
+                    type: integer
+                    nullable: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /players/{player_id}/transactions:
     get:
       tags:
@@ -794,4 +1270,221 @@ components:
           type: integer
           nullable: true
           example: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AuctionStatus:
+      type: string
+      enum: [active, sold, expired, cancelled]
+      description: Status of an auction
+      example: active
+    AuctionSummary:
+      type: object
+      required:
+        - id
+        - item_id
+        - seller_id
+        - quantity
+        - start_price
+        - current_bid
+        - currency
+        - expires_at
+        - status
+        - bid_count
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        item_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        seller_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        current_bidder_id:
+          type: string
+          format: uuid
+          nullable: true
+          example: 550e8400-e29b-41d4-a716-446655440003
+        expires_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T15:30:00Z'
+        status:
+          $ref: '#/components/schemas/AuctionStatus'
+        currency:
+          type: string
+          enum: [credits]
+          example: credits
+        start_price:
+          type: integer
+          format: int64
+          minimum: 100
+          description: Starting price in minor units
+          example: 10000
+        current_bid:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Current highest bid in minor units
+          example: 15000
+        buyout_price:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 0
+          description: Buyout price in minor units
+          example: 50000
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 1
+        bid_count:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 3
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AuctionDetail:
+      type: object
+      required:
+        - auction
+      properties:
+        auction:
+          allOf:
+            - $ref: '#/components/schemas/AuctionSummary'
+            - type: object
+              properties:
+                sold_price:
+                  type: integer
+                  format: int64
+                  nullable: true
+                  description: Final sale price in minor units
+                  example: 45000
+                sold_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  example: '2025-12-27T14:45:00Z'
+                winning_bidder_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  example: 550e8400-e29b-41d4-a716-446655440004
+        bids:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuctionBid'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AuctionBid:
+      type: object
+      required:
+        - id
+        - auction_id
+        - bidder_id
+        - amount
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440005
+        auction_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        bidder_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440006
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T13:15:00Z'
+        amount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Bid amount in minor units
+          example: 15000
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AuctionWithBid:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/AuctionSummary'
+        - type: object
+          required:
+            - my_bid_amount
+            - my_bid_time
+          properties:
+            my_bid_amount:
+              type: integer
+              format: int64
+              minimum: 0
+              description: User's bid amount in minor units
+              example: 15000
+            my_bid_time:
+              type: string
+              format: date-time
+              description: When user placed their bid
+              example: '2025-12-27T13:15:00Z'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CreateAuctionRequest:
+      type: object
+      required:
+        - item_id
+        - quantity
+        - start_price
+        - duration_hours
+        - currency
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: ID of the item to auction
+          example: 550e8400-e29b-41d4-a716-446655440001
+        currency:
+          type: string
+          enum: [credits]
+          example: credits
+        start_price:
+          type: integer
+          format: int64
+          minimum: 100
+          description: Starting price in minor units
+          example: 10000
+        buyout_price:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 0
+          description: Optional buyout price in minor units
+          example: 50000
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 1000
+          example: 1
+        duration_hours:
+          type: integer
+          format: int32
+          minimum: 24
+          maximum: 168
+          description: Auction duration in hours
+          example: 48
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PlaceBidRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Bid amount in minor units
+          example: 15000
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
