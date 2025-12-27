@@ -483,6 +483,21 @@ func (h *Handlers) GetOilLegacyQuest(w http.ResponseWriter, r *http.Request) {
 	h.respondJSON(w, http.StatusOK, quest)
 }
 
+// GetEverythingBiggerQuest handles GET /quests/dallas/everything-bigger
+// Issue: #140928943
+func (h *Handlers) GetEverythingBiggerQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get Everything Bigger quest request")
+
+	quest, err := h.service.GetEverythingBiggerQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get Everything Bigger quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
 // respondJSON sends a JSON response
 func (h *Handlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")

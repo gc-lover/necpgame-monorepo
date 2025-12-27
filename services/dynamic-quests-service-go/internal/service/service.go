@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 
 	"necpgame/services/dynamic-quests-service-go/internal/repository"
 	"necpgame/services/dynamic-quests-service-go/pkg/models"
@@ -700,12 +701,158 @@ func (s *Service) processAdvancedChoice(choice QuestChoice, selectedChoice *mode
 	return result, nil
 }
 
+// QuestYAML represents the structure of YAML quest files from knowledge/canon
+type QuestYAML struct {
+	Metadata struct {
+		ID    string `yaml:"id"`
+		Title string `yaml:"title"`
+	} `yaml:"metadata"`
+	QuestDefinition struct {
+		QuestType string `yaml:"quest_type"`
+		LevelMin  int    `yaml:"level_min"`
+		LevelMax  int    `yaml:"level_max"`
+		Objectives []struct {
+			ID    string `yaml:"id"`
+			Text  string `yaml:"text"`
+			Type  string `yaml:"type"`
+			Target string `yaml:"target"`
+		} `yaml:"objectives"`
+		Rewards struct {
+			XP         int            `yaml:"xp"`
+			Currency   int            `yaml:"currency"`
+			Reputation map[string]int `yaml:"reputation"`
+			SkillBoosts map[string]int `yaml:"skill_boosts"`
+		} `yaml:"rewards"`
+		Branches []struct {
+			Condition string `yaml:"condition"`
+			Outcome   string `yaml:"outcome"`
+		} `yaml:"branches"`
+	} `yaml:"quest_definition"`
+}
+
 // ImportQuestsFromYAML imports quests from YAML files
 func (s *Service) ImportQuestsFromYAML(ctx context.Context, yamlData []byte) error {
-	// This would parse YAML and create quest definitions
-	// For now, return placeholder implementation
-	s.logger.Info("Quest import from YAML - placeholder implementation")
-	return fmt.Errorf("YAML import not implemented yet")
+	s.logger.Info("Starting quest import from YAML")
+
+	var questYAML QuestYAML
+	if err := yaml.Unmarshal(yamlData, &questYAML); err != nil {
+		s.logger.Errorf("Failed to parse YAML quest data: %v", err)
+		return fmt.Errorf("failed to parse YAML: %w", err)
+	}
+
+	// Convert YAML to DynamicQuest model
+	dynamicQuest := &models.DynamicQuest{
+		QuestID:      questYAML.Metadata.ID,
+		Title:        questYAML.Metadata.Title,
+		QuestType:    questYAML.QuestDefinition.QuestType,
+		MinLevel:     questYAML.QuestDefinition.LevelMin,
+		MaxLevel:     questYAML.QuestDefinition.LevelMax,
+		Difficulty:   "medium", // Default difficulty
+		Status:       "active",
+		Themes:       []string{"outdoor", "lifestyle", "exploration"},
+		ChoicePoints: s.convertObjectivesToChoicePoints(questYAML.QuestDefinition.Objectives),
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "default_ending",
+				Title:       "Outdoor Day Completed",
+				Description: "Successfully completed the outdoor lifestyle day",
+				Rewards: []models.Reward{
+					{
+						Type:  "experience",
+						Value: questYAML.QuestDefinition.Rewards.XP,
+					},
+					{
+						Type:  "currency",
+						Value: questYAML.QuestDefinition.Rewards.Currency,
+					},
+				},
+			},
+		},
+		ReputationImpacts: s.convertReputationToImpacts(questYAML.QuestDefinition.Rewards.Reputation),
+		NarrativeSetup: models.NarrativeSetup{
+			Location:   "Denver",
+			TimePeriod: "2020-2029",
+			Weather:    "sunny",
+			Objectives: s.convertObjectivesToStrings(questYAML.QuestDefinition.Objectives),
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "local_guide",
+				Name:        "Local Outdoor Guide",
+				Role:        "Guide",
+				Description: "Experienced outdoor enthusiast",
+				Importance:  "secondary",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	// Save to database
+	if err := s.repo.CreateDynamicQuest(ctx, dynamicQuest); err != nil {
+		s.logger.Errorf("Failed to save quest to database: %v", err)
+		return fmt.Errorf("failed to save quest: %w", err)
+	}
+
+	s.logger.Infof("Successfully imported quest: %s", questYAML.Metadata.Title)
+	return nil
+}
+
+// Helper functions for conversion
+func (s *Service) convertObjectivesToChoicePoints(objectives []struct {
+	ID    string `yaml:"id"`
+	Text  string `yaml:"text"`
+	Type  string `yaml:"type"`
+	Target string `yaml:"target"`
+}) []models.ChoicePoint {
+	choicePoints := make([]models.ChoicePoint, len(objectives))
+	for i, obj := range objectives {
+		choicePoints[i] = models.ChoicePoint{
+			ID:       obj.ID,
+			Sequence: i + 1,
+			Title:    obj.Text,
+			Description: fmt.Sprintf("Complete: %s", obj.Text),
+			Context:  fmt.Sprintf("Objective type: %s, Target: %s", obj.Type, obj.Target),
+			Choices: []models.Choice{
+				{
+					ID:             fmt.Sprintf("%s_complete", obj.ID),
+					Text:           "Complete this objective",
+					Description:    fmt.Sprintf("Successfully finish: %s", obj.Text),
+					Consequences:   []models.Consequence{},
+					RiskLevel:      "low",
+					MoralAlignment: "neutral",
+				},
+			},
+			Critical: false,
+		}
+	}
+	return choicePoints
+}
+
+func (s *Service) convertReputationToImpacts(reputation map[string]int) []models.ReputationImpact {
+	impacts := make([]models.ReputationImpact, 0, len(reputation))
+	for faction, change := range reputation {
+		impacts = append(impacts, models.ReputationImpact{
+			Faction:     faction,
+			Change:      change,
+			Description: fmt.Sprintf("Reputation with %s changed by %d", faction, change),
+			ChoiceID:    "quest_completion",
+		})
+	}
+	return impacts
+}
+
+func (s *Service) convertObjectivesToStrings(objectives []struct {
+	ID    string `yaml:"id"`
+	Text  string `yaml:"text"`
+	Type  string `yaml:"type"`
+	Target string `yaml:"target"`
+}) []string {
+	objectivesStr := make([]string, len(objectives))
+	for i, obj := range objectives {
+		objectivesStr[i] = obj.Text
+	}
+	return objectivesStr
 }
 
 // GenerateQuestAnalytics generates comprehensive analytics for quest performance
@@ -2027,6 +2174,177 @@ func (s *Service) GetCapitalBuildingQuest(ctx context.Context) (*models.DynamicQ
 				Name:        "Профессор Джеймс Коллинз",
 				Role:        "Историк демократии",
 				Description:    "Страстный защитник демократических традиций Колорадо",
+				Importance:  "ally",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
+// GetEverythingBiggerQuest returns the Everything Bigger quest for Dallas
+// Issue: #140928943
+func (s *Service) GetEverythingBiggerQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Everything Bigger quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "everything-bigger-dallas-2020-2029",
+		Title:            "Everything Bigger",
+		Description:      "Переосмыслить девиз 'Everything is bigger in Texas' и показать, что истинная сила штата в индивидуальности",
+		QuestType:        "narrative_side",
+		MinLevel:         14,
+		MaxLevel:         24,
+		EstimatedDuration: 70,
+		Difficulty:       "medium",
+		Themes:           []string{"texas_identity", "corporate_mythology", "cultural_reinterpretation", "individualism_vs_corporate", "tradition_vs_modernity"},
+		Status:           "active",
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "tradition_reinterpretation",
+				Sequence:    1,
+				Title:       "Переосмысление традиций",
+				Description: "Как интерпретировать девиз 'Everything is bigger in Texas'",
+				Context:     "Девиз искажается корпорациями для оправдания гигантских проектов",
+				Choices: []models.Choice{
+					{
+						ID:             "embrace_individuality",
+						Text:           "Подчеркнуть индивидуальность",
+						Description:    "Показать, что сила Техаса в уникальности каждого",
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "corporate_giantism",
+						Text:           "Поддержать гигантоманию",
+						Description:    "Принять корпоративную интерпретацию",
+						RiskLevel:      "medium",
+						MoralAlignment: "evil",
+					},
+					{
+						ID:             "balanced_approach",
+						Text:           "Найти баланс",
+						Description:    "Соединить традицию с современностью",
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: true,
+			},
+			{
+				ID:          "corporate_response",
+				Sequence:    2,
+				Title:       "Реакция на корпоративное давление",
+				Description: "Как ответить на корпоративные проекты",
+				Context:     "Корпорации предлагают деньги и влияние за поддержку их видения",
+				Choices: []models.Choice{
+					{
+						ID:             "active_resistance",
+						Text:           "Активное сопротивление",
+						Description:    "Бороться против корпоративных проектов",
+						RiskLevel:      "high",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "negotiate_changes",
+						Text:           "Переговоры об изменениях",
+						Description:    "Внести коррективы в проекты",
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "corporate_alliance",
+						Text:           "Союз с корпорациями",
+						Description:    "Присоединиться к их видению",
+						RiskLevel:      "low",
+						MoralAlignment: "evil",
+					},
+				},
+				Critical: true,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "texas_individuality",
+				Title:       "Техасская индивидуальность",
+				Description: "Девиз переосмыслен как призыв к индивидуальности",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 15600},
+					{Type: "currency", Value: 10900},
+					{Type: "item", ItemID: "texas_star", Rarity: "legendary"},
+					{Type: "reputation", Value: "texas_individuality:+40"},
+				},
+			},
+			{
+				ID:          "balanced_growth",
+				Title:       "Сбалансированный рост",
+				Description: "Найден баланс между традициями и развитием",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 13700},
+					{Type: "currency", Value: 15600},
+					{Type: "reputation", Value: "texas_balance:+30"},
+				},
+			},
+			{
+				ID:          "corporate_dominance",
+				Title:       "Корпоративное доминирование",
+				Description: "Корпорации закрепили контроль над традициями",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 7800},
+					{Type: "currency", Value: 19500},
+					{Type: "reputation", Value: "corporate_alliance:+25"},
+				},
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "texas_locals",
+				Change:      35,
+				Description: "Помощь в сохранении истинных техасских традиций",
+				ChoiceID:    "embrace_individuality",
+			},
+			{
+				Faction:     "corporate_texas",
+				Change:      -45,
+				Description:    "Противодействие корпоративным планам",
+				ChoiceID:    "active_resistance",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Dallas, Texas State Capitol Area",
+			TimePeriod:  "2020-2029",
+			Weather:     "hot and humid with occasional thunderstorms",
+			Situation:   "The Texas motto 'Everything is bigger in Texas' has been corrupted by corporate interests",
+			Objectives: []string{
+				"Research the history of 'Everything is bigger in Texas'",
+				"Find examples of true Texas individuality",
+				"Counter corporate mega-projects",
+				"Organize campaign to reinterpret traditions",
+				"Show that 'bigger' doesn't always mean 'better'",
+				"Restore balance between tradition and modernity",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "texas_historian",
+				Name:        "Доктор Джим 'Истинный Техасец' Миллер",
+				Role:        "Историк техасских традиций",
+				Description:    "Эксперт по истории Техаса, страстный защитник индивидуальности штата",
+				Importance:  "primary",
+			},
+			{
+				ID:          "corporate_ceo",
+				Name:        "Мисс Виктория 'Биг' Джонсон",
+				Role:        "Корпоративный CEO",
+				Description:    "Лидер корпорации, продвигающей гигантские проекты",
+				Importance:  "antagonist",
+			},
+			{
+				ID:          "local_artist",
+				Name:        "Лола 'Маленькая Звезда' Гарсия",
+				Role:        "Местный художник",
+				Description:    "Представляет индивидуальность и творчество техасцев",
 				Importance:  "ally",
 			},
 		},
