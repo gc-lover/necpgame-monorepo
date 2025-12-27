@@ -114,12 +114,31 @@ func (h *Handler) CreateGuild(ctx context.Context, req *api.CreateGuildReq) (api
 	resp := guildResponsePool.Get().(*api.Guild)
 	defer guildResponsePool.Put(resp)
 
-	// Placeholder response
-	resp.GuildId = "550e8400-e29b-41d4-a716-446655440000"
-	resp.Name = req.Name
-	resp.LeaderId = req.LeaderId
+	// Extract user ID from context (set by auth middleware)
+	userID := getUserIDFromContext(ctx)
+	if userID == "" {
+		return &api.CreateGuildUnauthorized{
+			Message: "Unauthorized",
+			Code:    401,
+		}, nil
+	}
 
-	return &api.CreateGuildCreated{Body: *resp}, nil
+	// Create guild with mock data
+	guildID := uuid.New()
+	leaderID, err := uuid.Parse(userID)
+	if err != nil {
+		leaderID = uuid.New()
+	}
+
+	guild := api.Guild{
+		GuildID:  guildID,
+		Name:     req.Name,
+		LeaderID: leaderID,
+	}
+
+	return &api.CreateGuildCreated{
+		Guild: guild,
+	}, nil
 }
 
 // GetGuild implements GET /api/v1/guilds/{guildId}
@@ -216,7 +235,7 @@ func (h *Handler) AddGuildMember(ctx context.Context, req *api.AddGuildMemberReq
 
 // UpdateMemberRole implements PUT /api/v1/guilds/{guildId}/members/{playerId}
 // PERFORMANCE: <10ms P95, role validation and update
-func (h *Handler) UpdateMemberRole(ctx context.Context, req *api.UpdateMemberRoleRequest, params api.UpdateMemberRoleParams) (api.UpdateMemberRoleRes, error) {
+func (h *Handler) UpdateMemberRole(ctx context.Context, req *api.UpdateMemberRoleReq, params api.UpdateMemberRoleParams) (api.UpdateMemberRoleRes, error) {
 	// PERFORMANCE: Strict timeout for role updates
 	ctx, cancel := context.WithTimeout(ctx, memberOpsTimeout)
 	defer cancel()
