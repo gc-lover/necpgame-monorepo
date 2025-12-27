@@ -52,6 +52,12 @@ func (h *Handlers) SetupRoutes(r *chi.Mux) {
 		r.Post("/voice-channels/{channel_id}/signal", h.ExchangeSignalingMessage)
 		r.Post("/voice-channels/{channel_id}/leave", h.LeaveVoiceChannel)
 
+		// Guild voice channel management - INTEGRATION WITH GUILD SYSTEM
+		r.Post("/guilds/{guild_id}/voice-channels", h.CreateGuildVoiceChannel)
+		r.Get("/guilds/{guild_id}/voice-channels", h.ListGuildVoiceChannels)
+		r.Put("/guilds/{guild_id}/voice-channels/{channel_id}", h.UpdateGuildVoiceChannel)
+		r.Post("/guilds/{guild_id}/voice-channels/{channel_id}/join", h.JoinGuildVoiceChannel)
+
 		// Voice quality monitoring
 		r.Post("/voice-quality/{channel_id}/report", h.ReportVoiceQuality)
 	})
