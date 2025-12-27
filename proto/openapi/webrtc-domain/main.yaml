@@ -1224,25 +1224,317 @@ components:
           example: true
         quality_settings:
           $ref: '#/components/schemas/VoiceQualitySettings'
-          - best-practice
-        is_active:
-          type: boolean
-          description: Whether this example is active
-          example: true
-        priority:
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50% for voice channel operations.'
+
+    VoiceQualitySettings:
+      type: object
+      properties:
+        bitrate:
           type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-          example: 7
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot
-        path optimization required.'
-    CreateExampleRequest:
+          minimum: 8000
+          maximum: 128000
+          default: 64000
+          description: Audio bitrate in bps
+          example: 64000
+        sample_rate:
+          type: integer
+          enum: [8000, 16000, 24000, 48000]
+          default: 48000
+          description: Audio sample rate in Hz
+          example: 48000
+        channels:
+          type: integer
+          enum: [1, 2]
+          default: 1
+          description: Number of audio channels
+          example: 1
+        echo_cancellation:
+          type: boolean
+          default: true
+          description: Enable echo cancellation
+          example: true
+        noise_suppression:
+          type: boolean
+          default: true
+          description: Enable noise suppression
+          example: true
+      description: 'BACKEND NOTE: Voice quality settings for adaptive bitrate control.'
+
+    JoinChannelRequest:
+      type: object
+      required:
+      - user_id
+      - client_capabilities
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User joining the channel
+          example: 550e8400-e29b-41d4-a716-446655440001
+        client_capabilities:
+          $ref: '#/components/schemas/WebRTCCapabilities'
+        preferred_region:
+          type: string
+          maxLength: 50
+          description: Preferred server region
+          example: us-east-1
+      description: 'BACKEND NOTE: Request to join voice channel with client capabilities.'
+
+    WebRTCCapabilities:
+      type: object
+      properties:
+        webrtc_support:
+          type: boolean
+          default: true
+          example: true
+        dtls_support:
+          type: boolean
+          default: true
+          example: true
+        ice_candidates:
+          type: boolean
+          default: true
+          example: true
+        max_bitrate:
+          type: integer
+          minimum: 8000
+          maximum: 256000
+          example: 128000
+      description: 'BACKEND NOTE: Client WebRTC capabilities for compatibility checking.'
+
+    JoinChannelResponse:
+      type: object
+      required:
+      - channel
+      - ice_servers
+      - session_token
+      properties:
+        channel:
+          $ref: '#/components/schemas/VoiceChannel'
+        ice_servers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICEServer'
+          description: STUN/TURN servers for NAT traversal
+        session_token:
+          type: string
+          description: Session authentication token
+          example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceParticipant'
+          description: Current channel participants
+      description: 'BACKEND NOTE: Response with channel info and connection details.'
+
+    ICEServer:
+      type: object
+      required:
+      - urls
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+          example: ["stun:stun.necpgame.com:19302"]
+        username:
+          type: string
+          description: TURN server username
+        credential:
+          type: string
+          description: TURN server credential
+      description: 'BACKEND NOTE: STUN/TURN server configuration for WebRTC.'
+
+    VoiceParticipant:
+      type: object
+      required:
+      - user_id
+      - joined_at
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        display_name:
+          type: string
+          maxLength: 100
+          example: "NightRunner2077"
+        joined_at:
+          type: string
+          format: date-time
+          example: "2025-12-27T16:15:00Z"
+        is_muted:
+          type: boolean
+          default: false
+          example: false
+        connection_quality:
+          type: string
+          enum: [excellent, good, poor, disconnected]
+          example: excellent
+      description: 'BACKEND NOTE: Voice channel participant information.'
+
+    SignalingMessage:
+      type: object
+      required:
+      - type
+      - sender_id
+      - target_id
+      properties:
+        type:
+          type: string
+          enum: [offer, answer, ice_candidate, hangup]
+          example: offer
+        sender_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        target_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        sdp:
+          type: string
+          description: SDP offer/answer data
+          example: "v=0\r\no=- 12345 67890 IN IP4 192.168.1.1\r\n..."
+        ice_candidate:
+          $ref: '#/components/schemas/ICECandidate'
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-27T16:16:00Z"
+      description: 'BACKEND NOTE: WebRTC signaling message structure.'
+
+    ICECandidate:
+      type: object
+      required:
+      - candidate
+      - sdp_mid
+      - sdp_mline_index
+      properties:
+        candidate:
+          type: string
+          description: ICE candidate string
+          example: "candidate:1 1 UDP 2122260223 192.168.1.1 12345 typ host"
+        sdp_mid:
+          type: string
+          example: "0"
+        sdp_mline_index:
+          type: integer
+          example: 0
+      description: 'BACKEND NOTE: WebRTC ICE candidate for peer connection.'
+
+    SignalingResponse:
+      type: object
+      required:
+      - success
+      - message_id
+      properties:
+        success:
+          type: boolean
+          example: true
+        message_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440003
+        delivered_at:
+          type: string
+          format: date-time
+          example: "2025-12-27T16:16:05Z"
+      description: 'BACKEND NOTE: Signaling message delivery confirmation.'
+
+    LeaveChannelResponse:
+      type: object
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+          example: true
+        session_duration:
+          type: integer
+          description: Session duration in seconds
+          example: 1250
+        quality_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall voice quality score
+          example: 0.92
+      description: 'BACKEND NOTE: Voice channel leave confirmation with session stats.'
+
+    VoiceQualityReport:
+      type: object
+      required:
+      - user_id
+      - metrics
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        metrics:
+          $ref: '#/components/schemas/VoiceQualityMetrics'
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-27T16:17:00Z"
+      description: 'BACKEND NOTE: Voice quality metrics from client.'
+
+    VoiceQualityMetrics:
+      type: object
+      properties:
+        latency_ms:
+          type: number
+          minimum: 0
+          description: Round-trip latency in milliseconds
+          example: 45.2
+        packet_loss_percent:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Packet loss percentage
+          example: 0.5
+        jitter_ms:
+          type: number
+          minimum: 0
+          description: Jitter in milliseconds
+          example: 2.1
+        bitrate_bps:
+          type: integer
+          minimum: 0
+          description: Current bitrate in bps
+          example: 64000
+        volume_level:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Audio volume level (0-1)
+          example: 0.75
+      description: 'BACKEND NOTE: Real-time voice quality measurements.'
+
+    VoiceQualityResponse:
+      type: object
+      required:
+      - acknowledged
+      properties:
+        acknowledged:
+          type: boolean
+          example: true
+        recommended_settings:
+          $ref: '#/components/schemas/VoiceQualitySettings'
+        next_report_interval:
+          type: integer
+          minimum: 5
+          maximum: 300
+          description: Recommended reporting interval in seconds
+          example: 30
+      description: 'BACKEND NOTE: Quality report acknowledgment with recommendations.'
+
+    CreateVoiceChannelRequest:
       type: object
       required:
       - name
-      - description
+      - type
       properties:
         name:
           type: string
