@@ -148,7 +148,7 @@ func TestGetResetStatsQA(t *testing.T) {
 	assert.Equal(t, 42, resp.TotalResets)
 	assert.Equal(t, 38, resp.SuccessfulResets)
 	assert.Equal(t, 4, resp.FailedResets)
-	assert.Equal(t, 45.5, resp.AverageCompletionTime)
+	assert.Equal(t, float32(45.5), resp.AverageCompletionTime)
 }
 
 // TestTriggerResetQA tests reset triggering with various scenarios

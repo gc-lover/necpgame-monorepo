@@ -3,9 +3,9 @@ metadata:
   title: Архитектура системы клановых войн (Clan War System)
   document_type: architecture
   category: systems
-  status: draft
+  status: final
   version: '1.1.0'
-  last_updated: 2025-11-30T20:30:00Z
+  last_updated: 2025-12-27T22:45:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -528,3 +528,102 @@ architecture:
         fields:
           - id: UUID (PK)
           - attacker_clan_id: UUID (FK guilds)
+          - defender_clan_id: UUID (FK guilds)
+          - status: ENUM (DECLARED, PREPARATION, ACTIVE, ENDING, ENDED)
+          - phase: ENUM (PREPARATION, ACTIVE, ENDING)
+          - declared_at: TIMESTAMP
+          - started_at: TIMESTAMP (nullable)
+          - ended_at: TIMESTAMP (nullable)
+          - winner_clan_id: UUID (FK guilds, nullable)
+          - war_type: ENUM (TERRITORY, RESOURCE, HONOR)
+        indexes:
+          - attacker_clan_id, status
+          - defender_clan_id, status
+          - status, phase
+          - declared_at
+
+      - name: clan_war_territories
+        description: Территории клановых войн
+        fields:
+          - id: UUID (PK)
+          - war_id: UUID (FK clan_wars)
+          - territory_id: UUID (FK world_territories)
+          - controlling_clan_id: UUID (FK guilds)
+          - capture_progress: INTEGER (0-100)
+          - last_capture_attempt: TIMESTAMP (nullable)
+          - points_per_minute: INTEGER
+        indexes:
+          - war_id, territory_id
+          - controlling_clan_id
+
+      - name: clan_war_battles
+        description: Сражения клановых войн
+        fields:
+          - id: UUID (PK)
+          - war_id: UUID (FK clan_wars)
+          - territory_id: UUID (FK clan_war_territories)
+          - attacker_clan_id: UUID (FK guilds)
+          - defender_clan_id: UUID (FK guilds)
+          - status: ENUM (SCHEDULED, ACTIVE, COMPLETED, CANCELLED)
+          - started_at: TIMESTAMP (nullable)
+          - ended_at: TIMESTAMP (nullable)
+          - winner_clan_id: UUID (FK guilds, nullable)
+          - attacker_score: INTEGER
+          - defender_score: INTEGER
+        indexes:
+          - war_id, status
+          - territory_id, status
+
+      - name: clan_war_participants
+        description: Участники клановых войн
+        fields:
+          - id: UUID (PK)
+          - war_id: UUID (FK clan_wars)
+          - clan_id: UUID (FK guilds)
+          - player_id: UUID (FK accounts)
+          - joined_at: TIMESTAMP
+          - total_score: INTEGER (default: 0)
+          - battles_fought: INTEGER (default: 0)
+          - battles_won: INTEGER (default: 0)
+        indexes:
+          - war_id, clan_id
+          - player_id, war_id
+          - total_score DESC
+
+      - name: clan_war_rewards
+        description: Награды клановых войн
+        fields:
+          - id: UUID (PK)
+          - war_id: UUID (FK clan_wars)
+          - clan_id: UUID (FK guilds)
+          - player_id: UUID (FK accounts)
+          - reward_type: ENUM (CURRENCY, ITEM, TITLE, ACHIEVEMENT)
+          - reward_data: JSONB
+          - awarded_at: TIMESTAMP
+        indexes:
+          - war_id, clan_id
+          - player_id, war_id
+
+  validation:
+    architecture_complete: true
+    components_defined: true
+    microservices_identified: true
+    api_endpoints_described: true
+    technical_specification_ready: true
+    subtasks_defined: true
+
+  next_steps:
+    - Передача задачи агенту API Designer для создания OpenAPI спецификации
+    - Детализация API endpoints и WebSocket протоколов
+    - Создание схем событий и сообщений
+    - Определение формата данных для реального времени
+
+  history:
+    - version: '1.1.0'
+      date: 2025-12-27
+      author: Architect Agent
+      changes: |
+        Завершена схема базы данных
+        Добавлена валидация архитектуры
+        Определены следующие шаги реализации
+        Статус изменен на final
