@@ -47,3 +47,5 @@ EXPOSE 8094
 # Run the application
 ENTRYPOINT ["./announcement-service-go"]
 
+
+

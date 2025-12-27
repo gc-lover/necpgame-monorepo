@@ -49,3 +49,5 @@ type VisitApartmentParams struct {
 	ApartmentId uuid.UUID `path:"apartmentId"`
 }
 
+
+

@@ -299,3 +299,5 @@ func NewScheduleAnnouncementInternalServerError(data Error) ScheduleAnnouncement
 	return ScheduleAnnouncementInternalServerError{Data: data}
 }
 
+
+

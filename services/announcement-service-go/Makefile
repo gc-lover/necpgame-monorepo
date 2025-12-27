@@ -46,3 +46,5 @@ docker run -p 8094:8094 announcement-service-go
 dev:
 	go run github.com/cosmtrek/air -c .air.toml
 
+
+

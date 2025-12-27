@@ -24,6 +24,7 @@ class QuestMigrationGenerator(BaseContentMigrationGenerator):
             content_type="quests",
             input_dirs=[
                 "knowledge/canon/narrative/quests",
+                "knowledge/canon/lore/timeline-author/quests",
                 "knowledge/content/quests"
             ],
             output_dir="infrastructure/liquibase/data/gameplay/quests",

@@ -47,3 +47,5 @@ EXPOSE 8081
 # Run the application
 ENTRYPOINT ["./mentorship-service-go"]
 
+
+

@@ -37,3 +37,5 @@ type ScheduleAnnouncementParams struct {
 	AnnouncementId uuid.UUID `path:"announcement_id"`
 }
 
+
+
