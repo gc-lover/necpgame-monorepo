@@ -45,7 +45,7 @@ def main():
 
         # Apply schema migrations first
         script_dir = Path(__file__).parent
-        project_root = script_dir.parent
+        project_root = script_dir.parent.parent  # Go up one more level to project root
 
         # Schema migrations (V1_00 to V1_49)
         schema_dir = project_root / 'infrastructure' / 'liquibase' / 'schema'

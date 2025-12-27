@@ -710,19 +710,19 @@ type QuestYAML struct {
 		Title string `yaml:"title"`
 	} `yaml:"metadata"`
 	QuestDefinition struct {
-		QuestType string `yaml:"quest_type"`
-		LevelMin  int    `yaml:"level_min"`
-		LevelMax  int    `yaml:"level_max"`
+		QuestType  string `yaml:"quest_type"`
+		LevelMin   int    `yaml:"level_min"`
+		LevelMax   int    `yaml:"level_max"`
 		Objectives []struct {
-			ID    string `yaml:"id"`
-			Text  string `yaml:"text"`
-			Type  string `yaml:"type"`
+			ID     string `yaml:"id"`
+			Text   string `yaml:"text"`
+			Type   string `yaml:"type"`
 			Target string `yaml:"target"`
 		} `yaml:"objectives"`
 		Rewards struct {
-			XP         int            `yaml:"xp"`
-			Currency   int            `yaml:"currency"`
-			Reputation map[string]int `yaml:"reputation"`
+			XP          int            `yaml:"xp"`
+			Currency    int            `yaml:"currency"`
+			Reputation  map[string]int `yaml:"reputation"`
 			SkillBoosts map[string]int `yaml:"skill_boosts"`
 		} `yaml:"rewards"`
 		Branches []struct {
@@ -812,19 +812,19 @@ func (s *Service) GetQuestDefinition(ctx context.Context, questID string) (*repo
 
 // Helper functions for conversion
 func (s *Service) convertObjectivesToChoicePoints(objectives []struct {
-	ID    string `yaml:"id"`
-	Text  string `yaml:"text"`
-	Type  string `yaml:"type"`
+	ID     string `yaml:"id"`
+	Text   string `yaml:"text"`
+	Type   string `yaml:"type"`
 	Target string `yaml:"target"`
 }) []models.ChoicePoint {
 	choicePoints := make([]models.ChoicePoint, len(objectives))
 	for i, obj := range objectives {
 		choicePoints[i] = models.ChoicePoint{
-			ID:       obj.ID,
-			Sequence: i + 1,
-			Title:    obj.Text,
+			ID:          obj.ID,
+			Sequence:    i + 1,
+			Title:       obj.Text,
 			Description: fmt.Sprintf("Complete: %s", obj.Text),
-			Context:  fmt.Sprintf("Objective type: %s, Target: %s", obj.Type, obj.Target),
+			Context:     fmt.Sprintf("Objective type: %s, Target: %s", obj.Type, obj.Target),
 			Choices: []models.Choice{
 				{
 					ID:             fmt.Sprintf("%s_complete", obj.ID),
@@ -855,9 +855,9 @@ func (s *Service) convertReputationToImpacts(reputation map[string]int) []models
 }
 
 func (s *Service) convertObjectivesToStrings(objectives []struct {
-	ID    string `yaml:"id"`
-	Text  string `yaml:"text"`
-	Type  string `yaml:"type"`
+	ID     string `yaml:"id"`
+	Text   string `yaml:"text"`
+	Type   string `yaml:"type"`
 	Target string `yaml:"target"`
 }) []string {
 	objectivesStr := make([]string, len(objectives))
@@ -1265,16 +1265,16 @@ func (s *Service) GetConeyIslandHotDogsQuest(ctx context.Context) (*models.Dynam
 	s.logger.Info("Retrieving Coney Island Hot Dogs quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "coney-island-hot-dogs-detroit-2020-2029",
-		Title:            "Хот-доги Кони-Айленд",
-		Description:      "Восстановить традицию хот-догов Кони-Айленд в заброшенном парке развлечений Детройта",
-		QuestType:        "narrative_side",
-		MinLevel:         8,
-		MaxLevel:         15,
+		QuestID:           "coney-island-hot-dogs-detroit-2020-2029",
+		Title:             "Хот-доги Кони-Айленд",
+		Description:       "Восстановить традицию хот-догов Кони-Айленд в заброшенном парке развлечений Детройта",
+		QuestType:         "narrative_side",
+		MinLevel:          8,
+		MaxLevel:          15,
 		EstimatedDuration: 45,
-		Difficulty:       "medium",
-		Themes:           []string{"street_food", "corporate_resistance", "cultural_revitalization"},
-		Status:           "active",
+		Difficulty:        "medium",
+		Themes:            []string{"street_food", "corporate_resistance", "cultural_revitalization"},
+		Status:            "active",
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "park_exploration",
@@ -1314,10 +1314,10 @@ func (s *Service) GetConeyIslandHotDogsQuest(ctx context.Context) (*models.Dynam
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Detroit, Coney Island Amusement Park",
-			TimePeriod:  "2020-2029",
-			Weather:     "overcast with occasional rain",
-			Situation:   "The park stands abandoned, a relic of Detroit's golden age",
+			Location:   "Detroit, Coney Island Amusement Park",
+			TimePeriod: "2020-2029",
+			Weather:    "overcast with occasional rain",
+			Situation:  "The park stands abandoned, a relic of Detroit's golden age",
 			Objectives: []string{
 				"Find the legendary hot dog recipe",
 				"Restore the park's food stalls",
@@ -1346,16 +1346,16 @@ func (s *Service) Get1967RiotsLegacyQuest(ctx context.Context) (*models.DynamicQ
 	s.logger.Info("Retrieving 1967 Riots Legacy quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "1967-riots-legacy-detroit-2020-2029",
-		Title:            "Наследие бунтов 1967 года",
-		Description:      "Исследовать последствия бунтов 1967 года и их влияние на современный Детройт",
-		QuestType:        "narrative_main",
-		MinLevel:         12,
-		MaxLevel:         20,
+		QuestID:           "1967-riots-legacy-detroit-2020-2029",
+		Title:             "Наследие бунтов 1967 года",
+		Description:       "Исследовать последствия бунтов 1967 года и их влияние на современный Детройт",
+		QuestType:         "narrative_main",
+		MinLevel:          12,
+		MaxLevel:          20,
 		EstimatedDuration: 60,
-		Difficulty:       "hard",
-		Themes:           []string{"historical_trauma", "racial_justice", "urban_decay", "social_change"},
-		Status:           "active",
+		Difficulty:        "hard",
+		Themes:            []string{"historical_trauma", "racial_justice", "urban_decay", "social_change"},
+		Status:            "active",
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "family_history",
@@ -1395,10 +1395,10 @@ func (s *Service) Get1967RiotsLegacyQuest(ctx context.Context) (*models.DynamicQ
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Detroit, Various Neighborhoods",
-			TimePeriod:  "2020-2029",
-			Weather:     "mixed, reflecting the city's turbulent history",
-			Situation:   "The wounds of 1967 still bleed in Detroit's collective consciousness",
+			Location:   "Detroit, Various Neighborhoods",
+			TimePeriod: "2020-2029",
+			Weather:    "mixed, reflecting the city's turbulent history",
+			Situation:  "The wounds of 1967 still bleed in Detroit's collective consciousness",
 			Objectives: []string{
 				"Investigate family involvement in the 1967 riots",
 				"Interview survivors and witnesses",
@@ -1428,16 +1428,16 @@ func (s *Service) Get8MileRoadJourneyQuest(ctx context.Context) (*models.Dynamic
 	s.logger.Info("Retrieving 8 Mile Road Journey quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "8-mile-road-journey-detroit-2020-2029",
-		Title:            "Путешествие по дороге 8-Майл",
-		Description:      "Пройти по легендарной дороге 8-Майл и раскрыть её секреты",
-		QuestType:        "narrative_side",
-		MinLevel:         10,
-		MaxLevel:         18,
+		QuestID:           "8-mile-road-journey-detroit-2020-2029",
+		Title:             "Путешествие по дороге 8-Майл",
+		Description:       "Пройти по легендарной дороге 8-Майл и раскрыть её секреты",
+		QuestType:         "narrative_side",
+		MinLevel:          10,
+		MaxLevel:          18,
 		EstimatedDuration: 50,
-		Difficulty:       "medium",
-		Themes:           []string{"urban_exploration", "personal_growth", "detroit_mythology", "racial_divide"},
-		Status:           "active",
+		Difficulty:        "medium",
+		Themes:            []string{"urban_exploration", "personal_growth", "detroit_mythology", "racial_divide"},
+		Status:            "active",
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "road_choice",
@@ -1477,10 +1477,10 @@ func (s *Service) Get8MileRoadJourneyQuest(ctx context.Context) (*models.Dynamic
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Detroit, 8 Mile Road",
-			TimePeriod:  "2020-2029",
-			Weather:     "overcast with urban haze",
-			Situation:   "The legendary road divides Detroit's worlds, holding ancient secrets",
+			Location:   "Detroit, 8 Mile Road",
+			TimePeriod: "2020-2029",
+			Weather:    "overcast with urban haze",
+			Situation:  "The legendary road divides Detroit's worlds, holding ancient secrets",
 			Objectives: []string{
 				"Travel the length of 8 Mile Road",
 				"Discover hidden landmarks and stories",
@@ -1511,15 +1511,15 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 	s.logger.Info("Retrieving La Boca Caminito quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "canon-quest-buenos-aires-2029-002-caminito",
-		Title:            "Буэнос-Айрес: La Boca и Caminito",
-		Description:      "Исследуйте яркий район La Boca, прогуляйтесь по знаменитой улице Caminito и погрузитесь в культуру итальянских иммигрантов",
-		QuestType:        "side",
-		MinLevel:         1,
-		MaxLevel:         0, // No max level
+		QuestID:           "canon-quest-buenos-aires-2029-002-caminito",
+		Title:             "Буэнос-Айрес: La Boca и Caminito",
+		Description:       "Исследуйте яркий район La Boca, прогуляйтесь по знаменитой улице Caminito и погрузитесь в культуру итальянских иммигрантов",
+		QuestType:         "side",
+		MinLevel:          1,
+		MaxLevel:          0, // No max level
 		EstimatedDuration: 120,
-		Difficulty:       "easy",
-		Themes:           []string{"culture", "art", "sports", "history", "tourism"},
+		Difficulty:        "easy",
+		Themes:            []string{"culture", "art", "sports", "history", "tourism"},
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "caminito_color_walk",
@@ -1529,9 +1529,9 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 				Context:     "Начало вашего путешествия по самому яркому району Буэнос-Айреса",
 				Choices: []models.Choice{
 					{
-						ID:             "photograph_colors",
-						Text:           "Фотографировать разноцветные дома",
-						Description:    "Сделать серию фотографий уникальной архитектуры района",
+						ID:          "photograph_colors",
+						Text:        "Фотографировать разноцветные дома",
+						Description: "Сделать серию фотографий уникальной архитектуры района",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -1552,9 +1552,9 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "buy_art_souvenirs",
-						Text:           "Купить художественные сувениры",
-						Description:    "Приобрести местные поделки и картины",
+						ID:          "buy_art_souvenirs",
+						Text:        "Купить художественные сувениры",
+						Description: "Приобрести местные поделки и картины",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -1586,9 +1586,9 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 				Context:     "Продолжите знакомство с живой культурой района",
 				Choices: []models.Choice{
 					{
-						ID:             "learn_tango_basics",
-						Text:           "Взять мини-урок танго",
-						Description:    "Освоить базовые шаги аргентинского танго",
+						ID:          "learn_tango_basics",
+						Text:        "Взять мини-урок танго",
+						Description: "Освоить базовые шаги аргентинского танго",
 						Consequences: []models.Consequence{
 							{
 								Type:        "skill_boost",
@@ -1609,9 +1609,9 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "listen_to_stories",
-						Text:           "Послушать истории артистов",
-						Description:    "Узнать о жизни района от местных жителей",
+						ID:          "listen_to_stories",
+						Text:        "Послушать истории артистов",
+						Description: "Узнать о жизни района от местных жителей",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -1643,9 +1643,9 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 				Context:     "Погрузитесь в художественное наследие La Boca",
 				Choices: []models.Choice{
 					{
-						ID:             "paint_with_artists",
-						Text:           "Попробовать рисовать",
-						Description:    "Взять кисть и создать собственное произведение",
+						ID:          "paint_with_artists",
+						Text:        "Попробовать рисовать",
+						Description: "Взять кисть и создать собственное произведение",
 						Consequences: []models.Consequence{
 							{
 								Type:        "skill_boost",
@@ -1666,9 +1666,9 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "learn_paint_history",
-						Text:           "Изучить историю красок",
-						Description:    "Узнать о корабельной краске и традициях района",
+						ID:          "learn_paint_history",
+						Text:        "Изучить историю красок",
+						Description: "Узнать о корабельной краске и традициях района",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -1700,9 +1700,9 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 				Context:     "Кульминация путешествия - сердце аргентинского футбола",
 				Choices: []models.Choice{
 					{
-						ID:             "join_fans",
-						Text:           "Присоединиться к фанатам",
-						Description:    "Петь песни и поддерживать команду вместе с болельщиками",
+						ID:          "join_fans",
+						Text:        "Присоединиться к фанатам",
+						Description: "Петь песни и поддерживать команду вместе с болельщиками",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -1723,9 +1723,9 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "explore_history",
-						Text:           "Изучить историю стадиона",
-						Description:    "Узнать о легендах Boca Juniors и Диего Марадоне",
+						ID:          "explore_history",
+						Text:        "Изучить историю стадиона",
+						Description: "Узнать о легендах Boca Juniors и Диего Марадоне",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -1757,9 +1757,9 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 				Context:     "Ваш последний выбор определит впечатление от района",
 				Choices: []models.Choice{
 					{
-						ID:             "evening_milonga",
-						Text:           "Вечерняя милонга",
-						Description:    "Закончить день танцами под звездами",
+						ID:          "evening_milonga",
+						Text:        "Вечерняя милонга",
+						Description: "Закончить день танцами под звездами",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -1780,9 +1780,9 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "street_celebration",
-						Text:           "Уличное празднование",
-						Description:    "Присоединиться к спонтанному празднику на улицах",
+						ID:          "street_celebration",
+						Text:        "Уличное празднование",
+						Description: "Присоединиться к спонтанному празднику на улицах",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -1809,9 +1809,9 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 		},
 		EndingVariations: []models.EndingVariation{
 			{
-				ID:          "la_boca_artist",
-				Title:       "Художник La Boca",
-				Description: "Стали частью художественного наследия района",
+				ID:           "la_boca_artist",
+				Title:        "Художник La Boca",
+				Description:  "Стали частью художественного наследия района",
 				Requirements: []string{"paint_with_artists", "learn_paint_history", "evening_milonga"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 1200},
@@ -1821,9 +1821,9 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 				Narrative: "Искусство La Boca теперь течет в ваших венах, как разноцветная краска на стенах района.",
 			},
 			{
-				ID:          "boca_fan",
-				Title:       "Фанат Boca Juniors",
-				Description: "Завоевали сердца болельщиков легендарного клуба",
+				ID:           "boca_fan",
+				Title:        "Фанат Boca Juniors",
+				Description:  "Завоевали сердца болельщиков легендарного клуба",
 				Requirements: []string{"join_fans", "explore_history", "street_celebration"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 1100},
@@ -1833,9 +1833,9 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 				Narrative: "Вы стали частью великой традиции - поклонения команде, которая живет в сердцах миллионов.",
 			},
 			{
-				ID:          "cultural_explorer",
-				Title:       "Культурный исследователь",
-				Description: "Глубоко поняли дух итальянских иммигрантов La Boca",
+				ID:           "cultural_explorer",
+				Title:        "Культурный исследователь",
+				Description:  "Глубоко поняли дух итальянских иммигрантов La Boca",
 				Requirements: []string{"photograph_colors", "listen_to_stories", "learn_paint_history"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 1000},
@@ -1866,10 +1866,10 @@ func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQu
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "La Boca, Buenos Aires, Argentina",
-			TimePeriod:  "2020-2029",
-			Weather:     "warm and colorful afternoon",
-			Situation:   "The vibrant streets of La Boca call to you with their rainbow houses and passionate culture",
+			Location:   "La Boca, Buenos Aires, Argentina",
+			TimePeriod: "2020-2029",
+			Weather:    "warm and colorful afternoon",
+			Situation:  "The vibrant streets of La Boca call to you with their rainbow houses and passionate culture",
 			Objectives: []string{
 				"Walk the colorful Caminito street and capture its beauty",
 				"Meet street artists and learn about tango traditions",
@@ -1921,15 +1921,15 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 	s.logger.Info("Retrieving Asado BBQ quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "canon-quest-buenos-aires-2029-003-asado",
-		Title:            "Буэнос-Айрес: Асадо",
-		Description:      "Присоединитесь к традиционному аргентинскому барбекю - священному социальному ритуалу, где мясо, вино и дружба создают незабываемую атмосферу",
-		QuestType:        "side",
-		MinLevel:         2,
-		MaxLevel:         0, // No max level
+		QuestID:           "canon-quest-buenos-aires-2029-003-asado",
+		Title:             "Буэнос-Айрес: Асадо",
+		Description:       "Присоединитесь к традиционному аргентинскому барбекю - священному социальному ритуалу, где мясо, вино и дружба создают незабываемую атмосферу",
+		QuestType:         "side",
+		MinLevel:          2,
+		MaxLevel:          0, // No max level
 		EstimatedDuration: 240,
-		Difficulty:       "easy",
-		Themes:           []string{"cuisine", "social", "culture", "tradition", "food"},
+		Difficulty:        "easy",
+		Themes:            []string{"cuisine", "social", "culture", "tradition", "food"},
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "asado_invitation",
@@ -1939,9 +1939,9 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 				Context:     "Начало вашего погружения в культуру аргентинской кухни",
 				Choices: []models.Choice{
 					{
-						ID:             "accept_formal",
-						Text:           "Принять формальное приглашение",
-						Description:    "Получить официальное приглашение от семьи",
+						ID:          "accept_formal",
+						Text:        "Принять формальное приглашение",
+						Description: "Получить официальное приглашение от семьи",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -1962,9 +1962,9 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "join_spontaneous",
-						Text:           "Присоединиться спонтанно",
-						Description:    "Услышать о мероприятии и присоединиться",
+						ID:          "join_spontaneous",
+						Text:        "Присоединиться спонтанно",
+						Description: "Услышать о мероприятии и присоединиться",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -1996,9 +1996,9 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 				Context:     "Ключевой момент - правильная подготовка огня",
 				Choices: []models.Choice{
 					{
-						ID:             "arrange_coals",
-						Text:           "Уложить угли правильно",
-						Description:    "Создать идеальный жар для разных типов мяса",
+						ID:          "arrange_coals",
+						Text:        "Уложить угли правильно",
+						Description: "Создать идеальный жар для разных типов мяса",
 						Consequences: []models.Consequence{
 							{
 								Type:        "skill_boost",
@@ -2019,9 +2019,9 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "learn_fire_technique",
-						Text:           "Изучить технику огня",
-						Description:    "Освоить традиционные методы разжигания огня",
+						ID:          "learn_fire_technique",
+						Text:        "Изучить технику огня",
+						Description: "Освоить традиционные методы разжигания огня",
 						Consequences: []models.Consequence{
 							{
 								Type:        "skill_boost",
@@ -2053,9 +2053,9 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 				Context:     "Сердце асадо - правильный выбор мяса",
 				Choices: []models.Choice{
 					{
-						ID:             "select_premium",
-						Text:           "Выбрать премиум куски",
-						Description:    "Отобрать лучшие стейки и колбаски",
+						ID:          "select_premium",
+						Text:        "Выбрать премиум куски",
+						Description: "Отобрать лучшие стейки и колбаски",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2076,9 +2076,9 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "prepare_traditional",
-						Text:           "Подготовить традиционно",
-						Description:    "Нарезать и замариновать мясо по традициям",
+						ID:          "prepare_traditional",
+						Text:        "Подготовить традиционно",
+						Description: "Нарезать и замариновать мясо по традициям",
 						Consequences: []models.Consequence{
 							{
 								Type:        "skill_boost",
@@ -2110,9 +2110,9 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 				Context:     "Вино - обязательный элемент настоящего асадо",
 				Choices: []models.Choice{
 					{
-						ID:             "serve_malbec",
-						Text:           "Подать Мальбек",
-						Description:    "Выбрать и разлить идеальное аргентинское вино",
+						ID:          "serve_malbec",
+						Text:        "Подать Мальбек",
+						Description: "Выбрать и разлить идеальное аргентинское вино",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2133,9 +2133,9 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "prepare_chimichurri",
-						Text:           "Приготовить чиммичурри",
-						Description:    "Сделать традиционный аргентинский соус",
+						ID:          "prepare_chimichurri",
+						Text:        "Приготовить чиммичурри",
+						Description: "Сделать традиционный аргентинский соус",
 						Consequences: []models.Consequence{
 							{
 								Type:        "skill_boost",
@@ -2167,9 +2167,9 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 				Context:     "Кульминация асадо - укрепление социальных связей",
 				Choices: []models.Choice{
 					{
-						ID:             "share_stories",
-						Text:           "Делиться историями",
-						Description:    "Рассказать о своих приключениях и выслушать других",
+						ID:          "share_stories",
+						Text:        "Делиться историями",
+						Description: "Рассказать о своих приключениях и выслушать других",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2190,9 +2190,9 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "learn_traditions",
-						Text:           "Изучить традиции",
-						Description:    "Узнать больше об истории и культуре асадо",
+						ID:          "learn_traditions",
+						Text:        "Изучить традиции",
+						Description: "Узнать больше об истории и культуре асадо",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2219,9 +2219,9 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 		},
 		EndingVariations: []models.EndingVariation{
 			{
-				ID:          "asado_master",
-				Title:       "Мастер Асадо",
-				Description: "Стали настоящим экспертом в аргентинском барбекю",
+				ID:           "asado_master",
+				Title:        "Мастер Асадо",
+				Description:  "Стали настоящим экспертом в аргентинском барбекю",
 				Requirements: []string{"arrange_coals", "prepare_traditional", "prepare_chimichurri", "share_stories"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 2000},
@@ -2231,9 +2231,9 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 				Narrative: "Вы стали частью великой традиции асадо, где мясо, вино и дружба создают настоящую магию.",
 			},
 			{
-				ID:          "social_connector",
-				Title:       "Социальный коннектор",
-				Description: "Укрепили связи и создали новые дружбы",
+				ID:           "social_connector",
+				Title:        "Социальный коннектор",
+				Description:  "Укрепили связи и создали новые дружбы",
 				Requirements: []string{"join_spontaneous", "select_premium", "serve_malbec", "share_stories"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 1800},
@@ -2243,9 +2243,9 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 				Narrative: "Асадо стало мостом между культурами, а вы - тем, кто помогает людям находить общий язык.",
 			},
 			{
-				ID:          "cultural_enthusiast",
-				Title:       "Культурный энтузиаст",
-				Description: "Глубоко прониклись аргентинскими традициями",
+				ID:           "cultural_enthusiast",
+				Title:        "Культурный энтузиаст",
+				Description:  "Глубоко прониклись аргентинскими традициями",
 				Requirements: []string{"learn_fire_technique", "prepare_traditional", "learn_traditions"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 1600},
@@ -2276,10 +2276,10 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Buenos Aires Backyard, Argentina",
-			TimePeriod:  "2020-2029",
-			Weather:     "warm summer evening with gentle breeze",
-			Situation:   "The sacred tradition of asado calls you to join the gathering of family and friends around the parrilla",
+			Location:   "Buenos Aires Backyard, Argentina",
+			TimePeriod: "2020-2029",
+			Weather:    "warm summer evening with gentle breeze",
+			Situation:  "The sacred tradition of asado calls you to join the gathering of family and friends around the parrilla",
 			Objectives: []string{
 				"Receive invitation and prepare ingredients for the traditional barbecue",
 				"Help the parrillero set up the grill and control cooking temperatures",
@@ -2331,15 +2331,15 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 	s.logger.Info("Retrieving Recoleta Cemetery quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "canon-quest-buenos-aires-2029-004-recoleta",
-		Title:            "Буэнос-Айрес: Кладбище Реколета",
-		Description:      "Исследуйте 'город мёртвых' - кладбище Реколета с более чем 6400 мавзолеями, узнайте о культурном наследии Эвиты Перон и познакомьтесь с кошачьими хранителями.",
-		QuestType:        "side",
-		MinLevel:         1,
-		MaxLevel:         0, // No max level
+		QuestID:           "canon-quest-buenos-aires-2029-004-recoleta",
+		Title:             "Буэнос-Айрес: Кладбище Реколета",
+		Description:       "Исследуйте 'город мёртвых' - кладбище Реколета с более чем 6400 мавзолеями, узнайте о культурном наследии Эвиты Перон и познакомьтесь с кошачьими хранителями.",
+		QuestType:         "side",
+		MinLevel:          1,
+		MaxLevel:          0, // No max level
 		EstimatedDuration: 90,
-		Difficulty:       "easy",
-		Themes:           []string{"heritage", "memorial", "architecture", "cultural"},
+		Difficulty:        "easy",
+		Themes:            []string{"heritage", "memorial", "architecture", "cultural"},
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "cemetery_entrance",
@@ -2349,9 +2349,9 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 				Context:     "Вы стоите у входа на кладбище Реколета, одного из самых красивых кладбищ мира.",
 				Choices: []models.Choice{
 					{
-						ID:             "respectful_entrance",
-						Text:           "Войти с уважением и почтением",
-						Description:    "Показать уважение к месту упокоения",
+						ID:          "respectful_entrance",
+						Text:        "Войти с уважением и почтением",
+						Description: "Показать уважение к месту упокоения",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2373,9 +2373,9 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "curious_entrance",
-						Text:           "Войти с любопытством и интересом",
-						Description:    "Показать искренний интерес к истории",
+						ID:          "curious_entrance",
+						Text:        "Войти с любопытством и интересом",
+						Description: "Показать искренний интерес к истории",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2408,9 +2408,9 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 				Context:     "Вы гуляете среди величественных мраморных мавзолеев, каждый из которых рассказывает историю семьи.",
 				Choices: []models.Choice{
 					{
-						ID:             "read_inscriptions",
-						Text:           "Читать надписи и изучать истории семей",
-						Description:    "Узнать о людях, чьи жизни запечатлены здесь",
+						ID:          "read_inscriptions",
+						Text:        "Читать надписи и изучать истории семей",
+						Description: "Узнать о людях, чьи жизни запечатлены здесь",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2432,9 +2432,9 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "admire_architecture",
-						Text:           "Восхищаться архитектурой и искусством",
-						Description:    "Оценить красоту и мастерство скульпторов",
+						ID:          "admire_architecture",
+						Text:        "Восхищаться архитектурой и искусством",
+						Description: "Оценить красоту и мастерство скульпторов",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2467,9 +2467,9 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 				Context:     "Вы нашли гробницу Эвиты Перон - самой посещаемой на кладбище. Здесь стоит хранитель памяти.",
 				Choices: []models.Choice{
 					{
-						ID:             "pay_respects",
-						Text:           "Почтить память и выразить уважение",
-						Description:    "Показать глубокое уважение к исторической фигуре",
+						ID:          "pay_respects",
+						Text:        "Почтить память и выразить уважение",
+						Description: "Показать глубокое уважение к исторической фигуре",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2491,9 +2491,9 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "learn_history",
-						Text:           "Узнать о ее жизни и наследии",
-						Description:    "Поговорить с хранителем о истории Эвиты",
+						ID:          "learn_history",
+						Text:        "Узнать о ее жизни и наследии",
+						Description: "Поговорить с хранителем о истории Эвиты",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2526,9 +2526,9 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 				Context:     "На узких улицах склепов вы встречаете кошек, которые считаются хранителями кладбища.",
 				Choices: []models.Choice{
 					{
-						ID:             "befriend_cats",
-						Text:           "Подружиться с кошками",
-						Description:    "Показать доброту и уважение к местным традициям",
+						ID:          "befriend_cats",
+						Text:        "Подружиться с кошками",
+						Description: "Показать доброту и уважение к местным традициям",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2550,9 +2550,9 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "observe_tradition",
-						Text:           "Наблюдать за традицией кошачьей охраны",
-						Description:    "Изучить роль кошек в истории кладбища",
+						ID:          "observe_tradition",
+						Text:        "Наблюдать за традицией кошачьей охраны",
+						Description: "Изучить роль кошек в истории кладбища",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2585,9 +2585,9 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 				Context:     "Вы завершаете экскурсию по кладбищу Реколета и можете выполнить мини-ритуал памяти.",
 				Choices: []models.Choice{
 					{
-						ID:             "reflect_quietly",
-						Text:           "Размышлять в тишине о бренности жизни",
-						Description:    "Найти момент для личных размышлений",
+						ID:          "reflect_quietly",
+						Text:        "Размышлять в тишине о бренности жизни",
+						Description: "Найти момент для личных размышлений",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2609,9 +2609,9 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "leave_respectful",
-						Text:           "Уйти с уважением к этому месту",
-						Description:    "Показать полное уважение к традиции",
+						ID:          "leave_respectful",
+						Text:        "Уйти с уважением к этому месту",
+						Description: "Показать полное уважение к традиции",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2639,9 +2639,9 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 		},
 		EndingVariations: []models.EndingVariation{
 			{
-				ID:          "heritage_guardian",
-				Title:       "Хранитель Наследия",
-				Description: "Вы глубоко прониклись уважением к истории и культурному наследию кладбища Реколета.",
+				ID:           "heritage_guardian",
+				Title:        "Хранитель Наследия",
+				Description:  "Вы глубоко прониклись уважением к истории и культурному наследию кладбища Реколета.",
 				Requirements: []string{"respectful_entrance", "read_inscriptions", "pay_respects", "befriend_cats", "reflect_quietly"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 1500},
@@ -2651,9 +2651,9 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 				Narrative: "Реколета стала частью вашей души. Вы чувствуете связь с поколениями, которые нашли здесь свой последний приют.",
 			},
 			{
-				ID:          "cultural_explorer",
-				Title:       "Культурный Исследователь",
-				Description: "Вы изучили архитектуру, историю и традиции кладбища Реколета.",
+				ID:           "cultural_explorer",
+				Title:        "Культурный Исследователь",
+				Description:  "Вы изучили архитектуру, историю и традиции кладбища Реколета.",
 				Requirements: []string{"curious_entrance", "admire_architecture", "learn_history", "observe_tradition", "leave_respectful"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 1400},
@@ -2663,9 +2663,9 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 				Narrative: "Вы уносите с собой не только фотографии, но и глубокое понимание культурного значения этого уникального места.",
 			},
 			{
-				ID:          "memory_keeper",
-				Title:       "Хранитель Памяти",
-				Description: "Вы нашли особое значение в ритуалах памяти и уважении к прошлому.",
+				ID:           "memory_keeper",
+				Title:        "Хранитель Памяти",
+				Description:  "Вы нашли особое значение в ритуалах памяти и уважении к прошлому.",
 				Requirements: []string{"respectful_entrance", "pay_respects", "befriend_cats", "reflect_quietly"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 1450},
@@ -2690,10 +2690,10 @@ func (s *Service) GetRecoletaCemeteryQuest(ctx context.Context) (*models.Dynamic
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Recoleta Cemetery, Buenos Aires, Argentina",
-			TimePeriod:  "2020-2029",
-			Weather:     "calm, reflective atmosphere",
-			Situation:   "Explore the 'City of the Dead' - Recoleta Cemetery with over 6400 mausoleums, learn about Evita Peron's cultural heritage and meet the feline guardians.",
+			Location:   "Recoleta Cemetery, Buenos Aires, Argentina",
+			TimePeriod: "2020-2029",
+			Weather:    "calm, reflective atmosphere",
+			Situation:  "Explore the 'City of the Dead' - Recoleta Cemetery with over 6400 mausoleums, learn about Evita Peron's cultural heritage and meet the feline guardians.",
 			Objectives: []string{
 				"Enter Recoleta Cemetery and get a route map",
 				"Examine marble mausoleums and learn about family histories",
@@ -2737,15 +2737,15 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 	s.logger.Info("Retrieving Paris of the South quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "canon-quest-paris-of-the-south-buenos-aires-2020-2029",
-		Title:            "Буэнос-Айрес: Париж Южной Америки",
-		Description:      "Буэнос-Айрес, известный как 'Париж Южной Америки', находится под угрозой глобальной стандартизации. Корпорации сносят исторические здания belle epoque, заменяют европейские кафе на азиатские фастфуды. Сохраните уникальное сочетание европейской элегантности и латиноамериканской страсти.",
-		QuestType:        "narrative_side",
-		MinLevel:         20,
-		MaxLevel:         0, // No max level
+		QuestID:           "canon-quest-paris-of-the-south-buenos-aires-2020-2029",
+		Title:             "Буэнос-Айрес: Париж Южной Америки",
+		Description:       "Буэнос-Айрес, известный как 'Париж Южной Америки', находится под угрозой глобальной стандартизации. Корпорации сносят исторические здания belle epoque, заменяют европейские кафе на азиатские фастфуды. Сохраните уникальное сочетание европейской элегантности и латиноамериканской страсти.",
+		QuestType:         "narrative_side",
+		MinLevel:          20,
+		MaxLevel:          0, // No max level
 		EstimatedDuration: 360,
-		Difficulty:       "hard",
-		Themes:           []string{"cultural_preservation", "resistance", "heritage", "globalization", "identity"},
+		Difficulty:        "hard",
+		Themes:            []string{"cultural_preservation", "resistance", "heritage", "globalization", "identity"},
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "investigate_corporate_threat",
@@ -2755,9 +2755,9 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 				Context:     "Вы узнаете о планах корпораций снести исторический квартал Recoleta и заменить его на азиатский торговый комплекс.",
 				Choices: []models.Choice{
 					{
-						ID:             "gather_evidence",
-						Text:           "Собрать доказательства культурной ценности",
-						Description:    "Документировать историческую и архитектурную ценность зданий",
+						ID:          "gather_evidence",
+						Text:        "Собрать доказательства культурной ценности",
+						Description: "Документировать историческую и архитектурную ценность зданий",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2779,9 +2779,9 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "contact_locals",
-						Text:           "Связаться с местными жителями",
-						Description:    "Найти людей, которые помнят старую Европу",
+						ID:          "contact_locals",
+						Text:        "Связаться с местными жителями",
+						Description: "Найти людей, которые помнят старую Европу",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2814,9 +2814,9 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 				Context:     "Вы нашли несколько людей, готовых бороться за сохранение европейской идентичности Буэнос-Айреса.",
 				Choices: []models.Choice{
 					{
-						ID:             "architectural_experts",
-						Text:           "Привлечь архитекторов и историков",
-						Description:    "Собрать команду профессионалов для защиты зданий",
+						ID:          "architectural_experts",
+						Text:        "Привлечь архитекторов и историков",
+						Description: "Собрать команду профессионалов для защиты зданий",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2838,9 +2838,9 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "cultural_activists",
-						Text:           "Организовать культурных активистов",
-						Description:    "Собрать художников, музыкантов и артистов",
+						ID:          "cultural_activists",
+						Text:        "Организовать культурных активистов",
+						Description: "Собрать художников, музыкантов и артистов",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2873,9 +2873,9 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 				Context:     "Корпорация начинает демонтаж исторического здания в стиле belle epoque. Ваша группа готова действовать.",
 				Choices: []models.Choice{
 					{
-						ID:             "legal_protest",
-						Text:           "Организовать юридический протест",
-						Description:    "Подать иски и собрать юридические доказательства",
+						ID:          "legal_protest",
+						Text:        "Организовать юридический протест",
+						Description: "Подать иски и собрать юридические доказательства",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2897,9 +2897,9 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "public_campaign",
-						Text:           "Запустить общественную кампанию",
-						Description:    "Организовать митинги и медиа-кампанию",
+						ID:          "public_campaign",
+						Text:        "Запустить общественную кампанию",
+						Description: "Организовать митинги и медиа-кампанию",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2932,9 +2932,9 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 				Context:     "Здание спасено, но нужно показать жителям ценность европейского наследия.",
 				Choices: []models.Choice{
 					{
-						ID:             "underground_cafes",
-						Text:           "Организовать подпольные кафе",
-						Description:    "Создать тайные места с европейской атмосферой",
+						ID:          "underground_cafes",
+						Text:        "Организовать подпольные кафе",
+						Description: "Создать тайные места с европейской атмосферой",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2956,9 +2956,9 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "art_exhibitions",
-						Text:           "Устроить художественные выставки",
-						Description:    "Показать европейское искусство и архитектуру",
+						ID:          "art_exhibitions",
+						Text:        "Устроить художественные выставки",
+						Description: "Показать европейское искусство и архитектуру",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -2991,9 +2991,9 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 				Context:     "Корпорации готовят финальную атаку на европейскую идентичность города. Все зависит от вашего решения.",
 				Choices: []models.Choice{
 					{
-						ID:             "symbolic_restoration",
-						Text:           "Символическое восстановление",
-						Description:    "Восстановить ключевые элементы европейской архитектуры",
+						ID:          "symbolic_restoration",
+						Text:        "Символическое восстановление",
+						Description: "Восстановить ключевые элементы европейской архитектуры",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -3015,9 +3015,9 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "cultural_manifesto",
-						Text:           "Культурный манифест",
-						Description:    "Опубликовать манифест о важности культурного разнообразия",
+						ID:          "cultural_manifesto",
+						Text:        "Культурный манифест",
+						Description: "Опубликовать манифест о важности культурного разнообразия",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -3045,9 +3045,9 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 		},
 		EndingVariations: []models.EndingVariation{
 			{
-				ID:          "cultural_victory",
-				Title:       "Культурная победа",
-				Description: "Вы успешно защитили европейскую идентичность Буэнос-Айреса от глобальной стандартизации.",
+				ID:           "cultural_victory",
+				Title:        "Культурная победа",
+				Description:  "Вы успешно защитили европейскую идентичность Буэнос-Айреса от глобальной стандартизации.",
 				Requirements: []string{"gather_evidence", "architectural_experts", "legal_protest", "underground_cafes", "symbolic_restoration"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 24000},
@@ -3060,9 +3060,9 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 				Narrative: "Буэнос-Айрес сохранил свою уникальную идентичность 'Парижа Южной Америки'. Европейская элегантность и латиноамериканская страсть продолжают жить в гармонии.",
 			},
 			{
-				ID:          "resistance_legend",
-				Title:       "Легенда сопротивления",
-				Description: "Ваша борьба стала символом сопротивления глобализации и вдохновила другие города.",
+				ID:           "resistance_legend",
+				Title:        "Легенда сопротивления",
+				Description:  "Ваша борьба стала символом сопротивления глобализации и вдохновила другие города.",
 				Requirements: []string{"contact_locals", "cultural_activists", "public_campaign", "art_exhibitions", "cultural_manifesto"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 22000},
@@ -3074,9 +3074,9 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 				Narrative: "Ваша история борьбы за культурное разнообразие стала легендой. Города по всему миру берут пример с Буэнос-Айреса.",
 			},
 			{
-				ID:          "balanced_compromise",
-				Title:       "Сбалансированный компромисс",
-				Description: "Вы нашли баланс между сохранением наследия и необходимостью прогресса.",
+				ID:           "balanced_compromise",
+				Title:        "Сбалансированный компромисс",
+				Description:  "Вы нашли баланс между сохранением наследия и необходимостью прогресса.",
 				Requirements: []string{"gather_evidence", "cultural_activists", "public_campaign", "art_exhibitions", "symbolic_restoration"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 20000},
@@ -3121,10 +3121,10 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Buenos Aires, Argentina - Historic Districts",
-			TimePeriod:  "2020-2029",
-			Weather:     "variable, symbolic of cultural change",
-			Situation:   "Defend the European cultural heritage of Buenos Aires against corporate globalization and standardization.",
+			Location:   "Buenos Aires, Argentina - Historic Districts",
+			TimePeriod: "2020-2029",
+			Weather:    "variable, symbolic of cultural change",
+			Situation:  "Defend the European cultural heritage of Buenos Aires against corporate globalization and standardization.",
 			Objectives: []string{
 				"Document cultural heritage value of historic buildings",
 				"Unite heritage defenders and cultural activists",
@@ -3138,28 +3138,28 @@ func (s *Service) GetParisOfTheSouthQuest(ctx context.Context) (*models.DynamicQ
 				ID:          "architect_elena",
 				Name:        "Элена 'Архитектор' Мендоса",
 				Role:        "Историк архитектуры",
-				Description:    "Эксперт по зданиям belle epoque, страстный защитник европейского наследия",
+				Description: "Эксперт по зданиям belle epoque, страстный защитник европейского наследия",
 				Importance:  "primary",
 			},
 			{
 				ID:          "cultural_activist_carlos",
 				Name:        "Карлос 'Культурный Воин' Родригес",
 				Role:        "Культурный активист",
-				Description:    "Организатор подпольных культурных мероприятий, борец с глобализацией",
+				Description: "Организатор подпольных культурных мероприятий, борец с глобализацией",
 				Importance:  "secondary",
 			},
 			{
 				ID:          "corporate_rep_sarah",
 				Name:        "Сара 'Корпоративный Разработчик' Чен",
 				Role:        "Корпоративный представитель",
-				Description:    "Представитель азиатской корпорации, продвигающей стандартизацию",
+				Description: "Представитель азиатской корпорации, продвигающей стандартизацию",
 				Importance:  "antagonist",
 			},
 			{
 				ID:          "elderly_resident_maria",
 				Name:        "Донья Мария Вальдес",
 				Role:        "Старожил квартала",
-				Description:    "Пожилая женщина, помнящая довоенный Буэнос-Айрес и европейские традиции",
+				Description: "Пожилая женщина, помнящая довоенный Буэнос-Айрес и европейские традиции",
 				Importance:  "ally",
 			},
 		},
@@ -3175,15 +3175,15 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 	s.logger.Info("Retrieving Economic Crisis quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "canon-quest-economic-crisis-buenos-aires-2020-2029",
-		Title:            "Буэнос-Айрес: Экономический Кризис",
-		Description:      "В 2020-х годах корпорации установили тотальный контроль над экономикой Аргентины. Все транзакции проходят через импланты, инфляция манипулируется искусственно, а независимые предприниматели преследуются как 'экономические террористы'. Создайте альтернативную экономику, основанную на доверии и сообществе.",
-		QuestType:        "narrative_side",
-		MinLevel:         25,
-		MaxLevel:         0, // No max level
+		QuestID:           "canon-quest-economic-crisis-buenos-aires-2020-2029",
+		Title:             "Буэнос-Айрес: Экономический Кризис",
+		Description:       "В 2020-х годах корпорации установили тотальный контроль над экономикой Аргентины. Все транзакции проходят через импланты, инфляция манипулируется искусственно, а независимые предприниматели преследуются как 'экономические террористы'. Создайте альтернативную экономику, основанную на доверии и сообществе.",
+		QuestType:         "narrative_side",
+		MinLevel:          25,
+		MaxLevel:          0, // No max level
 		EstimatedDuration: 480,
-		Difficulty:       "legendary",
-		Themes:           []string{"economic_freedom", "corporate_control", "trust_economy", "resistance", "community"},
+		Difficulty:        "legendary",
+		Themes:            []string{"economic_freedom", "corporate_control", "trust_economy", "resistance", "community"},
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "investigate_corporate_control",
@@ -3193,9 +3193,9 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 				Context:     "Вы узнаете, что корпорации контролируют всю экономику через импланты и манипулируют инфляцией. Независимые предприниматели исчезают один за другим.",
 				Choices: []models.Choice{
 					{
-						ID:             "hack_corporate_systems",
-						Text:           "Взломать корпоративные системы",
-						Description:    "Получить доказательства манипуляций с внутренней стороны",
+						ID:          "hack_corporate_systems",
+						Text:        "Взломать корпоративные системы",
+						Description: "Получить доказательства манипуляций с внутренней стороны",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -3217,9 +3217,9 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 						MoralAlignment: "chaotic",
 					},
 					{
-						ID:             "interview_business_owners",
-						Text:           "Опросить пострадавших предпринимателей",
-						Description:    "Собрать свидетельства от жертв корпоративного контроля",
+						ID:          "interview_business_owners",
+						Text:        "Опросить пострадавших предпринимателей",
+						Description: "Собрать свидетельства от жертв корпоративного контроля",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -3252,9 +3252,9 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 				Context:     "Вы нашли несколько выживших независимых бизнесменов. Они готовы бороться, но боятся репрессий корпораций.",
 				Choices: []models.Choice{
 					{
-						ID:             "create_secret_alliance",
-						Text:           "Создать тайный альянс предпринимателей",
-						Description:    "Объединить бизнесменов в подпольную организацию",
+						ID:          "create_secret_alliance",
+						Text:        "Создать тайный альянс предпринимателей",
+						Description: "Объединить бизнесменов в подпольную организацию",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -3276,9 +3276,9 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "establish_community_trust",
-						Text:           "Установить систему доверия сообщества",
-						Description:    "Создать альтернативную экономику на основе взаимного доверия",
+						ID:          "establish_community_trust",
+						Text:        "Установить систему доверия сообщества",
+						Description: "Создать альтернативную экономику на основе взаимного доверия",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -3311,9 +3311,9 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 				Context:     "Ваша сеть растет, но для торговли нужна валюта, не зависящая от корпоративных имплантов.",
 				Choices: []models.Choice{
 					{
-						ID:             "digital_trust_tokens",
-						Text:           "Создать цифровые токены доверия",
-						Description:    "Ввести криптовалюту, основанную на репутации в сообществе",
+						ID:          "digital_trust_tokens",
+						Text:        "Создать цифровые токены доверия",
+						Description: "Ввести криптовалюту, основанную на репутации в сообществе",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -3335,9 +3335,9 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "barter_system",
-						Text:           "Восстановить систему бартера",
-						Description:    "Вернуться к прямому обмену товарами и услугами",
+						ID:          "barter_system",
+						Text:        "Восстановить систему бартера",
+						Description: "Вернуться к прямому обмену товарами и услугами",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -3370,9 +3370,9 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 				Context:     "Альтернативная валюта работает. Теперь нужно создать места, где люди могут торговать свободно.",
 				Choices: []models.Choice{
 					{
-						ID:             "mobile_trading_networks",
-						Text:           "Создать мобильные торговые сети",
-						Description:    "Организовать передвижные рынки, которые трудно отследить",
+						ID:          "mobile_trading_networks",
+						Text:        "Создать мобильные торговые сети",
+						Description: "Организовать передвижные рынки, которые трудно отследить",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -3394,9 +3394,9 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 						MoralAlignment: "chaotic",
 					},
 					{
-						ID:             "community_cooperatives",
-						Text:           "Организовать кооперативы сообщества",
-						Description:    "Создать коллективные предприятия с совместным владением",
+						ID:          "community_cooperatives",
+						Text:        "Организовать кооперативы сообщества",
+						Description: "Создать коллективные предприятия с совместным владением",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -3429,9 +3429,9 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 				Context:     "Корпорации знают о вашем движении и готовят финальный удар. Все зависит от вашей стратегии.",
 				Choices: []models.Choice{
 					{
-						ID:             "public_expose",
-						Text:           "Общественное разоблачение",
-						Description:    "Опубликовать все доказательства корпоративных преступлений",
+						ID:          "public_expose",
+						Text:        "Общественное разоблачение",
+						Description: "Опубликовать все доказательства корпоративных преступлений",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -3453,9 +3453,9 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "peaceful_transition",
-						Text:           "Мирный переход",
-						Description:    "Предложить корпорациям компромисс и совместное развитие",
+						ID:          "peaceful_transition",
+						Text:        "Мирный переход",
+						Description: "Предложить корпорациям компромисс и совместное развитие",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -3483,9 +3483,9 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 		},
 		EndingVariations: []models.EndingVariation{
 			{
-				ID:          "economic_revolution_success",
-				Title:       "Экономическая Революция",
-				Description: "Вы успешно создали альтернативную экономику и свергли корпоративный контроль над финансами Аргентины.",
+				ID:           "economic_revolution_success",
+				Title:        "Экономическая Революция",
+				Description:  "Вы успешно создали альтернативную экономику и свергли корпоративный контроль над финансами Аргентины.",
 				Requirements: []string{"hack_corporate_systems", "create_secret_alliance", "digital_trust_tokens", "mobile_trading_networks", "public_expose"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 32000},
@@ -3498,9 +3498,9 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 				Narrative: "Ваша революция изменила лицо аргентинской экономики. Теперь люди торгуют на основе доверия, а не корпоративного контроля.",
 			},
 			{
-				ID:          "trust_based_economy",
-				Title:       "Экономика Доверия",
-				Description: "Вы создали устойчивую экономику, основанную на взаимном доверии и традиционных ценностях.",
+				ID:           "trust_based_economy",
+				Title:        "Экономика Доверия",
+				Description:  "Вы создали устойчивую экономику, основанную на взаимном доверии и традиционных ценностях.",
 				Requirements: []string{"interview_business_owners", "establish_community_trust", "barter_system", "community_cooperatives", "peaceful_transition"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 30000},
@@ -3512,9 +3512,9 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 				Narrative: "Ваша экономика доверия стала моделью для других городов. Корпорации вынуждены считаться с силой сообщества.",
 			},
 			{
-				ID:          "hybrid_economic_system",
-				Title:       "Гибридная Экономическая Система",
-				Description: "Вы нашли баланс между корпоративным контролем и альтернативной экономикой.",
+				ID:           "hybrid_economic_system",
+				Title:        "Гибридная Экономическая Система",
+				Description:  "Вы нашли баланс между корпоративным контролем и альтернативной экономикой.",
 				Requirements: []string{"hack_corporate_systems", "establish_community_trust", "digital_trust_tokens", "community_cooperatives", "peaceful_transition"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 28000},
@@ -3559,10 +3559,10 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Buenos Aires, Argentina - Economic Underground",
-			TimePeriod:  "2020-2029",
-			Weather:     "tense, economically unstable atmosphere",
-			Situation:   "Fight against corporate economic control and create an alternative economy based on community trust.",
+			Location:   "Buenos Aires, Argentina - Economic Underground",
+			TimePeriod: "2020-2029",
+			Weather:    "tense, economically unstable atmosphere",
+			Situation:  "Fight against corporate economic control and create an alternative economy based on community trust.",
 			Objectives: []string{
 				"Investigate corporate economic control mechanisms",
 				"Gather independent business owners and artisans",
@@ -3576,28 +3576,28 @@ func (s *Service) GetEconomicCrisisQuest(ctx context.Context) (*models.DynamicQu
 				ID:          "business_owner_maria",
 				Name:        "Мария 'Независимая' Гонсалес",
 				Role:        "Владелица семейного магазина",
-				Description:    "Последняя независимая предпринимательница в районе, потеряла бизнес из-за корпоративных репрессий",
+				Description: "Последняя независимая предпринимательница в районе, потеряла бизнес из-за корпоративных репрессий",
 				Importance:  "primary",
 			},
 			{
 				ID:          "corporate_economist_sarah",
 				Name:        "Сара 'Корпоративная' Чен",
 				Role:        "Экономический аналитик корпорации",
-				Description:    "Представитель корпорации, отвечающая за контроль над местной экономикой",
+				Description: "Представитель корпорации, отвечающая за контроль над местной экономикой",
 				Importance:  "antagonist",
 			},
 			{
 				ID:          "trust_economist_carlos",
 				Name:        "Карлос 'Доверие' Родригес",
 				Role:        "Экономист альтернативных систем",
-				Description:    "Эксперт по экономике доверия и бартерным системам",
+				Description: "Эксперт по экономике доверия и бартерным системам",
 				Importance:  "secondary",
 			},
 			{
 				ID:          "underground_trader_ana",
 				Name:        "Ана 'Подпольная' Фернандес",
 				Role:        "Координатор подпольной торговли",
-				Description:    "Опытный торговец, знающий все тайные рынки города",
+				Description: "Опытный торговец, знающий все тайные рынки города",
 				Importance:  "ally",
 			},
 		},
@@ -3612,16 +3612,16 @@ func (s *Service) GetRedWingsHockeyQuest(ctx context.Context) (*models.DynamicQu
 	s.logger.Info("Retrieving Red Wings Hockey quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "red-wings-hockey-detroit-2020-2029",
-		Title:            "Хоккей Ред Уингс",
-		Description:      "Восстановить славу команды Детройт Ред Уингс",
-		QuestType:        "narrative_side",
-		MinLevel:         14,
-		MaxLevel:         22,
+		QuestID:           "red-wings-hockey-detroit-2020-2029",
+		Title:             "Хоккей Ред Уингс",
+		Description:       "Восстановить славу команды Детройт Ред Уингс",
+		QuestType:         "narrative_side",
+		MinLevel:          14,
+		MaxLevel:          22,
 		EstimatedDuration: 75,
-		Difficulty:       "hard",
-		Themes:           []string{"sports_revitalization", "team_building", "corporate_sports", "detroit_pride"},
-		Status:           "active",
+		Difficulty:        "hard",
+		Themes:            []string{"sports_revitalization", "team_building", "corporate_sports", "detroit_pride"},
+		Status:            "active",
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "team_recruitment",
@@ -3662,10 +3662,10 @@ func (s *Service) GetRedWingsHockeyQuest(ctx context.Context) (*models.DynamicQu
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Detroit, Joe Louis Arena",
-			TimePeriod:  "2020-2029",
-			Weather:     "indoor arena, electric atmosphere",
-			Situation:   "The legendary Red Wings franchise needs revival in a changed Detroit",
+			Location:   "Detroit, Joe Louis Arena",
+			TimePeriod: "2020-2029",
+			Weather:    "indoor arena, electric atmosphere",
+			Situation:  "The legendary Red Wings franchise needs revival in a changed Detroit",
 			Objectives: []string{
 				"Assemble a competitive hockey team",
 				"Restore Joe Louis Arena",
@@ -3695,16 +3695,16 @@ func (s *Service) GetRevivalHopeQuest(ctx context.Context) (*models.DynamicQuest
 	s.logger.Info("Retrieving Revival and Hope quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "revival-hope-detroit-2020-2029",
-		Title:            "Возрождение и надежда",
-		Description:      "Стать катализатором возрождения Детройта",
-		QuestType:        "narrative_main",
-		MinLevel:         16,
-		MaxLevel:         25,
+		QuestID:           "revival-hope-detroit-2020-2029",
+		Title:             "Возрождение и надежда",
+		Description:       "Стать катализатором возрождения Детройта",
+		QuestType:         "narrative_main",
+		MinLevel:          16,
+		MaxLevel:          25,
 		EstimatedDuration: 90,
-		Difficulty:       "legendary",
-		Themes:           []string{"urban_revitalization", "community_leadership", "hope_vs_despair", "detroit_future"},
-		Status:           "active",
+		Difficulty:        "legendary",
+		Themes:            []string{"urban_revitalization", "community_leadership", "hope_vs_despair", "detroit_future"},
+		Status:            "active",
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "revival_approach",
@@ -3745,10 +3745,10 @@ func (s *Service) GetRevivalHopeQuest(ctx context.Context) (*models.DynamicQuest
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Detroit, Multiple Districts",
-			TimePeriod:  "2020-2029",
-			Weather:     "symbolic of the city's changing fortunes",
-			Situation:   "Detroit stands at the crossroads of despair and hope",
+			Location:   "Detroit, Multiple Districts",
+			TimePeriod: "2020-2029",
+			Weather:    "symbolic of the city's changing fortunes",
+			Situation:  "Detroit stands at the crossroads of despair and hope",
 			Objectives: []string{
 				"Lead community revitalization projects",
 				"Combat corporate exploitation",
@@ -3780,16 +3780,16 @@ func (s *Service) GetDeepDishPizzaQuest(ctx context.Context) (*models.DynamicQue
 	s.logger.Info("Retrieving Deep Dish Pizza quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "deep-dish-pizza-chicago-2020-2029",
-		Title:            "Глубокая пицца",
-		Description:      "Сохранить традиции чикагской глубокой пиццы и противостоять корпоративной стандартизации",
-		QuestType:        "narrative_side",
-		MinLevel:         9,
-		MaxLevel:         18,
+		QuestID:           "deep-dish-pizza-chicago-2020-2029",
+		Title:             "Глубокая пицца",
+		Description:       "Сохранить традиции чикагской глубокой пиццы и противостоять корпоративной стандартизации",
+		QuestType:         "narrative_side",
+		MinLevel:          9,
+		MaxLevel:          18,
 		EstimatedDuration: 60,
-		Difficulty:       "medium",
-		Themes:           []string{"culinary_tradition", "corporate_resistance", "chicago_pride", "food_culture", "artisanal_craftsmanship"},
-		Status:           "active",
+		Difficulty:        "medium",
+		Themes:            []string{"culinary_tradition", "corporate_resistance", "chicago_pride", "food_culture", "artisanal_craftsmanship"},
+		Status:            "active",
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "recipe_search",
@@ -3902,10 +3902,10 @@ func (s *Service) GetDeepDishPizzaQuest(ctx context.Context) (*models.DynamicQue
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Chicago, Various Neighborhoods",
-			TimePeriod:  "2020-2029",
-			Weather:     "classic Chicago winter with occasional warm spells",
-			Situation:   "The deep dish pizza, Chicago's culinary crown jewel, faces extinction at the hands of corporate standardization",
+			Location:   "Chicago, Various Neighborhoods",
+			TimePeriod: "2020-2029",
+			Weather:    "classic Chicago winter with occasional warm spells",
+			Situation:  "The deep dish pizza, Chicago's culinary crown jewel, faces extinction at the hands of corporate standardization",
 			Objectives: []string{
 				"Find legendary pizzaiolos of Chicago",
 				"Gather authentic family recipes",
@@ -3951,16 +3951,16 @@ func (s *Service) GetOilLegacyQuest(ctx context.Context) (*models.DynamicQuest, 
 	s.logger.Info("Retrieving Oil Legacy quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "oil-legacy-dallas-2020-2029",
-		Title:            "Нефтяное наследие",
-		Description:      "Расследовать экологические преступления нефтяных компаний и сохранить нефтяное наследие Техаса",
-		QuestType:        "narrative_main",
-		MinLevel:         15,
-		MaxLevel:         25,
+		QuestID:           "oil-legacy-dallas-2020-2029",
+		Title:             "Нефтяное наследие",
+		Description:       "Расследовать экологические преступления нефтяных компаний и сохранить нефтяное наследие Техаса",
+		QuestType:         "narrative_main",
+		MinLevel:          15,
+		MaxLevel:          25,
 		EstimatedDuration: 95,
-		Difficulty:       "legendary",
-		Themes:           []string{"environmental_disaster", "corporate_corruption", "texas_heritage", "oil_industry", "ecological_activism"},
-		Status:           "active",
+		Difficulty:        "legendary",
+		Themes:            []string{"environmental_disaster", "corporate_corruption", "texas_heritage", "oil_industry", "ecological_activism"},
+		Status:            "active",
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "investigation_method",
@@ -4073,10 +4073,10 @@ func (s *Service) GetOilLegacyQuest(ctx context.Context) (*models.DynamicQuest, 
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Dallas, Texas Oil Fields",
-			TimePeriod:  "2020-2029",
-			Weather:     "hot and dusty with occasional chemical storms",
-			Situation:   "The Texas oil legacy, once a source of pride, now threatens to become an environmental nightmare",
+			Location:   "Dallas, Texas Oil Fields",
+			TimePeriod: "2020-2029",
+			Weather:    "hot and dusty with occasional chemical storms",
+			Situation:  "The Texas oil legacy, once a source of pride, now threatens to become an environmental nightmare",
 			Objectives: []string{
 				"Investigate contaminated territories around Dallas",
 				"Gather evidence of corporate corruption",
@@ -4092,21 +4092,21 @@ func (s *Service) GetOilLegacyQuest(ctx context.Context) (*models.DynamicQuest, 
 				ID:          "environmental_scientist",
 				Name:        "Доктор Мария Санчес",
 				Role:        "Экологический ученый",
-				Description:    "Эксперт по загрязнению окружающей среды, борется с корпорациями",
+				Description: "Эксперт по загрязнению окружающей среды, борется с корпорациями",
 				Importance:  "primary",
 			},
 			{
 				ID:          "oil_executive",
 				Name:        "Мистер Джек 'Блэк Голд' Миллер",
 				Role:        "Исполнительный директор нефтяной компании",
-				Description:    "Хладнокровный корпоративный магнат, готовый на всё ради прибыли",
+				Description: "Хладнокровный корпоративный магнат, готовый на всё ради прибыли",
 				Importance:  "antagonist",
 			},
 			{
 				ID:          "victim_activist",
 				Name:        "Сара Джонсон",
 				Role:        "Активистка и жертва загрязнения",
-				Description:    "Потеряла дом из-за утечки нефти, борется за справедливость",
+				Description: "Потеряла дом из-за утечки нефти, борется за справедливость",
 				Importance:  "ally",
 			},
 		},
@@ -4123,16 +4123,16 @@ func (s *Service) GetCapitalBuildingQuest(ctx context.Context) (*models.DynamicQ
 	s.logger.Info("Retrieving Capital Building quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "capital-building-denver-2020-2029",
-		Title:            "Капитолий Колорадо",
-		Description:      "Защитить Капитолий штата Колорадо от корпоративного захвата и сохранить демократические традиции",
-		QuestType:        "narrative_side",
-		MinLevel:         12,
-		MaxLevel:         22,
+		QuestID:           "capital-building-denver-2020-2029",
+		Title:             "Капитолий Колорадо",
+		Description:       "Защитить Капитолий штата Колорадо от корпоративного захвата и сохранить демократические традиции",
+		QuestType:         "narrative_side",
+		MinLevel:          12,
+		MaxLevel:          22,
 		EstimatedDuration: 90,
-		Difficulty:       "hard",
-		Themes:           []string{"democratic_preservation", "political_corruption", "corporate_lobbying", "state_sovereignty", "gothic_architecture"},
-		Status:           "active",
+		Difficulty:        "hard",
+		Themes:            []string{"democratic_preservation", "political_corruption", "corporate_lobbying", "state_sovereignty", "gothic_architecture"},
+		Status:            "active",
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "investigation_approach",
@@ -4245,10 +4245,10 @@ func (s *Service) GetCapitalBuildingQuest(ctx context.Context) (*models.DynamicQ
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Denver, Colorado State Capitol",
-			TimePeriod:  "2020-2029",
-			Weather:     "clear mountain air with occasional political storms",
-			Situation:   "The Colorado State Capitol stands as both a monument to democratic governance and a target for corporate greed",
+			Location:   "Denver, Colorado State Capitol",
+			TimePeriod: "2020-2029",
+			Weather:    "clear mountain air with occasional political storms",
+			Situation:  "The Colorado State Capitol stands as both a monument to democratic governance and a target for corporate greed",
 			Objectives: []string{
 				"Conduct inspection of the Colorado State Capitol",
 				"Gather evidence of corporate lobbying",
@@ -4270,14 +4270,14 @@ func (s *Service) GetCapitalBuildingQuest(ctx context.Context) (*models.DynamicQ
 				ID:          "corporate_lobbyist",
 				Name:        "Мистер Роберт Вон",
 				Role:        "Корпоративный лоббист",
-				Description:    "Хладнокровный представитель корпораций, готовый на всё ради прибыли",
+				Description: "Хладнокровный представитель корпораций, готовый на всё ради прибыли",
 				Importance:  "antagonist",
 			},
 			{
 				ID:          "historian",
 				Name:        "Профессор Джеймс Коллинз",
 				Role:        "Историк демократии",
-				Description:    "Страстный защитник демократических традиций Колорадо",
+				Description: "Страстный защитник демократических традиций Колорадо",
 				Importance:  "ally",
 			},
 		},
@@ -4294,16 +4294,16 @@ func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.Dynamic
 	s.logger.Info("Retrieving Outdoor Lifestyle quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "canon-quest-denver-2029-009-outdoor-lifestyle",
-		Title:            "Денвер: жизнь под открытым небом",
-		Description:      "Проведите день на свежем воздухе в Денвере, сочетая активные виды спорта и социальные мероприятия",
-		QuestType:        "side",
-		MinLevel:         2,
-		MaxLevel:         0, // No max level
+		QuestID:           "canon-quest-denver-2029-009-outdoor-lifestyle",
+		Title:             "Денвер: жизнь под открытым небом",
+		Description:       "Проведите день на свежем воздухе в Денвере, сочетая активные виды спорта и социальные мероприятия",
+		QuestType:         "side",
+		MinLevel:          2,
+		MaxLevel:          0, // No max level
 		EstimatedDuration: 45,
-		Difficulty:       "easy",
-		Themes:           []string{"outdoor", "lifestyle", "sports", "social", "nature"},
-		Status:           "active",
+		Difficulty:        "easy",
+		Themes:            []string{"outdoor", "lifestyle", "sports", "social", "nature"},
+		Status:            "active",
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "morning_bike_ride",
@@ -4313,14 +4313,14 @@ func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.Dynamic
 				Context:     "Начните день с активного велоспорта по живописной трассе Cherry Creek",
 				Choices: []models.Choice{
 					{
-						ID:             "leisure_ride",
-						Text:           "Прогулочный заезд",
-						Description:    "Спокойная поездка для наслаждения природой",
+						ID:          "leisure_ride",
+						Text:        "Прогулочный заезд",
+						Description: "Спокойная поездка для наслаждения природой",
 						Consequences: []models.Consequence{
 							{
-								Type:     "skill_boost",
-								Target:   "outdoor_flow",
-								Value:    float64(10),
+								Type:        "skill_boost",
+								Target:      "outdoor_flow",
+								Value:       float64(10),
 								Probability: 1.0,
 								Description: "Небольшое улучшение навыка outdoor flow",
 							},
@@ -4329,21 +4329,21 @@ func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "speed_ride",
-						Text:           "Скоростной заезд",
-						Description:    "Интенсивная тренировка с высокой скоростью",
+						ID:          "speed_ride",
+						Text:        "Скоростной заезд",
+						Description: "Интенсивная тренировка с высокой скоростью",
 						Consequences: []models.Consequence{
 							{
-								Type:     "skill_boost",
-								Target:   "outdoor_flow",
-								Value:    float64(15),
+								Type:        "skill_boost",
+								Target:      "outdoor_flow",
+								Value:       float64(15),
 								Probability: 1.0,
 								Description: "Значительное улучшение навыка outdoor flow",
 							},
 							{
-								Type:     "health_risk",
-								Target:   "stamina",
-								Value:    float64(-5),
+								Type:        "health_risk",
+								Target:      "stamina",
+								Value:       float64(-5),
 								Probability: 0.3,
 								Description: "Риск переутомления",
 							},
@@ -4362,14 +4362,14 @@ func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.Dynamic
 				Context:     "Продолжите день водными активностями на реке",
 				Choices: []models.Choice{
 					{
-						ID:             "guided_tour",
-						Text:           "Экскурсионный тур",
-						Description:    "Безопасный тур с гидом по спокойным водам",
+						ID:          "guided_tour",
+						Text:        "Экскурсионный тур",
+						Description: "Безопасный тур с гидом по спокойным водам",
 						Consequences: []models.Consequence{
 							{
-								Type:     "skill_boost",
-								Target:   "outdoor_flow",
-								Value:    float64(12),
+								Type:        "skill_boost",
+								Target:      "outdoor_flow",
+								Value:       float64(12),
 								Probability: 1.0,
 								Description: "Среднее улучшение навыка outdoor flow",
 							},
@@ -4378,21 +4378,21 @@ func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "extreme_rapids",
-						Text:           "Экстремальный сплав",
-						Description:    "Тренировка на бурных порогах",
+						ID:          "extreme_rapids",
+						Text:        "Экстремальный сплав",
+						Description: "Тренировка на бурных порогах",
 						Consequences: []models.Consequence{
 							{
-								Type:     "skill_boost",
-								Target:   "outdoor_flow",
-								Value:    float64(20),
+								Type:        "skill_boost",
+								Target:      "outdoor_flow",
+								Value:       float64(20),
 								Probability: 1.0,
 								Description: "Большое улучшение навыка outdoor flow",
 							},
 							{
-								Type:     "health_risk",
-								Target:   "health",
-								Value:    float64(-10),
+								Type:        "health_risk",
+								Target:      "health",
+								Value:       float64(-10),
 								Probability: 0.4,
 								Description: "Риск травмы при экстремальном сплаве",
 							},
@@ -4411,14 +4411,14 @@ func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.Dynamic
 				Context:     "Завершите спортивную часть дня йогой у озера",
 				Choices: []models.Choice{
 					{
-						ID:             "relaxation_yoga",
-						Text:           "Йога релаксации",
-						Description:    "Спокойная сессия для восстановления",
+						ID:          "relaxation_yoga",
+						Text:        "Йога релаксации",
+						Description: "Спокойная сессия для восстановления",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "social",
-								Value:    float64(10),
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(10),
 								Probability: 1.0,
 								Description: "Улучшение социальной репутации",
 							},
@@ -4427,14 +4427,14 @@ func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "power_yoga",
-						Text:           "Силовая йога",
-						Description:    "Интенсивная тренировка для продвинутых",
+						ID:          "power_yoga",
+						Text:        "Силовая йога",
+						Description: "Интенсивная тренировка для продвинутых",
 						Consequences: []models.Consequence{
 							{
-								Type:     "skill_boost",
-								Target:   "outdoor_flow",
-								Value:    float64(18),
+								Type:        "skill_boost",
+								Target:      "outdoor_flow",
+								Value:       float64(18),
 								Probability: 1.0,
 								Description: "Значительное улучшение навыка outdoor flow",
 							},
@@ -4453,14 +4453,14 @@ func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.Dynamic
 				Context:     "Завершите день социальным мероприятием",
 				Choices: []models.Choice{
 					{
-						ID:             "casual_social",
-						Text:           "Неформальное общение",
-						Description:    "Расслабленный вечер с друзьями",
+						ID:          "casual_social",
+						Text:        "Неформальное общение",
+						Description: "Расслабленный вечер с друзьями",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "social",
-								Value:    float64(15),
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(15),
 								Probability: 1.0,
 								Description: "Улучшение социальной репутации",
 							},
@@ -4469,21 +4469,21 @@ func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "networking",
-						Text:           "Нетворкинг",
-						Description:    "Вечер для деловых знакомств",
+						ID:          "networking",
+						Text:        "Нетворкинг",
+						Description: "Вечер для деловых знакомств",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "corporate",
-								Value:    float64(8),
+								Type:        "reputation",
+								Target:      "corporate",
+								Value:       float64(8),
 								Probability: 1.0,
 								Description: "Небольшое улучшение корпоративной репутации",
 							},
 							{
-								Type:     "reputation",
-								Target:   "social",
-								Value:    float64(10),
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(10),
 								Probability: 1.0,
 								Description: "Улучшение социальной репутации",
 							},
@@ -4497,9 +4497,9 @@ func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.Dynamic
 		},
 		EndingVariations: []models.EndingVariation{
 			{
-				ID:          "sports_focus",
-				Title:       "Спортивный день",
-				Description: "Фокус на активных видах спорта",
+				ID:           "sports_focus",
+				Title:        "Спортивный день",
+				Description:  "Фокус на активных видах спорта",
 				Requirements: []string{"speed_ride", "extreme_rapids", "power_yoga"},
 				Rewards: []models.Reward{
 					{
@@ -4514,9 +4514,9 @@ func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.Dynamic
 				Narrative: "Вы провели идеальный спортивный день в Денвере, полностью сосредоточившись на физической активности.",
 			},
 			{
-				ID:          "social_focus",
-				Title:       "Социальный день",
-				Description: "Фокус на общении и отдыхе",
+				ID:           "social_focus",
+				Title:        "Социальный день",
+				Description:  "Фокус на общении и отдыхе",
 				Requirements: []string{"leisure_ride", "guided_tour", "relaxation_yoga", "casual_social"},
 				Rewards: []models.Reward{
 					{
@@ -4531,9 +4531,9 @@ func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.Dynamic
 				Narrative: "Вы провели расслабляющий день, наслаждаясь природой и общением с людьми.",
 			},
 			{
-				ID:          "balanced_day",
-				Title:       "Сбалансированный день",
-				Description: "Сочетание спорта и социального взаимодействия",
+				ID:           "balanced_day",
+				Title:        "Сбалансированный день",
+				Description:  "Сочетание спорта и социального взаимодействия",
 				Requirements: []string{}, // Default ending
 				Rewards: []models.Reward{
 					{
@@ -4563,11 +4563,11 @@ func (s *Service) GetOutdoorLifestyleQuest(ctx context.Context) (*models.Dynamic
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Denver, Colorado",
-			TimePeriod:  "2029",
-			Weather:     "Sunny, 75°F",
-			Situation:   "A perfect day for outdoor activities in the Mile High City",
-			Objectives:  []string{
+			Location:   "Denver, Colorado",
+			TimePeriod: "2029",
+			Weather:    "Sunny, 75°F",
+			Situation:  "A perfect day for outdoor activities in the Mile High City",
+			Objectives: []string{
 				"Morning bike ride along Cherry Creek Trail",
 				"Midday kayaking at Confluence Park",
 				"Afternoon yoga at Sloan's Lake",
@@ -4617,16 +4617,16 @@ func (s *Service) GetEverythingBiggerQuest(ctx context.Context) (*models.Dynamic
 	s.logger.Info("Retrieving Everything Bigger quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "everything-bigger-dallas-2020-2029",
-		Title:            "Everything Bigger",
-		Description:      "Переосмыслить девиз 'Everything is bigger in Texas' и показать, что истинная сила штата в индивидуальности",
-		QuestType:        "narrative_side",
-		MinLevel:         14,
-		MaxLevel:         24,
+		QuestID:           "everything-bigger-dallas-2020-2029",
+		Title:             "Everything Bigger",
+		Description:       "Переосмыслить девиз 'Everything is bigger in Texas' и показать, что истинная сила штата в индивидуальности",
+		QuestType:         "narrative_side",
+		MinLevel:          14,
+		MaxLevel:          24,
 		EstimatedDuration: 70,
-		Difficulty:       "medium",
-		Themes:           []string{"texas_identity", "corporate_mythology", "cultural_reinterpretation", "individualism_vs_corporate", "tradition_vs_modernity"},
-		Status:           "active",
+		Difficulty:        "medium",
+		Themes:            []string{"texas_identity", "corporate_mythology", "cultural_reinterpretation", "individualism_vs_corporate", "tradition_vs_modernity"},
+		Status:            "active",
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "tradition_reinterpretation",
@@ -4734,15 +4734,15 @@ func (s *Service) GetEverythingBiggerQuest(ctx context.Context) (*models.Dynamic
 			{
 				Faction:     "corporate_texas",
 				Change:      -45,
-				Description:    "Противодействие корпоративным планам",
+				Description: "Противодействие корпоративным планам",
 				ChoiceID:    "active_resistance",
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Dallas, Texas State Capitol Area",
-			TimePeriod:  "2020-2029",
-			Weather:     "hot and humid with occasional thunderstorms",
-			Situation:   "The Texas motto 'Everything is bigger in Texas' has been corrupted by corporate interests",
+			Location:   "Dallas, Texas State Capitol Area",
+			TimePeriod: "2020-2029",
+			Weather:    "hot and humid with occasional thunderstorms",
+			Situation:  "The Texas motto 'Everything is bigger in Texas' has been corrupted by corporate interests",
 			Objectives: []string{
 				"Research the history of 'Everything is bigger in Texas'",
 				"Find examples of true Texas individuality",
@@ -4757,21 +4757,21 @@ func (s *Service) GetEverythingBiggerQuest(ctx context.Context) (*models.Dynamic
 				ID:          "texas_historian",
 				Name:        "Доктор Джим 'Истинный Техасец' Миллер",
 				Role:        "Историк техасских традиций",
-				Description:    "Эксперт по истории Техаса, страстный защитник индивидуальности штата",
+				Description: "Эксперт по истории Техаса, страстный защитник индивидуальности штата",
 				Importance:  "primary",
 			},
 			{
 				ID:          "corporate_ceo",
 				Name:        "Мисс Виктория 'Биг' Джонсон",
 				Role:        "Корпоративный CEO",
-				Description:    "Лидер корпорации, продвигающей гигантские проекты",
+				Description: "Лидер корпорации, продвигающей гигантские проекты",
 				Importance:  "antagonist",
 			},
 			{
 				ID:          "local_artist",
 				Name:        "Лола 'Маленькая Звезда' Гарсия",
 				Role:        "Местный художник",
-				Description:    "Представляет индивидуальность и творчество техасцев",
+				Description: "Представляет индивидуальность и творчество техасцев",
 				Importance:  "ally",
 			},
 		},
@@ -4788,15 +4788,15 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 	s.logger.Info("Retrieving Tango Dance quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "canon-quest-buenos-aires-2029-001-tango",
-		Title:            "Буэнос-Айрес: Танго",
-		Description:      "Погрузитесь в мир аргентинского танго - от уличных выступлений до ночной милонги",
-		QuestType:        "side",
-		MinLevel:         1,
-		MaxLevel:         0, // No max level
+		QuestID:           "canon-quest-buenos-aires-2029-001-tango",
+		Title:             "Буэнос-Айрес: Танго",
+		Description:       "Погрузитесь в мир аргентинского танго - от уличных выступлений до ночной милонги",
+		QuestType:         "side",
+		MinLevel:          1,
+		MaxLevel:          0, // No max level
 		EstimatedDuration: 180,
-		Difficulty:       "easy",
-		Themes:           []string{"culture", "dance", "social", "history"},
+		Difficulty:        "easy",
+		Themes:            []string{"culture", "dance", "social", "history"},
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "san_telmo_visit",
@@ -4806,9 +4806,9 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 				Context:     "Первый шаг в мир аргентинского танго",
 				Choices: []models.Choice{
 					{
-						ID:             "explore_historically",
-						Text:           "Исторический тур",
-						Description:    "Изучите историю танго в музее",
+						ID:          "explore_historically",
+						Text:        "Исторический тур",
+						Description: "Изучите историю танго в музее",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -4822,9 +4822,9 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "watch_street_performers",
-						Text:           "Наблюдать уличных артистов",
-						Description:    "Посмотрите на импровизированные выступления",
+						ID:          "watch_street_performers",
+						Text:        "Наблюдать уличных артистов",
+						Description: "Посмотрите на импровизированные выступления",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -4849,9 +4849,9 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 				Context:     "Продолжите знакомство с танго в живом исполнении",
 				Choices: []models.Choice{
 					{
-						ID:             "join_as_spectator",
-						Text:           "Остаться зрителем",
-						Description:    "Наслаждайтесь выступлением со стороны",
+						ID:          "join_as_spectator",
+						Text:        "Остаться зрителем",
+						Description: "Наслаждайтесь выступлением со стороны",
 						Consequences: []models.Consequence{
 							{
 								Type:        "skill_boost",
@@ -4865,9 +4865,9 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "ask_for_quick_lesson",
-						Text:           "Попросить быстрый урок",
-						Description:    "Попробуйте сделать несколько шагов",
+						ID:          "ask_for_quick_lesson",
+						Text:        "Попросить быстрый урок",
+						Description: "Попробуйте сделать несколько шагов",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -4899,9 +4899,9 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 				Context:     "Время перейти от наблюдения к практике",
 				Choices: []models.Choice{
 					{
-						ID:             "traditional_master",
-						Text:           "Традиционный мастер",
-						Description:    "Учиться у опытного тангеро старой школы",
+						ID:          "traditional_master",
+						Text:        "Традиционный мастер",
+						Description: "Учиться у опытного тангеро старой школы",
 						Consequences: []models.Consequence{
 							{
 								Type:        "skill_boost",
@@ -4922,9 +4922,9 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "modern_instructor",
-						Text:           "Современный инструктор",
-						Description:    "Учиться у прогрессивного преподавателя",
+						ID:          "modern_instructor",
+						Text:        "Современный инструктор",
+						Description: "Учиться у прогрессивного преподавателя",
 						Consequences: []models.Consequence{
 							{
 								Type:        "skill_boost",
@@ -4956,9 +4956,9 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 				Context:     "Кульминация - настоящее погружение в мир танго",
 				Choices: []models.Choice{
 					{
-						ID:             "dance_with_locals",
-						Text:           "Танцевать с местными",
-						Description:    "Выйти на паркет и танцевать с аргентинцами",
+						ID:          "dance_with_locals",
+						Text:        "Танцевать с местными",
+						Description: "Выйти на паркет и танцевать с аргентинцами",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -4979,9 +4979,9 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "observe_and_learn",
-						Text:           "Наблюдать и учиться",
-						Description:    "Изучать танец со стороны, делая заметки",
+						ID:          "observe_and_learn",
+						Text:        "Наблюдать и учиться",
+						Description: "Изучать танец со стороны, делая заметки",
 						Consequences: []models.Consequence{
 							{
 								Type:        "skill_boost",
@@ -5013,9 +5013,9 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 				Context:     "Финальное понимание культурного значения танго",
 				Choices: []models.Choice{
 					{
-						ID:             "embrace_tango_spirit",
-						Text:           "Принять дух танго",
-						Description:    "Полностью погрузиться в философию танго",
+						ID:          "embrace_tango_spirit",
+						Text:        "Принять дух танго",
+						Description: "Полностью погрузиться в философию танго",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -5036,9 +5036,9 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "cultural_appreciation",
-						Text:           "Культурное понимание",
-						Description:    "Оценить танго как часть культурного наследия",
+						ID:          "cultural_appreciation",
+						Text:        "Культурное понимание",
+						Description: "Оценить танго как часть культурного наследия",
 						Consequences: []models.Consequence{
 							{
 								Type:        "reputation",
@@ -5065,9 +5065,9 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 		},
 		EndingVariations: []models.EndingVariation{
 			{
-				ID:          "tango_aficionado",
-				Title:       "Афисионадо танго",
-				Description: "Стали истинным ценителем аргентинского танго",
+				ID:           "tango_aficionado",
+				Title:        "Афисионадо танго",
+				Description:  "Стали истинным ценителем аргентинского танго",
 				Requirements: []string{"traditional_master", "dance_with_locals", "embrace_tango_spirit"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 2000},
@@ -5077,9 +5077,9 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 				Narrative: "Вы полностью погрузились в мир танго, став частью этой живой традиции.",
 			},
 			{
-				ID:          "cultural_explorer",
-				Title:       "Культурный исследователь",
-				Description: "Глубоко поняли культурное значение танго",
+				ID:           "cultural_explorer",
+				Title:        "Культурный исследователь",
+				Description:  "Глубоко поняли культурное значение танго",
 				Requirements: []string{"explore_historically", "observe_and_learn", "cultural_appreciation"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 1800},
@@ -5089,9 +5089,9 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 				Narrative: "Ваше путешествие в мир танго было путешествием к пониманию аргентинской культуры.",
 			},
 			{
-				ID:          "social_dancer",
-				Title:       "Социальный танцор",
-				Description: "Освоили основы и наслаждаетесь танцем",
+				ID:           "social_dancer",
+				Title:        "Социальный танцор",
+				Description:  "Освоили основы и наслаждаетесь танцем",
 				Requirements: []string{"ask_for_quick_lesson", "dance_with_locals"},
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 1600},
@@ -5116,10 +5116,10 @@ func (s *Service) GetTangoDanceQuest(ctx context.Context) (*models.DynamicQuest,
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Buenos Aires, Argentina",
-			TimePeriod:  "2020-2029",
-			Weather:     "warm summer evening",
-			Situation:   "The soul of Argentine tango calls to you from the historic streets of Buenos Aires",
+			Location:   "Buenos Aires, Argentina",
+			TimePeriod: "2020-2029",
+			Weather:    "warm summer evening",
+			Situation:  "The soul of Argentine tango calls to you from the historic streets of Buenos Aires",
 			Objectives: []string{
 				"Explore the birthplace of tango in San Telmo",
 				"Witness authentic tango performances on Plaza Dorrego",
@@ -5164,16 +5164,16 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 	s.logger.Info("Retrieving Lake Michigan quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "canon-quest-004-lake-michigan",
-		Title:            "Чикаго — Озеро Мичиган (Third Coast)",
-		Description:      "Исследуйте 'Third Coast' США вдоль Lakefront Trail с сезонными активностями и атмосферой",
-		QuestType:        "side",
-		MinLevel:         1,
-		MaxLevel:         0, // No max level
+		QuestID:           "canon-quest-004-lake-michigan",
+		Title:             "Чикаго — Озеро Мичиган (Third Coast)",
+		Description:       "Исследуйте 'Third Coast' США вдоль Lakefront Trail с сезонными активностями и атмосферой",
+		QuestType:         "side",
+		MinLevel:          1,
+		MaxLevel:          0, // No max level
 		EstimatedDuration: 30,
-		Difficulty:       "easy",
-		Themes:           []string{"nature", "exploration", "seasonal", "urban-outdoor", "chicago"},
-		Status:           "active",
+		Difficulty:        "easy",
+		Themes:            []string{"nature", "exploration", "seasonal", "urban-outdoor", "chicago"},
+		Status:            "active",
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "season_choice",
@@ -5183,21 +5183,21 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 				Context:     "Lake Michigan предлагает совершенно разные впечатления зимой и летом",
 				Choices: []models.Choice{
 					{
-						ID:             "summer_exploration",
-						Text:           "Летнее исследование",
-						Description:    "Пляжи, теплое озеро, пикники и велосипеды",
+						ID:          "summer_exploration",
+						Text:        "Летнее исследование",
+						Description: "Пляжи, теплое озеро, пикники и велосипеды",
 						Consequences: []models.Consequence{
 							{
-								Type:     "skill_boost",
-								Target:   "outdoor_flow",
-								Value:    float64(10),
+								Type:        "skill_boost",
+								Target:      "outdoor_flow",
+								Value:       float64(10),
 								Probability: 1.0,
 								Description: "Улучшение навыка outdoor flow",
 							},
 							{
-								Type:     "reputation",
-								Target:   "social",
-								Value:    float64(8),
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(8),
 								Probability: 1.0,
 								Description: "Социальная репутация от общения с отдыхающими",
 							},
@@ -5206,21 +5206,21 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "winter_challenge",
-						Text:           "Зимний вызов",
-						Description:    "Ледяные ветра, замерзшее озеро, экстремальные условия",
+						ID:          "winter_challenge",
+						Text:        "Зимний вызов",
+						Description: "Ледяные ветра, замерзшее озеро, экстремальные условия",
 						Consequences: []models.Consequence{
 							{
-								Type:     "skill_boost",
-								Target:   "endurance",
-								Value:    float64(15),
+								Type:        "skill_boost",
+								Target:      "endurance",
+								Value:       float64(15),
 								Probability: 1.0,
 								Description: "Значительное улучшение выносливости",
 							},
 							{
-								Type:     "health_risk",
-								Target:   "health",
-								Value:    float64(-5),
+								Type:        "health_risk",
+								Target:      "health",
+								Value:       float64(-5),
 								Probability: 0.2,
 								Description: "Риск обморожения в экстремальных условиях",
 							},
@@ -5239,14 +5239,14 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 				Context:     "29-километровый маршрут предлагает множество интересных мест",
 				Choices: []models.Choice{
 					{
-						ID:             "beach_focus",
-						Text:           "Фокус на пляжах",
-						Description:    "Посетить пляжи и прибрежные зоны отдыха",
+						ID:          "beach_focus",
+						Text:        "Фокус на пляжах",
+						Description: "Посетить пляжи и прибрежные зоны отдыха",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "nature",
-								Value:    float64(12),
+								Type:        "reputation",
+								Target:      "nature",
+								Value:       float64(12),
 								Probability: 1.0,
 								Description: "Репутация среди любителей природы",
 							},
@@ -5255,14 +5255,14 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "pier_focus",
-						Text:           "Фокус на Navy Pier",
-						Description:    "Посетить развлекательный комплекс Navy Pier",
+						ID:          "pier_focus",
+						Text:        "Фокус на Navy Pier",
+						Description: "Посетить развлекательный комплекс Navy Pier",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "social",
-								Value:    float64(10),
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(10),
 								Probability: 1.0,
 								Description: "Социальная репутация от посещения мероприятий",
 							},
@@ -5271,14 +5271,14 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "viewpoints_focus",
-						Text:           "Фокус на смотровые площадки",
-						Description:    "Посетить обзорные точки с видом на озеро",
+						ID:          "viewpoints_focus",
+						Text:        "Фокус на смотровые площадки",
+						Description: "Посетить обзорные точки с видом на озеро",
 						Consequences: []models.Consequence{
 							{
-								Type:     "skill_boost",
-								Target:   "perception",
-								Value:    float64(8),
+								Type:        "skill_boost",
+								Target:      "perception",
+								Value:       float64(8),
 								Probability: 1.0,
 								Description: "Улучшение восприятия от красивых видов",
 							},
@@ -5297,14 +5297,14 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 				Context:     "Погода на озере может быть непредсказуемой",
 				Choices: []models.Choice{
 					{
-						ID:             "embrace_weather",
-						Text:           "Принять погоду",
-						Description:    "Адаптироваться к условиям и насладиться моментом",
+						ID:          "embrace_weather",
+						Text:        "Принять погоду",
+						Description: "Адаптироваться к условиям и насладиться моментом",
 						Consequences: []models.Consequence{
 							{
-								Type:     "skill_boost",
-								Target:   "adaptability",
-								Value:    float64(12),
+								Type:        "skill_boost",
+								Target:      "adaptability",
+								Value:       float64(12),
 								Probability: 1.0,
 								Description: "Улучшение адаптивности",
 							},
@@ -5313,14 +5313,14 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "seek_shelter",
-						Text:           "Искать укрытие",
-						Description:    "Найти ближайшее укрытие от непогоды",
+						ID:          "seek_shelter",
+						Text:        "Искать укрытие",
+						Description: "Найти ближайшее укрытие от непогоды",
 						Consequences: []models.Consequence{
 							{
-								Type:     "experience",
-								Target:   "practicality",
-								Value:    float64(5),
+								Type:        "experience",
+								Target:      "practicality",
+								Value:       float64(5),
 								Probability: 1.0,
 								Description: "Практический опыт",
 							},
@@ -5339,21 +5339,21 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 				Context:     "Местные могут поделиться историями и открыть новые возможности",
 				Choices: []models.Choice{
 					{
-						ID:             "deep_conversation",
-						Text:           "Глубокий разговор",
-						Description:    "Обсудить историю и культуру Чикаго",
+						ID:          "deep_conversation",
+						Text:        "Глубокий разговор",
+						Description: "Обсудить историю и культуру Чикаго",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "local",
-								Value:    float64(15),
+								Type:        "reputation",
+								Target:      "local",
+								Value:       float64(15),
 								Probability: 1.0,
 								Description: "Репутация среди местных жителей",
 							},
 							{
-								Type:     "unlock",
-								Target:   "side_quests",
-								Value:    float64(1),
+								Type:        "unlock",
+								Target:      "side_quests",
+								Value:       float64(1),
 								Probability: 1.0,
 								Description: "Доступ к дополнительным квестам",
 							},
@@ -5362,14 +5362,14 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "casual_chat",
-						Text:           "Легкий разговор",
-						Description:    "Короткий разговор о погоде и озере",
+						ID:          "casual_chat",
+						Text:        "Легкий разговор",
+						Description: "Короткий разговор о погоде и озере",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "local",
-								Value:    float64(8),
+								Type:        "reputation",
+								Target:      "local",
+								Value:       float64(8),
 								Probability: 1.0,
 								Description: "Небольшое улучшение репутации у местных",
 							},
@@ -5383,9 +5383,9 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 		},
 		EndingVariations: []models.EndingVariation{
 			{
-				ID:          "summer_master",
-				Title:       "Мастер летнего озера",
-				Description: "Полностью насладились летней атмосферой Lake Michigan",
+				ID:           "summer_master",
+				Title:        "Мастер летнего озера",
+				Description:  "Полностью насладились летней атмосферой Lake Michigan",
 				Requirements: []string{"summer_exploration"},
 				Rewards: []models.Reward{
 					{
@@ -5400,9 +5400,9 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 				Narrative: "Вы стали настоящим мастером летнего отдыха на Lake Michigan, насладившись всеми радостями теплого сезона.",
 			},
 			{
-				ID:          "winter_survivor",
-				Title:       "Выживший зимнего озера",
-				Description: "Преодолели экстремальные зимние условия",
+				ID:           "winter_survivor",
+				Title:        "Выживший зимнего озера",
+				Description:  "Преодолели экстремальные зимние условия",
 				Requirements: []string{"winter_challenge"},
 				Rewards: []models.Reward{
 					{
@@ -5417,9 +5417,9 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 				Narrative: "Вы доказали свою стойкость, преодолев ледяные ветра и экстремальные условия зимнего Lake Michigan.",
 			},
 			{
-				ID:          "third_coast_explorer",
-				Title:       "Исследователь Third Coast",
-				Description: "Полностью изучили все аспекты Lake Michigan",
+				ID:           "third_coast_explorer",
+				Title:        "Исследователь Third Coast",
+				Description:  "Полностью изучили все аспекты Lake Michigan",
 				Requirements: []string{}, // Default ending
 				Rewards: []models.Reward{
 					{
@@ -5449,11 +5449,11 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Chicago, Illinois - Lake Michigan Shoreline",
-			TimePeriod:  "2020-2029",
-			Weather:     "Variable - Summer warmth or Winter chill",
-			Situation:   "Exploring the 'Third Coast' of America",
-			Objectives:  []string{
+			Location:   "Chicago, Illinois - Lake Michigan Shoreline",
+			TimePeriod: "2020-2029",
+			Weather:    "Variable - Summer warmth or Winter chill",
+			Situation:  "Exploring the 'Third Coast' of America",
+			Objectives: []string{
 				"Choose seasonal exploration path",
 				"Visit key Lakefront Trail landmarks",
 				"Interact with weather conditions",
@@ -5503,16 +5503,16 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 	s.logger.Info("Retrieving Chicago Cubs Wrigley Field quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "canon-quest-005-cubs-wrigley-field",
-		Title:            "Чикаго — Chicago Cubs на Wrigley Field",
-		Description:      "Посетите исторический матч Chicago Cubs на легендарном Wrigley Field с традициями и атмосферой",
-		QuestType:        "side",
-		MinLevel:         5,
-		MaxLevel:         0, // No max level
+		QuestID:           "canon-quest-005-cubs-wrigley-field",
+		Title:             "Чикаго — Chicago Cubs на Wrigley Field",
+		Description:       "Посетите исторический матч Chicago Cubs на легендарном Wrigley Field с традициями и атмосферой",
+		QuestType:         "side",
+		MinLevel:          5,
+		MaxLevel:          0, // No max level
 		EstimatedDuration: 45,
-		Difficulty:       "medium",
-		Themes:           []string{"sports", "baseball", "tradition", "chicago", "culture", "history"},
-		Status:           "active",
+		Difficulty:        "medium",
+		Themes:            []string{"sports", "baseball", "tradition", "chicago", "culture", "history"},
+		Status:            "active",
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "ticket_purchase",
@@ -5522,21 +5522,21 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 				Context:     "Wrigley Field предлагает разные зоны с уникальной атмосферой",
 				Choices: []models.Choice{
 					{
-						ID:             "bleacher_seats",
-						Text:           "Билеты на bleacher seats",
-						Description:    "Стоячие места с лучшей атмосферой и криками фанатов",
+						ID:          "bleacher_seats",
+						Text:        "Билеты на bleacher seats",
+						Description: "Стоячие места с лучшей атмосферой и криками фанатов",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "sport",
-								Value:    float64(25),
+								Type:        "reputation",
+								Target:      "sport",
+								Value:       float64(25),
 								Probability: 1.0,
 								Description: "Максимальная спортивная репутация",
 							},
 							{
-								Type:     "currency",
-								Target:   "spending",
-								Value:    float64(-80),
+								Type:        "currency",
+								Target:      "spending",
+								Value:       float64(-80),
 								Probability: 1.0,
 								Description: "Более дорогие билеты",
 							},
@@ -5545,21 +5545,21 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "box_seats",
-						Text:           "Билеты в ложу",
-						Description:    "Комфортные сидячие места с едой и напитками",
+						ID:          "box_seats",
+						Text:        "Билеты в ложу",
+						Description: "Комфортные сидячие места с едой и напитками",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "elite",
-								Value:    float64(15),
+								Type:        "reputation",
+								Target:      "elite",
+								Value:       float64(15),
 								Probability: 1.0,
 								Description: "Репутация среди элиты",
 							},
 							{
-								Type:     "currency",
-								Target:   "spending",
-								Value:    float64(-120),
+								Type:        "currency",
+								Target:      "spending",
+								Value:       float64(-120),
 								Probability: 1.0,
 								Description: "Самые дорогие билеты",
 							},
@@ -5568,21 +5568,21 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "standing_room",
-						Text:           "Стоячие места у поля",
-						Description:    "Дешевые билеты близко к полю, но без сидений",
+						ID:          "standing_room",
+						Text:        "Стоячие места у поля",
+						Description: "Дешевые билеты близко к полю, но без сидений",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "sport",
-								Value:    float64(15),
+								Type:        "reputation",
+								Target:      "sport",
+								Value:       float64(15),
 								Probability: 1.0,
 								Description: "Хорошая спортивная репутация",
 							},
 							{
-								Type:     "currency",
-								Target:   "spending",
-								Value:    float64(-40),
+								Type:        "currency",
+								Target:      "spending",
+								Value:       float64(-40),
 								Probability: 1.0,
 								Description: "Самые дешевые билеты",
 							},
@@ -5601,21 +5601,21 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 				Context:     "Wrigley Field полон исторических достопримечательностей",
 				Choices: []models.Choice{
 					{
-						ID:             "ivy_wall",
-						Text:           "Изучить плющ на стене",
-						Description:    "Легендарный плющ, который растет на стене с 1937 года",
+						ID:          "ivy_wall",
+						Text:        "Изучить плющ на стене",
+						Description: "Легендарный плющ, который растет на стене с 1937 года",
 						Consequences: []models.Consequence{
 							{
-								Type:     "skill_boost",
-								Target:   "knowledge",
-								Value:    float64(10),
+								Type:        "skill_boost",
+								Target:      "knowledge",
+								Value:       float64(10),
 								Probability: 1.0,
 								Description: "Увеличение знаний о истории",
 							},
 							{
-								Type:     "achievement",
-								Target:   "ivy_explorer",
-								Value:    float64(1),
+								Type:        "achievement",
+								Target:      "ivy_explorer",
+								Value:       float64(1),
 								Probability: 1.0,
 								Description: "Достижение 'Исследователь плюща'",
 							},
@@ -5624,14 +5624,14 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "manual_scoreboard",
-						Text:           "Посмотреть ручное табло",
-						Description:    "Уникальное ручное табло, которое обновляется вручную",
+						ID:          "manual_scoreboard",
+						Text:        "Посмотреть ручное табло",
+						Description: "Уникальное ручное табло, которое обновляется вручную",
 						Consequences: []models.Consequence{
 							{
-								Type:     "skill_boost",
-								Target:   "attention",
-								Value:    float64(8),
+								Type:        "skill_boost",
+								Target:      "attention",
+								Value:       float64(8),
 								Probability: 1.0,
 								Description: "Улучшение внимательности",
 							},
@@ -5640,14 +5640,14 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "dugout_area",
-						Text:           "Подойти к скамейке игроков",
-						Description:    "Посмотреть на игроков и тренерский состав",
+						ID:          "dugout_area",
+						Text:        "Подойти к скамейке игроков",
+						Description: "Посмотреть на игроков и тренерский состав",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "sport",
-								Value:    float64(12),
+								Type:        "reputation",
+								Target:      "sport",
+								Value:       float64(12),
 								Probability: 1.0,
 								Description: "Дополнительная спортивная репутация",
 							},
@@ -5666,21 +5666,21 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 				Context:     "В седьмом иннинге все встают и поют 'Take Me Out to the Ball Game'",
 				Choices: []models.Choice{
 					{
-						ID:             "lead_singing",
-						Text:           "Вести хор",
-						Description:    "Стать лидером и вести толпу в пении",
+						ID:          "lead_singing",
+						Text:        "Вести хор",
+						Description: "Стать лидером и вести толпу в пении",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "social",
-								Value:    float64(20),
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(20),
 								Probability: 1.0,
 								Description: "Максимальная социальная репутация",
 							},
 							{
-								Type:     "skill_boost",
-								Target:   "charisma",
-								Value:    float64(15),
+								Type:        "skill_boost",
+								Target:      "charisma",
+								Value:       float64(15),
 								Probability: 1.0,
 								Description: "Увеличение харизмы",
 							},
@@ -5689,14 +5689,14 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "enthusiastic_participation",
-						Text:           "Активно участвовать",
-						Description:    "Петь громко и танцевать вместе со всеми",
+						ID:          "enthusiastic_participation",
+						Text:        "Активно участвовать",
+						Description: "Петь громко и танцевать вместе со всеми",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "social",
-								Value:    float64(12),
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(12),
 								Probability: 1.0,
 								Description: "Хорошая социальная репутация",
 							},
@@ -5705,14 +5705,14 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "good",
 					},
 					{
-						ID:             "quiet_observation",
-						Text:           "Наблюдать молча",
-						Description:    "Стоять и смотреть, как поют другие",
+						ID:          "quiet_observation",
+						Text:        "Наблюдать молча",
+						Description: "Стоять и смотреть, как поют другие",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "social",
-								Value:    float64(-5),
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(-5),
 								Probability: 1.0,
 								Description: "Небольшое снижение социальной репутации",
 							},
@@ -5731,21 +5731,21 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 				Context:     "Фанат расскажет легенду о проклятии козла, которое держало Cubs без чемпионства 71 год",
 				Choices: []models.Choice{
 					{
-						ID:             "believe_curse",
-						Text:           "Поверить в проклятие",
-						Description:    "Слушать внимательно и верить в сверхъестественное",
+						ID:          "believe_curse",
+						Text:        "Поверить в проклятие",
+						Description: "Слушать внимательно и верить в сверхъестественное",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "superstitious",
-								Value:    float64(15),
+								Type:        "reputation",
+								Target:      "superstitious",
+								Value:       float64(15),
 								Probability: 1.0,
 								Description: "Репутация среди суеверных",
 							},
 							{
-								Type:     "unlock",
-								Target:   "curse_lore",
-								Value:    float64(1),
+								Type:        "unlock",
+								Target:      "curse_lore",
+								Value:       float64(1),
 								Probability: 1.0,
 								Description: "Доступ к дополнительным легендам",
 							},
@@ -5754,14 +5754,14 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "skeptical_view",
-						Text:           "Отнестись скептически",
-						Description:    "Слушать историю, но считать её вымыслом",
+						ID:          "skeptical_view",
+						Text:        "Отнестись скептически",
+						Description: "Слушать историю, но считать её вымыслом",
 						Consequences: []models.Consequence{
 							{
-								Type:     "skill_boost",
-								Target:   "critical_thinking",
-								Value:    float64(10),
+								Type:        "skill_boost",
+								Target:      "critical_thinking",
+								Value:       float64(10),
 								Probability: 1.0,
 								Description: "Улучшение критического мышления",
 							},
@@ -5770,21 +5770,21 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 						MoralAlignment: "neutral",
 					},
 					{
-						ID:             "dismiss_story",
-						Text:           "Проигнорировать рассказ",
-						Description:    "Не слушать историю и уйти",
+						ID:          "dismiss_story",
+						Text:        "Проигнорировать рассказ",
+						Description: "Не слушать историю и уйти",
 						Consequences: []models.Consequence{
 							{
-								Type:     "reputation",
-								Target:   "social",
-								Value:    float64(-10),
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(-10),
 								Probability: 1.0,
 								Description: "Снижение социальной репутации",
 							},
 							{
-								Type:     "missed_reward",
-								Target:   "merch",
-								Value:    float64(1),
+								Type:        "missed_reward",
+								Target:      "merch",
+								Value:       float64(1),
 								Probability: 1.0,
 								Description: "Пропуск редкого мерча",
 							},
@@ -5798,9 +5798,9 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 		},
 		EndingVariations: []models.EndingVariation{
 			{
-				ID:          "ultimate_fan",
-				Title:       "Истинный фанат Cubs",
-				Description: "Полностью погрузились в культуру Chicago Cubs",
+				ID:           "ultimate_fan",
+				Title:        "Истинный фанат Cubs",
+				Description:  "Полностью погрузились в культуру Chicago Cubs",
 				Requirements: []string{"bleacher_seats", "ivy_wall", "lead_singing", "believe_curse"},
 				Rewards: []models.Reward{
 					{
@@ -5819,9 +5819,9 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 				Narrative: "Вы стали истинным фанатом Chicago Cubs, познав все традиции и легенды Wrigley Field.",
 			},
 			{
-				ID:          "casual_fan",
-				Title:       "Казуальный болельщик",
-				Description: "Насладились матчем, но не погрузились глубоко",
+				ID:           "casual_fan",
+				Title:        "Казуальный болельщик",
+				Description:  "Насладились матчем, но не погрузились глубоко",
 				Requirements: []string{"standing_room", "manual_scoreboard", "enthusiastic_participation"},
 				Rewards: []models.Reward{
 					{
@@ -5836,9 +5836,9 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 				Narrative: "Вы хорошо провели время на матче Chicago Cubs, но остались обычным зрителем.",
 			},
 			{
-				ID:          "elite_experience",
-				Title:       "Элитный опыт",
-				Description: "Посетили матч в комфорте ложи",
+				ID:           "elite_experience",
+				Title:        "Элитный опыт",
+				Description:  "Посетили матч в комфорте ложи",
 				Requirements: []string{"box_seats"},
 				Rewards: []models.Reward{
 					{
@@ -5878,11 +5878,11 @@ func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.Dynamic
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Wrigley Field, Chicago, Illinois",
-			TimePeriod:  "2020-2029",
-			Weather:     "Perfect baseball weather - 75°F, sunny",
-			Situation:   "Historic Chicago Cubs baseball game at legendary Wrigley Field",
-			Objectives:  []string{
+			Location:   "Wrigley Field, Chicago, Illinois",
+			TimePeriod: "2020-2029",
+			Weather:    "Perfect baseball weather - 75°F, sunny",
+			Situation:  "Historic Chicago Cubs baseball game at legendary Wrigley Field",
+			Objectives: []string{
 				"Purchase tickets and enter through fan zone",
 				"Explore Wrigley Field landmarks (ivy wall, manual scoreboard, bleacher seats)",
 				"Join the seventh inning stretch singing tradition",
@@ -5932,16 +5932,16 @@ func (s *Service) GetWillisTowerQuest(ctx context.Context) (*models.DynamicQuest
 	s.logger.Info("Retrieving Willis Tower quest definition")
 
 	quest := &models.DynamicQuest{
-		QuestID:          "willis-tower-chicago-2020-2029",
-		Title:            "Башня Уиллис",
-		Description:      "Защитить Башню Уиллис от корпоративного сноса и сохранить архитектурное наследие Чикаго",
-		QuestType:        "narrative_side",
-		MinLevel:         16,
-		MaxLevel:         25,
+		QuestID:           "willis-tower-chicago-2020-2029",
+		Title:             "Башня Уиллис",
+		Description:       "Защитить Башню Уиллис от корпоративного сноса и сохранить архитектурное наследие Чикаго",
+		QuestType:         "narrative_side",
+		MinLevel:          16,
+		MaxLevel:          25,
 		EstimatedDuration: 75,
-		Difficulty:       "hard",
-		Themes:           []string{"architectural_preservation", "corporate_conspiracy", "urban_heritage", "chicago_pride", "structural_engineering"},
-		Status:           "active",
+		Difficulty:        "hard",
+		Themes:            []string{"architectural_preservation", "corporate_conspiracy", "urban_heritage", "chicago_pride", "structural_engineering"},
+		Status:            "active",
 		ChoicePoints: []models.ChoicePoint{
 			{
 				ID:          "inspection_approach",
@@ -6054,10 +6054,10 @@ func (s *Service) GetWillisTowerQuest(ctx context.Context) (*models.DynamicQuest
 			},
 		},
 		NarrativeSetup: models.NarrativeSetup{
-			Location:    "Chicago, Willis Tower",
-			TimePeriod:  "2020-2029",
-			Weather:     "windy with occasional rain, accentuating the tower's height",
-			Situation:   "The iconic Willis Tower stands as both a monument to human achievement and a target for corporate greed",
+			Location:   "Chicago, Willis Tower",
+			TimePeriod: "2020-2029",
+			Weather:    "windy with occasional rain, accentuating the tower's height",
+			Situation:  "The iconic Willis Tower stands as both a monument to human achievement and a target for corporate greed",
 			Objectives: []string{
 				"Conduct structural integrity inspection",
 				"Gather evidence of corporate demolition plans",
