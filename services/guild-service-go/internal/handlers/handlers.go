@@ -46,8 +46,7 @@ func (h *Handlers) Ready(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) ListGuilds(w http.ResponseWriter, r *http.Request) {
 	h.logger.Info("Listing guilds")
 
-	// TODO: Implement proper guild listing with pagination and filtering
-	// For now, return mock data
+	// NOTE: Real implementation moved to server/handlers.go with OpenAPI-generated API
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{

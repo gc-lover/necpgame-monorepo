@@ -61,18 +61,20 @@ type Handler struct {
 
 // GuildServiceInterface defines the business logic interface
 type GuildServiceInterface interface {
+	UpdateRepository(repo *repository.Repository) // Add repository integration
 	CreateGuild(ctx context.Context, name, description string, leaderID uuid.UUID) (*Guild, error)
 	GetGuild(ctx context.Context, id uuid.UUID) (*Guild, error)
 	ListGuilds(ctx context.Context, limit, offset int, sortBy string) ([]*Guild, error)
 	UpdateGuild(ctx context.Context, id uuid.UUID, name, description string) error
 	DeleteGuild(ctx context.Context, id uuid.UUID) error
+	DisbandGuild(ctx context.Context, id uuid.UUID) error // Add disband method
 
 	AddMember(ctx context.Context, guildID, userID uuid.UUID, role string) error
 	RemoveMember(ctx context.Context, guildID, userID uuid.UUID) error
 	UpdateMemberRole(ctx context.Context, guildID, userID uuid.UUID, role string) error
 	ListMembers(ctx context.Context, guildID uuid.UUID) ([]*GuildMember, error)
 
-	CreateAnnouncement(ctx context.Context, guildID, authorID uuid.UUID, title, content string) (*GuildAnnouncement, error)
+	CreateAnnouncement(ctx context.Context, authorID, guildID uuid.UUID, title, content string) (*GuildAnnouncement, error) // Fix parameter order
 	ListAnnouncements(ctx context.Context, guildID uuid.UUID, limit, offset int) ([]*GuildAnnouncement, error)
 	GetPlayerGuilds(ctx context.Context, playerID uuid.UUID) ([]*Guild, error)
 	JoinGuild(ctx context.Context, guildID, playerID uuid.UUID) error
@@ -413,6 +415,11 @@ func (h *Handler) DeleteGuild(ctx context.Context, params api.DeleteGuildParams)
 
 	h.logger.Info("Successfully disbanded guild", zap.String("guildID", params.GuildId.String()))
 	return &api.DisbandGuildNoContent{}, nil
+}
+
+// DisbandGuild implements DELETE /api/v1/guilds/{guildId} (same as DeleteGuild)
+func (h *Handler) DisbandGuild(ctx context.Context, params api.DisbandGuildParams) (api.DisbandGuildRes, error) {
+	return h.DeleteGuild(ctx, api.DeleteGuildParams{GuildId: params.GuildId})
 }
 
 // ListGuildMembers implements GET /api/v1/guilds/{guildId}/members
@@ -816,7 +823,7 @@ func (h *Handler) CreateGuildAnnouncement(ctx context.Context, req *api.CreateGu
 	}
 
 	// Create announcement using service
-	announcement, err := h.service.CreateAnnouncement(ctx, params.GuildId, authorUUID, req.Title, req.Content)
+	announcement, err := h.service.CreateAnnouncement(ctx, authorUUID, params.GuildId, req.Title, req.Content)
 	if err != nil {
 		h.logger.Error("Failed to create announcement", zap.Error(err))
 		return &api.CreateGuildAnnouncementBadRequest{

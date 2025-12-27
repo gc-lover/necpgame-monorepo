@@ -37,6 +37,11 @@ func (s *GuildService) UpdateRepository(repo *repository.Repository) {
 	s.repository = repo
 }
 
+// DisbandGuild disbands a guild (same as delete for now)
+func (s *GuildService) DisbandGuild(ctx context.Context, id uuid.UUID) error {
+	return s.DeleteGuild(ctx, id)
+}
+
 // CreateGuild creates a new guild
 func (s *GuildService) CreateGuild(ctx context.Context, name, description string, leaderID uuid.UUID) (*Guild, error) {
 	if name == "" {

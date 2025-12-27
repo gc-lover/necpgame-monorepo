@@ -6,22 +6,127 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
 	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/internal/config"
 	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/internal/repository"
+	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/pkg/api"
 	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/server"
 )
+
+// JWTClaims represents JWT token claims
+type JWTClaims struct {
+	UserID   string `json:"user_id"`
+	Username string `json:"username"`
+	Role     string `json:"role"`
+	jwt.RegisteredClaims
+}
+
+// SecurityHandler implements JWT authentication
+type SecurityHandler struct {
+	jwtSecret []byte
+	logger    *zap.SugaredLogger
+}
+
+// NewSecurityHandler creates a new security handler with JWT secret
+func NewSecurityHandler(jwtSecret string, logger *zap.SugaredLogger) *SecurityHandler {
+	return &SecurityHandler{
+		jwtSecret: []byte(jwtSecret),
+		logger:    logger,
+	}
+}
+
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
+	// Extract token from BearerAuth
+	tokenString := string(t)
+
+	// Parse and validate token
+	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return s.jwtSecret, nil
+	})
+
+	if err != nil {
+		s.logger.Errorf("JWT validation failed: %v", err)
+		return ctx, fmt.Errorf("invalid token: %w", err)
+	}
+
+	if !token.Valid {
+		s.logger.Warn("Invalid JWT token provided")
+		return ctx, fmt.Errorf("token is not valid")
+	}
+
+	claims, ok := token.Claims.(*JWTClaims)
+	if !ok {
+		s.logger.Error("Invalid JWT claims format")
+		return ctx, fmt.Errorf("invalid token claims")
+	}
+
+	// Check token expiration
+	if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
+		s.logger.Warn("Expired JWT token used")
+		return ctx, fmt.Errorf("token has expired")
+	}
+
+	// Add user information to context
+	ctx = context.WithValue(ctx, "user_id", claims.UserID)
+	ctx = context.WithValue(ctx, "username", claims.Username)
+	ctx = context.WithValue(ctx, "role", claims.Role)
+
+	s.logger.Debugf("JWT validated successfully for user: %s", claims.Username)
+	return ctx, nil
+}
+
+// middlewareWrapper wraps the OpenAPI server with enterprise-grade middleware
+func middlewareWrapper(apiHandler http.Handler, metricsHandler http.Handler) http.Handler {
+	r := chi.NewRouter()
+
+	// Core middleware
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(30 * time.Second))
+
+	// Security middleware
+	r.Use(middleware.SetHeader("X-Content-Type-Options", "nosniff"))
+	r.Use(middleware.SetHeader("X-Frame-Options", "DENY"))
+	r.Use(middleware.SetHeader("X-XSS-Protection", "1; mode=block"))
+
+	// Health and monitoring endpoints
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"healthy","service":"guild-service-go"}`))
+	})
+	r.Get("/ready", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ready","service":"guild-service-go"}`))
+	})
+	r.Handle("/metrics", metricsHandler)
+	r.Mount("/debug/pprof", middleware.Profiler())
+
+	// Mount OpenAPI routes
+	r.Mount("/", apiHandler)
+
+	return r
+}
 
 func main() {
 	// Initialize structured logging
@@ -79,58 +184,24 @@ func main() {
 	// Initialize handlers
 	h := server.NewHandler(logger, guildSvc)
 
-	// Create HTTP router with enterprise-grade middleware
-	r := chi.NewRouter()
+	// Initialize security handler with JWT secret
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "default-jwt-secret-change-in-production"
+		sugar.Warn("Using default JWT secret - change JWT_SECRET environment variable in production")
+	}
+	sec := NewSecurityHandler(jwtSecret, sugar)
 
-	// Core middleware
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(30 * time.Second))
+	// Create HTTP server with OpenAPI-generated routes
+	srv, err := api.NewServer(h, sec)
+	if err != nil {
+		sugar.Fatalf("Failed to create API server: %v", err)
+	}
 
-	// Security middleware
-	r.Use(middleware.SetHeader("X-Content-Type-Options", "nosniff"))
-	r.Use(middleware.SetHeader("X-Frame-Options", "DENY"))
-	r.Use(middleware.SetHeader("X-XSS-Protection", "1; mode=block"))
-
-	// Health and monitoring endpoints
-	r.Get("/health", h.Health)
-	r.Get("/ready", h.Ready)
-	r.Handle("/metrics", promhttp.Handler())
-	r.Mount("/debug/pprof", middleware.Profiler())
-
-	// API routes with versioning
-	r.Route("/api/v1", func(r chi.Router) {
-		r.Route("/guilds", func(r chi.Router) {
-			r.Get("/", h.ListGuilds)                    // GET /api/v1/guilds
-			r.Post("/", h.CreateGuild)                  // POST /api/v1/guilds
-			r.Get("/{guildId}", h.GetGuild)             // GET /api/v1/guilds/{id}
-			r.Put("/{guildId}", h.UpdateGuild)          // PUT /api/v1/guilds/{id}
-			r.Delete("/{guildId}", h.DeleteGuild)       // DELETE /api/v1/guilds/{id}
-		})
-
-		r.Route("/guilds/{guildId}", func(r chi.Router) {
-			r.Get("/members", h.GetGuildMembers)        // GET /api/v1/guilds/{id}/members
-			r.Post("/members", h.AddGuildMember)        // POST /api/v1/guilds/{id}/members
-			r.Put("/members/{playerId}", h.UpdateMemberRole) // PUT /api/v1/guilds/{id}/members/{playerId}
-			r.Delete("/members/{playerId}", h.RemoveGuildMember) // DELETE /api/v1/guilds/{id}/members/{playerId}
-
-			r.Get("/announcements", h.GetGuildAnnouncements) // GET /api/v1/guilds/{id}/announcements
-			r.Post("/announcements", h.CreateAnnouncement)   // POST /api/v1/guilds/{id}/announcements
-		})
-
-		r.Route("/players/{playerId}", func(r chi.Router) {
-			r.Get("/guilds", h.GetPlayerGuilds)         // GET /api/v1/players/{id}/guilds
-			r.Post("/guilds/{guildId}/join", h.JoinGuild) // POST /api/v1/players/{id}/guilds/{guildId}/join
-			r.Post("/guilds/{guildId}/leave", h.LeaveGuild) // POST /api/v1/players/{id}/guilds/{guildId}/leave
-		})
-	})
-
-	// Create HTTP server with optimized settings
-	srv := &http.Server{
+	// Create HTTP server with OpenAPI-generated routes and middleware
+	httpSrv := &http.Server{
 		Addr:         cfg.Server.GetAddr(),
-		Handler:      r,
+		Handler:      middlewareWrapper(srv, promhttp.Handler()),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -139,7 +210,7 @@ func main() {
 	// Start server in goroutine
 	go func() {
 		sugar.Infof("Server starting on %s", cfg.Server.GetAddr())
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			sugar.Fatalf("Server failed to start: %v", err)
 		}
 	}()
@@ -154,7 +225,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := httpSrv.Shutdown(ctx); err != nil {
 		sugar.Errorf("Server forced to shutdown: %v", err)
 	}
 
