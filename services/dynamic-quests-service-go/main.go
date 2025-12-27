@@ -102,6 +102,22 @@ func main() {
 				r.Get("/red-wings-hockey", h.GetRedWingsHockeyQuest)         // GET /api/v1/quests/detroit/red-wings-hockey
 				r.Get("/revival-hope", h.GetRevivalHopeQuest)                // GET /api/v1/quests/detroit/revival-hope
 			})
+
+			// Chicago Quests - Issues: #140928947, #140928949
+			r.Route("/chicago", func(r chi.Router) {
+				r.Get("/willis-tower", h.GetWillisTowerQuest)     // GET /api/v1/quests/chicago/willis-tower
+				r.Get("/deep-dish-pizza", h.GetDeepDishPizzaQuest) // GET /api/v1/quests/chicago/deep-dish-pizza
+			})
+
+			// Denver Quests - Issue: #140928923
+			r.Route("/denver", func(r chi.Router) {
+				r.Get("/capital-building", h.GetCapitalBuildingQuest) // GET /api/v1/quests/denver/capital-building
+			})
+
+			// Dallas Quests - Issue: #140928929
+			r.Route("/dallas", func(r chi.Router) {
+				r.Get("/oil-legacy", h.GetOilLegacyQuest) // GET /api/v1/quests/dallas/oil-legacy
+			})
 		})
 
 		r.Route("/quests/{questId}", func(r chi.Router) {

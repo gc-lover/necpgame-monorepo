@@ -1522,3 +1522,688 @@ func (s *Service) GetRevivalHopeQuest(ctx context.Context) (*models.DynamicQuest
 
 	return quest, nil
 }
+
+// GetDeepDishPizzaQuest returns the Deep Dish Pizza quest for Chicago
+// Issue: #140928949
+func (s *Service) GetDeepDishPizzaQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Deep Dish Pizza quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "deep-dish-pizza-chicago-2020-2029",
+		Title:            "Глубокая пицца",
+		Description:      "Сохранить традиции чикагской глубокой пиццы и противостоять корпоративной стандартизации",
+		QuestType:        "narrative_side",
+		MinLevel:         9,
+		MaxLevel:         18,
+		EstimatedDuration: 60,
+		Difficulty:       "medium",
+		Themes:           []string{"culinary_tradition", "corporate_resistance", "chicago_pride", "food_culture", "artisanal_craftsmanship"},
+		Status:           "active",
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "recipe_search",
+				Sequence:    1,
+				Title:       "Поиск рецептов",
+				Description: "Выбрать подход к поиску семейных рецептов пиццы",
+				Context:     "Легендарные рецепты глубокой пиццы спрятаны в старых семейных пекарнях",
+				Choices: []models.Choice{
+					{
+						ID:             "visit_old_bakeries",
+						Text:           "Посетить старые пекарни",
+						Description:    "Найти информацию у традиционных производителей",
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "hack_corporate",
+						Text:           "Взломать корпоративные базы",
+						Description:    "Получить рецепты от конкурентов",
+						RiskLevel:      "high",
+						MoralAlignment: "evil",
+					},
+					{
+						ID:             "ask_locals",
+						Text:           "Спросить у местных жителей",
+						Description:    "Собрать информацию через слухи и истории",
+						RiskLevel:      "medium",
+						MoralAlignment: "good",
+					},
+				},
+				Critical: true,
+			},
+			{
+				ID:          "corporate_response",
+				Sequence:    2,
+				Title:       "Реакция на корпорации",
+				Description: "Как ответить на корпоративное давление",
+				Context:     "Корпорации предлагают купить рецепты или угрожают судебными исками",
+				Choices: []models.Choice{
+					{
+						ID:             "create_cooperative",
+						Text:           "Создать кооператив",
+						Description:    "Объединить независимых производителей",
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "direct_confrontation",
+						Text:           "Прямое противостояние",
+						Description:    "Открыто бороться с корпорациями",
+						RiskLevel:      "high",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "underground_network",
+						Text:           "Подпольная сеть",
+						Description:    "Создать тайную сеть производителей",
+						RiskLevel:      "medium",
+						MoralAlignment: "evil",
+					},
+				},
+				Critical: true,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "tradition_saved",
+				Title:       "Традиции спасены",
+				Description: "Глубокая пицца Чикаго сохранена для будущих поколений",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 11200},
+					{Type: "currency", Value: 7800},
+					{Type: "item", ItemID: "deep_dish_recipe", Rarity: "legendary"},
+					{Type: "reputation", Value: "chicago_culinary:+35"},
+				},
+			},
+			{
+				ID:          "corporate_compromise",
+				Title:       "Компромисс достигнут",
+				Description: "Найден баланс между традициями и современностью",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 9800},
+					{Type: "currency", Value: 10200},
+					{Type: "reputation", Value: "corporate_alliance:+15"},
+				},
+			},
+			{
+				ID:          "tradition_lost",
+				Title:       "Традиции утеряны",
+				Description: "Корпоративная стандартизация победила",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 5600},
+					{Type: "currency", Value: 11200},
+					{Type: "reputation", Value: "corporate_alliance:+25"},
+				},
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "chicago_locals",
+				Change:      30,
+				Description: "Помощь в сохранении кулинарных традиций",
+				ChoiceID:    "ask_locals",
+			},
+			{
+				Faction:     "corporate_food",
+				Change:      -35,
+				Description: "Противодействие корпоративным планам",
+				ChoiceID:    "direct_confrontation",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Chicago, Various Neighborhoods",
+			TimePeriod:  "2020-2029",
+			Weather:     "classic Chicago winter with occasional warm spells",
+			Situation:   "The deep dish pizza, Chicago's culinary crown jewel, faces extinction at the hands of corporate standardization",
+			Objectives: []string{
+				"Find legendary pizzaiolos of Chicago",
+				"Gather authentic family recipes",
+				"Restore traditional pizzerias",
+				"Organize deep dish pizza festival",
+				"Counter corporate competitors",
+				"Create cooperative of independent producers",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "master_pizzaiolo",
+				Name:        "Дон Антонио 'Толстый Борт' Росси",
+				Role:        "Мастер-пиццамейкер",
+				Description: "Последний хранитель настоящих традиций глубокой пиццы Чикаго",
+				Importance:  "primary",
+			},
+			{
+				ID:          "corporate_exec",
+				Name:        "Мисс Эмма Синтезис",
+				Role:        "Корпоративный менеджер",
+				Description: "Представитель корпорации, которая хочет стандартизировать все рецепты",
+				Importance:  "antagonist",
+			},
+			{
+				ID:          "food_critic",
+				Name:        "Профессор Марио Дель Конти",
+				Role:        "Кулинарный критик",
+				Description: "Эксперт по итальянской кухне, страстный защитник аутентичности",
+				Importance:  "ally",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
+// GetOilLegacyQuest returns the Oil Legacy quest for Dallas
+// Issue: #140928929
+func (s *Service) GetOilLegacyQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Oil Legacy quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "oil-legacy-dallas-2020-2029",
+		Title:            "Нефтяное наследие",
+		Description:      "Расследовать экологические преступления нефтяных компаний и сохранить нефтяное наследие Техаса",
+		QuestType:        "narrative_main",
+		MinLevel:         15,
+		MaxLevel:         25,
+		EstimatedDuration: 95,
+		Difficulty:       "legendary",
+		Themes:           []string{"environmental_disaster", "corporate_corruption", "texas_heritage", "oil_industry", "ecological_activism"},
+		Status:           "active",
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "investigation_method",
+				Sequence:    1,
+				Title:       "Метод расследования",
+				Description: "Выбрать подход к расследованию экологических преступлений",
+				Context:     "Нефтяные компании хорошо защищены, но доказательства загрязнения повсюду",
+				Choices: []models.Choice{
+					{
+						ID:             "scientific_analysis",
+						Text:           "Провести научный анализ",
+						Description:    "Собрать образцы и провести лабораторные тесты",
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "whistleblower_network",
+						Text:           "Создать сеть информаторов",
+						Description:    "Найти бывших сотрудников и свидетелей",
+						RiskLevel:      "high",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "corporate_infiltration",
+						Text:           "Проникнуть в корпорацию",
+						Description:    "Внедриться и получить доступ к документам",
+						RiskLevel:      "high",
+						MoralAlignment: "evil",
+					},
+				},
+				Critical: true,
+			},
+			{
+				ID:          "corporate_response",
+				Sequence:    2,
+				Title:       "Реакция на корпоративное давление",
+				Description: "Как ответить на угрозы и подкуп от нефтяных компаний",
+				Context:     "Корпорации используют все средства - от взяток до угроз",
+				Choices: []models.Choice{
+					{
+						ID:             "accept_settlement",
+						Text:           "Принять компенсацию",
+						Description:    "Взять деньги и прекратить расследование",
+						RiskLevel:      "low",
+						MoralAlignment: "evil",
+					},
+					{
+						ID:             "full_exposure",
+						Text:           "Полное разоблачение",
+						Description:    "Предать огласке все преступления",
+						RiskLevel:      "high",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "reform_compromise",
+						Text:           "Реформы через компромисс",
+						Description:    "Добиться изменений через переговоры",
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: true,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "environment_saved",
+				Title:       "Окружающая среда спасена",
+				Description: "Нефтяные компании привлечены к ответственности, экология восстановлена",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 18400},
+					{Type: "currency", Value: 12800},
+					{Type: "item", ItemID: "texas_oil_talisman", Rarity: "legendary"},
+					{Type: "reputation", Value: "texas_ecology:+50"},
+				},
+			},
+			{
+				ID:          "compromise_achieved",
+				Title:       "Компромисс достигнут",
+				Description: "Нефтяная промышленность реформирована с учетом экологии",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 16100},
+					{Type: "currency", Value: 18400},
+					{Type: "reputation", Value: "texas_business:+35"},
+				},
+			},
+			{
+				ID:          "corporate_victory",
+				Title:       "Победа корпораций",
+				Description: "Нефтяные компании продолжают загрязнять без последствий",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 9200},
+					{Type: "currency", Value: 23000},
+					{Type: "reputation", Value: "corporate_alliance:+30"},
+				},
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "texas_locals",
+				Change:      40,
+				Description: "Помощь в защите окружающей среды",
+				ChoiceID:    "whistleblower_network",
+			},
+			{
+				Faction:     "oil_companies",
+				Change:      -60,
+				Description: "Противодействие нефтяным корпорациям",
+				ChoiceID:    "full_exposure",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Dallas, Texas Oil Fields",
+			TimePeriod:  "2020-2029",
+			Weather:     "hot and dusty with occasional chemical storms",
+			Situation:   "The Texas oil legacy, once a source of pride, now threatens to become an environmental nightmare",
+			Objectives: []string{
+				"Investigate contaminated territories around Dallas",
+				"Gather evidence of corporate corruption",
+				"Interview victims of environmental disasters",
+				"Organize environmental responsibility campaign",
+				"Counter corporate lobbyists",
+				"Find alternative energy sources",
+				"Protect the oil legacy from destruction",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "environmental_scientist",
+				Name:        "Доктор Мария Санчес",
+				Role:        "Экологический ученый",
+				Description:    "Эксперт по загрязнению окружающей среды, борется с корпорациями",
+				Importance:  "primary",
+			},
+			{
+				ID:          "oil_executive",
+				Name:        "Мистер Джек 'Блэк Голд' Миллер",
+				Role:        "Исполнительный директор нефтяной компании",
+				Description:    "Хладнокровный корпоративный магнат, готовый на всё ради прибыли",
+				Importance:  "antagonist",
+			},
+			{
+				ID:          "victim_activist",
+				Name:        "Сара Джонсон",
+				Role:        "Активистка и жертва загрязнения",
+				Description:    "Потеряла дом из-за утечки нефти, борется за справедливость",
+				Importance:  "ally",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
+// GetCapitalBuildingQuest returns the Capital Building quest for Denver
+// Issue: #140928923
+func (s *Service) GetCapitalBuildingQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Capital Building quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "capital-building-denver-2020-2029",
+		Title:            "Капитолий Колорадо",
+		Description:      "Защитить Капитолий штата Колорадо от корпоративного захвата и сохранить демократические традиции",
+		QuestType:        "narrative_side",
+		MinLevel:         12,
+		MaxLevel:         22,
+		EstimatedDuration: 90,
+		Difficulty:       "hard",
+		Themes:           []string{"democratic_preservation", "political_corruption", "corporate_lobbying", "state_sovereignty", "gothic_architecture"},
+		Status:           "active",
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "investigation_approach",
+				Sequence:    1,
+				Title:       "Подход к расследованию",
+				Description: "Выбрать метод проведения расследования коррупции",
+				Context:     "Капитолий требует тщательного расследования, но корпоративные интересы усложняют задачу",
+				Choices: []models.Choice{
+					{
+						ID:             "official_investigation",
+						Text:           "Провести официальное расследование",
+						Description:    "Получить разрешение и провести полную проверку",
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "undercover_operation",
+						Text:           "Провести тайное расследование",
+						Description:    "Внедриться под прикрытием и собрать доказательства",
+						RiskLevel:      "high",
+						MoralAlignment: "evil",
+					},
+					{
+						ID:             "public_expose",
+						Text:           "Начать публичное разоблачение",
+						Description:    "Привлечь СМИ и общественность",
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+				},
+				Critical: true,
+			},
+			{
+				ID:          "corporate_response",
+				Sequence:    2,
+				Title:       "Реакция на корпоративное давление",
+				Description: "Как ответить на корпоративные угрозы и взятки",
+				Context:     "Корпорации не сдаются легко, предлагая взятки и политическое давление",
+				Choices: []models.Choice{
+					{
+						ID:             "accept_corruption",
+						Text:           "Принять взятку и отступить",
+						Description:    "Получить деньги, но предать демократию",
+						RiskLevel:      "low",
+						MoralAlignment: "evil",
+					},
+					{
+						ID:             "expose_scandal",
+						Text:           "Разоблачить скандал",
+						Description:    "Собрать доказательства и предать огласке",
+						RiskLevel:      "high",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "political_compromise",
+						Text:           "Достичь политического компромисса",
+						Description:    "Найти баланс между интересами",
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: true,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "capitol_saved",
+				Title:       "Капитолий спасен",
+				Description: "Капитолий Колорадо сохранен для будущих поколений",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 15200},
+					{Type: "currency", Value: 10600},
+					{Type: "item", ItemID: "colorado_capitol_key", Rarity: "legendary"},
+					{Type: "reputation", Value: "colorado_democracy:+45"},
+				},
+			},
+			{
+				ID:          "compromise_reached",
+				Title:       "Компромисс достигнут",
+				Description: "Капитолий модернизирован с сохранением демократических традиций",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 13300},
+					{Type: "currency", Value: 9300},
+					{Type: "reputation", Value: "colorado_business:+30"},
+				},
+			},
+			{
+				ID:          "capitol_corporatized",
+				Title:       "Капитолий корпоратизирован",
+				Description: "Корпоративные интересы победили демократию",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 7600},
+					{Type: "currency", Value: 15200},
+					{Type: "reputation", Value: "corporate_alliance:+25"},
+				},
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "colorado_citizens",
+				Change:      35,
+				Description: "Помощь в сохранении демократических традиций",
+				ChoiceID:    "public_expose",
+			},
+			{
+				Faction:     "corporate_alliance",
+				Change:      -50,
+				Description: "Противодействие корпоративным планам",
+				ChoiceID:    "expose_scandal",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Denver, Colorado State Capitol",
+			TimePeriod:  "2020-2029",
+			Weather:     "clear mountain air with occasional political storms",
+			Situation:   "The Colorado State Capitol stands as both a monument to democratic governance and a target for corporate greed",
+			Objectives: []string{
+				"Conduct inspection of the Colorado State Capitol",
+				"Gather evidence of corporate lobbying",
+				"Organize democracy preservation campaign",
+				"Counter corporate lobbyists",
+				"Find alternative solutions to governance problems",
+				"Protect the building's historical significance",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "state_inspector",
+				Name:        "Доктор Элизабет Харпер",
+				Role:        "Главный инспектор государственных зданий",
+				Description: "Эксперт по сохранению исторических зданий, скептически относится к корпоративным планам",
+				Importance:  "primary",
+			},
+			{
+				ID:          "corporate_lobbyist",
+				Name:        "Мистер Роберт Вон",
+				Role:        "Корпоративный лоббист",
+				Description:    "Хладнокровный представитель корпораций, готовый на всё ради прибыли",
+				Importance:  "antagonist",
+			},
+			{
+				ID:          "historian",
+				Name:        "Профессор Джеймс Коллинз",
+				Role:        "Историк демократии",
+				Description:    "Страстный защитник демократических традиций Колорадо",
+				Importance:  "ally",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
+// GetWillisTowerQuest returns the Willis Tower quest for Chicago
+// Issue: #140928947
+func (s *Service) GetWillisTowerQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Willis Tower quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "willis-tower-chicago-2020-2029",
+		Title:            "Башня Уиллис",
+		Description:      "Защитить Башню Уиллис от корпоративного сноса и сохранить архитектурное наследие Чикаго",
+		QuestType:        "narrative_side",
+		MinLevel:         16,
+		MaxLevel:         25,
+		EstimatedDuration: 75,
+		Difficulty:       "hard",
+		Themes:           []string{"architectural_preservation", "corporate_conspiracy", "urban_heritage", "chicago_pride", "structural_engineering"},
+		Status:           "active",
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "inspection_approach",
+				Sequence:    1,
+				Title:       "Подход к инспекции",
+				Description: "Выбрать метод проведения структурной инспекции башни",
+				Context:     "Башня Уиллис требует тщательной проверки, но корпоративные интересы усложняют задачу",
+				Choices: []models.Choice{
+					{
+						ID:             "official_inspection",
+						Text:           "Провести официальную инспекцию",
+						Description:    "Получить разрешение и провести полную проверку",
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "covert_investigation",
+						Text:           "Провести скрытное расследование",
+						Description:    "Взломать системы и собрать данные тайно",
+						RiskLevel:      "high",
+						MoralAlignment: "evil",
+					},
+					{
+						ID:             "public_campaign",
+						Text:           "Начать публичную кампанию",
+						Description:    "Привлечь СМИ и общественность",
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+				},
+				Critical: true,
+			},
+			{
+				ID:          "corporate_response",
+				Sequence:    2,
+				Title:       "Реакция на корпоративное давление",
+				Description: "Как ответить на корпоративные угрозы и подкуп",
+				Context:     "Корпорации не сдаются легко, предлагая взятки и угрозы",
+				Choices: []models.Choice{
+					{
+						ID:             "accept_bribe",
+						Text:           "Принять взятку и отступить",
+						Description:    "Получить деньги, но предать идеалы",
+						RiskLevel:      "low",
+						MoralAlignment: "evil",
+					},
+					{
+						ID:             "expose_corruption",
+						Text:           "Разоблачить коррупцию",
+						Description:    "Собрать доказательства и предать огласке",
+						RiskLevel:      "high",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "negotiate_compromise",
+						Text:           "Достичь компромисса",
+						Description:    "Найти альтернативное решение",
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: true,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "tower_saved",
+				Title:       "Башня спасена",
+				Description: "Башня Уиллис сохранена для будущих поколений",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 19200},
+					{Type: "currency", Value: 13400},
+					{Type: "item", ItemID: "willis_tower_key", Rarity: "legendary"},
+					{Type: "reputation", Value: "chicago_architecture:+40"},
+				},
+			},
+			{
+				ID:          "compromise_reached",
+				Title:       "Компромисс достигнут",
+				Description: "Башня модернизирована с сохранением исторической ценности",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 16800},
+					{Type: "currency", Value: 11700},
+					{Type: "reputation", Value: "chicago_business:+25"},
+				},
+			},
+			{
+				ID:          "tower_demolished",
+				Title:       "Башня снесена",
+				Description: "Корпоративные интересы победили",
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 9600},
+					{Type: "currency", Value: 16800},
+					{Type: "reputation", Value: "corporate_alliance:+20"},
+				},
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "chicago_architects",
+				Change:      30,
+				Description: "Помощь в сохранении архитектурного наследия",
+				ChoiceID:    "public_campaign",
+			},
+			{
+				Faction:     "corporate_alliance",
+				Change:      -40,
+				Description: "Противодействие корпоративным планам",
+				ChoiceID:    "expose_corruption",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Chicago, Willis Tower",
+			TimePeriod:  "2020-2029",
+			Weather:     "windy with occasional rain, accentuating the tower's height",
+			Situation:   "The iconic Willis Tower stands as both a monument to human achievement and a target for corporate greed",
+			Objectives: []string{
+				"Conduct structural integrity inspection",
+				"Gather evidence of corporate demolition plans",
+				"Organize preservation campaign",
+				"Counter corporate lobbyists",
+				"Find alternative solutions to building problems",
+				"Protect the tower's historical significance",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "chief_engineer",
+				Name:        "Доктор Сара Макдональд",
+				Role:        "Главный инженер по инспекциям",
+				Description: "Эксперт по структурной целостности небоскребов, скептически относится к корпоративным планам",
+				Importance:  "primary",
+			},
+			{
+				ID:          "corporate_rep",
+				Name:        "Мистер Виктор Рейнольдс",
+				Role:        "Представитель корпорации-агрессора",
+				Description: "Хладнокровный корпоративный лоббист, готовый на всё ради прибыли",
+				Importance:  "antagonist",
+			},
+			{
+				ID:          "historian",
+				Name:        "Профессор Элизабет Чанг",
+				Role:        "Историк архитектуры",
+				Description: "Страстный защитник архитектурного наследия Чикаго",
+				Importance:  "ally",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}

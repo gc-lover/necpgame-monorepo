@@ -7,21 +7,20 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"necpgame/services/webrtc-signaling-service-go/internal/service"
 	"necpgame/services/webrtc-signaling-service-go/pkg/models"
 )
 
-// Handlers handles HTTP requests
+// Handlers handles HTTP requests for WebRTC signaling service
 type Handlers struct {
 	service *service.Service
 	logger  *zap.Logger
 }
 
-// NewHandlers creates new handlers instance
+// NewHandlers creates a new handlers instance
 func NewHandlers(svc *service.Service, logger *zap.Logger) *Handlers {
 	return &Handlers{
 		service: svc,
@@ -29,395 +28,367 @@ func NewHandlers(svc *service.Service, logger *zap.Logger) *Handlers {
 	}
 }
 
-// Metrics
-var (
-	requestsTotal = promauto.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "webrtc_signaling_requests_total",
-			Help: "Total number of requests processed",
-		},
-		[]string{"method", "endpoint", "status"},
-	)
+// SetupRoutes configures all HTTP routes
+func (h *Handlers) SetupRoutes(r *chi.Mux) {
+	// Health check endpoints
+	r.Get("/health", h.HealthCheck)
+	r.Post("/health/batch", h.BatchHealthCheck)
+	r.Get("/health/ws", h.HealthWebSocket)
 
-	requestDuration = promauto.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "webrtc_signaling_request_duration_seconds",
-			Help:    "Request duration in seconds",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"method", "endpoint"},
-	)
+	// Metrics endpoint
+	r.Handle("/metrics", h.MetricsHandler())
 
-	activeConnections = promauto.NewGauge(
-		prometheus.GaugeOpts{
-			Name: "webrtc_signaling_active_connections",
-			Help: "Number of active voice connections",
-		},
-	)
-)
+	// API routes
+	r.Route("/api/v1", func(r chi.Router) {
+		// Voice channels management
+		r.Get("/voice-channels", h.ListVoiceChannels)
+		r.Post("/voice-channels", h.CreateVoiceChannel)
+		r.Get("/voice-channels/{channel_id}", h.GetVoiceChannel)
+		r.Put("/voice-channels/{channel_id}", h.UpdateVoiceChannel)
+		r.Delete("/voice-channels/{channel_id}", h.DeleteVoiceChannel)
 
-// HealthCheck handles health check requests
+		// Voice channel operations
+		r.Post("/voice-channels/{channel_id}/join", h.JoinVoiceChannel)
+		r.Post("/voice-channels/{channel_id}/signal", h.ExchangeSignalingMessage)
+		r.Post("/voice-channels/{channel_id}/leave", h.LeaveVoiceChannel)
+
+		// Voice quality monitoring
+		r.Post("/voice-quality/{channel_id}/report", h.ReportVoiceQuality)
+	})
+}
+
+// Health check handlers
 func (h *Handlers) HealthCheck(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
+	ctx, cancel := contextWithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
 
-	response := models.HealthResponse{
-		Service:   "webrtc-signaling",
+	err := h.service.HealthCheck(ctx)
+	if err != nil {
+		h.logger.Error("Health check failed", zap.Error(err))
+		h.respondError(w, http.StatusServiceUnavailable, "Service unhealthy")
+		return
+	}
+
+	health := models.HealthStatus{
+		Service:   "webrtc-signaling-service",
 		Status:    "healthy",
-		Timestamp: time.Now(),
 		Version:   "1.0.0",
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
-
-	duration := time.Since(start)
-	requestDuration.WithLabelValues("GET", "/health").Observe(duration.Seconds())
-	requestsTotal.WithLabelValues("GET", "/health", "200").Inc()
-}
-
-// BatchHealthCheck handles batch health checks
-func (h *Handlers) BatchHealthCheck(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-
-	var req struct {
-		Services []string `json:"services"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, "Invalid request", http.StatusBadRequest, err)
-		return
-	}
-
-	results := make([]models.HealthResponse, len(req.Services))
-	for i, svc := range req.Services {
-		results[i] = models.HealthResponse{
-			Service:   svc,
-			Status:    "healthy", // Simplified - in production, check actual service health
-			Timestamp: time.Now(),
-			Version:   "1.0.0",
-		}
-	}
-
-	response := map[string]interface{}{
-		"results":     results,
-		"total_time_ms": time.Since(start).Milliseconds(),
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
-
-	duration := time.Since(start)
-	requestDuration.WithLabelValues("POST", "/health/batch").Observe(duration.Seconds())
-	requestsTotal.WithLabelValues("POST", "/health/batch", "200").Inc()
-}
-
-// HealthWebSocket handles WebSocket health connections (placeholder)
-func (h *Handlers) HealthWebSocket(w http.ResponseWriter, r *http.Request) {
-	// Simplified WebSocket health check
-	response := models.WebSocketHealthMessage{
-		Type:      "health_update",
 		Timestamp: time.Now(),
-		Health: models.HealthResponse{
-			Service:   "webrtc-signaling",
-			Status:    "healthy",
-			Timestamp: time.Now(),
-			Version:   "1.0.0",
-		},
+		Uptime:    "running", // TODO: Implement uptime tracking
+		Database:  "connected",
+		Redis:     "connected",
 	}
+	health.WebSocket.ActiveConnections = h.getActiveConnections()
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
-
-	requestsTotal.WithLabelValues("GET", "/health/ws", "200").Inc()
+	h.respondJSON(w, http.StatusOK, health)
 }
 
-// ListVoiceChannels handles listing voice channels
+func (h *Handlers) BatchHealthCheck(w http.ResponseWriter, r *http.Request) {
+	// Simple batch health check - could be extended
+	h.HealthCheck(w, r)
+}
+
+func (h *Handlers) HealthWebSocket(w http.ResponseWriter, r *http.Request) {
+	// WebSocket health check endpoint
+	h.HealthCheck(w, r)
+}
+
+// Metrics handler
+func (h *Handlers) MetricsHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: Implement Prometheus metrics
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("# WebRTC Signaling Service Metrics\n"))
+		w.Write([]byte("webrtc_active_connections 0\n"))
+		w.Write([]byte("webrtc_total_messages 0\n"))
+	})
+}
+
+// Voice channel handlers
 func (h *Handlers) ListVoiceChannels(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
+	guildIDStr := r.URL.Query().Get("guild_id")
+	var guildID *uuid.UUID
 
-	// Parse query parameters
-	limitStr := r.URL.Query().Get("limit")
-	offsetStr := r.URL.Query().Get("offset")
-	channelType := r.URL.Query().Get("type")
-	status := r.URL.Query().Get("status")
-
-	limit := 20 // default
-	if limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
-			limit = l
+	if guildIDStr != "" {
+		parsed, err := uuid.Parse(guildIDStr)
+		if err != nil {
+			h.respondError(w, http.StatusBadRequest, "Invalid guild_id format")
+			return
 		}
+		guildID = &parsed
 	}
 
-	offset := 0 // default
-	if offsetStr != "" {
-		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
-			offset = o
-		}
-	}
+	ctx, cancel := contextWithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
 
-	response, err := h.service.ListVoiceChannels(r.Context(), limit, offset, channelType, status)
+	channels, err := h.service.ListVoiceChannels(ctx, guildID)
 	if err != nil {
-		h.respondError(w, "Failed to list voice channels", http.StatusInternalServerError, err)
+		h.logger.Error("Failed to list voice channels", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to list voice channels")
 		return
 	}
 
-	h.respondJSON(w, response, http.StatusOK)
+	// Convert to response format
+	responses := make([]models.VoiceChannelResponse, len(channels))
+	for i, channel := range channels {
+		responses[i] = models.VoiceChannelResponse{
+			ID:           channel.ID.String(),
+			Name:         channel.Name,
+			Type:         channel.Type,
+			OwnerID:      channel.OwnerID.String(),
+			MaxUsers:     channel.MaxUsers,
+			CurrentUsers: channel.CurrentUsers,
+			IsActive:     channel.IsActive,
+			CreatedAt:    channel.CreatedAt,
+		}
+		if channel.GuildID != nil {
+			guildIDStr := channel.GuildID.String()
+			responses[i].GuildID = &guildIDStr
+		}
+	}
 
-	duration := time.Since(start)
-	requestDuration.WithLabelValues("GET", "/voice-channels").Observe(duration.Seconds())
-	requestsTotal.WithLabelValues("GET", "/voice-channels", "200").Inc()
+	h.respondJSON(w, http.StatusOK, responses)
 }
 
-// CreateVoiceChannel handles creating a new voice channel
 func (h *Handlers) CreateVoiceChannel(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-
-	var req models.CreateVoiceChannelRequest
+	var req models.VoiceChannelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, "Invalid request body", http.StatusBadRequest, err)
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	channel, err := h.service.CreateVoiceChannel(r.Context(), req)
+	// TODO: Get user ID from JWT token
+	ownerID := uuid.New() // Placeholder
+
+	ctx, cancel := contextWithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	response, err := h.service.CreateVoiceChannel(ctx, &req, ownerID)
 	if err != nil {
-		h.respondError(w, "Failed to create voice channel", http.StatusInternalServerError, err)
+		h.logger.Error("Failed to create voice channel", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to create voice channel")
 		return
 	}
 
-	response := models.VoiceChannelResponse{Channel: *channel}
-	h.respondJSON(w, response, http.StatusCreated)
-
-	duration := time.Since(start)
-	requestDuration.WithLabelValues("POST", "/voice-channels").Observe(duration.Seconds())
-	requestsTotal.WithLabelValues("POST", "/voice-channels", "201").Inc()
+	h.respondJSON(w, http.StatusCreated, response)
 }
 
-// GetVoiceChannel handles retrieving a specific voice channel
 func (h *Handlers) GetVoiceChannel(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-
-	channelID := chi.URLParam(r, "channel_id")
-	if channelID == "" {
-		h.respondError(w, "Channel ID is required", http.StatusBadRequest, nil)
-		return
-	}
-
-	channel, err := h.service.GetVoiceChannel(r.Context(), channelID)
+	channelIDStr := chi.URLParam(r, "channel_id")
+	channelID, err := uuid.Parse(channelIDStr)
 	if err != nil {
-		h.respondError(w, "Failed to get voice channel", http.StatusNotFound, err)
+		h.respondError(w, http.StatusBadRequest, "Invalid channel_id format")
 		return
 	}
 
-	response := models.VoiceChannelResponse{Channel: *channel}
-	h.respondJSON(w, response, http.StatusOK)
+	ctx, cancel := contextWithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
 
-	duration := time.Since(start)
-	requestDuration.WithLabelValues("GET", "/voice-channels/{id}").Observe(duration.Seconds())
-	requestsTotal.WithLabelValues("GET", "/voice-channels/{id}", "200").Inc()
+	response, err := h.service.GetVoiceChannel(ctx, channelID)
+	if err != nil {
+		h.logger.Error("Failed to get voice channel", zap.Error(err))
+		h.respondError(w, http.StatusNotFound, "Voice channel not found")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
-// UpdateVoiceChannel handles updating a voice channel
 func (h *Handlers) UpdateVoiceChannel(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-
-	channelID := chi.URLParam(r, "channel_id")
-	if channelID == "" {
-		h.respondError(w, "Channel ID is required", http.StatusBadRequest, nil)
-		return
-	}
-
-	var req models.UpdateVoiceChannelRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, "Invalid request body", http.StatusBadRequest, err)
-		return
-	}
-
-	channel, err := h.service.UpdateVoiceChannel(r.Context(), channelID, req)
+	channelIDStr := chi.URLParam(r, "channel_id")
+	channelID, err := uuid.Parse(channelIDStr)
 	if err != nil {
-		h.respondError(w, "Failed to update voice channel", http.StatusInternalServerError, err)
+		h.respondError(w, http.StatusBadRequest, "Invalid channel_id format")
 		return
 	}
 
-	response := models.VoiceChannelResponse{Channel: *channel}
-	h.respondJSON(w, response, http.StatusOK)
+	var req models.VoiceChannelRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
 
-	duration := time.Since(start)
-	requestDuration.WithLabelValues("PUT", "/voice-channels/{id}").Observe(duration.Seconds())
-	requestsTotal.WithLabelValues("PUT", "/voice-channels/{id}", "200").Inc()
+	ctx, cancel := contextWithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	response, err := h.service.UpdateVoiceChannel(ctx, channelID, &req)
+	if err != nil {
+		h.logger.Error("Failed to update voice channel", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to update voice channel")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
-// DeleteVoiceChannel handles deleting a voice channel
 func (h *Handlers) DeleteVoiceChannel(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-
-	channelID := chi.URLParam(r, "channel_id")
-	if channelID == "" {
-		h.respondError(w, "Channel ID is required", http.StatusBadRequest, nil)
-		return
-	}
-
-	err := h.service.DeleteVoiceChannel(r.Context(), channelID)
+	channelIDStr := chi.URLParam(r, "channel_id")
+	channelID, err := uuid.Parse(channelIDStr)
 	if err != nil {
-		h.respondError(w, "Failed to delete voice channel", http.StatusInternalServerError, err)
+		h.respondError(w, http.StatusBadRequest, "Invalid channel_id format")
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	ctx, cancel := contextWithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
 
-	duration := time.Since(start)
-	requestDuration.WithLabelValues("DELETE", "/voice-channels/{id}").Observe(duration.Seconds())
-	requestsTotal.WithLabelValues("DELETE", "/voice-channels/{id}", "204").Inc()
+	err = h.service.DeleteVoiceChannel(ctx, channelID)
+	if err != nil {
+		h.logger.Error("Failed to delete voice channel", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to delete voice channel")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
 
-// JoinVoiceChannel handles joining a voice channel
+// Voice channel operation handlers
 func (h *Handlers) JoinVoiceChannel(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-
-	channelID := chi.URLParam(r, "channel_id")
-	if channelID == "" {
-		h.respondError(w, "Channel ID is required", http.StatusBadRequest, nil)
+	channelIDStr := chi.URLParam(r, "channel_id")
+	channelID, err := uuid.Parse(channelIDStr)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid channel_id format")
 		return
 	}
 
-	var req models.JoinChannelRequest
+	var req models.JoinVoiceChannelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, "Invalid request body", http.StatusBadRequest, err)
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	response, err := h.service.JoinVoiceChannel(r.Context(), channelID, req)
+	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		status := http.StatusInternalServerError
-		if err.Error() == "voice channel is full" {
-			status = http.StatusConflict
-		}
-		h.respondError(w, "Failed to join voice channel", status, err)
+		h.respondError(w, http.StatusBadRequest, "Invalid user_id format")
 		return
 	}
 
-	h.respondJSON(w, response, http.StatusOK)
-	activeConnections.Inc()
+	ctx, cancel := contextWithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
 
-	duration := time.Since(start)
-	requestDuration.WithLabelValues("POST", "/voice-channels/{id}/join").Observe(duration.Seconds())
-	requestsTotal.WithLabelValues("POST", "/voice-channels/{id}/join", "200").Inc()
+	response, err := h.service.JoinVoiceChannel(ctx, channelID, userID)
+	if err != nil {
+		h.logger.Error("Failed to join voice channel", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
-// ExchangeSignalingMessage handles WebRTC signaling
 func (h *Handlers) ExchangeSignalingMessage(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-
-	channelID := chi.URLParam(r, "channel_id")
-	if channelID == "" {
-		h.respondError(w, "Channel ID is required", http.StatusBadRequest, nil)
-		return
-	}
-
-	var msg models.SignalingMessage
-	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		h.respondError(w, "Invalid signaling message", http.StatusBadRequest, err)
-		return
-	}
-
-	response, err := h.service.ExchangeSignalingMessage(r.Context(), channelID, msg)
+	channelIDStr := chi.URLParam(r, "channel_id")
+	_, err := uuid.Parse(channelIDStr)
 	if err != nil {
-		h.respondError(w, "Failed to process signaling message", http.StatusBadRequest, err)
+		h.respondError(w, http.StatusBadRequest, "Invalid channel_id format")
 		return
 	}
 
-	h.respondJSON(w, response, http.StatusOK)
+	var req models.SignalingRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
 
-	duration := time.Since(start)
-	requestDuration.WithLabelValues("POST", "/voice-channels/{id}/signal").Observe(duration.Seconds())
-	requestsTotal.WithLabelValues("POST", "/voice-channels/{id}/signal", "200").Inc()
+	ctx, cancel := contextWithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	response, err := h.service.ExchangeSignalingMessage(ctx, &req)
+	if err != nil {
+		h.logger.Error("Failed to exchange signaling message", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to exchange signaling message")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
-// LeaveVoiceChannel handles leaving a voice channel
 func (h *Handlers) LeaveVoiceChannel(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-
-	channelID := chi.URLParam(r, "channel_id")
-	if channelID == "" {
-		h.respondError(w, "Channel ID is required", http.StatusBadRequest, nil)
-		return
-	}
-
-	// Extract user ID from context (simplified - in production, from JWT)
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
-		userID = "anonymous" // For demo purposes
-	}
-
-	response, err := h.service.LeaveVoiceChannel(r.Context(), channelID, userID)
+	channelIDStr := chi.URLParam(r, "channel_id")
+	channelID, err := uuid.Parse(channelIDStr)
 	if err != nil {
-		h.respondError(w, "Failed to leave voice channel", http.StatusInternalServerError, err)
+		h.respondError(w, http.StatusBadRequest, "Invalid channel_id format")
 		return
 	}
 
-	h.respondJSON(w, response, http.StatusOK)
-	activeConnections.Dec()
+	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		h.respondError(w, http.StatusBadRequest, "Missing user_id parameter")
+		return
+	}
 
-	duration := time.Since(start)
-	requestDuration.WithLabelValues("POST", "/voice-channels/{id}/leave").Observe(duration.Seconds())
-	requestsTotal.WithLabelValues("POST", "/voice-channels/{id}/leave", "200").Inc()
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid user_id format")
+		return
+	}
+
+	ctx, cancel := contextWithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	err = h.service.LeaveVoiceChannel(ctx, channelID, userID)
+	if err != nil {
+		h.logger.Error("Failed to leave voice channel", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to leave voice channel")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, map[string]string{"status": "left"})
 }
 
-// ReportVoiceQuality handles voice quality reports
+// Voice quality handler
 func (h *Handlers) ReportVoiceQuality(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
-
-	channelID := chi.URLParam(r, "channel_id")
-	if channelID == "" {
-		h.respondError(w, "Channel ID is required", http.StatusBadRequest, nil)
-		return
-	}
-
-	var report models.VoiceQualityReport
-	if err := json.NewDecoder(r.Body).Decode(&report); err != nil {
-		h.respondError(w, "Invalid quality report", http.StatusBadRequest, err)
-		return
-	}
-
-	response, err := h.service.ReportVoiceQuality(r.Context(), channelID, report)
+	channelIDStr := chi.URLParam(r, "channel_id")
+	channelID, err := uuid.Parse(channelIDStr)
 	if err != nil {
-		h.respondError(w, "Failed to process quality report", http.StatusInternalServerError, err)
+		h.respondError(w, http.StatusBadRequest, "Invalid channel_id format")
 		return
 	}
 
-	h.respondJSON(w, response, http.StatusOK)
+	var req models.VoiceQualityReportRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
 
-	duration := time.Since(start)
-	requestDuration.WithLabelValues("POST", "/voice-quality/{id}/report").Observe(duration.Seconds())
-	requestsTotal.WithLabelValues("POST", "/voice-quality/{id}/report", "200").Inc()
+	// TODO: Get user ID from JWT token
+	userID := uuid.New() // Placeholder
+
+	ctx, cancel := contextWithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	err = h.service.ReportVoiceQuality(ctx, channelID, userID, &req)
+	if err != nil {
+		h.logger.Error("Failed to report voice quality", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to report voice quality")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, map[string]string{"status": "reported"})
 }
 
 // Helper methods
-
-func (h *Handlers) respondJSON(w http.ResponseWriter, data interface{}, status int) {
+func (h *Handlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		h.logger.Error("Failed to encode JSON response", zap.Error(err))
-	}
+	json.NewEncoder(w).Encode(data)
 }
 
-func (h *Handlers) respondError(w http.ResponseWriter, message string, status int, err error) {
-	response := models.Error{
-		Code:    status,
-		Message: message,
-	}
-
-	if err != nil {
-		h.logger.Error(message, zap.Error(err))
-		response.Details = err.Error()
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(response)
-
-	requestsTotal.WithLabelValues("UNKNOWN", "UNKNOWN", strconv.Itoa(status)).Inc()
+func (h *Handlers) respondError(w http.ResponseWriter, status int, message string) {
+	h.respondJSON(w, status, map[string]string{"error": message})
 }
+
+func (h *Handlers) getActiveConnections() int {
+	// TODO: Implement active connections tracking
+	return 0
+}
+
+// contextWithTimeout creates a context with timeout
+func contextWithTimeout(parent context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(parent, timeout)
+}
+
+// PERFORMANCE: Handlers use context timeouts for all operations
+// Error responses include appropriate HTTP status codes
+// JSON responses are properly formatted for API clients

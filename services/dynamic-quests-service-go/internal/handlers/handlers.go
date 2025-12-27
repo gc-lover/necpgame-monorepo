@@ -423,6 +423,66 @@ func (h *Handlers) GetRevivalHopeQuest(w http.ResponseWriter, r *http.Request) {
 	h.respondJSON(w, http.StatusOK, quest)
 }
 
+// GetWillisTowerQuest handles GET /quests/chicago/willis-tower
+// Issue: #140928947
+func (h *Handlers) GetWillisTowerQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get Willis Tower quest request")
+
+	quest, err := h.service.GetWillisTowerQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get Willis Tower quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
+// GetDeepDishPizzaQuest handles GET /quests/chicago/deep-dish-pizza
+// Issue: #140928949
+func (h *Handlers) GetDeepDishPizzaQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get Deep Dish Pizza quest request")
+
+	quest, err := h.service.GetDeepDishPizzaQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get Deep Dish Pizza quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
+// GetCapitalBuildingQuest handles GET /quests/denver/capital-building
+// Issue: #140928923
+func (h *Handlers) GetCapitalBuildingQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get Capital Building quest request")
+
+	quest, err := h.service.GetCapitalBuildingQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get Capital Building quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
+// GetOilLegacyQuest handles GET /quests/dallas/oil-legacy
+// Issue: #140928929
+func (h *Handlers) GetOilLegacyQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get Oil Legacy quest request")
+
+	quest, err := h.service.GetOilLegacyQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get Oil Legacy quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
 // respondJSON sends a JSON response
 func (h *Handlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")

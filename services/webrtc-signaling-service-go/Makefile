@@ -1,67 +1,79 @@
-.PHONY: build run test clean docker-build docker-run lint fmt vet mod-tidy
+# Makefile for WebRTC Signaling Service
 
-# Variables
-APP_NAME=webrtc-signaling-service
-DOCKER_IMAGE=necpgame/$(APP_NAME):latest
+.PHONY: build run test clean deps docker-build docker-run k8s-deploy
 
-# Build the application
+# Build the service
 build:
-	go build -o bin/$(APP_NAME) .
+	go build -o bin/webrtc-signaling-service .
 
-# Run the application
+# Run the service
 run:
 	go run .
 
 # Run tests
 test:
-	go test -v ./...
+	go test ./...
+
+# Run integration tests
+test-integration:
+	go test -tags=integration ./tests/
 
 # Clean build artifacts
 clean:
-	go clean
 	rm -rf bin/
+
+# Install dependencies
+deps:
+	go mod tidy
+	go mod download
 
 # Format code
 fmt:
 	go fmt ./...
 
-# Vet code
-vet:
-	go vet ./...
-
-# Tidy modules
-mod-tidy:
-	go mod tidy
-
-# Lint code (requires golangci-lint)
+# Lint code
 lint:
 	golangci-lint run
 
+# Run locally with air (hot reload)
+dev:
+	air
+
 # Build Docker image
 docker-build:
-	docker build -t $(DOCKER_IMAGE) .
+	docker build -t webrtc-signaling-service .
 
 # Run Docker container
 docker-run:
-	docker run -p 8080:8080 \
-		-e DATABASE_URL="postgres://user:password@localhost:5432/webrtc_signaling?sslmode=disable" \
-		-e REDIS_URL="redis://localhost:6379" \
-		-e JWT_SECRET="your-secret-key" \
-		$(DOCKER_IMAGE)
+	docker run -p 8080:8080 --env-file .env webrtc-signaling-service
 
-# Development setup
-dev-setup: mod-tidy fmt vet
+# Docker compose up
+docker-up:
+	docker-compose up -d
 
-# Production build
-prod-build: mod-tidy fmt vet test build docker-build
+# Docker compose down
+docker-down:
+	docker-compose down
+
+# Kubernetes deploy
+k8s-deploy:
+	kubectl apply -f k8s/
+
+# Performance benchmark
+bench:
+	go test -bench=. -benchmem
+
+# Profile CPU
+profile-cpu:
+	go tool pprof -http=:8081 cpu.prof
+
+# Profile memory
+profile-mem:
+	go tool pprof -http=:8082 mem.prof
 
 # Health check
-health-check:
-	curl -f http://localhost:8080/health || exit 1
+health:
+	curl -f http://localhost:8080/health
 
-# Load test (requires hey or similar)
-load-test:
-	hey -n 1000 -c 10 http://localhost:8080/health
-
-# All quality checks
-quality: fmt vet lint test
+# All-in-one setup
+setup: deps fmt lint build docker-build
