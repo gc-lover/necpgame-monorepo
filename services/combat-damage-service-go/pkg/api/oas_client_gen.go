@@ -33,14 +33,14 @@ type Invoker interface {
 	// Apply buffs, debuffs, and status effects to combat participants.
 	//
 	// POST /combat/effects/apply
-	ApplyEffects(ctx context.Context, request *EffectsRequest) (ApplyEffectsRes, error)
+	ApplyEffects(ctx context.Context, request *ApplyEffectsRequest) (ApplyEffectsRes, error)
 	// CalculateDamage invokes calculateDamage operation.
 	//
 	// Calculate damage with all modifiers, critical hits, and anti-cheat validation.
 	// **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations.
 	//
 	// POST /combat/damage/calculate
-	CalculateDamage(ctx context.Context, request *DamageRequest) (CalculateDamageRes, error)
+	CalculateDamage(ctx context.Context, request *DamageCalculationRequest) (CalculateDamageRes, error)
 	// GetActiveEffects invokes getActiveEffects operation.
 	//
 	// Retrieve all active effects for a combat participant.
@@ -118,12 +118,12 @@ func (c *Client) requestURL(ctx context.Context) *url.URL {
 // Apply buffs, debuffs, and status effects to combat participants.
 //
 // POST /combat/effects/apply
-func (c *Client) ApplyEffects(ctx context.Context, request *EffectsRequest) (ApplyEffectsRes, error) {
+func (c *Client) ApplyEffects(ctx context.Context, request *ApplyEffectsRequest) (ApplyEffectsRes, error) {
 	res, err := c.sendApplyEffects(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendApplyEffects(ctx context.Context, request *EffectsRequest) (res ApplyEffectsRes, err error) {
+func (c *Client) sendApplyEffects(ctx context.Context, request *ApplyEffectsRequest) (res ApplyEffectsRes, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("applyEffects"),
 		semconv.HTTPRequestMethodKey.String("POST"),
@@ -228,12 +228,12 @@ func (c *Client) sendApplyEffects(ctx context.Context, request *EffectsRequest) 
 // **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations.
 //
 // POST /combat/damage/calculate
-func (c *Client) CalculateDamage(ctx context.Context, request *DamageRequest) (CalculateDamageRes, error) {
+func (c *Client) CalculateDamage(ctx context.Context, request *DamageCalculationRequest) (CalculateDamageRes, error) {
 	res, err := c.sendCalculateDamage(ctx, request)
 	return res, err
 }
 
-func (c *Client) sendCalculateDamage(ctx context.Context, request *DamageRequest) (res CalculateDamageRes, err error) {
+func (c *Client) sendCalculateDamage(ctx context.Context, request *DamageCalculationRequest) (res CalculateDamageRes, err error) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("calculateDamage"),
 		semconv.HTTPRequestMethodKey.String("POST"),

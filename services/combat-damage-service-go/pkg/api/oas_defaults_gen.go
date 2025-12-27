@@ -3,7 +3,31 @@
 package api
 
 // setDefaults set default value of fields.
-func (s *DamageRequest) setDefaults() {
+func (s *ApplyEffectsRequest) setDefaults() {
+	{
+		val := bool(false)
+		s.OverrideExisting.SetTo(val)
+	}
+	{
+		val := bool(true)
+		s.StackEffects.SetTo(val)
+	}
+}
+
+// setDefaults set default value of fields.
+func (s *ApplyEffectsRequestEffectsItem) setDefaults() {
+	{
+		val := float32(1)
+		s.Intensity.SetTo(val)
+	}
+	{
+		val := int32(1)
+		s.Stacks.SetTo(val)
+	}
+}
+
+// setDefaults set default value of fields.
+func (s *DamageCalculationRequest) setDefaults() {
 	{
 		val := float32(1)
 		s.CriticalMultiplier.SetTo(val)
@@ -31,7 +55,7 @@ func (s *DamageRequest) setDefaults() {
 }
 
 // setDefaults set default value of fields.
-func (s *DamageRequestEnvironmentalModifiers) setDefaults() {
+func (s *DamageCalculationRequestEnvironmentalModifiers) setDefaults() {
 	{
 		val := float32(1)
 		s.WeatherMultiplier.SetTo(val)
@@ -39,41 +63,5 @@ func (s *DamageRequestEnvironmentalModifiers) setDefaults() {
 	{
 		val := float32(0)
 		s.TerrainCover.SetTo(val)
-	}
-}
-
-// setDefaults set default value of fields.
-func (s *EffectsRequest) setDefaults() {
-	{
-		val := bool(false)
-		s.OverrideExisting.SetTo(val)
-	}
-	{
-		val := bool(true)
-		s.StackEffects.SetTo(val)
-	}
-}
-
-// setDefaults set default value of fields.
-func (s *EffectsRequestCombatEffect) setDefaults() {
-	{
-		val := float32(1)
-		s.Intensity.SetTo(val)
-	}
-	{
-		val := int32(1)
-		s.Stacks.SetTo(val)
-	}
-}
-
-// setDefaults set default value of fields.
-func (s *EffectsRequestEffectsItem) setDefaults() {
-	{
-		val := float32(1)
-		s.Intensity.SetTo(val)
-	}
-	{
-		val := int32(1)
-		s.Stacks.SetTo(val)
 	}
 }

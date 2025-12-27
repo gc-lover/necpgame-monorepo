@@ -13,7 +13,7 @@ import (
 
 func encodeApplyEffectsResponse(response ApplyEffectsRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *EffectsResult:
+	case *ApplyEffectsResult:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(200)
 		span.SetStatus(codes.Ok, http.StatusText(200))
@@ -46,7 +46,7 @@ func encodeApplyEffectsResponse(response ApplyEffectsRes, w http.ResponseWriter,
 
 func encodeCalculateDamageResponse(response CalculateDamageRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *DamageResult:
+	case *DamageCalculationResult:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(200)
 		span.SetStatus(codes.Ok, http.StatusText(200))
@@ -92,7 +92,7 @@ func encodeCalculateDamageResponse(response CalculateDamageRes, w http.ResponseW
 
 func encodeGetActiveEffectsResponse(response GetActiveEffectsRes, w http.ResponseWriter, span trace.Span) error {
 	switch response := response.(type) {
-	case *ActiveEffects:
+	case *ActiveEffectsResponse:
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(200)
 		span.SetStatus(codes.Ok, http.StatusText(200))

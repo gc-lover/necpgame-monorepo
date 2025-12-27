@@ -9,7 +9,7 @@ import (
 	"github.com/ogen-go/ogen/validate"
 )
 
-func (s *ActiveEffects) Validate() error {
+func (s *ActiveEffectsResponse) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -79,8 +79,183 @@ func (s *ActiveEffects) Validate() error {
 			Error: err,
 		})
 	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *ActiveEffectsResponseEffectsItem) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
 	if err := func() error {
-		if value, ok := s.ActiveEffect.Get(); ok {
+		if err := s.EffectType.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "effect_type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := (validate.Int{
+			MinSet:        true,
+			Min:           0,
+			MaxSet:        false,
+			Max:           0,
+			MinExclusive:  false,
+			MaxExclusive:  false,
+			MultipleOfSet: false,
+			MultipleOf:    0,
+			Pattern:       nil,
+		}).Validate(int64(s.RemainingMs)); err != nil {
+			return errors.Wrap(err, "int")
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "remaining_ms",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Intensity.Get(); ok {
+			if err := func() error {
+				if err := (validate.Float{
+					MinSet:        true,
+					Min:           0.1,
+					MaxSet:        true,
+					Max:           5,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    nil,
+					Pattern:       nil,
+				}).Validate(float64(value)); err != nil {
+					return errors.Wrap(err, "float")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "intensity",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Stacks.Get(); ok {
+			if err := func() error {
+				if err := (validate.Int{
+					MinSet:        true,
+					Min:           1,
+					MaxSet:        true,
+					Max:           10,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    0,
+					Pattern:       nil,
+				}).Validate(int64(value)); err != nil {
+					return errors.Wrap(err, "int")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "stacks",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s ActiveEffectsResponseEffectsItemEffectType) Validate() error {
+	switch s {
+	case "buff_damage":
+		return nil
+	case "debuff_damage_reduction":
+		return nil
+	case "buff_speed":
+		return nil
+	case "debuff_slow":
+		return nil
+	case "buff_regeneration":
+		return nil
+	case "debuff_poison":
+		return nil
+	case "buff_shield":
+		return nil
+	case "debuff_stun":
+		return nil
+	case "buff_critical_chance":
+		return nil
+	case "debuff_accuracy_reduction":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *ApplyEffectsRequest) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if s.Effects == nil {
+			return errors.New("nil is invalid value")
+		}
+		if err := (validate.Array{
+			MinLength:    1,
+			MinLengthSet: true,
+			MaxLength:    20,
+			MaxLengthSet: true,
+		}).ValidateLength(len(s.Effects)); err != nil {
+			return errors.Wrap(err, "array")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.Effects {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "effects",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.SourceType.Get(); ok {
 			if err := func() error {
 				if err := value.Validate(); err != nil {
 					return err
@@ -93,7 +268,25 @@ func (s *ActiveEffects) Validate() error {
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "ActiveEffect",
+			Name:  "source_type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Context.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "context",
 			Error: err,
 		})
 	}
@@ -103,7 +296,52 @@ func (s *ActiveEffects) Validate() error {
 	return nil
 }
 
-func (s *ActiveEffectsActiveEffect) Validate() error {
+func (s *ApplyEffectsRequestContext) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.WeatherConditions.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "weather_conditions",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s ApplyEffectsRequestContextWeatherConditions) Validate() error {
+	switch s {
+	case "clear":
+		return nil
+	case "rain":
+		return nil
+	case "storm":
+		return nil
+	case "fog":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *ApplyEffectsRequestEffectsItem) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -123,21 +361,21 @@ func (s *ActiveEffectsActiveEffect) Validate() error {
 	if err := func() error {
 		if err := (validate.Int{
 			MinSet:        true,
-			Min:           0,
-			MaxSet:        false,
-			Max:           0,
+			Min:           1000,
+			MaxSet:        true,
+			Max:           300000,
 			MinExclusive:  false,
 			MaxExclusive:  false,
 			MultipleOfSet: false,
 			MultipleOf:    0,
 			Pattern:       nil,
-		}).Validate(int64(s.RemainingMs)); err != nil {
+		}).Validate(int64(s.DurationMs)); err != nil {
 			return errors.Wrap(err, "int")
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "remaining_ms",
+			Name:  "duration_ms",
 			Error: err,
 		})
 	}
@@ -203,7 +441,7 @@ func (s *ActiveEffectsActiveEffect) Validate() error {
 	return nil
 }
 
-func (s ActiveEffectsActiveEffectEffectType) Validate() error {
+func (s ApplyEffectsRequestEffectsItemEffectType) Validate() error {
 	switch s {
 	case "buff_damage":
 		return nil
@@ -230,59 +468,89 @@ func (s ActiveEffectsActiveEffectEffectType) Validate() error {
 	}
 }
 
-func (s *ActiveEffectsEffectsItem) Validate() error {
+func (s ApplyEffectsRequestSourceType) Validate() error {
+	switch s {
+	case "weapon":
+		return nil
+	case "ability":
+		return nil
+	case "implant":
+		return nil
+	case "environmental":
+		return nil
+	case "status_effect":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *ApplyEffectsResult) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
 
 	var failures []validate.FieldError
 	if err := func() error {
-		if err := s.EffectType.Validate(); err != nil {
-			return err
+		if s.AppliedEffects == nil {
+			return errors.New("nil is invalid value")
+		}
+		if err := (validate.Array{
+			MinLength:    0,
+			MinLengthSet: false,
+			MaxLength:    20,
+			MaxLengthSet: true,
+		}).ValidateLength(len(s.AppliedEffects)); err != nil {
+			return errors.Wrap(err, "array")
 		}
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "effect_type",
+			Name:  "applied_effects",
 			Error: err,
 		})
 	}
 	if err := func() error {
-		if err := (validate.Int{
-			MinSet:        true,
-			Min:           0,
-			MaxSet:        false,
-			Max:           0,
-			MinExclusive:  false,
-			MaxExclusive:  false,
-			MultipleOfSet: false,
-			MultipleOf:    0,
-			Pattern:       nil,
-		}).Validate(int64(s.RemainingMs)); err != nil {
-			return errors.Wrap(err, "int")
+		if s.RejectedEffects == nil {
+			return nil // optional
 		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "remaining_ms",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.Intensity.Get(); ok {
+		if err := (validate.Array{
+			MinLength:    0,
+			MinLengthSet: false,
+			MaxLength:    10,
+			MaxLengthSet: true,
+		}).ValidateLength(len(s.RejectedEffects)); err != nil {
+			return errors.Wrap(err, "array")
+		}
+		var failures []validate.FieldError
+		for i, elem := range s.RejectedEffects {
 			if err := func() error {
-				if err := (validate.Float{
-					MinSet:        true,
-					Min:           0.1,
-					MaxSet:        true,
-					Max:           5,
-					MinExclusive:  false,
-					MaxExclusive:  false,
-					MultipleOfSet: false,
-					MultipleOf:    nil,
-					Pattern:       nil,
-				}).Validate(float64(value)); err != nil {
-					return errors.Wrap(err, "float")
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "rejected_effects",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Status.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
 				}
 				return nil
 			}(); err != nil {
@@ -292,35 +560,7 @@ func (s *ActiveEffectsEffectsItem) Validate() error {
 		return nil
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
-			Name:  "intensity",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.Stacks.Get(); ok {
-			if err := func() error {
-				if err := (validate.Int{
-					MinSet:        true,
-					Min:           1,
-					MaxSet:        true,
-					Max:           10,
-					MinExclusive:  false,
-					MaxExclusive:  false,
-					MultipleOfSet: false,
-					MultipleOf:    0,
-					Pattern:       nil,
-				}).Validate(int64(value)); err != nil {
-					return errors.Wrap(err, "int")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "stacks",
+			Name:  "status",
 			Error: err,
 		})
 	}
@@ -330,34 +570,60 @@ func (s *ActiveEffectsEffectsItem) Validate() error {
 	return nil
 }
 
-func (s ActiveEffectsEffectsItemEffectType) Validate() error {
+func (s *ApplyEffectsResultRejectedEffectsItem) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Reason.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "reason",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s ApplyEffectsResultRejectedEffectsItemReason) Validate() error {
 	switch s {
-	case "buff_damage":
+	case "effect_limit_reached":
 		return nil
-	case "debuff_damage_reduction":
+	case "conflicting_effect":
 		return nil
-	case "buff_speed":
+	case "invalid_parameters":
 		return nil
-	case "debuff_slow":
+	case "participant_not_found":
 		return nil
-	case "buff_regeneration":
-		return nil
-	case "debuff_poison":
-		return nil
-	case "buff_shield":
-		return nil
-	case "debuff_stun":
-		return nil
-	case "buff_critical_chance":
-		return nil
-	case "debuff_accuracy_reduction":
+	case "effect_already_active":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
 }
 
-func (s *DamageRequest) Validate() error {
+func (s ApplyEffectsResultStatus) Validate() error {
+	switch s {
+	case "success":
+		return nil
+	case "partial_success":
+		return nil
+	case "failed":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *DamageCalculationRequest) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -597,49 +863,13 @@ func (s *DamageRequest) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if value, ok := s.WeaponModifier.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "WeaponModifier",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.ImplantSynergy.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "ImplantSynergy",
-			Error: err,
-		})
-	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
 }
 
-func (s DamageRequestDamageType) Validate() error {
+func (s DamageCalculationRequestDamageType) Validate() error {
 	switch s {
 	case "physical":
 		return nil
@@ -662,7 +892,7 @@ func (s DamageRequestDamageType) Validate() error {
 	}
 }
 
-func (s *DamageRequestEnvironmentalModifiers) Validate() error {
+func (s *DamageCalculationRequestEnvironmentalModifiers) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -730,7 +960,7 @@ func (s *DamageRequestEnvironmentalModifiers) Validate() error {
 	return nil
 }
 
-func (s *DamageRequestImplantSynergiesItem) Validate() error {
+func (s *DamageCalculationRequestImplantSynergiesItem) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -774,7 +1004,7 @@ func (s *DamageRequestImplantSynergiesItem) Validate() error {
 	return nil
 }
 
-func (s DamageRequestImplantSynergiesItemImplantType) Validate() error {
+func (s DamageCalculationRequestImplantSynergiesItemImplantType) Validate() error {
 	switch s {
 	case "gorilla_arms":
 		return nil
@@ -791,68 +1021,7 @@ func (s DamageRequestImplantSynergiesItemImplantType) Validate() error {
 	}
 }
 
-func (s *DamageRequestImplantSynergy) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.ImplantType.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "implant_type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := (validate.Float{
-			MinSet:        true,
-			Min:           0,
-			MaxSet:        true,
-			Max:           2,
-			MinExclusive:  false,
-			MaxExclusive:  false,
-			MultipleOfSet: false,
-			MultipleOf:    nil,
-			Pattern:       nil,
-		}).Validate(float64(s.SynergyBonus)); err != nil {
-			return errors.Wrap(err, "float")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "synergy_bonus",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s DamageRequestImplantSynergyImplantType) Validate() error {
-	switch s {
-	case "gorilla_arms":
-		return nil
-	case "mantis_blades":
-		return nil
-	case "kerenzikov":
-		return nil
-	case "sandevistan":
-		return nil
-	case "projectile_launcher":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s *DamageRequestWeaponModifier) Validate() error {
+func (s *DamageCalculationRequestWeaponModifiersItem) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -886,7 +1055,7 @@ func (s *DamageRequestWeaponModifier) Validate() error {
 	return nil
 }
 
-func (s DamageRequestWeaponModifierType) Validate() error {
+func (s DamageCalculationRequestWeaponModifiersItemType) Validate() error {
 	switch s {
 	case "damage_boost":
 		return nil
@@ -901,56 +1070,7 @@ func (s DamageRequestWeaponModifierType) Validate() error {
 	}
 }
 
-func (s *DamageRequestWeaponModifiersItem) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Type.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := (validate.Float{}).Validate(float64(s.Value)); err != nil {
-			return errors.Wrap(err, "float")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "value",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s DamageRequestWeaponModifiersItemType) Validate() error {
-	switch s {
-	case "damage_boost":
-		return nil
-	case "accuracy_bonus":
-		return nil
-	case "armor_penetration":
-		return nil
-	case "elemental_damage":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s *DamageResult) Validate() error {
+func (s *DamageCalculationResult) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -1190,49 +1310,13 @@ func (s *DamageResult) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if value, ok := s.AppliedModifier.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "AppliedModifier",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.DamageComponent.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "DamageComponent",
-			Error: err,
-		})
-	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
 }
 
-func (s *DamageResultAppliedModifier) Validate() error {
+func (s *DamageCalculationResultAppliedModifiersItem) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -1266,7 +1350,7 @@ func (s *DamageResultAppliedModifier) Validate() error {
 	return nil
 }
 
-func (s DamageResultAppliedModifierType) Validate() error {
+func (s DamageCalculationResultAppliedModifiersItemType) Validate() error {
 	switch s {
 	case "critical_hit":
 		return nil
@@ -1287,62 +1371,7 @@ func (s DamageResultAppliedModifierType) Validate() error {
 	}
 }
 
-func (s *DamageResultAppliedModifiersItem) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Type.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := (validate.Float{}).Validate(float64(s.Value)); err != nil {
-			return errors.Wrap(err, "float")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "value",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s DamageResultAppliedModifiersItemType) Validate() error {
-	switch s {
-	case "critical_hit":
-		return nil
-	case "weak_spot":
-		return nil
-	case "armor_reduction":
-		return nil
-	case "elemental_bonus":
-		return nil
-	case "implant_synergy":
-		return nil
-	case "environmental":
-		return nil
-	case "backstab":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s *DamageResultDamageBreakdownItem) Validate() error {
+func (s *DamageCalculationResultDamageBreakdownItem) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -1365,7 +1394,7 @@ func (s *DamageResultDamageBreakdownItem) Validate() error {
 	return nil
 }
 
-func (s DamageResultDamageBreakdownItemType) Validate() error {
+func (s DamageCalculationResultDamageBreakdownItemType) Validate() error {
 	switch s {
 	case "base_damage":
 		return nil
@@ -1386,51 +1415,7 @@ func (s DamageResultDamageBreakdownItemType) Validate() error {
 	}
 }
 
-func (s *DamageResultDamageComponent) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Type.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "type",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s DamageResultDamageComponentType) Validate() error {
-	switch s {
-	case "base_damage":
-		return nil
-	case "critical_bonus":
-		return nil
-	case "weak_spot_bonus":
-		return nil
-	case "armor_penetration":
-		return nil
-	case "elemental_damage":
-		return nil
-	case "synergy_bonus":
-		return nil
-	case "environmental_modifier":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s DamageResultDamageType) Validate() error {
+func (s DamageCalculationResultDamageType) Validate() error {
 	switch s {
 	case "physical":
 		return nil
@@ -1453,7 +1438,7 @@ func (s DamageResultDamageType) Validate() error {
 	}
 }
 
-func (s *DamageResultTargetStats) Validate() error {
+func (s *DamageCalculationResultTargetStats) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
 	}
@@ -1669,97 +1654,10 @@ func (s *DamageValidationRequest) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if value, ok := s.ClientModifier.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "ClientModifier",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.Vector3.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "Vector3",
-			Error: err,
-		})
-	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
-}
-
-func (s *DamageValidationRequestClientModifier) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Type.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := (validate.Float{}).Validate(float64(s.Value)); err != nil {
-			return errors.Wrap(err, "float")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "value",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s DamageValidationRequestClientModifierType) Validate() error {
-	switch s {
-	case "critical_multiplier":
-		return nil
-	case "range_modifier":
-		return nil
-	case "weak_spot_bonus":
-		return nil
-	case "armor_penetration":
-		return nil
-	case "elemental_damage":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
 }
 
 func (s *DamageValidationRequestClientModifiersItem) Validate() error {
@@ -1978,51 +1876,6 @@ func (s *DamageValidationRequestPositionDataTargetPos) Validate() error {
 	return nil
 }
 
-func (s *DamageValidationRequestVector3) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := (validate.Float{}).Validate(float64(s.X)); err != nil {
-			return errors.Wrap(err, "float")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "x",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := (validate.Float{}).Validate(float64(s.Y)); err != nil {
-			return errors.Wrap(err, "float")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "y",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := (validate.Float{}).Validate(float64(s.Z)); err != nil {
-			return errors.Wrap(err, "float")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "z",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
 func (s *DamageValidationResult) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -2143,83 +1996,6 @@ func (s *DamageValidationResult) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if value, ok := s.ValidationIssue.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "ValidationIssue",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.CorrectedModifier.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "CorrectedModifier",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s *DamageValidationResultCorrectedModifier) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := (validate.Float{}).Validate(float64(s.CorrectValue)); err != nil {
-			return errors.Wrap(err, "float")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "correct_value",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.ReportedValue.Get(); ok {
-			if err := func() error {
-				if err := (validate.Float{}).Validate(float64(value)); err != nil {
-					return errors.Wrap(err, "float")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "reported_value",
-			Error: err,
-		})
-	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
@@ -2302,94 +2078,6 @@ func (s *DamageValidationResultCorrectedValuesCorrectedModifiersItem) Validate()
 		return &validate.Error{Fields: failures}
 	}
 	return nil
-}
-
-func (s *DamageValidationResultValidationIssue) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.IssueType.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "issue_type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.Severity.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "severity",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.EvidenceValue.Get(); ok {
-			if err := func() error {
-				if err := (validate.Float{}).Validate(float64(value)); err != nil {
-					return errors.Wrap(err, "float")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "evidence_value",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s DamageValidationResultValidationIssueIssueType) Validate() error {
-	switch s {
-	case "damage_mismatch":
-		return nil
-	case "invalid_modifier":
-		return nil
-	case "line_of_sight_blocked":
-		return nil
-	case "impossible_timing":
-		return nil
-	case "suspicious_pattern":
-		return nil
-	case "weapon_hash_mismatch":
-		return nil
-	case "position_inconsistency":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s DamageValidationResultValidationIssueSeverity) Validate() error {
-	switch s {
-	case "low":
-		return nil
-	case "medium":
-		return nil
-	case "high":
-		return nil
-	case "critical":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
 }
 
 func (s *DamageValidationResultValidationIssuesItem) Validate() error {
@@ -2489,620 +2177,6 @@ func (s DamageValidationResultValidationStatus) Validate() error {
 	case "invalid":
 		return nil
 	case "requires_review":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s *EffectsRequest) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if s.Effects == nil {
-			return errors.New("nil is invalid value")
-		}
-		if err := (validate.Array{
-			MinLength:    1,
-			MinLengthSet: true,
-			MaxLength:    20,
-			MaxLengthSet: true,
-		}).ValidateLength(len(s.Effects)); err != nil {
-			return errors.Wrap(err, "array")
-		}
-		var failures []validate.FieldError
-		for i, elem := range s.Effects {
-			if err := func() error {
-				if err := elem.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				failures = append(failures, validate.FieldError{
-					Name:  fmt.Sprintf("[%d]", i),
-					Error: err,
-				})
-			}
-		}
-		if len(failures) > 0 {
-			return &validate.Error{Fields: failures}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "effects",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.SourceType.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "source_type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.Context.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "context",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.CombatEffect.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "CombatEffect",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s *EffectsRequestCombatEffect) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.EffectType.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "effect_type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := (validate.Int{
-			MinSet:        true,
-			Min:           1000,
-			MaxSet:        true,
-			Max:           300000,
-			MinExclusive:  false,
-			MaxExclusive:  false,
-			MultipleOfSet: false,
-			MultipleOf:    0,
-			Pattern:       nil,
-		}).Validate(int64(s.DurationMs)); err != nil {
-			return errors.Wrap(err, "int")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "duration_ms",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.Intensity.Get(); ok {
-			if err := func() error {
-				if err := (validate.Float{
-					MinSet:        true,
-					Min:           0.1,
-					MaxSet:        true,
-					Max:           5,
-					MinExclusive:  false,
-					MaxExclusive:  false,
-					MultipleOfSet: false,
-					MultipleOf:    nil,
-					Pattern:       nil,
-				}).Validate(float64(value)); err != nil {
-					return errors.Wrap(err, "float")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "intensity",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.Stacks.Get(); ok {
-			if err := func() error {
-				if err := (validate.Int{
-					MinSet:        true,
-					Min:           1,
-					MaxSet:        true,
-					Max:           10,
-					MinExclusive:  false,
-					MaxExclusive:  false,
-					MultipleOfSet: false,
-					MultipleOf:    0,
-					Pattern:       nil,
-				}).Validate(int64(value)); err != nil {
-					return errors.Wrap(err, "int")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "stacks",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s EffectsRequestCombatEffectEffectType) Validate() error {
-	switch s {
-	case "buff_damage":
-		return nil
-	case "debuff_damage_reduction":
-		return nil
-	case "buff_speed":
-		return nil
-	case "debuff_slow":
-		return nil
-	case "buff_regeneration":
-		return nil
-	case "debuff_poison":
-		return nil
-	case "buff_shield":
-		return nil
-	case "debuff_stun":
-		return nil
-	case "buff_critical_chance":
-		return nil
-	case "debuff_accuracy_reduction":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s *EffectsRequestContext) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if value, ok := s.WeatherConditions.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "weather_conditions",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s EffectsRequestContextWeatherConditions) Validate() error {
-	switch s {
-	case "clear":
-		return nil
-	case "rain":
-		return nil
-	case "storm":
-		return nil
-	case "fog":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s *EffectsRequestEffectsItem) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.EffectType.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "effect_type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := (validate.Int{
-			MinSet:        true,
-			Min:           1000,
-			MaxSet:        true,
-			Max:           300000,
-			MinExclusive:  false,
-			MaxExclusive:  false,
-			MultipleOfSet: false,
-			MultipleOf:    0,
-			Pattern:       nil,
-		}).Validate(int64(s.DurationMs)); err != nil {
-			return errors.Wrap(err, "int")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "duration_ms",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.Intensity.Get(); ok {
-			if err := func() error {
-				if err := (validate.Float{
-					MinSet:        true,
-					Min:           0.1,
-					MaxSet:        true,
-					Max:           5,
-					MinExclusive:  false,
-					MaxExclusive:  false,
-					MultipleOfSet: false,
-					MultipleOf:    nil,
-					Pattern:       nil,
-				}).Validate(float64(value)); err != nil {
-					return errors.Wrap(err, "float")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "intensity",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.Stacks.Get(); ok {
-			if err := func() error {
-				if err := (validate.Int{
-					MinSet:        true,
-					Min:           1,
-					MaxSet:        true,
-					Max:           10,
-					MinExclusive:  false,
-					MaxExclusive:  false,
-					MultipleOfSet: false,
-					MultipleOf:    0,
-					Pattern:       nil,
-				}).Validate(int64(value)); err != nil {
-					return errors.Wrap(err, "int")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "stacks",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s EffectsRequestEffectsItemEffectType) Validate() error {
-	switch s {
-	case "buff_damage":
-		return nil
-	case "debuff_damage_reduction":
-		return nil
-	case "buff_speed":
-		return nil
-	case "debuff_slow":
-		return nil
-	case "buff_regeneration":
-		return nil
-	case "debuff_poison":
-		return nil
-	case "buff_shield":
-		return nil
-	case "debuff_stun":
-		return nil
-	case "buff_critical_chance":
-		return nil
-	case "debuff_accuracy_reduction":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s EffectsRequestSourceType) Validate() error {
-	switch s {
-	case "weapon":
-		return nil
-	case "ability":
-		return nil
-	case "implant":
-		return nil
-	case "environmental":
-		return nil
-	case "status_effect":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s *EffectsResult) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if s.AppliedEffects == nil {
-			return errors.New("nil is invalid value")
-		}
-		if err := (validate.Array{
-			MinLength:    0,
-			MinLengthSet: false,
-			MaxLength:    20,
-			MaxLengthSet: true,
-		}).ValidateLength(len(s.AppliedEffects)); err != nil {
-			return errors.Wrap(err, "array")
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "applied_effects",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if s.RejectedEffects == nil {
-			return nil // optional
-		}
-		if err := (validate.Array{
-			MinLength:    0,
-			MinLengthSet: false,
-			MaxLength:    10,
-			MaxLengthSet: true,
-		}).ValidateLength(len(s.RejectedEffects)); err != nil {
-			return errors.Wrap(err, "array")
-		}
-		var failures []validate.FieldError
-		for i, elem := range s.RejectedEffects {
-			if err := func() error {
-				if err := elem.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				failures = append(failures, validate.FieldError{
-					Name:  fmt.Sprintf("[%d]", i),
-					Error: err,
-				})
-			}
-		}
-		if len(failures) > 0 {
-			return &validate.Error{Fields: failures}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "rejected_effects",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.Status.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "status",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if value, ok := s.RejectedEffectInfo.Get(); ok {
-			if err := func() error {
-				if err := value.Validate(); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "RejectedEffectInfo",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s *EffectsResultRejectedEffectInfo) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Reason.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "reason",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s EffectsResultRejectedEffectInfoReason) Validate() error {
-	switch s {
-	case "effect_limit_reached":
-		return nil
-	case "conflicting_effect":
-		return nil
-	case "invalid_parameters":
-		return nil
-	case "participant_not_found":
-		return nil
-	case "effect_already_active":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s *EffectsResultRejectedEffectsItem) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Reason.Validate(); err != nil {
-			return err
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "reason",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s EffectsResultRejectedEffectsItemReason) Validate() error {
-	switch s {
-	case "effect_limit_reached":
-		return nil
-	case "conflicting_effect":
-		return nil
-	case "invalid_parameters":
-		return nil
-	case "participant_not_found":
-		return nil
-	case "effect_already_active":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s EffectsResultStatus) Validate() error {
-	switch s {
-	case "success":
-		return nil
-	case "partial_success":
-		return nil
-	case "failed":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

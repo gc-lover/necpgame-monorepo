@@ -11,7 +11,7 @@ import (
 )
 
 func encodeApplyEffectsRequest(
-	req *EffectsRequest,
+	req *ApplyEffectsRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -25,7 +25,7 @@ func encodeApplyEffectsRequest(
 }
 
 func encodeCalculateDamageRequest(
-	req *DamageRequest,
+	req *DamageCalculationRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

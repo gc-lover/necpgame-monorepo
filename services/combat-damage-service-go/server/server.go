@@ -19,12 +19,13 @@ import (
 
 // Server implements the api.Handler
 type Server struct {
-	logger         *zap.Logger
-	db             *pgxpool.Pool
-	tokenAuth      *jwtauth.JWTAuth
-	damagePool     *sync.Pool // Memory pool for damage calculations
-	effectsPool    *sync.Pool // Memory pool for effects operations
-	validationPool *sync.Pool // Memory pool for validation operations
+	logger               *zap.Logger
+	db                   *pgxpool.Pool
+	tokenAuth            *jwtauth.JWTAuth
+	damagePool           *sync.Pool // Memory pool for damage calculations
+	effectsPool          *sync.Pool // Memory pool for effects operations
+	validationPool       *sync.Pool // Memory pool for validation operations
+	activeEffectsPool    *sync.Pool // Memory pool for active effects queries
 }
 
 // NewServer creates a new server instance
@@ -35,12 +36,12 @@ func NewServer(db *pgxpool.Pool, logger *zap.Logger, tokenAuth *jwtauth.JWTAuth)
 		tokenAuth: tokenAuth,
 		damagePool: &sync.Pool{
 			New: func() interface{} {
-				return &api.DamageResult{}
+				return &api.DamageCalculationResult{}
 			},
 		},
 		effectsPool: &sync.Pool{
 			New: func() interface{} {
-				return &api.EffectsResult{}
+				return &api.ApplyEffectsResult{}
 			},
 		},
 		validationPool: &sync.Pool{
@@ -48,11 +49,16 @@ func NewServer(db *pgxpool.Pool, logger *zap.Logger, tokenAuth *jwtauth.JWTAuth)
 				return &api.DamageValidationResult{}
 			},
 		},
+		activeEffectsPool: &sync.Pool{
+			New: func() interface{} {
+				return &api.ActiveEffectsResponse{}
+			},
+		},
 	}
 }
 
 // CalculateDamage implements api.Handler
-func (s *Server) CalculateDamage(ctx context.Context, req *api.DamageRequest) (api.CalculateDamageRes, error) {
+func (s *Server) CalculateDamage(ctx context.Context, req *api.DamageCalculationRequest) (api.CalculateDamageRes, error) {
 	// Set timeout for damage calculation (hot path - 50ms max)
 	timeoutCtx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
 	defer cancel()
@@ -68,11 +74,11 @@ func (s *Server) CalculateDamage(ctx context.Context, req *api.DamageRequest) (a
 	}
 
 	// Get result from memory pool
-	result := s.damagePool.Get().(*api.DamageResult)
+	result := s.damagePool.Get().(*api.DamageCalculationResult)
 	defer s.damagePool.Put(result)
 
 	// Reset the result
-	*result = api.DamageResult{}
+	*result = api.DamageCalculationResult{}
 
 	// Calculate damage with all modifiers
 	calculatedResult, err := s.calculateDamageWithModifiers(timeoutCtx, req)
@@ -136,7 +142,7 @@ func (s *Server) ValidateDamage(ctx context.Context, req *api.DamageValidationRe
 }
 
 // ApplyEffects implements api.Handler
-func (s *Server) ApplyEffects(ctx context.Context, req *api.EffectsRequest) (api.ApplyEffectsRes, error) {
+func (s *Server) ApplyEffects(ctx context.Context, req *api.ApplyEffectsRequest) (api.ApplyEffectsRes, error) {
 	// Set timeout for effects application (200ms max for complex effect chains)
 	timeoutCtx, cancel := context.WithTimeout(ctx, 200*time.Millisecond)
 	defer cancel()
@@ -152,11 +158,11 @@ func (s *Server) ApplyEffects(ctx context.Context, req *api.EffectsRequest) (api
 	}
 
 	// Get result from memory pool
-	result := s.effectsPool.Get().(*api.EffectsResult)
+	result := s.effectsPool.Get().(*api.ApplyEffectsResult)
 	defer s.effectsPool.Put(result)
 
 	// Reset the result
-	*result = api.EffectsResult{}
+	*result = api.ApplyEffectsResult{}
 
 	// Apply effects
 	effectsResult, err := s.applyCombatEffects(timeoutCtx, req)
@@ -185,14 +191,24 @@ func (s *Server) GetActiveEffects(ctx context.Context, params api.GetActiveEffec
 
 	startTime := time.Now()
 
+	// Get result from memory pool
+	result := s.activeEffectsPool.Get().(*api.ActiveEffectsResponse)
+	defer s.activeEffectsPool.Put(result)
+
+	// Reset the result
+	*result = api.ActiveEffectsResponse{}
+
 	// Get active effects for participant
-	result, err := s.getActiveEffects(timeoutCtx, params.ParticipantID)
+	activeEffects, err := s.getActiveEffects(timeoutCtx, params.ParticipantID)
 	if err != nil {
 		return &api.Error{
 			Code:    "PARTICIPANT_NOT_FOUND",
 			Message: fmt.Sprintf("Participant %s not found or has no active effects", params.ParticipantID.String()),
 		}, nil
 	}
+
+	// Copy active effects to pooled result
+	*result = *activeEffects
 
 	// Add processing time (not included in response schema, but for consistency)
 	_ = time.Since(startTime)
@@ -232,13 +248,24 @@ func (s *Server) RemoveEffect(ctx context.Context, params api.RemoveEffectParams
 
 // HealthCheck implements api.Handler
 func (s *Server) HealthCheck(ctx context.Context) (api.HealthCheckRes, error) {
-	// Check service status - always healthy for now
-	status := api.HealthResponseStatusHealthy
+	// Set timeout for health check
+	timeoutCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+	defer cancel()
+
+	// Check database connectivity
+	if err := s.db.Ping(timeoutCtx); err != nil {
+		s.logger.Error("Database health check failed", zap.Error(err))
+		return &api.Error{
+			Code:    "DB_UNAVAILABLE",
+			Message: "Database connection failed",
+		}, nil
+	}
 
 	version := "1.0.0" // In real implementation, get from build info
+	status := api.HealthResponseStatusHealthy
 
 	return &api.HealthResponse{
-		Version:   api.OptString{Value: version, Set: true},
+		Version:   api.NewOptString(version),
 		Status:    status,
 		Timestamp: time.Now(),
 	}, nil
@@ -261,12 +288,12 @@ func (s *Server) CreateRouter() *chi.Mux {
 }
 
 // calculateDamageWithModifiers calculates combat damage with all modifiers
-func (s *Server) calculateDamageWithModifiers(ctx context.Context, req *api.DamageRequest) (*api.DamageResult, error) {
+func (s *Server) calculateDamageWithModifiers(ctx context.Context, req *api.DamageCalculationRequest) (*api.DamageCalculationResult, error) {
 	calculationID := uuid.New()
 
 	// Start with base damage
 	damage := float64(req.BaseDamage)
-	appliedModifiers := []api.DamageResultAppliedModifiersItem{}
+	appliedModifiers := []api.DamageCalculationResultAppliedModifiersItem{}
 	totalMultiplier := 1.0
 
 	// Apply level scaling (higher level attackers do more damage)
@@ -275,8 +302,8 @@ func (s *Server) calculateDamageWithModifiers(ctx context.Context, req *api.Dama
 		targetLevel := float64(req.TargetLevel.Value)
 		levelModifier := 1.0 + (attackerLevel-targetLevel)*0.02 // 2% per level difference
 		damage *= levelModifier
-		appliedModifiers = append(appliedModifiers, api.DamageResultAppliedModifiersItem{
-			Type:   api.DamageResultAppliedModifiersItemType("LEVEL_SCALING"),
+		appliedModifiers = append(appliedModifiers, api.DamageCalculationResultAppliedModifiersItem{
+			Type:   api.DamageCalculationResultAppliedModifiersItemType("LEVEL_SCALING"),
 			Value:  float32(levelModifier),
 			Source: "level_difference",
 		})
@@ -287,8 +314,8 @@ func (s *Server) calculateDamageWithModifiers(ctx context.Context, req *api.Dama
 	for _, modifier := range req.WeaponModifiers {
 		modValue := float64(modifier.Value)
 		damage *= modValue
-		appliedModifiers = append(appliedModifiers, api.DamageResultAppliedModifiersItem{
-			Type:   api.DamageResultAppliedModifiersItemType(modifier.Type),
+		appliedModifiers = append(appliedModifiers, api.DamageCalculationResultAppliedModifiersItem{
+			Type:   api.DamageCalculationResultAppliedModifiersItemType(modifier.Type),
 			Value:  float32(modValue),
 			Source: "weapon_modifier",
 		})
@@ -299,8 +326,8 @@ func (s *Server) calculateDamageWithModifiers(ctx context.Context, req *api.Dama
 	for _, synergy := range req.ImplantSynergies {
 		synergyValue := float64(synergy.SynergyBonus)
 		damage *= synergyValue
-		appliedModifiers = append(appliedModifiers, api.DamageResultAppliedModifiersItem{
-			Type:   api.DamageResultAppliedModifiersItemType(synergy.ImplantType),
+		appliedModifiers = append(appliedModifiers, api.DamageCalculationResultAppliedModifiersItem{
+			Type:   api.DamageCalculationResultAppliedModifiersItemType(synergy.ImplantType),
 			Value:  float32(synergyValue),
 			Source: "implant_synergy",
 		})
@@ -313,8 +340,8 @@ func (s *Server) calculateDamageWithModifiers(ctx context.Context, req *api.Dama
 		if envMods.WeatherMultiplier.IsSet() {
 			weatherMod := float64(envMods.WeatherMultiplier.Value)
 			damage *= weatherMod
-			appliedModifiers = append(appliedModifiers, api.DamageResultAppliedModifiersItem{
-				Type:   api.DamageResultAppliedModifiersItemType("WEATHER"),
+			appliedModifiers = append(appliedModifiers, api.DamageCalculationResultAppliedModifiersItem{
+				Type:   api.DamageCalculationResultAppliedModifiersItemType("WEATHER"),
 				Value:  float32(weatherMod),
 				Source: "environmental",
 			})
@@ -323,8 +350,8 @@ func (s *Server) calculateDamageWithModifiers(ctx context.Context, req *api.Dama
 		if envMods.TerrainCover.IsSet() {
 			terrainMod := float64(envMods.TerrainCover.Value)
 			damage *= terrainMod
-			appliedModifiers = append(appliedModifiers, api.DamageResultAppliedModifiersItem{
-				Type:   api.DamageResultAppliedModifiersItemType("TERRAIN"),
+			appliedModifiers = append(appliedModifiers, api.DamageCalculationResultAppliedModifiersItem{
+				Type:   api.DamageCalculationResultAppliedModifiersItemType("TERRAIN"),
 				Value:  float32(terrainMod),
 				Source: "environmental",
 			})
@@ -343,8 +370,8 @@ func (s *Server) calculateDamageWithModifiers(ctx context.Context, req *api.Dama
 			criticalMultiplier = 2.0 // default critical multiplier
 		}
 		damage *= criticalMultiplier
-		appliedModifiers = append(appliedModifiers, api.DamageResultAppliedModifiersItem{
-			Type:   api.DamageResultAppliedModifiersItemType("CRITICAL_HIT"),
+		appliedModifiers = append(appliedModifiers, api.DamageCalculationResultAppliedModifiersItem{
+			Type:   api.DamageCalculationResultAppliedModifiersItemType("CRITICAL_HIT"),
 			Value:  float32(criticalMultiplier),
 			Source: "combat_mechanic",
 		})
@@ -355,8 +382,8 @@ func (s *Server) calculateDamageWithModifiers(ctx context.Context, req *api.Dama
 	if req.IsWeakSpotHit.IsSet() && req.IsWeakSpotHit.Value {
 		weakSpotMultiplier := 1.5 // 50% bonus for weak spots
 		damage *= weakSpotMultiplier
-		appliedModifiers = append(appliedModifiers, api.DamageResultAppliedModifiersItem{
-			Type:   api.DamageResultAppliedModifiersItemType("WEAK_SPOT"),
+		appliedModifiers = append(appliedModifiers, api.DamageCalculationResultAppliedModifiersItem{
+			Type:   api.DamageCalculationResultAppliedModifiersItemType("WEAK_SPOT"),
 			Value:  float32(weakSpotMultiplier),
 			Source: "combat_mechanic",
 		})
@@ -367,8 +394,8 @@ func (s *Server) calculateDamageWithModifiers(ctx context.Context, req *api.Dama
 	if req.IsBackstab.IsSet() && req.IsBackstab.Value {
 		backstabMultiplier := 2.0 // 100% bonus for backstabs
 		damage *= backstabMultiplier
-		appliedModifiers = append(appliedModifiers, api.DamageResultAppliedModifiersItem{
-			Type:   api.DamageResultAppliedModifiersItemType("BACKSTAB"),
+		appliedModifiers = append(appliedModifiers, api.DamageCalculationResultAppliedModifiersItem{
+			Type:   api.DamageCalculationResultAppliedModifiersItemType("BACKSTAB"),
 			Value:  float32(backstabMultiplier),
 			Source: "combat_mechanic",
 		})
@@ -379,8 +406,8 @@ func (s *Server) calculateDamageWithModifiers(ctx context.Context, req *api.Dama
 	if req.RangeModifier.IsSet() {
 		rangeMod := float64(req.RangeModifier.Value)
 		damage *= rangeMod
-		appliedModifiers = append(appliedModifiers, api.DamageResultAppliedModifiersItem{
-			Type:   api.DamageResultAppliedModifiersItemType("RANGE"),
+		appliedModifiers = append(appliedModifiers, api.DamageCalculationResultAppliedModifiersItem{
+			Type:   api.DamageCalculationResultAppliedModifiersItemType("RANGE"),
 			Value:  float32(rangeMod),
 			Source: "combat_mechanic",
 		})
@@ -404,17 +431,17 @@ func (s *Server) calculateDamageWithModifiers(ctx context.Context, req *api.Dama
 	finalDamage := int32(math.Round(damage))
 
 	// Create damage breakdown
-	damageBreakdown := []api.DamageResultDamageBreakdownItem{
+	damageBreakdown := []api.DamageCalculationResultDamageBreakdownItem{
 		{
-			Type:   api.DamageResultDamageBreakdownItemType("BASE"),
+			Type:   api.DamageCalculationResultDamageBreakdownItemType("BASE"),
 			Amount: req.BaseDamage,
 		},
 		{
-			Type:   api.DamageResultDamageBreakdownItemType("MODIFIER"),
+			Type:   api.DamageCalculationResultDamageBreakdownItemType("MODIFIER"),
 			Amount: int32(math.Round((totalMultiplier - 1.0) * 100)), // percentage
 		},
 		{
-			Type:   api.DamageResultDamageBreakdownItemType("REDUCTION"),
+			Type:   api.DamageCalculationResultDamageBreakdownItemType("REDUCTION"),
 			Amount: armorReduction,
 		},
 	}
@@ -424,14 +451,14 @@ func (s *Server) calculateDamageWithModifiers(ctx context.Context, req *api.Dama
 
 	timestamp := time.Now().UnixMilli()
 
-	result := &api.DamageResult{
+	result := &api.DamageCalculationResult{
 		AttackerID:       req.AttackerID,
 		TargetID:         req.TargetID,
 		CalculationID:    calculationID,
 		AppliedModifiers: appliedModifiers,
 		DamageBreakdown:  damageBreakdown,
 		FinalDamage:      finalDamage,
-		DamageType:       api.DamageResultDamageType(req.DamageType),
+		DamageType:       api.DamageCalculationResultDamageType(req.DamageType),
 	}
 
 	// Set optional fields
@@ -460,18 +487,18 @@ func (s *Server) performDamageValidation(ctx context.Context, req *api.DamageVal
 	validationScore := int32(100) // Start with perfect score
 	isValid := true
 
-	// Create a DamageRequest from validation request for recalculation
-	damageReq := &api.DamageRequest{
+	// Create a DamageCalculationRequest from validation request for recalculation
+	damageReq := &api.DamageCalculationRequest{
 		AttackerID: req.AttackerID,
 		TargetID:   req.TargetID,
 		BaseDamage: 100, // Placeholder - in real implementation would come from weapon data
-		DamageType: api.DamageRequestDamageType(req.DamageType),
+		DamageType: api.DamageCalculationRequestDamageType(req.DamageType),
 	}
 
 	// Convert client modifiers to weapon modifiers
 	for _, clientMod := range req.ClientModifiers {
-		damageReq.WeaponModifiers = append(damageReq.WeaponModifiers, api.DamageRequestWeaponModifiersItem{
-			Type:  api.DamageRequestWeaponModifiersItemType(clientMod.Type),
+		damageReq.WeaponModifiers = append(damageReq.WeaponModifiers, api.DamageCalculationRequestWeaponModifiersItem{
+			Type:  api.DamageCalculationRequestWeaponModifiersItemType(clientMod.Type),
 			Value: clientMod.Value,
 		})
 	}
@@ -604,14 +631,14 @@ func (s *Server) performDamageValidation(ctx context.Context, req *api.DamageVal
 }
 
 // applyCombatEffects applies combat effects to a participant
-func (s *Server) applyCombatEffects(ctx context.Context, req *api.EffectsRequest) (*api.EffectsResult, error) {
-	appliedEffects := []api.EffectsResultAppliedEffectsItem{}
-	rejectedEffects := []api.EffectsResultRejectedEffectsItem{}
+func (s *Server) applyCombatEffects(ctx context.Context, req *api.ApplyEffectsRequest) (*api.ApplyEffectsResult, error) {
+	appliedEffects := []api.ApplyEffectsResultAppliedEffectsItem{}
+	rejectedEffects := []api.ApplyEffectsResultRejectedEffectsItem{}
 	success := true
 
 	// In a real implementation, this would check existing effects from database/cache
 	// For now, we'll use a simple in-memory approach
-	existingEffects := make(map[string]api.EffectsRequestEffectsItem)
+	existingEffects := make(map[string]api.ApplyEffectsRequestEffectsItem)
 
 	// Check stacking and override settings
 	allowStacking := true
@@ -633,9 +660,9 @@ func (s *Server) applyCombatEffects(ctx context.Context, req *api.EffectsRequest
 		if _, exists := existingEffects[effectType]; exists {
 			if !allowOverride && !allowStacking {
 				// Reject effect due to conflict
-				rejectedEffects = append(rejectedEffects, api.EffectsResultRejectedEffectsItem{
+				rejectedEffects = append(rejectedEffects, api.ApplyEffectsResultRejectedEffectsItem{
 					EffectType: effectType,
-					Reason:     api.EffectsResultRejectedEffectsItemReason("CONFLICT"),
+					Reason:     api.ApplyEffectsResultRejectedEffectsItemReason("CONFLICT"),
 				})
 				continue
 			}
@@ -649,7 +676,7 @@ func (s *Server) applyCombatEffects(ctx context.Context, req *api.EffectsRequest
 		}
 
 		// Apply effect (in real implementation, this would persist to database)
-		appliedEffects = append(appliedEffects, api.EffectsResultAppliedEffectsItem{
+		appliedEffects = append(appliedEffects, api.ApplyEffectsResultAppliedEffectsItem{
 			EffectID:   effectID,
 			EffectType: effectType,
 			DurationMs: effect.DurationMs,
@@ -658,7 +685,7 @@ func (s *Server) applyCombatEffects(ctx context.Context, req *api.EffectsRequest
 	}
 
 	// Determine overall status
-	var status api.EffectsResultStatus
+	var status api.ApplyEffectsResultStatus
 	totalEffects := len(appliedEffects) + len(rejectedEffects)
 	if len(rejectedEffects) == 0 {
 		status = "SUCCESS"
@@ -671,7 +698,7 @@ func (s *Server) applyCombatEffects(ctx context.Context, req *api.EffectsRequest
 	}
 
 	// Create summary
-	summary := &api.EffectsResultSummary{
+	summary := &api.ApplyEffectsResultSummary{
 		TotalRequested:      api.OptInt32{Value: int32(totalEffects), Set: true},
 		SuccessfullyApplied: api.OptInt32{Value: int32(len(appliedEffects)), Set: true},
 		RejectedCount:       api.OptInt32{Value: int32(len(rejectedEffects)), Set: true},
@@ -679,13 +706,13 @@ func (s *Server) applyCombatEffects(ctx context.Context, req *api.EffectsRequest
 
 	timestamp := time.Now().UnixMilli()
 
-	result := &api.EffectsResult{
+	result := &api.ApplyEffectsResult{
 		ParticipantID:    req.ParticipantID,
 		AppliedEffects:   appliedEffects,
 		RejectedEffects:  rejectedEffects,
 		Timestamp:        api.OptInt64{Value: timestamp, Set: true},
-		Status:           api.OptEffectsResultStatus{Value: status, Set: true},
-		Summary:          api.OptEffectsResultSummary{Value: *summary, Set: true},
+		Status:           api.OptApplyEffectsResultStatus{Value: status, Set: true},
+		Summary:          api.OptApplyEffectsResultSummary{Value: *summary, Set: true},
 		Success:          success,
 	}
 
@@ -693,7 +720,7 @@ func (s *Server) applyCombatEffects(ctx context.Context, req *api.EffectsRequest
 }
 
 // getActiveEffects retrieves all active effects for a combat participant
-func (s *Server) getActiveEffects(ctx context.Context, participantID uuid.UUID) (*api.ActiveEffects, error) {
+func (s *Server) getActiveEffects(ctx context.Context, participantID uuid.UUID) (*api.ActiveEffectsResponse, error) {
 	// In a real implementation, this would query the database for active effects
 	// For now, we'll return mock data based on participant ID hash for consistency
 
@@ -701,7 +728,7 @@ func (s *Server) getActiveEffects(ctx context.Context, participantID uuid.UUID) 
 	hash := int(participantID[0]) + int(participantID[1]) + int(participantID[2])
 	effectCount := hash % 5 // 0-4 effects
 
-	effects := []api.ActiveEffectsEffectsItem{}
+	effects := []api.ActiveEffectsResponseEffectsItem{}
 	hasCriticalEffects := false
 
 	// Generate mock effects
@@ -725,9 +752,9 @@ func (s *Server) getActiveEffects(ctx context.Context, participantID uuid.UUID) 
 			duration = 45000 // 45 seconds
 		}
 
-		effects = append(effects, api.ActiveEffectsEffectsItem{
+		effects = append(effects, api.ActiveEffectsResponseEffectsItem{
 			EffectID:    uuid.New(),
-			EffectType:  api.ActiveEffectsEffectsItemEffectType(effectType),
+			EffectType:  api.ActiveEffectsResponseEffectsItemEffectType(effectType),
 			RemainingMs: duration - int32(hash%int(duration)), // mock remaining time
 			SourceID:    uuid.New(), // mock source ID
 			Stacks:      api.OptInt32{Value: int32((hash+i)%3 + 1), Set: true}, // 1-3 stacks
@@ -751,18 +778,18 @@ func (s *Server) getActiveEffects(ctx context.Context, participantID uuid.UUID) 
 		}
 	}
 
-	summary := &api.ActiveEffectsSummary{
+	summary := &api.ActiveEffectsResponseSummary{
 		Buffs:         api.OptInt32{Value: int32(buffCount), Set: true},
 		Debuffs:       api.OptInt32{Value: int32(debuffCount), Set: true},
 		StatusEffects: api.OptInt32{Value: int32(statusCount), Set: true},
 	}
 
-	return &api.ActiveEffects{
+	return &api.ActiveEffectsResponse{
 		ParticipantID:      participantID,
 		Effects:           effects,
 		Timestamp:         time.Now().UnixMilli(),
 		TotalEffects:      api.OptInt32{Value: int32(len(effects)), Set: true},
-		Summary:           api.OptActiveEffectsSummary{Value: *summary, Set: true},
+		Summary:           api.OptActiveEffectsResponseSummary{Value: *summary, Set: true},
 		HasCriticalEffects: api.OptBool{Value: hasCriticalEffects, Set: true},
 	}, nil
 }

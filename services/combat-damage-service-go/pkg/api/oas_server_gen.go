@@ -13,14 +13,14 @@ type Handler interface {
 	// Apply buffs, debuffs, and status effects to combat participants.
 	//
 	// POST /combat/effects/apply
-	ApplyEffects(ctx context.Context, req *EffectsRequest) (ApplyEffectsRes, error)
+	ApplyEffects(ctx context.Context, req *ApplyEffectsRequest) (ApplyEffectsRes, error)
 	// CalculateDamage implements calculateDamage operation.
 	//
 	// Calculate damage with all modifiers, critical hits, and anti-cheat validation.
 	// **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations.
 	//
 	// POST /combat/damage/calculate
-	CalculateDamage(ctx context.Context, req *DamageRequest) (CalculateDamageRes, error)
+	CalculateDamage(ctx context.Context, req *DamageCalculationRequest) (CalculateDamageRes, error)
 	// GetActiveEffects implements getActiveEffects operation.
 	//
 	// Retrieve all active effects for a combat participant.

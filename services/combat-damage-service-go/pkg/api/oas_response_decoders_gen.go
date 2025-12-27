@@ -29,7 +29,7 @@ func decodeApplyEffectsResponse(resp *http.Response) (res ApplyEffectsRes, _ err
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response EffectsResult
+			var response ApplyEffectsResult
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
@@ -114,7 +114,7 @@ func decodeCalculateDamageResponse(resp *http.Response) (res CalculateDamageRes,
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response DamageResult
+			var response DamageCalculationResult
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err
@@ -234,7 +234,7 @@ func decodeGetActiveEffectsResponse(resp *http.Response) (res GetActiveEffectsRe
 			}
 			d := jx.DecodeBytes(buf)
 
-			var response ActiveEffects
+			var response ActiveEffectsResponse
 			if err := func() error {
 				if err := response.Decode(d); err != nil {
 					return err

@@ -15,7 +15,7 @@ import (
 )
 
 func (s *Server) decodeApplyEffectsRequest(r *http.Request) (
-	req *EffectsRequest,
+	req *ApplyEffectsRequest,
 	rawBody []byte,
 	close func() error,
 	rerr error,
@@ -62,7 +62,7 @@ func (s *Server) decodeApplyEffectsRequest(r *http.Request) (
 		rawBody = append(rawBody, buf...)
 		d := jx.DecodeBytes(buf)
 
-		var request EffectsRequest
+		var request ApplyEffectsRequest
 		if err := func() error {
 			if err := request.Decode(d); err != nil {
 				return err
@@ -94,7 +94,7 @@ func (s *Server) decodeApplyEffectsRequest(r *http.Request) (
 }
 
 func (s *Server) decodeCalculateDamageRequest(r *http.Request) (
-	req *DamageRequest,
+	req *DamageCalculationRequest,
 	rawBody []byte,
 	close func() error,
 	rerr error,
@@ -141,7 +141,7 @@ func (s *Server) decodeCalculateDamageRequest(r *http.Request) (
 		rawBody = append(rawBody, buf...)
 		d := jx.DecodeBytes(buf)
 
-		var request DamageRequest
+		var request DamageCalculationRequest
 		if err := func() error {
 			if err := request.Decode(d); err != nil {
 				return err

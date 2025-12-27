@@ -183,7 +183,7 @@ func (s *Server) handleApplyEffectsRequest(args [0]string, argsEscaped bool, w h
 		}
 
 		type (
-			Request  = *EffectsRequest
+			Request  = *ApplyEffectsRequest
 			Params   = struct{}
 			Response = ApplyEffectsRes
 		)
@@ -369,7 +369,7 @@ func (s *Server) handleCalculateDamageRequest(args [0]string, argsEscaped bool, 
 		}
 
 		type (
-			Request  = *DamageRequest
+			Request  = *DamageCalculationRequest
 			Params   = struct{}
 			Response = CalculateDamageRes
 		)

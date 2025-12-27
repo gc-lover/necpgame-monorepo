@@ -17,102 +17,90 @@ import (
 // - Objects
 // - Booleans last
 // Expected memory: ~52 bytes/instance.
-// Ref: #/components/schemas/active-effects
-type ActiveEffects struct {
+// Ref: #/components/schemas/ActiveEffectsResponse
+type ActiveEffectsResponse struct {
 	// Combat participant ID.
 	ParticipantID uuid.UUID `json:"participant_id"`
 	// Currently active effects.
-	Effects []ActiveEffectsEffectsItem `json:"effects"`
+	Effects []ActiveEffectsResponseEffectsItem `json:"effects"`
 	// Response timestamp (unix milliseconds).
 	Timestamp int64 `json:"timestamp"`
 	// Total number of active effects.
 	TotalEffects OptInt32 `json:"total_effects"`
 	// Effects summary by category.
-	Summary OptActiveEffectsSummary `json:"summary"`
+	Summary OptActiveEffectsResponseSummary `json:"summary"`
 	// Whether participant has critical effects (stun, etc.).
 	HasCriticalEffects OptBool `json:"has_critical_effects"`
-	// Individual active effect information.
-	ActiveEffect OptActiveEffectsActiveEffect `json:"ActiveEffect"`
 }
 
 // GetParticipantID returns the value of ParticipantID.
-func (s *ActiveEffects) GetParticipantID() uuid.UUID {
+func (s *ActiveEffectsResponse) GetParticipantID() uuid.UUID {
 	return s.ParticipantID
 }
 
 // GetEffects returns the value of Effects.
-func (s *ActiveEffects) GetEffects() []ActiveEffectsEffectsItem {
+func (s *ActiveEffectsResponse) GetEffects() []ActiveEffectsResponseEffectsItem {
 	return s.Effects
 }
 
 // GetTimestamp returns the value of Timestamp.
-func (s *ActiveEffects) GetTimestamp() int64 {
+func (s *ActiveEffectsResponse) GetTimestamp() int64 {
 	return s.Timestamp
 }
 
 // GetTotalEffects returns the value of TotalEffects.
-func (s *ActiveEffects) GetTotalEffects() OptInt32 {
+func (s *ActiveEffectsResponse) GetTotalEffects() OptInt32 {
 	return s.TotalEffects
 }
 
 // GetSummary returns the value of Summary.
-func (s *ActiveEffects) GetSummary() OptActiveEffectsSummary {
+func (s *ActiveEffectsResponse) GetSummary() OptActiveEffectsResponseSummary {
 	return s.Summary
 }
 
 // GetHasCriticalEffects returns the value of HasCriticalEffects.
-func (s *ActiveEffects) GetHasCriticalEffects() OptBool {
+func (s *ActiveEffectsResponse) GetHasCriticalEffects() OptBool {
 	return s.HasCriticalEffects
 }
 
-// GetActiveEffect returns the value of ActiveEffect.
-func (s *ActiveEffects) GetActiveEffect() OptActiveEffectsActiveEffect {
-	return s.ActiveEffect
-}
-
 // SetParticipantID sets the value of ParticipantID.
-func (s *ActiveEffects) SetParticipantID(val uuid.UUID) {
+func (s *ActiveEffectsResponse) SetParticipantID(val uuid.UUID) {
 	s.ParticipantID = val
 }
 
 // SetEffects sets the value of Effects.
-func (s *ActiveEffects) SetEffects(val []ActiveEffectsEffectsItem) {
+func (s *ActiveEffectsResponse) SetEffects(val []ActiveEffectsResponseEffectsItem) {
 	s.Effects = val
 }
 
 // SetTimestamp sets the value of Timestamp.
-func (s *ActiveEffects) SetTimestamp(val int64) {
+func (s *ActiveEffectsResponse) SetTimestamp(val int64) {
 	s.Timestamp = val
 }
 
 // SetTotalEffects sets the value of TotalEffects.
-func (s *ActiveEffects) SetTotalEffects(val OptInt32) {
+func (s *ActiveEffectsResponse) SetTotalEffects(val OptInt32) {
 	s.TotalEffects = val
 }
 
 // SetSummary sets the value of Summary.
-func (s *ActiveEffects) SetSummary(val OptActiveEffectsSummary) {
+func (s *ActiveEffectsResponse) SetSummary(val OptActiveEffectsResponseSummary) {
 	s.Summary = val
 }
 
 // SetHasCriticalEffects sets the value of HasCriticalEffects.
-func (s *ActiveEffects) SetHasCriticalEffects(val OptBool) {
+func (s *ActiveEffectsResponse) SetHasCriticalEffects(val OptBool) {
 	s.HasCriticalEffects = val
 }
 
-// SetActiveEffect sets the value of ActiveEffect.
-func (s *ActiveEffects) SetActiveEffect(val OptActiveEffectsActiveEffect) {
-	s.ActiveEffect = val
-}
-
-func (*ActiveEffects) getActiveEffectsRes() {}
+func (*ActiveEffectsResponse) getActiveEffectsRes() {}
 
 // Individual active effect information.
-type ActiveEffectsActiveEffect struct {
+type ActiveEffectsResponseEffectsItem struct {
 	// Unique effect instance ID.
 	EffectID uuid.UUID `json:"effect_id"`
 	// Type of effect.
-	EffectType ActiveEffectsActiveEffectEffectType `json:"effect_type"`
+	EffectType ActiveEffectsResponseEffectsItemEffectType `json:"effect_type"`
 	// Remaining duration in milliseconds.
 	RemainingMs int32 `json:"remaining_ms"`
 	// Source entity ID.
@@ -126,129 +114,129 @@ type ActiveEffectsActiveEffect struct {
 }
 
 // GetEffectID returns the value of EffectID.
-func (s *ActiveEffectsActiveEffect) GetEffectID() uuid.UUID {
+func (s *ActiveEffectsResponseEffectsItem) GetEffectID() uuid.UUID {
 	return s.EffectID
 }
 
 // GetEffectType returns the value of EffectType.
-func (s *ActiveEffectsActiveEffect) GetEffectType() ActiveEffectsActiveEffectEffectType {
+func (s *ActiveEffectsResponseEffectsItem) GetEffectType() ActiveEffectsResponseEffectsItemEffectType {
 	return s.EffectType
 }
 
 // GetRemainingMs returns the value of RemainingMs.
-func (s *ActiveEffectsActiveEffect) GetRemainingMs() int32 {
+func (s *ActiveEffectsResponseEffectsItem) GetRemainingMs() int32 {
 	return s.RemainingMs
 }
 
 // GetSourceID returns the value of SourceID.
-func (s *ActiveEffectsActiveEffect) GetSourceID() uuid.UUID {
+func (s *ActiveEffectsResponseEffectsItem) GetSourceID() uuid.UUID {
 	return s.SourceID
 }
 
 // GetIntensity returns the value of Intensity.
-func (s *ActiveEffectsActiveEffect) GetIntensity() OptFloat32 {
+func (s *ActiveEffectsResponseEffectsItem) GetIntensity() OptFloat32 {
 	return s.Intensity
 }
 
 // GetStacks returns the value of Stacks.
-func (s *ActiveEffectsActiveEffect) GetStacks() OptInt32 {
+func (s *ActiveEffectsResponseEffectsItem) GetStacks() OptInt32 {
 	return s.Stacks
 }
 
 // GetAppliedAt returns the value of AppliedAt.
-func (s *ActiveEffectsActiveEffect) GetAppliedAt() OptInt64 {
+func (s *ActiveEffectsResponseEffectsItem) GetAppliedAt() OptInt64 {
 	return s.AppliedAt
 }
 
 // SetEffectID sets the value of EffectID.
-func (s *ActiveEffectsActiveEffect) SetEffectID(val uuid.UUID) {
+func (s *ActiveEffectsResponseEffectsItem) SetEffectID(val uuid.UUID) {
 	s.EffectID = val
 }
 
 // SetEffectType sets the value of EffectType.
-func (s *ActiveEffectsActiveEffect) SetEffectType(val ActiveEffectsActiveEffectEffectType) {
+func (s *ActiveEffectsResponseEffectsItem) SetEffectType(val ActiveEffectsResponseEffectsItemEffectType) {
 	s.EffectType = val
 }
 
 // SetRemainingMs sets the value of RemainingMs.
-func (s *ActiveEffectsActiveEffect) SetRemainingMs(val int32) {
+func (s *ActiveEffectsResponseEffectsItem) SetRemainingMs(val int32) {
 	s.RemainingMs = val
 }
 
 // SetSourceID sets the value of SourceID.
-func (s *ActiveEffectsActiveEffect) SetSourceID(val uuid.UUID) {
+func (s *ActiveEffectsResponseEffectsItem) SetSourceID(val uuid.UUID) {
 	s.SourceID = val
 }
 
 // SetIntensity sets the value of Intensity.
-func (s *ActiveEffectsActiveEffect) SetIntensity(val OptFloat32) {
+func (s *ActiveEffectsResponseEffectsItem) SetIntensity(val OptFloat32) {
 	s.Intensity = val
 }
 
 // SetStacks sets the value of Stacks.
-func (s *ActiveEffectsActiveEffect) SetStacks(val OptInt32) {
+func (s *ActiveEffectsResponseEffectsItem) SetStacks(val OptInt32) {
 	s.Stacks = val
 }
 
 // SetAppliedAt sets the value of AppliedAt.
-func (s *ActiveEffectsActiveEffect) SetAppliedAt(val OptInt64) {
+func (s *ActiveEffectsResponseEffectsItem) SetAppliedAt(val OptInt64) {
 	s.AppliedAt = val
 }
 
 // Type of effect.
-type ActiveEffectsActiveEffectEffectType string
+type ActiveEffectsResponseEffectsItemEffectType string
 
 const (
-	ActiveEffectsActiveEffectEffectTypeBuffDamage              ActiveEffectsActiveEffectEffectType = "buff_damage"
-	ActiveEffectsActiveEffectEffectTypeDebuffDamageReduction   ActiveEffectsActiveEffectEffectType = "debuff_damage_reduction"
-	ActiveEffectsActiveEffectEffectTypeBuffSpeed               ActiveEffectsActiveEffectEffectType = "buff_speed"
-	ActiveEffectsActiveEffectEffectTypeDebuffSlow              ActiveEffectsActiveEffectEffectType = "debuff_slow"
-	ActiveEffectsActiveEffectEffectTypeBuffRegeneration        ActiveEffectsActiveEffectEffectType = "buff_regeneration"
-	ActiveEffectsActiveEffectEffectTypeDebuffPoison            ActiveEffectsActiveEffectEffectType = "debuff_poison"
-	ActiveEffectsActiveEffectEffectTypeBuffShield              ActiveEffectsActiveEffectEffectType = "buff_shield"
-	ActiveEffectsActiveEffectEffectTypeDebuffStun              ActiveEffectsActiveEffectEffectType = "debuff_stun"
-	ActiveEffectsActiveEffectEffectTypeBuffCriticalChance      ActiveEffectsActiveEffectEffectType = "buff_critical_chance"
-	ActiveEffectsActiveEffectEffectTypeDebuffAccuracyReduction ActiveEffectsActiveEffectEffectType = "debuff_accuracy_reduction"
+	ActiveEffectsResponseEffectsItemEffectTypeBuffDamage              ActiveEffectsResponseEffectsItemEffectType = "buff_damage"
+	ActiveEffectsResponseEffectsItemEffectTypeDebuffDamageReduction   ActiveEffectsResponseEffectsItemEffectType = "debuff_damage_reduction"
+	ActiveEffectsResponseEffectsItemEffectTypeBuffSpeed               ActiveEffectsResponseEffectsItemEffectType = "buff_speed"
+	ActiveEffectsResponseEffectsItemEffectTypeDebuffSlow              ActiveEffectsResponseEffectsItemEffectType = "debuff_slow"
+	ActiveEffectsResponseEffectsItemEffectTypeBuffRegeneration        ActiveEffectsResponseEffectsItemEffectType = "buff_regeneration"
+	ActiveEffectsResponseEffectsItemEffectTypeDebuffPoison            ActiveEffectsResponseEffectsItemEffectType = "debuff_poison"
+	ActiveEffectsResponseEffectsItemEffectTypeBuffShield              ActiveEffectsResponseEffectsItemEffectType = "buff_shield"
+	ActiveEffectsResponseEffectsItemEffectTypeDebuffStun              ActiveEffectsResponseEffectsItemEffectType = "debuff_stun"
+	ActiveEffectsResponseEffectsItemEffectTypeBuffCriticalChance      ActiveEffectsResponseEffectsItemEffectType = "buff_critical_chance"
+	ActiveEffectsResponseEffectsItemEffectTypeDebuffAccuracyReduction ActiveEffectsResponseEffectsItemEffectType = "debuff_accuracy_reduction"
 )
 
-// AllValues returns all ActiveEffectsActiveEffectEffectType values.
-func (ActiveEffectsActiveEffectEffectType) AllValues() []ActiveEffectsActiveEffectEffectType {
-	return []ActiveEffectsActiveEffectEffectType{
-		ActiveEffectsActiveEffectEffectTypeBuffDamage,
-		ActiveEffectsActiveEffectEffectTypeDebuffDamageReduction,
-		ActiveEffectsActiveEffectEffectTypeBuffSpeed,
-		ActiveEffectsActiveEffectEffectTypeDebuffSlow,
-		ActiveEffectsActiveEffectEffectTypeBuffRegeneration,
-		ActiveEffectsActiveEffectEffectTypeDebuffPoison,
-		ActiveEffectsActiveEffectEffectTypeBuffShield,
-		ActiveEffectsActiveEffectEffectTypeDebuffStun,
-		ActiveEffectsActiveEffectEffectTypeBuffCriticalChance,
-		ActiveEffectsActiveEffectEffectTypeDebuffAccuracyReduction,
+// AllValues returns all ActiveEffectsResponseEffectsItemEffectType values.
+func (ActiveEffectsResponseEffectsItemEffectType) AllValues() []ActiveEffectsResponseEffectsItemEffectType {
+	return []ActiveEffectsResponseEffectsItemEffectType{
+		ActiveEffectsResponseEffectsItemEffectTypeBuffDamage,
+		ActiveEffectsResponseEffectsItemEffectTypeDebuffDamageReduction,
+		ActiveEffectsResponseEffectsItemEffectTypeBuffSpeed,
+		ActiveEffectsResponseEffectsItemEffectTypeDebuffSlow,
+		ActiveEffectsResponseEffectsItemEffectTypeBuffRegeneration,
+		ActiveEffectsResponseEffectsItemEffectTypeDebuffPoison,
+		ActiveEffectsResponseEffectsItemEffectTypeBuffShield,
+		ActiveEffectsResponseEffectsItemEffectTypeDebuffStun,
+		ActiveEffectsResponseEffectsItemEffectTypeBuffCriticalChance,
+		ActiveEffectsResponseEffectsItemEffectTypeDebuffAccuracyReduction,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s ActiveEffectsActiveEffectEffectType) MarshalText() ([]byte, error) {
+func (s ActiveEffectsResponseEffectsItemEffectType) MarshalText() ([]byte, error) {
 	switch s {
-	case ActiveEffectsActiveEffectEffectTypeBuffDamage:
+	case ActiveEffectsResponseEffectsItemEffectTypeBuffDamage:
 		return []byte(s), nil
-	case ActiveEffectsActiveEffectEffectTypeDebuffDamageReduction:
+	case ActiveEffectsResponseEffectsItemEffectTypeDebuffDamageReduction:
 		return []byte(s), nil
-	case ActiveEffectsActiveEffectEffectTypeBuffSpeed:
+	case ActiveEffectsResponseEffectsItemEffectTypeBuffSpeed:
 		return []byte(s), nil
-	case ActiveEffectsActiveEffectEffectTypeDebuffSlow:
+	case ActiveEffectsResponseEffectsItemEffectTypeDebuffSlow:
 		return []byte(s), nil
-	case ActiveEffectsActiveEffectEffectTypeBuffRegeneration:
+	case ActiveEffectsResponseEffectsItemEffectTypeBuffRegeneration:
 		return []byte(s), nil
-	case ActiveEffectsActiveEffectEffectTypeDebuffPoison:
+	case ActiveEffectsResponseEffectsItemEffectTypeDebuffPoison:
 		return []byte(s), nil
-	case ActiveEffectsActiveEffectEffectTypeBuffShield:
+	case ActiveEffectsResponseEffectsItemEffectTypeBuffShield:
 		return []byte(s), nil
-	case ActiveEffectsActiveEffectEffectTypeDebuffStun:
+	case ActiveEffectsResponseEffectsItemEffectTypeDebuffStun:
 		return []byte(s), nil
-	case ActiveEffectsActiveEffectEffectTypeBuffCriticalChance:
+	case ActiveEffectsResponseEffectsItemEffectTypeBuffCriticalChance:
 		return []byte(s), nil
-	case ActiveEffectsActiveEffectEffectTypeDebuffAccuracyReduction:
+	case ActiveEffectsResponseEffectsItemEffectTypeDebuffAccuracyReduction:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -256,223 +244,37 @@ func (s ActiveEffectsActiveEffectEffectType) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ActiveEffectsActiveEffectEffectType) UnmarshalText(data []byte) error {
-	switch ActiveEffectsActiveEffectEffectType(data) {
-	case ActiveEffectsActiveEffectEffectTypeBuffDamage:
-		*s = ActiveEffectsActiveEffectEffectTypeBuffDamage
+func (s *ActiveEffectsResponseEffectsItemEffectType) UnmarshalText(data []byte) error {
+	switch ActiveEffectsResponseEffectsItemEffectType(data) {
+	case ActiveEffectsResponseEffectsItemEffectTypeBuffDamage:
+		*s = ActiveEffectsResponseEffectsItemEffectTypeBuffDamage
 		return nil
-	case ActiveEffectsActiveEffectEffectTypeDebuffDamageReduction:
-		*s = ActiveEffectsActiveEffectEffectTypeDebuffDamageReduction
+	case ActiveEffectsResponseEffectsItemEffectTypeDebuffDamageReduction:
+		*s = ActiveEffectsResponseEffectsItemEffectTypeDebuffDamageReduction
 		return nil
-	case ActiveEffectsActiveEffectEffectTypeBuffSpeed:
-		*s = ActiveEffectsActiveEffectEffectTypeBuffSpeed
+	case ActiveEffectsResponseEffectsItemEffectTypeBuffSpeed:
+		*s = ActiveEffectsResponseEffectsItemEffectTypeBuffSpeed
 		return nil
-	case ActiveEffectsActiveEffectEffectTypeDebuffSlow:
-		*s = ActiveEffectsActiveEffectEffectTypeDebuffSlow
+	case ActiveEffectsResponseEffectsItemEffectTypeDebuffSlow:
+		*s = ActiveEffectsResponseEffectsItemEffectTypeDebuffSlow
 		return nil
-	case ActiveEffectsActiveEffectEffectTypeBuffRegeneration:
-		*s = ActiveEffectsActiveEffectEffectTypeBuffRegeneration
+	case ActiveEffectsResponseEffectsItemEffectTypeBuffRegeneration:
+		*s = ActiveEffectsResponseEffectsItemEffectTypeBuffRegeneration
 		return nil
-	case ActiveEffectsActiveEffectEffectTypeDebuffPoison:
-		*s = ActiveEffectsActiveEffectEffectTypeDebuffPoison
+	case ActiveEffectsResponseEffectsItemEffectTypeDebuffPoison:
+		*s = ActiveEffectsResponseEffectsItemEffectTypeDebuffPoison
 		return nil
-	case ActiveEffectsActiveEffectEffectTypeBuffShield:
-		*s = ActiveEffectsActiveEffectEffectTypeBuffShield
+	case ActiveEffectsResponseEffectsItemEffectTypeBuffShield:
+		*s = ActiveEffectsResponseEffectsItemEffectTypeBuffShield
 		return nil
-	case ActiveEffectsActiveEffectEffectTypeDebuffStun:
-		*s = ActiveEffectsActiveEffectEffectTypeDebuffStun
+	case ActiveEffectsResponseEffectsItemEffectTypeDebuffStun:
+		*s = ActiveEffectsResponseEffectsItemEffectTypeDebuffStun
 		return nil
-	case ActiveEffectsActiveEffectEffectTypeBuffCriticalChance:
-		*s = ActiveEffectsActiveEffectEffectTypeBuffCriticalChance
+	case ActiveEffectsResponseEffectsItemEffectTypeBuffCriticalChance:
+		*s = ActiveEffectsResponseEffectsItemEffectTypeBuffCriticalChance
 		return nil
-	case ActiveEffectsActiveEffectEffectTypeDebuffAccuracyReduction:
-		*s = ActiveEffectsActiveEffectEffectTypeDebuffAccuracyReduction
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Individual active effect information.
-type ActiveEffectsEffectsItem struct {
-	// Unique effect instance ID.
-	EffectID uuid.UUID `json:"effect_id"`
-	// Type of effect.
-	EffectType ActiveEffectsEffectsItemEffectType `json:"effect_type"`
-	// Remaining duration in milliseconds.
-	RemainingMs int32 `json:"remaining_ms"`
-	// Source entity ID.
-	SourceID uuid.UUID `json:"source_id"`
-	// Current effect intensity.
-	Intensity OptFloat32 `json:"intensity"`
-	// Current stack count.
-	Stacks OptInt32 `json:"stacks"`
-	// When effect was applied (unix milliseconds).
-	AppliedAt OptInt64 `json:"applied_at"`
-}
-
-// GetEffectID returns the value of EffectID.
-func (s *ActiveEffectsEffectsItem) GetEffectID() uuid.UUID {
-	return s.EffectID
-}
-
-// GetEffectType returns the value of EffectType.
-func (s *ActiveEffectsEffectsItem) GetEffectType() ActiveEffectsEffectsItemEffectType {
-	return s.EffectType
-}
-
-// GetRemainingMs returns the value of RemainingMs.
-func (s *ActiveEffectsEffectsItem) GetRemainingMs() int32 {
-	return s.RemainingMs
-}
-
-// GetSourceID returns the value of SourceID.
-func (s *ActiveEffectsEffectsItem) GetSourceID() uuid.UUID {
-	return s.SourceID
-}
-
-// GetIntensity returns the value of Intensity.
-func (s *ActiveEffectsEffectsItem) GetIntensity() OptFloat32 {
-	return s.Intensity
-}
-
-// GetStacks returns the value of Stacks.
-func (s *ActiveEffectsEffectsItem) GetStacks() OptInt32 {
-	return s.Stacks
-}
-
-// GetAppliedAt returns the value of AppliedAt.
-func (s *ActiveEffectsEffectsItem) GetAppliedAt() OptInt64 {
-	return s.AppliedAt
-}
-
-// SetEffectID sets the value of EffectID.
-func (s *ActiveEffectsEffectsItem) SetEffectID(val uuid.UUID) {
-	s.EffectID = val
-}
-
-// SetEffectType sets the value of EffectType.
-func (s *ActiveEffectsEffectsItem) SetEffectType(val ActiveEffectsEffectsItemEffectType) {
-	s.EffectType = val
-}
-
-// SetRemainingMs sets the value of RemainingMs.
-func (s *ActiveEffectsEffectsItem) SetRemainingMs(val int32) {
-	s.RemainingMs = val
-}
-
-// SetSourceID sets the value of SourceID.
-func (s *ActiveEffectsEffectsItem) SetSourceID(val uuid.UUID) {
-	s.SourceID = val
-}
-
-// SetIntensity sets the value of Intensity.
-func (s *ActiveEffectsEffectsItem) SetIntensity(val OptFloat32) {
-	s.Intensity = val
-}
-
-// SetStacks sets the value of Stacks.
-func (s *ActiveEffectsEffectsItem) SetStacks(val OptInt32) {
-	s.Stacks = val
-}
-
-// SetAppliedAt sets the value of AppliedAt.
-func (s *ActiveEffectsEffectsItem) SetAppliedAt(val OptInt64) {
-	s.AppliedAt = val
-}
-
-// Type of effect.
-type ActiveEffectsEffectsItemEffectType string
-
-const (
-	ActiveEffectsEffectsItemEffectTypeBuffDamage              ActiveEffectsEffectsItemEffectType = "buff_damage"
-	ActiveEffectsEffectsItemEffectTypeDebuffDamageReduction   ActiveEffectsEffectsItemEffectType = "debuff_damage_reduction"
-	ActiveEffectsEffectsItemEffectTypeBuffSpeed               ActiveEffectsEffectsItemEffectType = "buff_speed"
-	ActiveEffectsEffectsItemEffectTypeDebuffSlow              ActiveEffectsEffectsItemEffectType = "debuff_slow"
-	ActiveEffectsEffectsItemEffectTypeBuffRegeneration        ActiveEffectsEffectsItemEffectType = "buff_regeneration"
-	ActiveEffectsEffectsItemEffectTypeDebuffPoison            ActiveEffectsEffectsItemEffectType = "debuff_poison"
-	ActiveEffectsEffectsItemEffectTypeBuffShield              ActiveEffectsEffectsItemEffectType = "buff_shield"
-	ActiveEffectsEffectsItemEffectTypeDebuffStun              ActiveEffectsEffectsItemEffectType = "debuff_stun"
-	ActiveEffectsEffectsItemEffectTypeBuffCriticalChance      ActiveEffectsEffectsItemEffectType = "buff_critical_chance"
-	ActiveEffectsEffectsItemEffectTypeDebuffAccuracyReduction ActiveEffectsEffectsItemEffectType = "debuff_accuracy_reduction"
-)
-
-// AllValues returns all ActiveEffectsEffectsItemEffectType values.
-func (ActiveEffectsEffectsItemEffectType) AllValues() []ActiveEffectsEffectsItemEffectType {
-	return []ActiveEffectsEffectsItemEffectType{
-		ActiveEffectsEffectsItemEffectTypeBuffDamage,
-		ActiveEffectsEffectsItemEffectTypeDebuffDamageReduction,
-		ActiveEffectsEffectsItemEffectTypeBuffSpeed,
-		ActiveEffectsEffectsItemEffectTypeDebuffSlow,
-		ActiveEffectsEffectsItemEffectTypeBuffRegeneration,
-		ActiveEffectsEffectsItemEffectTypeDebuffPoison,
-		ActiveEffectsEffectsItemEffectTypeBuffShield,
-		ActiveEffectsEffectsItemEffectTypeDebuffStun,
-		ActiveEffectsEffectsItemEffectTypeBuffCriticalChance,
-		ActiveEffectsEffectsItemEffectTypeDebuffAccuracyReduction,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s ActiveEffectsEffectsItemEffectType) MarshalText() ([]byte, error) {
-	switch s {
-	case ActiveEffectsEffectsItemEffectTypeBuffDamage:
-		return []byte(s), nil
-	case ActiveEffectsEffectsItemEffectTypeDebuffDamageReduction:
-		return []byte(s), nil
-	case ActiveEffectsEffectsItemEffectTypeBuffSpeed:
-		return []byte(s), nil
-	case ActiveEffectsEffectsItemEffectTypeDebuffSlow:
-		return []byte(s), nil
-	case ActiveEffectsEffectsItemEffectTypeBuffRegeneration:
-		return []byte(s), nil
-	case ActiveEffectsEffectsItemEffectTypeDebuffPoison:
-		return []byte(s), nil
-	case ActiveEffectsEffectsItemEffectTypeBuffShield:
-		return []byte(s), nil
-	case ActiveEffectsEffectsItemEffectTypeDebuffStun:
-		return []byte(s), nil
-	case ActiveEffectsEffectsItemEffectTypeBuffCriticalChance:
-		return []byte(s), nil
-	case ActiveEffectsEffectsItemEffectTypeDebuffAccuracyReduction:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *ActiveEffectsEffectsItemEffectType) UnmarshalText(data []byte) error {
-	switch ActiveEffectsEffectsItemEffectType(data) {
-	case ActiveEffectsEffectsItemEffectTypeBuffDamage:
-		*s = ActiveEffectsEffectsItemEffectTypeBuffDamage
-		return nil
-	case ActiveEffectsEffectsItemEffectTypeDebuffDamageReduction:
-		*s = ActiveEffectsEffectsItemEffectTypeDebuffDamageReduction
-		return nil
-	case ActiveEffectsEffectsItemEffectTypeBuffSpeed:
-		*s = ActiveEffectsEffectsItemEffectTypeBuffSpeed
-		return nil
-	case ActiveEffectsEffectsItemEffectTypeDebuffSlow:
-		*s = ActiveEffectsEffectsItemEffectTypeDebuffSlow
-		return nil
-	case ActiveEffectsEffectsItemEffectTypeBuffRegeneration:
-		*s = ActiveEffectsEffectsItemEffectTypeBuffRegeneration
-		return nil
-	case ActiveEffectsEffectsItemEffectTypeDebuffPoison:
-		*s = ActiveEffectsEffectsItemEffectTypeDebuffPoison
-		return nil
-	case ActiveEffectsEffectsItemEffectTypeBuffShield:
-		*s = ActiveEffectsEffectsItemEffectTypeBuffShield
-		return nil
-	case ActiveEffectsEffectsItemEffectTypeDebuffStun:
-		*s = ActiveEffectsEffectsItemEffectTypeDebuffStun
-		return nil
-	case ActiveEffectsEffectsItemEffectTypeBuffCriticalChance:
-		*s = ActiveEffectsEffectsItemEffectTypeBuffCriticalChance
-		return nil
-	case ActiveEffectsEffectsItemEffectTypeDebuffAccuracyReduction:
-		*s = ActiveEffectsEffectsItemEffectTypeDebuffAccuracyReduction
+	case ActiveEffectsResponseEffectsItemEffectTypeDebuffAccuracyReduction:
+		*s = ActiveEffectsResponseEffectsItemEffectTypeDebuffAccuracyReduction
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -480,7 +282,7 @@ func (s *ActiveEffectsEffectsItemEffectType) UnmarshalText(data []byte) error {
 }
 
 // Effects summary by category.
-type ActiveEffectsSummary struct {
+type ActiveEffectsResponseSummary struct {
 	// Number of active buffs.
 	Buffs OptInt32 `json:"buffs"`
 	// Number of active debuffs.
@@ -490,33 +292,792 @@ type ActiveEffectsSummary struct {
 }
 
 // GetBuffs returns the value of Buffs.
-func (s *ActiveEffectsSummary) GetBuffs() OptInt32 {
+func (s *ActiveEffectsResponseSummary) GetBuffs() OptInt32 {
 	return s.Buffs
 }
 
 // GetDebuffs returns the value of Debuffs.
-func (s *ActiveEffectsSummary) GetDebuffs() OptInt32 {
+func (s *ActiveEffectsResponseSummary) GetDebuffs() OptInt32 {
 	return s.Debuffs
 }
 
 // GetStatusEffects returns the value of StatusEffects.
-func (s *ActiveEffectsSummary) GetStatusEffects() OptInt32 {
+func (s *ActiveEffectsResponseSummary) GetStatusEffects() OptInt32 {
 	return s.StatusEffects
 }
 
 // SetBuffs sets the value of Buffs.
-func (s *ActiveEffectsSummary) SetBuffs(val OptInt32) {
+func (s *ActiveEffectsResponseSummary) SetBuffs(val OptInt32) {
 	s.Buffs = val
 }
 
 // SetDebuffs sets the value of Debuffs.
-func (s *ActiveEffectsSummary) SetDebuffs(val OptInt32) {
+func (s *ActiveEffectsResponseSummary) SetDebuffs(val OptInt32) {
 	s.Debuffs = val
 }
 
 // SetStatusEffects sets the value of StatusEffects.
-func (s *ActiveEffectsSummary) SetStatusEffects(val OptInt32) {
+func (s *ActiveEffectsResponseSummary) SetStatusEffects(val OptInt32) {
 	s.StatusEffects = val
+}
+
+// BACKEND NOTE: Combat effects application request.
+// Fields ordered for struct alignment (large → small):
+// - UUIDs first
+// - Arrays
+// - Integers
+// - Objects
+// - Booleans last
+// Expected memory: ~48 bytes/instance.
+// Ref: #/components/schemas/ApplyEffectsRequest
+type ApplyEffectsRequest struct {
+	// Combat participant to apply effects to.
+	ParticipantID uuid.UUID `json:"participant_id"`
+	// Effects to apply.
+	Effects []ApplyEffectsRequestEffectsItem `json:"effects"`
+	// Combat session ID (optional, for context).
+	SessionID OptInt64 `json:"session_id"`
+	// Request timestamp (unix milliseconds).
+	Timestamp OptInt64 `json:"timestamp"`
+	// Source of the effects.
+	SourceType OptApplyEffectsRequestSourceType `json:"source_type"`
+	// Additional context for effect application.
+	Context OptApplyEffectsRequestContext `json:"context"`
+	// Whether to override existing effects of same type.
+	OverrideExisting OptBool `json:"override_existing"`
+	// Whether effects can stack with existing ones.
+	StackEffects OptBool `json:"stack_effects"`
+}
+
+// GetParticipantID returns the value of ParticipantID.
+func (s *ApplyEffectsRequest) GetParticipantID() uuid.UUID {
+	return s.ParticipantID
+}
+
+// GetEffects returns the value of Effects.
+func (s *ApplyEffectsRequest) GetEffects() []ApplyEffectsRequestEffectsItem {
+	return s.Effects
+}
+
+// GetSessionID returns the value of SessionID.
+func (s *ApplyEffectsRequest) GetSessionID() OptInt64 {
+	return s.SessionID
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *ApplyEffectsRequest) GetTimestamp() OptInt64 {
+	return s.Timestamp
+}
+
+// GetSourceType returns the value of SourceType.
+func (s *ApplyEffectsRequest) GetSourceType() OptApplyEffectsRequestSourceType {
+	return s.SourceType
+}
+
+// GetContext returns the value of Context.
+func (s *ApplyEffectsRequest) GetContext() OptApplyEffectsRequestContext {
+	return s.Context
+}
+
+// GetOverrideExisting returns the value of OverrideExisting.
+func (s *ApplyEffectsRequest) GetOverrideExisting() OptBool {
+	return s.OverrideExisting
+}
+
+// GetStackEffects returns the value of StackEffects.
+func (s *ApplyEffectsRequest) GetStackEffects() OptBool {
+	return s.StackEffects
+}
+
+// SetParticipantID sets the value of ParticipantID.
+func (s *ApplyEffectsRequest) SetParticipantID(val uuid.UUID) {
+	s.ParticipantID = val
+}
+
+// SetEffects sets the value of Effects.
+func (s *ApplyEffectsRequest) SetEffects(val []ApplyEffectsRequestEffectsItem) {
+	s.Effects = val
+}
+
+// SetSessionID sets the value of SessionID.
+func (s *ApplyEffectsRequest) SetSessionID(val OptInt64) {
+	s.SessionID = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *ApplyEffectsRequest) SetTimestamp(val OptInt64) {
+	s.Timestamp = val
+}
+
+// SetSourceType sets the value of SourceType.
+func (s *ApplyEffectsRequest) SetSourceType(val OptApplyEffectsRequestSourceType) {
+	s.SourceType = val
+}
+
+// SetContext sets the value of Context.
+func (s *ApplyEffectsRequest) SetContext(val OptApplyEffectsRequestContext) {
+	s.Context = val
+}
+
+// SetOverrideExisting sets the value of OverrideExisting.
+func (s *ApplyEffectsRequest) SetOverrideExisting(val OptBool) {
+	s.OverrideExisting = val
+}
+
+// SetStackEffects sets the value of StackEffects.
+func (s *ApplyEffectsRequest) SetStackEffects(val OptBool) {
+	s.StackEffects = val
+}
+
+// Additional context for effect application.
+type ApplyEffectsRequestContext struct {
+	// Combat area/location ID.
+	AreaID OptString `json:"area_id"`
+	// Current weather affecting effects.
+	WeatherConditions OptApplyEffectsRequestContextWeatherConditions `json:"weather_conditions"`
+}
+
+// GetAreaID returns the value of AreaID.
+func (s *ApplyEffectsRequestContext) GetAreaID() OptString {
+	return s.AreaID
+}
+
+// GetWeatherConditions returns the value of WeatherConditions.
+func (s *ApplyEffectsRequestContext) GetWeatherConditions() OptApplyEffectsRequestContextWeatherConditions {
+	return s.WeatherConditions
+}
+
+// SetAreaID sets the value of AreaID.
+func (s *ApplyEffectsRequestContext) SetAreaID(val OptString) {
+	s.AreaID = val
+}
+
+// SetWeatherConditions sets the value of WeatherConditions.
+func (s *ApplyEffectsRequestContext) SetWeatherConditions(val OptApplyEffectsRequestContextWeatherConditions) {
+	s.WeatherConditions = val
+}
+
+// Current weather affecting effects.
+type ApplyEffectsRequestContextWeatherConditions string
+
+const (
+	ApplyEffectsRequestContextWeatherConditionsClear ApplyEffectsRequestContextWeatherConditions = "clear"
+	ApplyEffectsRequestContextWeatherConditionsRain  ApplyEffectsRequestContextWeatherConditions = "rain"
+	ApplyEffectsRequestContextWeatherConditionsStorm ApplyEffectsRequestContextWeatherConditions = "storm"
+	ApplyEffectsRequestContextWeatherConditionsFog   ApplyEffectsRequestContextWeatherConditions = "fog"
+)
+
+// AllValues returns all ApplyEffectsRequestContextWeatherConditions values.
+func (ApplyEffectsRequestContextWeatherConditions) AllValues() []ApplyEffectsRequestContextWeatherConditions {
+	return []ApplyEffectsRequestContextWeatherConditions{
+		ApplyEffectsRequestContextWeatherConditionsClear,
+		ApplyEffectsRequestContextWeatherConditionsRain,
+		ApplyEffectsRequestContextWeatherConditionsStorm,
+		ApplyEffectsRequestContextWeatherConditionsFog,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ApplyEffectsRequestContextWeatherConditions) MarshalText() ([]byte, error) {
+	switch s {
+	case ApplyEffectsRequestContextWeatherConditionsClear:
+		return []byte(s), nil
+	case ApplyEffectsRequestContextWeatherConditionsRain:
+		return []byte(s), nil
+	case ApplyEffectsRequestContextWeatherConditionsStorm:
+		return []byte(s), nil
+	case ApplyEffectsRequestContextWeatherConditionsFog:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ApplyEffectsRequestContextWeatherConditions) UnmarshalText(data []byte) error {
+	switch ApplyEffectsRequestContextWeatherConditions(data) {
+	case ApplyEffectsRequestContextWeatherConditionsClear:
+		*s = ApplyEffectsRequestContextWeatherConditionsClear
+		return nil
+	case ApplyEffectsRequestContextWeatherConditionsRain:
+		*s = ApplyEffectsRequestContextWeatherConditionsRain
+		return nil
+	case ApplyEffectsRequestContextWeatherConditionsStorm:
+		*s = ApplyEffectsRequestContextWeatherConditionsStorm
+		return nil
+	case ApplyEffectsRequestContextWeatherConditionsFog:
+		*s = ApplyEffectsRequestContextWeatherConditionsFog
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Individual combat effect to apply.
+type ApplyEffectsRequestEffectsItem struct {
+	// Type of combat effect.
+	EffectType ApplyEffectsRequestEffectsItemEffectType `json:"effect_type"`
+	// Effect duration in milliseconds.
+	DurationMs int32 `json:"duration_ms"`
+	// Source entity ID (weapon, ability, etc.).
+	SourceID uuid.UUID `json:"source_id"`
+	// Effect intensity multiplier.
+	Intensity OptFloat32 `json:"intensity"`
+	// Number of effect stacks.
+	Stacks OptInt32 `json:"stacks"`
+}
+
+// GetEffectType returns the value of EffectType.
+func (s *ApplyEffectsRequestEffectsItem) GetEffectType() ApplyEffectsRequestEffectsItemEffectType {
+	return s.EffectType
+}
+
+// GetDurationMs returns the value of DurationMs.
+func (s *ApplyEffectsRequestEffectsItem) GetDurationMs() int32 {
+	return s.DurationMs
+}
+
+// GetSourceID returns the value of SourceID.
+func (s *ApplyEffectsRequestEffectsItem) GetSourceID() uuid.UUID {
+	return s.SourceID
+}
+
+// GetIntensity returns the value of Intensity.
+func (s *ApplyEffectsRequestEffectsItem) GetIntensity() OptFloat32 {
+	return s.Intensity
+}
+
+// GetStacks returns the value of Stacks.
+func (s *ApplyEffectsRequestEffectsItem) GetStacks() OptInt32 {
+	return s.Stacks
+}
+
+// SetEffectType sets the value of EffectType.
+func (s *ApplyEffectsRequestEffectsItem) SetEffectType(val ApplyEffectsRequestEffectsItemEffectType) {
+	s.EffectType = val
+}
+
+// SetDurationMs sets the value of DurationMs.
+func (s *ApplyEffectsRequestEffectsItem) SetDurationMs(val int32) {
+	s.DurationMs = val
+}
+
+// SetSourceID sets the value of SourceID.
+func (s *ApplyEffectsRequestEffectsItem) SetSourceID(val uuid.UUID) {
+	s.SourceID = val
+}
+
+// SetIntensity sets the value of Intensity.
+func (s *ApplyEffectsRequestEffectsItem) SetIntensity(val OptFloat32) {
+	s.Intensity = val
+}
+
+// SetStacks sets the value of Stacks.
+func (s *ApplyEffectsRequestEffectsItem) SetStacks(val OptInt32) {
+	s.Stacks = val
+}
+
+// Type of combat effect.
+type ApplyEffectsRequestEffectsItemEffectType string
+
+const (
+	ApplyEffectsRequestEffectsItemEffectTypeBuffDamage              ApplyEffectsRequestEffectsItemEffectType = "buff_damage"
+	ApplyEffectsRequestEffectsItemEffectTypeDebuffDamageReduction   ApplyEffectsRequestEffectsItemEffectType = "debuff_damage_reduction"
+	ApplyEffectsRequestEffectsItemEffectTypeBuffSpeed               ApplyEffectsRequestEffectsItemEffectType = "buff_speed"
+	ApplyEffectsRequestEffectsItemEffectTypeDebuffSlow              ApplyEffectsRequestEffectsItemEffectType = "debuff_slow"
+	ApplyEffectsRequestEffectsItemEffectTypeBuffRegeneration        ApplyEffectsRequestEffectsItemEffectType = "buff_regeneration"
+	ApplyEffectsRequestEffectsItemEffectTypeDebuffPoison            ApplyEffectsRequestEffectsItemEffectType = "debuff_poison"
+	ApplyEffectsRequestEffectsItemEffectTypeBuffShield              ApplyEffectsRequestEffectsItemEffectType = "buff_shield"
+	ApplyEffectsRequestEffectsItemEffectTypeDebuffStun              ApplyEffectsRequestEffectsItemEffectType = "debuff_stun"
+	ApplyEffectsRequestEffectsItemEffectTypeBuffCriticalChance      ApplyEffectsRequestEffectsItemEffectType = "buff_critical_chance"
+	ApplyEffectsRequestEffectsItemEffectTypeDebuffAccuracyReduction ApplyEffectsRequestEffectsItemEffectType = "debuff_accuracy_reduction"
+)
+
+// AllValues returns all ApplyEffectsRequestEffectsItemEffectType values.
+func (ApplyEffectsRequestEffectsItemEffectType) AllValues() []ApplyEffectsRequestEffectsItemEffectType {
+	return []ApplyEffectsRequestEffectsItemEffectType{
+		ApplyEffectsRequestEffectsItemEffectTypeBuffDamage,
+		ApplyEffectsRequestEffectsItemEffectTypeDebuffDamageReduction,
+		ApplyEffectsRequestEffectsItemEffectTypeBuffSpeed,
+		ApplyEffectsRequestEffectsItemEffectTypeDebuffSlow,
+		ApplyEffectsRequestEffectsItemEffectTypeBuffRegeneration,
+		ApplyEffectsRequestEffectsItemEffectTypeDebuffPoison,
+		ApplyEffectsRequestEffectsItemEffectTypeBuffShield,
+		ApplyEffectsRequestEffectsItemEffectTypeDebuffStun,
+		ApplyEffectsRequestEffectsItemEffectTypeBuffCriticalChance,
+		ApplyEffectsRequestEffectsItemEffectTypeDebuffAccuracyReduction,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ApplyEffectsRequestEffectsItemEffectType) MarshalText() ([]byte, error) {
+	switch s {
+	case ApplyEffectsRequestEffectsItemEffectTypeBuffDamage:
+		return []byte(s), nil
+	case ApplyEffectsRequestEffectsItemEffectTypeDebuffDamageReduction:
+		return []byte(s), nil
+	case ApplyEffectsRequestEffectsItemEffectTypeBuffSpeed:
+		return []byte(s), nil
+	case ApplyEffectsRequestEffectsItemEffectTypeDebuffSlow:
+		return []byte(s), nil
+	case ApplyEffectsRequestEffectsItemEffectTypeBuffRegeneration:
+		return []byte(s), nil
+	case ApplyEffectsRequestEffectsItemEffectTypeDebuffPoison:
+		return []byte(s), nil
+	case ApplyEffectsRequestEffectsItemEffectTypeBuffShield:
+		return []byte(s), nil
+	case ApplyEffectsRequestEffectsItemEffectTypeDebuffStun:
+		return []byte(s), nil
+	case ApplyEffectsRequestEffectsItemEffectTypeBuffCriticalChance:
+		return []byte(s), nil
+	case ApplyEffectsRequestEffectsItemEffectTypeDebuffAccuracyReduction:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ApplyEffectsRequestEffectsItemEffectType) UnmarshalText(data []byte) error {
+	switch ApplyEffectsRequestEffectsItemEffectType(data) {
+	case ApplyEffectsRequestEffectsItemEffectTypeBuffDamage:
+		*s = ApplyEffectsRequestEffectsItemEffectTypeBuffDamage
+		return nil
+	case ApplyEffectsRequestEffectsItemEffectTypeDebuffDamageReduction:
+		*s = ApplyEffectsRequestEffectsItemEffectTypeDebuffDamageReduction
+		return nil
+	case ApplyEffectsRequestEffectsItemEffectTypeBuffSpeed:
+		*s = ApplyEffectsRequestEffectsItemEffectTypeBuffSpeed
+		return nil
+	case ApplyEffectsRequestEffectsItemEffectTypeDebuffSlow:
+		*s = ApplyEffectsRequestEffectsItemEffectTypeDebuffSlow
+		return nil
+	case ApplyEffectsRequestEffectsItemEffectTypeBuffRegeneration:
+		*s = ApplyEffectsRequestEffectsItemEffectTypeBuffRegeneration
+		return nil
+	case ApplyEffectsRequestEffectsItemEffectTypeDebuffPoison:
+		*s = ApplyEffectsRequestEffectsItemEffectTypeDebuffPoison
+		return nil
+	case ApplyEffectsRequestEffectsItemEffectTypeBuffShield:
+		*s = ApplyEffectsRequestEffectsItemEffectTypeBuffShield
+		return nil
+	case ApplyEffectsRequestEffectsItemEffectTypeDebuffStun:
+		*s = ApplyEffectsRequestEffectsItemEffectTypeDebuffStun
+		return nil
+	case ApplyEffectsRequestEffectsItemEffectTypeBuffCriticalChance:
+		*s = ApplyEffectsRequestEffectsItemEffectTypeBuffCriticalChance
+		return nil
+	case ApplyEffectsRequestEffectsItemEffectTypeDebuffAccuracyReduction:
+		*s = ApplyEffectsRequestEffectsItemEffectTypeDebuffAccuracyReduction
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Source of the effects.
+type ApplyEffectsRequestSourceType string
+
+const (
+	ApplyEffectsRequestSourceTypeWeapon        ApplyEffectsRequestSourceType = "weapon"
+	ApplyEffectsRequestSourceTypeAbility       ApplyEffectsRequestSourceType = "ability"
+	ApplyEffectsRequestSourceTypeImplant       ApplyEffectsRequestSourceType = "implant"
+	ApplyEffectsRequestSourceTypeEnvironmental ApplyEffectsRequestSourceType = "environmental"
+	ApplyEffectsRequestSourceTypeStatusEffect  ApplyEffectsRequestSourceType = "status_effect"
+)
+
+// AllValues returns all ApplyEffectsRequestSourceType values.
+func (ApplyEffectsRequestSourceType) AllValues() []ApplyEffectsRequestSourceType {
+	return []ApplyEffectsRequestSourceType{
+		ApplyEffectsRequestSourceTypeWeapon,
+		ApplyEffectsRequestSourceTypeAbility,
+		ApplyEffectsRequestSourceTypeImplant,
+		ApplyEffectsRequestSourceTypeEnvironmental,
+		ApplyEffectsRequestSourceTypeStatusEffect,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ApplyEffectsRequestSourceType) MarshalText() ([]byte, error) {
+	switch s {
+	case ApplyEffectsRequestSourceTypeWeapon:
+		return []byte(s), nil
+	case ApplyEffectsRequestSourceTypeAbility:
+		return []byte(s), nil
+	case ApplyEffectsRequestSourceTypeImplant:
+		return []byte(s), nil
+	case ApplyEffectsRequestSourceTypeEnvironmental:
+		return []byte(s), nil
+	case ApplyEffectsRequestSourceTypeStatusEffect:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ApplyEffectsRequestSourceType) UnmarshalText(data []byte) error {
+	switch ApplyEffectsRequestSourceType(data) {
+	case ApplyEffectsRequestSourceTypeWeapon:
+		*s = ApplyEffectsRequestSourceTypeWeapon
+		return nil
+	case ApplyEffectsRequestSourceTypeAbility:
+		*s = ApplyEffectsRequestSourceTypeAbility
+		return nil
+	case ApplyEffectsRequestSourceTypeImplant:
+		*s = ApplyEffectsRequestSourceTypeImplant
+		return nil
+	case ApplyEffectsRequestSourceTypeEnvironmental:
+		*s = ApplyEffectsRequestSourceTypeEnvironmental
+		return nil
+	case ApplyEffectsRequestSourceTypeStatusEffect:
+		*s = ApplyEffectsRequestSourceTypeStatusEffect
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Effects application result.
+// Fields ordered for struct alignment (large → small):
+// - UUIDs first
+// - Arrays
+// - Integers
+// - Objects
+// - Booleans last
+// Expected memory: ~40 bytes/instance.
+// Ref: #/components/schemas/ApplyEffectsResult
+type ApplyEffectsResult struct {
+	// Combat participant effects were applied to.
+	ParticipantID uuid.UUID `json:"participant_id"`
+	// Successfully applied effects with IDs.
+	AppliedEffects []ApplyEffectsResultAppliedEffectsItem `json:"applied_effects"`
+	// Effects that were rejected (conflicts, limits, etc.).
+	RejectedEffects []ApplyEffectsResultRejectedEffectsItem `json:"rejected_effects"`
+	// Application timestamp (unix milliseconds).
+	Timestamp OptInt64 `json:"timestamp"`
+	// Server processing time in nanoseconds.
+	ProcessingTimeNs OptInt64 `json:"processing_time_ns"`
+	// Overall application status.
+	Status OptApplyEffectsResultStatus `json:"status"`
+	// Application summary statistics.
+	Summary OptApplyEffectsResultSummary `json:"summary"`
+	// Whether application was successful.
+	Success bool `json:"success"`
+}
+
+// GetParticipantID returns the value of ParticipantID.
+func (s *ApplyEffectsResult) GetParticipantID() uuid.UUID {
+	return s.ParticipantID
+}
+
+// GetAppliedEffects returns the value of AppliedEffects.
+func (s *ApplyEffectsResult) GetAppliedEffects() []ApplyEffectsResultAppliedEffectsItem {
+	return s.AppliedEffects
+}
+
+// GetRejectedEffects returns the value of RejectedEffects.
+func (s *ApplyEffectsResult) GetRejectedEffects() []ApplyEffectsResultRejectedEffectsItem {
+	return s.RejectedEffects
+}
+
+// GetTimestamp returns the value of Timestamp.
+func (s *ApplyEffectsResult) GetTimestamp() OptInt64 {
+	return s.Timestamp
+}
+
+// GetProcessingTimeNs returns the value of ProcessingTimeNs.
+func (s *ApplyEffectsResult) GetProcessingTimeNs() OptInt64 {
+	return s.ProcessingTimeNs
+}
+
+// GetStatus returns the value of Status.
+func (s *ApplyEffectsResult) GetStatus() OptApplyEffectsResultStatus {
+	return s.Status
+}
+
+// GetSummary returns the value of Summary.
+func (s *ApplyEffectsResult) GetSummary() OptApplyEffectsResultSummary {
+	return s.Summary
+}
+
+// GetSuccess returns the value of Success.
+func (s *ApplyEffectsResult) GetSuccess() bool {
+	return s.Success
+}
+
+// SetParticipantID sets the value of ParticipantID.
+func (s *ApplyEffectsResult) SetParticipantID(val uuid.UUID) {
+	s.ParticipantID = val
+}
+
+// SetAppliedEffects sets the value of AppliedEffects.
+func (s *ApplyEffectsResult) SetAppliedEffects(val []ApplyEffectsResultAppliedEffectsItem) {
+	s.AppliedEffects = val
+}
+
+// SetRejectedEffects sets the value of RejectedEffects.
+func (s *ApplyEffectsResult) SetRejectedEffects(val []ApplyEffectsResultRejectedEffectsItem) {
+	s.RejectedEffects = val
+}
+
+// SetTimestamp sets the value of Timestamp.
+func (s *ApplyEffectsResult) SetTimestamp(val OptInt64) {
+	s.Timestamp = val
+}
+
+// SetProcessingTimeNs sets the value of ProcessingTimeNs.
+func (s *ApplyEffectsResult) SetProcessingTimeNs(val OptInt64) {
+	s.ProcessingTimeNs = val
+}
+
+// SetStatus sets the value of Status.
+func (s *ApplyEffectsResult) SetStatus(val OptApplyEffectsResultStatus) {
+	s.Status = val
+}
+
+// SetSummary sets the value of Summary.
+func (s *ApplyEffectsResult) SetSummary(val OptApplyEffectsResultSummary) {
+	s.Summary = val
+}
+
+// SetSuccess sets the value of Success.
+func (s *ApplyEffectsResult) SetSuccess(val bool) {
+	s.Success = val
+}
+
+func (*ApplyEffectsResult) applyEffectsRes() {}
+
+// Information about successfully applied effect.
+type ApplyEffectsResultAppliedEffectsItem struct {
+	// Type of applied effect.
+	EffectType string `json:"effect_type"`
+	// Unique effect instance ID.
+	EffectID uuid.UUID `json:"effect_id"`
+	// Effect duration in milliseconds.
+	DurationMs int32 `json:"duration_ms"`
+	// Current stack count.
+	Stacks OptInt32 `json:"stacks"`
+}
+
+// GetEffectType returns the value of EffectType.
+func (s *ApplyEffectsResultAppliedEffectsItem) GetEffectType() string {
+	return s.EffectType
+}
+
+// GetEffectID returns the value of EffectID.
+func (s *ApplyEffectsResultAppliedEffectsItem) GetEffectID() uuid.UUID {
+	return s.EffectID
+}
+
+// GetDurationMs returns the value of DurationMs.
+func (s *ApplyEffectsResultAppliedEffectsItem) GetDurationMs() int32 {
+	return s.DurationMs
+}
+
+// GetStacks returns the value of Stacks.
+func (s *ApplyEffectsResultAppliedEffectsItem) GetStacks() OptInt32 {
+	return s.Stacks
+}
+
+// SetEffectType sets the value of EffectType.
+func (s *ApplyEffectsResultAppliedEffectsItem) SetEffectType(val string) {
+	s.EffectType = val
+}
+
+// SetEffectID sets the value of EffectID.
+func (s *ApplyEffectsResultAppliedEffectsItem) SetEffectID(val uuid.UUID) {
+	s.EffectID = val
+}
+
+// SetDurationMs sets the value of DurationMs.
+func (s *ApplyEffectsResultAppliedEffectsItem) SetDurationMs(val int32) {
+	s.DurationMs = val
+}
+
+// SetStacks sets the value of Stacks.
+func (s *ApplyEffectsResultAppliedEffectsItem) SetStacks(val OptInt32) {
+	s.Stacks = val
+}
+
+// Information about rejected effect.
+type ApplyEffectsResultRejectedEffectsItem struct {
+	// Type of rejected effect.
+	EffectType string `json:"effect_type"`
+	// Reason for rejection.
+	Reason ApplyEffectsResultRejectedEffectsItemReason `json:"reason"`
+}
+
+// GetEffectType returns the value of EffectType.
+func (s *ApplyEffectsResultRejectedEffectsItem) GetEffectType() string {
+	return s.EffectType
+}
+
+// GetReason returns the value of Reason.
+func (s *ApplyEffectsResultRejectedEffectsItem) GetReason() ApplyEffectsResultRejectedEffectsItemReason {
+	return s.Reason
+}
+
+// SetEffectType sets the value of EffectType.
+func (s *ApplyEffectsResultRejectedEffectsItem) SetEffectType(val string) {
+	s.EffectType = val
+}
+
+// SetReason sets the value of Reason.
+func (s *ApplyEffectsResultRejectedEffectsItem) SetReason(val ApplyEffectsResultRejectedEffectsItemReason) {
+	s.Reason = val
+}
+
+// Reason for rejection.
+type ApplyEffectsResultRejectedEffectsItemReason string
+
+const (
+	ApplyEffectsResultRejectedEffectsItemReasonEffectLimitReached  ApplyEffectsResultRejectedEffectsItemReason = "effect_limit_reached"
+	ApplyEffectsResultRejectedEffectsItemReasonConflictingEffect   ApplyEffectsResultRejectedEffectsItemReason = "conflicting_effect"
+	ApplyEffectsResultRejectedEffectsItemReasonInvalidParameters   ApplyEffectsResultRejectedEffectsItemReason = "invalid_parameters"
+	ApplyEffectsResultRejectedEffectsItemReasonParticipantNotFound ApplyEffectsResultRejectedEffectsItemReason = "participant_not_found"
+	ApplyEffectsResultRejectedEffectsItemReasonEffectAlreadyActive ApplyEffectsResultRejectedEffectsItemReason = "effect_already_active"
+)
+
+// AllValues returns all ApplyEffectsResultRejectedEffectsItemReason values.
+func (ApplyEffectsResultRejectedEffectsItemReason) AllValues() []ApplyEffectsResultRejectedEffectsItemReason {
+	return []ApplyEffectsResultRejectedEffectsItemReason{
+		ApplyEffectsResultRejectedEffectsItemReasonEffectLimitReached,
+		ApplyEffectsResultRejectedEffectsItemReasonConflictingEffect,
+		ApplyEffectsResultRejectedEffectsItemReasonInvalidParameters,
+		ApplyEffectsResultRejectedEffectsItemReasonParticipantNotFound,
+		ApplyEffectsResultRejectedEffectsItemReasonEffectAlreadyActive,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ApplyEffectsResultRejectedEffectsItemReason) MarshalText() ([]byte, error) {
+	switch s {
+	case ApplyEffectsResultRejectedEffectsItemReasonEffectLimitReached:
+		return []byte(s), nil
+	case ApplyEffectsResultRejectedEffectsItemReasonConflictingEffect:
+		return []byte(s), nil
+	case ApplyEffectsResultRejectedEffectsItemReasonInvalidParameters:
+		return []byte(s), nil
+	case ApplyEffectsResultRejectedEffectsItemReasonParticipantNotFound:
+		return []byte(s), nil
+	case ApplyEffectsResultRejectedEffectsItemReasonEffectAlreadyActive:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ApplyEffectsResultRejectedEffectsItemReason) UnmarshalText(data []byte) error {
+	switch ApplyEffectsResultRejectedEffectsItemReason(data) {
+	case ApplyEffectsResultRejectedEffectsItemReasonEffectLimitReached:
+		*s = ApplyEffectsResultRejectedEffectsItemReasonEffectLimitReached
+		return nil
+	case ApplyEffectsResultRejectedEffectsItemReasonConflictingEffect:
+		*s = ApplyEffectsResultRejectedEffectsItemReasonConflictingEffect
+		return nil
+	case ApplyEffectsResultRejectedEffectsItemReasonInvalidParameters:
+		*s = ApplyEffectsResultRejectedEffectsItemReasonInvalidParameters
+		return nil
+	case ApplyEffectsResultRejectedEffectsItemReasonParticipantNotFound:
+		*s = ApplyEffectsResultRejectedEffectsItemReasonParticipantNotFound
+		return nil
+	case ApplyEffectsResultRejectedEffectsItemReasonEffectAlreadyActive:
+		*s = ApplyEffectsResultRejectedEffectsItemReasonEffectAlreadyActive
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Overall application status.
+type ApplyEffectsResultStatus string
+
+const (
+	ApplyEffectsResultStatusSuccess        ApplyEffectsResultStatus = "success"
+	ApplyEffectsResultStatusPartialSuccess ApplyEffectsResultStatus = "partial_success"
+	ApplyEffectsResultStatusFailed         ApplyEffectsResultStatus = "failed"
+)
+
+// AllValues returns all ApplyEffectsResultStatus values.
+func (ApplyEffectsResultStatus) AllValues() []ApplyEffectsResultStatus {
+	return []ApplyEffectsResultStatus{
+		ApplyEffectsResultStatusSuccess,
+		ApplyEffectsResultStatusPartialSuccess,
+		ApplyEffectsResultStatusFailed,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ApplyEffectsResultStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case ApplyEffectsResultStatusSuccess:
+		return []byte(s), nil
+	case ApplyEffectsResultStatusPartialSuccess:
+		return []byte(s), nil
+	case ApplyEffectsResultStatusFailed:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ApplyEffectsResultStatus) UnmarshalText(data []byte) error {
+	switch ApplyEffectsResultStatus(data) {
+	case ApplyEffectsResultStatusSuccess:
+		*s = ApplyEffectsResultStatusSuccess
+		return nil
+	case ApplyEffectsResultStatusPartialSuccess:
+		*s = ApplyEffectsResultStatusPartialSuccess
+		return nil
+	case ApplyEffectsResultStatusFailed:
+		*s = ApplyEffectsResultStatusFailed
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Application summary statistics.
+type ApplyEffectsResultSummary struct {
+	// Total effects requested.
+	TotalRequested OptInt32 `json:"total_requested"`
+	// Successfully applied count.
+	SuccessfullyApplied OptInt32 `json:"successfully_applied"`
+	// Rejected effects count.
+	RejectedCount OptInt32 `json:"rejected_count"`
+}
+
+// GetTotalRequested returns the value of TotalRequested.
+func (s *ApplyEffectsResultSummary) GetTotalRequested() OptInt32 {
+	return s.TotalRequested
+}
+
+// GetSuccessfullyApplied returns the value of SuccessfullyApplied.
+func (s *ApplyEffectsResultSummary) GetSuccessfullyApplied() OptInt32 {
+	return s.SuccessfullyApplied
+}
+
+// GetRejectedCount returns the value of RejectedCount.
+func (s *ApplyEffectsResultSummary) GetRejectedCount() OptInt32 {
+	return s.RejectedCount
+}
+
+// SetTotalRequested sets the value of TotalRequested.
+func (s *ApplyEffectsResultSummary) SetTotalRequested(val OptInt32) {
+	s.TotalRequested = val
+}
+
+// SetSuccessfullyApplied sets the value of SuccessfullyApplied.
+func (s *ApplyEffectsResultSummary) SetSuccessfullyApplied(val OptInt32) {
+	s.SuccessfullyApplied = val
+}
+
+// SetRejectedCount sets the value of RejectedCount.
+func (s *ApplyEffectsResultSummary) SetRejectedCount(val OptInt32) {
+	s.RejectedCount = val
 }
 
 type BearerAuth struct {
@@ -560,18 +1121,18 @@ func (*CalculateDamageTooManyRequests) calculateDamageRes() {}
 // - Booleans (1 byte) last
 // Expected memory: ~64 bytes/instance.
 // Memory savings: 30-50% vs non-aligned structs.
-// Ref: #/components/schemas/damage-request
-type DamageRequest struct {
+// Ref: #/components/schemas/DamageCalculationRequest
+type DamageCalculationRequest struct {
 	// Attacking participant UUID.
 	AttackerID uuid.UUID `json:"attacker_id"`
 	// Target participant UUID.
 	TargetID uuid.UUID `json:"target_id"`
 	// Weapon-specific modifiers and synergies.
-	WeaponModifiers []DamageRequestWeaponModifiersItem `json:"weapon_modifiers"`
+	WeaponModifiers []DamageCalculationRequestWeaponModifiersItem `json:"weapon_modifiers"`
 	// Active implant synergies affecting damage.
-	ImplantSynergies []DamageRequestImplantSynergiesItem `json:"implant_synergies"`
+	ImplantSynergies []DamageCalculationRequestImplantSynergiesItem `json:"implant_synergies"`
 	// Environmental damage modifiers (weather, terrain, etc.).
-	EnvironmentalModifiers OptDamageRequestEnvironmentalModifiers `json:"environmental_modifiers"`
+	EnvironmentalModifiers OptDamageCalculationRequestEnvironmentalModifiers `json:"environmental_modifiers"`
 	// Base weapon/ability damage.
 	BaseDamage int32 `json:"base_damage"`
 	// Attacker character level.
@@ -581,7 +1142,7 @@ type DamageRequest struct {
 	// Request timestamp (unix milliseconds).
 	Timestamp OptInt64 `json:"timestamp"`
 	// Primary damage type.
-	DamageType DamageRequestDamageType `json:"damage_type"`
+	DamageType DamageCalculationRequestDamageType `json:"damage_type"`
 	// Weapon class/type for modifiers.
 	WeaponType OptString `json:"weapon_type"`
 	// Critical hit multiplier.
@@ -596,248 +1157,224 @@ type DamageRequest struct {
 	IsBackstab OptBool `json:"is_backstab"`
 	// Whether to ignore target armor.
 	IgnoreArmor OptBool `json:"ignore_armor"`
-	// Individual weapon modifier.
-	WeaponModifier OptDamageRequestWeaponModifier `json:"WeaponModifier"`
-	// Active implant synergy effect.
-	ImplantSynergy OptDamageRequestImplantSynergy `json:"ImplantSynergy"`
 }
 
 // GetAttackerID returns the value of AttackerID.
-func (s *DamageRequest) GetAttackerID() uuid.UUID {
+func (s *DamageCalculationRequest) GetAttackerID() uuid.UUID {
 	return s.AttackerID
 }
 
 // GetTargetID returns the value of TargetID.
-func (s *DamageRequest) GetTargetID() uuid.UUID {
+func (s *DamageCalculationRequest) GetTargetID() uuid.UUID {
 	return s.TargetID
 }
 
 // GetWeaponModifiers returns the value of WeaponModifiers.
-func (s *DamageRequest) GetWeaponModifiers() []DamageRequestWeaponModifiersItem {
+func (s *DamageCalculationRequest) GetWeaponModifiers() []DamageCalculationRequestWeaponModifiersItem {
 	return s.WeaponModifiers
 }
 
 // GetImplantSynergies returns the value of ImplantSynergies.
-func (s *DamageRequest) GetImplantSynergies() []DamageRequestImplantSynergiesItem {
+func (s *DamageCalculationRequest) GetImplantSynergies() []DamageCalculationRequestImplantSynergiesItem {
 	return s.ImplantSynergies
 }
 
 // GetEnvironmentalModifiers returns the value of EnvironmentalModifiers.
-func (s *DamageRequest) GetEnvironmentalModifiers() OptDamageRequestEnvironmentalModifiers {
+func (s *DamageCalculationRequest) GetEnvironmentalModifiers() OptDamageCalculationRequestEnvironmentalModifiers {
 	return s.EnvironmentalModifiers
 }
 
 // GetBaseDamage returns the value of BaseDamage.
-func (s *DamageRequest) GetBaseDamage() int32 {
+func (s *DamageCalculationRequest) GetBaseDamage() int32 {
 	return s.BaseDamage
 }
 
 // GetAttackerLevel returns the value of AttackerLevel.
-func (s *DamageRequest) GetAttackerLevel() OptInt32 {
+func (s *DamageCalculationRequest) GetAttackerLevel() OptInt32 {
 	return s.AttackerLevel
 }
 
 // GetTargetLevel returns the value of TargetLevel.
-func (s *DamageRequest) GetTargetLevel() OptInt32 {
+func (s *DamageCalculationRequest) GetTargetLevel() OptInt32 {
 	return s.TargetLevel
 }
 
 // GetTimestamp returns the value of Timestamp.
-func (s *DamageRequest) GetTimestamp() OptInt64 {
+func (s *DamageCalculationRequest) GetTimestamp() OptInt64 {
 	return s.Timestamp
 }
 
 // GetDamageType returns the value of DamageType.
-func (s *DamageRequest) GetDamageType() DamageRequestDamageType {
+func (s *DamageCalculationRequest) GetDamageType() DamageCalculationRequestDamageType {
 	return s.DamageType
 }
 
 // GetWeaponType returns the value of WeaponType.
-func (s *DamageRequest) GetWeaponType() OptString {
+func (s *DamageCalculationRequest) GetWeaponType() OptString {
 	return s.WeaponType
 }
 
 // GetCriticalMultiplier returns the value of CriticalMultiplier.
-func (s *DamageRequest) GetCriticalMultiplier() OptFloat32 {
+func (s *DamageCalculationRequest) GetCriticalMultiplier() OptFloat32 {
 	return s.CriticalMultiplier
 }
 
 // GetRangeModifier returns the value of RangeModifier.
-func (s *DamageRequest) GetRangeModifier() OptFloat32 {
+func (s *DamageCalculationRequest) GetRangeModifier() OptFloat32 {
 	return s.RangeModifier
 }
 
 // GetIsCriticalHit returns the value of IsCriticalHit.
-func (s *DamageRequest) GetIsCriticalHit() OptBool {
+func (s *DamageCalculationRequest) GetIsCriticalHit() OptBool {
 	return s.IsCriticalHit
 }
 
 // GetIsWeakSpotHit returns the value of IsWeakSpotHit.
-func (s *DamageRequest) GetIsWeakSpotHit() OptBool {
+func (s *DamageCalculationRequest) GetIsWeakSpotHit() OptBool {
 	return s.IsWeakSpotHit
 }
 
 // GetIsBackstab returns the value of IsBackstab.
-func (s *DamageRequest) GetIsBackstab() OptBool {
+func (s *DamageCalculationRequest) GetIsBackstab() OptBool {
 	return s.IsBackstab
 }
 
 // GetIgnoreArmor returns the value of IgnoreArmor.
-func (s *DamageRequest) GetIgnoreArmor() OptBool {
+func (s *DamageCalculationRequest) GetIgnoreArmor() OptBool {
 	return s.IgnoreArmor
 }
 
-// GetWeaponModifier returns the value of WeaponModifier.
-func (s *DamageRequest) GetWeaponModifier() OptDamageRequestWeaponModifier {
-	return s.WeaponModifier
-}
-
-// GetImplantSynergy returns the value of ImplantSynergy.
-func (s *DamageRequest) GetImplantSynergy() OptDamageRequestImplantSynergy {
-	return s.ImplantSynergy
-}
-
 // SetAttackerID sets the value of AttackerID.
-func (s *DamageRequest) SetAttackerID(val uuid.UUID) {
+func (s *DamageCalculationRequest) SetAttackerID(val uuid.UUID) {
 	s.AttackerID = val
 }
 
 // SetTargetID sets the value of TargetID.
-func (s *DamageRequest) SetTargetID(val uuid.UUID) {
+func (s *DamageCalculationRequest) SetTargetID(val uuid.UUID) {
 	s.TargetID = val
 }
 
 // SetWeaponModifiers sets the value of WeaponModifiers.
-func (s *DamageRequest) SetWeaponModifiers(val []DamageRequestWeaponModifiersItem) {
+func (s *DamageCalculationRequest) SetWeaponModifiers(val []DamageCalculationRequestWeaponModifiersItem) {
 	s.WeaponModifiers = val
 }
 
 // SetImplantSynergies sets the value of ImplantSynergies.
-func (s *DamageRequest) SetImplantSynergies(val []DamageRequestImplantSynergiesItem) {
+func (s *DamageCalculationRequest) SetImplantSynergies(val []DamageCalculationRequestImplantSynergiesItem) {
 	s.ImplantSynergies = val
 }
 
 // SetEnvironmentalModifiers sets the value of EnvironmentalModifiers.
-func (s *DamageRequest) SetEnvironmentalModifiers(val OptDamageRequestEnvironmentalModifiers) {
+func (s *DamageCalculationRequest) SetEnvironmentalModifiers(val OptDamageCalculationRequestEnvironmentalModifiers) {
 	s.EnvironmentalModifiers = val
 }
 
 // SetBaseDamage sets the value of BaseDamage.
-func (s *DamageRequest) SetBaseDamage(val int32) {
+func (s *DamageCalculationRequest) SetBaseDamage(val int32) {
 	s.BaseDamage = val
 }
 
 // SetAttackerLevel sets the value of AttackerLevel.
-func (s *DamageRequest) SetAttackerLevel(val OptInt32) {
+func (s *DamageCalculationRequest) SetAttackerLevel(val OptInt32) {
 	s.AttackerLevel = val
 }
 
 // SetTargetLevel sets the value of TargetLevel.
-func (s *DamageRequest) SetTargetLevel(val OptInt32) {
+func (s *DamageCalculationRequest) SetTargetLevel(val OptInt32) {
 	s.TargetLevel = val
 }
 
 // SetTimestamp sets the value of Timestamp.
-func (s *DamageRequest) SetTimestamp(val OptInt64) {
+func (s *DamageCalculationRequest) SetTimestamp(val OptInt64) {
 	s.Timestamp = val
 }
 
 // SetDamageType sets the value of DamageType.
-func (s *DamageRequest) SetDamageType(val DamageRequestDamageType) {
+func (s *DamageCalculationRequest) SetDamageType(val DamageCalculationRequestDamageType) {
 	s.DamageType = val
 }
 
 // SetWeaponType sets the value of WeaponType.
-func (s *DamageRequest) SetWeaponType(val OptString) {
+func (s *DamageCalculationRequest) SetWeaponType(val OptString) {
 	s.WeaponType = val
 }
 
 // SetCriticalMultiplier sets the value of CriticalMultiplier.
-func (s *DamageRequest) SetCriticalMultiplier(val OptFloat32) {
+func (s *DamageCalculationRequest) SetCriticalMultiplier(val OptFloat32) {
 	s.CriticalMultiplier = val
 }
 
 // SetRangeModifier sets the value of RangeModifier.
-func (s *DamageRequest) SetRangeModifier(val OptFloat32) {
+func (s *DamageCalculationRequest) SetRangeModifier(val OptFloat32) {
 	s.RangeModifier = val
 }
 
 // SetIsCriticalHit sets the value of IsCriticalHit.
-func (s *DamageRequest) SetIsCriticalHit(val OptBool) {
+func (s *DamageCalculationRequest) SetIsCriticalHit(val OptBool) {
 	s.IsCriticalHit = val
 }
 
 // SetIsWeakSpotHit sets the value of IsWeakSpotHit.
-func (s *DamageRequest) SetIsWeakSpotHit(val OptBool) {
+func (s *DamageCalculationRequest) SetIsWeakSpotHit(val OptBool) {
 	s.IsWeakSpotHit = val
 }
 
 // SetIsBackstab sets the value of IsBackstab.
-func (s *DamageRequest) SetIsBackstab(val OptBool) {
+func (s *DamageCalculationRequest) SetIsBackstab(val OptBool) {
 	s.IsBackstab = val
 }
 
 // SetIgnoreArmor sets the value of IgnoreArmor.
-func (s *DamageRequest) SetIgnoreArmor(val OptBool) {
+func (s *DamageCalculationRequest) SetIgnoreArmor(val OptBool) {
 	s.IgnoreArmor = val
 }
 
-// SetWeaponModifier sets the value of WeaponModifier.
-func (s *DamageRequest) SetWeaponModifier(val OptDamageRequestWeaponModifier) {
-	s.WeaponModifier = val
-}
-
-// SetImplantSynergy sets the value of ImplantSynergy.
-func (s *DamageRequest) SetImplantSynergy(val OptDamageRequestImplantSynergy) {
-	s.ImplantSynergy = val
-}
-
 // Primary damage type.
-type DamageRequestDamageType string
+type DamageCalculationRequestDamageType string
 
 const (
-	DamageRequestDamageTypePhysical  DamageRequestDamageType = "physical"
-	DamageRequestDamageTypeFire      DamageRequestDamageType = "fire"
-	DamageRequestDamageTypeCold      DamageRequestDamageType = "cold"
-	DamageRequestDamageTypeLightning DamageRequestDamageType = "lightning"
-	DamageRequestDamageTypePoison    DamageRequestDamageType = "poison"
-	DamageRequestDamageTypeCyber     DamageRequestDamageType = "cyber"
-	DamageRequestDamageTypeRadiation DamageRequestDamageType = "radiation"
-	DamageRequestDamageTypeExplosive DamageRequestDamageType = "explosive"
+	DamageCalculationRequestDamageTypePhysical  DamageCalculationRequestDamageType = "physical"
+	DamageCalculationRequestDamageTypeFire      DamageCalculationRequestDamageType = "fire"
+	DamageCalculationRequestDamageTypeCold      DamageCalculationRequestDamageType = "cold"
+	DamageCalculationRequestDamageTypeLightning DamageCalculationRequestDamageType = "lightning"
+	DamageCalculationRequestDamageTypePoison    DamageCalculationRequestDamageType = "poison"
+	DamageCalculationRequestDamageTypeCyber     DamageCalculationRequestDamageType = "cyber"
+	DamageCalculationRequestDamageTypeRadiation DamageCalculationRequestDamageType = "radiation"
+	DamageCalculationRequestDamageTypeExplosive DamageCalculationRequestDamageType = "explosive"
 )
 
-// AllValues returns all DamageRequestDamageType values.
-func (DamageRequestDamageType) AllValues() []DamageRequestDamageType {
-	return []DamageRequestDamageType{
-		DamageRequestDamageTypePhysical,
-		DamageRequestDamageTypeFire,
-		DamageRequestDamageTypeCold,
-		DamageRequestDamageTypeLightning,
-		DamageRequestDamageTypePoison,
-		DamageRequestDamageTypeCyber,
-		DamageRequestDamageTypeRadiation,
-		DamageRequestDamageTypeExplosive,
+// AllValues returns all DamageCalculationRequestDamageType values.
+func (DamageCalculationRequestDamageType) AllValues() []DamageCalculationRequestDamageType {
+	return []DamageCalculationRequestDamageType{
+		DamageCalculationRequestDamageTypePhysical,
+		DamageCalculationRequestDamageTypeFire,
+		DamageCalculationRequestDamageTypeCold,
+		DamageCalculationRequestDamageTypeLightning,
+		DamageCalculationRequestDamageTypePoison,
+		DamageCalculationRequestDamageTypeCyber,
+		DamageCalculationRequestDamageTypeRadiation,
+		DamageCalculationRequestDamageTypeExplosive,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s DamageRequestDamageType) MarshalText() ([]byte, error) {
+func (s DamageCalculationRequestDamageType) MarshalText() ([]byte, error) {
 	switch s {
-	case DamageRequestDamageTypePhysical:
+	case DamageCalculationRequestDamageTypePhysical:
 		return []byte(s), nil
-	case DamageRequestDamageTypeFire:
+	case DamageCalculationRequestDamageTypeFire:
 		return []byte(s), nil
-	case DamageRequestDamageTypeCold:
+	case DamageCalculationRequestDamageTypeCold:
 		return []byte(s), nil
-	case DamageRequestDamageTypeLightning:
+	case DamageCalculationRequestDamageTypeLightning:
 		return []byte(s), nil
-	case DamageRequestDamageTypePoison:
+	case DamageCalculationRequestDamageTypePoison:
 		return []byte(s), nil
-	case DamageRequestDamageTypeCyber:
+	case DamageCalculationRequestDamageTypeCyber:
 		return []byte(s), nil
-	case DamageRequestDamageTypeRadiation:
+	case DamageCalculationRequestDamageTypeRadiation:
 		return []byte(s), nil
-	case DamageRequestDamageTypeExplosive:
+	case DamageCalculationRequestDamageTypeExplosive:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -845,31 +1382,31 @@ func (s DamageRequestDamageType) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DamageRequestDamageType) UnmarshalText(data []byte) error {
-	switch DamageRequestDamageType(data) {
-	case DamageRequestDamageTypePhysical:
-		*s = DamageRequestDamageTypePhysical
+func (s *DamageCalculationRequestDamageType) UnmarshalText(data []byte) error {
+	switch DamageCalculationRequestDamageType(data) {
+	case DamageCalculationRequestDamageTypePhysical:
+		*s = DamageCalculationRequestDamageTypePhysical
 		return nil
-	case DamageRequestDamageTypeFire:
-		*s = DamageRequestDamageTypeFire
+	case DamageCalculationRequestDamageTypeFire:
+		*s = DamageCalculationRequestDamageTypeFire
 		return nil
-	case DamageRequestDamageTypeCold:
-		*s = DamageRequestDamageTypeCold
+	case DamageCalculationRequestDamageTypeCold:
+		*s = DamageCalculationRequestDamageTypeCold
 		return nil
-	case DamageRequestDamageTypeLightning:
-		*s = DamageRequestDamageTypeLightning
+	case DamageCalculationRequestDamageTypeLightning:
+		*s = DamageCalculationRequestDamageTypeLightning
 		return nil
-	case DamageRequestDamageTypePoison:
-		*s = DamageRequestDamageTypePoison
+	case DamageCalculationRequestDamageTypePoison:
+		*s = DamageCalculationRequestDamageTypePoison
 		return nil
-	case DamageRequestDamageTypeCyber:
-		*s = DamageRequestDamageTypeCyber
+	case DamageCalculationRequestDamageTypeCyber:
+		*s = DamageCalculationRequestDamageTypeCyber
 		return nil
-	case DamageRequestDamageTypeRadiation:
-		*s = DamageRequestDamageTypeRadiation
+	case DamageCalculationRequestDamageTypeRadiation:
+		*s = DamageCalculationRequestDamageTypeRadiation
 		return nil
-	case DamageRequestDamageTypeExplosive:
-		*s = DamageRequestDamageTypeExplosive
+	case DamageCalculationRequestDamageTypeExplosive:
+		*s = DamageCalculationRequestDamageTypeExplosive
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -877,7 +1414,7 @@ func (s *DamageRequestDamageType) UnmarshalText(data []byte) error {
 }
 
 // Environmental damage modifiers (weather, terrain, etc.).
-type DamageRequestEnvironmentalModifiers struct {
+type DamageCalculationRequestEnvironmentalModifiers struct {
 	// Weather damage multiplier.
 	WeatherMultiplier OptFloat32 `json:"weather_multiplier"`
 	// Terrain cover reduction (0-1).
@@ -885,87 +1422,87 @@ type DamageRequestEnvironmentalModifiers struct {
 }
 
 // GetWeatherMultiplier returns the value of WeatherMultiplier.
-func (s *DamageRequestEnvironmentalModifiers) GetWeatherMultiplier() OptFloat32 {
+func (s *DamageCalculationRequestEnvironmentalModifiers) GetWeatherMultiplier() OptFloat32 {
 	return s.WeatherMultiplier
 }
 
 // GetTerrainCover returns the value of TerrainCover.
-func (s *DamageRequestEnvironmentalModifiers) GetTerrainCover() OptFloat32 {
+func (s *DamageCalculationRequestEnvironmentalModifiers) GetTerrainCover() OptFloat32 {
 	return s.TerrainCover
 }
 
 // SetWeatherMultiplier sets the value of WeatherMultiplier.
-func (s *DamageRequestEnvironmentalModifiers) SetWeatherMultiplier(val OptFloat32) {
+func (s *DamageCalculationRequestEnvironmentalModifiers) SetWeatherMultiplier(val OptFloat32) {
 	s.WeatherMultiplier = val
 }
 
 // SetTerrainCover sets the value of TerrainCover.
-func (s *DamageRequestEnvironmentalModifiers) SetTerrainCover(val OptFloat32) {
+func (s *DamageCalculationRequestEnvironmentalModifiers) SetTerrainCover(val OptFloat32) {
 	s.TerrainCover = val
 }
 
 // Active implant synergy effect.
-type DamageRequestImplantSynergiesItem struct {
+type DamageCalculationRequestImplantSynergiesItem struct {
 	// Implant providing synergy.
-	ImplantType DamageRequestImplantSynergiesItemImplantType `json:"implant_type"`
+	ImplantType DamageCalculationRequestImplantSynergiesItemImplantType `json:"implant_type"`
 	// Damage synergy multiplier.
 	SynergyBonus float32 `json:"synergy_bonus"`
 }
 
 // GetImplantType returns the value of ImplantType.
-func (s *DamageRequestImplantSynergiesItem) GetImplantType() DamageRequestImplantSynergiesItemImplantType {
+func (s *DamageCalculationRequestImplantSynergiesItem) GetImplantType() DamageCalculationRequestImplantSynergiesItemImplantType {
 	return s.ImplantType
 }
 
 // GetSynergyBonus returns the value of SynergyBonus.
-func (s *DamageRequestImplantSynergiesItem) GetSynergyBonus() float32 {
+func (s *DamageCalculationRequestImplantSynergiesItem) GetSynergyBonus() float32 {
 	return s.SynergyBonus
 }
 
 // SetImplantType sets the value of ImplantType.
-func (s *DamageRequestImplantSynergiesItem) SetImplantType(val DamageRequestImplantSynergiesItemImplantType) {
+func (s *DamageCalculationRequestImplantSynergiesItem) SetImplantType(val DamageCalculationRequestImplantSynergiesItemImplantType) {
 	s.ImplantType = val
 }
 
 // SetSynergyBonus sets the value of SynergyBonus.
-func (s *DamageRequestImplantSynergiesItem) SetSynergyBonus(val float32) {
+func (s *DamageCalculationRequestImplantSynergiesItem) SetSynergyBonus(val float32) {
 	s.SynergyBonus = val
 }
 
 // Implant providing synergy.
-type DamageRequestImplantSynergiesItemImplantType string
+type DamageCalculationRequestImplantSynergiesItemImplantType string
 
 const (
-	DamageRequestImplantSynergiesItemImplantTypeGorillaArms        DamageRequestImplantSynergiesItemImplantType = "gorilla_arms"
-	DamageRequestImplantSynergiesItemImplantTypeMantisBlades       DamageRequestImplantSynergiesItemImplantType = "mantis_blades"
-	DamageRequestImplantSynergiesItemImplantTypeKerenzikov         DamageRequestImplantSynergiesItemImplantType = "kerenzikov"
-	DamageRequestImplantSynergiesItemImplantTypeSandevistan        DamageRequestImplantSynergiesItemImplantType = "sandevistan"
-	DamageRequestImplantSynergiesItemImplantTypeProjectileLauncher DamageRequestImplantSynergiesItemImplantType = "projectile_launcher"
+	DamageCalculationRequestImplantSynergiesItemImplantTypeGorillaArms        DamageCalculationRequestImplantSynergiesItemImplantType = "gorilla_arms"
+	DamageCalculationRequestImplantSynergiesItemImplantTypeMantisBlades       DamageCalculationRequestImplantSynergiesItemImplantType = "mantis_blades"
+	DamageCalculationRequestImplantSynergiesItemImplantTypeKerenzikov         DamageCalculationRequestImplantSynergiesItemImplantType = "kerenzikov"
+	DamageCalculationRequestImplantSynergiesItemImplantTypeSandevistan        DamageCalculationRequestImplantSynergiesItemImplantType = "sandevistan"
+	DamageCalculationRequestImplantSynergiesItemImplantTypeProjectileLauncher DamageCalculationRequestImplantSynergiesItemImplantType = "projectile_launcher"
 )
 
-// AllValues returns all DamageRequestImplantSynergiesItemImplantType values.
-func (DamageRequestImplantSynergiesItemImplantType) AllValues() []DamageRequestImplantSynergiesItemImplantType {
-	return []DamageRequestImplantSynergiesItemImplantType{
-		DamageRequestImplantSynergiesItemImplantTypeGorillaArms,
-		DamageRequestImplantSynergiesItemImplantTypeMantisBlades,
-		DamageRequestImplantSynergiesItemImplantTypeKerenzikov,
-		DamageRequestImplantSynergiesItemImplantTypeSandevistan,
-		DamageRequestImplantSynergiesItemImplantTypeProjectileLauncher,
+// AllValues returns all DamageCalculationRequestImplantSynergiesItemImplantType values.
+func (DamageCalculationRequestImplantSynergiesItemImplantType) AllValues() []DamageCalculationRequestImplantSynergiesItemImplantType {
+	return []DamageCalculationRequestImplantSynergiesItemImplantType{
+		DamageCalculationRequestImplantSynergiesItemImplantTypeGorillaArms,
+		DamageCalculationRequestImplantSynergiesItemImplantTypeMantisBlades,
+		DamageCalculationRequestImplantSynergiesItemImplantTypeKerenzikov,
+		DamageCalculationRequestImplantSynergiesItemImplantTypeSandevistan,
+		DamageCalculationRequestImplantSynergiesItemImplantTypeProjectileLauncher,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s DamageRequestImplantSynergiesItemImplantType) MarshalText() ([]byte, error) {
+func (s DamageCalculationRequestImplantSynergiesItemImplantType) MarshalText() ([]byte, error) {
 	switch s {
-	case DamageRequestImplantSynergiesItemImplantTypeGorillaArms:
+	case DamageCalculationRequestImplantSynergiesItemImplantTypeGorillaArms:
 		return []byte(s), nil
-	case DamageRequestImplantSynergiesItemImplantTypeMantisBlades:
+	case DamageCalculationRequestImplantSynergiesItemImplantTypeMantisBlades:
 		return []byte(s), nil
-	case DamageRequestImplantSynergiesItemImplantTypeKerenzikov:
+	case DamageCalculationRequestImplantSynergiesItemImplantTypeKerenzikov:
 		return []byte(s), nil
-	case DamageRequestImplantSynergiesItemImplantTypeSandevistan:
+	case DamageCalculationRequestImplantSynergiesItemImplantTypeSandevistan:
 		return []byte(s), nil
-	case DamageRequestImplantSynergiesItemImplantTypeProjectileLauncher:
+	case DamageCalculationRequestImplantSynergiesItemImplantTypeProjectileLauncher:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -973,113 +1510,22 @@ func (s DamageRequestImplantSynergiesItemImplantType) MarshalText() ([]byte, err
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DamageRequestImplantSynergiesItemImplantType) UnmarshalText(data []byte) error {
-	switch DamageRequestImplantSynergiesItemImplantType(data) {
-	case DamageRequestImplantSynergiesItemImplantTypeGorillaArms:
-		*s = DamageRequestImplantSynergiesItemImplantTypeGorillaArms
+func (s *DamageCalculationRequestImplantSynergiesItemImplantType) UnmarshalText(data []byte) error {
+	switch DamageCalculationRequestImplantSynergiesItemImplantType(data) {
+	case DamageCalculationRequestImplantSynergiesItemImplantTypeGorillaArms:
+		*s = DamageCalculationRequestImplantSynergiesItemImplantTypeGorillaArms
 		return nil
-	case DamageRequestImplantSynergiesItemImplantTypeMantisBlades:
-		*s = DamageRequestImplantSynergiesItemImplantTypeMantisBlades
+	case DamageCalculationRequestImplantSynergiesItemImplantTypeMantisBlades:
+		*s = DamageCalculationRequestImplantSynergiesItemImplantTypeMantisBlades
 		return nil
-	case DamageRequestImplantSynergiesItemImplantTypeKerenzikov:
-		*s = DamageRequestImplantSynergiesItemImplantTypeKerenzikov
+	case DamageCalculationRequestImplantSynergiesItemImplantTypeKerenzikov:
+		*s = DamageCalculationRequestImplantSynergiesItemImplantTypeKerenzikov
 		return nil
-	case DamageRequestImplantSynergiesItemImplantTypeSandevistan:
-		*s = DamageRequestImplantSynergiesItemImplantTypeSandevistan
+	case DamageCalculationRequestImplantSynergiesItemImplantTypeSandevistan:
+		*s = DamageCalculationRequestImplantSynergiesItemImplantTypeSandevistan
 		return nil
-	case DamageRequestImplantSynergiesItemImplantTypeProjectileLauncher:
-		*s = DamageRequestImplantSynergiesItemImplantTypeProjectileLauncher
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Active implant synergy effect.
-type DamageRequestImplantSynergy struct {
-	// Implant providing synergy.
-	ImplantType DamageRequestImplantSynergyImplantType `json:"implant_type"`
-	// Damage synergy multiplier.
-	SynergyBonus float32 `json:"synergy_bonus"`
-}
-
-// GetImplantType returns the value of ImplantType.
-func (s *DamageRequestImplantSynergy) GetImplantType() DamageRequestImplantSynergyImplantType {
-	return s.ImplantType
-}
-
-// GetSynergyBonus returns the value of SynergyBonus.
-func (s *DamageRequestImplantSynergy) GetSynergyBonus() float32 {
-	return s.SynergyBonus
-}
-
-// SetImplantType sets the value of ImplantType.
-func (s *DamageRequestImplantSynergy) SetImplantType(val DamageRequestImplantSynergyImplantType) {
-	s.ImplantType = val
-}
-
-// SetSynergyBonus sets the value of SynergyBonus.
-func (s *DamageRequestImplantSynergy) SetSynergyBonus(val float32) {
-	s.SynergyBonus = val
-}
-
-// Implant providing synergy.
-type DamageRequestImplantSynergyImplantType string
-
-const (
-	DamageRequestImplantSynergyImplantTypeGorillaArms        DamageRequestImplantSynergyImplantType = "gorilla_arms"
-	DamageRequestImplantSynergyImplantTypeMantisBlades       DamageRequestImplantSynergyImplantType = "mantis_blades"
-	DamageRequestImplantSynergyImplantTypeKerenzikov         DamageRequestImplantSynergyImplantType = "kerenzikov"
-	DamageRequestImplantSynergyImplantTypeSandevistan        DamageRequestImplantSynergyImplantType = "sandevistan"
-	DamageRequestImplantSynergyImplantTypeProjectileLauncher DamageRequestImplantSynergyImplantType = "projectile_launcher"
-)
-
-// AllValues returns all DamageRequestImplantSynergyImplantType values.
-func (DamageRequestImplantSynergyImplantType) AllValues() []DamageRequestImplantSynergyImplantType {
-	return []DamageRequestImplantSynergyImplantType{
-		DamageRequestImplantSynergyImplantTypeGorillaArms,
-		DamageRequestImplantSynergyImplantTypeMantisBlades,
-		DamageRequestImplantSynergyImplantTypeKerenzikov,
-		DamageRequestImplantSynergyImplantTypeSandevistan,
-		DamageRequestImplantSynergyImplantTypeProjectileLauncher,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s DamageRequestImplantSynergyImplantType) MarshalText() ([]byte, error) {
-	switch s {
-	case DamageRequestImplantSynergyImplantTypeGorillaArms:
-		return []byte(s), nil
-	case DamageRequestImplantSynergyImplantTypeMantisBlades:
-		return []byte(s), nil
-	case DamageRequestImplantSynergyImplantTypeKerenzikov:
-		return []byte(s), nil
-	case DamageRequestImplantSynergyImplantTypeSandevistan:
-		return []byte(s), nil
-	case DamageRequestImplantSynergyImplantTypeProjectileLauncher:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DamageRequestImplantSynergyImplantType) UnmarshalText(data []byte) error {
-	switch DamageRequestImplantSynergyImplantType(data) {
-	case DamageRequestImplantSynergyImplantTypeGorillaArms:
-		*s = DamageRequestImplantSynergyImplantTypeGorillaArms
-		return nil
-	case DamageRequestImplantSynergyImplantTypeMantisBlades:
-		*s = DamageRequestImplantSynergyImplantTypeMantisBlades
-		return nil
-	case DamageRequestImplantSynergyImplantTypeKerenzikov:
-		*s = DamageRequestImplantSynergyImplantTypeKerenzikov
-		return nil
-	case DamageRequestImplantSynergyImplantTypeSandevistan:
-		*s = DamageRequestImplantSynergyImplantTypeSandevistan
-		return nil
-	case DamageRequestImplantSynergyImplantTypeProjectileLauncher:
-		*s = DamageRequestImplantSynergyImplantTypeProjectileLauncher
+	case DamageCalculationRequestImplantSynergiesItemImplantTypeProjectileLauncher:
+		*s = DamageCalculationRequestImplantSynergiesItemImplantTypeProjectileLauncher
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -1087,63 +1533,63 @@ func (s *DamageRequestImplantSynergyImplantType) UnmarshalText(data []byte) erro
 }
 
 // Individual weapon modifier.
-type DamageRequestWeaponModifier struct {
+type DamageCalculationRequestWeaponModifiersItem struct {
 	// Modifier type.
-	Type DamageRequestWeaponModifierType `json:"type"`
+	Type DamageCalculationRequestWeaponModifiersItemType `json:"type"`
 	// Modifier value/multiplier.
 	Value float32 `json:"value"`
 }
 
 // GetType returns the value of Type.
-func (s *DamageRequestWeaponModifier) GetType() DamageRequestWeaponModifierType {
+func (s *DamageCalculationRequestWeaponModifiersItem) GetType() DamageCalculationRequestWeaponModifiersItemType {
 	return s.Type
 }
 
 // GetValue returns the value of Value.
-func (s *DamageRequestWeaponModifier) GetValue() float32 {
+func (s *DamageCalculationRequestWeaponModifiersItem) GetValue() float32 {
 	return s.Value
 }
 
 // SetType sets the value of Type.
-func (s *DamageRequestWeaponModifier) SetType(val DamageRequestWeaponModifierType) {
+func (s *DamageCalculationRequestWeaponModifiersItem) SetType(val DamageCalculationRequestWeaponModifiersItemType) {
 	s.Type = val
 }
 
 // SetValue sets the value of Value.
-func (s *DamageRequestWeaponModifier) SetValue(val float32) {
+func (s *DamageCalculationRequestWeaponModifiersItem) SetValue(val float32) {
 	s.Value = val
 }
 
 // Modifier type.
-type DamageRequestWeaponModifierType string
+type DamageCalculationRequestWeaponModifiersItemType string
 
 const (
-	DamageRequestWeaponModifierTypeDamageBoost      DamageRequestWeaponModifierType = "damage_boost"
-	DamageRequestWeaponModifierTypeAccuracyBonus    DamageRequestWeaponModifierType = "accuracy_bonus"
-	DamageRequestWeaponModifierTypeArmorPenetration DamageRequestWeaponModifierType = "armor_penetration"
-	DamageRequestWeaponModifierTypeElementalDamage  DamageRequestWeaponModifierType = "elemental_damage"
+	DamageCalculationRequestWeaponModifiersItemTypeDamageBoost      DamageCalculationRequestWeaponModifiersItemType = "damage_boost"
+	DamageCalculationRequestWeaponModifiersItemTypeAccuracyBonus    DamageCalculationRequestWeaponModifiersItemType = "accuracy_bonus"
+	DamageCalculationRequestWeaponModifiersItemTypeArmorPenetration DamageCalculationRequestWeaponModifiersItemType = "armor_penetration"
+	DamageCalculationRequestWeaponModifiersItemTypeElementalDamage  DamageCalculationRequestWeaponModifiersItemType = "elemental_damage"
 )
 
-// AllValues returns all DamageRequestWeaponModifierType values.
-func (DamageRequestWeaponModifierType) AllValues() []DamageRequestWeaponModifierType {
-	return []DamageRequestWeaponModifierType{
-		DamageRequestWeaponModifierTypeDamageBoost,
-		DamageRequestWeaponModifierTypeAccuracyBonus,
-		DamageRequestWeaponModifierTypeArmorPenetration,
-		DamageRequestWeaponModifierTypeElementalDamage,
+// AllValues returns all DamageCalculationRequestWeaponModifiersItemType values.
+func (DamageCalculationRequestWeaponModifiersItemType) AllValues() []DamageCalculationRequestWeaponModifiersItemType {
+	return []DamageCalculationRequestWeaponModifiersItemType{
+		DamageCalculationRequestWeaponModifiersItemTypeDamageBoost,
+		DamageCalculationRequestWeaponModifiersItemTypeAccuracyBonus,
+		DamageCalculationRequestWeaponModifiersItemTypeArmorPenetration,
+		DamageCalculationRequestWeaponModifiersItemTypeElementalDamage,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s DamageRequestWeaponModifierType) MarshalText() ([]byte, error) {
+func (s DamageCalculationRequestWeaponModifiersItemType) MarshalText() ([]byte, error) {
 	switch s {
-	case DamageRequestWeaponModifierTypeDamageBoost:
+	case DamageCalculationRequestWeaponModifiersItemTypeDamageBoost:
 		return []byte(s), nil
-	case DamageRequestWeaponModifierTypeAccuracyBonus:
+	case DamageCalculationRequestWeaponModifiersItemTypeAccuracyBonus:
 		return []byte(s), nil
-	case DamageRequestWeaponModifierTypeArmorPenetration:
+	case DamageCalculationRequestWeaponModifiersItemTypeArmorPenetration:
 		return []byte(s), nil
-	case DamageRequestWeaponModifierTypeElementalDamage:
+	case DamageCalculationRequestWeaponModifiersItemTypeElementalDamage:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1151,103 +1597,19 @@ func (s DamageRequestWeaponModifierType) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DamageRequestWeaponModifierType) UnmarshalText(data []byte) error {
-	switch DamageRequestWeaponModifierType(data) {
-	case DamageRequestWeaponModifierTypeDamageBoost:
-		*s = DamageRequestWeaponModifierTypeDamageBoost
+func (s *DamageCalculationRequestWeaponModifiersItemType) UnmarshalText(data []byte) error {
+	switch DamageCalculationRequestWeaponModifiersItemType(data) {
+	case DamageCalculationRequestWeaponModifiersItemTypeDamageBoost:
+		*s = DamageCalculationRequestWeaponModifiersItemTypeDamageBoost
 		return nil
-	case DamageRequestWeaponModifierTypeAccuracyBonus:
-		*s = DamageRequestWeaponModifierTypeAccuracyBonus
+	case DamageCalculationRequestWeaponModifiersItemTypeAccuracyBonus:
+		*s = DamageCalculationRequestWeaponModifiersItemTypeAccuracyBonus
 		return nil
-	case DamageRequestWeaponModifierTypeArmorPenetration:
-		*s = DamageRequestWeaponModifierTypeArmorPenetration
+	case DamageCalculationRequestWeaponModifiersItemTypeArmorPenetration:
+		*s = DamageCalculationRequestWeaponModifiersItemTypeArmorPenetration
 		return nil
-	case DamageRequestWeaponModifierTypeElementalDamage:
-		*s = DamageRequestWeaponModifierTypeElementalDamage
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Individual weapon modifier.
-type DamageRequestWeaponModifiersItem struct {
-	// Modifier type.
-	Type DamageRequestWeaponModifiersItemType `json:"type"`
-	// Modifier value/multiplier.
-	Value float32 `json:"value"`
-}
-
-// GetType returns the value of Type.
-func (s *DamageRequestWeaponModifiersItem) GetType() DamageRequestWeaponModifiersItemType {
-	return s.Type
-}
-
-// GetValue returns the value of Value.
-func (s *DamageRequestWeaponModifiersItem) GetValue() float32 {
-	return s.Value
-}
-
-// SetType sets the value of Type.
-func (s *DamageRequestWeaponModifiersItem) SetType(val DamageRequestWeaponModifiersItemType) {
-	s.Type = val
-}
-
-// SetValue sets the value of Value.
-func (s *DamageRequestWeaponModifiersItem) SetValue(val float32) {
-	s.Value = val
-}
-
-// Modifier type.
-type DamageRequestWeaponModifiersItemType string
-
-const (
-	DamageRequestWeaponModifiersItemTypeDamageBoost      DamageRequestWeaponModifiersItemType = "damage_boost"
-	DamageRequestWeaponModifiersItemTypeAccuracyBonus    DamageRequestWeaponModifiersItemType = "accuracy_bonus"
-	DamageRequestWeaponModifiersItemTypeArmorPenetration DamageRequestWeaponModifiersItemType = "armor_penetration"
-	DamageRequestWeaponModifiersItemTypeElementalDamage  DamageRequestWeaponModifiersItemType = "elemental_damage"
-)
-
-// AllValues returns all DamageRequestWeaponModifiersItemType values.
-func (DamageRequestWeaponModifiersItemType) AllValues() []DamageRequestWeaponModifiersItemType {
-	return []DamageRequestWeaponModifiersItemType{
-		DamageRequestWeaponModifiersItemTypeDamageBoost,
-		DamageRequestWeaponModifiersItemTypeAccuracyBonus,
-		DamageRequestWeaponModifiersItemTypeArmorPenetration,
-		DamageRequestWeaponModifiersItemTypeElementalDamage,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s DamageRequestWeaponModifiersItemType) MarshalText() ([]byte, error) {
-	switch s {
-	case DamageRequestWeaponModifiersItemTypeDamageBoost:
-		return []byte(s), nil
-	case DamageRequestWeaponModifiersItemTypeAccuracyBonus:
-		return []byte(s), nil
-	case DamageRequestWeaponModifiersItemTypeArmorPenetration:
-		return []byte(s), nil
-	case DamageRequestWeaponModifiersItemTypeElementalDamage:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DamageRequestWeaponModifiersItemType) UnmarshalText(data []byte) error {
-	switch DamageRequestWeaponModifiersItemType(data) {
-	case DamageRequestWeaponModifiersItemTypeDamageBoost:
-		*s = DamageRequestWeaponModifiersItemTypeDamageBoost
-		return nil
-	case DamageRequestWeaponModifiersItemTypeAccuracyBonus:
-		*s = DamageRequestWeaponModifiersItemTypeAccuracyBonus
-		return nil
-	case DamageRequestWeaponModifiersItemTypeArmorPenetration:
-		*s = DamageRequestWeaponModifiersItemTypeArmorPenetration
-		return nil
-	case DamageRequestWeaponModifiersItemTypeElementalDamage:
-		*s = DamageRequestWeaponModifiersItemTypeElementalDamage
+	case DamageCalculationRequestWeaponModifiersItemTypeElementalDamage:
+		*s = DamageCalculationRequestWeaponModifiersItemTypeElementalDamage
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -1263,8 +1625,8 @@ func (s *DamageRequestWeaponModifiersItemType) UnmarshalText(data []byte) error 
 // - Booleans (1 byte) last
 // Expected memory: ~72 bytes/instance.
 // Memory savings: 35-45% vs non-aligned structs.
-// Ref: #/components/schemas/damage-result
-type DamageResult struct {
+// Ref: #/components/schemas/DamageCalculationResult
+type DamageCalculationResult struct {
 	// Attacking participant UUID.
 	AttackerID uuid.UUID `json:"attacker_id"`
 	// Target participant UUID.
@@ -1272,9 +1634,9 @@ type DamageResult struct {
 	// Unique calculation ID for tracking.
 	CalculationID uuid.UUID `json:"calculation_id"`
 	// All modifiers applied in calculation.
-	AppliedModifiers []DamageResultAppliedModifiersItem `json:"applied_modifiers"`
+	AppliedModifiers []DamageCalculationResultAppliedModifiersItem `json:"applied_modifiers"`
 	// Detailed damage breakdown by component.
-	DamageBreakdown []DamageResultDamageBreakdownItem `json:"damage_breakdown"`
+	DamageBreakdown []DamageCalculationResultDamageBreakdownItem `json:"damage_breakdown"`
 	// Final calculated damage after all modifiers.
 	FinalDamage int32 `json:"final_damage"`
 	// Original base damage.
@@ -1286,13 +1648,13 @@ type DamageResult struct {
 	// Server processing time in nanoseconds.
 	ProcessingTimeNs OptInt64 `json:"processing_time_ns"`
 	// Final damage type after synergies.
-	DamageType DamageResultDamageType `json:"damage_type"`
+	DamageType DamageCalculationResultDamageType `json:"damage_type"`
 	// Applied critical multiplier.
 	CriticalMultiplier OptFloat32 `json:"critical_multiplier"`
 	// Total damage multiplier from all sources.
 	TotalMultiplier OptFloat32 `json:"total_multiplier"`
 	// Target stats snapshot at calculation time.
-	TargetStats OptDamageResultTargetStats `json:"target_stats"`
+	TargetStats OptDamageCalculationResultTargetStats `json:"target_stats"`
 	// Whether critical hit was applied.
 	WasCritical OptBool `json:"was_critical"`
 	// Whether attack was dodged (final_damage = 0).
@@ -1301,218 +1663,194 @@ type DamageResult struct {
 	WasBlocked OptBool `json:"was_blocked"`
 	// Whether target survived the damage.
 	TargetAlive OptBool `json:"target_alive"`
-	// Individual modifier applied in calculation.
-	AppliedModifier OptDamageResultAppliedModifier `json:"AppliedModifier"`
-	// Individual damage component in breakdown.
-	DamageComponent OptDamageResultDamageComponent `json:"DamageComponent"`
 }
 
 // GetAttackerID returns the value of AttackerID.
-func (s *DamageResult) GetAttackerID() uuid.UUID {
+func (s *DamageCalculationResult) GetAttackerID() uuid.UUID {
 	return s.AttackerID
 }
 
 // GetTargetID returns the value of TargetID.
-func (s *DamageResult) GetTargetID() uuid.UUID {
+func (s *DamageCalculationResult) GetTargetID() uuid.UUID {
 	return s.TargetID
 }
 
 // GetCalculationID returns the value of CalculationID.
-func (s *DamageResult) GetCalculationID() uuid.UUID {
+func (s *DamageCalculationResult) GetCalculationID() uuid.UUID {
 	return s.CalculationID
 }
 
 // GetAppliedModifiers returns the value of AppliedModifiers.
-func (s *DamageResult) GetAppliedModifiers() []DamageResultAppliedModifiersItem {
+func (s *DamageCalculationResult) GetAppliedModifiers() []DamageCalculationResultAppliedModifiersItem {
 	return s.AppliedModifiers
 }
 
 // GetDamageBreakdown returns the value of DamageBreakdown.
-func (s *DamageResult) GetDamageBreakdown() []DamageResultDamageBreakdownItem {
+func (s *DamageCalculationResult) GetDamageBreakdown() []DamageCalculationResultDamageBreakdownItem {
 	return s.DamageBreakdown
 }
 
 // GetFinalDamage returns the value of FinalDamage.
-func (s *DamageResult) GetFinalDamage() int32 {
+func (s *DamageCalculationResult) GetFinalDamage() int32 {
 	return s.FinalDamage
 }
 
 // GetBaseDamage returns the value of BaseDamage.
-func (s *DamageResult) GetBaseDamage() OptInt32 {
+func (s *DamageCalculationResult) GetBaseDamage() OptInt32 {
 	return s.BaseDamage
 }
 
 // GetArmorReduction returns the value of ArmorReduction.
-func (s *DamageResult) GetArmorReduction() OptInt32 {
+func (s *DamageCalculationResult) GetArmorReduction() OptInt32 {
 	return s.ArmorReduction
 }
 
 // GetTimestamp returns the value of Timestamp.
-func (s *DamageResult) GetTimestamp() OptInt64 {
+func (s *DamageCalculationResult) GetTimestamp() OptInt64 {
 	return s.Timestamp
 }
 
 // GetProcessingTimeNs returns the value of ProcessingTimeNs.
-func (s *DamageResult) GetProcessingTimeNs() OptInt64 {
+func (s *DamageCalculationResult) GetProcessingTimeNs() OptInt64 {
 	return s.ProcessingTimeNs
 }
 
 // GetDamageType returns the value of DamageType.
-func (s *DamageResult) GetDamageType() DamageResultDamageType {
+func (s *DamageCalculationResult) GetDamageType() DamageCalculationResultDamageType {
 	return s.DamageType
 }
 
 // GetCriticalMultiplier returns the value of CriticalMultiplier.
-func (s *DamageResult) GetCriticalMultiplier() OptFloat32 {
+func (s *DamageCalculationResult) GetCriticalMultiplier() OptFloat32 {
 	return s.CriticalMultiplier
 }
 
 // GetTotalMultiplier returns the value of TotalMultiplier.
-func (s *DamageResult) GetTotalMultiplier() OptFloat32 {
+func (s *DamageCalculationResult) GetTotalMultiplier() OptFloat32 {
 	return s.TotalMultiplier
 }
 
 // GetTargetStats returns the value of TargetStats.
-func (s *DamageResult) GetTargetStats() OptDamageResultTargetStats {
+func (s *DamageCalculationResult) GetTargetStats() OptDamageCalculationResultTargetStats {
 	return s.TargetStats
 }
 
 // GetWasCritical returns the value of WasCritical.
-func (s *DamageResult) GetWasCritical() OptBool {
+func (s *DamageCalculationResult) GetWasCritical() OptBool {
 	return s.WasCritical
 }
 
 // GetWasDodged returns the value of WasDodged.
-func (s *DamageResult) GetWasDodged() OptBool {
+func (s *DamageCalculationResult) GetWasDodged() OptBool {
 	return s.WasDodged
 }
 
 // GetWasBlocked returns the value of WasBlocked.
-func (s *DamageResult) GetWasBlocked() OptBool {
+func (s *DamageCalculationResult) GetWasBlocked() OptBool {
 	return s.WasBlocked
 }
 
 // GetTargetAlive returns the value of TargetAlive.
-func (s *DamageResult) GetTargetAlive() OptBool {
+func (s *DamageCalculationResult) GetTargetAlive() OptBool {
 	return s.TargetAlive
 }
 
-// GetAppliedModifier returns the value of AppliedModifier.
-func (s *DamageResult) GetAppliedModifier() OptDamageResultAppliedModifier {
-	return s.AppliedModifier
-}
-
-// GetDamageComponent returns the value of DamageComponent.
-func (s *DamageResult) GetDamageComponent() OptDamageResultDamageComponent {
-	return s.DamageComponent
-}
-
 // SetAttackerID sets the value of AttackerID.
-func (s *DamageResult) SetAttackerID(val uuid.UUID) {
+func (s *DamageCalculationResult) SetAttackerID(val uuid.UUID) {
 	s.AttackerID = val
 }
 
 // SetTargetID sets the value of TargetID.
-func (s *DamageResult) SetTargetID(val uuid.UUID) {
+func (s *DamageCalculationResult) SetTargetID(val uuid.UUID) {
 	s.TargetID = val
 }
 
 // SetCalculationID sets the value of CalculationID.
-func (s *DamageResult) SetCalculationID(val uuid.UUID) {
+func (s *DamageCalculationResult) SetCalculationID(val uuid.UUID) {
 	s.CalculationID = val
 }
 
 // SetAppliedModifiers sets the value of AppliedModifiers.
-func (s *DamageResult) SetAppliedModifiers(val []DamageResultAppliedModifiersItem) {
+func (s *DamageCalculationResult) SetAppliedModifiers(val []DamageCalculationResultAppliedModifiersItem) {
 	s.AppliedModifiers = val
 }
 
 // SetDamageBreakdown sets the value of DamageBreakdown.
-func (s *DamageResult) SetDamageBreakdown(val []DamageResultDamageBreakdownItem) {
+func (s *DamageCalculationResult) SetDamageBreakdown(val []DamageCalculationResultDamageBreakdownItem) {
 	s.DamageBreakdown = val
 }
 
 // SetFinalDamage sets the value of FinalDamage.
-func (s *DamageResult) SetFinalDamage(val int32) {
+func (s *DamageCalculationResult) SetFinalDamage(val int32) {
 	s.FinalDamage = val
 }
 
 // SetBaseDamage sets the value of BaseDamage.
-func (s *DamageResult) SetBaseDamage(val OptInt32) {
+func (s *DamageCalculationResult) SetBaseDamage(val OptInt32) {
 	s.BaseDamage = val
 }
 
 // SetArmorReduction sets the value of ArmorReduction.
-func (s *DamageResult) SetArmorReduction(val OptInt32) {
+func (s *DamageCalculationResult) SetArmorReduction(val OptInt32) {
 	s.ArmorReduction = val
 }
 
 // SetTimestamp sets the value of Timestamp.
-func (s *DamageResult) SetTimestamp(val OptInt64) {
+func (s *DamageCalculationResult) SetTimestamp(val OptInt64) {
 	s.Timestamp = val
 }
 
 // SetProcessingTimeNs sets the value of ProcessingTimeNs.
-func (s *DamageResult) SetProcessingTimeNs(val OptInt64) {
+func (s *DamageCalculationResult) SetProcessingTimeNs(val OptInt64) {
 	s.ProcessingTimeNs = val
 }
 
 // SetDamageType sets the value of DamageType.
-func (s *DamageResult) SetDamageType(val DamageResultDamageType) {
+func (s *DamageCalculationResult) SetDamageType(val DamageCalculationResultDamageType) {
 	s.DamageType = val
 }
 
 // SetCriticalMultiplier sets the value of CriticalMultiplier.
-func (s *DamageResult) SetCriticalMultiplier(val OptFloat32) {
+func (s *DamageCalculationResult) SetCriticalMultiplier(val OptFloat32) {
 	s.CriticalMultiplier = val
 }
 
 // SetTotalMultiplier sets the value of TotalMultiplier.
-func (s *DamageResult) SetTotalMultiplier(val OptFloat32) {
+func (s *DamageCalculationResult) SetTotalMultiplier(val OptFloat32) {
 	s.TotalMultiplier = val
 }
 
 // SetTargetStats sets the value of TargetStats.
-func (s *DamageResult) SetTargetStats(val OptDamageResultTargetStats) {
+func (s *DamageCalculationResult) SetTargetStats(val OptDamageCalculationResultTargetStats) {
 	s.TargetStats = val
 }
 
 // SetWasCritical sets the value of WasCritical.
-func (s *DamageResult) SetWasCritical(val OptBool) {
+func (s *DamageCalculationResult) SetWasCritical(val OptBool) {
 	s.WasCritical = val
 }
 
 // SetWasDodged sets the value of WasDodged.
-func (s *DamageResult) SetWasDodged(val OptBool) {
+func (s *DamageCalculationResult) SetWasDodged(val OptBool) {
 	s.WasDodged = val
 }
 
 // SetWasBlocked sets the value of WasBlocked.
-func (s *DamageResult) SetWasBlocked(val OptBool) {
+func (s *DamageCalculationResult) SetWasBlocked(val OptBool) {
 	s.WasBlocked = val
 }
 
 // SetTargetAlive sets the value of TargetAlive.
-func (s *DamageResult) SetTargetAlive(val OptBool) {
+func (s *DamageCalculationResult) SetTargetAlive(val OptBool) {
 	s.TargetAlive = val
 }
 
-// SetAppliedModifier sets the value of AppliedModifier.
-func (s *DamageResult) SetAppliedModifier(val OptDamageResultAppliedModifier) {
-	s.AppliedModifier = val
-}
-
-// SetDamageComponent sets the value of DamageComponent.
-func (s *DamageResult) SetDamageComponent(val OptDamageResultDamageComponent) {
-	s.DamageComponent = val
-}
-
-func (*DamageResult) calculateDamageRes() {}
+func (*DamageCalculationResult) calculateDamageRes() {}
 
 // Individual modifier applied in calculation.
-type DamageResultAppliedModifier struct {
+type DamageCalculationResultAppliedModifiersItem struct {
 	// Modifier type.
-	Type DamageResultAppliedModifierType `json:"type"`
+	Type DamageCalculationResultAppliedModifiersItemType `json:"type"`
 	// Modifier value.
 	Value float32 `json:"value"`
 	// Source of modifier (weapon, implant, environment, etc.).
@@ -1520,77 +1858,77 @@ type DamageResultAppliedModifier struct {
 }
 
 // GetType returns the value of Type.
-func (s *DamageResultAppliedModifier) GetType() DamageResultAppliedModifierType {
+func (s *DamageCalculationResultAppliedModifiersItem) GetType() DamageCalculationResultAppliedModifiersItemType {
 	return s.Type
 }
 
 // GetValue returns the value of Value.
-func (s *DamageResultAppliedModifier) GetValue() float32 {
+func (s *DamageCalculationResultAppliedModifiersItem) GetValue() float32 {
 	return s.Value
 }
 
 // GetSource returns the value of Source.
-func (s *DamageResultAppliedModifier) GetSource() string {
+func (s *DamageCalculationResultAppliedModifiersItem) GetSource() string {
 	return s.Source
 }
 
 // SetType sets the value of Type.
-func (s *DamageResultAppliedModifier) SetType(val DamageResultAppliedModifierType) {
+func (s *DamageCalculationResultAppliedModifiersItem) SetType(val DamageCalculationResultAppliedModifiersItemType) {
 	s.Type = val
 }
 
 // SetValue sets the value of Value.
-func (s *DamageResultAppliedModifier) SetValue(val float32) {
+func (s *DamageCalculationResultAppliedModifiersItem) SetValue(val float32) {
 	s.Value = val
 }
 
 // SetSource sets the value of Source.
-func (s *DamageResultAppliedModifier) SetSource(val string) {
+func (s *DamageCalculationResultAppliedModifiersItem) SetSource(val string) {
 	s.Source = val
 }
 
 // Modifier type.
-type DamageResultAppliedModifierType string
+type DamageCalculationResultAppliedModifiersItemType string
 
 const (
-	DamageResultAppliedModifierTypeCriticalHit    DamageResultAppliedModifierType = "critical_hit"
-	DamageResultAppliedModifierTypeWeakSpot       DamageResultAppliedModifierType = "weak_spot"
-	DamageResultAppliedModifierTypeArmorReduction DamageResultAppliedModifierType = "armor_reduction"
-	DamageResultAppliedModifierTypeElementalBonus DamageResultAppliedModifierType = "elemental_bonus"
-	DamageResultAppliedModifierTypeImplantSynergy DamageResultAppliedModifierType = "implant_synergy"
-	DamageResultAppliedModifierTypeEnvironmental  DamageResultAppliedModifierType = "environmental"
-	DamageResultAppliedModifierTypeBackstab       DamageResultAppliedModifierType = "backstab"
+	DamageCalculationResultAppliedModifiersItemTypeCriticalHit    DamageCalculationResultAppliedModifiersItemType = "critical_hit"
+	DamageCalculationResultAppliedModifiersItemTypeWeakSpot       DamageCalculationResultAppliedModifiersItemType = "weak_spot"
+	DamageCalculationResultAppliedModifiersItemTypeArmorReduction DamageCalculationResultAppliedModifiersItemType = "armor_reduction"
+	DamageCalculationResultAppliedModifiersItemTypeElementalBonus DamageCalculationResultAppliedModifiersItemType = "elemental_bonus"
+	DamageCalculationResultAppliedModifiersItemTypeImplantSynergy DamageCalculationResultAppliedModifiersItemType = "implant_synergy"
+	DamageCalculationResultAppliedModifiersItemTypeEnvironmental  DamageCalculationResultAppliedModifiersItemType = "environmental"
+	DamageCalculationResultAppliedModifiersItemTypeBackstab       DamageCalculationResultAppliedModifiersItemType = "backstab"
 )
 
-// AllValues returns all DamageResultAppliedModifierType values.
-func (DamageResultAppliedModifierType) AllValues() []DamageResultAppliedModifierType {
-	return []DamageResultAppliedModifierType{
-		DamageResultAppliedModifierTypeCriticalHit,
-		DamageResultAppliedModifierTypeWeakSpot,
-		DamageResultAppliedModifierTypeArmorReduction,
-		DamageResultAppliedModifierTypeElementalBonus,
-		DamageResultAppliedModifierTypeImplantSynergy,
-		DamageResultAppliedModifierTypeEnvironmental,
-		DamageResultAppliedModifierTypeBackstab,
+// AllValues returns all DamageCalculationResultAppliedModifiersItemType values.
+func (DamageCalculationResultAppliedModifiersItemType) AllValues() []DamageCalculationResultAppliedModifiersItemType {
+	return []DamageCalculationResultAppliedModifiersItemType{
+		DamageCalculationResultAppliedModifiersItemTypeCriticalHit,
+		DamageCalculationResultAppliedModifiersItemTypeWeakSpot,
+		DamageCalculationResultAppliedModifiersItemTypeArmorReduction,
+		DamageCalculationResultAppliedModifiersItemTypeElementalBonus,
+		DamageCalculationResultAppliedModifiersItemTypeImplantSynergy,
+		DamageCalculationResultAppliedModifiersItemTypeEnvironmental,
+		DamageCalculationResultAppliedModifiersItemTypeBackstab,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s DamageResultAppliedModifierType) MarshalText() ([]byte, error) {
+func (s DamageCalculationResultAppliedModifiersItemType) MarshalText() ([]byte, error) {
 	switch s {
-	case DamageResultAppliedModifierTypeCriticalHit:
+	case DamageCalculationResultAppliedModifiersItemTypeCriticalHit:
 		return []byte(s), nil
-	case DamageResultAppliedModifierTypeWeakSpot:
+	case DamageCalculationResultAppliedModifiersItemTypeWeakSpot:
 		return []byte(s), nil
-	case DamageResultAppliedModifierTypeArmorReduction:
+	case DamageCalculationResultAppliedModifiersItemTypeArmorReduction:
 		return []byte(s), nil
-	case DamageResultAppliedModifierTypeElementalBonus:
+	case DamageCalculationResultAppliedModifiersItemTypeElementalBonus:
 		return []byte(s), nil
-	case DamageResultAppliedModifierTypeImplantSynergy:
+	case DamageCalculationResultAppliedModifiersItemTypeImplantSynergy:
 		return []byte(s), nil
-	case DamageResultAppliedModifierTypeEnvironmental:
+	case DamageCalculationResultAppliedModifiersItemTypeEnvironmental:
 		return []byte(s), nil
-	case DamageResultAppliedModifierTypeBackstab:
+	case DamageCalculationResultAppliedModifiersItemTypeBackstab:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1598,145 +1936,28 @@ func (s DamageResultAppliedModifierType) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DamageResultAppliedModifierType) UnmarshalText(data []byte) error {
-	switch DamageResultAppliedModifierType(data) {
-	case DamageResultAppliedModifierTypeCriticalHit:
-		*s = DamageResultAppliedModifierTypeCriticalHit
+func (s *DamageCalculationResultAppliedModifiersItemType) UnmarshalText(data []byte) error {
+	switch DamageCalculationResultAppliedModifiersItemType(data) {
+	case DamageCalculationResultAppliedModifiersItemTypeCriticalHit:
+		*s = DamageCalculationResultAppliedModifiersItemTypeCriticalHit
 		return nil
-	case DamageResultAppliedModifierTypeWeakSpot:
-		*s = DamageResultAppliedModifierTypeWeakSpot
+	case DamageCalculationResultAppliedModifiersItemTypeWeakSpot:
+		*s = DamageCalculationResultAppliedModifiersItemTypeWeakSpot
 		return nil
-	case DamageResultAppliedModifierTypeArmorReduction:
-		*s = DamageResultAppliedModifierTypeArmorReduction
+	case DamageCalculationResultAppliedModifiersItemTypeArmorReduction:
+		*s = DamageCalculationResultAppliedModifiersItemTypeArmorReduction
 		return nil
-	case DamageResultAppliedModifierTypeElementalBonus:
-		*s = DamageResultAppliedModifierTypeElementalBonus
+	case DamageCalculationResultAppliedModifiersItemTypeElementalBonus:
+		*s = DamageCalculationResultAppliedModifiersItemTypeElementalBonus
 		return nil
-	case DamageResultAppliedModifierTypeImplantSynergy:
-		*s = DamageResultAppliedModifierTypeImplantSynergy
+	case DamageCalculationResultAppliedModifiersItemTypeImplantSynergy:
+		*s = DamageCalculationResultAppliedModifiersItemTypeImplantSynergy
 		return nil
-	case DamageResultAppliedModifierTypeEnvironmental:
-		*s = DamageResultAppliedModifierTypeEnvironmental
+	case DamageCalculationResultAppliedModifiersItemTypeEnvironmental:
+		*s = DamageCalculationResultAppliedModifiersItemTypeEnvironmental
 		return nil
-	case DamageResultAppliedModifierTypeBackstab:
-		*s = DamageResultAppliedModifierTypeBackstab
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Individual modifier applied in calculation.
-type DamageResultAppliedModifiersItem struct {
-	// Modifier type.
-	Type DamageResultAppliedModifiersItemType `json:"type"`
-	// Modifier value.
-	Value float32 `json:"value"`
-	// Source of modifier (weapon, implant, environment, etc.).
-	Source string `json:"source"`
-}
-
-// GetType returns the value of Type.
-func (s *DamageResultAppliedModifiersItem) GetType() DamageResultAppliedModifiersItemType {
-	return s.Type
-}
-
-// GetValue returns the value of Value.
-func (s *DamageResultAppliedModifiersItem) GetValue() float32 {
-	return s.Value
-}
-
-// GetSource returns the value of Source.
-func (s *DamageResultAppliedModifiersItem) GetSource() string {
-	return s.Source
-}
-
-// SetType sets the value of Type.
-func (s *DamageResultAppliedModifiersItem) SetType(val DamageResultAppliedModifiersItemType) {
-	s.Type = val
-}
-
-// SetValue sets the value of Value.
-func (s *DamageResultAppliedModifiersItem) SetValue(val float32) {
-	s.Value = val
-}
-
-// SetSource sets the value of Source.
-func (s *DamageResultAppliedModifiersItem) SetSource(val string) {
-	s.Source = val
-}
-
-// Modifier type.
-type DamageResultAppliedModifiersItemType string
-
-const (
-	DamageResultAppliedModifiersItemTypeCriticalHit    DamageResultAppliedModifiersItemType = "critical_hit"
-	DamageResultAppliedModifiersItemTypeWeakSpot       DamageResultAppliedModifiersItemType = "weak_spot"
-	DamageResultAppliedModifiersItemTypeArmorReduction DamageResultAppliedModifiersItemType = "armor_reduction"
-	DamageResultAppliedModifiersItemTypeElementalBonus DamageResultAppliedModifiersItemType = "elemental_bonus"
-	DamageResultAppliedModifiersItemTypeImplantSynergy DamageResultAppliedModifiersItemType = "implant_synergy"
-	DamageResultAppliedModifiersItemTypeEnvironmental  DamageResultAppliedModifiersItemType = "environmental"
-	DamageResultAppliedModifiersItemTypeBackstab       DamageResultAppliedModifiersItemType = "backstab"
-)
-
-// AllValues returns all DamageResultAppliedModifiersItemType values.
-func (DamageResultAppliedModifiersItemType) AllValues() []DamageResultAppliedModifiersItemType {
-	return []DamageResultAppliedModifiersItemType{
-		DamageResultAppliedModifiersItemTypeCriticalHit,
-		DamageResultAppliedModifiersItemTypeWeakSpot,
-		DamageResultAppliedModifiersItemTypeArmorReduction,
-		DamageResultAppliedModifiersItemTypeElementalBonus,
-		DamageResultAppliedModifiersItemTypeImplantSynergy,
-		DamageResultAppliedModifiersItemTypeEnvironmental,
-		DamageResultAppliedModifiersItemTypeBackstab,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s DamageResultAppliedModifiersItemType) MarshalText() ([]byte, error) {
-	switch s {
-	case DamageResultAppliedModifiersItemTypeCriticalHit:
-		return []byte(s), nil
-	case DamageResultAppliedModifiersItemTypeWeakSpot:
-		return []byte(s), nil
-	case DamageResultAppliedModifiersItemTypeArmorReduction:
-		return []byte(s), nil
-	case DamageResultAppliedModifiersItemTypeElementalBonus:
-		return []byte(s), nil
-	case DamageResultAppliedModifiersItemTypeImplantSynergy:
-		return []byte(s), nil
-	case DamageResultAppliedModifiersItemTypeEnvironmental:
-		return []byte(s), nil
-	case DamageResultAppliedModifiersItemTypeBackstab:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DamageResultAppliedModifiersItemType) UnmarshalText(data []byte) error {
-	switch DamageResultAppliedModifiersItemType(data) {
-	case DamageResultAppliedModifiersItemTypeCriticalHit:
-		*s = DamageResultAppliedModifiersItemTypeCriticalHit
-		return nil
-	case DamageResultAppliedModifiersItemTypeWeakSpot:
-		*s = DamageResultAppliedModifiersItemTypeWeakSpot
-		return nil
-	case DamageResultAppliedModifiersItemTypeArmorReduction:
-		*s = DamageResultAppliedModifiersItemTypeArmorReduction
-		return nil
-	case DamageResultAppliedModifiersItemTypeElementalBonus:
-		*s = DamageResultAppliedModifiersItemTypeElementalBonus
-		return nil
-	case DamageResultAppliedModifiersItemTypeImplantSynergy:
-		*s = DamageResultAppliedModifiersItemTypeImplantSynergy
-		return nil
-	case DamageResultAppliedModifiersItemTypeEnvironmental:
-		*s = DamageResultAppliedModifiersItemTypeEnvironmental
-		return nil
-	case DamageResultAppliedModifiersItemTypeBackstab:
-		*s = DamageResultAppliedModifiersItemTypeBackstab
+	case DamageCalculationResultAppliedModifiersItemTypeBackstab:
+		*s = DamageCalculationResultAppliedModifiersItemTypeBackstab
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -1744,75 +1965,75 @@ func (s *DamageResultAppliedModifiersItemType) UnmarshalText(data []byte) error 
 }
 
 // Individual damage component in breakdown.
-type DamageResultDamageBreakdownItem struct {
+type DamageCalculationResultDamageBreakdownItem struct {
 	// Component type.
-	Type DamageResultDamageBreakdownItemType `json:"type"`
+	Type DamageCalculationResultDamageBreakdownItemType `json:"type"`
 	// Damage amount for this component.
 	Amount int32 `json:"amount"`
 }
 
 // GetType returns the value of Type.
-func (s *DamageResultDamageBreakdownItem) GetType() DamageResultDamageBreakdownItemType {
+func (s *DamageCalculationResultDamageBreakdownItem) GetType() DamageCalculationResultDamageBreakdownItemType {
 	return s.Type
 }
 
 // GetAmount returns the value of Amount.
-func (s *DamageResultDamageBreakdownItem) GetAmount() int32 {
+func (s *DamageCalculationResultDamageBreakdownItem) GetAmount() int32 {
 	return s.Amount
 }
 
 // SetType sets the value of Type.
-func (s *DamageResultDamageBreakdownItem) SetType(val DamageResultDamageBreakdownItemType) {
+func (s *DamageCalculationResultDamageBreakdownItem) SetType(val DamageCalculationResultDamageBreakdownItemType) {
 	s.Type = val
 }
 
 // SetAmount sets the value of Amount.
-func (s *DamageResultDamageBreakdownItem) SetAmount(val int32) {
+func (s *DamageCalculationResultDamageBreakdownItem) SetAmount(val int32) {
 	s.Amount = val
 }
 
 // Component type.
-type DamageResultDamageBreakdownItemType string
+type DamageCalculationResultDamageBreakdownItemType string
 
 const (
-	DamageResultDamageBreakdownItemTypeBaseDamage            DamageResultDamageBreakdownItemType = "base_damage"
-	DamageResultDamageBreakdownItemTypeCriticalBonus         DamageResultDamageBreakdownItemType = "critical_bonus"
-	DamageResultDamageBreakdownItemTypeWeakSpotBonus         DamageResultDamageBreakdownItemType = "weak_spot_bonus"
-	DamageResultDamageBreakdownItemTypeArmorPenetration      DamageResultDamageBreakdownItemType = "armor_penetration"
-	DamageResultDamageBreakdownItemTypeElementalDamage       DamageResultDamageBreakdownItemType = "elemental_damage"
-	DamageResultDamageBreakdownItemTypeSynergyBonus          DamageResultDamageBreakdownItemType = "synergy_bonus"
-	DamageResultDamageBreakdownItemTypeEnvironmentalModifier DamageResultDamageBreakdownItemType = "environmental_modifier"
+	DamageCalculationResultDamageBreakdownItemTypeBaseDamage            DamageCalculationResultDamageBreakdownItemType = "base_damage"
+	DamageCalculationResultDamageBreakdownItemTypeCriticalBonus         DamageCalculationResultDamageBreakdownItemType = "critical_bonus"
+	DamageCalculationResultDamageBreakdownItemTypeWeakSpotBonus         DamageCalculationResultDamageBreakdownItemType = "weak_spot_bonus"
+	DamageCalculationResultDamageBreakdownItemTypeArmorPenetration      DamageCalculationResultDamageBreakdownItemType = "armor_penetration"
+	DamageCalculationResultDamageBreakdownItemTypeElementalDamage       DamageCalculationResultDamageBreakdownItemType = "elemental_damage"
+	DamageCalculationResultDamageBreakdownItemTypeSynergyBonus          DamageCalculationResultDamageBreakdownItemType = "synergy_bonus"
+	DamageCalculationResultDamageBreakdownItemTypeEnvironmentalModifier DamageCalculationResultDamageBreakdownItemType = "environmental_modifier"
 )
 
-// AllValues returns all DamageResultDamageBreakdownItemType values.
-func (DamageResultDamageBreakdownItemType) AllValues() []DamageResultDamageBreakdownItemType {
-	return []DamageResultDamageBreakdownItemType{
-		DamageResultDamageBreakdownItemTypeBaseDamage,
-		DamageResultDamageBreakdownItemTypeCriticalBonus,
-		DamageResultDamageBreakdownItemTypeWeakSpotBonus,
-		DamageResultDamageBreakdownItemTypeArmorPenetration,
-		DamageResultDamageBreakdownItemTypeElementalDamage,
-		DamageResultDamageBreakdownItemTypeSynergyBonus,
-		DamageResultDamageBreakdownItemTypeEnvironmentalModifier,
+// AllValues returns all DamageCalculationResultDamageBreakdownItemType values.
+func (DamageCalculationResultDamageBreakdownItemType) AllValues() []DamageCalculationResultDamageBreakdownItemType {
+	return []DamageCalculationResultDamageBreakdownItemType{
+		DamageCalculationResultDamageBreakdownItemTypeBaseDamage,
+		DamageCalculationResultDamageBreakdownItemTypeCriticalBonus,
+		DamageCalculationResultDamageBreakdownItemTypeWeakSpotBonus,
+		DamageCalculationResultDamageBreakdownItemTypeArmorPenetration,
+		DamageCalculationResultDamageBreakdownItemTypeElementalDamage,
+		DamageCalculationResultDamageBreakdownItemTypeSynergyBonus,
+		DamageCalculationResultDamageBreakdownItemTypeEnvironmentalModifier,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s DamageResultDamageBreakdownItemType) MarshalText() ([]byte, error) {
+func (s DamageCalculationResultDamageBreakdownItemType) MarshalText() ([]byte, error) {
 	switch s {
-	case DamageResultDamageBreakdownItemTypeBaseDamage:
+	case DamageCalculationResultDamageBreakdownItemTypeBaseDamage:
 		return []byte(s), nil
-	case DamageResultDamageBreakdownItemTypeCriticalBonus:
+	case DamageCalculationResultDamageBreakdownItemTypeCriticalBonus:
 		return []byte(s), nil
-	case DamageResultDamageBreakdownItemTypeWeakSpotBonus:
+	case DamageCalculationResultDamageBreakdownItemTypeWeakSpotBonus:
 		return []byte(s), nil
-	case DamageResultDamageBreakdownItemTypeArmorPenetration:
+	case DamageCalculationResultDamageBreakdownItemTypeArmorPenetration:
 		return []byte(s), nil
-	case DamageResultDamageBreakdownItemTypeElementalDamage:
+	case DamageCalculationResultDamageBreakdownItemTypeElementalDamage:
 		return []byte(s), nil
-	case DamageResultDamageBreakdownItemTypeSynergyBonus:
+	case DamageCalculationResultDamageBreakdownItemTypeSynergyBonus:
 		return []byte(s), nil
-	case DamageResultDamageBreakdownItemTypeEnvironmentalModifier:
+	case DamageCalculationResultDamageBreakdownItemTypeEnvironmentalModifier:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -1820,133 +2041,28 @@ func (s DamageResultDamageBreakdownItemType) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DamageResultDamageBreakdownItemType) UnmarshalText(data []byte) error {
-	switch DamageResultDamageBreakdownItemType(data) {
-	case DamageResultDamageBreakdownItemTypeBaseDamage:
-		*s = DamageResultDamageBreakdownItemTypeBaseDamage
+func (s *DamageCalculationResultDamageBreakdownItemType) UnmarshalText(data []byte) error {
+	switch DamageCalculationResultDamageBreakdownItemType(data) {
+	case DamageCalculationResultDamageBreakdownItemTypeBaseDamage:
+		*s = DamageCalculationResultDamageBreakdownItemTypeBaseDamage
 		return nil
-	case DamageResultDamageBreakdownItemTypeCriticalBonus:
-		*s = DamageResultDamageBreakdownItemTypeCriticalBonus
+	case DamageCalculationResultDamageBreakdownItemTypeCriticalBonus:
+		*s = DamageCalculationResultDamageBreakdownItemTypeCriticalBonus
 		return nil
-	case DamageResultDamageBreakdownItemTypeWeakSpotBonus:
-		*s = DamageResultDamageBreakdownItemTypeWeakSpotBonus
+	case DamageCalculationResultDamageBreakdownItemTypeWeakSpotBonus:
+		*s = DamageCalculationResultDamageBreakdownItemTypeWeakSpotBonus
 		return nil
-	case DamageResultDamageBreakdownItemTypeArmorPenetration:
-		*s = DamageResultDamageBreakdownItemTypeArmorPenetration
+	case DamageCalculationResultDamageBreakdownItemTypeArmorPenetration:
+		*s = DamageCalculationResultDamageBreakdownItemTypeArmorPenetration
 		return nil
-	case DamageResultDamageBreakdownItemTypeElementalDamage:
-		*s = DamageResultDamageBreakdownItemTypeElementalDamage
+	case DamageCalculationResultDamageBreakdownItemTypeElementalDamage:
+		*s = DamageCalculationResultDamageBreakdownItemTypeElementalDamage
 		return nil
-	case DamageResultDamageBreakdownItemTypeSynergyBonus:
-		*s = DamageResultDamageBreakdownItemTypeSynergyBonus
+	case DamageCalculationResultDamageBreakdownItemTypeSynergyBonus:
+		*s = DamageCalculationResultDamageBreakdownItemTypeSynergyBonus
 		return nil
-	case DamageResultDamageBreakdownItemTypeEnvironmentalModifier:
-		*s = DamageResultDamageBreakdownItemTypeEnvironmentalModifier
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Individual damage component in breakdown.
-type DamageResultDamageComponent struct {
-	// Component type.
-	Type DamageResultDamageComponentType `json:"type"`
-	// Damage amount for this component.
-	Amount int32 `json:"amount"`
-}
-
-// GetType returns the value of Type.
-func (s *DamageResultDamageComponent) GetType() DamageResultDamageComponentType {
-	return s.Type
-}
-
-// GetAmount returns the value of Amount.
-func (s *DamageResultDamageComponent) GetAmount() int32 {
-	return s.Amount
-}
-
-// SetType sets the value of Type.
-func (s *DamageResultDamageComponent) SetType(val DamageResultDamageComponentType) {
-	s.Type = val
-}
-
-// SetAmount sets the value of Amount.
-func (s *DamageResultDamageComponent) SetAmount(val int32) {
-	s.Amount = val
-}
-
-// Component type.
-type DamageResultDamageComponentType string
-
-const (
-	DamageResultDamageComponentTypeBaseDamage            DamageResultDamageComponentType = "base_damage"
-	DamageResultDamageComponentTypeCriticalBonus         DamageResultDamageComponentType = "critical_bonus"
-	DamageResultDamageComponentTypeWeakSpotBonus         DamageResultDamageComponentType = "weak_spot_bonus"
-	DamageResultDamageComponentTypeArmorPenetration      DamageResultDamageComponentType = "armor_penetration"
-	DamageResultDamageComponentTypeElementalDamage       DamageResultDamageComponentType = "elemental_damage"
-	DamageResultDamageComponentTypeSynergyBonus          DamageResultDamageComponentType = "synergy_bonus"
-	DamageResultDamageComponentTypeEnvironmentalModifier DamageResultDamageComponentType = "environmental_modifier"
-)
-
-// AllValues returns all DamageResultDamageComponentType values.
-func (DamageResultDamageComponentType) AllValues() []DamageResultDamageComponentType {
-	return []DamageResultDamageComponentType{
-		DamageResultDamageComponentTypeBaseDamage,
-		DamageResultDamageComponentTypeCriticalBonus,
-		DamageResultDamageComponentTypeWeakSpotBonus,
-		DamageResultDamageComponentTypeArmorPenetration,
-		DamageResultDamageComponentTypeElementalDamage,
-		DamageResultDamageComponentTypeSynergyBonus,
-		DamageResultDamageComponentTypeEnvironmentalModifier,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s DamageResultDamageComponentType) MarshalText() ([]byte, error) {
-	switch s {
-	case DamageResultDamageComponentTypeBaseDamage:
-		return []byte(s), nil
-	case DamageResultDamageComponentTypeCriticalBonus:
-		return []byte(s), nil
-	case DamageResultDamageComponentTypeWeakSpotBonus:
-		return []byte(s), nil
-	case DamageResultDamageComponentTypeArmorPenetration:
-		return []byte(s), nil
-	case DamageResultDamageComponentTypeElementalDamage:
-		return []byte(s), nil
-	case DamageResultDamageComponentTypeSynergyBonus:
-		return []byte(s), nil
-	case DamageResultDamageComponentTypeEnvironmentalModifier:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DamageResultDamageComponentType) UnmarshalText(data []byte) error {
-	switch DamageResultDamageComponentType(data) {
-	case DamageResultDamageComponentTypeBaseDamage:
-		*s = DamageResultDamageComponentTypeBaseDamage
-		return nil
-	case DamageResultDamageComponentTypeCriticalBonus:
-		*s = DamageResultDamageComponentTypeCriticalBonus
-		return nil
-	case DamageResultDamageComponentTypeWeakSpotBonus:
-		*s = DamageResultDamageComponentTypeWeakSpotBonus
-		return nil
-	case DamageResultDamageComponentTypeArmorPenetration:
-		*s = DamageResultDamageComponentTypeArmorPenetration
-		return nil
-	case DamageResultDamageComponentTypeElementalDamage:
-		*s = DamageResultDamageComponentTypeElementalDamage
-		return nil
-	case DamageResultDamageComponentTypeSynergyBonus:
-		*s = DamageResultDamageComponentTypeSynergyBonus
-		return nil
-	case DamageResultDamageComponentTypeEnvironmentalModifier:
-		*s = DamageResultDamageComponentTypeEnvironmentalModifier
+	case DamageCalculationResultDamageBreakdownItemTypeEnvironmentalModifier:
+		*s = DamageCalculationResultDamageBreakdownItemTypeEnvironmentalModifier
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -1954,51 +2070,51 @@ func (s *DamageResultDamageComponentType) UnmarshalText(data []byte) error {
 }
 
 // Final damage type after synergies.
-type DamageResultDamageType string
+type DamageCalculationResultDamageType string
 
 const (
-	DamageResultDamageTypePhysical  DamageResultDamageType = "physical"
-	DamageResultDamageTypeFire      DamageResultDamageType = "fire"
-	DamageResultDamageTypeCold      DamageResultDamageType = "cold"
-	DamageResultDamageTypeLightning DamageResultDamageType = "lightning"
-	DamageResultDamageTypePoison    DamageResultDamageType = "poison"
-	DamageResultDamageTypeCyber     DamageResultDamageType = "cyber"
-	DamageResultDamageTypeRadiation DamageResultDamageType = "radiation"
-	DamageResultDamageTypeExplosive DamageResultDamageType = "explosive"
+	DamageCalculationResultDamageTypePhysical  DamageCalculationResultDamageType = "physical"
+	DamageCalculationResultDamageTypeFire      DamageCalculationResultDamageType = "fire"
+	DamageCalculationResultDamageTypeCold      DamageCalculationResultDamageType = "cold"
+	DamageCalculationResultDamageTypeLightning DamageCalculationResultDamageType = "lightning"
+	DamageCalculationResultDamageTypePoison    DamageCalculationResultDamageType = "poison"
+	DamageCalculationResultDamageTypeCyber     DamageCalculationResultDamageType = "cyber"
+	DamageCalculationResultDamageTypeRadiation DamageCalculationResultDamageType = "radiation"
+	DamageCalculationResultDamageTypeExplosive DamageCalculationResultDamageType = "explosive"
 )
 
-// AllValues returns all DamageResultDamageType values.
-func (DamageResultDamageType) AllValues() []DamageResultDamageType {
-	return []DamageResultDamageType{
-		DamageResultDamageTypePhysical,
-		DamageResultDamageTypeFire,
-		DamageResultDamageTypeCold,
-		DamageResultDamageTypeLightning,
-		DamageResultDamageTypePoison,
-		DamageResultDamageTypeCyber,
-		DamageResultDamageTypeRadiation,
-		DamageResultDamageTypeExplosive,
+// AllValues returns all DamageCalculationResultDamageType values.
+func (DamageCalculationResultDamageType) AllValues() []DamageCalculationResultDamageType {
+	return []DamageCalculationResultDamageType{
+		DamageCalculationResultDamageTypePhysical,
+		DamageCalculationResultDamageTypeFire,
+		DamageCalculationResultDamageTypeCold,
+		DamageCalculationResultDamageTypeLightning,
+		DamageCalculationResultDamageTypePoison,
+		DamageCalculationResultDamageTypeCyber,
+		DamageCalculationResultDamageTypeRadiation,
+		DamageCalculationResultDamageTypeExplosive,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s DamageResultDamageType) MarshalText() ([]byte, error) {
+func (s DamageCalculationResultDamageType) MarshalText() ([]byte, error) {
 	switch s {
-	case DamageResultDamageTypePhysical:
+	case DamageCalculationResultDamageTypePhysical:
 		return []byte(s), nil
-	case DamageResultDamageTypeFire:
+	case DamageCalculationResultDamageTypeFire:
 		return []byte(s), nil
-	case DamageResultDamageTypeCold:
+	case DamageCalculationResultDamageTypeCold:
 		return []byte(s), nil
-	case DamageResultDamageTypeLightning:
+	case DamageCalculationResultDamageTypeLightning:
 		return []byte(s), nil
-	case DamageResultDamageTypePoison:
+	case DamageCalculationResultDamageTypePoison:
 		return []byte(s), nil
-	case DamageResultDamageTypeCyber:
+	case DamageCalculationResultDamageTypeCyber:
 		return []byte(s), nil
-	case DamageResultDamageTypeRadiation:
+	case DamageCalculationResultDamageTypeRadiation:
 		return []byte(s), nil
-	case DamageResultDamageTypeExplosive:
+	case DamageCalculationResultDamageTypeExplosive:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -2006,31 +2122,31 @@ func (s DamageResultDamageType) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DamageResultDamageType) UnmarshalText(data []byte) error {
-	switch DamageResultDamageType(data) {
-	case DamageResultDamageTypePhysical:
-		*s = DamageResultDamageTypePhysical
+func (s *DamageCalculationResultDamageType) UnmarshalText(data []byte) error {
+	switch DamageCalculationResultDamageType(data) {
+	case DamageCalculationResultDamageTypePhysical:
+		*s = DamageCalculationResultDamageTypePhysical
 		return nil
-	case DamageResultDamageTypeFire:
-		*s = DamageResultDamageTypeFire
+	case DamageCalculationResultDamageTypeFire:
+		*s = DamageCalculationResultDamageTypeFire
 		return nil
-	case DamageResultDamageTypeCold:
-		*s = DamageResultDamageTypeCold
+	case DamageCalculationResultDamageTypeCold:
+		*s = DamageCalculationResultDamageTypeCold
 		return nil
-	case DamageResultDamageTypeLightning:
-		*s = DamageResultDamageTypeLightning
+	case DamageCalculationResultDamageTypeLightning:
+		*s = DamageCalculationResultDamageTypeLightning
 		return nil
-	case DamageResultDamageTypePoison:
-		*s = DamageResultDamageTypePoison
+	case DamageCalculationResultDamageTypePoison:
+		*s = DamageCalculationResultDamageTypePoison
 		return nil
-	case DamageResultDamageTypeCyber:
-		*s = DamageResultDamageTypeCyber
+	case DamageCalculationResultDamageTypeCyber:
+		*s = DamageCalculationResultDamageTypeCyber
 		return nil
-	case DamageResultDamageTypeRadiation:
-		*s = DamageResultDamageTypeRadiation
+	case DamageCalculationResultDamageTypeRadiation:
+		*s = DamageCalculationResultDamageTypeRadiation
 		return nil
-	case DamageResultDamageTypeExplosive:
-		*s = DamageResultDamageTypeExplosive
+	case DamageCalculationResultDamageTypeExplosive:
+		*s = DamageCalculationResultDamageTypeExplosive
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -2038,7 +2154,7 @@ func (s *DamageResultDamageType) UnmarshalText(data []byte) error {
 }
 
 // Target stats snapshot at calculation time.
-type DamageResultTargetStats struct {
+type DamageCalculationResultTargetStats struct {
 	// Current HP before damage.
 	CurrentHp OptInt32 `json:"current_hp"`
 	// Maximum HP.
@@ -2048,32 +2164,32 @@ type DamageResultTargetStats struct {
 }
 
 // GetCurrentHp returns the value of CurrentHp.
-func (s *DamageResultTargetStats) GetCurrentHp() OptInt32 {
+func (s *DamageCalculationResultTargetStats) GetCurrentHp() OptInt32 {
 	return s.CurrentHp
 }
 
 // GetMaxHp returns the value of MaxHp.
-func (s *DamageResultTargetStats) GetMaxHp() OptInt32 {
+func (s *DamageCalculationResultTargetStats) GetMaxHp() OptInt32 {
 	return s.MaxHp
 }
 
 // GetArmorRating returns the value of ArmorRating.
-func (s *DamageResultTargetStats) GetArmorRating() OptInt32 {
+func (s *DamageCalculationResultTargetStats) GetArmorRating() OptInt32 {
 	return s.ArmorRating
 }
 
 // SetCurrentHp sets the value of CurrentHp.
-func (s *DamageResultTargetStats) SetCurrentHp(val OptInt32) {
+func (s *DamageCalculationResultTargetStats) SetCurrentHp(val OptInt32) {
 	s.CurrentHp = val
 }
 
 // SetMaxHp sets the value of MaxHp.
-func (s *DamageResultTargetStats) SetMaxHp(val OptInt32) {
+func (s *DamageCalculationResultTargetStats) SetMaxHp(val OptInt32) {
 	s.MaxHp = val
 }
 
 // SetArmorRating sets the value of ArmorRating.
-func (s *DamageResultTargetStats) SetArmorRating(val OptInt32) {
+func (s *DamageCalculationResultTargetStats) SetArmorRating(val OptInt32) {
 	s.ArmorRating = val
 }
 
@@ -2085,7 +2201,7 @@ func (s *DamageResultTargetStats) SetArmorRating(val OptInt32) {
 // - Objects
 // - Booleans last
 // Expected memory: ~56 bytes/instance.
-// Ref: #/components/schemas/damage-validation-request
+// Ref: #/components/schemas/DamageValidationRequest
 type DamageValidationRequest struct {
 	// Combat session ID.
 	SessionID uuid.UUID `json:"session_id"`
@@ -2111,10 +2227,6 @@ type DamageValidationRequest struct {
 	WasCritical OptBool `json:"was_critical"`
 	// Client reported headshot.
 	WasHeadshot OptBool `json:"was_headshot"`
-	// Modifier reported by client.
-	ClientModifier OptDamageValidationRequestClientModifier `json:"ClientModifier"`
-	// 3D vector coordinates.
-	Vector3 OptDamageValidationRequestVector3 `json:"Vector3"`
 }
 
 // GetSessionID returns the value of SessionID.
@@ -2177,16 +2289,6 @@ func (s *DamageValidationRequest) GetWasHeadshot() OptBool {
 	return s.WasHeadshot
 }
 
-// GetClientModifier returns the value of ClientModifier.
-func (s *DamageValidationRequest) GetClientModifier() OptDamageValidationRequestClientModifier {
-	return s.ClientModifier
-}
-
-// GetVector3 returns the value of Vector3.
-func (s *DamageValidationRequest) GetVector3() OptDamageValidationRequestVector3 {
-	return s.Vector3
-}
-
 // SetSessionID sets the value of SessionID.
 func (s *DamageValidationRequest) SetSessionID(val uuid.UUID) {
 	s.SessionID = val
@@ -2245,107 +2347,6 @@ func (s *DamageValidationRequest) SetWasCritical(val OptBool) {
 // SetWasHeadshot sets the value of WasHeadshot.
 func (s *DamageValidationRequest) SetWasHeadshot(val OptBool) {
 	s.WasHeadshot = val
-}
-
-// SetClientModifier sets the value of ClientModifier.
-func (s *DamageValidationRequest) SetClientModifier(val OptDamageValidationRequestClientModifier) {
-	s.ClientModifier = val
-}
-
-// SetVector3 sets the value of Vector3.
-func (s *DamageValidationRequest) SetVector3(val OptDamageValidationRequestVector3) {
-	s.Vector3 = val
-}
-
-// Modifier reported by client.
-type DamageValidationRequestClientModifier struct {
-	// Modifier type.
-	Type DamageValidationRequestClientModifierType `json:"type"`
-	// Modifier value.
-	Value float32 `json:"value"`
-}
-
-// GetType returns the value of Type.
-func (s *DamageValidationRequestClientModifier) GetType() DamageValidationRequestClientModifierType {
-	return s.Type
-}
-
-// GetValue returns the value of Value.
-func (s *DamageValidationRequestClientModifier) GetValue() float32 {
-	return s.Value
-}
-
-// SetType sets the value of Type.
-func (s *DamageValidationRequestClientModifier) SetType(val DamageValidationRequestClientModifierType) {
-	s.Type = val
-}
-
-// SetValue sets the value of Value.
-func (s *DamageValidationRequestClientModifier) SetValue(val float32) {
-	s.Value = val
-}
-
-// Modifier type.
-type DamageValidationRequestClientModifierType string
-
-const (
-	DamageValidationRequestClientModifierTypeCriticalMultiplier DamageValidationRequestClientModifierType = "critical_multiplier"
-	DamageValidationRequestClientModifierTypeRangeModifier      DamageValidationRequestClientModifierType = "range_modifier"
-	DamageValidationRequestClientModifierTypeWeakSpotBonus      DamageValidationRequestClientModifierType = "weak_spot_bonus"
-	DamageValidationRequestClientModifierTypeArmorPenetration   DamageValidationRequestClientModifierType = "armor_penetration"
-	DamageValidationRequestClientModifierTypeElementalDamage    DamageValidationRequestClientModifierType = "elemental_damage"
-)
-
-// AllValues returns all DamageValidationRequestClientModifierType values.
-func (DamageValidationRequestClientModifierType) AllValues() []DamageValidationRequestClientModifierType {
-	return []DamageValidationRequestClientModifierType{
-		DamageValidationRequestClientModifierTypeCriticalMultiplier,
-		DamageValidationRequestClientModifierTypeRangeModifier,
-		DamageValidationRequestClientModifierTypeWeakSpotBonus,
-		DamageValidationRequestClientModifierTypeArmorPenetration,
-		DamageValidationRequestClientModifierTypeElementalDamage,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s DamageValidationRequestClientModifierType) MarshalText() ([]byte, error) {
-	switch s {
-	case DamageValidationRequestClientModifierTypeCriticalMultiplier:
-		return []byte(s), nil
-	case DamageValidationRequestClientModifierTypeRangeModifier:
-		return []byte(s), nil
-	case DamageValidationRequestClientModifierTypeWeakSpotBonus:
-		return []byte(s), nil
-	case DamageValidationRequestClientModifierTypeArmorPenetration:
-		return []byte(s), nil
-	case DamageValidationRequestClientModifierTypeElementalDamage:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DamageValidationRequestClientModifierType) UnmarshalText(data []byte) error {
-	switch DamageValidationRequestClientModifierType(data) {
-	case DamageValidationRequestClientModifierTypeCriticalMultiplier:
-		*s = DamageValidationRequestClientModifierTypeCriticalMultiplier
-		return nil
-	case DamageValidationRequestClientModifierTypeRangeModifier:
-		*s = DamageValidationRequestClientModifierTypeRangeModifier
-		return nil
-	case DamageValidationRequestClientModifierTypeWeakSpotBonus:
-		*s = DamageValidationRequestClientModifierTypeWeakSpotBonus
-		return nil
-	case DamageValidationRequestClientModifierTypeArmorPenetration:
-		*s = DamageValidationRequestClientModifierTypeArmorPenetration
-		return nil
-	case DamageValidationRequestClientModifierTypeElementalDamage:
-		*s = DamageValidationRequestClientModifierTypeElementalDamage
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
 }
 
 // Modifier reported by client.
@@ -2643,46 +2644,6 @@ func (s *DamageValidationRequestPositionDataTargetPos) SetZ(val float32) {
 	s.Z = val
 }
 
-// 3D vector coordinates.
-type DamageValidationRequestVector3 struct {
-	// X coordinate.
-	X float32 `json:"x"`
-	// Y coordinate.
-	Y float32 `json:"y"`
-	// Z coordinate.
-	Z float32 `json:"z"`
-}
-
-// GetX returns the value of X.
-func (s *DamageValidationRequestVector3) GetX() float32 {
-	return s.X
-}
-
-// GetY returns the value of Y.
-func (s *DamageValidationRequestVector3) GetY() float32 {
-	return s.Y
-}
-
-// GetZ returns the value of Z.
-func (s *DamageValidationRequestVector3) GetZ() float32 {
-	return s.Z
-}
-
-// SetX sets the value of X.
-func (s *DamageValidationRequestVector3) SetX(val float32) {
-	s.X = val
-}
-
-// SetY sets the value of Y.
-func (s *DamageValidationRequestVector3) SetY(val float32) {
-	s.Y = val
-}
-
-// SetZ sets the value of Z.
-func (s *DamageValidationRequestVector3) SetZ(val float32) {
-	s.Z = val
-}
-
 // BACKEND NOTE: Anti-cheat validation result.
 // Fields ordered for struct alignment (large → small):
 // - UUIDs first
@@ -2691,7 +2652,7 @@ func (s *DamageValidationRequestVector3) SetZ(val float32) {
 // - Objects
 // - Booleans last
 // Expected memory: ~48 bytes/instance.
-// Ref: #/components/schemas/damage-validation-result
+// Ref: #/components/schemas/DamageValidationResult
 type DamageValidationResult struct {
 	// Combat session ID.
 	SessionID uuid.UUID `json:"session_id"`
@@ -2715,10 +2676,6 @@ type DamageValidationResult struct {
 	RequiresServerCorrection OptBool `json:"requires_server_correction"`
 	// Whether this event should be flagged for manual review.
 	FlaggedForReview OptBool `json:"flagged_for_review"`
-	// Individual validation issue detected.
-	ValidationIssue OptDamageValidationResultValidationIssue `json:"ValidationIssue"`
-	// Corrected modifier value.
-	CorrectedModifier OptDamageValidationResultCorrectedModifier `json:"CorrectedModifier"`
 }
 
 // GetSessionID returns the value of SessionID.
@@ -2776,16 +2733,6 @@ func (s *DamageValidationResult) GetFlaggedForReview() OptBool {
 	return s.FlaggedForReview
 }
 
-// GetValidationIssue returns the value of ValidationIssue.
-func (s *DamageValidationResult) GetValidationIssue() OptDamageValidationResultValidationIssue {
-	return s.ValidationIssue
-}
-
-// GetCorrectedModifier returns the value of CorrectedModifier.
-func (s *DamageValidationResult) GetCorrectedModifier() OptDamageValidationResultCorrectedModifier {
-	return s.CorrectedModifier
-}
-
 // SetSessionID sets the value of SessionID.
 func (s *DamageValidationResult) SetSessionID(val uuid.UUID) {
 	s.SessionID = val
@@ -2841,57 +2788,7 @@ func (s *DamageValidationResult) SetFlaggedForReview(val OptBool) {
 	s.FlaggedForReview = val
 }
 
-// SetValidationIssue sets the value of ValidationIssue.
-func (s *DamageValidationResult) SetValidationIssue(val OptDamageValidationResultValidationIssue) {
-	s.ValidationIssue = val
-}
-
-// SetCorrectedModifier sets the value of CorrectedModifier.
-func (s *DamageValidationResult) SetCorrectedModifier(val OptDamageValidationResultCorrectedModifier) {
-	s.CorrectedModifier = val
-}
-
 func (*DamageValidationResult) validateDamageRes() {}
-
-// Corrected modifier value.
-type DamageValidationResultCorrectedModifier struct {
-	// Modifier type.
-	Type string `json:"type"`
-	// Server-calculated correct value.
-	CorrectValue float32 `json:"correct_value"`
-	// Client-reported value.
-	ReportedValue OptFloat32 `json:"reported_value"`
-}
-
-// GetType returns the value of Type.
-func (s *DamageValidationResultCorrectedModifier) GetType() string {
-	return s.Type
-}
-
-// GetCorrectValue returns the value of CorrectValue.
-func (s *DamageValidationResultCorrectedModifier) GetCorrectValue() float32 {
-	return s.CorrectValue
-}
-
-// GetReportedValue returns the value of ReportedValue.
-func (s *DamageValidationResultCorrectedModifier) GetReportedValue() OptFloat32 {
-	return s.ReportedValue
-}
-
-// SetType sets the value of Type.
-func (s *DamageValidationResultCorrectedModifier) SetType(val string) {
-	s.Type = val
-}
-
-// SetCorrectValue sets the value of CorrectValue.
-func (s *DamageValidationResultCorrectedModifier) SetCorrectValue(val float32) {
-	s.CorrectValue = val
-}
-
-// SetReportedValue sets the value of ReportedValue.
-func (s *DamageValidationResultCorrectedModifier) SetReportedValue(val OptFloat32) {
-	s.ReportedValue = val
-}
 
 // Corrected values if validation failed.
 type DamageValidationResultCorrectedValues struct {
@@ -2959,191 +2856,6 @@ func (s *DamageValidationResultCorrectedValuesCorrectedModifiersItem) SetCorrect
 // SetReportedValue sets the value of ReportedValue.
 func (s *DamageValidationResultCorrectedValuesCorrectedModifiersItem) SetReportedValue(val OptFloat32) {
 	s.ReportedValue = val
-}
-
-// Individual validation issue detected.
-type DamageValidationResultValidationIssue struct {
-	// Type of validation issue.
-	IssueType DamageValidationResultValidationIssueIssueType `json:"issue_type"`
-	// Issue severity level.
-	Severity DamageValidationResultValidationIssueSeverity `json:"severity"`
-	// Human-readable description of the issue.
-	Description string `json:"description"`
-	// Quantitative evidence for the issue.
-	EvidenceValue OptFloat32 `json:"evidence_value"`
-}
-
-// GetIssueType returns the value of IssueType.
-func (s *DamageValidationResultValidationIssue) GetIssueType() DamageValidationResultValidationIssueIssueType {
-	return s.IssueType
-}
-
-// GetSeverity returns the value of Severity.
-func (s *DamageValidationResultValidationIssue) GetSeverity() DamageValidationResultValidationIssueSeverity {
-	return s.Severity
-}
-
-// GetDescription returns the value of Description.
-func (s *DamageValidationResultValidationIssue) GetDescription() string {
-	return s.Description
-}
-
-// GetEvidenceValue returns the value of EvidenceValue.
-func (s *DamageValidationResultValidationIssue) GetEvidenceValue() OptFloat32 {
-	return s.EvidenceValue
-}
-
-// SetIssueType sets the value of IssueType.
-func (s *DamageValidationResultValidationIssue) SetIssueType(val DamageValidationResultValidationIssueIssueType) {
-	s.IssueType = val
-}
-
-// SetSeverity sets the value of Severity.
-func (s *DamageValidationResultValidationIssue) SetSeverity(val DamageValidationResultValidationIssueSeverity) {
-	s.Severity = val
-}
-
-// SetDescription sets the value of Description.
-func (s *DamageValidationResultValidationIssue) SetDescription(val string) {
-	s.Description = val
-}
-
-// SetEvidenceValue sets the value of EvidenceValue.
-func (s *DamageValidationResultValidationIssue) SetEvidenceValue(val OptFloat32) {
-	s.EvidenceValue = val
-}
-
-// Type of validation issue.
-type DamageValidationResultValidationIssueIssueType string
-
-const (
-	DamageValidationResultValidationIssueIssueTypeDamageMismatch        DamageValidationResultValidationIssueIssueType = "damage_mismatch"
-	DamageValidationResultValidationIssueIssueTypeInvalidModifier       DamageValidationResultValidationIssueIssueType = "invalid_modifier"
-	DamageValidationResultValidationIssueIssueTypeLineOfSightBlocked    DamageValidationResultValidationIssueIssueType = "line_of_sight_blocked"
-	DamageValidationResultValidationIssueIssueTypeImpossibleTiming      DamageValidationResultValidationIssueIssueType = "impossible_timing"
-	DamageValidationResultValidationIssueIssueTypeSuspiciousPattern     DamageValidationResultValidationIssueIssueType = "suspicious_pattern"
-	DamageValidationResultValidationIssueIssueTypeWeaponHashMismatch    DamageValidationResultValidationIssueIssueType = "weapon_hash_mismatch"
-	DamageValidationResultValidationIssueIssueTypePositionInconsistency DamageValidationResultValidationIssueIssueType = "position_inconsistency"
-)
-
-// AllValues returns all DamageValidationResultValidationIssueIssueType values.
-func (DamageValidationResultValidationIssueIssueType) AllValues() []DamageValidationResultValidationIssueIssueType {
-	return []DamageValidationResultValidationIssueIssueType{
-		DamageValidationResultValidationIssueIssueTypeDamageMismatch,
-		DamageValidationResultValidationIssueIssueTypeInvalidModifier,
-		DamageValidationResultValidationIssueIssueTypeLineOfSightBlocked,
-		DamageValidationResultValidationIssueIssueTypeImpossibleTiming,
-		DamageValidationResultValidationIssueIssueTypeSuspiciousPattern,
-		DamageValidationResultValidationIssueIssueTypeWeaponHashMismatch,
-		DamageValidationResultValidationIssueIssueTypePositionInconsistency,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s DamageValidationResultValidationIssueIssueType) MarshalText() ([]byte, error) {
-	switch s {
-	case DamageValidationResultValidationIssueIssueTypeDamageMismatch:
-		return []byte(s), nil
-	case DamageValidationResultValidationIssueIssueTypeInvalidModifier:
-		return []byte(s), nil
-	case DamageValidationResultValidationIssueIssueTypeLineOfSightBlocked:
-		return []byte(s), nil
-	case DamageValidationResultValidationIssueIssueTypeImpossibleTiming:
-		return []byte(s), nil
-	case DamageValidationResultValidationIssueIssueTypeSuspiciousPattern:
-		return []byte(s), nil
-	case DamageValidationResultValidationIssueIssueTypeWeaponHashMismatch:
-		return []byte(s), nil
-	case DamageValidationResultValidationIssueIssueTypePositionInconsistency:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DamageValidationResultValidationIssueIssueType) UnmarshalText(data []byte) error {
-	switch DamageValidationResultValidationIssueIssueType(data) {
-	case DamageValidationResultValidationIssueIssueTypeDamageMismatch:
-		*s = DamageValidationResultValidationIssueIssueTypeDamageMismatch
-		return nil
-	case DamageValidationResultValidationIssueIssueTypeInvalidModifier:
-		*s = DamageValidationResultValidationIssueIssueTypeInvalidModifier
-		return nil
-	case DamageValidationResultValidationIssueIssueTypeLineOfSightBlocked:
-		*s = DamageValidationResultValidationIssueIssueTypeLineOfSightBlocked
-		return nil
-	case DamageValidationResultValidationIssueIssueTypeImpossibleTiming:
-		*s = DamageValidationResultValidationIssueIssueTypeImpossibleTiming
-		return nil
-	case DamageValidationResultValidationIssueIssueTypeSuspiciousPattern:
-		*s = DamageValidationResultValidationIssueIssueTypeSuspiciousPattern
-		return nil
-	case DamageValidationResultValidationIssueIssueTypeWeaponHashMismatch:
-		*s = DamageValidationResultValidationIssueIssueTypeWeaponHashMismatch
-		return nil
-	case DamageValidationResultValidationIssueIssueTypePositionInconsistency:
-		*s = DamageValidationResultValidationIssueIssueTypePositionInconsistency
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Issue severity level.
-type DamageValidationResultValidationIssueSeverity string
-
-const (
-	DamageValidationResultValidationIssueSeverityLow      DamageValidationResultValidationIssueSeverity = "low"
-	DamageValidationResultValidationIssueSeverityMedium   DamageValidationResultValidationIssueSeverity = "medium"
-	DamageValidationResultValidationIssueSeverityHigh     DamageValidationResultValidationIssueSeverity = "high"
-	DamageValidationResultValidationIssueSeverityCritical DamageValidationResultValidationIssueSeverity = "critical"
-)
-
-// AllValues returns all DamageValidationResultValidationIssueSeverity values.
-func (DamageValidationResultValidationIssueSeverity) AllValues() []DamageValidationResultValidationIssueSeverity {
-	return []DamageValidationResultValidationIssueSeverity{
-		DamageValidationResultValidationIssueSeverityLow,
-		DamageValidationResultValidationIssueSeverityMedium,
-		DamageValidationResultValidationIssueSeverityHigh,
-		DamageValidationResultValidationIssueSeverityCritical,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s DamageValidationResultValidationIssueSeverity) MarshalText() ([]byte, error) {
-	switch s {
-	case DamageValidationResultValidationIssueSeverityLow:
-		return []byte(s), nil
-	case DamageValidationResultValidationIssueSeverityMedium:
-		return []byte(s), nil
-	case DamageValidationResultValidationIssueSeverityHigh:
-		return []byte(s), nil
-	case DamageValidationResultValidationIssueSeverityCritical:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DamageValidationResultValidationIssueSeverity) UnmarshalText(data []byte) error {
-	switch DamageValidationResultValidationIssueSeverity(data) {
-	case DamageValidationResultValidationIssueSeverityLow:
-		*s = DamageValidationResultValidationIssueSeverityLow
-		return nil
-	case DamageValidationResultValidationIssueSeverityMedium:
-		*s = DamageValidationResultValidationIssueSeverityMedium
-		return nil
-	case DamageValidationResultValidationIssueSeverityHigh:
-		*s = DamageValidationResultValidationIssueSeverityHigh
-		return nil
-	case DamageValidationResultValidationIssueSeverityCritical:
-		*s = DamageValidationResultValidationIssueSeverityCritical
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
 }
 
 // Individual validation issue detected.
@@ -3387,1106 +3099,6 @@ func (s *DamageValidationResultValidationStatus) UnmarshalText(data []byte) erro
 	}
 }
 
-// BACKEND NOTE: Combat effects application request.
-// Fields ordered for struct alignment (large → small):
-// - UUIDs first
-// - Arrays
-// - Integers
-// - Objects
-// - Booleans last
-// Expected memory: ~48 bytes/instance.
-// Ref: #/components/schemas/effects-request
-type EffectsRequest struct {
-	// Combat participant to apply effects to.
-	ParticipantID uuid.UUID `json:"participant_id"`
-	// Effects to apply.
-	Effects []EffectsRequestEffectsItem `json:"effects"`
-	// Combat session ID (optional, for context).
-	SessionID OptInt64 `json:"session_id"`
-	// Request timestamp (unix milliseconds).
-	Timestamp OptInt64 `json:"timestamp"`
-	// Source of the effects.
-	SourceType OptEffectsRequestSourceType `json:"source_type"`
-	// Additional context for effect application.
-	Context OptEffectsRequestContext `json:"context"`
-	// Whether to override existing effects of same type.
-	OverrideExisting OptBool `json:"override_existing"`
-	// Whether effects can stack with existing ones.
-	StackEffects OptBool `json:"stack_effects"`
-	// Individual combat effect to apply.
-	CombatEffect OptEffectsRequestCombatEffect `json:"CombatEffect"`
-}
-
-// GetParticipantID returns the value of ParticipantID.
-func (s *EffectsRequest) GetParticipantID() uuid.UUID {
-	return s.ParticipantID
-}
-
-// GetEffects returns the value of Effects.
-func (s *EffectsRequest) GetEffects() []EffectsRequestEffectsItem {
-	return s.Effects
-}
-
-// GetSessionID returns the value of SessionID.
-func (s *EffectsRequest) GetSessionID() OptInt64 {
-	return s.SessionID
-}
-
-// GetTimestamp returns the value of Timestamp.
-func (s *EffectsRequest) GetTimestamp() OptInt64 {
-	return s.Timestamp
-}
-
-// GetSourceType returns the value of SourceType.
-func (s *EffectsRequest) GetSourceType() OptEffectsRequestSourceType {
-	return s.SourceType
-}
-
-// GetContext returns the value of Context.
-func (s *EffectsRequest) GetContext() OptEffectsRequestContext {
-	return s.Context
-}
-
-// GetOverrideExisting returns the value of OverrideExisting.
-func (s *EffectsRequest) GetOverrideExisting() OptBool {
-	return s.OverrideExisting
-}
-
-// GetStackEffects returns the value of StackEffects.
-func (s *EffectsRequest) GetStackEffects() OptBool {
-	return s.StackEffects
-}
-
-// GetCombatEffect returns the value of CombatEffect.
-func (s *EffectsRequest) GetCombatEffect() OptEffectsRequestCombatEffect {
-	return s.CombatEffect
-}
-
-// SetParticipantID sets the value of ParticipantID.
-func (s *EffectsRequest) SetParticipantID(val uuid.UUID) {
-	s.ParticipantID = val
-}
-
-// SetEffects sets the value of Effects.
-func (s *EffectsRequest) SetEffects(val []EffectsRequestEffectsItem) {
-	s.Effects = val
-}
-
-// SetSessionID sets the value of SessionID.
-func (s *EffectsRequest) SetSessionID(val OptInt64) {
-	s.SessionID = val
-}
-
-// SetTimestamp sets the value of Timestamp.
-func (s *EffectsRequest) SetTimestamp(val OptInt64) {
-	s.Timestamp = val
-}
-
-// SetSourceType sets the value of SourceType.
-func (s *EffectsRequest) SetSourceType(val OptEffectsRequestSourceType) {
-	s.SourceType = val
-}
-
-// SetContext sets the value of Context.
-func (s *EffectsRequest) SetContext(val OptEffectsRequestContext) {
-	s.Context = val
-}
-
-// SetOverrideExisting sets the value of OverrideExisting.
-func (s *EffectsRequest) SetOverrideExisting(val OptBool) {
-	s.OverrideExisting = val
-}
-
-// SetStackEffects sets the value of StackEffects.
-func (s *EffectsRequest) SetStackEffects(val OptBool) {
-	s.StackEffects = val
-}
-
-// SetCombatEffect sets the value of CombatEffect.
-func (s *EffectsRequest) SetCombatEffect(val OptEffectsRequestCombatEffect) {
-	s.CombatEffect = val
-}
-
-// Individual combat effect to apply.
-type EffectsRequestCombatEffect struct {
-	// Type of combat effect.
-	EffectType EffectsRequestCombatEffectEffectType `json:"effect_type"`
-	// Effect duration in milliseconds.
-	DurationMs int32 `json:"duration_ms"`
-	// Source entity ID (weapon, ability, etc.).
-	SourceID uuid.UUID `json:"source_id"`
-	// Effect intensity multiplier.
-	Intensity OptFloat32 `json:"intensity"`
-	// Number of effect stacks.
-	Stacks OptInt32 `json:"stacks"`
-}
-
-// GetEffectType returns the value of EffectType.
-func (s *EffectsRequestCombatEffect) GetEffectType() EffectsRequestCombatEffectEffectType {
-	return s.EffectType
-}
-
-// GetDurationMs returns the value of DurationMs.
-func (s *EffectsRequestCombatEffect) GetDurationMs() int32 {
-	return s.DurationMs
-}
-
-// GetSourceID returns the value of SourceID.
-func (s *EffectsRequestCombatEffect) GetSourceID() uuid.UUID {
-	return s.SourceID
-}
-
-// GetIntensity returns the value of Intensity.
-func (s *EffectsRequestCombatEffect) GetIntensity() OptFloat32 {
-	return s.Intensity
-}
-
-// GetStacks returns the value of Stacks.
-func (s *EffectsRequestCombatEffect) GetStacks() OptInt32 {
-	return s.Stacks
-}
-
-// SetEffectType sets the value of EffectType.
-func (s *EffectsRequestCombatEffect) SetEffectType(val EffectsRequestCombatEffectEffectType) {
-	s.EffectType = val
-}
-
-// SetDurationMs sets the value of DurationMs.
-func (s *EffectsRequestCombatEffect) SetDurationMs(val int32) {
-	s.DurationMs = val
-}
-
-// SetSourceID sets the value of SourceID.
-func (s *EffectsRequestCombatEffect) SetSourceID(val uuid.UUID) {
-	s.SourceID = val
-}
-
-// SetIntensity sets the value of Intensity.
-func (s *EffectsRequestCombatEffect) SetIntensity(val OptFloat32) {
-	s.Intensity = val
-}
-
-// SetStacks sets the value of Stacks.
-func (s *EffectsRequestCombatEffect) SetStacks(val OptInt32) {
-	s.Stacks = val
-}
-
-// Type of combat effect.
-type EffectsRequestCombatEffectEffectType string
-
-const (
-	EffectsRequestCombatEffectEffectTypeBuffDamage              EffectsRequestCombatEffectEffectType = "buff_damage"
-	EffectsRequestCombatEffectEffectTypeDebuffDamageReduction   EffectsRequestCombatEffectEffectType = "debuff_damage_reduction"
-	EffectsRequestCombatEffectEffectTypeBuffSpeed               EffectsRequestCombatEffectEffectType = "buff_speed"
-	EffectsRequestCombatEffectEffectTypeDebuffSlow              EffectsRequestCombatEffectEffectType = "debuff_slow"
-	EffectsRequestCombatEffectEffectTypeBuffRegeneration        EffectsRequestCombatEffectEffectType = "buff_regeneration"
-	EffectsRequestCombatEffectEffectTypeDebuffPoison            EffectsRequestCombatEffectEffectType = "debuff_poison"
-	EffectsRequestCombatEffectEffectTypeBuffShield              EffectsRequestCombatEffectEffectType = "buff_shield"
-	EffectsRequestCombatEffectEffectTypeDebuffStun              EffectsRequestCombatEffectEffectType = "debuff_stun"
-	EffectsRequestCombatEffectEffectTypeBuffCriticalChance      EffectsRequestCombatEffectEffectType = "buff_critical_chance"
-	EffectsRequestCombatEffectEffectTypeDebuffAccuracyReduction EffectsRequestCombatEffectEffectType = "debuff_accuracy_reduction"
-)
-
-// AllValues returns all EffectsRequestCombatEffectEffectType values.
-func (EffectsRequestCombatEffectEffectType) AllValues() []EffectsRequestCombatEffectEffectType {
-	return []EffectsRequestCombatEffectEffectType{
-		EffectsRequestCombatEffectEffectTypeBuffDamage,
-		EffectsRequestCombatEffectEffectTypeDebuffDamageReduction,
-		EffectsRequestCombatEffectEffectTypeBuffSpeed,
-		EffectsRequestCombatEffectEffectTypeDebuffSlow,
-		EffectsRequestCombatEffectEffectTypeBuffRegeneration,
-		EffectsRequestCombatEffectEffectTypeDebuffPoison,
-		EffectsRequestCombatEffectEffectTypeBuffShield,
-		EffectsRequestCombatEffectEffectTypeDebuffStun,
-		EffectsRequestCombatEffectEffectTypeBuffCriticalChance,
-		EffectsRequestCombatEffectEffectTypeDebuffAccuracyReduction,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s EffectsRequestCombatEffectEffectType) MarshalText() ([]byte, error) {
-	switch s {
-	case EffectsRequestCombatEffectEffectTypeBuffDamage:
-		return []byte(s), nil
-	case EffectsRequestCombatEffectEffectTypeDebuffDamageReduction:
-		return []byte(s), nil
-	case EffectsRequestCombatEffectEffectTypeBuffSpeed:
-		return []byte(s), nil
-	case EffectsRequestCombatEffectEffectTypeDebuffSlow:
-		return []byte(s), nil
-	case EffectsRequestCombatEffectEffectTypeBuffRegeneration:
-		return []byte(s), nil
-	case EffectsRequestCombatEffectEffectTypeDebuffPoison:
-		return []byte(s), nil
-	case EffectsRequestCombatEffectEffectTypeBuffShield:
-		return []byte(s), nil
-	case EffectsRequestCombatEffectEffectTypeDebuffStun:
-		return []byte(s), nil
-	case EffectsRequestCombatEffectEffectTypeBuffCriticalChance:
-		return []byte(s), nil
-	case EffectsRequestCombatEffectEffectTypeDebuffAccuracyReduction:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *EffectsRequestCombatEffectEffectType) UnmarshalText(data []byte) error {
-	switch EffectsRequestCombatEffectEffectType(data) {
-	case EffectsRequestCombatEffectEffectTypeBuffDamage:
-		*s = EffectsRequestCombatEffectEffectTypeBuffDamage
-		return nil
-	case EffectsRequestCombatEffectEffectTypeDebuffDamageReduction:
-		*s = EffectsRequestCombatEffectEffectTypeDebuffDamageReduction
-		return nil
-	case EffectsRequestCombatEffectEffectTypeBuffSpeed:
-		*s = EffectsRequestCombatEffectEffectTypeBuffSpeed
-		return nil
-	case EffectsRequestCombatEffectEffectTypeDebuffSlow:
-		*s = EffectsRequestCombatEffectEffectTypeDebuffSlow
-		return nil
-	case EffectsRequestCombatEffectEffectTypeBuffRegeneration:
-		*s = EffectsRequestCombatEffectEffectTypeBuffRegeneration
-		return nil
-	case EffectsRequestCombatEffectEffectTypeDebuffPoison:
-		*s = EffectsRequestCombatEffectEffectTypeDebuffPoison
-		return nil
-	case EffectsRequestCombatEffectEffectTypeBuffShield:
-		*s = EffectsRequestCombatEffectEffectTypeBuffShield
-		return nil
-	case EffectsRequestCombatEffectEffectTypeDebuffStun:
-		*s = EffectsRequestCombatEffectEffectTypeDebuffStun
-		return nil
-	case EffectsRequestCombatEffectEffectTypeBuffCriticalChance:
-		*s = EffectsRequestCombatEffectEffectTypeBuffCriticalChance
-		return nil
-	case EffectsRequestCombatEffectEffectTypeDebuffAccuracyReduction:
-		*s = EffectsRequestCombatEffectEffectTypeDebuffAccuracyReduction
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Additional context for effect application.
-type EffectsRequestContext struct {
-	// Combat area/location ID.
-	AreaID OptString `json:"area_id"`
-	// Current weather affecting effects.
-	WeatherConditions OptEffectsRequestContextWeatherConditions `json:"weather_conditions"`
-}
-
-// GetAreaID returns the value of AreaID.
-func (s *EffectsRequestContext) GetAreaID() OptString {
-	return s.AreaID
-}
-
-// GetWeatherConditions returns the value of WeatherConditions.
-func (s *EffectsRequestContext) GetWeatherConditions() OptEffectsRequestContextWeatherConditions {
-	return s.WeatherConditions
-}
-
-// SetAreaID sets the value of AreaID.
-func (s *EffectsRequestContext) SetAreaID(val OptString) {
-	s.AreaID = val
-}
-
-// SetWeatherConditions sets the value of WeatherConditions.
-func (s *EffectsRequestContext) SetWeatherConditions(val OptEffectsRequestContextWeatherConditions) {
-	s.WeatherConditions = val
-}
-
-// Current weather affecting effects.
-type EffectsRequestContextWeatherConditions string
-
-const (
-	EffectsRequestContextWeatherConditionsClear EffectsRequestContextWeatherConditions = "clear"
-	EffectsRequestContextWeatherConditionsRain  EffectsRequestContextWeatherConditions = "rain"
-	EffectsRequestContextWeatherConditionsStorm EffectsRequestContextWeatherConditions = "storm"
-	EffectsRequestContextWeatherConditionsFog   EffectsRequestContextWeatherConditions = "fog"
-)
-
-// AllValues returns all EffectsRequestContextWeatherConditions values.
-func (EffectsRequestContextWeatherConditions) AllValues() []EffectsRequestContextWeatherConditions {
-	return []EffectsRequestContextWeatherConditions{
-		EffectsRequestContextWeatherConditionsClear,
-		EffectsRequestContextWeatherConditionsRain,
-		EffectsRequestContextWeatherConditionsStorm,
-		EffectsRequestContextWeatherConditionsFog,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s EffectsRequestContextWeatherConditions) MarshalText() ([]byte, error) {
-	switch s {
-	case EffectsRequestContextWeatherConditionsClear:
-		return []byte(s), nil
-	case EffectsRequestContextWeatherConditionsRain:
-		return []byte(s), nil
-	case EffectsRequestContextWeatherConditionsStorm:
-		return []byte(s), nil
-	case EffectsRequestContextWeatherConditionsFog:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *EffectsRequestContextWeatherConditions) UnmarshalText(data []byte) error {
-	switch EffectsRequestContextWeatherConditions(data) {
-	case EffectsRequestContextWeatherConditionsClear:
-		*s = EffectsRequestContextWeatherConditionsClear
-		return nil
-	case EffectsRequestContextWeatherConditionsRain:
-		*s = EffectsRequestContextWeatherConditionsRain
-		return nil
-	case EffectsRequestContextWeatherConditionsStorm:
-		*s = EffectsRequestContextWeatherConditionsStorm
-		return nil
-	case EffectsRequestContextWeatherConditionsFog:
-		*s = EffectsRequestContextWeatherConditionsFog
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Individual combat effect to apply.
-type EffectsRequestEffectsItem struct {
-	// Type of combat effect.
-	EffectType EffectsRequestEffectsItemEffectType `json:"effect_type"`
-	// Effect duration in milliseconds.
-	DurationMs int32 `json:"duration_ms"`
-	// Source entity ID (weapon, ability, etc.).
-	SourceID uuid.UUID `json:"source_id"`
-	// Effect intensity multiplier.
-	Intensity OptFloat32 `json:"intensity"`
-	// Number of effect stacks.
-	Stacks OptInt32 `json:"stacks"`
-}
-
-// GetEffectType returns the value of EffectType.
-func (s *EffectsRequestEffectsItem) GetEffectType() EffectsRequestEffectsItemEffectType {
-	return s.EffectType
-}
-
-// GetDurationMs returns the value of DurationMs.
-func (s *EffectsRequestEffectsItem) GetDurationMs() int32 {
-	return s.DurationMs
-}
-
-// GetSourceID returns the value of SourceID.
-func (s *EffectsRequestEffectsItem) GetSourceID() uuid.UUID {
-	return s.SourceID
-}
-
-// GetIntensity returns the value of Intensity.
-func (s *EffectsRequestEffectsItem) GetIntensity() OptFloat32 {
-	return s.Intensity
-}
-
-// GetStacks returns the value of Stacks.
-func (s *EffectsRequestEffectsItem) GetStacks() OptInt32 {
-	return s.Stacks
-}
-
-// SetEffectType sets the value of EffectType.
-func (s *EffectsRequestEffectsItem) SetEffectType(val EffectsRequestEffectsItemEffectType) {
-	s.EffectType = val
-}
-
-// SetDurationMs sets the value of DurationMs.
-func (s *EffectsRequestEffectsItem) SetDurationMs(val int32) {
-	s.DurationMs = val
-}
-
-// SetSourceID sets the value of SourceID.
-func (s *EffectsRequestEffectsItem) SetSourceID(val uuid.UUID) {
-	s.SourceID = val
-}
-
-// SetIntensity sets the value of Intensity.
-func (s *EffectsRequestEffectsItem) SetIntensity(val OptFloat32) {
-	s.Intensity = val
-}
-
-// SetStacks sets the value of Stacks.
-func (s *EffectsRequestEffectsItem) SetStacks(val OptInt32) {
-	s.Stacks = val
-}
-
-// Type of combat effect.
-type EffectsRequestEffectsItemEffectType string
-
-const (
-	EffectsRequestEffectsItemEffectTypeBuffDamage              EffectsRequestEffectsItemEffectType = "buff_damage"
-	EffectsRequestEffectsItemEffectTypeDebuffDamageReduction   EffectsRequestEffectsItemEffectType = "debuff_damage_reduction"
-	EffectsRequestEffectsItemEffectTypeBuffSpeed               EffectsRequestEffectsItemEffectType = "buff_speed"
-	EffectsRequestEffectsItemEffectTypeDebuffSlow              EffectsRequestEffectsItemEffectType = "debuff_slow"
-	EffectsRequestEffectsItemEffectTypeBuffRegeneration        EffectsRequestEffectsItemEffectType = "buff_regeneration"
-	EffectsRequestEffectsItemEffectTypeDebuffPoison            EffectsRequestEffectsItemEffectType = "debuff_poison"
-	EffectsRequestEffectsItemEffectTypeBuffShield              EffectsRequestEffectsItemEffectType = "buff_shield"
-	EffectsRequestEffectsItemEffectTypeDebuffStun              EffectsRequestEffectsItemEffectType = "debuff_stun"
-	EffectsRequestEffectsItemEffectTypeBuffCriticalChance      EffectsRequestEffectsItemEffectType = "buff_critical_chance"
-	EffectsRequestEffectsItemEffectTypeDebuffAccuracyReduction EffectsRequestEffectsItemEffectType = "debuff_accuracy_reduction"
-)
-
-// AllValues returns all EffectsRequestEffectsItemEffectType values.
-func (EffectsRequestEffectsItemEffectType) AllValues() []EffectsRequestEffectsItemEffectType {
-	return []EffectsRequestEffectsItemEffectType{
-		EffectsRequestEffectsItemEffectTypeBuffDamage,
-		EffectsRequestEffectsItemEffectTypeDebuffDamageReduction,
-		EffectsRequestEffectsItemEffectTypeBuffSpeed,
-		EffectsRequestEffectsItemEffectTypeDebuffSlow,
-		EffectsRequestEffectsItemEffectTypeBuffRegeneration,
-		EffectsRequestEffectsItemEffectTypeDebuffPoison,
-		EffectsRequestEffectsItemEffectTypeBuffShield,
-		EffectsRequestEffectsItemEffectTypeDebuffStun,
-		EffectsRequestEffectsItemEffectTypeBuffCriticalChance,
-		EffectsRequestEffectsItemEffectTypeDebuffAccuracyReduction,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s EffectsRequestEffectsItemEffectType) MarshalText() ([]byte, error) {
-	switch s {
-	case EffectsRequestEffectsItemEffectTypeBuffDamage:
-		return []byte(s), nil
-	case EffectsRequestEffectsItemEffectTypeDebuffDamageReduction:
-		return []byte(s), nil
-	case EffectsRequestEffectsItemEffectTypeBuffSpeed:
-		return []byte(s), nil
-	case EffectsRequestEffectsItemEffectTypeDebuffSlow:
-		return []byte(s), nil
-	case EffectsRequestEffectsItemEffectTypeBuffRegeneration:
-		return []byte(s), nil
-	case EffectsRequestEffectsItemEffectTypeDebuffPoison:
-		return []byte(s), nil
-	case EffectsRequestEffectsItemEffectTypeBuffShield:
-		return []byte(s), nil
-	case EffectsRequestEffectsItemEffectTypeDebuffStun:
-		return []byte(s), nil
-	case EffectsRequestEffectsItemEffectTypeBuffCriticalChance:
-		return []byte(s), nil
-	case EffectsRequestEffectsItemEffectTypeDebuffAccuracyReduction:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *EffectsRequestEffectsItemEffectType) UnmarshalText(data []byte) error {
-	switch EffectsRequestEffectsItemEffectType(data) {
-	case EffectsRequestEffectsItemEffectTypeBuffDamage:
-		*s = EffectsRequestEffectsItemEffectTypeBuffDamage
-		return nil
-	case EffectsRequestEffectsItemEffectTypeDebuffDamageReduction:
-		*s = EffectsRequestEffectsItemEffectTypeDebuffDamageReduction
-		return nil
-	case EffectsRequestEffectsItemEffectTypeBuffSpeed:
-		*s = EffectsRequestEffectsItemEffectTypeBuffSpeed
-		return nil
-	case EffectsRequestEffectsItemEffectTypeDebuffSlow:
-		*s = EffectsRequestEffectsItemEffectTypeDebuffSlow
-		return nil
-	case EffectsRequestEffectsItemEffectTypeBuffRegeneration:
-		*s = EffectsRequestEffectsItemEffectTypeBuffRegeneration
-		return nil
-	case EffectsRequestEffectsItemEffectTypeDebuffPoison:
-		*s = EffectsRequestEffectsItemEffectTypeDebuffPoison
-		return nil
-	case EffectsRequestEffectsItemEffectTypeBuffShield:
-		*s = EffectsRequestEffectsItemEffectTypeBuffShield
-		return nil
-	case EffectsRequestEffectsItemEffectTypeDebuffStun:
-		*s = EffectsRequestEffectsItemEffectTypeDebuffStun
-		return nil
-	case EffectsRequestEffectsItemEffectTypeBuffCriticalChance:
-		*s = EffectsRequestEffectsItemEffectTypeBuffCriticalChance
-		return nil
-	case EffectsRequestEffectsItemEffectTypeDebuffAccuracyReduction:
-		*s = EffectsRequestEffectsItemEffectTypeDebuffAccuracyReduction
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Source of the effects.
-type EffectsRequestSourceType string
-
-const (
-	EffectsRequestSourceTypeWeapon        EffectsRequestSourceType = "weapon"
-	EffectsRequestSourceTypeAbility       EffectsRequestSourceType = "ability"
-	EffectsRequestSourceTypeImplant       EffectsRequestSourceType = "implant"
-	EffectsRequestSourceTypeEnvironmental EffectsRequestSourceType = "environmental"
-	EffectsRequestSourceTypeStatusEffect  EffectsRequestSourceType = "status_effect"
-)
-
-// AllValues returns all EffectsRequestSourceType values.
-func (EffectsRequestSourceType) AllValues() []EffectsRequestSourceType {
-	return []EffectsRequestSourceType{
-		EffectsRequestSourceTypeWeapon,
-		EffectsRequestSourceTypeAbility,
-		EffectsRequestSourceTypeImplant,
-		EffectsRequestSourceTypeEnvironmental,
-		EffectsRequestSourceTypeStatusEffect,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s EffectsRequestSourceType) MarshalText() ([]byte, error) {
-	switch s {
-	case EffectsRequestSourceTypeWeapon:
-		return []byte(s), nil
-	case EffectsRequestSourceTypeAbility:
-		return []byte(s), nil
-	case EffectsRequestSourceTypeImplant:
-		return []byte(s), nil
-	case EffectsRequestSourceTypeEnvironmental:
-		return []byte(s), nil
-	case EffectsRequestSourceTypeStatusEffect:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *EffectsRequestSourceType) UnmarshalText(data []byte) error {
-	switch EffectsRequestSourceType(data) {
-	case EffectsRequestSourceTypeWeapon:
-		*s = EffectsRequestSourceTypeWeapon
-		return nil
-	case EffectsRequestSourceTypeAbility:
-		*s = EffectsRequestSourceTypeAbility
-		return nil
-	case EffectsRequestSourceTypeImplant:
-		*s = EffectsRequestSourceTypeImplant
-		return nil
-	case EffectsRequestSourceTypeEnvironmental:
-		*s = EffectsRequestSourceTypeEnvironmental
-		return nil
-	case EffectsRequestSourceTypeStatusEffect:
-		*s = EffectsRequestSourceTypeStatusEffect
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// BACKEND NOTE: Effects application result.
-// Fields ordered for struct alignment (large → small):
-// - UUIDs first
-// - Arrays
-// - Integers
-// - Objects
-// - Booleans last
-// Expected memory: ~40 bytes/instance.
-// Ref: #/components/schemas/effects-result
-type EffectsResult struct {
-	// Combat participant effects were applied to.
-	ParticipantID uuid.UUID `json:"participant_id"`
-	// Successfully applied effects with IDs.
-	AppliedEffects []EffectsResultAppliedEffectsItem `json:"applied_effects"`
-	// Effects that were rejected (conflicts, limits, etc.).
-	RejectedEffects []EffectsResultRejectedEffectsItem `json:"rejected_effects"`
-	// Application timestamp (unix milliseconds).
-	Timestamp OptInt64 `json:"timestamp"`
-	// Server processing time in nanoseconds.
-	ProcessingTimeNs OptInt64 `json:"processing_time_ns"`
-	// Overall application status.
-	Status OptEffectsResultStatus `json:"status"`
-	// Application summary statistics.
-	Summary OptEffectsResultSummary `json:"summary"`
-	// Whether application was successful.
-	Success bool `json:"success"`
-	// Information about successfully applied effect.
-	AppliedEffectInfo OptEffectsResultAppliedEffectInfo `json:"AppliedEffectInfo"`
-	// Information about rejected effect.
-	RejectedEffectInfo OptEffectsResultRejectedEffectInfo `json:"RejectedEffectInfo"`
-}
-
-// GetParticipantID returns the value of ParticipantID.
-func (s *EffectsResult) GetParticipantID() uuid.UUID {
-	return s.ParticipantID
-}
-
-// GetAppliedEffects returns the value of AppliedEffects.
-func (s *EffectsResult) GetAppliedEffects() []EffectsResultAppliedEffectsItem {
-	return s.AppliedEffects
-}
-
-// GetRejectedEffects returns the value of RejectedEffects.
-func (s *EffectsResult) GetRejectedEffects() []EffectsResultRejectedEffectsItem {
-	return s.RejectedEffects
-}
-
-// GetTimestamp returns the value of Timestamp.
-func (s *EffectsResult) GetTimestamp() OptInt64 {
-	return s.Timestamp
-}
-
-// GetProcessingTimeNs returns the value of ProcessingTimeNs.
-func (s *EffectsResult) GetProcessingTimeNs() OptInt64 {
-	return s.ProcessingTimeNs
-}
-
-// GetStatus returns the value of Status.
-func (s *EffectsResult) GetStatus() OptEffectsResultStatus {
-	return s.Status
-}
-
-// GetSummary returns the value of Summary.
-func (s *EffectsResult) GetSummary() OptEffectsResultSummary {
-	return s.Summary
-}
-
-// GetSuccess returns the value of Success.
-func (s *EffectsResult) GetSuccess() bool {
-	return s.Success
-}
-
-// GetAppliedEffectInfo returns the value of AppliedEffectInfo.
-func (s *EffectsResult) GetAppliedEffectInfo() OptEffectsResultAppliedEffectInfo {
-	return s.AppliedEffectInfo
-}
-
-// GetRejectedEffectInfo returns the value of RejectedEffectInfo.
-func (s *EffectsResult) GetRejectedEffectInfo() OptEffectsResultRejectedEffectInfo {
-	return s.RejectedEffectInfo
-}
-
-// SetParticipantID sets the value of ParticipantID.
-func (s *EffectsResult) SetParticipantID(val uuid.UUID) {
-	s.ParticipantID = val
-}
-
-// SetAppliedEffects sets the value of AppliedEffects.
-func (s *EffectsResult) SetAppliedEffects(val []EffectsResultAppliedEffectsItem) {
-	s.AppliedEffects = val
-}
-
-// SetRejectedEffects sets the value of RejectedEffects.
-func (s *EffectsResult) SetRejectedEffects(val []EffectsResultRejectedEffectsItem) {
-	s.RejectedEffects = val
-}
-
-// SetTimestamp sets the value of Timestamp.
-func (s *EffectsResult) SetTimestamp(val OptInt64) {
-	s.Timestamp = val
-}
-
-// SetProcessingTimeNs sets the value of ProcessingTimeNs.
-func (s *EffectsResult) SetProcessingTimeNs(val OptInt64) {
-	s.ProcessingTimeNs = val
-}
-
-// SetStatus sets the value of Status.
-func (s *EffectsResult) SetStatus(val OptEffectsResultStatus) {
-	s.Status = val
-}
-
-// SetSummary sets the value of Summary.
-func (s *EffectsResult) SetSummary(val OptEffectsResultSummary) {
-	s.Summary = val
-}
-
-// SetSuccess sets the value of Success.
-func (s *EffectsResult) SetSuccess(val bool) {
-	s.Success = val
-}
-
-// SetAppliedEffectInfo sets the value of AppliedEffectInfo.
-func (s *EffectsResult) SetAppliedEffectInfo(val OptEffectsResultAppliedEffectInfo) {
-	s.AppliedEffectInfo = val
-}
-
-// SetRejectedEffectInfo sets the value of RejectedEffectInfo.
-func (s *EffectsResult) SetRejectedEffectInfo(val OptEffectsResultRejectedEffectInfo) {
-	s.RejectedEffectInfo = val
-}
-
-func (*EffectsResult) applyEffectsRes() {}
-
-// Information about successfully applied effect.
-type EffectsResultAppliedEffectInfo struct {
-	// Type of applied effect.
-	EffectType string `json:"effect_type"`
-	// Unique effect instance ID.
-	EffectID uuid.UUID `json:"effect_id"`
-	// Effect duration in milliseconds.
-	DurationMs int32 `json:"duration_ms"`
-	// Current stack count.
-	Stacks OptInt32 `json:"stacks"`
-}
-
-// GetEffectType returns the value of EffectType.
-func (s *EffectsResultAppliedEffectInfo) GetEffectType() string {
-	return s.EffectType
-}
-
-// GetEffectID returns the value of EffectID.
-func (s *EffectsResultAppliedEffectInfo) GetEffectID() uuid.UUID {
-	return s.EffectID
-}
-
-// GetDurationMs returns the value of DurationMs.
-func (s *EffectsResultAppliedEffectInfo) GetDurationMs() int32 {
-	return s.DurationMs
-}
-
-// GetStacks returns the value of Stacks.
-func (s *EffectsResultAppliedEffectInfo) GetStacks() OptInt32 {
-	return s.Stacks
-}
-
-// SetEffectType sets the value of EffectType.
-func (s *EffectsResultAppliedEffectInfo) SetEffectType(val string) {
-	s.EffectType = val
-}
-
-// SetEffectID sets the value of EffectID.
-func (s *EffectsResultAppliedEffectInfo) SetEffectID(val uuid.UUID) {
-	s.EffectID = val
-}
-
-// SetDurationMs sets the value of DurationMs.
-func (s *EffectsResultAppliedEffectInfo) SetDurationMs(val int32) {
-	s.DurationMs = val
-}
-
-// SetStacks sets the value of Stacks.
-func (s *EffectsResultAppliedEffectInfo) SetStacks(val OptInt32) {
-	s.Stacks = val
-}
-
-// Information about successfully applied effect.
-type EffectsResultAppliedEffectsItem struct {
-	// Type of applied effect.
-	EffectType string `json:"effect_type"`
-	// Unique effect instance ID.
-	EffectID uuid.UUID `json:"effect_id"`
-	// Effect duration in milliseconds.
-	DurationMs int32 `json:"duration_ms"`
-	// Current stack count.
-	Stacks OptInt32 `json:"stacks"`
-}
-
-// GetEffectType returns the value of EffectType.
-func (s *EffectsResultAppliedEffectsItem) GetEffectType() string {
-	return s.EffectType
-}
-
-// GetEffectID returns the value of EffectID.
-func (s *EffectsResultAppliedEffectsItem) GetEffectID() uuid.UUID {
-	return s.EffectID
-}
-
-// GetDurationMs returns the value of DurationMs.
-func (s *EffectsResultAppliedEffectsItem) GetDurationMs() int32 {
-	return s.DurationMs
-}
-
-// GetStacks returns the value of Stacks.
-func (s *EffectsResultAppliedEffectsItem) GetStacks() OptInt32 {
-	return s.Stacks
-}
-
-// SetEffectType sets the value of EffectType.
-func (s *EffectsResultAppliedEffectsItem) SetEffectType(val string) {
-	s.EffectType = val
-}
-
-// SetEffectID sets the value of EffectID.
-func (s *EffectsResultAppliedEffectsItem) SetEffectID(val uuid.UUID) {
-	s.EffectID = val
-}
-
-// SetDurationMs sets the value of DurationMs.
-func (s *EffectsResultAppliedEffectsItem) SetDurationMs(val int32) {
-	s.DurationMs = val
-}
-
-// SetStacks sets the value of Stacks.
-func (s *EffectsResultAppliedEffectsItem) SetStacks(val OptInt32) {
-	s.Stacks = val
-}
-
-// Information about rejected effect.
-type EffectsResultRejectedEffectInfo struct {
-	// Type of rejected effect.
-	EffectType string `json:"effect_type"`
-	// Reason for rejection.
-	Reason EffectsResultRejectedEffectInfoReason `json:"reason"`
-}
-
-// GetEffectType returns the value of EffectType.
-func (s *EffectsResultRejectedEffectInfo) GetEffectType() string {
-	return s.EffectType
-}
-
-// GetReason returns the value of Reason.
-func (s *EffectsResultRejectedEffectInfo) GetReason() EffectsResultRejectedEffectInfoReason {
-	return s.Reason
-}
-
-// SetEffectType sets the value of EffectType.
-func (s *EffectsResultRejectedEffectInfo) SetEffectType(val string) {
-	s.EffectType = val
-}
-
-// SetReason sets the value of Reason.
-func (s *EffectsResultRejectedEffectInfo) SetReason(val EffectsResultRejectedEffectInfoReason) {
-	s.Reason = val
-}
-
-// Reason for rejection.
-type EffectsResultRejectedEffectInfoReason string
-
-const (
-	EffectsResultRejectedEffectInfoReasonEffectLimitReached  EffectsResultRejectedEffectInfoReason = "effect_limit_reached"
-	EffectsResultRejectedEffectInfoReasonConflictingEffect   EffectsResultRejectedEffectInfoReason = "conflicting_effect"
-	EffectsResultRejectedEffectInfoReasonInvalidParameters   EffectsResultRejectedEffectInfoReason = "invalid_parameters"
-	EffectsResultRejectedEffectInfoReasonParticipantNotFound EffectsResultRejectedEffectInfoReason = "participant_not_found"
-	EffectsResultRejectedEffectInfoReasonEffectAlreadyActive EffectsResultRejectedEffectInfoReason = "effect_already_active"
-)
-
-// AllValues returns all EffectsResultRejectedEffectInfoReason values.
-func (EffectsResultRejectedEffectInfoReason) AllValues() []EffectsResultRejectedEffectInfoReason {
-	return []EffectsResultRejectedEffectInfoReason{
-		EffectsResultRejectedEffectInfoReasonEffectLimitReached,
-		EffectsResultRejectedEffectInfoReasonConflictingEffect,
-		EffectsResultRejectedEffectInfoReasonInvalidParameters,
-		EffectsResultRejectedEffectInfoReasonParticipantNotFound,
-		EffectsResultRejectedEffectInfoReasonEffectAlreadyActive,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s EffectsResultRejectedEffectInfoReason) MarshalText() ([]byte, error) {
-	switch s {
-	case EffectsResultRejectedEffectInfoReasonEffectLimitReached:
-		return []byte(s), nil
-	case EffectsResultRejectedEffectInfoReasonConflictingEffect:
-		return []byte(s), nil
-	case EffectsResultRejectedEffectInfoReasonInvalidParameters:
-		return []byte(s), nil
-	case EffectsResultRejectedEffectInfoReasonParticipantNotFound:
-		return []byte(s), nil
-	case EffectsResultRejectedEffectInfoReasonEffectAlreadyActive:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *EffectsResultRejectedEffectInfoReason) UnmarshalText(data []byte) error {
-	switch EffectsResultRejectedEffectInfoReason(data) {
-	case EffectsResultRejectedEffectInfoReasonEffectLimitReached:
-		*s = EffectsResultRejectedEffectInfoReasonEffectLimitReached
-		return nil
-	case EffectsResultRejectedEffectInfoReasonConflictingEffect:
-		*s = EffectsResultRejectedEffectInfoReasonConflictingEffect
-		return nil
-	case EffectsResultRejectedEffectInfoReasonInvalidParameters:
-		*s = EffectsResultRejectedEffectInfoReasonInvalidParameters
-		return nil
-	case EffectsResultRejectedEffectInfoReasonParticipantNotFound:
-		*s = EffectsResultRejectedEffectInfoReasonParticipantNotFound
-		return nil
-	case EffectsResultRejectedEffectInfoReasonEffectAlreadyActive:
-		*s = EffectsResultRejectedEffectInfoReasonEffectAlreadyActive
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Information about rejected effect.
-type EffectsResultRejectedEffectsItem struct {
-	// Type of rejected effect.
-	EffectType string `json:"effect_type"`
-	// Reason for rejection.
-	Reason EffectsResultRejectedEffectsItemReason `json:"reason"`
-}
-
-// GetEffectType returns the value of EffectType.
-func (s *EffectsResultRejectedEffectsItem) GetEffectType() string {
-	return s.EffectType
-}
-
-// GetReason returns the value of Reason.
-func (s *EffectsResultRejectedEffectsItem) GetReason() EffectsResultRejectedEffectsItemReason {
-	return s.Reason
-}
-
-// SetEffectType sets the value of EffectType.
-func (s *EffectsResultRejectedEffectsItem) SetEffectType(val string) {
-	s.EffectType = val
-}
-
-// SetReason sets the value of Reason.
-func (s *EffectsResultRejectedEffectsItem) SetReason(val EffectsResultRejectedEffectsItemReason) {
-	s.Reason = val
-}
-
-// Reason for rejection.
-type EffectsResultRejectedEffectsItemReason string
-
-const (
-	EffectsResultRejectedEffectsItemReasonEffectLimitReached  EffectsResultRejectedEffectsItemReason = "effect_limit_reached"
-	EffectsResultRejectedEffectsItemReasonConflictingEffect   EffectsResultRejectedEffectsItemReason = "conflicting_effect"
-	EffectsResultRejectedEffectsItemReasonInvalidParameters   EffectsResultRejectedEffectsItemReason = "invalid_parameters"
-	EffectsResultRejectedEffectsItemReasonParticipantNotFound EffectsResultRejectedEffectsItemReason = "participant_not_found"
-	EffectsResultRejectedEffectsItemReasonEffectAlreadyActive EffectsResultRejectedEffectsItemReason = "effect_already_active"
-)
-
-// AllValues returns all EffectsResultRejectedEffectsItemReason values.
-func (EffectsResultRejectedEffectsItemReason) AllValues() []EffectsResultRejectedEffectsItemReason {
-	return []EffectsResultRejectedEffectsItemReason{
-		EffectsResultRejectedEffectsItemReasonEffectLimitReached,
-		EffectsResultRejectedEffectsItemReasonConflictingEffect,
-		EffectsResultRejectedEffectsItemReasonInvalidParameters,
-		EffectsResultRejectedEffectsItemReasonParticipantNotFound,
-		EffectsResultRejectedEffectsItemReasonEffectAlreadyActive,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s EffectsResultRejectedEffectsItemReason) MarshalText() ([]byte, error) {
-	switch s {
-	case EffectsResultRejectedEffectsItemReasonEffectLimitReached:
-		return []byte(s), nil
-	case EffectsResultRejectedEffectsItemReasonConflictingEffect:
-		return []byte(s), nil
-	case EffectsResultRejectedEffectsItemReasonInvalidParameters:
-		return []byte(s), nil
-	case EffectsResultRejectedEffectsItemReasonParticipantNotFound:
-		return []byte(s), nil
-	case EffectsResultRejectedEffectsItemReasonEffectAlreadyActive:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *EffectsResultRejectedEffectsItemReason) UnmarshalText(data []byte) error {
-	switch EffectsResultRejectedEffectsItemReason(data) {
-	case EffectsResultRejectedEffectsItemReasonEffectLimitReached:
-		*s = EffectsResultRejectedEffectsItemReasonEffectLimitReached
-		return nil
-	case EffectsResultRejectedEffectsItemReasonConflictingEffect:
-		*s = EffectsResultRejectedEffectsItemReasonConflictingEffect
-		return nil
-	case EffectsResultRejectedEffectsItemReasonInvalidParameters:
-		*s = EffectsResultRejectedEffectsItemReasonInvalidParameters
-		return nil
-	case EffectsResultRejectedEffectsItemReasonParticipantNotFound:
-		*s = EffectsResultRejectedEffectsItemReasonParticipantNotFound
-		return nil
-	case EffectsResultRejectedEffectsItemReasonEffectAlreadyActive:
-		*s = EffectsResultRejectedEffectsItemReasonEffectAlreadyActive
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Overall application status.
-type EffectsResultStatus string
-
-const (
-	EffectsResultStatusSuccess        EffectsResultStatus = "success"
-	EffectsResultStatusPartialSuccess EffectsResultStatus = "partial_success"
-	EffectsResultStatusFailed         EffectsResultStatus = "failed"
-)
-
-// AllValues returns all EffectsResultStatus values.
-func (EffectsResultStatus) AllValues() []EffectsResultStatus {
-	return []EffectsResultStatus{
-		EffectsResultStatusSuccess,
-		EffectsResultStatusPartialSuccess,
-		EffectsResultStatusFailed,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s EffectsResultStatus) MarshalText() ([]byte, error) {
-	switch s {
-	case EffectsResultStatusSuccess:
-		return []byte(s), nil
-	case EffectsResultStatusPartialSuccess:
-		return []byte(s), nil
-	case EffectsResultStatusFailed:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *EffectsResultStatus) UnmarshalText(data []byte) error {
-	switch EffectsResultStatus(data) {
-	case EffectsResultStatusSuccess:
-		*s = EffectsResultStatusSuccess
-		return nil
-	case EffectsResultStatusPartialSuccess:
-		*s = EffectsResultStatusPartialSuccess
-		return nil
-	case EffectsResultStatusFailed:
-		*s = EffectsResultStatusFailed
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Application summary statistics.
-type EffectsResultSummary struct {
-	// Total effects requested.
-	TotalRequested OptInt32 `json:"total_requested"`
-	// Successfully applied count.
-	SuccessfullyApplied OptInt32 `json:"successfully_applied"`
-	// Rejected effects count.
-	RejectedCount OptInt32 `json:"rejected_count"`
-}
-
-// GetTotalRequested returns the value of TotalRequested.
-func (s *EffectsResultSummary) GetTotalRequested() OptInt32 {
-	return s.TotalRequested
-}
-
-// GetSuccessfullyApplied returns the value of SuccessfullyApplied.
-func (s *EffectsResultSummary) GetSuccessfullyApplied() OptInt32 {
-	return s.SuccessfullyApplied
-}
-
-// GetRejectedCount returns the value of RejectedCount.
-func (s *EffectsResultSummary) GetRejectedCount() OptInt32 {
-	return s.RejectedCount
-}
-
-// SetTotalRequested sets the value of TotalRequested.
-func (s *EffectsResultSummary) SetTotalRequested(val OptInt32) {
-	s.TotalRequested = val
-}
-
-// SetSuccessfullyApplied sets the value of SuccessfullyApplied.
-func (s *EffectsResultSummary) SetSuccessfullyApplied(val OptInt32) {
-	s.SuccessfullyApplied = val
-}
-
-// SetRejectedCount sets the value of RejectedCount.
-func (s *EffectsResultSummary) SetRejectedCount(val OptInt32) {
-	s.RejectedCount = val
-}
-
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
 // Ref: #/components/schemas/Error
@@ -4613,38 +3225,38 @@ func (s *HealthResponseStatus) UnmarshalText(data []byte) error {
 	}
 }
 
-// NewOptActiveEffectsActiveEffect returns new OptActiveEffectsActiveEffect with value set to v.
-func NewOptActiveEffectsActiveEffect(v ActiveEffectsActiveEffect) OptActiveEffectsActiveEffect {
-	return OptActiveEffectsActiveEffect{
+// NewOptActiveEffectsResponseSummary returns new OptActiveEffectsResponseSummary with value set to v.
+func NewOptActiveEffectsResponseSummary(v ActiveEffectsResponseSummary) OptActiveEffectsResponseSummary {
+	return OptActiveEffectsResponseSummary{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptActiveEffectsActiveEffect is optional ActiveEffectsActiveEffect.
-type OptActiveEffectsActiveEffect struct {
-	Value ActiveEffectsActiveEffect
+// OptActiveEffectsResponseSummary is optional ActiveEffectsResponseSummary.
+type OptActiveEffectsResponseSummary struct {
+	Value ActiveEffectsResponseSummary
 	Set   bool
 }
 
-// IsSet returns true if OptActiveEffectsActiveEffect was set.
-func (o OptActiveEffectsActiveEffect) IsSet() bool { return o.Set }
+// IsSet returns true if OptActiveEffectsResponseSummary was set.
+func (o OptActiveEffectsResponseSummary) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptActiveEffectsActiveEffect) Reset() {
-	var v ActiveEffectsActiveEffect
+func (o *OptActiveEffectsResponseSummary) Reset() {
+	var v ActiveEffectsResponseSummary
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptActiveEffectsActiveEffect) SetTo(v ActiveEffectsActiveEffect) {
+func (o *OptActiveEffectsResponseSummary) SetTo(v ActiveEffectsResponseSummary) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptActiveEffectsActiveEffect) Get() (v ActiveEffectsActiveEffect, ok bool) {
+func (o OptActiveEffectsResponseSummary) Get() (v ActiveEffectsResponseSummary, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -4652,45 +3264,45 @@ func (o OptActiveEffectsActiveEffect) Get() (v ActiveEffectsActiveEffect, ok boo
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptActiveEffectsActiveEffect) Or(d ActiveEffectsActiveEffect) ActiveEffectsActiveEffect {
+func (o OptActiveEffectsResponseSummary) Or(d ActiveEffectsResponseSummary) ActiveEffectsResponseSummary {
 	if v, ok := o.Get(); ok {
 		return v
 	}
 	return d
 }
 
-// NewOptActiveEffectsSummary returns new OptActiveEffectsSummary with value set to v.
-func NewOptActiveEffectsSummary(v ActiveEffectsSummary) OptActiveEffectsSummary {
-	return OptActiveEffectsSummary{
+// NewOptApplyEffectsRequestContext returns new OptApplyEffectsRequestContext with value set to v.
+func NewOptApplyEffectsRequestContext(v ApplyEffectsRequestContext) OptApplyEffectsRequestContext {
+	return OptApplyEffectsRequestContext{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptActiveEffectsSummary is optional ActiveEffectsSummary.
-type OptActiveEffectsSummary struct {
-	Value ActiveEffectsSummary
+// OptApplyEffectsRequestContext is optional ApplyEffectsRequestContext.
+type OptApplyEffectsRequestContext struct {
+	Value ApplyEffectsRequestContext
 	Set   bool
 }
 
-// IsSet returns true if OptActiveEffectsSummary was set.
-func (o OptActiveEffectsSummary) IsSet() bool { return o.Set }
+// IsSet returns true if OptApplyEffectsRequestContext was set.
+func (o OptApplyEffectsRequestContext) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptActiveEffectsSummary) Reset() {
-	var v ActiveEffectsSummary
+func (o *OptApplyEffectsRequestContext) Reset() {
+	var v ApplyEffectsRequestContext
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptActiveEffectsSummary) SetTo(v ActiveEffectsSummary) {
+func (o *OptApplyEffectsRequestContext) SetTo(v ApplyEffectsRequestContext) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptActiveEffectsSummary) Get() (v ActiveEffectsSummary, ok bool) {
+func (o OptApplyEffectsRequestContext) Get() (v ApplyEffectsRequestContext, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -4698,7 +3310,191 @@ func (o OptActiveEffectsSummary) Get() (v ActiveEffectsSummary, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptActiveEffectsSummary) Or(d ActiveEffectsSummary) ActiveEffectsSummary {
+func (o OptApplyEffectsRequestContext) Or(d ApplyEffectsRequestContext) ApplyEffectsRequestContext {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptApplyEffectsRequestContextWeatherConditions returns new OptApplyEffectsRequestContextWeatherConditions with value set to v.
+func NewOptApplyEffectsRequestContextWeatherConditions(v ApplyEffectsRequestContextWeatherConditions) OptApplyEffectsRequestContextWeatherConditions {
+	return OptApplyEffectsRequestContextWeatherConditions{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptApplyEffectsRequestContextWeatherConditions is optional ApplyEffectsRequestContextWeatherConditions.
+type OptApplyEffectsRequestContextWeatherConditions struct {
+	Value ApplyEffectsRequestContextWeatherConditions
+	Set   bool
+}
+
+// IsSet returns true if OptApplyEffectsRequestContextWeatherConditions was set.
+func (o OptApplyEffectsRequestContextWeatherConditions) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptApplyEffectsRequestContextWeatherConditions) Reset() {
+	var v ApplyEffectsRequestContextWeatherConditions
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptApplyEffectsRequestContextWeatherConditions) SetTo(v ApplyEffectsRequestContextWeatherConditions) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptApplyEffectsRequestContextWeatherConditions) Get() (v ApplyEffectsRequestContextWeatherConditions, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptApplyEffectsRequestContextWeatherConditions) Or(d ApplyEffectsRequestContextWeatherConditions) ApplyEffectsRequestContextWeatherConditions {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptApplyEffectsRequestSourceType returns new OptApplyEffectsRequestSourceType with value set to v.
+func NewOptApplyEffectsRequestSourceType(v ApplyEffectsRequestSourceType) OptApplyEffectsRequestSourceType {
+	return OptApplyEffectsRequestSourceType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptApplyEffectsRequestSourceType is optional ApplyEffectsRequestSourceType.
+type OptApplyEffectsRequestSourceType struct {
+	Value ApplyEffectsRequestSourceType
+	Set   bool
+}
+
+// IsSet returns true if OptApplyEffectsRequestSourceType was set.
+func (o OptApplyEffectsRequestSourceType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptApplyEffectsRequestSourceType) Reset() {
+	var v ApplyEffectsRequestSourceType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptApplyEffectsRequestSourceType) SetTo(v ApplyEffectsRequestSourceType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptApplyEffectsRequestSourceType) Get() (v ApplyEffectsRequestSourceType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptApplyEffectsRequestSourceType) Or(d ApplyEffectsRequestSourceType) ApplyEffectsRequestSourceType {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptApplyEffectsResultStatus returns new OptApplyEffectsResultStatus with value set to v.
+func NewOptApplyEffectsResultStatus(v ApplyEffectsResultStatus) OptApplyEffectsResultStatus {
+	return OptApplyEffectsResultStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptApplyEffectsResultStatus is optional ApplyEffectsResultStatus.
+type OptApplyEffectsResultStatus struct {
+	Value ApplyEffectsResultStatus
+	Set   bool
+}
+
+// IsSet returns true if OptApplyEffectsResultStatus was set.
+func (o OptApplyEffectsResultStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptApplyEffectsResultStatus) Reset() {
+	var v ApplyEffectsResultStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptApplyEffectsResultStatus) SetTo(v ApplyEffectsResultStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptApplyEffectsResultStatus) Get() (v ApplyEffectsResultStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptApplyEffectsResultStatus) Or(d ApplyEffectsResultStatus) ApplyEffectsResultStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptApplyEffectsResultSummary returns new OptApplyEffectsResultSummary with value set to v.
+func NewOptApplyEffectsResultSummary(v ApplyEffectsResultSummary) OptApplyEffectsResultSummary {
+	return OptApplyEffectsResultSummary{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptApplyEffectsResultSummary is optional ApplyEffectsResultSummary.
+type OptApplyEffectsResultSummary struct {
+	Value ApplyEffectsResultSummary
+	Set   bool
+}
+
+// IsSet returns true if OptApplyEffectsResultSummary was set.
+func (o OptApplyEffectsResultSummary) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptApplyEffectsResultSummary) Reset() {
+	var v ApplyEffectsResultSummary
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptApplyEffectsResultSummary) SetTo(v ApplyEffectsResultSummary) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptApplyEffectsResultSummary) Get() (v ApplyEffectsResultSummary, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptApplyEffectsResultSummary) Or(d ApplyEffectsResultSummary) ApplyEffectsResultSummary {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -4751,38 +3547,38 @@ func (o OptBool) Or(d bool) bool {
 	return d
 }
 
-// NewOptDamageRequestEnvironmentalModifiers returns new OptDamageRequestEnvironmentalModifiers with value set to v.
-func NewOptDamageRequestEnvironmentalModifiers(v DamageRequestEnvironmentalModifiers) OptDamageRequestEnvironmentalModifiers {
-	return OptDamageRequestEnvironmentalModifiers{
+// NewOptDamageCalculationRequestEnvironmentalModifiers returns new OptDamageCalculationRequestEnvironmentalModifiers with value set to v.
+func NewOptDamageCalculationRequestEnvironmentalModifiers(v DamageCalculationRequestEnvironmentalModifiers) OptDamageCalculationRequestEnvironmentalModifiers {
+	return OptDamageCalculationRequestEnvironmentalModifiers{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptDamageRequestEnvironmentalModifiers is optional DamageRequestEnvironmentalModifiers.
-type OptDamageRequestEnvironmentalModifiers struct {
-	Value DamageRequestEnvironmentalModifiers
+// OptDamageCalculationRequestEnvironmentalModifiers is optional DamageCalculationRequestEnvironmentalModifiers.
+type OptDamageCalculationRequestEnvironmentalModifiers struct {
+	Value DamageCalculationRequestEnvironmentalModifiers
 	Set   bool
 }
 
-// IsSet returns true if OptDamageRequestEnvironmentalModifiers was set.
-func (o OptDamageRequestEnvironmentalModifiers) IsSet() bool { return o.Set }
+// IsSet returns true if OptDamageCalculationRequestEnvironmentalModifiers was set.
+func (o OptDamageCalculationRequestEnvironmentalModifiers) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptDamageRequestEnvironmentalModifiers) Reset() {
-	var v DamageRequestEnvironmentalModifiers
+func (o *OptDamageCalculationRequestEnvironmentalModifiers) Reset() {
+	var v DamageCalculationRequestEnvironmentalModifiers
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptDamageRequestEnvironmentalModifiers) SetTo(v DamageRequestEnvironmentalModifiers) {
+func (o *OptDamageCalculationRequestEnvironmentalModifiers) SetTo(v DamageCalculationRequestEnvironmentalModifiers) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptDamageRequestEnvironmentalModifiers) Get() (v DamageRequestEnvironmentalModifiers, ok bool) {
+func (o OptDamageCalculationRequestEnvironmentalModifiers) Get() (v DamageCalculationRequestEnvironmentalModifiers, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -4790,45 +3586,45 @@ func (o OptDamageRequestEnvironmentalModifiers) Get() (v DamageRequestEnvironmen
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptDamageRequestEnvironmentalModifiers) Or(d DamageRequestEnvironmentalModifiers) DamageRequestEnvironmentalModifiers {
+func (o OptDamageCalculationRequestEnvironmentalModifiers) Or(d DamageCalculationRequestEnvironmentalModifiers) DamageCalculationRequestEnvironmentalModifiers {
 	if v, ok := o.Get(); ok {
 		return v
 	}
 	return d
 }
 
-// NewOptDamageRequestImplantSynergy returns new OptDamageRequestImplantSynergy with value set to v.
-func NewOptDamageRequestImplantSynergy(v DamageRequestImplantSynergy) OptDamageRequestImplantSynergy {
-	return OptDamageRequestImplantSynergy{
+// NewOptDamageCalculationResultTargetStats returns new OptDamageCalculationResultTargetStats with value set to v.
+func NewOptDamageCalculationResultTargetStats(v DamageCalculationResultTargetStats) OptDamageCalculationResultTargetStats {
+	return OptDamageCalculationResultTargetStats{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptDamageRequestImplantSynergy is optional DamageRequestImplantSynergy.
-type OptDamageRequestImplantSynergy struct {
-	Value DamageRequestImplantSynergy
+// OptDamageCalculationResultTargetStats is optional DamageCalculationResultTargetStats.
+type OptDamageCalculationResultTargetStats struct {
+	Value DamageCalculationResultTargetStats
 	Set   bool
 }
 
-// IsSet returns true if OptDamageRequestImplantSynergy was set.
-func (o OptDamageRequestImplantSynergy) IsSet() bool { return o.Set }
+// IsSet returns true if OptDamageCalculationResultTargetStats was set.
+func (o OptDamageCalculationResultTargetStats) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptDamageRequestImplantSynergy) Reset() {
-	var v DamageRequestImplantSynergy
+func (o *OptDamageCalculationResultTargetStats) Reset() {
+	var v DamageCalculationResultTargetStats
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptDamageRequestImplantSynergy) SetTo(v DamageRequestImplantSynergy) {
+func (o *OptDamageCalculationResultTargetStats) SetTo(v DamageCalculationResultTargetStats) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptDamageRequestImplantSynergy) Get() (v DamageRequestImplantSynergy, ok bool) {
+func (o OptDamageCalculationResultTargetStats) Get() (v DamageCalculationResultTargetStats, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -4836,237 +3632,7 @@ func (o OptDamageRequestImplantSynergy) Get() (v DamageRequestImplantSynergy, ok
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptDamageRequestImplantSynergy) Or(d DamageRequestImplantSynergy) DamageRequestImplantSynergy {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptDamageRequestWeaponModifier returns new OptDamageRequestWeaponModifier with value set to v.
-func NewOptDamageRequestWeaponModifier(v DamageRequestWeaponModifier) OptDamageRequestWeaponModifier {
-	return OptDamageRequestWeaponModifier{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDamageRequestWeaponModifier is optional DamageRequestWeaponModifier.
-type OptDamageRequestWeaponModifier struct {
-	Value DamageRequestWeaponModifier
-	Set   bool
-}
-
-// IsSet returns true if OptDamageRequestWeaponModifier was set.
-func (o OptDamageRequestWeaponModifier) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDamageRequestWeaponModifier) Reset() {
-	var v DamageRequestWeaponModifier
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDamageRequestWeaponModifier) SetTo(v DamageRequestWeaponModifier) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDamageRequestWeaponModifier) Get() (v DamageRequestWeaponModifier, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDamageRequestWeaponModifier) Or(d DamageRequestWeaponModifier) DamageRequestWeaponModifier {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptDamageResultAppliedModifier returns new OptDamageResultAppliedModifier with value set to v.
-func NewOptDamageResultAppliedModifier(v DamageResultAppliedModifier) OptDamageResultAppliedModifier {
-	return OptDamageResultAppliedModifier{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDamageResultAppliedModifier is optional DamageResultAppliedModifier.
-type OptDamageResultAppliedModifier struct {
-	Value DamageResultAppliedModifier
-	Set   bool
-}
-
-// IsSet returns true if OptDamageResultAppliedModifier was set.
-func (o OptDamageResultAppliedModifier) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDamageResultAppliedModifier) Reset() {
-	var v DamageResultAppliedModifier
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDamageResultAppliedModifier) SetTo(v DamageResultAppliedModifier) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDamageResultAppliedModifier) Get() (v DamageResultAppliedModifier, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDamageResultAppliedModifier) Or(d DamageResultAppliedModifier) DamageResultAppliedModifier {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptDamageResultDamageComponent returns new OptDamageResultDamageComponent with value set to v.
-func NewOptDamageResultDamageComponent(v DamageResultDamageComponent) OptDamageResultDamageComponent {
-	return OptDamageResultDamageComponent{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDamageResultDamageComponent is optional DamageResultDamageComponent.
-type OptDamageResultDamageComponent struct {
-	Value DamageResultDamageComponent
-	Set   bool
-}
-
-// IsSet returns true if OptDamageResultDamageComponent was set.
-func (o OptDamageResultDamageComponent) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDamageResultDamageComponent) Reset() {
-	var v DamageResultDamageComponent
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDamageResultDamageComponent) SetTo(v DamageResultDamageComponent) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDamageResultDamageComponent) Get() (v DamageResultDamageComponent, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDamageResultDamageComponent) Or(d DamageResultDamageComponent) DamageResultDamageComponent {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptDamageResultTargetStats returns new OptDamageResultTargetStats with value set to v.
-func NewOptDamageResultTargetStats(v DamageResultTargetStats) OptDamageResultTargetStats {
-	return OptDamageResultTargetStats{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDamageResultTargetStats is optional DamageResultTargetStats.
-type OptDamageResultTargetStats struct {
-	Value DamageResultTargetStats
-	Set   bool
-}
-
-// IsSet returns true if OptDamageResultTargetStats was set.
-func (o OptDamageResultTargetStats) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDamageResultTargetStats) Reset() {
-	var v DamageResultTargetStats
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDamageResultTargetStats) SetTo(v DamageResultTargetStats) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDamageResultTargetStats) Get() (v DamageResultTargetStats, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDamageResultTargetStats) Or(d DamageResultTargetStats) DamageResultTargetStats {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptDamageValidationRequestClientModifier returns new OptDamageValidationRequestClientModifier with value set to v.
-func NewOptDamageValidationRequestClientModifier(v DamageValidationRequestClientModifier) OptDamageValidationRequestClientModifier {
-	return OptDamageValidationRequestClientModifier{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDamageValidationRequestClientModifier is optional DamageValidationRequestClientModifier.
-type OptDamageValidationRequestClientModifier struct {
-	Value DamageValidationRequestClientModifier
-	Set   bool
-}
-
-// IsSet returns true if OptDamageValidationRequestClientModifier was set.
-func (o OptDamageValidationRequestClientModifier) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDamageValidationRequestClientModifier) Reset() {
-	var v DamageValidationRequestClientModifier
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDamageValidationRequestClientModifier) SetTo(v DamageValidationRequestClientModifier) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDamageValidationRequestClientModifier) Get() (v DamageValidationRequestClientModifier, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDamageValidationRequestClientModifier) Or(d DamageValidationRequestClientModifier) DamageValidationRequestClientModifier {
+func (o OptDamageCalculationResultTargetStats) Or(d DamageCalculationResultTargetStats) DamageCalculationResultTargetStats {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -5119,98 +3685,6 @@ func (o OptDamageValidationRequestPositionData) Or(d DamageValidationRequestPosi
 	return d
 }
 
-// NewOptDamageValidationRequestVector3 returns new OptDamageValidationRequestVector3 with value set to v.
-func NewOptDamageValidationRequestVector3(v DamageValidationRequestVector3) OptDamageValidationRequestVector3 {
-	return OptDamageValidationRequestVector3{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDamageValidationRequestVector3 is optional DamageValidationRequestVector3.
-type OptDamageValidationRequestVector3 struct {
-	Value DamageValidationRequestVector3
-	Set   bool
-}
-
-// IsSet returns true if OptDamageValidationRequestVector3 was set.
-func (o OptDamageValidationRequestVector3) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDamageValidationRequestVector3) Reset() {
-	var v DamageValidationRequestVector3
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDamageValidationRequestVector3) SetTo(v DamageValidationRequestVector3) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDamageValidationRequestVector3) Get() (v DamageValidationRequestVector3, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDamageValidationRequestVector3) Or(d DamageValidationRequestVector3) DamageValidationRequestVector3 {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptDamageValidationResultCorrectedModifier returns new OptDamageValidationResultCorrectedModifier with value set to v.
-func NewOptDamageValidationResultCorrectedModifier(v DamageValidationResultCorrectedModifier) OptDamageValidationResultCorrectedModifier {
-	return OptDamageValidationResultCorrectedModifier{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDamageValidationResultCorrectedModifier is optional DamageValidationResultCorrectedModifier.
-type OptDamageValidationResultCorrectedModifier struct {
-	Value DamageValidationResultCorrectedModifier
-	Set   bool
-}
-
-// IsSet returns true if OptDamageValidationResultCorrectedModifier was set.
-func (o OptDamageValidationResultCorrectedModifier) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDamageValidationResultCorrectedModifier) Reset() {
-	var v DamageValidationResultCorrectedModifier
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDamageValidationResultCorrectedModifier) SetTo(v DamageValidationResultCorrectedModifier) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDamageValidationResultCorrectedModifier) Get() (v DamageValidationResultCorrectedModifier, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDamageValidationResultCorrectedModifier) Or(d DamageValidationResultCorrectedModifier) DamageValidationResultCorrectedModifier {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptDamageValidationResultCorrectedValues returns new OptDamageValidationResultCorrectedValues with value set to v.
 func NewOptDamageValidationResultCorrectedValues(v DamageValidationResultCorrectedValues) OptDamageValidationResultCorrectedValues {
 	return OptDamageValidationResultCorrectedValues{
@@ -5257,52 +3731,6 @@ func (o OptDamageValidationResultCorrectedValues) Or(d DamageValidationResultCor
 	return d
 }
 
-// NewOptDamageValidationResultValidationIssue returns new OptDamageValidationResultValidationIssue with value set to v.
-func NewOptDamageValidationResultValidationIssue(v DamageValidationResultValidationIssue) OptDamageValidationResultValidationIssue {
-	return OptDamageValidationResultValidationIssue{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDamageValidationResultValidationIssue is optional DamageValidationResultValidationIssue.
-type OptDamageValidationResultValidationIssue struct {
-	Value DamageValidationResultValidationIssue
-	Set   bool
-}
-
-// IsSet returns true if OptDamageValidationResultValidationIssue was set.
-func (o OptDamageValidationResultValidationIssue) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDamageValidationResultValidationIssue) Reset() {
-	var v DamageValidationResultValidationIssue
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDamageValidationResultValidationIssue) SetTo(v DamageValidationResultValidationIssue) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDamageValidationResultValidationIssue) Get() (v DamageValidationResultValidationIssue, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDamageValidationResultValidationIssue) Or(d DamageValidationResultValidationIssue) DamageValidationResultValidationIssue {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptDamageValidationResultValidationStatus returns new OptDamageValidationResultValidationStatus with value set to v.
 func NewOptDamageValidationResultValidationStatus(v DamageValidationResultValidationStatus) OptDamageValidationResultValidationStatus {
 	return OptDamageValidationResultValidationStatus{
@@ -5343,374 +3771,6 @@ func (o OptDamageValidationResultValidationStatus) Get() (v DamageValidationResu
 
 // Or returns value if set, or given parameter if does not.
 func (o OptDamageValidationResultValidationStatus) Or(d DamageValidationResultValidationStatus) DamageValidationResultValidationStatus {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptEffectsRequestCombatEffect returns new OptEffectsRequestCombatEffect with value set to v.
-func NewOptEffectsRequestCombatEffect(v EffectsRequestCombatEffect) OptEffectsRequestCombatEffect {
-	return OptEffectsRequestCombatEffect{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptEffectsRequestCombatEffect is optional EffectsRequestCombatEffect.
-type OptEffectsRequestCombatEffect struct {
-	Value EffectsRequestCombatEffect
-	Set   bool
-}
-
-// IsSet returns true if OptEffectsRequestCombatEffect was set.
-func (o OptEffectsRequestCombatEffect) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptEffectsRequestCombatEffect) Reset() {
-	var v EffectsRequestCombatEffect
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptEffectsRequestCombatEffect) SetTo(v EffectsRequestCombatEffect) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptEffectsRequestCombatEffect) Get() (v EffectsRequestCombatEffect, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptEffectsRequestCombatEffect) Or(d EffectsRequestCombatEffect) EffectsRequestCombatEffect {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptEffectsRequestContext returns new OptEffectsRequestContext with value set to v.
-func NewOptEffectsRequestContext(v EffectsRequestContext) OptEffectsRequestContext {
-	return OptEffectsRequestContext{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptEffectsRequestContext is optional EffectsRequestContext.
-type OptEffectsRequestContext struct {
-	Value EffectsRequestContext
-	Set   bool
-}
-
-// IsSet returns true if OptEffectsRequestContext was set.
-func (o OptEffectsRequestContext) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptEffectsRequestContext) Reset() {
-	var v EffectsRequestContext
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptEffectsRequestContext) SetTo(v EffectsRequestContext) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptEffectsRequestContext) Get() (v EffectsRequestContext, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptEffectsRequestContext) Or(d EffectsRequestContext) EffectsRequestContext {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptEffectsRequestContextWeatherConditions returns new OptEffectsRequestContextWeatherConditions with value set to v.
-func NewOptEffectsRequestContextWeatherConditions(v EffectsRequestContextWeatherConditions) OptEffectsRequestContextWeatherConditions {
-	return OptEffectsRequestContextWeatherConditions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptEffectsRequestContextWeatherConditions is optional EffectsRequestContextWeatherConditions.
-type OptEffectsRequestContextWeatherConditions struct {
-	Value EffectsRequestContextWeatherConditions
-	Set   bool
-}
-
-// IsSet returns true if OptEffectsRequestContextWeatherConditions was set.
-func (o OptEffectsRequestContextWeatherConditions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptEffectsRequestContextWeatherConditions) Reset() {
-	var v EffectsRequestContextWeatherConditions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptEffectsRequestContextWeatherConditions) SetTo(v EffectsRequestContextWeatherConditions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptEffectsRequestContextWeatherConditions) Get() (v EffectsRequestContextWeatherConditions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptEffectsRequestContextWeatherConditions) Or(d EffectsRequestContextWeatherConditions) EffectsRequestContextWeatherConditions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptEffectsRequestSourceType returns new OptEffectsRequestSourceType with value set to v.
-func NewOptEffectsRequestSourceType(v EffectsRequestSourceType) OptEffectsRequestSourceType {
-	return OptEffectsRequestSourceType{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptEffectsRequestSourceType is optional EffectsRequestSourceType.
-type OptEffectsRequestSourceType struct {
-	Value EffectsRequestSourceType
-	Set   bool
-}
-
-// IsSet returns true if OptEffectsRequestSourceType was set.
-func (o OptEffectsRequestSourceType) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptEffectsRequestSourceType) Reset() {
-	var v EffectsRequestSourceType
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptEffectsRequestSourceType) SetTo(v EffectsRequestSourceType) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptEffectsRequestSourceType) Get() (v EffectsRequestSourceType, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptEffectsRequestSourceType) Or(d EffectsRequestSourceType) EffectsRequestSourceType {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptEffectsResultAppliedEffectInfo returns new OptEffectsResultAppliedEffectInfo with value set to v.
-func NewOptEffectsResultAppliedEffectInfo(v EffectsResultAppliedEffectInfo) OptEffectsResultAppliedEffectInfo {
-	return OptEffectsResultAppliedEffectInfo{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptEffectsResultAppliedEffectInfo is optional EffectsResultAppliedEffectInfo.
-type OptEffectsResultAppliedEffectInfo struct {
-	Value EffectsResultAppliedEffectInfo
-	Set   bool
-}
-
-// IsSet returns true if OptEffectsResultAppliedEffectInfo was set.
-func (o OptEffectsResultAppliedEffectInfo) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptEffectsResultAppliedEffectInfo) Reset() {
-	var v EffectsResultAppliedEffectInfo
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptEffectsResultAppliedEffectInfo) SetTo(v EffectsResultAppliedEffectInfo) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptEffectsResultAppliedEffectInfo) Get() (v EffectsResultAppliedEffectInfo, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptEffectsResultAppliedEffectInfo) Or(d EffectsResultAppliedEffectInfo) EffectsResultAppliedEffectInfo {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptEffectsResultRejectedEffectInfo returns new OptEffectsResultRejectedEffectInfo with value set to v.
-func NewOptEffectsResultRejectedEffectInfo(v EffectsResultRejectedEffectInfo) OptEffectsResultRejectedEffectInfo {
-	return OptEffectsResultRejectedEffectInfo{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptEffectsResultRejectedEffectInfo is optional EffectsResultRejectedEffectInfo.
-type OptEffectsResultRejectedEffectInfo struct {
-	Value EffectsResultRejectedEffectInfo
-	Set   bool
-}
-
-// IsSet returns true if OptEffectsResultRejectedEffectInfo was set.
-func (o OptEffectsResultRejectedEffectInfo) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptEffectsResultRejectedEffectInfo) Reset() {
-	var v EffectsResultRejectedEffectInfo
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptEffectsResultRejectedEffectInfo) SetTo(v EffectsResultRejectedEffectInfo) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptEffectsResultRejectedEffectInfo) Get() (v EffectsResultRejectedEffectInfo, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptEffectsResultRejectedEffectInfo) Or(d EffectsResultRejectedEffectInfo) EffectsResultRejectedEffectInfo {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptEffectsResultStatus returns new OptEffectsResultStatus with value set to v.
-func NewOptEffectsResultStatus(v EffectsResultStatus) OptEffectsResultStatus {
-	return OptEffectsResultStatus{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptEffectsResultStatus is optional EffectsResultStatus.
-type OptEffectsResultStatus struct {
-	Value EffectsResultStatus
-	Set   bool
-}
-
-// IsSet returns true if OptEffectsResultStatus was set.
-func (o OptEffectsResultStatus) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptEffectsResultStatus) Reset() {
-	var v EffectsResultStatus
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptEffectsResultStatus) SetTo(v EffectsResultStatus) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptEffectsResultStatus) Get() (v EffectsResultStatus, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptEffectsResultStatus) Or(d EffectsResultStatus) EffectsResultStatus {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptEffectsResultSummary returns new OptEffectsResultSummary with value set to v.
-func NewOptEffectsResultSummary(v EffectsResultSummary) OptEffectsResultSummary {
-	return OptEffectsResultSummary{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptEffectsResultSummary is optional EffectsResultSummary.
-type OptEffectsResultSummary struct {
-	Value EffectsResultSummary
-	Set   bool
-}
-
-// IsSet returns true if OptEffectsResultSummary was set.
-func (o OptEffectsResultSummary) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptEffectsResultSummary) Reset() {
-	var v EffectsResultSummary
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptEffectsResultSummary) SetTo(v EffectsResultSummary) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptEffectsResultSummary) Get() (v EffectsResultSummary, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptEffectsResultSummary) Or(d EffectsResultSummary) EffectsResultSummary {
 	if v, ok := o.Get(); ok {
 		return v
 	}

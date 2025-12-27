@@ -18,7 +18,7 @@ var _ Handler = UnimplementedHandler{}
 // Apply buffs, debuffs, and status effects to combat participants.
 //
 // POST /combat/effects/apply
-func (UnimplementedHandler) ApplyEffects(ctx context.Context, req *EffectsRequest) (r ApplyEffectsRes, _ error) {
+func (UnimplementedHandler) ApplyEffects(ctx context.Context, req *ApplyEffectsRequest) (r ApplyEffectsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -28,7 +28,7 @@ func (UnimplementedHandler) ApplyEffects(ctx context.Context, req *EffectsReques
 // **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations.
 //
 // POST /combat/damage/calculate
-func (UnimplementedHandler) CalculateDamage(ctx context.Context, req *DamageRequest) (r CalculateDamageRes, _ error) {
+func (UnimplementedHandler) CalculateDamage(ctx context.Context, req *DamageCalculationRequest) (r CalculateDamageRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
