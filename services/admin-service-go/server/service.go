@@ -33,6 +33,7 @@ type AdminService struct {
 	adminUsers   map[string]*models.AdminUser // sessionID -> admin user
 	mu           sync.RWMutex
 	jwtSecret    string
+	startTime    time.Time // Track service start time for uptime calculation
 
 	// Performance optimizations
 	userPool     sync.Pool // Object pooling for user objects
@@ -72,6 +73,7 @@ func NewAdminService(logger *zap.Logger, redisURL, dbURL, jwtSecret string) (*Ad
 		logger:     logger,
 		repo:       repo, // Use repository interface
 		jwtSecret:  jwtSecret,
+		startTime:  time.Now(),
 		adminUsers: make(map[string]*models.AdminUser),
 
 		// Initialize object pools for memory optimization
