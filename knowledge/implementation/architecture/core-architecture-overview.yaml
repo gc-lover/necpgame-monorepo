@@ -1,0 +1,154 @@
+# Issue: #140876980
+metadata:
+  id: core-architecture-overview
+  title: "Core Architecture Overview - Обзор архитектуры ядра системы"
+  document_type: architecture
+  category: core
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-27T19:40:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - core
+    - overview
+    - system-design
+  topics:
+    - system-architecture
+    - microservices
+    - scalability
+  related_systems:
+    - all-services
+  related_documents:
+    - id: core-architecture-database
+      relation: extends
+    - id: core-architecture-api
+      relation: extends
+    - id: core-architecture-security
+      relation: extends
+  github_issue: 140876980
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - devops
+    - security
+
+summary:
+  problem: |
+    Необходим обзор архитектуры ядра системы для понимания общего дизайна,
+    компонентов и взаимодействия между ними
+  goal: |
+    Создать всесторонний обзор архитектуры ядра, включая:
+    - Общую структуру системы
+    - Ключевые компоненты и их роли
+    - Взаимодействие между компонентами
+    - Масштабируемость и производительность
+    - Безопасность на уровне архитектуры
+  essence: |
+    Единая точка входа для понимания архитектуры ядра NECPGAME
+
+architecture:
+  system_overview:
+    description: |
+      NECPGAME построена на микросервисной архитектуре с использованием
+      Kubernetes для оркестрации, Envoy для API Gateway, PostgreSQL для данных
+      и Redis для кеширования. Система поддерживает MMOFPS геймплей с
+      миллионами одновременных игроков.
+
+    key_components:
+      - api_gateway: Envoy proxy для маршрутизации и безопасности
+      - microservices: 50+ специализированных сервисов
+      - databases: PostgreSQL кластеры с шардингом
+      - cache: Redis кластер для сессий и игрового состояния
+      - messaging: Kafka для асинхронных коммуникаций
+      - monitoring: Prometheus + Grafana для observability
+
+  scalability_patterns:
+    horizontal_scaling:
+      description: Автоматическое масштабирование сервисов на основе нагрузки
+      components:
+        - HPA (Horizontal Pod Autoscaler) в Kubernetes
+        - Service mesh для распределения нагрузки
+        - Database sharding для горизонтального масштабирования данных
+
+    data_partitioning:
+      description: Разделение данных для оптимизации производительности
+      strategies:
+        - player_id sharding для игровых данных
+        - geographic sharding для региональных данных
+        - time-based partitioning для исторических данных
+
+  security_architecture:
+    defense_layers:
+      - network: Firewalls, DDoS protection, WAF
+      - application: Input validation, authentication, authorization
+      - data: Encryption at rest, encryption in transit
+      - monitoring: Security event logging, anomaly detection
+
+    authentication:
+      - JWT tokens для API аутентификации
+      - Session management через Redis
+      - OAuth 2.0 для внешних интеграций
+
+  performance_considerations:
+    latency_requirements:
+      - API responses: <100ms для 95% запросов
+      - Real-time updates: <50ms задержка
+      - Database queries: <10ms для простых операций
+
+    optimization_techniques:
+      - Database indexing и query optimization
+      - Caching strategies (Redis, CDN)
+      - Connection pooling и reuse
+      - Asynchronous processing для тяжелых операций
+
+  reliability_patterns:
+    redundancy:
+      - Multi-zone deployment в Kubernetes
+      - Database replication (primary-secondary)
+      - Service mesh для failover
+
+    monitoring:
+      - Health checks для всех сервисов
+      - Distributed tracing (Jaeger)
+      - Alerting на основе метрик
+      - Log aggregation (Loki + Promtail)
+
+implementation:
+  deployment:
+    environments:
+      - development: Single-node Kubernetes
+      - staging: Multi-node cluster
+      - production: Multi-zone, multi-region
+
+    ci_cd:
+      - GitHub Actions для автоматизации
+      - ArgoCD для GitOps deployment
+      - Automated testing pipelines
+
+  maintenance:
+    backup_strategies:
+      - Database snapshots каждые 6 часов
+      - Point-in-time recovery capability
+      - Cross-region backup replication
+
+    disaster_recovery:
+      - RTO: 4 hours
+      - RPO: 15 minutes
+      - Automated failover procedures
+
+validation:
+  checklists:
+    - Architecture review completed
+    - Security assessment passed
+    - Performance benchmarks met
+    - Scalability testing completed
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-27
+    author: architect_agent
+    changes: Initial core architecture overview document

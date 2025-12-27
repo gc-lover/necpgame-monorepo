@@ -1,0 +1,193 @@
+# Issue: #140876980
+metadata:
+  id: core-architecture-api
+  title: "Core Architecture API - Архитектура API ядра системы"
+  document_type: architecture
+  category: core
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-27T19:40:00Z
+  owners:
+    - role: api_designer
+      contact: api@necp.game
+  tags:
+    - architecture
+    - api
+    - openapi
+    - rest
+  topics:
+    - api-design
+    - microservices
+    - integration
+  related_systems:
+    - envoy
+    - all-services
+  related_documents:
+    - id: core-architecture-overview
+      relation: part_of
+  github_issue: 140876980
+
+summary:
+  problem: |
+    Необходима единая архитектура API для 50+ микросервисов
+    с поддержкой миллионов одновременных игроков
+  goal: |
+    Спроектировать масштабируемую API архитектуру с:
+    - Едиными стандартами для всех сервисов
+    - Высокой производительностью и низкой задержкой
+    - Безопасностью и мониторингом
+    - Поддержкой разных протоколов (REST, gRPC, WebSocket)
+  essence: |
+    Enterprise-grade API архитектура с Envoy gateway и domain-driven design
+
+architecture:
+  api_gateway:
+    technology: Envoy Proxy
+    features:
+      - Load balancing с автоматическим failover
+      - Rate limiting по user/player
+      - Authentication и authorization
+      - Request/response transformation
+      - Circuit breaking для resilience
+      - Distributed tracing
+
+    routing_strategy:
+      path_based_routing: /api/v1/{domain}/{resource}
+      domain_routing:
+        gameplay: gameplay-service
+        economy: economy-service
+        social: social-service
+        world: world-service
+        auth: auth-service
+
+  api_design_principles:
+    restful_design:
+      - Resource-oriented URLs
+      - HTTP methods для CRUD операций
+      - Proper HTTP status codes
+      - HATEOAS для navigation
+
+    domain_driven_design:
+      - Bounded contexts для каждого domain
+      - Domain-specific language в API
+      - Event-driven communication между domains
+      - CQRS pattern для complex operations
+
+    performance_optimization:
+      - Pagination для больших наборов данных
+      - Conditional requests (ETags, Last-Modified)
+      - Compression (gzip, brotli)
+      - Caching headers для static resources
+
+  protocol_support:
+    rest_api:
+      specification: OpenAPI 3.0
+      content_types:
+        - application/json
+        - application/problem+json для ошибок
+      versioning: URL-based (/api/v1/, /api/v2/)
+
+    grpc_api:
+      usage: Internal service communication
+      benefits:
+        - Binary protocol для performance
+        - Streaming для real-time data
+        - Strong typing с protobuf
+
+    websocket_api:
+      usage: Real-time game features
+      features:
+        - Player position updates
+        - Chat messages
+        - Combat events
+        - Social notifications
+
+  security_architecture:
+    authentication:
+      jwt_tokens:
+        - Issued by auth-service
+        - Player-scoped permissions
+        - Expiration и refresh tokens
+      session_management:
+        - Redis-based sessions
+        - Automatic cleanup
+        - Cross-device synchronization
+
+    authorization:
+      role_based_access:
+        - Player, Moderator, Admin roles
+        - Resource-specific permissions
+        - Guild/clan permissions
+      rate_limiting:
+        - Per-player limits
+        - Burst handling
+        - Graduated penalties
+
+    input_validation:
+      schema_validation: OpenAPI schemas
+      sanitization: XSS protection, SQL injection prevention
+      business_logic_validation: Domain-specific rules
+
+  monitoring_and_observability:
+    metrics_collection:
+      response_times: p50, p95, p99
+      error_rates: 4xx, 5xx rates
+      throughput: requests per second
+      resource_usage: CPU, memory per endpoint
+
+    distributed_tracing:
+      jaeger_integration: Request tracing across services
+      correlation_ids: Для debugging complex flows
+      performance_analysis: Bottleneck identification
+
+    logging:
+      structured_logging: JSON format для всех services
+      log_levels: ERROR, WARN, INFO, DEBUG
+      centralized_aggregation: Loki + Promtail
+
+  error_handling:
+    standardized_errors:
+      problem_details_format: RFC 7807 compliance
+      error_codes: Domain-specific error classification
+      localization: Multi-language error messages
+
+    retry_logic:
+      idempotent_operations: Safe retry для network errors
+      exponential_backoff: Для transient failures
+      circuit_breaker: Prevention cascade failures
+
+  versioning_strategy:
+    api_versions:
+      v1: Current stable version
+      v2: Next major version (backward compatible)
+      experimental: /api/experimental/ для testing
+
+    backward_compatibility:
+      additive_changes: New fields optional
+      deprecation_warnings: Headers для deprecated endpoints
+      migration_guides: Documentation для breaking changes
+
+implementation:
+  code_generation:
+    openapi_generator: For client SDKs
+    grpc_codegen: For service interfaces
+    documentation: Automated API docs generation
+
+  testing_strategy:
+    unit_tests: Service-level API testing
+    integration_tests: Cross-service API flows
+    performance_tests: Load testing API endpoints
+    contract_tests: API schema validation
+
+validation:
+  api_maturity:
+    - OpenAPI compliance: 100%
+    - Documentation coverage: 100%
+    - Test coverage: >90%
+    - Performance benchmarks: Met
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-27
+    author: api_designer_agent
+    changes: Initial core API architecture document

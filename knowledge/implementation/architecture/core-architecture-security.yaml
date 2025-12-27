@@ -1,0 +1,239 @@
+# Issue: #140876980
+metadata:
+  id: core-architecture-security
+  title: "Core Architecture Security - Архитектура безопасности ядра системы"
+  document_type: architecture
+  category: core
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-27T19:40:00Z
+  owners:
+    - role: security
+      contact: security@necp.game
+  tags:
+    - architecture
+    - security
+    - authentication
+    - authorization
+  topics:
+    - cybersecurity
+    - threat-modeling
+    - compliance
+  related_systems:
+    - auth-service
+    - security-service
+  related_documents:
+    - id: core-architecture-overview
+      relation: part_of
+  github_issue: 140876980
+
+summary:
+  problem: |
+    Необходима комплексная архитектура безопасности для защиты
+    миллионов игроков и критичных игровых данных от угроз
+  goal: |
+    Спроектировать многоуровневую систему безопасности с:
+    - Защитой от распространенных атак (DDoS, injection, XSS)
+    - Аутентификацией и авторизацией игроков
+    - Шифрованием данных в покое и в транзите
+    - Мониторингом и реагированием на инциденты
+    - Соответствием регуляторным требованиям
+  essence: |
+    Defense-in-depth архитектура безопасности для MMOFPS игры
+
+architecture:
+  security_layers:
+    network_security:
+      perimeter_protection:
+        - Cloudflare WAF для DDoS mitigation
+        - Envoy proxy для application-level filtering
+        - Kubernetes network policies для microsegmentation
+        - Zero-trust networking principles
+
+      encryption_in_transit:
+        - TLS 1.3 для всех external communications
+        - Mutual TLS для internal service communication
+        - Perfect forward secrecy для session keys
+        - Certificate pinning для mobile clients
+
+    application_security:
+      input_validation:
+        - Schema validation для всех API inputs
+        - Sanitization для XSS prevention
+        - Parameter binding для SQL injection prevention
+        - Rate limiting per player/IP
+
+      authentication:
+        jwt_based_auth:
+          - Player authentication через auth-service
+          - Session management с automatic expiration
+          - Refresh token rotation
+          - Multi-device session management
+
+        social_auth:
+          - OAuth 2.0 integration (Discord, Google, etc.)
+          - Social account linking
+          - Account verification workflows
+
+      authorization:
+        role_based_access_control:
+          - Player, Moderator, Admin, Developer roles
+          - Resource-specific permissions
+          - Guild/clan-based permissions
+          - Geographic restrictions
+
+        attribute_based_access:
+          - Player level requirements
+          - Account age restrictions
+          - Behavioral scoring
+
+    data_security:
+      encryption_at_rest:
+        - AES-256 для database encryption
+        - Key rotation every 90 days
+        - Hardware security modules (HSM)
+        - Backup encryption
+
+      data_classification:
+        sensitive_data:
+          - Player personal information (PII)
+          - Payment information
+          - Chat logs and communications
+        game_data:
+          - Character progression
+          - Inventory items
+          - Guild information
+
+      privacy_protection:
+        gdpr_compliance:
+          - Right to erasure (account deletion)
+          - Data portability
+          - Consent management
+          - Privacy by design principles
+
+  threat_modeling:
+    attack_vectors:
+      account_takeover:
+        - Credential stuffing attacks
+        - Phishing campaigns
+        - Session hijacking
+        - Social engineering
+
+      cheating_exploits:
+        - Memory manipulation
+        - Packet interception
+        - Bot automation
+        - Speed hacking
+
+      data_breaches:
+        - SQL injection vulnerabilities
+        - Insecure API endpoints
+        - Third-party compromise
+        - Insider threats
+
+    mitigation_strategies:
+      anti_cheating:
+        server_authoritative_model:
+          - All game state on server
+          - Client prediction with reconciliation
+          - Statistical anomaly detection
+          - Behavioral pattern analysis
+
+        anti_tampering:
+          - Code obfuscation
+          - Integrity checks
+          - Root/jailbreak detection
+          - Emulator detection
+
+  monitoring_and_incident_response:
+    security_monitoring:
+      siem_integration:
+        - Centralized logging (Loki)
+        - Security event correlation
+        - Automated alerting
+        - Threat intelligence feeds
+
+      anomaly_detection:
+        - Unusual login patterns
+        - Suspicious transaction volumes
+        - Abnormal API usage
+        - Geographic anomalies
+
+    incident_response:
+      playbooks:
+        data_breach: Containment, notification, recovery
+        ddos_attack: Traffic filtering, scaling response
+        account_compromise: Password reset, session invalidation
+        cheating_detection: Investigation, ban procedures
+
+      automated_response:
+        - IP blocking for brute force
+        - Account suspension for suspicious activity
+        - Rate limit increases during attacks
+        - Emergency maintenance mode activation
+
+  compliance_and_audit:
+    regulatory_compliance:
+      gdpr: EU data protection regulations
+      ccpa: California consumer privacy act
+      soc2: Security, availability, and confidentiality
+      pci_dss: Payment card industry standards
+
+    audit_trail:
+      security_events:
+        - Authentication attempts (success/failure)
+        - Authorization decisions
+        - Data access patterns
+        - Administrative actions
+
+      compliance_reporting:
+        - Monthly security reports
+        - Penetration testing results
+        - Incident response summaries
+        - Compliance audit trails
+
+implementation:
+  security_development_lifecycle:
+    secure_coding_practices:
+      - SAST (Static Application Security Testing)
+      - DAST (Dynamic Application Security Testing)
+      - Dependency scanning
+      - Container image scanning
+
+    deployment_security:
+      - Infrastructure as Code security
+      - Secret management (Vault, AWS Secrets Manager)
+      - Configuration hardening
+      - Automated security testing
+
+  third_party_security:
+    vendor_assessment:
+      - Security questionnaires for vendors
+      - Third-party penetration testing
+      - Supply chain risk assessment
+      - Contractual security requirements
+
+    integration_security:
+      - OAuth 2.0 for social logins
+      - Secure webhook signatures
+      - API key rotation
+      - Certificate management
+
+validation:
+  security_assessment:
+    penetration_testing: Quarterly external testing
+    vulnerability_scanning: Weekly automated scans
+    code_reviews: Security-focused code reviews
+    compliance_audits: Annual third-party audits
+
+  security_metrics:
+    - Mean time to detect (MTTD): < 1 hour
+    - Mean time to respond (MTTR): < 4 hours
+    - Security incident rate: < 0.1 per month
+    - Compliance coverage: 100%
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-27
+    author: security_agent
+    changes: Initial core security architecture document

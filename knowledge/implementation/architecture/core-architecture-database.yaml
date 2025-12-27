@@ -1,0 +1,162 @@
+# Issue: #140876980
+metadata:
+  id: core-architecture-database
+  title: "Core Architecture Database - Архитектура базы данных ядра системы"
+  document_type: architecture
+  category: core
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-27T19:40:00Z
+  owners:
+    - role: database
+      contact: database@necp.game
+  tags:
+    - architecture
+    - database
+    - postgresql
+    - sharding
+  topics:
+    - database-design
+    - data-modeling
+    - performance
+  related_systems:
+    - database-service
+    - liquibase
+  related_documents:
+    - id: core-architecture-overview
+      relation: part_of
+  github_issue: 140876980
+
+summary:
+  problem: |
+    Необходима архитектура базы данных для поддержки миллионов игроков
+    с высокими требованиями к производительности и доступности
+  goal: |
+    Спроектировать масштабируемую архитектуру БД с:
+    - Шардингом для горизонтального масштабирования
+    - Оптимизацией запросов для игрового геймплея
+    - Высокой доступностью и отказоустойчивостью
+    - Поддержкой аналитики и отчетности
+  essence: |
+    PostgreSQL-based архитектура с шардингом и оптимизациями для MMOFPS
+
+architecture:
+  database_technology:
+    primary: PostgreSQL 15+
+    reasons:
+      - ACID compliance для транзакций
+      - Rich data types для игровых данных
+      - Advanced indexing для производительности
+      - JSONB для гибких данных
+      - Extensions (PostGIS, pg_stat_statements)
+
+  sharding_strategy:
+    player_based_sharding:
+      description: Основной шардинг по player_id
+      benefits:
+        - Локальность данных игрока
+        - Оптимизация PvP и социальных взаимодействий
+        - Упрощение кеширования
+      implementation:
+        - Hash-based sharding на player_id
+        - 1024 шарда для масштабирования до 100M+ игроков
+        - Consistent hashing для rebalancing
+
+    regional_sharding:
+      description: Географический шардинг для локализации
+      regions:
+        - americas
+        - europe
+        - asia_pacific
+        - china
+      benefits:
+        - Соответствие GDPR и локальным законам
+        - Снижение latency для региональных игроков
+        - Изоляция региональных экономик
+
+  data_modeling:
+    normalized_structure:
+      description: Гибридная модель с нормализацией и денормализацией
+      tables:
+        - players: Основная информация об игроках
+        - characters: Персонажи игроков
+        - inventory_items: Предметы инвентаря
+        - game_sessions: Игровые сессии
+        - social_relations: Социальные связи
+
+    jsonb_usage:
+      flexible_data:
+        - player_preferences: Настройки интерфейса
+        - character_customization: Кастомизация внешности
+        - quest_progress: Прогресс квестов
+        - achievement_data: Достижения и награды
+
+  performance_optimization:
+    indexing_strategy:
+      composite_indexes:
+        - (player_id, created_at) для временных запросов
+        - (guild_id, player_id) для гильдий
+        - (location_id, player_id) для геолокации
+      partial_indexes:
+        - Активные предметы: WHERE is_active = true
+        - Недавние сессии: WHERE created_at > now() - interval '30 days'
+
+    query_optimization:
+      connection_pooling: PgBouncer для управления соединениями
+      prepared_statements: Кеширование планов запросов
+      partitioning: Time-based partitioning для исторических данных
+
+  high_availability:
+    replication:
+      streaming_replication: Синхронная репликация для consistency
+      logical_replication: Для cross-shard queries и analytics
+      cascading_replicas: Multi-level replication для масштабирования
+
+    failover:
+      automatic_failover: Patroni для управления кластером
+      connection_routing: Через PgBouncer с автоматическим switching
+      backup_strategies:
+        - Continuous WAL archiving
+        - Point-in-time recovery
+        - Cross-region backups
+
+  monitoring_and_observability:
+    metrics:
+      - Query performance (pg_stat_statements)
+      - Connection usage (pg_stat_activity)
+      - Replication lag
+      - Disk usage and I/O
+      - Cache hit ratios
+
+    alerting:
+      - Slow queries (>100ms)
+      - High connection count
+      - Replication lag >5 seconds
+      - Disk space <10% free
+
+implementation:
+  migration_strategy:
+    liquibase: Для управления схемой и данными
+    versioning: Semantic versioning для миграций
+    rollback: Поддержка отката для всех миграций
+
+  backup_and_recovery:
+    automated_backups:
+      - Daily full backups
+      - Hourly incremental backups
+      - WAL archiving every 5 minutes
+    recovery_testing: Monthly DR drills
+    rto_rpo: 4 hours RTO, 15 minutes RPO
+
+validation:
+  performance_benchmarks:
+    - 1000 concurrent players: <50ms response time
+    - Complex queries: <100ms execution time
+    - Write throughput: 10,000 TPS
+    - Read throughput: 50,000 QPS
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-27
+    author: database_agent
+    changes: Initial core database architecture document
