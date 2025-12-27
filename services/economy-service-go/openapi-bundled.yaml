@@ -400,6 +400,272 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/responses/InternalServerError'
+  /economy/overview:
+    get:
+      tags:
+        - Market Data
+      summary: Get economy overview
+      description: |-
+        Get comprehensive economy statistics and market trends.
+        **BACKEND NOTE:** Aggregated data for dashboard views.
+      operationId: getEconomyOverview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Optional player ID filter
+      responses:
+        '200':
+          description: Economy overview data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomyOverview'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /players/{player_id}/inventory:
+    get:
+      tags:
+        - Market Data
+      summary: Get player inventory
+      description: |-
+        Get detailed player inventory with valuation.
+        **BACKEND NOTE:** Includes item values and capacity information.
+      operationId: getCharacterInventory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player ID
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [weapons, armor, consumables, materials]
+          description: Filter by item category
+      responses:
+        '200':
+          description: Player inventory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterInventory'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /crafting/recipes:
+    get:
+      tags:
+        - Market Data
+      summary: Get crafting recipes
+      description: |-
+        Get paginated list of crafting recipes with filtering.
+        **BACKEND NOTE:** Supports complex filtering for crafting UI.
+      operationId: getCraftingRecipes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [weapons, armor, consumables, materials]
+          description: Filter by recipe category
+        - name: tier
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+          description: Filter by recipe tier
+        - name: quality
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Filter by minimum quality
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of recipes to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Crafting recipes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CraftingRecipeList'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /players/{player_id}/wallet:
+    get:
+      tags:
+        - Transaction History
+      summary: Get player wallet
+      description: Get player wallet information and balances.
+      operationId: getPlayerWallet
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player ID
+      responses:
+        '200':
+          description: Player wallet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerWallet'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Transaction History
+      summary: Update player wallet
+      description: Update player wallet balances (admin only).
+      operationId: updatePlayerWallet
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWalletRequest'
+      responses:
+        '200':
+          description: Wallet updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerWallet'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /auctions:
     get:
       tags:
@@ -833,17 +1099,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  auctions:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/AuctionWithBid'
-                  total:
-                    type: integer
-                  next_offset:
-                    type: integer
-                    nullable: true
+                $ref: '#/components/schemas/AuctionWithBidList'
         '401':
           description: Unauthorized
           content:
@@ -1780,3 +2036,73 @@ components:
           format: uuid
           example: 550e8400-e29b-41d4-a716-446655440001
       description: Parameters for player wallet request.
+    PlayerWallet:
+      type: object
+      required:
+        - player_id
+        - balances
+        - total_value
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        balances:
+          type: object
+          properties:
+            credits:
+              type: integer
+              format: int64
+              minimum: 0
+              example: 15000
+            premium_credits:
+              type: integer
+              format: int64
+              minimum: 0
+              example: 500
+            tokens:
+              type: integer
+              format: int64
+              minimum: 0
+              example: 25
+        total_value:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total value across all currencies
+          example: 15525
+        last_updated:
+          type: string
+          format: date-time
+          example: '2025-12-27T13:45:00Z'
+      description: 'BACKEND NOTE: Player wallet with multiple currency balances.'
+    UpdateWalletRequest:
+      type: object
+      required:
+        - operation
+        - currency
+        - amount
+      properties:
+        operation:
+          type: string
+          enum: [add, subtract, set]
+          example: add
+        currency:
+          type: string
+          enum: [credits, premium_credits, tokens]
+          example: credits
+        amount:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 1000
+        reason:
+          type: string
+          maxLength: 255
+          example: "Admin adjustment for quest completion"
+      description: 'BACKEND NOTE: Wallet update operation for admin use.'
+    PlayerID:
+      type: string
+      format: uuid
+      description: Player UUID identifier
+      example: 550e8400-e29b-41d4-a716-446655440001
