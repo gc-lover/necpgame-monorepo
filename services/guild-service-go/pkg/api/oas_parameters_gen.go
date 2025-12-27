@@ -81,6 +81,192 @@ func decodeCreateGuildAnnouncementParams(args [1]string, argsEscaped bool, r *ht
 	return params, nil
 }
 
+// CreateVoiceChannelParams is parameters of createVoiceChannel operation.
+type CreateVoiceChannelParams struct {
+	// Guild ID.
+	GuildId uuid.UUID
+}
+
+func unpackCreateVoiceChannelParams(packed middleware.Parameters) (params CreateVoiceChannelParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "guildId",
+			In:   "path",
+		}
+		params.GuildId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeCreateVoiceChannelParams(args [1]string, argsEscaped bool, r *http.Request) (params CreateVoiceChannelParams, _ error) {
+	// Decode path: guildId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "guildId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.GuildId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "guildId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// DeleteVoiceChannelParams is parameters of deleteVoiceChannel operation.
+type DeleteVoiceChannelParams struct {
+	// Guild ID.
+	GuildId uuid.UUID
+	// Voice channel ID.
+	ChannelId uuid.UUID
+}
+
+func unpackDeleteVoiceChannelParams(packed middleware.Parameters) (params DeleteVoiceChannelParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "guildId",
+			In:   "path",
+		}
+		params.GuildId = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "channelId",
+			In:   "path",
+		}
+		params.ChannelId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeDeleteVoiceChannelParams(args [2]string, argsEscaped bool, r *http.Request) (params DeleteVoiceChannelParams, _ error) {
+	// Decode path: guildId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "guildId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.GuildId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "guildId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: channelId.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "channelId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ChannelId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "channelId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // DisbandGuildParams is parameters of disbandGuild operation.
 type DisbandGuildParams struct {
 	// Guild unique identifier.
@@ -260,6 +446,366 @@ func decodeGetGuildParams(args [1]string, argsEscaped bool, r *http.Request) (pa
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "guild_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// GetVoiceChannelParams is parameters of getVoiceChannel operation.
+type GetVoiceChannelParams struct {
+	// Guild ID.
+	GuildId uuid.UUID
+	// Voice channel ID.
+	ChannelId uuid.UUID
+}
+
+func unpackGetVoiceChannelParams(packed middleware.Parameters) (params GetVoiceChannelParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "guildId",
+			In:   "path",
+		}
+		params.GuildId = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "channelId",
+			In:   "path",
+		}
+		params.ChannelId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeGetVoiceChannelParams(args [2]string, argsEscaped bool, r *http.Request) (params GetVoiceChannelParams, _ error) {
+	// Decode path: guildId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "guildId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.GuildId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "guildId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: channelId.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "channelId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ChannelId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "channelId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// JoinVoiceChannelParams is parameters of joinVoiceChannel operation.
+type JoinVoiceChannelParams struct {
+	// Guild ID.
+	GuildId uuid.UUID
+	// Voice channel ID.
+	ChannelId uuid.UUID
+}
+
+func unpackJoinVoiceChannelParams(packed middleware.Parameters) (params JoinVoiceChannelParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "guildId",
+			In:   "path",
+		}
+		params.GuildId = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "channelId",
+			In:   "path",
+		}
+		params.ChannelId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeJoinVoiceChannelParams(args [2]string, argsEscaped bool, r *http.Request) (params JoinVoiceChannelParams, _ error) {
+	// Decode path: guildId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "guildId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.GuildId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "guildId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: channelId.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "channelId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ChannelId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "channelId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// LeaveVoiceChannelParams is parameters of leaveVoiceChannel operation.
+type LeaveVoiceChannelParams struct {
+	// Guild ID.
+	GuildId uuid.UUID
+	// Voice channel ID.
+	ChannelId uuid.UUID
+}
+
+func unpackLeaveVoiceChannelParams(packed middleware.Parameters) (params LeaveVoiceChannelParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "guildId",
+			In:   "path",
+		}
+		params.GuildId = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "channelId",
+			In:   "path",
+		}
+		params.ChannelId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeLeaveVoiceChannelParams(args [2]string, argsEscaped bool, r *http.Request) (params LeaveVoiceChannelParams, _ error) {
+	// Decode path: guildId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "guildId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.GuildId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "guildId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: channelId.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "channelId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ChannelId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "channelId",
 			In:   "path",
 			Err:  err,
 		}
@@ -1437,6 +1983,192 @@ func decodeListGuildsParams(args [0]string, argsEscaped bool, r *http.Request) (
 	return params, nil
 }
 
+// ListVoiceChannelsParams is parameters of listVoiceChannels operation.
+type ListVoiceChannelsParams struct {
+	// Guild ID.
+	GuildId uuid.UUID
+}
+
+func unpackListVoiceChannelsParams(packed middleware.Parameters) (params ListVoiceChannelsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "guildId",
+			In:   "path",
+		}
+		params.GuildId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeListVoiceChannelsParams(args [1]string, argsEscaped bool, r *http.Request) (params ListVoiceChannelsParams, _ error) {
+	// Decode path: guildId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "guildId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.GuildId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "guildId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// ListVoiceParticipantsParams is parameters of listVoiceParticipants operation.
+type ListVoiceParticipantsParams struct {
+	// Guild ID.
+	GuildId uuid.UUID
+	// Voice channel ID.
+	ChannelId uuid.UUID
+}
+
+func unpackListVoiceParticipantsParams(packed middleware.Parameters) (params ListVoiceParticipantsParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "guildId",
+			In:   "path",
+		}
+		params.GuildId = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "channelId",
+			In:   "path",
+		}
+		params.ChannelId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeListVoiceParticipantsParams(args [2]string, argsEscaped bool, r *http.Request) (params ListVoiceParticipantsParams, _ error) {
+	// Decode path: guildId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "guildId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.GuildId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "guildId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: channelId.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "channelId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ChannelId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "channelId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
 // RemoveGuildMemberParams is parameters of removeGuildMember operation.
 type RemoveGuildMemberParams struct {
 	// Guild unique identifier.
@@ -1736,6 +2468,126 @@ func decodeUpdateMemberRoleParams(args [2]string, argsEscaped bool, r *http.Requ
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
 			Name: "player_id",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	return params, nil
+}
+
+// UpdateVoiceChannelParams is parameters of updateVoiceChannel operation.
+type UpdateVoiceChannelParams struct {
+	// Guild ID.
+	GuildId uuid.UUID
+	// Voice channel ID.
+	ChannelId uuid.UUID
+}
+
+func unpackUpdateVoiceChannelParams(packed middleware.Parameters) (params UpdateVoiceChannelParams) {
+	{
+		key := middleware.ParameterKey{
+			Name: "guildId",
+			In:   "path",
+		}
+		params.GuildId = packed[key].(uuid.UUID)
+	}
+	{
+		key := middleware.ParameterKey{
+			Name: "channelId",
+			In:   "path",
+		}
+		params.ChannelId = packed[key].(uuid.UUID)
+	}
+	return params
+}
+
+func decodeUpdateVoiceChannelParams(args [2]string, argsEscaped bool, r *http.Request) (params UpdateVoiceChannelParams, _ error) {
+	// Decode path: guildId.
+	if err := func() error {
+		param := args[0]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[0])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "guildId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.GuildId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "guildId",
+			In:   "path",
+			Err:  err,
+		}
+	}
+	// Decode path: channelId.
+	if err := func() error {
+		param := args[1]
+		if argsEscaped {
+			unescaped, err := url.PathUnescape(args[1])
+			if err != nil {
+				return errors.Wrap(err, "unescape path")
+			}
+			param = unescaped
+		}
+		if len(param) > 0 {
+			d := uri.NewPathDecoder(uri.PathDecoderConfig{
+				Param:   "channelId",
+				Value:   param,
+				Style:   uri.PathStyleSimple,
+				Explode: false,
+			})
+
+			if err := func() error {
+				val, err := d.DecodeValue()
+				if err != nil {
+					return err
+				}
+
+				c, err := conv.ToUUID(val)
+				if err != nil {
+					return err
+				}
+
+				params.ChannelId = c
+				return nil
+			}(); err != nil {
+				return err
+			}
+		} else {
+			return validate.ErrFieldRequired
+		}
+		return nil
+	}(); err != nil {
+		return params, &ogenerrors.DecodeParamError{
+			Name: "channelId",
 			In:   "path",
 			Err:  err,
 		}

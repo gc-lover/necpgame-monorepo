@@ -36,15 +36,23 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 var operationRolesBearerAuth = map[string][]string{
 	CreateGuildOperation:             []string{},
 	CreateGuildAnnouncementOperation: []string{},
+	CreateVoiceChannelOperation:      []string{},
+	DeleteVoiceChannelOperation:      []string{},
 	DisbandGuildOperation:            []string{},
 	GetGuildOperation:                []string{},
 	GetHealthOperation:               []string{},
+	GetVoiceChannelOperation:         []string{},
+	JoinVoiceChannelOperation:        []string{},
+	LeaveVoiceChannelOperation:       []string{},
 	ListGuildAnnouncementsOperation:  []string{},
 	ListGuildMembersOperation:        []string{},
 	ListGuildsOperation:              []string{},
+	ListVoiceChannelsOperation:       []string{},
+	ListVoiceParticipantsOperation:   []string{},
 	RemoveGuildMemberOperation:       []string{},
 	UpdateGuildOperation:             []string{},
 	UpdateMemberRoleOperation:        []string{},
+	UpdateVoiceChannelOperation:      []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {

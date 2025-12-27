@@ -40,6 +40,23 @@ type Invoker interface {
 	//
 	// POST /guilds/{guild_id}/announcements
 	CreateGuildAnnouncement(ctx context.Context, request *CreateGuildAnnouncementReq, params CreateGuildAnnouncementParams) (CreateGuildAnnouncementRes, error)
+	// CreateVoiceChannel invokes createVoiceChannel operation.
+	//
+	// **Create Guild Voice Channel**
+	// Creates a new voice channel integrated with WebRTC signaling service. Only guild officers and
+	// leaders can create voice channels.
+	// **Performance:** <50ms P95, database write with WebRTC integration.
+	//
+	// POST /guilds/{guildId}/voice-channels
+	CreateVoiceChannel(ctx context.Context, request *CreateVoiceChannelReq, params CreateVoiceChannelParams) (CreateVoiceChannelRes, error)
+	// DeleteVoiceChannel invokes deleteVoiceChannel operation.
+	//
+	// **Delete Voice Channel**
+	// Deletes a voice channel. Only channel creator or guild officers can delete.
+	// **Performance:** <30ms P95, database delete with WebRTC cleanup.
+	//
+	// DELETE /guilds/{guildId}/voice-channels/{channelId}
+	DeleteVoiceChannel(ctx context.Context, params DeleteVoiceChannelParams) (DeleteVoiceChannelRes, error)
 	// DisbandGuild invokes disbandGuild operation.
 	//
 	// Disband guild (leader only, requires confirmation).
@@ -58,6 +75,30 @@ type Invoker interface {
 	//
 	// GET /health
 	GetHealth(ctx context.Context) (*HealthResponse, error)
+	// GetVoiceChannel invokes getVoiceChannel operation.
+	//
+	// **Get Voice Channel Details**
+	// Returns detailed information about a specific voice channel.
+	// **Performance:** <10ms P95, cached retrieval.
+	//
+	// GET /guilds/{guildId}/voice-channels/{channelId}
+	GetVoiceChannel(ctx context.Context, params GetVoiceChannelParams) (GetVoiceChannelRes, error)
+	// JoinVoiceChannel invokes joinVoiceChannel operation.
+	//
+	// **Join Voice Channel**
+	// Joins the specified voice channel and establishes WebRTC connection.
+	// **Performance:** <15ms P95, participant management.
+	//
+	// POST /guilds/{guildId}/voice-channels/{channelId}/join
+	JoinVoiceChannel(ctx context.Context, params JoinVoiceChannelParams) (JoinVoiceChannelRes, error)
+	// LeaveVoiceChannel invokes leaveVoiceChannel operation.
+	//
+	// **Leave Voice Channel**
+	// Leaves the voice channel and cleans up WebRTC connection.
+	// **Performance:** <10ms P95, participant cleanup.
+	//
+	// POST /guilds/{guildId}/voice-channels/{channelId}/leave
+	LeaveVoiceChannel(ctx context.Context, params LeaveVoiceChannelParams) (LeaveVoiceChannelRes, error)
 	// ListGuildAnnouncements invokes listGuildAnnouncements operation.
 	//
 	// Get paginated list of guild announcements.
@@ -76,6 +117,22 @@ type Invoker interface {
 	//
 	// GET /guilds
 	ListGuilds(ctx context.Context, params ListGuildsParams) (ListGuildsRes, error)
+	// ListVoiceChannels invokes listVoiceChannels operation.
+	//
+	// **List Guild Voice Channels**
+	// Returns all active voice channels for the specified guild.
+	// **Performance:** <25ms P95, cached channel listing.
+	//
+	// GET /guilds/{guildId}/voice-channels
+	ListVoiceChannels(ctx context.Context, params ListVoiceChannelsParams) (ListVoiceChannelsRes, error)
+	// ListVoiceParticipants invokes listVoiceParticipants operation.
+	//
+	// **List Voice Channel Participants**
+	// Returns current participants in the voice channel with their status.
+	// **Performance:** <20ms P95, real-time participant listing.
+	//
+	// GET /guilds/{guildId}/voice-channels/{channelId}/participants
+	ListVoiceParticipants(ctx context.Context, params ListVoiceParticipantsParams) (ListVoiceParticipantsRes, error)
 	// RemoveGuildMember invokes removeGuildMember operation.
 	//
 	// Remove member from guild (leader/officer only).
@@ -94,6 +151,14 @@ type Invoker interface {
 	//
 	// PUT /guilds/{guild_id}/members/{player_id}
 	UpdateMemberRole(ctx context.Context, request *UpdateMemberRoleReq, params UpdateMemberRoleParams) (UpdateMemberRoleRes, error)
+	// UpdateVoiceChannel invokes updateVoiceChannel operation.
+	//
+	// **Update Voice Channel**
+	// Updates voice channel settings. Only channel creator or guild officers can update.
+	// **Performance:** <30ms P95, database update.
+	//
+	// PUT /guilds/{guildId}/voice-channels/{channelId}
+	UpdateVoiceChannel(ctx context.Context, request *UpdateVoiceChannelReq, params UpdateVoiceChannelParams) (UpdateVoiceChannelRes, error)
 }
 
 // Client implements OAS client.
@@ -371,6 +436,282 @@ func (c *Client) sendCreateGuildAnnouncement(ctx context.Context, request *Creat
 
 	stage = "DecodeResponse"
 	result, err := decodeCreateGuildAnnouncementResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// CreateVoiceChannel invokes createVoiceChannel operation.
+//
+// **Create Guild Voice Channel**
+// Creates a new voice channel integrated with WebRTC signaling service. Only guild officers and
+// leaders can create voice channels.
+// **Performance:** <50ms P95, database write with WebRTC integration.
+//
+// POST /guilds/{guildId}/voice-channels
+func (c *Client) CreateVoiceChannel(ctx context.Context, request *CreateVoiceChannelReq, params CreateVoiceChannelParams) (CreateVoiceChannelRes, error) {
+	res, err := c.sendCreateVoiceChannel(ctx, request, params)
+	return res, err
+}
+
+func (c *Client) sendCreateVoiceChannel(ctx context.Context, request *CreateVoiceChannelReq, params CreateVoiceChannelParams) (res CreateVoiceChannelRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("createVoiceChannel"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/guilds/{guildId}/voice-channels"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, CreateVoiceChannelOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/guilds/"
+	{
+		// Encode "guildId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "guildId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.GuildId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/voice-channels"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeCreateVoiceChannelRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, CreateVoiceChannelOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeCreateVoiceChannelResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// DeleteVoiceChannel invokes deleteVoiceChannel operation.
+//
+// **Delete Voice Channel**
+// Deletes a voice channel. Only channel creator or guild officers can delete.
+// **Performance:** <30ms P95, database delete with WebRTC cleanup.
+//
+// DELETE /guilds/{guildId}/voice-channels/{channelId}
+func (c *Client) DeleteVoiceChannel(ctx context.Context, params DeleteVoiceChannelParams) (DeleteVoiceChannelRes, error) {
+	res, err := c.sendDeleteVoiceChannel(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendDeleteVoiceChannel(ctx context.Context, params DeleteVoiceChannelParams) (res DeleteVoiceChannelRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("deleteVoiceChannel"),
+		semconv.HTTPRequestMethodKey.String("DELETE"),
+		semconv.URLTemplateKey.String("/guilds/{guildId}/voice-channels/{channelId}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, DeleteVoiceChannelOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [4]string
+	pathParts[0] = "/guilds/"
+	{
+		// Encode "guildId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "guildId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.GuildId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/voice-channels/"
+	{
+		// Encode "channelId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "channelId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.ChannelId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "DELETE", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, DeleteVoiceChannelOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeDeleteVoiceChannelResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -743,6 +1084,443 @@ func (c *Client) sendGetHealth(ctx context.Context) (res *HealthResponse, err er
 
 	stage = "DecodeResponse"
 	result, err := decodeGetHealthResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetVoiceChannel invokes getVoiceChannel operation.
+//
+// **Get Voice Channel Details**
+// Returns detailed information about a specific voice channel.
+// **Performance:** <10ms P95, cached retrieval.
+//
+// GET /guilds/{guildId}/voice-channels/{channelId}
+func (c *Client) GetVoiceChannel(ctx context.Context, params GetVoiceChannelParams) (GetVoiceChannelRes, error) {
+	res, err := c.sendGetVoiceChannel(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetVoiceChannel(ctx context.Context, params GetVoiceChannelParams) (res GetVoiceChannelRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("getVoiceChannel"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/guilds/{guildId}/voice-channels/{channelId}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GetVoiceChannelOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [4]string
+	pathParts[0] = "/guilds/"
+	{
+		// Encode "guildId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "guildId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.GuildId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/voice-channels/"
+	{
+		// Encode "channelId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "channelId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.ChannelId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, GetVoiceChannelOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGetVoiceChannelResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// JoinVoiceChannel invokes joinVoiceChannel operation.
+//
+// **Join Voice Channel**
+// Joins the specified voice channel and establishes WebRTC connection.
+// **Performance:** <15ms P95, participant management.
+//
+// POST /guilds/{guildId}/voice-channels/{channelId}/join
+func (c *Client) JoinVoiceChannel(ctx context.Context, params JoinVoiceChannelParams) (JoinVoiceChannelRes, error) {
+	res, err := c.sendJoinVoiceChannel(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendJoinVoiceChannel(ctx context.Context, params JoinVoiceChannelParams) (res JoinVoiceChannelRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("joinVoiceChannel"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/guilds/{guildId}/voice-channels/{channelId}/join"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, JoinVoiceChannelOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [5]string
+	pathParts[0] = "/guilds/"
+	{
+		// Encode "guildId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "guildId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.GuildId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/voice-channels/"
+	{
+		// Encode "channelId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "channelId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.ChannelId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	pathParts[4] = "/join"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, JoinVoiceChannelOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeJoinVoiceChannelResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// LeaveVoiceChannel invokes leaveVoiceChannel operation.
+//
+// **Leave Voice Channel**
+// Leaves the voice channel and cleans up WebRTC connection.
+// **Performance:** <10ms P95, participant cleanup.
+//
+// POST /guilds/{guildId}/voice-channels/{channelId}/leave
+func (c *Client) LeaveVoiceChannel(ctx context.Context, params LeaveVoiceChannelParams) (LeaveVoiceChannelRes, error) {
+	res, err := c.sendLeaveVoiceChannel(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendLeaveVoiceChannel(ctx context.Context, params LeaveVoiceChannelParams) (res LeaveVoiceChannelRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("leaveVoiceChannel"),
+		semconv.HTTPRequestMethodKey.String("POST"),
+		semconv.URLTemplateKey.String("/guilds/{guildId}/voice-channels/{channelId}/leave"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, LeaveVoiceChannelOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [5]string
+	pathParts[0] = "/guilds/"
+	{
+		// Encode "guildId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "guildId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.GuildId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/voice-channels/"
+	{
+		// Encode "channelId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "channelId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.ChannelId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	pathParts[4] = "/leave"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "POST", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, LeaveVoiceChannelOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeLeaveVoiceChannelResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -1356,6 +2134,279 @@ func (c *Client) sendListGuilds(ctx context.Context, params ListGuildsParams) (r
 	return result, nil
 }
 
+// ListVoiceChannels invokes listVoiceChannels operation.
+//
+// **List Guild Voice Channels**
+// Returns all active voice channels for the specified guild.
+// **Performance:** <25ms P95, cached channel listing.
+//
+// GET /guilds/{guildId}/voice-channels
+func (c *Client) ListVoiceChannels(ctx context.Context, params ListVoiceChannelsParams) (ListVoiceChannelsRes, error) {
+	res, err := c.sendListVoiceChannels(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListVoiceChannels(ctx context.Context, params ListVoiceChannelsParams) (res ListVoiceChannelsRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listVoiceChannels"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/guilds/{guildId}/voice-channels"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListVoiceChannelsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/guilds/"
+	{
+		// Encode "guildId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "guildId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.GuildId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/voice-channels"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, ListVoiceChannelsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListVoiceChannelsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// ListVoiceParticipants invokes listVoiceParticipants operation.
+//
+// **List Voice Channel Participants**
+// Returns current participants in the voice channel with their status.
+// **Performance:** <20ms P95, real-time participant listing.
+//
+// GET /guilds/{guildId}/voice-channels/{channelId}/participants
+func (c *Client) ListVoiceParticipants(ctx context.Context, params ListVoiceParticipantsParams) (ListVoiceParticipantsRes, error) {
+	res, err := c.sendListVoiceParticipants(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendListVoiceParticipants(ctx context.Context, params ListVoiceParticipantsParams) (res ListVoiceParticipantsRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("listVoiceParticipants"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/guilds/{guildId}/voice-channels/{channelId}/participants"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, ListVoiceParticipantsOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [5]string
+	pathParts[0] = "/guilds/"
+	{
+		// Encode "guildId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "guildId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.GuildId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/voice-channels/"
+	{
+		// Encode "channelId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "channelId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.ChannelId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	pathParts[4] = "/participants"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, ListVoiceParticipantsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeListVoiceParticipantsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // RemoveGuildMember invokes removeGuildMember operation.
 //
 // Remove member from guild (leader/officer only).
@@ -1765,6 +2816,154 @@ func (c *Client) sendUpdateMemberRole(ctx context.Context, request *UpdateMember
 
 	stage = "DecodeResponse"
 	result, err := decodeUpdateMemberRoleResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// UpdateVoiceChannel invokes updateVoiceChannel operation.
+//
+// **Update Voice Channel**
+// Updates voice channel settings. Only channel creator or guild officers can update.
+// **Performance:** <30ms P95, database update.
+//
+// PUT /guilds/{guildId}/voice-channels/{channelId}
+func (c *Client) UpdateVoiceChannel(ctx context.Context, request *UpdateVoiceChannelReq, params UpdateVoiceChannelParams) (UpdateVoiceChannelRes, error) {
+	res, err := c.sendUpdateVoiceChannel(ctx, request, params)
+	return res, err
+}
+
+func (c *Client) sendUpdateVoiceChannel(ctx context.Context, request *UpdateVoiceChannelReq, params UpdateVoiceChannelParams) (res UpdateVoiceChannelRes, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("updateVoiceChannel"),
+		semconv.HTTPRequestMethodKey.String("PUT"),
+		semconv.URLTemplateKey.String("/guilds/{guildId}/voice-channels/{channelId}"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, UpdateVoiceChannelOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [4]string
+	pathParts[0] = "/guilds/"
+	{
+		// Encode "guildId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "guildId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.GuildId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/voice-channels/"
+	{
+		// Encode "channelId" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "channelId",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.ChannelId))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "PUT", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeUpdateVoiceChannelRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			stage = "Security:BearerAuth"
+			switch err := c.securityBearerAuth(ctx, UpdateVoiceChannelOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	defer resp.Body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeUpdateVoiceChannelResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

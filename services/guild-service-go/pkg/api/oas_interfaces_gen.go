@@ -9,12 +9,32 @@ type CreateGuildRes interface {
 	createGuildRes()
 }
 
+type CreateVoiceChannelRes interface {
+	createVoiceChannelRes()
+}
+
+type DeleteVoiceChannelRes interface {
+	deleteVoiceChannelRes()
+}
+
 type DisbandGuildRes interface {
 	disbandGuildRes()
 }
 
 type GetGuildRes interface {
 	getGuildRes()
+}
+
+type GetVoiceChannelRes interface {
+	getVoiceChannelRes()
+}
+
+type JoinVoiceChannelRes interface {
+	joinVoiceChannelRes()
+}
+
+type LeaveVoiceChannelRes interface {
+	leaveVoiceChannelRes()
 }
 
 type ListGuildAnnouncementsRes interface {
@@ -29,6 +49,14 @@ type ListGuildsRes interface {
 	listGuildsRes()
 }
 
+type ListVoiceChannelsRes interface {
+	listVoiceChannelsRes()
+}
+
+type ListVoiceParticipantsRes interface {
+	listVoiceParticipantsRes()
+}
+
 type RemoveGuildMemberRes interface {
 	removeGuildMemberRes()
 }
@@ -39,4 +67,8 @@ type UpdateGuildRes interface {
 
 type UpdateMemberRoleRes interface {
 	updateMemberRoleRes()
+}
+
+type UpdateVoiceChannelRes interface {
+	updateVoiceChannelRes()
 }

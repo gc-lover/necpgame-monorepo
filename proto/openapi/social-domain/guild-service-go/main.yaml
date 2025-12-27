@@ -56,6 +56,8 @@ tags:
     description: Announcements and events management
   - name: Guild Settings
     description: Guild configuration and customization
+  - name: Voice Channels
+    description: Guild voice channel management and WebRTC integration
 
 paths:
   # Guild Management
@@ -788,6 +790,427 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+
+  /guilds/{guildId}/voice-channels:
+    post:
+      tags:
+        - Voice Channels
+      summary: Create a new voice channel for the guild
+      description: '**Create Guild Voice Channel**
+
+        Creates a new voice channel integrated with WebRTC signaling service.
+        Only guild officers and leaders can create voice channels.
+
+        **Performance:** <50ms P95, database write with WebRTC integration
+        '
+      operationId: createVoiceChannel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - max_users
+              properties:
+                name:
+                  type: string
+                  maxLength: 50
+                  example: General Voice
+                description:
+                  type: string
+                  maxLength: 200
+                  example: General discussion channel
+                max_users:
+                  type: integer
+                  minimum: 1
+                  maximum: 50
+                  example: 10
+                is_private:
+                  type: boolean
+                  example: false
+      responses:
+        '201':
+          description: Voice channel created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/VoiceChannel'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - Voice Channels
+      summary: List guild voice channels
+      description: '**List Guild Voice Channels**
+
+        Returns all active voice channels for the specified guild.
+
+        **Performance:** <25ms P95, cached channel listing
+        '
+      operationId: listVoiceChannels
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild ID
+      responses:
+        '200':
+          description: Voice channels retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VoiceChannel'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guilds/{guildId}/voice-channels/{channelId}:
+    get:
+      tags:
+        - Voice Channels
+      summary: Get voice channel details
+      description: '**Get Voice Channel Details**
+
+        Returns detailed information about a specific voice channel.
+
+        **Performance:** <10ms P95, cached retrieval
+        '
+      operationId: getVoiceChannel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild ID
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel ID
+      responses:
+        '200':
+          description: Voice channel details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/VoiceChannel'
+        '404':
+          description: Voice channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Voice Channels
+      summary: Update voice channel
+      description: '**Update Voice Channel**
+
+        Updates voice channel settings. Only channel creator or guild officers can update.
+
+        **Performance:** <30ms P95, database update
+        '
+      operationId: updateVoiceChannel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild ID
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 50
+                  example: Updated Voice Channel
+                description:
+                  type: string
+                  maxLength: 200
+                  example: Updated description
+                max_users:
+                  type: integer
+                  minimum: 1
+                  maximum: 50
+                  example: 15
+      responses:
+        '200':
+          description: Voice channel updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/VoiceChannel'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Voice channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Voice Channels
+      summary: Delete voice channel
+      description: '**Delete Voice Channel**
+
+        Deletes a voice channel. Only channel creator or guild officers can delete.
+
+        **Performance:** <30ms P95, database delete with WebRTC cleanup
+        '
+      operationId: deleteVoiceChannel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild ID
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel ID
+      responses:
+        '204':
+          description: Voice channel deleted successfully
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Voice channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guilds/{guildId}/voice-channels/{channelId}/join:
+    post:
+      tags:
+        - Voice Channels
+      summary: Join voice channel
+      description: '**Join Voice Channel**
+
+        Joins the specified voice channel and establishes WebRTC connection.
+
+        **Performance:** <15ms P95, participant management
+        '
+      operationId: joinVoiceChannel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild ID
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel ID
+      responses:
+        '200':
+          description: Successfully joined voice channel
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/VoiceParticipant'
+        '400':
+          description: Cannot join channel (full, banned, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Voice channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guilds/{guildId}/voice-channels/{channelId}/leave:
+    post:
+      tags:
+        - Voice Channels
+      summary: Leave voice channel
+      description: '**Leave Voice Channel**
+
+        Leaves the voice channel and cleans up WebRTC connection.
+
+        **Performance:** <10ms P95, participant cleanup
+        '
+      operationId: leaveVoiceChannel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild ID
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel ID
+      responses:
+        '200':
+          description: Successfully left voice channel
+        '404':
+          description: Voice channel not found or not a participant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guilds/{guildId}/voice-channels/{channelId}/participants:
+    get:
+      tags:
+        - Voice Channels
+      summary: List voice channel participants
+      description: '**List Voice Channel Participants**
+
+        Returns current participants in the voice channel with their status.
+
+        **Performance:** <20ms P95, real-time participant listing
+        '
+      operationId: listVoiceParticipants
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild ID
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel ID
+      responses:
+        '200':
+          description: Participants retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VoiceParticipant'
+        '404':
+          description: Voice channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   securitySchemes:

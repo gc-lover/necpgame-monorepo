@@ -281,6 +281,94 @@ type CreateGuildUnauthorized Error
 
 func (*CreateGuildUnauthorized) createGuildRes() {}
 
+type CreateVoiceChannelBadRequest Error
+
+func (*CreateVoiceChannelBadRequest) createVoiceChannelRes() {}
+
+type CreateVoiceChannelCreated struct {
+	Data OptVoiceChannel `json:"data"`
+}
+
+// GetData returns the value of Data.
+func (s *CreateVoiceChannelCreated) GetData() OptVoiceChannel {
+	return s.Data
+}
+
+// SetData sets the value of Data.
+func (s *CreateVoiceChannelCreated) SetData(val OptVoiceChannel) {
+	s.Data = val
+}
+
+func (*CreateVoiceChannelCreated) createVoiceChannelRes() {}
+
+type CreateVoiceChannelForbidden Error
+
+func (*CreateVoiceChannelForbidden) createVoiceChannelRes() {}
+
+type CreateVoiceChannelReq struct {
+	Name        string    `json:"name"`
+	Description OptString `json:"description"`
+	MaxUsers    int       `json:"max_users"`
+	IsPrivate   OptBool   `json:"is_private"`
+}
+
+// GetName returns the value of Name.
+func (s *CreateVoiceChannelReq) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *CreateVoiceChannelReq) GetDescription() OptString {
+	return s.Description
+}
+
+// GetMaxUsers returns the value of MaxUsers.
+func (s *CreateVoiceChannelReq) GetMaxUsers() int {
+	return s.MaxUsers
+}
+
+// GetIsPrivate returns the value of IsPrivate.
+func (s *CreateVoiceChannelReq) GetIsPrivate() OptBool {
+	return s.IsPrivate
+}
+
+// SetName sets the value of Name.
+func (s *CreateVoiceChannelReq) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *CreateVoiceChannelReq) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetMaxUsers sets the value of MaxUsers.
+func (s *CreateVoiceChannelReq) SetMaxUsers(val int) {
+	s.MaxUsers = val
+}
+
+// SetIsPrivate sets the value of IsPrivate.
+func (s *CreateVoiceChannelReq) SetIsPrivate(val OptBool) {
+	s.IsPrivate = val
+}
+
+type CreateVoiceChannelUnauthorized Error
+
+func (*CreateVoiceChannelUnauthorized) createVoiceChannelRes() {}
+
+type DeleteVoiceChannelForbidden Error
+
+func (*DeleteVoiceChannelForbidden) deleteVoiceChannelRes() {}
+
+// DeleteVoiceChannelNoContent is response for DeleteVoiceChannel operation.
+type DeleteVoiceChannelNoContent struct{}
+
+func (*DeleteVoiceChannelNoContent) deleteVoiceChannelRes() {}
+
+type DeleteVoiceChannelNotFound Error
+
+func (*DeleteVoiceChannelNotFound) deleteVoiceChannelRes() {}
+
 type DisbandGuildBadRequest Error
 
 func (*DisbandGuildBadRequest) disbandGuildRes() {}
@@ -391,6 +479,11 @@ func (s *Error) SetCode(val int32) {
 	s.Code = val
 }
 
+func (*Error) getVoiceChannelRes()       {}
+func (*Error) leaveVoiceChannelRes()     {}
+func (*Error) listVoiceChannelsRes()     {}
+func (*Error) listVoiceParticipantsRes() {}
+
 // Additional error context.
 type ErrorDetails struct{}
 
@@ -421,6 +514,22 @@ func (*GetGuildOK) getGuildRes() {}
 type GetGuildUnauthorized Error
 
 func (*GetGuildUnauthorized) getGuildRes() {}
+
+type GetVoiceChannelOK struct {
+	Data OptVoiceChannel `json:"data"`
+}
+
+// GetData returns the value of Data.
+func (s *GetVoiceChannelOK) GetData() OptVoiceChannel {
+	return s.Data
+}
+
+// SetData sets the value of Data.
+func (s *GetVoiceChannelOK) SetData(val OptVoiceChannel) {
+	s.Data = val
+}
+
+func (*GetVoiceChannelOK) getVoiceChannelRes() {}
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
@@ -775,6 +884,35 @@ func (s *HealthResponseStatus) UnmarshalText(data []byte) error {
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+type JoinVoiceChannelBadRequest Error
+
+func (*JoinVoiceChannelBadRequest) joinVoiceChannelRes() {}
+
+type JoinVoiceChannelNotFound Error
+
+func (*JoinVoiceChannelNotFound) joinVoiceChannelRes() {}
+
+type JoinVoiceChannelOK struct {
+	Data OptVoiceParticipant `json:"data"`
+}
+
+// GetData returns the value of Data.
+func (s *JoinVoiceChannelOK) GetData() OptVoiceParticipant {
+	return s.Data
+}
+
+// SetData sets the value of Data.
+func (s *JoinVoiceChannelOK) SetData(val OptVoiceParticipant) {
+	s.Data = val
+}
+
+func (*JoinVoiceChannelOK) joinVoiceChannelRes() {}
+
+// LeaveVoiceChannelOK is response for LeaveVoiceChannel operation.
+type LeaveVoiceChannelOK struct{}
+
+func (*LeaveVoiceChannelOK) leaveVoiceChannelRes() {}
 
 type ListGuildAnnouncementsInternalServerError Error
 
@@ -1191,6 +1329,38 @@ func (s *ListGuildsSortOrder) UnmarshalText(data []byte) error {
 type ListGuildsUnauthorized Error
 
 func (*ListGuildsUnauthorized) listGuildsRes() {}
+
+type ListVoiceChannelsOK struct {
+	Data []VoiceChannel `json:"data"`
+}
+
+// GetData returns the value of Data.
+func (s *ListVoiceChannelsOK) GetData() []VoiceChannel {
+	return s.Data
+}
+
+// SetData sets the value of Data.
+func (s *ListVoiceChannelsOK) SetData(val []VoiceChannel) {
+	s.Data = val
+}
+
+func (*ListVoiceChannelsOK) listVoiceChannelsRes() {}
+
+type ListVoiceParticipantsOK struct {
+	Data []VoiceParticipant `json:"data"`
+}
+
+// GetData returns the value of Data.
+func (s *ListVoiceParticipantsOK) GetData() []VoiceParticipant {
+	return s.Data
+}
+
+// SetData sets the value of Data.
+func (s *ListVoiceParticipantsOK) SetData(val []VoiceParticipant) {
+	s.Data = val
+}
+
+func (*ListVoiceParticipantsOK) listVoiceParticipantsRes() {}
 
 // NewOptBool returns new OptBool with value set to v.
 func NewOptBool(v bool) OptBool {
@@ -1698,6 +1868,98 @@ func (o OptURI) Or(d url.URL) url.URL {
 	return d
 }
 
+// NewOptVoiceChannel returns new OptVoiceChannel with value set to v.
+func NewOptVoiceChannel(v VoiceChannel) OptVoiceChannel {
+	return OptVoiceChannel{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptVoiceChannel is optional VoiceChannel.
+type OptVoiceChannel struct {
+	Value VoiceChannel
+	Set   bool
+}
+
+// IsSet returns true if OptVoiceChannel was set.
+func (o OptVoiceChannel) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptVoiceChannel) Reset() {
+	var v VoiceChannel
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptVoiceChannel) SetTo(v VoiceChannel) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptVoiceChannel) Get() (v VoiceChannel, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptVoiceChannel) Or(d VoiceChannel) VoiceChannel {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptVoiceParticipant returns new OptVoiceParticipant with value set to v.
+func NewOptVoiceParticipant(v VoiceParticipant) OptVoiceParticipant {
+	return OptVoiceParticipant{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptVoiceParticipant is optional VoiceParticipant.
+type OptVoiceParticipant struct {
+	Value VoiceParticipant
+	Set   bool
+}
+
+// IsSet returns true if OptVoiceParticipant was set.
+func (o OptVoiceParticipant) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptVoiceParticipant) Reset() {
+	var v VoiceParticipant
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptVoiceParticipant) SetTo(v VoiceParticipant) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptVoiceParticipant) Get() (v VoiceParticipant, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptVoiceParticipant) Or(d VoiceParticipant) VoiceParticipant {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 type RemoveGuildMemberForbidden Error
 
 func (*RemoveGuildMemberForbidden) removeGuildMemberRes() {}
@@ -2007,3 +2269,325 @@ func (s *UpdateMemberRoleReqRole) UnmarshalText(data []byte) error {
 type UpdateMemberRoleUnauthorized Error
 
 func (*UpdateMemberRoleUnauthorized) updateMemberRoleRes() {}
+
+type UpdateVoiceChannelBadRequest Error
+
+func (*UpdateVoiceChannelBadRequest) updateVoiceChannelRes() {}
+
+type UpdateVoiceChannelForbidden Error
+
+func (*UpdateVoiceChannelForbidden) updateVoiceChannelRes() {}
+
+type UpdateVoiceChannelNotFound Error
+
+func (*UpdateVoiceChannelNotFound) updateVoiceChannelRes() {}
+
+type UpdateVoiceChannelOK struct {
+	Data OptVoiceChannel `json:"data"`
+}
+
+// GetData returns the value of Data.
+func (s *UpdateVoiceChannelOK) GetData() OptVoiceChannel {
+	return s.Data
+}
+
+// SetData sets the value of Data.
+func (s *UpdateVoiceChannelOK) SetData(val OptVoiceChannel) {
+	s.Data = val
+}
+
+func (*UpdateVoiceChannelOK) updateVoiceChannelRes() {}
+
+type UpdateVoiceChannelReq struct {
+	Name        OptString `json:"name"`
+	Description OptString `json:"description"`
+	MaxUsers    OptInt    `json:"max_users"`
+}
+
+// GetName returns the value of Name.
+func (s *UpdateVoiceChannelReq) GetName() OptString {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *UpdateVoiceChannelReq) GetDescription() OptString {
+	return s.Description
+}
+
+// GetMaxUsers returns the value of MaxUsers.
+func (s *UpdateVoiceChannelReq) GetMaxUsers() OptInt {
+	return s.MaxUsers
+}
+
+// SetName sets the value of Name.
+func (s *UpdateVoiceChannelReq) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *UpdateVoiceChannelReq) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetMaxUsers sets the value of MaxUsers.
+func (s *UpdateVoiceChannelReq) SetMaxUsers(val OptInt) {
+	s.MaxUsers = val
+}
+
+// Guild voice channel integrated with WebRTC signaling.
+// Ref: #/components/schemas/VoiceChannel
+type VoiceChannel struct {
+	ID          uuid.UUID `json:"id"`
+	GuildID     uuid.UUID `json:"guild_id"`
+	Name        string    `json:"name"`
+	Description OptString `json:"description"`
+	// WebRTC signaling channel ID.
+	ChannelID string             `json:"channel_id"`
+	MaxUsers  int                `json:"max_users"`
+	IsPrivate bool               `json:"is_private"`
+	CreatedBy uuid.UUID          `json:"created_by"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt OptDateTime        `json:"updated_at"`
+	Status    VoiceChannelStatus `json:"status"`
+}
+
+// GetID returns the value of ID.
+func (s *VoiceChannel) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetGuildID returns the value of GuildID.
+func (s *VoiceChannel) GetGuildID() uuid.UUID {
+	return s.GuildID
+}
+
+// GetName returns the value of Name.
+func (s *VoiceChannel) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *VoiceChannel) GetDescription() OptString {
+	return s.Description
+}
+
+// GetChannelID returns the value of ChannelID.
+func (s *VoiceChannel) GetChannelID() string {
+	return s.ChannelID
+}
+
+// GetMaxUsers returns the value of MaxUsers.
+func (s *VoiceChannel) GetMaxUsers() int {
+	return s.MaxUsers
+}
+
+// GetIsPrivate returns the value of IsPrivate.
+func (s *VoiceChannel) GetIsPrivate() bool {
+	return s.IsPrivate
+}
+
+// GetCreatedBy returns the value of CreatedBy.
+func (s *VoiceChannel) GetCreatedBy() uuid.UUID {
+	return s.CreatedBy
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *VoiceChannel) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *VoiceChannel) GetUpdatedAt() OptDateTime {
+	return s.UpdatedAt
+}
+
+// GetStatus returns the value of Status.
+func (s *VoiceChannel) GetStatus() VoiceChannelStatus {
+	return s.Status
+}
+
+// SetID sets the value of ID.
+func (s *VoiceChannel) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetGuildID sets the value of GuildID.
+func (s *VoiceChannel) SetGuildID(val uuid.UUID) {
+	s.GuildID = val
+}
+
+// SetName sets the value of Name.
+func (s *VoiceChannel) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *VoiceChannel) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetChannelID sets the value of ChannelID.
+func (s *VoiceChannel) SetChannelID(val string) {
+	s.ChannelID = val
+}
+
+// SetMaxUsers sets the value of MaxUsers.
+func (s *VoiceChannel) SetMaxUsers(val int) {
+	s.MaxUsers = val
+}
+
+// SetIsPrivate sets the value of IsPrivate.
+func (s *VoiceChannel) SetIsPrivate(val bool) {
+	s.IsPrivate = val
+}
+
+// SetCreatedBy sets the value of CreatedBy.
+func (s *VoiceChannel) SetCreatedBy(val uuid.UUID) {
+	s.CreatedBy = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *VoiceChannel) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *VoiceChannel) SetUpdatedAt(val OptDateTime) {
+	s.UpdatedAt = val
+}
+
+// SetStatus sets the value of Status.
+func (s *VoiceChannel) SetStatus(val VoiceChannelStatus) {
+	s.Status = val
+}
+
+type VoiceChannelStatus string
+
+const (
+	VoiceChannelStatusActive      VoiceChannelStatus = "active"
+	VoiceChannelStatusInactive    VoiceChannelStatus = "inactive"
+	VoiceChannelStatusMaintenance VoiceChannelStatus = "maintenance"
+)
+
+// AllValues returns all VoiceChannelStatus values.
+func (VoiceChannelStatus) AllValues() []VoiceChannelStatus {
+	return []VoiceChannelStatus{
+		VoiceChannelStatusActive,
+		VoiceChannelStatusInactive,
+		VoiceChannelStatusMaintenance,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s VoiceChannelStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case VoiceChannelStatusActive:
+		return []byte(s), nil
+	case VoiceChannelStatusInactive:
+		return []byte(s), nil
+	case VoiceChannelStatusMaintenance:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *VoiceChannelStatus) UnmarshalText(data []byte) error {
+	switch VoiceChannelStatus(data) {
+	case VoiceChannelStatusActive:
+		*s = VoiceChannelStatusActive
+		return nil
+	case VoiceChannelStatusInactive:
+		*s = VoiceChannelStatusInactive
+		return nil
+	case VoiceChannelStatusMaintenance:
+		*s = VoiceChannelStatusMaintenance
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Voice channel participant with WebRTC integration.
+// Ref: #/components/schemas/VoiceParticipant
+type VoiceParticipant struct {
+	UserID     uuid.UUID `json:"user_id"`
+	ChannelID  uuid.UUID `json:"channel_id"`
+	GuildID    uuid.UUID `json:"guild_id"`
+	JoinedAt   time.Time `json:"joined_at"`
+	IsMuted    bool      `json:"is_muted"`
+	IsDeafened bool      `json:"is_deafened"`
+	// WebRTC signaling participant ID.
+	WebrtcID string `json:"webrtc_id"`
+}
+
+// GetUserID returns the value of UserID.
+func (s *VoiceParticipant) GetUserID() uuid.UUID {
+	return s.UserID
+}
+
+// GetChannelID returns the value of ChannelID.
+func (s *VoiceParticipant) GetChannelID() uuid.UUID {
+	return s.ChannelID
+}
+
+// GetGuildID returns the value of GuildID.
+func (s *VoiceParticipant) GetGuildID() uuid.UUID {
+	return s.GuildID
+}
+
+// GetJoinedAt returns the value of JoinedAt.
+func (s *VoiceParticipant) GetJoinedAt() time.Time {
+	return s.JoinedAt
+}
+
+// GetIsMuted returns the value of IsMuted.
+func (s *VoiceParticipant) GetIsMuted() bool {
+	return s.IsMuted
+}
+
+// GetIsDeafened returns the value of IsDeafened.
+func (s *VoiceParticipant) GetIsDeafened() bool {
+	return s.IsDeafened
+}
+
+// GetWebrtcID returns the value of WebrtcID.
+func (s *VoiceParticipant) GetWebrtcID() string {
+	return s.WebrtcID
+}
+
+// SetUserID sets the value of UserID.
+func (s *VoiceParticipant) SetUserID(val uuid.UUID) {
+	s.UserID = val
+}
+
+// SetChannelID sets the value of ChannelID.
+func (s *VoiceParticipant) SetChannelID(val uuid.UUID) {
+	s.ChannelID = val
+}
+
+// SetGuildID sets the value of GuildID.
+func (s *VoiceParticipant) SetGuildID(val uuid.UUID) {
+	s.GuildID = val
+}
+
+// SetJoinedAt sets the value of JoinedAt.
+func (s *VoiceParticipant) SetJoinedAt(val time.Time) {
+	s.JoinedAt = val
+}
+
+// SetIsMuted sets the value of IsMuted.
+func (s *VoiceParticipant) SetIsMuted(val bool) {
+	s.IsMuted = val
+}
+
+// SetIsDeafened sets the value of IsDeafened.
+func (s *VoiceParticipant) SetIsDeafened(val bool) {
+	s.IsDeafened = val
+}
+
+// SetWebrtcID sets the value of WebrtcID.
+func (s *VoiceParticipant) SetWebrtcID(val string) {
+	s.WebrtcID = val
+}

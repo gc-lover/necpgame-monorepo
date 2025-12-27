@@ -31,6 +31,29 @@ func (UnimplementedHandler) CreateGuildAnnouncement(ctx context.Context, req *Cr
 	return r, ht.ErrNotImplemented
 }
 
+// CreateVoiceChannel implements createVoiceChannel operation.
+//
+// **Create Guild Voice Channel**
+// Creates a new voice channel integrated with WebRTC signaling service. Only guild officers and
+// leaders can create voice channels.
+// **Performance:** <50ms P95, database write with WebRTC integration.
+//
+// POST /guilds/{guildId}/voice-channels
+func (UnimplementedHandler) CreateVoiceChannel(ctx context.Context, req *CreateVoiceChannelReq, params CreateVoiceChannelParams) (r CreateVoiceChannelRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// DeleteVoiceChannel implements deleteVoiceChannel operation.
+//
+// **Delete Voice Channel**
+// Deletes a voice channel. Only channel creator or guild officers can delete.
+// **Performance:** <30ms P95, database delete with WebRTC cleanup.
+//
+// DELETE /guilds/{guildId}/voice-channels/{channelId}
+func (UnimplementedHandler) DeleteVoiceChannel(ctx context.Context, params DeleteVoiceChannelParams) (r DeleteVoiceChannelRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // DisbandGuild implements disbandGuild operation.
 //
 // Disband guild (leader only, requires confirmation).
@@ -55,6 +78,39 @@ func (UnimplementedHandler) GetGuild(ctx context.Context, params GetGuildParams)
 //
 // GET /health
 func (UnimplementedHandler) GetHealth(ctx context.Context) (r *HealthResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetVoiceChannel implements getVoiceChannel operation.
+//
+// **Get Voice Channel Details**
+// Returns detailed information about a specific voice channel.
+// **Performance:** <10ms P95, cached retrieval.
+//
+// GET /guilds/{guildId}/voice-channels/{channelId}
+func (UnimplementedHandler) GetVoiceChannel(ctx context.Context, params GetVoiceChannelParams) (r GetVoiceChannelRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// JoinVoiceChannel implements joinVoiceChannel operation.
+//
+// **Join Voice Channel**
+// Joins the specified voice channel and establishes WebRTC connection.
+// **Performance:** <15ms P95, participant management.
+//
+// POST /guilds/{guildId}/voice-channels/{channelId}/join
+func (UnimplementedHandler) JoinVoiceChannel(ctx context.Context, params JoinVoiceChannelParams) (r JoinVoiceChannelRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// LeaveVoiceChannel implements leaveVoiceChannel operation.
+//
+// **Leave Voice Channel**
+// Leaves the voice channel and cleans up WebRTC connection.
+// **Performance:** <10ms P95, participant cleanup.
+//
+// POST /guilds/{guildId}/voice-channels/{channelId}/leave
+func (UnimplementedHandler) LeaveVoiceChannel(ctx context.Context, params LeaveVoiceChannelParams) (r LeaveVoiceChannelRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -85,6 +141,28 @@ func (UnimplementedHandler) ListGuilds(ctx context.Context, params ListGuildsPar
 	return r, ht.ErrNotImplemented
 }
 
+// ListVoiceChannels implements listVoiceChannels operation.
+//
+// **List Guild Voice Channels**
+// Returns all active voice channels for the specified guild.
+// **Performance:** <25ms P95, cached channel listing.
+//
+// GET /guilds/{guildId}/voice-channels
+func (UnimplementedHandler) ListVoiceChannels(ctx context.Context, params ListVoiceChannelsParams) (r ListVoiceChannelsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// ListVoiceParticipants implements listVoiceParticipants operation.
+//
+// **List Voice Channel Participants**
+// Returns current participants in the voice channel with their status.
+// **Performance:** <20ms P95, real-time participant listing.
+//
+// GET /guilds/{guildId}/voice-channels/{channelId}/participants
+func (UnimplementedHandler) ListVoiceParticipants(ctx context.Context, params ListVoiceParticipantsParams) (r ListVoiceParticipantsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // RemoveGuildMember implements removeGuildMember operation.
 //
 // Remove member from guild (leader/officer only).
@@ -109,5 +187,16 @@ func (UnimplementedHandler) UpdateGuild(ctx context.Context, req *UpdateGuildReq
 //
 // PUT /guilds/{guild_id}/members/{player_id}
 func (UnimplementedHandler) UpdateMemberRole(ctx context.Context, req *UpdateMemberRoleReq, params UpdateMemberRoleParams) (r UpdateMemberRoleRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UpdateVoiceChannel implements updateVoiceChannel operation.
+//
+// **Update Voice Channel**
+// Updates voice channel settings. Only channel creator or guild officers can update.
+// **Performance:** <30ms P95, database update.
+//
+// PUT /guilds/{guildId}/voice-channels/{channelId}
+func (UnimplementedHandler) UpdateVoiceChannel(ctx context.Context, req *UpdateVoiceChannelReq, params UpdateVoiceChannelParams) (r UpdateVoiceChannelRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

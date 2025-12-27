@@ -38,6 +38,20 @@ func encodeCreateGuildAnnouncementRequest(
 	return nil
 }
 
+func encodeCreateVoiceChannelRequest(
+	req *CreateVoiceChannelReq,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeUpdateGuildRequest(
 	req *UpdateGuildReq,
 	r *http.Request,
@@ -54,6 +68,20 @@ func encodeUpdateGuildRequest(
 
 func encodeUpdateMemberRoleRequest(
 	req *UpdateMemberRoleReq,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeUpdateVoiceChannelRequest(
+	req *UpdateVoiceChannelReq,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

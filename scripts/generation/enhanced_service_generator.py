@@ -335,15 +335,16 @@ func (r *Repository) HealthCheck(ctx context.Context) error {{
             optimizations.append("Redis caching enabled")
 
         performance_config = f"GOGC=50" if context.analysis.complexity_level == "high" else "GOGC=default"
+        domain_title = context.domain.title()
 
         return template.format(
             domain=context.domain,
-            domain_title=context.domain.title(),
+            domain_title=domain_title,
             service_name=context.service_name,
             performance_config=performance_config,
             optimizations="\\n".join(f"    // {opt}" for opt in optimizations),
-            estimated_qps=context.analysis.estimated_qps,
-            memory_kb=context.analysis.memory_per_request_kb
+            estimated_qps=str(context.analysis.estimated_qps),
+            memory_kb=str(context.analysis.memory_per_request_kb)
         )
 
     def _generate_http_server_go(self, context: GenerationContext) -> str:
@@ -379,31 +380,31 @@ import (
     "{context.service_name}/pkg/api"
 )
 
-// {context.domain.title()}Service wraps the HTTP server
-type {context.domain.title()}Service struct {{
+// {domain_title}Service wraps the HTTP server
+type {domain_title}Service struct {{
     api *api.Server
 }}
 
-// New{context.domain.title()}Service creates a new service instance
-func New{context.domain.title()}Service() *{context.domain.title()}Service {{
+// New{domain_title}Service creates a new service instance
+func New{domain_title}Service() *{domain_title}Service {{
     handler := NewHandler()
 
     // Apply middleware based on API requirements
     var h http.Handler = handler
 {chr(10).join(middleware_setup)}
 
-    return &{context.domain.title()}Service{{
+    return &{domain_title}Service{{
         api: api.NewServer(handler),
     }}
 }}
 
 // Handler returns the HTTP handler
-func (s *{context.domain.title()}Service) Handler() http.Handler {{
+func (s *{domain_title}Service) Handler() http.Handler {{
     return s.api
 }}
 
 // ConfigureServer applies performance optimizations based on analysis
-func (s *{context.domain.title()}Service) ConfigureServer(server *http.Server) {{
+func (s *{domain_title}Service) ConfigureServer(server *http.Server) {{
     // Performance optimizations for {context.analysis.service_type} service
     server.ReadTimeout = 15 * time.Second
     server.WriteTimeout = 15 * time.Second
@@ -1198,7 +1199,7 @@ import (
 // Tests full request/response cycle
 
 func TestHealthCheck(t *testing.T) {{
-    svc := server.New{context.domain.title()}Service()
+    svc := server.New{domain_title}Service()
 
     req := httptest.NewRequest("GET", "/health", nil)
     w := httptest.NewRecorder()
@@ -1211,7 +1212,7 @@ func TestHealthCheck(t *testing.T) {{
 }}
 
 func TestServiceStartup(t *testing.T) {{
-    svc := server.New{context.domain.title()}Service()
+    svc := server.New{domain_title}Service()
 
     // Test that service starts without panicking
     server := httptest.NewServer(svc.Handler())

@@ -20,6 +20,23 @@ type Handler interface {
 	//
 	// POST /guilds/{guild_id}/announcements
 	CreateGuildAnnouncement(ctx context.Context, req *CreateGuildAnnouncementReq, params CreateGuildAnnouncementParams) (CreateGuildAnnouncementRes, error)
+	// CreateVoiceChannel implements createVoiceChannel operation.
+	//
+	// **Create Guild Voice Channel**
+	// Creates a new voice channel integrated with WebRTC signaling service. Only guild officers and
+	// leaders can create voice channels.
+	// **Performance:** <50ms P95, database write with WebRTC integration.
+	//
+	// POST /guilds/{guildId}/voice-channels
+	CreateVoiceChannel(ctx context.Context, req *CreateVoiceChannelReq, params CreateVoiceChannelParams) (CreateVoiceChannelRes, error)
+	// DeleteVoiceChannel implements deleteVoiceChannel operation.
+	//
+	// **Delete Voice Channel**
+	// Deletes a voice channel. Only channel creator or guild officers can delete.
+	// **Performance:** <30ms P95, database delete with WebRTC cleanup.
+	//
+	// DELETE /guilds/{guildId}/voice-channels/{channelId}
+	DeleteVoiceChannel(ctx context.Context, params DeleteVoiceChannelParams) (DeleteVoiceChannelRes, error)
 	// DisbandGuild implements disbandGuild operation.
 	//
 	// Disband guild (leader only, requires confirmation).
@@ -38,6 +55,30 @@ type Handler interface {
 	//
 	// GET /health
 	GetHealth(ctx context.Context) (*HealthResponse, error)
+	// GetVoiceChannel implements getVoiceChannel operation.
+	//
+	// **Get Voice Channel Details**
+	// Returns detailed information about a specific voice channel.
+	// **Performance:** <10ms P95, cached retrieval.
+	//
+	// GET /guilds/{guildId}/voice-channels/{channelId}
+	GetVoiceChannel(ctx context.Context, params GetVoiceChannelParams) (GetVoiceChannelRes, error)
+	// JoinVoiceChannel implements joinVoiceChannel operation.
+	//
+	// **Join Voice Channel**
+	// Joins the specified voice channel and establishes WebRTC connection.
+	// **Performance:** <15ms P95, participant management.
+	//
+	// POST /guilds/{guildId}/voice-channels/{channelId}/join
+	JoinVoiceChannel(ctx context.Context, params JoinVoiceChannelParams) (JoinVoiceChannelRes, error)
+	// LeaveVoiceChannel implements leaveVoiceChannel operation.
+	//
+	// **Leave Voice Channel**
+	// Leaves the voice channel and cleans up WebRTC connection.
+	// **Performance:** <10ms P95, participant cleanup.
+	//
+	// POST /guilds/{guildId}/voice-channels/{channelId}/leave
+	LeaveVoiceChannel(ctx context.Context, params LeaveVoiceChannelParams) (LeaveVoiceChannelRes, error)
 	// ListGuildAnnouncements implements listGuildAnnouncements operation.
 	//
 	// Get paginated list of guild announcements.
@@ -56,6 +97,22 @@ type Handler interface {
 	//
 	// GET /guilds
 	ListGuilds(ctx context.Context, params ListGuildsParams) (ListGuildsRes, error)
+	// ListVoiceChannels implements listVoiceChannels operation.
+	//
+	// **List Guild Voice Channels**
+	// Returns all active voice channels for the specified guild.
+	// **Performance:** <25ms P95, cached channel listing.
+	//
+	// GET /guilds/{guildId}/voice-channels
+	ListVoiceChannels(ctx context.Context, params ListVoiceChannelsParams) (ListVoiceChannelsRes, error)
+	// ListVoiceParticipants implements listVoiceParticipants operation.
+	//
+	// **List Voice Channel Participants**
+	// Returns current participants in the voice channel with their status.
+	// **Performance:** <20ms P95, real-time participant listing.
+	//
+	// GET /guilds/{guildId}/voice-channels/{channelId}/participants
+	ListVoiceParticipants(ctx context.Context, params ListVoiceParticipantsParams) (ListVoiceParticipantsRes, error)
 	// RemoveGuildMember implements removeGuildMember operation.
 	//
 	// Remove member from guild (leader/officer only).
@@ -74,6 +131,14 @@ type Handler interface {
 	//
 	// PUT /guilds/{guild_id}/members/{player_id}
 	UpdateMemberRole(ctx context.Context, req *UpdateMemberRoleReq, params UpdateMemberRoleParams) (UpdateMemberRoleRes, error)
+	// UpdateVoiceChannel implements updateVoiceChannel operation.
+	//
+	// **Update Voice Channel**
+	// Updates voice channel settings. Only channel creator or guild officers can update.
+	// **Performance:** <30ms P95, database update.
+	//
+	// PUT /guilds/{guildId}/voice-channels/{channelId}
+	UpdateVoiceChannel(ctx context.Context, req *UpdateVoiceChannelReq, params UpdateVoiceChannelParams) (UpdateVoiceChannelRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

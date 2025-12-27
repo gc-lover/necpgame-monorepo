@@ -2226,7 +2226,7 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 2000},
 					{Type: "achievement", Value: "asado_master"},
-					{Type: "buff", Value: "hp_buff:+35", Duration: "12h"},
+					{Type: "buff", Value: "hp_buff:+35"}, // 12 hour duration
 				},
 				Narrative: "Вы стали частью великой традиции асадо, где мясо, вино и дружба создают настоящую магию.",
 			},
@@ -2238,7 +2238,7 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 1800},
 					{Type: "achievement", Value: "social_connector"},
-					{Type: "buff", Value: "social_buff:+25", Duration: "24h"},
+					{Type: "buff", Value: "social_buff:+25"}, // 24 hour duration
 				},
 				Narrative: "Асадо стало мостом между культурами, а вы - тем, кто помогает людям находить общий язык.",
 			},
@@ -2250,7 +2250,7 @@ func (s *Service) GetAsadoBBQQuest(ctx context.Context) (*models.DynamicQuest, e
 				Rewards: []models.Reward{
 					{Type: "experience", Value: 1600},
 					{Type: "achievement", Value: "cultural_enthusiast"},
-					{Type: "buff", Value: "cultural_buff:+30", Duration: "18h"},
+					{Type: "buff", Value: "cultural_buff:+30"}, // 18 hour duration
 				},
 				Narrative: "Традиции асадо открыли вам дверь в богатую культуру Аргентины и ее людей.",
 			},

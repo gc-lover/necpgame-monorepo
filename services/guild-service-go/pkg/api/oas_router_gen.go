@@ -218,6 +218,159 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 							}
 
+						case 'v': // Prefix: "voice-channels"
+
+							if l := len("voice-channels"); len(elem) >= l && elem[0:l] == "voice-channels" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch r.Method {
+								case "GET":
+									s.handleListVoiceChannelsRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								case "POST":
+									s.handleCreateVoiceChannelRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET,POST")
+								}
+
+								return
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "channelId"
+								// Match until "/"
+								idx := strings.IndexByte(elem, '/')
+								if idx < 0 {
+									idx = len(elem)
+								}
+								args[1] = elem[:idx]
+								elem = elem[idx:]
+
+								if len(elem) == 0 {
+									switch r.Method {
+									case "DELETE":
+										s.handleDeleteVoiceChannelRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									case "GET":
+										s.handleGetVoiceChannelRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									case "PUT":
+										s.handleUpdateVoiceChannelRequest([2]string{
+											args[0],
+											args[1],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "DELETE,GET,PUT")
+									}
+
+									return
+								}
+								switch elem[0] {
+								case '/': // Prefix: "/"
+
+									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									if len(elem) == 0 {
+										break
+									}
+									switch elem[0] {
+									case 'j': // Prefix: "join"
+
+										if l := len("join"); len(elem) >= l && elem[0:l] == "join" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch r.Method {
+											case "POST":
+												s.handleJoinVoiceChannelRequest([2]string{
+													args[0],
+													args[1],
+												}, elemIsEscaped, w, r)
+											default:
+												s.notAllowed(w, r, "POST")
+											}
+
+											return
+										}
+
+									case 'l': // Prefix: "leave"
+
+										if l := len("leave"); len(elem) >= l && elem[0:l] == "leave" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch r.Method {
+											case "POST":
+												s.handleLeaveVoiceChannelRequest([2]string{
+													args[0],
+													args[1],
+												}, elemIsEscaped, w, r)
+											default:
+												s.notAllowed(w, r, "POST")
+											}
+
+											return
+										}
+
+									case 'p': // Prefix: "participants"
+
+										if l := len("participants"); len(elem) >= l && elem[0:l] == "participants" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch r.Method {
+											case "GET":
+												s.handleListVoiceParticipantsRequest([2]string{
+													args[0],
+													args[1],
+												}, elemIsEscaped, w, r)
+											default:
+												s.notAllowed(w, r, "GET")
+											}
+
+											return
+										}
+
+									}
+
+								}
+
+							}
+
 						}
 
 					}
@@ -539,6 +692,183 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 									default:
 										return
 									}
+								}
+
+							}
+
+						case 'v': // Prefix: "voice-channels"
+
+							if l := len("voice-channels"); len(elem) >= l && elem[0:l] == "voice-channels" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								switch method {
+								case "GET":
+									r.name = ListVoiceChannelsOperation
+									r.summary = "List guild voice channels"
+									r.operationID = "listVoiceChannels"
+									r.operationGroup = ""
+									r.pathPattern = "/guilds/{guildId}/voice-channels"
+									r.args = args
+									r.count = 1
+									return r, true
+								case "POST":
+									r.name = CreateVoiceChannelOperation
+									r.summary = "Create a new voice channel for the guild"
+									r.operationID = "createVoiceChannel"
+									r.operationGroup = ""
+									r.pathPattern = "/guilds/{guildId}/voice-channels"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+							switch elem[0] {
+							case '/': // Prefix: "/"
+
+								if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								// Param: "channelId"
+								// Match until "/"
+								idx := strings.IndexByte(elem, '/')
+								if idx < 0 {
+									idx = len(elem)
+								}
+								args[1] = elem[:idx]
+								elem = elem[idx:]
+
+								if len(elem) == 0 {
+									switch method {
+									case "DELETE":
+										r.name = DeleteVoiceChannelOperation
+										r.summary = "Delete voice channel"
+										r.operationID = "deleteVoiceChannel"
+										r.operationGroup = ""
+										r.pathPattern = "/guilds/{guildId}/voice-channels/{channelId}"
+										r.args = args
+										r.count = 2
+										return r, true
+									case "GET":
+										r.name = GetVoiceChannelOperation
+										r.summary = "Get voice channel details"
+										r.operationID = "getVoiceChannel"
+										r.operationGroup = ""
+										r.pathPattern = "/guilds/{guildId}/voice-channels/{channelId}"
+										r.args = args
+										r.count = 2
+										return r, true
+									case "PUT":
+										r.name = UpdateVoiceChannelOperation
+										r.summary = "Update voice channel"
+										r.operationID = "updateVoiceChannel"
+										r.operationGroup = ""
+										r.pathPattern = "/guilds/{guildId}/voice-channels/{channelId}"
+										r.args = args
+										r.count = 2
+										return r, true
+									default:
+										return
+									}
+								}
+								switch elem[0] {
+								case '/': // Prefix: "/"
+
+									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+										elem = elem[l:]
+									} else {
+										break
+									}
+
+									if len(elem) == 0 {
+										break
+									}
+									switch elem[0] {
+									case 'j': // Prefix: "join"
+
+										if l := len("join"); len(elem) >= l && elem[0:l] == "join" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch method {
+											case "POST":
+												r.name = JoinVoiceChannelOperation
+												r.summary = "Join voice channel"
+												r.operationID = "joinVoiceChannel"
+												r.operationGroup = ""
+												r.pathPattern = "/guilds/{guildId}/voice-channels/{channelId}/join"
+												r.args = args
+												r.count = 2
+												return r, true
+											default:
+												return
+											}
+										}
+
+									case 'l': // Prefix: "leave"
+
+										if l := len("leave"); len(elem) >= l && elem[0:l] == "leave" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch method {
+											case "POST":
+												r.name = LeaveVoiceChannelOperation
+												r.summary = "Leave voice channel"
+												r.operationID = "leaveVoiceChannel"
+												r.operationGroup = ""
+												r.pathPattern = "/guilds/{guildId}/voice-channels/{channelId}/leave"
+												r.args = args
+												r.count = 2
+												return r, true
+											default:
+												return
+											}
+										}
+
+									case 'p': // Prefix: "participants"
+
+										if l := len("participants"); len(elem) >= l && elem[0:l] == "participants" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch method {
+											case "GET":
+												r.name = ListVoiceParticipantsOperation
+												r.summary = "List voice channel participants"
+												r.operationID = "listVoiceParticipants"
+												r.operationGroup = ""
+												r.pathPattern = "/guilds/{guildId}/voice-channels/{channelId}/participants"
+												r.args = args
+												r.count = 2
+												return r, true
+											default:
+												return
+											}
+										}
+
+									}
+
 								}
 
 							}
