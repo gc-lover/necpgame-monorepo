@@ -14,6 +14,34 @@ import (
 	"go.uber.org/zap"
 )
 
+// BranchingLogic represents the JSONB structure for quest branching
+type BranchingLogic struct {
+	Version     string                 `json:"version"`
+	EntryPoint  string                 `json:"entry_point"`
+	Nodes       map[string]BranchNode  `json:"nodes"`
+}
+
+// BranchNode represents a node in the branching logic
+type BranchNode struct {
+	Type        string               `json:"type"` // "choice", "quest", "ending"
+	Title       string               `json:"title,omitempty"`
+	Description string               `json:"description,omitempty"`
+	Options     []BranchOption       `json:"options,omitempty"`
+	Objectives  []string             `json:"objectives,omitempty"`
+	Rewards     map[string]interface{} `json:"rewards,omitempty"`
+	NextNode    *string              `json:"next_node,omitempty"`
+}
+
+// BranchOption represents a choice option in a choice node
+type BranchOption struct {
+	ID          string                 `json:"id"`
+	Title       string                 `json:"title"`
+	Description string                 `json:"description,omitempty"`
+	Requirements map[string]interface{} `json:"requirements,omitempty"`
+	Rewards     map[string]interface{} `json:"rewards,omitempty"`
+	NextNode    string                 `json:"next_node"`
+}
+
 // Repository handles all database operations
 type Repository struct {
 	db     *sql.DB
@@ -39,6 +67,7 @@ type QuestDefinition struct {
 	ChoicePoints    json.RawMessage `json:"choice_points"`
 	EndingVariations json.RawMessage `json:"ending_variations"`
 	ReputationImpacts json.RawMessage `json:"reputation_impacts"`
+	BranchingLogic  json.RawMessage `json:"branching_logic"`  // JSONB field for advanced branching
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
 }
@@ -50,6 +79,7 @@ type PlayerQuestState struct {
 	CurrentState string          `json:"current_state"`
 	ChoiceHistory json.RawMessage `json:"choice_history"`
 	ReputationSnapshot json.RawMessage `json:"reputation_snapshot"`
+	BranchingState json.RawMessage `json:"branching_state"` // JSONB field for current branching state
 	StartedAt    time.Time       `json:"started_at"`
 	CompletedAt  *time.Time      `json:"completed_at"`
 	EndingAchieved string         `json:"ending_achieved"`
@@ -114,9 +144,9 @@ func (r *Repository) CreateQuestDefinition(ctx context.Context, quest *QuestDefi
 // GetQuestDefinition retrieves a quest definition by ID
 func (r *Repository) GetQuestDefinition(ctx context.Context, questID string) (*QuestDefinition, error) {
 	query := `
-		SELECT quest_id, title, description, quest_type, min_level, max_level,
-			   choice_points, ending_variations, reputation_impacts, created_at, updated_at
-		FROM gameplay.dynamic_quests
+		SELECT quest_id, title, description, quest_type, level_min, level_max,
+			   objectives, rewards, status, branching_logic, created_at, updated_at
+		FROM gameplay.quest_definitions
 		WHERE quest_id = $1
 	`
 
@@ -125,7 +155,7 @@ func (r *Repository) GetQuestDefinition(ctx context.Context, questID string) (*Q
 		&quest.QuestID, &quest.Title, &quest.Description, &quest.QuestType,
 		&quest.MinLevel, &quest.MaxLevel, &quest.ChoicePoints,
 		&quest.EndingVariations, &quest.ReputationImpacts,
-		&quest.CreatedAt, &quest.UpdatedAt,
+		&quest.BranchingLogic, &quest.CreatedAt, &quest.UpdatedAt,
 	)
 
 	if err != nil {
@@ -142,9 +172,10 @@ func (r *Repository) GetQuestDefinition(ctx context.Context, questID string) (*Q
 // ListQuestDefinitions retrieves quest definitions with pagination
 func (r *Repository) ListQuestDefinitions(ctx context.Context, limit, offset int) ([]*QuestDefinition, error) {
 	query := `
-		SELECT quest_id, title, description, quest_type, min_level, max_level,
-			   choice_points, ending_variations, reputation_impacts, created_at, updated_at
-		FROM gameplay.dynamic_quests
+		SELECT quest_id, title, description, quest_type, level_min, level_max,
+			   objectives, rewards, status, branching_logic, created_at, updated_at
+		FROM gameplay.quest_definitions
+		WHERE status = 'active'
 		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2
 	`
@@ -162,7 +193,7 @@ func (r *Repository) ListQuestDefinitions(ctx context.Context, limit, offset int
 		err := rows.Scan(
 			&quest.QuestID, &quest.Title, &quest.Description, &quest.QuestType,
 			&quest.MinLevel, &quest.MaxLevel, &quest.ChoicePoints,
-			&quest.EndingVariations, &quest.ReputationImpacts,
+			&quest.EndingVariations, &quest.ReputationImpacts, &quest.BranchingLogic,
 			&quest.CreatedAt, &quest.UpdatedAt,
 		)
 		if err != nil {
@@ -178,19 +209,20 @@ func (r *Repository) ListQuestDefinitions(ctx context.Context, limit, offset int
 // StartPlayerQuest starts a quest for a player
 func (r *Repository) StartPlayerQuest(ctx context.Context, playerID, questID string, reputationSnapshot json.RawMessage) error {
 	query := `
-		INSERT INTO gameplay.player_quest_states (
+		INSERT INTO gameplay.player_quest_progress (
 			player_id, quest_id, current_state, choice_history,
-			reputation_snapshot, started_at
-		) VALUES ($1, $2, $3, $4, $5, $6)
+			reputation_snapshot, branching_state, started_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (player_id, quest_id) DO UPDATE SET
 			current_state = EXCLUDED.current_state,
 			reputation_snapshot = EXCLUDED.reputation_snapshot,
+			branching_state = EXCLUDED.branching_state,
 			started_at = EXCLUDED.started_at
 		WHERE current_state = 'available'
 	`
 
 	_, err := r.db.ExecContext(ctx, query,
-		playerID, questID, "active", "[]", reputationSnapshot, time.Now())
+		playerID, questID, "active", "[]", reputationSnapshot, "{}", time.Now())
 
 	if err != nil {
 		r.logger.Errorf("Failed to start player quest: %v", err)
@@ -201,19 +233,245 @@ func (r *Repository) StartPlayerQuest(ctx context.Context, playerID, questID str
 	return nil
 }
 
+// ParseBranchingLogic parses the JSONB branching logic from quest definition
+func (r *Repository) ParseBranchingLogic(branchingData json.RawMessage) (*BranchingLogic, error) {
+	if len(branchingData) == 0 || string(branchingData) == "null" {
+		return nil, nil // No branching logic
+	}
+
+	var logic BranchingLogic
+	if err := json.Unmarshal(branchingData, &logic); err != nil {
+		return nil, fmt.Errorf("failed to parse branching logic: %w", err)
+	}
+
+	return &logic, nil
+}
+
+// UpdatePlayerBranchingState updates the branching state for a player quest
+func (r *Repository) UpdatePlayerBranchingState(ctx context.Context, playerID, questID string, branchingState json.RawMessage) error {
+	query := `
+		UPDATE gameplay.player_quest_progress
+		SET branching_state = $3, updated_at = $4
+		WHERE player_id = $1 AND quest_id = $2
+	`
+
+	_, err := r.db.ExecContext(ctx, query, playerID, questID, branchingState, time.Now())
+
+	if err != nil {
+		r.logger.Errorf("Failed to update player branching state: %v", err)
+		return fmt.Errorf("failed to update player branching state: %w", err)
+	}
+
+	r.logger.Infof("Player branching state updated: player=%s, quest=%s", playerID, questID)
+	return nil
+}
+
+// Quest statistics structures for analytics
+type ChoiceStatistic struct {
+	ChoicePoint string `json:"choice_point"`
+	ChoiceValue string `json:"choice_value"`
+	Count       int64  `json:"count"`
+}
+
+type EndingStatistic struct {
+	Ending string `json:"ending"`
+	Count  int64  `json:"count"`
+}
+
+type DifficultyRating struct {
+	Difficulty string  `json:"difficulty"`
+	Rating     float64 `json:"rating"`
+}
+
+// GetQuestPlayerCount returns total number of players who started a quest
+func (r *Repository) GetQuestPlayerCount(ctx context.Context, questID string) (int64, error) {
+	query := `SELECT COUNT(*) FROM gameplay.player_quest_progress WHERE quest_id = $1`
+
+	var count int64
+	err := r.db.QueryRowContext(ctx, query, questID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get player count: %w", err)
+	}
+
+	return count, nil
+}
+
+// GetQuestCompletedCount returns number of players who completed a quest
+func (r *Repository) GetQuestCompletedCount(ctx context.Context, questID string) (int64, error) {
+	query := `SELECT COUNT(*) FROM gameplay.player_quest_progress WHERE quest_id = $1 AND current_state = 'completed'`
+
+	var count int64
+	err := r.db.QueryRowContext(ctx, query, questID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get completed count: %w", err)
+	}
+
+	return count, nil
+}
+
+// GetQuestChoiceStatistics returns statistics about choice popularity
+func (r *Repository) GetQuestChoiceStatistics(ctx context.Context, questID string) ([]ChoiceStatistic, error) {
+	query := `
+		SELECT
+			(choice_history->>'choice_point') as choice_point,
+			(choice_history->>'choice_value') as choice_value,
+			COUNT(*) as count
+		FROM gameplay.player_quest_progress,
+		jsonb_array_elements(choice_history) as choice_item
+		WHERE quest_id = $1
+		GROUP BY choice_point, choice_value
+		ORDER BY count DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, questID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get choice statistics: %w", err)
+	}
+	defer rows.Close()
+
+	var stats []ChoiceStatistic
+	for rows.Next() {
+		var stat ChoiceStatistic
+		err := rows.Scan(&stat.ChoicePoint, &stat.ChoiceValue, &stat.Count)
+		if err != nil {
+			r.logger.Warnf("Failed to scan choice statistic: %v", err)
+			continue
+		}
+		stats = append(stats, stat)
+	}
+
+	return stats, nil
+}
+
+// GetQuestEndingStatistics returns statistics about quest endings
+func (r *Repository) GetQuestEndingStatistics(ctx context.Context, questID string) ([]EndingStatistic, error) {
+	query := `SELECT ending_achieved, COUNT(*) as count FROM gameplay.player_quest_progress WHERE quest_id = $1 AND ending_achieved IS NOT NULL GROUP BY ending_achieved ORDER BY count DESC`
+
+	rows, err := r.db.QueryContext(ctx, query, questID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ending statistics: %w", err)
+	}
+	defer rows.Close()
+
+	var stats []EndingStatistic
+	for rows.Next() {
+		var stat EndingStatistic
+		err := rows.Scan(&stat.Ending, &stat.Count)
+		if err != nil {
+			r.logger.Warnf("Failed to scan ending statistic: %v", err)
+			continue
+		}
+		stats = append(stats, stat)
+	}
+
+	return stats, nil
+}
+
+// GetQuestDifficultyRatings returns aggregated difficulty ratings (placeholder - would need rating system)
+func (r *Repository) GetQuestDifficultyRatings(ctx context.Context, questID string) ([]DifficultyRating, error) {
+	// Placeholder implementation - in real system this would come from player feedback
+	// For now, return mock data based on quest completion rates
+
+	completedCount, err := r.GetQuestCompletedCount(ctx, questID)
+	if err != nil {
+		return nil, err
+	}
+
+	totalCount, err := r.GetQuestPlayerCount(ctx, questID)
+	if err != nil {
+		return nil, err
+	}
+
+	completionRate := float64(completedCount) / float64(totalCount)
+
+	// Mock difficulty rating based on completion rate
+	var difficulty string
+	var rating float64
+
+	if completionRate > 0.8 {
+		difficulty = "easy"
+		rating = 3.0
+	} else if completionRate > 0.5 {
+		difficulty = "medium"
+		rating = 5.0
+	} else {
+		difficulty = "hard"
+		rating = 7.0
+	}
+
+	return []DifficultyRating{{Difficulty: difficulty, Rating: rating}}, nil
+}
+
+// GetPlayerQuestHistory returns recent quest history for a player
+func (r *Repository) GetPlayerQuestHistory(ctx context.Context, playerID string, limit int) ([]*PlayerQuestState, error) {
+	query := `
+		SELECT player_id, quest_id, current_state, choice_history,
+			   reputation_snapshot, branching_state, started_at, completed_at, ending_achieved
+		FROM gameplay.player_quest_progress
+		WHERE player_id = $1
+		ORDER BY started_at DESC
+		LIMIT $2
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, playerID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get player quest history: %w", err)
+	}
+	defer rows.Close()
+
+	var history []*PlayerQuestState
+	for rows.Next() {
+		var state PlayerQuestState
+		err := rows.Scan(
+			&state.PlayerID, &state.QuestID, &state.CurrentState,
+			&state.ChoiceHistory, &state.ReputationSnapshot, &state.BranchingState,
+			&state.StartedAt, &state.CompletedAt, &state.EndingAchieved,
+		)
+		if err != nil {
+			r.logger.Warnf("Failed to scan quest history: %v", err)
+			continue
+		}
+		history = append(history, &state)
+	}
+
+	return history, nil
+}
+
+// GetCurrentBranchingNode returns the current branching node for a player
+func (r *Repository) GetCurrentBranchingNode(ctx context.Context, playerID, questID string) (string, error) {
+	query := `
+		SELECT COALESCE(branching_state->>'current_node', '') as current_node
+		FROM gameplay.player_quest_progress
+		WHERE player_id = $1 AND quest_id = $2
+	`
+
+	var currentNode string
+	err := r.db.QueryRowContext(ctx, query, playerID, questID).Scan(&currentNode)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("quest progress not found for player %s quest %s", playerID, questID)
+		}
+		r.logger.Errorf("Failed to get current branching node: %v", err)
+		return "", fmt.Errorf("failed to get current branching node: %w", err)
+	}
+
+	return currentNode, nil
+}
+
 // GetPlayerQuestState retrieves a player's quest state
 func (r *Repository) GetPlayerQuestState(ctx context.Context, playerID, questID string) (*PlayerQuestState, error) {
 	query := `
 		SELECT player_id, quest_id, current_state, choice_history,
-			   reputation_snapshot, started_at, completed_at, ending_achieved
-		FROM gameplay.player_quest_states
+			   reputation_snapshot, branching_state, started_at, completed_at, ending_achieved
+		FROM gameplay.player_quest_progress
 		WHERE player_id = $1 AND quest_id = $2
 	`
 
 	var state PlayerQuestState
 	err := r.db.QueryRowContext(ctx, query, playerID, questID).Scan(
 		&state.PlayerID, &state.QuestID, &state.CurrentState,
-		&state.ChoiceHistory, &state.ReputationSnapshot,
+		&state.ChoiceHistory, &state.ReputationSnapshot, &state.BranchingState,
 		&state.StartedAt, &state.CompletedAt, &state.EndingAchieved,
 	)
 
@@ -231,7 +489,7 @@ func (r *Repository) GetPlayerQuestState(ctx context.Context, playerID, questID 
 // UpdatePlayerQuestState updates a player's quest progress
 func (r *Repository) UpdatePlayerQuestState(ctx context.Context, playerID, questID, newState string, choiceHistory json.RawMessage) error {
 	query := `
-		UPDATE gameplay.player_quest_states
+		UPDATE gameplay.player_quest_progress
 		SET current_state = $3, choice_history = $4, updated_at = $5
 		WHERE player_id = $1 AND quest_id = $2
 	`

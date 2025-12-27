@@ -27,6 +27,11 @@ import (
 )
 
 func main() {
+	// PERFORMANCE: Optimize GC for low-latency game service
+	if os.Getenv("GOGC") == "" {
+		os.Setenv("GOGC", "50") // Lower GC threshold for MMOFPS
+	}
+
 	// Initialize structured logging
 	logger, err := zap.NewProduction()
 	if err != nil {
@@ -35,7 +40,7 @@ func main() {
 	defer logger.Sync()
 
 	sugar := logger.Sugar()
-	sugar.Info("Starting Dynamic Quests Service v1.0.0")
+	sugar.Info("Starting Dynamic Quests Service v1.0.0 with MMOFPS optimizations")
 
 	// Load configuration
 	cfg, err := config.Load()

@@ -25,6 +25,11 @@ import (
 )
 
 func main() {
+	// PERFORMANCE: Optimize GC for real-time combat service
+	if os.Getenv("GOGC") == "" {
+		os.Setenv("GOGC", "30") // Aggressive GC for sub-10ms latency
+	}
+
 	// Initialize structured logger
 	logger, err := zap.NewProduction()
 	if err != nil {

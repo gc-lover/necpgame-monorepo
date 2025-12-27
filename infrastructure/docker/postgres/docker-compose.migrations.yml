@@ -5,7 +5,7 @@ version: '3.8'
 
 services:
   liquibase:
-    image: liquibase/liquibase:latest
+    image: liquibase/liquibase:4.27
     container_name: necpgame-liquibase
     depends_on:
       postgres:
@@ -16,9 +16,10 @@ services:
       LIQUIBASE_COMMAND_PASSWORD: postgres
       LIQUIBASE_COMMAND_CHANGELOG_FILE: changelog.yaml
     volumes:
-      - ../../../liquibase:/liquibase:ro
+      - ../../../infrastructure/liquibase:/liquibase:ro
     working_dir: /liquibase
-    command: [ "update" ]
+    entrypoint: ["/usr/local/bin/docker-entrypoint.sh"]
+    command: ["update"]
     networks:
       - default
 

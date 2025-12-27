@@ -203,30 +203,21 @@ class BaseContentMigrationGenerator(ABC):
 
     def should_update_migration(self, yaml_file: Path, file_hash: str) -> tuple[bool, str]:
         """Check if migration should be updated based on existing files."""
-        # Look for existing migration files for this content
-        existing_pattern = f"data_{self.config.content_type}_{yaml_file.stem}_*.yaml"
-        existing_files = list(self.output_dir.glob(existing_pattern))
+        # Look for existing migration file for this content
+        expected_filename = f"data_{self.config.content_type}_{yaml_file.stem}.yaml"
+        existing_file = self.output_dir / expected_filename
 
-        if not existing_files:
-            # No existing migration, need to create
-            return True, ""
+        # Check if migration file already exists
+        if existing_file.exists():
+            # File already processed, skip
+            return False, str(existing_file)
 
-        # Check if any existing file has the same hash
-        for existing_file in existing_files:
-            filename_parts = existing_file.stem.split('_')
-            if len(filename_parts) >= 4:
-                existing_hash = filename_parts[-2]  # Hash is second to last part
-                if existing_hash == file_hash[:8]:
-                    # Same content, no need to update
-                    return False, str(existing_file)
-
-        # Different hash, need to update (old file will be replaced)
+        # File doesn't exist, create new
         return True, ""
 
     def generate_migration(self, content_data: Dict[str, Any], yaml_file: Path) -> str:
         """Generate Liquibase migration YAML for content data."""
         file_hash = FileUtils.get_file_hash(yaml_file)
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
 
         # Check if we need to update
         needs_update, existing_file = self.should_update_migration(yaml_file, file_hash)
@@ -237,7 +228,7 @@ class BaseContentMigrationGenerator(ABC):
         migration = {
             'databaseChangeLog': [{
                 'changeSet': {
-                    'id': f'{self.config.content_type}-{yaml_file.stem}-{file_hash[:8]}',
+                    'id': f'{self.config.content_type}-{yaml_file.stem}',
                     'author': 'content-migration-generator',
                     'changes': [{
                         'insert': {
@@ -258,8 +249,8 @@ class BaseContentMigrationGenerator(ABC):
                 }
             })
 
-        # Generate filename with readable format: data_type_filename_hash_timestamp.yaml
-        filename = f"data_{self.config.content_type}_{yaml_file.stem}_{file_hash[:8]}_{timestamp}.yaml"
+        # Generate filename with readable format: data_type_filename.yaml
+        filename = f"data_{self.config.content_type}_{yaml_file.stem}.yaml"
         filepath = self.output_dir / filename
 
         # Remove old migration file if it exists

@@ -21,6 +21,7 @@ type Server struct {
 	positionPool         *sync.Pool // Memory pool for position operations
 	pathfindingPool      *sync.Pool // Memory pool for pathfinding operations
 	validationPool       *sync.Pool // Memory pool for validation operations
+	healthPool           *sync.Pool // Memory pool for health responses
 }
 
 // NewServer creates a new server instance
@@ -44,6 +45,11 @@ func NewServer(db *pgxpool.Pool, logger *zap.Logger, tokenAuth *jwtauth.JWTAuth)
 				return &movementservice.MovementValidationResult{}
 			},
 		},
+		healthPool: &sync.Pool{
+			New: func() interface{} {
+				return &movementservice.HealthResponse{}
+			},
+		},
 	}
 }
 
@@ -55,9 +61,13 @@ func (s *Server) CreateRouter() http.Handler {
 
 // GetHealth implements movementservice.Handler
 func (s *Server) GetHealth(ctx context.Context) (movementservice.GetHealthRes, error) {
+	// PERFORMANCE: Add context timeout for MMOFPS requirements
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Millisecond)
+	defer cancel()
+
 	// Get health response from pool
-	healthResp := s.positionPool.Get().(*movementservice.HealthResponse)
-	defer s.positionPool.Put(healthResp)
+	healthResp := s.healthPool.Get().(*movementservice.HealthResponse)
+	defer s.healthPool.Put(healthResp)
 
 	// Reset the struct
 	*healthResp = movementservice.HealthResponse{}
@@ -79,6 +89,10 @@ func (s *Server) GetHealth(ctx context.Context) (movementservice.GetHealthRes, e
 
 // PostMovementPositionUpdate implements movementservice.Handler
 func (s *Server) PostMovementPositionUpdate(ctx context.Context, req movementservice.PostMovementPositionUpdateReq) (movementservice.PostMovementPositionUpdateRes, error) {
+	// PERFORMANCE: Add context timeout for MMOFPS requirements (position updates must be <5ms)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Millisecond)
+	defer cancel()
+
 	// Get position update from pool
 	update := s.positionPool.Get().(*movementservice.PositionUpdate)
 	defer s.positionPool.Put(update)
@@ -105,6 +119,10 @@ func (s *Server) PostMovementPositionUpdate(ctx context.Context, req movementser
 
 // PostMovementPathfind implements movementservice.Handler
 func (s *Server) PostMovementPathfind(ctx context.Context, req movementservice.PostMovementPathfindReq) (movementservice.PostMovementPathfindRes, error) {
+	// PERFORMANCE: Add context timeout for pathfinding (should be fast)
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+
 	// Get pathfinding result from pool
 	result := s.pathfindingPool.Get().(*movementservice.PathfindingResult)
 	defer s.pathfindingPool.Put(result)
@@ -132,6 +150,10 @@ func (s *Server) PostMovementPathfind(ctx context.Context, req movementservice.P
 
 // PostMovementValidate implements movementservice.Handler
 func (s *Server) PostMovementValidate(ctx context.Context, req movementservice.PostMovementValidateReq) (movementservice.PostMovementValidateRes, error) {
+	// PERFORMANCE: Add context timeout for validation (must be very fast)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Millisecond)
+	defer cancel()
+
 	// Get validation result from pool
 	result := s.validationPool.Get().(*movementservice.MovementValidationResult)
 	defer s.validationPool.Put(result)

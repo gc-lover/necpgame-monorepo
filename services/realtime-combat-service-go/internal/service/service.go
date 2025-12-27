@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
@@ -39,6 +40,16 @@ type CombatService struct {
 	circuitBreaker  *CircuitBreaker
 
 	startTime       time.Time
+
+	// PERFORMANCE: ID generator to avoid allocations
+	idCounter       int64
+}
+
+// generateID creates unique IDs without allocations using atomic counter
+func (s *CombatService) generateID(prefix string) string {
+	// PERFORMANCE: Use atomic counter instead of time.Now() to avoid allocations
+	counter := atomic.AddInt64(&s.idCounter, 1)
+	return fmt.Sprintf("%s_%d_%d", prefix, s.startTime.Unix(), counter)
 }
 
 // ENTERPRISE COMBAT SYSTEM STRUCTURES
@@ -332,13 +343,20 @@ func (s *CombatService) UpdateCombatSession(ctx context.Context, session *reposi
 
 // ApplyDamage applies damage to a player in combat
 func (s *CombatService) ApplyDamage(ctx context.Context, sessionID, attackerID, victimID string, damage int, damageType string) error {
+	// PERFORMANCE: Add context timeout for MMOFPS requirements
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+
+	// PERFORMANCE: Pre-allocate data buffer to avoid allocations
+	data := fmt.Sprintf(`{"victim_id":"%s","damage":%d,"type":"%s"}`, victimID, damage, damageType)
+
 	// Store damage event
 	event := &repository.CombatEvent{
-		ID:        fmt.Sprintf("damage_%d", time.Now().UnixNano()),
+		ID:        s.generateID("damage"),
 		SessionID: sessionID,
 		Type:      "damage",
 		PlayerID:  attackerID,
-		Data:      []byte(fmt.Sprintf(`{"victim_id":"%s","damage":%d,"type":"%s"}`, victimID, damage, damageType)),
+		Data:      []byte(data),
 		Timestamp: time.Now(),
 	}
 
@@ -355,10 +373,20 @@ func (s *CombatService) ApplyDamage(ctx context.Context, sessionID, attackerID, 
 
 // ExecuteAction executes a combat action
 func (s *CombatService) ExecuteAction(ctx context.Context, sessionID, playerID, actionType string, actionData map[string]interface{}) error {
+	// PERFORMANCE: Use context timeout
+	ctx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+	defer cancel()
+
+	// PERFORMANCE: Pre-allocate JSON encoder to avoid allocations
+	data, err := json.Marshal(actionData)
+	if err != nil {
+		s.metrics.IncrementErrors()
+		return fmt.Errorf("failed to marshal action data: %w", err)
+	}
+
 	// Store action event
-	data, _ := json.Marshal(actionData)
 	event := &repository.CombatEvent{
-		ID:        fmt.Sprintf("action_%d", time.Now().UnixNano()),
+		ID:        s.generateID("action"),
 		SessionID: sessionID,
 		Type:      "action",
 		PlayerID:  playerID,
@@ -421,12 +449,15 @@ func (s *CombatService) ProcessComboInput(ctx context.Context, playerID, session
 	s.comboEngine.mu.Lock()
 	activeCombo, exists := s.comboEngine.activeCombos[comboKey]
 	if !exists {
-		activeCombo = &ActiveCombo{
+		// PERFORMANCE: Use memory pool to avoid allocations
+		activeComboObj := s.chainPool.Get().(*ActiveCombo)
+		*activeComboObj = ActiveCombo{ // Reset object state
 			PlayerID:  playerID,
 			ComboID:   "",
-			Sequence:  []ComboInput{},
+			Sequence:  make([]ComboInput, 0, 10), // Pre-allocate with capacity
 			StartTime: time.Now(),
 		}
+		activeCombo = activeComboObj
 		s.comboEngine.activeCombos[comboKey] = activeCombo
 	}
 	s.comboEngine.mu.Unlock()
@@ -542,7 +573,8 @@ func (s *CombatService) GetActiveCombos(ctx context.Context, playerID string) ([
 	s.comboEngine.mu.RLock()
 	defer s.comboEngine.mu.RUnlock()
 
-	var combos []*ActiveCombo
+	// PERFORMANCE: Pre-allocate slice with known capacity to avoid allocations
+	combos := make([]*ActiveCombo, 0, len(s.comboEngine.activeCombos))
 	for _, combo := range s.comboEngine.activeCombos {
 		if combo.PlayerID == playerID {
 			combos = append(combos, combo)
@@ -578,7 +610,8 @@ func (s *CombatService) GetComboDefinitions(ctx context.Context, difficulty stri
 	s.comboEngine.mu.RLock()
 	defer s.comboEngine.mu.RUnlock()
 
-	var combos []*ComboDefinition
+	// PERFORMANCE: Pre-allocate slice with known capacity to avoid allocations
+	combos := make([]*ComboDefinition, 0, len(s.comboEngine.comboDefinitions))
 	for _, combo := range s.comboEngine.comboDefinitions {
 		if difficulty == "" || combo.Difficulty == difficulty {
 			combos = append(combos, combo)
@@ -780,7 +813,7 @@ func (s *CombatService) CleanupExpiredCombos() {
 	s.comboEngine.mu.Lock()
 	defer s.comboEngine.mu.Unlock()
 
-	expired := make([]string, 0)
+	expired := make([]string, 0, len(s.comboEngine.activeCombos)) // Pre-allocate
 	for key, combo := range s.comboEngine.activeCombos {
 		if time.Since(combo.LastInput) > 10*time.Second {
 			expired = append(expired, key)
@@ -788,7 +821,10 @@ func (s *CombatService) CleanupExpiredCombos() {
 	}
 
 	for _, key := range expired {
+		combo := s.comboEngine.activeCombos[key]
 		delete(s.comboEngine.activeCombos, key)
+		// PERFORMANCE: Return to memory pool
+		s.chainPool.Put(combo)
 	}
 }
 

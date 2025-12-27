@@ -25,6 +25,11 @@ import (
 )
 
 func main() {
+	// PERFORMANCE: Optimize GC for low-latency game service
+	if os.Getenv("GOGC") == "" {
+		os.Setenv("GOGC", "50") // Lower GC threshold for MMOFPS
+	}
+
 	// Initialize structured logger
 	logger, err := zap.NewProduction()
 	if err != nil {

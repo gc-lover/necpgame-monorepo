@@ -57,25 +57,44 @@ class InteractivesMigrationGenerator(BaseContentMigrationGenerator):
             if interactives_list:
                 # For now, process first interactive - can be extended for multiple
                 interactive_data = interactives_list[0] if isinstance(interactives_list, list) else interactives_list
+                return {
+                    'id': str(uuid.uuid4()),
+                    'interactive_id': f"{yaml_file.stem}-{interactive_data.get('name', 'unknown')}",
+                    'name': interactive_data.get('display_name', interactive_data.get('name', yaml_file.stem)),
+                    'description': interactive_data.get('description', ''),
+                    'category': interactive_data.get('category', 'container'),
+                    'location': None,  # Will be set from mechanics if available
+                    'interactable': True,
+                    'reusable': True,
+                    'requires_key': False,
+                    'interaction_type': 'examine',
+                    'properties': json.dumps(interactive_data.get('mechanics', {}), default=JsonSerializer.json_serializer, ensure_ascii=False),
+                    'requirements': json.dumps({}, default=JsonSerializer.json_serializer, ensure_ascii=False),
+                    'rewards': json.dumps({}, default=JsonSerializer.json_serializer, ensure_ascii=False)
+                }
+
+        # Fallback for old structure or no data found
+        interactive_def = spec.get('interactive_definition', {})
         return {
             'id': str(uuid.uuid4()),
-            'interactive_id': f"{yaml_file.stem}-{interactive_data.get('name', 'unknown')}",
-            'name': interactive_data.get('display_name', interactive_data.get('name', yaml_file.stem)),
-            'description': interactive_data.get('description', ''),
-            'category': interactive_data.get('category', 'container'),
-            'location': None,  # Will be set from mechanics if available
-            'interactable': True,
-            'reusable': True,
-            'requires_key': False,
-            'interaction_type': 'examine',
-            'properties': json.dumps(interactive_data.get('mechanics', {}), default=JsonSerializer.json_serializer, ensure_ascii=False),
-            'requirements': json.dumps({}, default=JsonSerializer.json_serializer, ensure_ascii=False),
-            'rewards': json.dumps({}, default=JsonSerializer.json_serializer, ensure_ascii=False)
+            'interactive_id': metadata.get('id', f"interactive-{yaml_file.stem}"),
+            'name': metadata.get('name', yaml_file.stem.replace('_', ' ').title()),
+            'description': spec.get('description', ''),
+            'category': interactive_def.get('category', 'container'),
+            'location': interactive_def.get('location'),
+            'interactable': interactive_def.get('interactable', True),
+            'reusable': interactive_def.get('reusable', True),
+            'requires_key': interactive_def.get('requires_key', False),
+            'interaction_type': interactive_def.get('interaction_type', 'examine'),
+            'properties': json.dumps(interactive_def.get('properties', {}), default=JsonSerializer.json_serializer, ensure_ascii=False),
+            'requirements': json.dumps(interactive_def.get('requirements', {}), default=JsonSerializer.json_serializer, ensure_ascii=False),
+            'rewards': json.dumps(interactive_def.get('rewards', {}), default=JsonSerializer.json_serializer, ensure_ascii=False)
         }
 
         # Fallback for old structure
         interactive_def = spec.get('interactive_definition', {})
         return {
+            'id': str(uuid.uuid4()),
             'interactive_id': metadata.get('id', f"interactive-{yaml_file.stem}"),
             'name': metadata.get('name', yaml_file.stem.replace('_', ' ').title()),
             'description': spec.get('description', ''),
