@@ -241,6 +241,59 @@ CREATE TABLE voice_quality_reports (
 
 ## Integration Points
 
+### Guild System Integration
+
+WebRTC Signaling Service now includes comprehensive guild voice channel support:
+
+#### Guild Voice Channels
+- **Dedicated Channels**: Each guild can have multiple voice channels
+- **Role-Based Access**: Control access based on guild roles (leader, officer, member)
+- **Moderation Tools**: Mute, deafen, and block users in specific channels
+- **Default Channels**: Automatic creation of default voice channels for guilds
+- **Permission System**: Granular control over channel access and features
+
+#### Guild Permissions
+```json
+{
+  "allowed_roles": ["leader", "officer", "member"],
+  "blocked_users": [],
+  "muted_users": [],
+  "deafened_users": [],
+  "is_moderated": false,
+  "require_approval": false
+}
+```
+
+#### Guild Voice Channel API
+```javascript
+// Create guild voice channel
+const channel = await fetch('/api/v1/guilds/guild-123/voice-channels', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        name: 'Raid Voice',
+        type: 'guild',
+        guild_id: 'guild-123',
+        max_users: 25,
+        allowed_roles: ['leader', 'officer', 'member'],
+        is_moderated: true
+    })
+});
+
+// Join guild voice channel
+const joinResponse = await fetch('/api/v1/guilds/guild-123/voice-channels/channel-456/join', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: 'user-789' })
+});
+```
+
+### Guild Service Integration
+- **Permission Validation**: Integration with guild service for role-based access control
+- **Member Management**: Automatic sync of guild members with voice channel permissions
+- **Event Broadcasting**: Guild events trigger voice channel updates
+- **Moderation Sync**: Guild moderation actions reflect in voice channels
+
 ### Game Client Integration
 ```javascript
 // Join voice channel
