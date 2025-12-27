@@ -18,7 +18,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
 
-	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/server"
+	"economy-service-go/server"
 )
 
 func main() {
