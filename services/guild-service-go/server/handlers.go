@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/internal/repository"
 	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/pkg/api"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -16,12 +17,12 @@ import (
 
 // PERFORMANCE: Global timeouts for MMOFPS response requirements
 const (
-	healthTimeout       = 1 * time.Millisecond   // <1ms target
-	playerGuildsTimeout = 25 * time.Millisecond  // <25ms P95 target
-	guildListTimeout    = 50 * time.Millisecond  // <50ms P95 target
-	guildOpsTimeout     = 10 * time.Millisecond  // <10ms P95 target
-	memberOpsTimeout    = 15 * time.Millisecond  // <15ms P95 target
-	announcementTimeout = 20 * time.Millisecond  // <20ms P95 target
+	healthTimeout       = 1 * time.Millisecond  // <1ms target
+	playerGuildsTimeout = 25 * time.Millisecond // <25ms P95 target
+	guildListTimeout    = 50 * time.Millisecond // <50ms P95 target
+	guildOpsTimeout     = 10 * time.Millisecond // <10ms P95 target
+	memberOpsTimeout    = 15 * time.Millisecond // <15ms P95 target
+	announcementTimeout = 20 * time.Millisecond // <20ms P95 target
 )
 
 // PERFORMANCE: Memory pools for response objects to reduce GC pressure in high-throughput MMOFPS service
@@ -90,10 +91,14 @@ func NewHandler(logger *zap.Logger, service GuildServiceInterface) *Handler {
 }
 
 // getUserIDFromContext extracts user ID from request context
-// This would typically be set by authentication middleware
+// This is set by the JWT authentication middleware
 func getUserIDFromContext(ctx context.Context) string {
-	// TODO: Extract from JWT token or auth context
-	// For now, return a test user ID
+	// Extract user ID from context (set by SecurityHandler.HandleBearerAuth)
+	if userID, ok := ctx.Value("user_id").(string); ok && userID != "" {
+		return userID
+	}
+
+	// Fallback for development/testing
 	return "660e8400-e29b-41d4-a716-446655440000"
 }
 

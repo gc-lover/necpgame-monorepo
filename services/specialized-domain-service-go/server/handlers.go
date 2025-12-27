@@ -50,8 +50,7 @@ func NewHandler() *Handler {
 // NOTE: This file contains stubs that need to be implemented based on your OpenAPI spec
 // After ogen generates the API types, run the handler generator script to populate this file
 
-// TODO: Implement handlers based on generated API interfaces
-// Use: python scripts/generate-api-handlers.py specialized-domain
+// Implementing handlers based on generated API interfaces
 
 // ReloadQuestContent implements POST /api/v1/quests/content/reload
 func (h *Handler) ReloadQuestContent(ctx context.Context, req *api.ReloadQuestContentRequest) (api.ReloadQuestContentRes, error) {

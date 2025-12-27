@@ -6,6 +6,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -99,6 +100,116 @@ func (r RedisConfig) GetAddr() string {
 	return r.Host + ":" + string(rune(r.Port))
 }
 
+// CachedGuild represents guild data for Redis caching
+type CachedGuild struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	LeaderID    uuid.UUID `json:"leader_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	MemberCount int       `json:"member_count"`
+	MaxMembers  int       `json:"max_members"`
+	Level       int       `json:"level"`
+	Experience  int64     `json:"experience"`
+	Reputation  int       `json:"reputation"`
+}
+
+// serializeGuild converts server.Guild to CachedGuild for Redis storage
+func serializeGuild(guild *server.Guild) *CachedGuild {
+	return &CachedGuild{
+		ID:          guild.ID,
+		Name:        guild.Name,
+		Description: guild.Description,
+		LeaderID:    guild.LeaderID,
+		CreatedAt:   guild.CreatedAt,
+		UpdatedAt:   guild.UpdatedAt,
+		MemberCount: guild.MemberCount,
+		MaxMembers:  guild.MaxMembers,
+		Level:       guild.Level,
+		Experience:  guild.Experience,
+		Reputation:  guild.Reputation,
+	}
+}
+
+// deserializeGuild converts CachedGuild back to server.Guild
+func deserializeGuild(cached *CachedGuild) *server.Guild {
+	return &server.Guild{
+		ID:          cached.ID,
+		Name:        cached.Name,
+		Description: cached.Description,
+		LeaderID:    cached.LeaderID,
+		CreatedAt:   cached.CreatedAt,
+		UpdatedAt:   cached.UpdatedAt,
+		MemberCount: cached.MemberCount,
+		MaxMembers:  cached.MaxMembers,
+		Level:       cached.Level,
+		Experience:  cached.Experience,
+		Reputation:  cached.Reputation,
+	}
+}
+
+// setGuildCache stores guild in Redis cache
+func (r *Repository) setGuildCache(ctx context.Context, guild *server.Guild) error {
+	cacheKey := "guild:" + guild.ID.String()
+	cached := serializeGuild(guild)
+
+	data, err := json.Marshal(cached)
+	if err != nil {
+		r.logger.Errorf("Failed to marshal guild for cache: %v", err)
+		return err
+	}
+
+	// Cache for 10 minutes
+	err = r.redis.Set(ctx, cacheKey, data, 10*time.Minute).Err()
+	if err != nil {
+		r.logger.Errorf("Failed to set guild cache: %v", err)
+		return err
+	}
+
+	r.logger.Debugf("Guild cached: %s", guild.ID)
+	return nil
+}
+
+// getGuildCache retrieves guild from Redis cache
+func (r *Repository) getGuildCache(ctx context.Context, guildID uuid.UUID) (*server.Guild, error) {
+	cacheKey := "guild:" + guildID.String()
+
+	data, err := r.redis.Get(ctx, cacheKey).Result()
+	if err != nil {
+		if err == redis.Nil {
+			r.logger.Debugf("Guild not found in cache: %s", guildID)
+			return nil, nil // Cache miss
+		}
+		r.logger.Errorf("Failed to get guild from cache: %v", err)
+		return nil, err
+	}
+
+	var cached CachedGuild
+	if err := json.Unmarshal([]byte(data), &cached); err != nil {
+		r.logger.Errorf("Failed to unmarshal guild from cache: %v", err)
+		return nil, err
+	}
+
+	guild := deserializeGuild(&cached)
+	r.logger.Debugf("Guild retrieved from cache: %s", guildID)
+	return guild, nil
+}
+
+// invalidateGuildCache removes guild from Redis cache
+func (r *Repository) invalidateGuildCache(ctx context.Context, guildID uuid.UUID) error {
+	cacheKey := "guild:" + guildID.String()
+
+	err := r.redis.Del(ctx, cacheKey).Err()
+	if err != nil {
+		r.logger.Errorf("Failed to invalidate guild cache: %v", err)
+		return err
+	}
+
+	r.logger.Debugf("Guild cache invalidated: %s", guildID)
+	return nil
+}
+
 // ListGuilds retrieves a paginated list of guilds
 func (r *Repository) ListGuilds(ctx context.Context, limit, offset int, sortBy string) ([]*server.Guild, error) {
 	r.logger.Infof("Listing guilds with limit: %d, offset: %d, sort: %s", limit, offset, sortBy)
@@ -190,13 +301,15 @@ func (r *Repository) CreateGuild(ctx context.Context, name, description string, 
 
 // GetGuild retrieves a guild from database or cache
 func (r *Repository) GetGuild(ctx context.Context, guildID uuid.UUID) (*server.Guild, error) {
-	r.logger.Infof("Getting guild from database: %s", guildID)
+	r.logger.Infof("Getting guild: %s", guildID)
 
 	// Try cache first
-	cacheKey := "guild:" + guildID.String()
-	if cached, err := r.redis.Get(ctx, cacheKey).Result(); err == nil {
+	if cachedGuild, err := r.getGuildCache(ctx, guildID); err != nil {
+		r.logger.Errorf("Cache error for guild %s: %v", guildID, err)
+		// Continue to database query on cache error
+	} else if cachedGuild != nil {
 		r.logger.Debugf("Guild found in cache: %s", guildID)
-		// TODO: Parse cached guild data
+		return cachedGuild, nil
 	}
 
 	// Query database
@@ -223,7 +336,10 @@ func (r *Repository) GetGuild(ctx context.Context, guildID uuid.UUID) (*server.G
 	}
 
 	// Cache the result
-	// TODO: Serialize and cache guild data
+	if err := r.setGuildCache(ctx, &guild); err != nil {
+		r.logger.Warnf("Failed to cache guild %s: %v", guildID, err)
+		// Don't fail the request if caching fails
+	}
 
 	r.logger.Debugf("Successfully retrieved guild: %s", guildID)
 	return &guild, nil
@@ -257,8 +373,10 @@ func (r *Repository) UpdateGuild(ctx context.Context, guildID uuid.UUID, name, d
 	}
 
 	// Invalidate cache
-	cacheKey := "guild:" + guildID.String()
-	r.redis.Del(ctx, cacheKey)
+	if err := r.invalidateGuildCache(ctx, guildID); err != nil {
+		r.logger.Warnf("Failed to invalidate cache for guild %s: %v", guildID, err)
+		// Don't fail the request if cache invalidation fails
+	}
 
 	r.logger.Infof("Successfully updated guild: %s", guildID)
 	return nil
@@ -292,8 +410,10 @@ func (r *Repository) DeleteGuild(ctx context.Context, guildID uuid.UUID) error {
 	}
 
 	// Invalidate cache
-	cacheKey := "guild:" + guildID.String()
-	r.redis.Del(ctx, cacheKey)
+	if err := r.invalidateGuildCache(ctx, guildID); err != nil {
+		r.logger.Warnf("Failed to invalidate cache for guild %s: %v", guildID, err)
+		// Don't fail the request if cache invalidation fails
+	}
 
 	r.logger.Infof("Successfully soft deleted guild: %s", guildID)
 	return nil
@@ -353,8 +473,9 @@ func (r *Repository) AddGuildMember(ctx context.Context, guildID, userID uuid.UU
 	}
 
 	// Invalidate cache
-	cacheKey := "guild:" + guildID.String()
-	r.redis.Del(ctx, cacheKey)
+	if err := r.invalidateGuildCache(ctx, guildID); err != nil {
+		r.logger.Warnf("Failed to invalidate cache for guild %s: %v", guildID, err)
+	}
 
 	r.logger.Infof("Successfully added member %s to guild %s", userID, guildID)
 	return nil
@@ -409,8 +530,9 @@ func (r *Repository) RemoveGuildMember(ctx context.Context, guildID, userID uuid
 	}
 
 	// Invalidate cache
-	cacheKey := "guild:" + guildID.String()
-	r.redis.Del(ctx, cacheKey)
+	if err := r.invalidateGuildCache(ctx, guildID); err != nil {
+		r.logger.Warnf("Failed to invalidate cache for guild %s: %v", guildID, err)
+	}
 
 	r.logger.Infof("Successfully removed member %s from guild %s", userID, guildID)
 	return nil
