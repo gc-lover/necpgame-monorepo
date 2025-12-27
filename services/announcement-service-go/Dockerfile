@@ -53,3 +53,4 @@ ENTRYPOINT ["./announcement-service-go"]
 
 
 
+

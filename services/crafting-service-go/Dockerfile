@@ -62,3 +62,4 @@ ENV GOGC=40
 CMD ["./crafting-service"]
 
 
+

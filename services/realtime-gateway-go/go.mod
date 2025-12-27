@@ -1,4 +1,4 @@
-module realtime-gateway-go
+module github.com/gc-lover/necpgame-monorepo/services/realtime-gateway-go
 
 go 1.21.0
 

@@ -12,8 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"realtime-gateway-go/pkg/proto"
-	"realtime-gateway-go/pkg/proto/realtime"
+	rt "github.com/gc-lover/necpgame-monorepo/services/realtime-gateway-go/pkg/proto/realtime"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
@@ -124,7 +123,7 @@ func (s *UDPServer) Start(ctx context.Context) error {
 // handlePacket processes incoming UDP packets
 func (s *UDPServer) handlePacket(data []byte, clientAddr *net.UDPAddr) {
 	// Parse protobuf message
-	msg := &realtime.ClientMessage{}
+	msg := &rt.ClientMessage{}
 	if err := proto.Unmarshal(data, msg); err != nil {
 		s.logger.Warn("Failed to unmarshal client message", zap.Error(err), zap.String("addr", clientAddr.String()))
 		return
@@ -149,75 +148,80 @@ func (s *UDPServer) handlePacket(data []byte, clientAddr *net.UDPAddr) {
 
 	// Handle message type
 	switch payload := msg.Payload.(type) {
-	case *realtime.ClientMessage_PlayerInput:
+	case *rt.ClientMessage_PlayerInput:
 		s.handlePlayerInput(udpSession, payload.PlayerInput)
-	case *realtime.ClientMessage_Heartbeat:
+	case *rt.ClientMessage_Heartbeat:
 		s.handleHeartbeat(udpSession, payload.Heartbeat)
-	case *realtime.ClientMessage_ProtocolSwitchRequest:
-		s.handleProtocolSwitch(udpSession, payload.ProtocolSwitchRequest)
+	// ProtocolSwitchRequest not implemented in current proto schema
 	default:
 		s.logger.Warn("Unknown message type", zap.String("session_id", udpSession.ID))
 	}
 }
 
 // handlePlayerInput processes player input messages
-func (s *UDPServer) handlePlayerInput(session *UDPSession, input *realtime.PlayerInput) {
-	// Update player position in spatial grid
-	pos := Vector3{
-		X: input.Position.X,
-		Y: input.Position.Y,
-		Z: input.Position.Z,
-	}
+func (s *UDPServer) handlePlayerInput(session *UDPSession, input *rt.PlayerInput) {
+	// Calculate new position based on movement input
+	// For now, simple movement simulation - in real game this would be physics-based
+	pos := session.Position
+	pos.X += input.MoveX * 0.1 // Simple movement scaling
+	pos.Y += input.MoveY * 0.1
+	// Z movement could be added for flying/jumping
 
 	s.spatialGrid.UpdatePlayerPosition(session.PlayerID, pos)
 	session.Position = pos
 
 	// Update session info
 	session.PlayerID = input.PlayerId
-	session.SequenceNum = input.SequenceNumber
+	session.SequenceNum = uint32(input.Tick) // Use tick as sequence number
 
 	// Broadcast to nearby players
 	s.broadcastPlayerUpdate(session, input)
 }
 
 // handleHeartbeat processes heartbeat messages for connection health
-func (s *UDPServer) handleHeartbeat(session *UDPSession, heartbeat *realtime.Heartbeat) {
+func (s *UDPServer) handleHeartbeat(session *UDPSession, heartbeat *rt.Heartbeat) {
 	// Send heartbeat ack
-	ack := &realtime.HeartbeatAck{
-		Timestamp: time.Now().UnixMilli(),
-		Ping:      heartbeat.Timestamp, // Echo back client timestamp
+	ack := &rt.HeartbeatAck{
+		ServerTimeMs: time.Now().UnixMilli(),
+		RttEstimateMs: time.Now().UnixMilli() - heartbeat.ClientTimeMs, // Calculate RTT
 	}
 
-	s.sendMessage(session, &realtime.ServerMessage{
-		Payload: &realtime.ServerMessage_HeartbeatAck{HeartbeatAck: ack},
+	s.sendMessage(session, &rt.ServerMessage{
+		Payload: &rt.ServerMessage_HeartbeatAck{HeartbeatAck: ack},
 	})
 }
 
 // handleProtocolSwitch handles requests to switch between UDP/WebSocket
-func (s *UDPServer) handleProtocolSwitch(session *UDPSession, req *proto.ProtocolSwitchRequest) {
-	// Implementation for protocol switching logic
-	s.logger.Info("Protocol switch request",
-		zap.String("session_id", session.ID),
-		zap.String("requested_protocol", req.Protocol))
-}
+// TODO: Implement when ProtocolSwitchRequest is added to proto schema
 
-// broadcastPlayerUpdate sends player updates to nearby players
-func (s *UDPServer) broadcastPlayerUpdate(session *UDPSession, input *realtime.PlayerInput) {
+// broadcastPlayerUpdate sends player updates to nearby players using delta compression
+func (s *UDPServer) broadcastPlayerUpdate(session *UDPSession, input *rt.PlayerInput) {
 	nearbyPlayers := s.spatialGrid.GetNearbyPlayers(session.Position, 100.0) // 100m radius
 
-	update := &realtime.PlayerUpdate{
-		PlayerId:       session.PlayerID,
-		SequenceNumber: session.SequenceNum,
-		Position: &realtime.Vector3{
-			X: session.Position.X,
-			Y: session.Position.Y,
-			Z: session.Position.Z,
-		},
-		// Add other fields as needed
+	// Create entity state for this player
+	entity := &rt.EntityState{
+		Id: session.PlayerID,
+		X:  session.Position.X,
+		Y:  session.Position.Y,
+		Z:  session.Position.Z,
+		Vx: input.MoveX, // Use movement as velocity
+		Vy: input.MoveY,
+		Vz: 0, // No Z movement for now
 	}
 
-	msg := &realtime.ServerMessage{
-		Payload: &realtime.ServerMessage_PlayerUpdate{PlayerUpdate: update},
+	// Create delta update (could be optimized with proper delta compression)
+	delta := &rt.GameDelta{
+		BaseTick:   int64(session.SequenceNum - 1), // Previous tick
+		TargetTick: int64(session.SequenceNum),     // Current tick
+		Changed:    []*rt.EntityState{entity},
+	}
+
+	gameState := &rt.GameState{
+		State: &rt.GameState_Delta{Delta: delta},
+	}
+
+	msg := &rt.ServerMessage{
+		Payload: &rt.ServerMessage_GameState{GameState: gameState},
 	}
 
 	for _, playerID := range nearbyPlayers {
@@ -228,7 +232,7 @@ func (s *UDPServer) broadcastPlayerUpdate(session *UDPSession, input *realtime.P
 }
 
 // sendMessage sends a protobuf message to a UDP client
-func (s *UDPServer) sendMessage(session *UDPSession, msg *realtime.ServerMessage) {
+func (s *UDPServer) sendMessage(session *UDPSession, msg *rt.ServerMessage) {
 	data, err := proto.Marshal(msg)
 	if err != nil {
 		s.logger.Error("Failed to marshal server message", zap.Error(err))

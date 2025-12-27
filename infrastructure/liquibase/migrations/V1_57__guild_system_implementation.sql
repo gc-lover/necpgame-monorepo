@@ -91,3 +91,4 @@ ON CONFLICT (user_id, guild_id) DO NOTHING;
 
 COMMIT;
 
+

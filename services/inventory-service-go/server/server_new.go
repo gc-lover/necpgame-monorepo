@@ -22,3 +22,4 @@ func (s *Server) CreateRouter() http.Handler {
 }
 
 // Issue: #1591
+

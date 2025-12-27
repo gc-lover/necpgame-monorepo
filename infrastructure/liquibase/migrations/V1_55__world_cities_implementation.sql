@@ -228,3 +228,4 @@ ON CONFLICT (city_id) DO NOTHING;
 -- Integration: Provides foundation for world-regions-service and narrative systems
 
 
+
