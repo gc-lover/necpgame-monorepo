@@ -119,14 +119,14 @@ func TestVoiceChatService_CreateVoiceChannel_Success(t *testing.T) {
 	description := "Test Description"
 	maxUsers := 10
 
-	expectedChannel := &VoiceChannel{
-		ID:          uuid.New(),
-		GuildID:     guildID,
-		Name:        name,
-		Description: description,
-		MaxUsers:    maxUsers,
-		IsLocked:    false,
-		CreatedAt:   time.Now(),
+	// expectedChannel := &VoiceChannel{
+	// 	ID:          uuid.New(),
+	// 	GuildID:     guildID,
+	// 	Name:        name,
+	// 	Description: description,
+	// 	MaxUsers:    maxUsers,
+	// 	IsLocked:    false,
+	// 	CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
 
@@ -862,7 +862,7 @@ func TestVoiceChatService_InputValidation(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name      string
+		testName  string
 		guildID   uuid.UUID
 		name      string
 		maxUsers  int
@@ -877,7 +877,7 @@ func TestVoiceChatService_InputValidation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.testName, func(t *testing.T) {
 			if !tt.expectErr {
 				mockRepo.On("CreateVoiceChannel", ctx, mock.AnythingOfType("*server.VoiceChannel")).Return(nil).Once()
 			}

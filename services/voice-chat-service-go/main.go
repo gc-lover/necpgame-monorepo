@@ -4,12 +4,10 @@
 package main
 
 import (
-	"context"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"go.uber.org/zap"
 	"voice-chat-service-go/server"
@@ -53,8 +51,9 @@ func main() {
 	logger.Info("Shutting down Voice Chat Service")
 
 	// Graceful shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+	// TODO: Use context for graceful shutdown
+	// ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// defer cancel()
 
 	// TODO: Close database connections
 	// TODO: Stop HTTP server
