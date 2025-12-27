@@ -2,19 +2,74 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/gc-lover/necpgame-monorepo/services/housing-service-go/pkg/api"
 	"github.com/gc-lover/necpgame-monorepo/services/housing-service-go/server"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
+
+// JWTSecurityHandler implements JWT Bearer token authentication
+type JWTSecurityHandler struct {
+	jwtSecret []byte
+	logger    *zap.Logger
+}
+
+// NewJWTSecurityHandler creates a new JWT security handler
+func NewJWTSecurityHandler(secret string, logger *zap.Logger) *JWTSecurityHandler {
+	return &JWTSecurityHandler{
+		jwtSecret: []byte(secret),
+		logger:    logger,
+	}
+}
+
+// HandleBearerAuth implements the SecurityHandler interface
+func (h *JWTSecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
+	tokenString := string(t)
+
+	// Parse and validate JWT token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Validate signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return h.jwtSecret, nil
+	})
+
+	if err != nil {
+		h.logger.Warn("JWT token validation failed", zap.Error(err))
+		return ctx, fmt.Errorf("invalid token: %w", err)
+	}
+
+	if !token.Valid {
+		return ctx, fmt.Errorf("invalid token")
+	}
+
+	// Extract claims
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		// Add user information to context
+		playerID := claims["player_id"]
+		if playerID != nil {
+			ctx = context.WithValue(ctx, "player_id", playerID)
+		}
+
+		h.logger.Debug("JWT token validated successfully",
+			zap.Any("player_id", playerID),
+			zap.String("operation", string(operationName)))
+	}
+
+	return ctx, nil
+}
 
 func createDatabaseConnection(logger *zap.Logger) (*pgxpool.Pool, error) {
 	// Database connection parameters
@@ -90,9 +145,13 @@ func main() {
 	}
 	defer db.Close()
 
-	handler := server.NewServer(db, logger, nil) // TODO: Add proper auth
+	// Initialize JWT security handler
+	jwtSecret := getEnv("JWT_SECRET", "default-jwt-secret-change-in-production")
+	securityHandler := NewJWTSecurityHandler(jwtSecret, logger)
 
-	srv, err := api.NewServer(handler, handler)
+	handler := server.NewServer(db, logger, securityHandler)
+
+	srv, err := api.NewServer(handler, securityHandler)
 	if err != nil {
 		logger.Fatal("failed to create server", zap.Error(err))
 	}

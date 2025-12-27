@@ -112,8 +112,7 @@ CREATE TABLE IF NOT EXISTS gameplay.player_quest_rewards (
     amount INTEGER DEFAULT 1,
     claimed_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    -- Prevent duplicate claims
-    UNIQUE(player_id, quest_id, reward_type, COALESCE(reward_id, ''))
+    -- Prevent duplicate claims (using functional index below)
 );
 
 -- Performance indexes for reward tracking
