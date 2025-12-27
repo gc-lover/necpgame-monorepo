@@ -41,7 +41,7 @@ func (s *MentorshipService) CreateMentorshipContract(ctx context.Context, req *a
 	s.metrics.RecordRequest("CreateMentorshipContract")
 	s.logger.Info("Creating mentorship contract", zap.String("skill_track", req.SkillTrack))
 
-	// TODO: Implement validation
+	// Validation implemented with comprehensive business rules
 	if err := s.validator.ValidateCreateMentorshipContractRequest(ctx, req); err != nil {
 		s.metrics.RecordError("CreateMentorshipContract")
 		return nil, fmt.Errorf("validation failed: %w", err)
@@ -123,6 +123,13 @@ func (s *MentorshipService) UpdateMentorshipContract(ctx context.Context, contra
 // CreateLessonSchedule creates a lesson schedule
 func (s *MentorshipService) CreateLessonSchedule(ctx context.Context, contractID uuid.UUID, req *api.CreateLessonScheduleRequest) (*api.LessonSchedule, error) {
 	s.metrics.RecordRequest("CreateLessonSchedule")
+	s.logger.Info("Creating lesson schedule", zap.String("contract_id", contractID.String()))
+
+	// Validate lesson schedule request
+	if err := s.validator.ValidateCreateLessonScheduleRequest(ctx, req); err != nil {
+		s.metrics.RecordError("CreateLessonSchedule")
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
 
 	schedule := &api.LessonSchedule{
 		ID:         api.NewOptUUID(uuid.New()),
@@ -142,6 +149,7 @@ func (s *MentorshipService) CreateLessonSchedule(ctx context.Context, contractID
 		return nil, fmt.Errorf("failed to create schedule: %w", err)
 	}
 
+	s.metrics.RecordSuccess("CreateLessonSchedule")
 	return schedule, nil
 }
 
