@@ -19,9 +19,10 @@ from pathlib import Path
 class EasterEggsImporter:
     """Imports cyberspace easter eggs from YAML to database"""
 
-    def __init__(self, yaml_path: str, api_url: str):
+    def __init__(self, yaml_path: str, api_url: str, dry_run: bool = False):
         self.yaml_path = Path(yaml_path)
         self.api_url = api_url
+        self.dry_run = dry_run
 
     def validate_yaml_file(self) -> bool:
         """Validate that YAML file exists and is readable"""
@@ -50,8 +51,11 @@ class EasterEggsImporter:
         """Make HTTP request to import easter eggs"""
         print(f"INFO: Making import request to: {self.api_url}")
 
-        # For now, we'll simulate the import since the service might not be running
-        # In production, this would make an actual HTTP request
+        try:
+            import requests
+        except ImportError:
+            print("ERROR: requests library not installed. Install with: pip install requests")
+            return False
 
         # Check if YAML file has expected structure
         try:
@@ -69,9 +73,6 @@ class EasterEggsImporter:
 
             print(f"INFO: Found {len(easter_eggs)} easter eggs to import")
 
-            # Here would be the actual HTTP request
-            # For now, we'll just validate the structure
-
             # Validate each easter egg has required fields
             required_fields = ['id', 'name', 'category', 'difficulty', 'description']
             for i, egg in enumerate(easter_eggs):
@@ -81,7 +82,33 @@ class EasterEggsImporter:
                     return False
 
             print("INFO: All easter eggs validated successfully")
-            return True
+
+            if self.dry_run:
+                print("INFO: Dry run mode - skipping actual import")
+                return True
+
+            # Make actual HTTP request to import
+            try:
+                response = requests.post(
+                    self.api_url,
+                    json=data,
+                    headers={'Content-Type': 'application/json'},
+                    timeout=30
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    print(f"SUCCESS: Imported {result.get('imported_count', 0)} easter eggs")
+                    return True
+                else:
+                    print(f"ERROR: Import failed with status {response.status_code}")
+                    print(f"Response: {response.text}")
+                    return False
+
+            except requests.exceptions.RequestException as e:
+                print(f"ERROR: HTTP request failed: {e}")
+                print("INFO: Service may not be running. Use --dry-run to validate structure only.")
+                return False
 
         except yaml.YAMLError as e:
             print(f"ERROR: YAML parsing error: {e}")
@@ -109,12 +136,14 @@ def main():
     parser = argparse.ArgumentParser(description="Import cyberspace easter eggs from YAML")
     parser.add_argument("--yaml-path", required=True,
                        help="Path to YAML file containing easter eggs")
-    parser.add_argument("--api-url", default="http://localhost:8080/v1/cyberspace/admin/import",
+    parser.add_argument("--api-url", default="http://localhost:8080/api/v1/admin/import",
                        help="API endpoint URL for import")
+    parser.add_argument("--dry-run", action="store_true",
+                       help="Validate YAML structure without making HTTP request")
 
     args = parser.parse_args()
 
-    importer = EasterEggsImporter(args.yaml_path, args.api_url)
+    importer = EasterEggsImporter(args.yaml_path, args.api_url, args.dry_run)
 
     if importer.run_import():
         print("SUCCESS: Easter eggs import completed successfully")

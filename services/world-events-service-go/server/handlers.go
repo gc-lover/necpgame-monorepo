@@ -7,11 +7,14 @@ package server
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-service-go/pkg/api"
 )
@@ -63,26 +66,35 @@ var (
 // Handler implements the generated API server interface
 // PERFORMANCE: Struct aligned for memory efficiency (pointers first for 64-bit alignment)
 type Handler struct {
-	service   *Service        // 8 bytes (pointer)
-	validator *Validator      // 8 bytes (pointer)
-	cache     *Cache         // 8 bytes (pointer)
-	repo      *Repository    // 8 bytes (pointer)
+	service   *Service          // 8 bytes (pointer)
+	validator *Validator        // 8 bytes (pointer)
+	cache     *Cache           // 8 bytes (pointer)
+	repo      *Repository      // 8 bytes (pointer)
+	metrics   *MetricsCollector // 8 bytes (pointer)
+	logger    *zap.Logger      // 8 bytes (pointer)
 	// Add padding if needed for alignment
 	_pad [0]byte
 }
 
 // NewHandler creates a new handler instance with PERFORMANCE optimizations
 func NewHandler(db *sql.DB, redisClient *redis.Client) *Handler {
-	repo := NewRepository(db)
+	repo, err := NewRepository(db)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to create repository: %v", err))
+	}
 	cache := NewCache(redisClient)
 	service := NewService(repo, cache)
 	validator := NewValidator()
+	metrics := NewMetricsCollector()
+	logger, _ := zap.NewProduction()
 
 	return &Handler{
 		service:   service,
 		validator: validator,
 		cache:     cache,
 		repo:      repo,
+		metrics:   metrics,
+		logger:    logger,
 	}
 }
 
@@ -513,153 +525,6 @@ func (h *Handler) ValidateEventParticipation(ctx context.Context, req *api.Event
 		Valid:      true,
 		Violations: []api.EventValidationResponseViolationsItem{},
 		Confidence: api.NewOptFloat32(0.95),
-	}
-
-	return resp, nil
-}
-
-// GetEventProgress implements GET /{eventId}/progress
-// PERFORMANCE: <50ms P95 for progress tracking
-func (h *Handler) GetEventProgress(ctx context.Context, params api.GetEventProgressParams) (api.GetEventProgressRes, error) {
-	eventID := params.EventId.String()
-
-	// PERFORMANCE: Strict timeout
-	ctx, cancel := context.WithTimeout(ctx, eventDetailsTimeout)
-	defer cancel()
-
-	// PERFORMANCE: Check if event exists
-	event, err := h.repo.GetEventDetails(ctx, eventID)
-	if err != nil {
-		return &api.GetEventProgressNotFound{}, nil
-	}
-
-	// PERFORMANCE: Get pooled response object
-	resp := eventDetailsResponsePool.Get().(*api.EventDetailsResponse)
-	defer func() {
-		// PERFORMANCE: Reset and return to pool
-		resp.EventId = api.OptUUID{}
-		resp.Title = ""
-		resp.Description = ""
-		resp.Status = ""
-		resp.Type = ""
-		resp.Scale = ""
-		resp.Objectives = []api.EventObjective{}
-		resp.Rewards = []api.EventReward{}
-		resp.StartTime = api.OptDateTime{}
-		resp.EndTime = api.OptDateTime{}
-		resp.CurrentParticipants = 0
-		resp.MaxParticipants = 0
-		eventDetailsResponsePool.Put(resp)
-	}()
-
-	// Calculate progress (placeholder - would calculate real progress)
-	completedObjectives := 2
-	totalObjectives := 5
-	progressPercentage := float32(completedObjectives) / float32(totalObjectives) * 100.0
-
-	resp.EventId = api.NewOptUUID(event.ID)
-	resp.Title = event.Title
-	resp.Description = event.Description
-	resp.Status = api.NewOptEventDetailsResponseStatus(api.EventDetailsResponseStatus(event.Status))
-	resp.Type = api.NewOptEventDetailsResponseType(api.EventDetailsResponseType(event.Type))
-	resp.Scale = api.NewOptEventDetailsResponseScale(api.EventDetailsResponseScale(event.Scale))
-	resp.StartTime = api.NewOptDateTime(event.StartTime)
-	resp.EndTime = api.NewOptDateTime(event.EndTime)
-	resp.CurrentParticipants = event.CurrentParticipants
-	resp.MaxParticipants = event.MaxParticipants
-
-	// Add progress-specific fields
-	resp.Objectives = []api.EventObjective{
-		{
-			Id:          "objective_1",
-			Description: "Complete primary objective",
-			Completed:   true,
-			Progress:    100,
-		},
-		{
-			Id:          "objective_2",
-			Description: "Complete secondary objective",
-			Completed:   true,
-			Progress:    100,
-		},
-		{
-			Id:          "objective_3",
-			Description: "Bonus objective",
-			Completed:   false,
-			Progress:    60,
-		},
-	}
-
-	// Calculate overall progress
-	overallProgress := &api.EventProgressResponse{
-		Event:            api.NewOptEventDetailsResponse(*resp),
-		OverallProgress:  api.NewOptFloat32(progressPercentage),
-		CompletedObjectives: api.NewOptInt(completedObjectives),
-		TotalObjectives:  api.NewOptInt(totalObjectives),
-		TimeRemaining:    api.NewOptDuration(time.Until(event.EndTime)),
-		ParticipantsCount: api.NewOptInt(event.CurrentParticipants),
-	}
-
-	return overallProgress, nil
-}
-
-// GetEventRewards implements GET /{eventId}/rewards
-// PERFORMANCE: <50ms P95 for reward lookup
-func (h *Handler) GetEventRewards(ctx context.Context, params api.GetEventRewardsParams) (api.GetEventRewardsRes, error) {
-	eventID := params.EventId.String()
-
-	// PERFORMANCE: Strict timeout
-	ctx, cancel := context.WithTimeout(ctx, eventDetailsTimeout)
-	defer cancel()
-
-	// PERFORMANCE: Check if event exists
-	event, err := h.repo.GetEventDetails(ctx, eventID)
-	if err != nil {
-		return &api.GetEventProgressNotFound{}, nil // Reuse error type
-	}
-
-	// PERFORMANCE: Get cached rewards or calculate them
-	rewards := []api.EventReward{
-		{
-			Id:          "reward_currency",
-			Type:        "currency",
-			Name:        "Event Bonus Credits",
-			Description: "Bonus credits for participating in the event",
-			Amount:      api.NewOptInt(5000),
-			Rarity:      api.NewOptEventRewardRarity(api.EventRewardRarityCommon),
-			Claimed:     false,
-		},
-		{
-			Id:          "reward_xp",
-			Type:        "experience",
-			Name:        "Event Experience Boost",
-			Description: "Experience points for character progression",
-			Amount:      api.NewOptInt(10000),
-			Rarity:      api.NewOptEventRewardRarity(api.EventRewardRarityUncommon),
-			Claimed:     false,
-		},
-		{
-			Id:          "reward_item",
-			Type:        "item",
-			Name:        "Legendary Cyberware",
-			Description: "Rare cyberware implant with special abilities",
-			ItemId:      api.NewOptString("cyberware_legendary_001"),
-			Rarity:      api.NewOptEventRewardRarity(api.EventRewardRarityLegendary),
-			Claimed:     false,
-		},
-	}
-
-	// Filter rewards based on player progress (placeholder)
-	availableRewards := make([]api.EventReward, 0, len(rewards))
-	for _, reward := range rewards {
-		// In production, check if player qualifies for this reward
-		availableRewards = append(availableRewards, reward)
-	}
-
-	resp := &api.EventRewardsResponse{
-		EventId: api.NewOptUUID(event.ID),
-		Rewards: availableRewards,
-		ClaimDeadline: api.NewOptDateTime(event.EndTime.Add(24 * time.Hour)), // 24h after event end
 	}
 
 	return resp, nil

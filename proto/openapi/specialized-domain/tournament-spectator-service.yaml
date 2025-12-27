@@ -1,0 +1,1189 @@
+openapi: 3.0.3
+info:
+  title: Tournament Spectator Service API
+  description: |
+    **Enterprise-Grade Tournament Spectator API** for NECPGAME MMOFPS RPG.
+
+    **Module Purpose:** Live tournament spectating, replay systems, spectator camera controls, and real-time event broadcasting for competitive gaming.
+
+    **Architecture:** WebSocket-based real-time spectator feeds with event-driven updates, Redis caching for live data, and Kafka streaming for tournament events.
+
+    **Core Features:**
+    - Live tournament spectating (1000+ concurrent spectators)
+    - Multiple camera modes (free, follow, overview, cinematic)
+    - Real-time replay system with variable speed control
+    - Spectator chat and interaction systems
+    - Tournament bracket visualization
+    - Live statistics and leaderboard updates
+    - Anti-stream sniping protection
+
+    **Performance Targets:**
+    - WebSocket connections: 1000+ concurrent spectators
+    - Real-time updates: 1000+ events/sec, P99 <20ms latency
+    - Camera switches: <50ms transition time
+    - Replay streaming: 60fps with <100ms buffering
+    - Memory per spectator: <10KB active state
+    - Cache hit rate: >95% for tournament data
+
+    **BACKEND NOTE:** Spectator session management with Redis. Camera position validation for anti-cheat. Event buffering for replay systems.
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME Tournament API Support
+    url: https://necpgame.com/support
+    email: spectator@necpgame.com
+
+servers:
+  - url: http://localhost:8090/api/v1/tournament/spectator
+    description: Tournament Spectator Service Development Server
+  - url: https://spectator.necpgame.com/api/v1
+    description: Tournament Spectator Service Production Server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Spectator Sessions
+    description: Spectator session management and lifecycle
+  - name: Camera Control
+    description: Spectator camera modes and controls
+  - name: Live Events
+    description: Real-time tournament event streaming
+  - name: Replay System
+    description: Tournament replay and highlight management
+  - name: Tournament Data
+    description: Tournament bracket, statistics, and leaderboard
+  - name: Spectator Chat
+    description: Spectator communication and interaction
+  - name: System
+    description: Health checks and system operations
+
+paths:
+  /health:
+    get:
+      summary: Tournament spectator service health check
+      operationId: spectatorHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Spectator Session Management
+  /sessions:
+    post:
+      summary: Join tournament spectator session
+      description: |
+        Creates or joins a spectator session for live tournament viewing.
+
+        **BACKEND NOTE:** Validates tournament access, initializes WebSocket connection, sets up camera preferences.
+        Session supports multiple camera modes with real-time switching.
+      operationId: joinSpectatorSession
+      tags:
+        - Spectator Sessions
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinSpectatorRequest'
+      responses:
+        '201':
+          description: Spectator session created/joined successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpectatorSession'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Tournament access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: List active spectator sessions
+      description: |
+        Retrieves list of active spectator sessions for available tournaments.
+
+        **BACKEND NOTE:** Cached with Redis TTL. Filtered by tournament status and viewer permissions.
+      operationId: listSpectatorSessions
+      tags:
+        - Spectator Sessions
+      parameters:
+        - name: tournament_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific tournament
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, upcoming, completed]
+          description: Filter by session status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Maximum number of sessions to return
+      responses:
+        '200':
+          description: Active spectator sessions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpectatorSessionList'
+
+  /sessions/{session_id}:
+    get:
+      summary: Get spectator session details
+      operationId: getSpectatorSession
+      tags:
+        - Spectator Sessions
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Spectator session ID
+      responses:
+        '200':
+          description: Spectator session details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpectatorSession'
+        '404':
+          description: Spectator session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Leave spectator session
+      operationId: leaveSpectatorSession
+      tags:
+        - Spectator Sessions
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Spectator session ID
+      responses:
+        '204':
+          description: Successfully left spectator session
+        '404':
+          description: Spectator session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Camera Control
+  /sessions/{session_id}/camera:
+    put:
+      summary: Update spectator camera settings
+      description: |
+        Updates camera mode, position, and settings for spectator viewing.
+
+        **BACKEND NOTE:** Validates camera position against tournament boundaries.
+        Prevents stream sniping by limiting extreme camera angles.
+      operationId: updateSpectatorCamera
+      tags:
+        - Camera Control
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Spectator session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CameraUpdateRequest'
+      responses:
+        '200':
+          description: Camera settings updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CameraSettings'
+        '400':
+          description: Invalid camera parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Switch camera mode
+      operationId: switchCameraMode
+      tags:
+        - Camera Control
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Spectator session ID
+        - name: mode
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [free, follow, overview, cinematic, cycle]
+          description: Camera mode to switch to
+        - name: target_player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Player ID to follow (required for follow mode)
+      responses:
+        '200':
+          description: Camera mode switched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CameraSettings'
+        '400':
+          description: Invalid camera mode or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Live Events
+  /sessions/{session_id}/events:
+    get:
+      summary: Get live tournament events
+      description: |
+        Streams live tournament events for spectator consumption.
+
+        **BACKEND NOTE:** WebSocket-based real-time event streaming.
+        Events include kills, objectives, match states, and highlights.
+      operationId: getLiveEvents
+      tags:
+        - Live Events
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Spectator session ID
+        - name: event_types
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [kill, death, objective, match_start, match_end, highlight, player_join, player_leave]
+          description: Filter events by type
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Get events since timestamp
+      responses:
+        '200':
+          description: Live events stream initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventStream'
+        '404':
+          description: Spectator session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Replay System
+  /replays:
+    get:
+      summary: List available tournament replays
+      operationId: listTournamentReplays
+      tags:
+        - Replay System
+      parameters:
+        - name: tournament_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by tournament
+        - name: match_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific match
+        - name: highlight_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Show only highlight reels
+      responses:
+        '200':
+          description: Tournament replays retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReplayList'
+
+    post:
+      summary: Create tournament replay
+      description: |
+        Creates a replay from tournament match data.
+
+        **BACKEND NOTE:** Processes event store data to generate replay.
+        Supports variable speed playback and camera angle selection.
+      operationId: createTournamentReplay
+      tags:
+        - Replay System
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReplayRequest'
+      responses:
+        '201':
+          description: Tournament replay created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Replay'
+        '400':
+          description: Invalid replay parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /replays/{replay_id}/stream:
+    get:
+      summary: Stream tournament replay
+      description: |
+        Streams tournament replay with variable speed control.
+
+        **BACKEND NOTE:** Real-time streaming with frame-accurate positioning.
+        Supports pause, rewind, fast-forward operations.
+      operationId: streamTournamentReplay
+      tags:
+        - Replay System
+      parameters:
+        - name: replay_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Replay ID
+        - name: speed
+          in: query
+          schema:
+            type: number
+            minimum: 0.25
+            maximum: 4.0
+            default: 1.0
+          description: Playback speed multiplier
+        - name: position
+          in: query
+          schema:
+            type: number
+            minimum: 0
+          description: Start position in seconds
+      responses:
+        '200':
+          description: Replay stream initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReplayStream'
+        '404':
+          description: Replay not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Tournament Data
+  /tournaments/{tournament_id}/bracket:
+    get:
+      summary: Get tournament bracket
+      operationId: getTournamentBracket
+      tags:
+        - Tournament Data
+      parameters:
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament ID
+      responses:
+        '200':
+          description: Tournament bracket retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentBracket'
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tournaments/{tournament_id}/leaderboard:
+    get:
+      summary: Get tournament leaderboard
+      operationId: getTournamentLeaderboard
+      tags:
+        - Tournament Data
+      parameters:
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament ID
+        - name: metric
+          in: query
+          schema:
+            type: string
+            enum: [kills, score, win_rate, accuracy]
+            default: score
+          description: Leaderboard metric
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of entries to return
+      responses:
+        '200':
+          description: Tournament leaderboard retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Leaderboard'
+
+  # Spectator Chat
+  /sessions/{session_id}/chat:
+    post:
+      summary: Send spectator chat message
+      operationId: sendSpectatorChat
+      tags:
+        - Spectator Chat
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Spectator session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatMessage'
+      responses:
+        '201':
+          description: Chat message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessage'
+        '400':
+          description: Invalid chat message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: Get spectator chat history
+      operationId: getSpectatorChatHistory
+      tags:
+        - Spectator Chat
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Spectator session ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of messages to retrieve
+      responses:
+        '200':
+          description: Spectator chat history retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessageList'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Common schemas
+    HealthResponse:
+      type: object
+      description: "BACKEND NOTE: Fields ordered for struct alignment (30-50% memory savings)."
+      properties:
+        status:
+          type: string
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: tournament-spectator
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        version:
+          type: string
+          example: "1.0.0"
+          maxLength: 255
+
+    Error:
+      type: object
+      description: "BACKEND NOTE: Fields ordered for struct alignment (30-50% memory savings)."
+      properties:
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        domain:
+          type: string
+          example: tournament-spectator
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        code:
+          type: integer
+          example: 500
+          format: int32
+        details:
+          type: object
+          additionalProperties: true
+
+    # Spectator Session schemas
+    JoinSpectatorRequest:
+      type: object
+      required:
+        - tournament_id
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+          description: Tournament to spectate
+        preferred_camera_mode:
+          type: string
+          enum: [free, follow, overview, cinematic]
+          default: overview
+          description: Initial camera mode preference
+        nickname:
+          type: string
+          maxLength: 50
+          description: Spectator display name
+        stream_quality:
+          type: string
+          enum: [low, medium, high, ultra]
+          default: high
+          description: Stream quality preference
+
+    SpectatorSession:
+      type: object
+      required:
+        - session_id
+        - tournament_id
+        - spectator_id
+        - status
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Unique spectator session identifier
+        tournament_id:
+          type: string
+          format: uuid
+          description: Tournament being spectated
+        spectator_id:
+          type: string
+          format: uuid
+          description: Spectator user identifier
+        status:
+          type: string
+          enum: [connecting, active, disconnected, banned]
+          description: Current session status
+        camera_settings:
+          $ref: '#/components/schemas/CameraSettings'
+        joined_at:
+          type: string
+          format: date-time
+          description: Session join timestamp
+        last_activity:
+          type: string
+          format: date-time
+          description: Last spectator activity timestamp
+        spectator_count:
+          type: integer
+          minimum: 0
+          description: Total spectators in this tournament
+
+    SpectatorSessionList:
+      type: object
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpectatorSession'
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of active sessions
+
+    # Camera Control schemas
+    CameraSettings:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [free, follow, overview, cinematic, cycle]
+          description: Current camera mode
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+          description: Camera world position
+        rotation:
+          type: object
+          properties:
+            pitch:
+              type: number
+              format: float
+            yaw:
+              type: number
+              format: float
+            roll:
+              type: number
+              format: float
+          description: Camera rotation
+        zoom_level:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 10.0
+          description: Camera zoom level
+        follow_target:
+          type: string
+          format: uuid
+          description: Player ID being followed (follow mode only)
+        auto_cycle_interval:
+          type: number
+          minimum: 5
+          maximum: 300
+          description: Auto-cycle interval in seconds
+
+    CameraUpdateRequest:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [free, follow, overview, cinematic, cycle]
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+        rotation:
+          type: object
+          properties:
+            pitch:
+              type: number
+              format: float
+            yaw:
+              type: number
+              format: float
+            roll:
+              type: number
+              format: float
+        zoom_level:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 10.0
+        follow_target:
+          type: string
+          format: uuid
+        auto_cycle_interval:
+          type: number
+          minimum: 5
+          maximum: 300
+
+    # Event schemas
+    EventStream:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentEvent'
+        stream_url:
+          type: string
+          format: uri
+          description: WebSocket URL for real-time events
+
+    TournamentEvent:
+      type: object
+      required:
+        - event_id
+        - event_type
+        - timestamp
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [kill, death, objective, match_start, match_end, highlight, player_join, player_leave, tournament_start, tournament_end]
+        timestamp:
+          type: string
+          format: date-time
+        match_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        weapon_id:
+          type: string
+          format: uuid
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+        damage:
+          type: number
+          format: float
+        metadata:
+          type: object
+          additionalProperties: true
+
+    # Replay schemas
+    ReplayList:
+      type: object
+      properties:
+        replays:
+          type: array
+          items:
+            $ref: '#/components/schemas/Replay'
+        total_count:
+          type: integer
+          minimum: 0
+
+    Replay:
+      type: object
+      required:
+        - replay_id
+        - tournament_id
+        - match_id
+        - duration
+      properties:
+        replay_id:
+          type: string
+          format: uuid
+        tournament_id:
+          type: string
+          format: uuid
+        match_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        duration:
+          type: number
+          format: float
+          description: Replay duration in seconds
+        created_at:
+          type: string
+          format: date-time
+        view_count:
+          type: integer
+          minimum: 0
+        thumbnail_url:
+          type: string
+          format: uri
+        is_highlight:
+          type: boolean
+          default: false
+        tags:
+          type: array
+          items:
+            type: string
+          description: Replay tags for filtering
+
+    CreateReplayRequest:
+      type: object
+      required:
+        - tournament_id
+        - match_id
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        match_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        start_time:
+          type: number
+          format: float
+          minimum: 0
+          description: Start time in seconds from match begin
+        end_time:
+          type: number
+          format: float
+          minimum: 0
+          description: End time in seconds from match begin
+        camera_angles:
+          type: array
+          items:
+            type: string
+            enum: [free, follow, overview, cinematic]
+          description: Camera angles to include in replay
+        is_highlight:
+          type: boolean
+          default: false
+        tags:
+          type: array
+          items:
+            type: string
+
+    ReplayStream:
+      type: object
+      properties:
+        replay_id:
+          type: string
+          format: uuid
+        stream_url:
+          type: string
+          format: uri
+        duration:
+          type: number
+          format: float
+        current_position:
+          type: number
+          format: float
+        playback_speed:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [playing, paused, stopped, buffering]
+
+    # Tournament Data schemas
+    TournamentBracket:
+      type: object
+      required:
+        - tournament_id
+        - rounds
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+          enum: [upcoming, active, completed, cancelled]
+        rounds:
+          type: array
+          items:
+            $ref: '#/components/schemas/BracketRound'
+        current_round:
+          type: integer
+          minimum: 1
+        winner:
+          type: string
+          format: uuid
+          description: Winning team/player ID
+
+    BracketRound:
+      type: object
+      required:
+        - round_number
+        - matches
+      properties:
+        round_number:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/BracketMatch'
+        status:
+          type: string
+          enum: [upcoming, active, completed]
+
+    BracketMatch:
+      type: object
+      required:
+        - match_id
+        - participants
+      properties:
+        match_id:
+          type: string
+          format: uuid
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          maxItems: 2
+        winner:
+          type: string
+          format: uuid
+        score:
+          type: object
+          properties:
+            participant1_score:
+              type: integer
+              minimum: 0
+            participant2_score:
+              type: integer
+              minimum: 0
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled]
+        scheduled_time:
+          type: string
+          format: date-time
+        completed_time:
+          type: string
+          format: date-time
+
+    Leaderboard:
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        metric:
+          type: string
+          enum: [kills, score, win_rate, accuracy]
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+        last_updated:
+          type: string
+          format: date-time
+
+    LeaderboardEntry:
+      type: object
+      required:
+        - player_id
+        - rank
+        - value
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        team_name:
+          type: string
+        rank:
+          type: integer
+          minimum: 1
+        value:
+          type: number
+          format: float
+        previous_rank:
+          type: integer
+          minimum: 1
+        change:
+          type: integer
+          description: Rank change from previous update
+
+    # Chat schemas
+    ChatMessage:
+      type: object
+      required:
+        - message_id
+        - session_id
+        - sender_id
+        - content
+        - timestamp
+      properties:
+        message_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        sender_id:
+          type: string
+          format: uuid
+        sender_name:
+          type: string
+          maxLength: 50
+        content:
+          type: string
+          maxLength: 500
+        timestamp:
+          type: string
+          format: date-time
+        message_type:
+          type: string
+          enum: [text, emoji, system]
+          default: text
+        reply_to:
+          type: string
+          format: uuid
+          description: Message ID being replied to
+
+    ChatMessageList:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        total_count:
+          type: integer
+          minimum: 0
+        has_more:
+          type: boolean
+          default: false
+
+  parameters:
+    limit:
+      name: limit
+      in: query
+      description: Maximum number of items to return
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    offset:
+      name: offset
+      in: query
+      description: Number of items to skip
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0

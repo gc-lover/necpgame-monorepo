@@ -15,6 +15,15 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-service-go/pkg/api"
 )
 
+// ParticipantStatus represents cached participant status data
+type ParticipantStatus struct {
+	Status       string    `json:"status"`
+	JoinedAt     time.Time `json:"joined_at"`
+	Progress     float32   `json:"progress"`
+	Score        int       `json:"score"`
+	Achievements []string  `json:"achievements"`
+}
+
 type Cache struct {
 	client *redis.Client
 }
@@ -200,9 +209,9 @@ func (c *Cache) InvalidateEventAnalytics(ctx context.Context, eventID, period st
 
 // BatchGetPlayerStatuses retrieves multiple player statuses in one pipeline
 // PERFORMANCE: Reduces Redis round trips by 70% for bulk status checks
-func (c *Cache) BatchGetPlayerStatuses(ctx context.Context, playerEventPairs []PlayerEventPair) (map[string]*api.ParticipantStatus, error) {
+func (c *Cache) BatchGetPlayerStatuses(ctx context.Context, playerEventPairs []PlayerEventPair) (map[string]*ParticipantStatus, error) {
 	if len(playerEventPairs) == 0 {
-		return make(map[string]*api.ParticipantStatus), nil
+		return make(map[string]*ParticipantStatus), nil
 	}
 
 	// Create pipeline for batch operation
@@ -222,7 +231,7 @@ func (c *Cache) BatchGetPlayerStatuses(ctx context.Context, playerEventPairs []P
 	}
 
 	// Collect results
-	results := make(map[string]*api.ParticipantStatus)
+	results := make(map[string]*ParticipantStatus)
 	for key, cmd := range cmds {
 		val, err := cmd.Result()
 		if err == redis.Nil {
@@ -233,7 +242,7 @@ func (c *Cache) BatchGetPlayerStatuses(ctx context.Context, playerEventPairs []P
 			continue
 		}
 
-		var status api.ParticipantStatus
+		var status ParticipantStatus
 		if err := json.Unmarshal([]byte(val), &status); err != nil {
 			fmt.Printf("Error unmarshaling cached status for key %s: %v\n", key, err)
 			continue
@@ -247,7 +256,7 @@ func (c *Cache) BatchGetPlayerStatuses(ctx context.Context, playerEventPairs []P
 
 // BatchSetPlayerStatuses caches multiple player statuses in one pipeline
 // PERFORMANCE: Reduces Redis round trips by 70% for bulk caching
-func (c *Cache) BatchSetPlayerStatuses(ctx context.Context, statuses map[string]*api.ParticipantStatus) error {
+func (c *Cache) BatchSetPlayerStatuses(ctx context.Context, statuses map[string]*ParticipantStatus) error {
 	if len(statuses) == 0 {
 		return nil
 	}
