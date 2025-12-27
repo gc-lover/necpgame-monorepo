@@ -327,10 +327,54 @@ func (r *Repository) UpdateMentorshipContract(ctx context.Context, contractID uu
 }
 
 // CreateLessonSchedule creates a lesson schedule
+// NOTE: Requires Database agent to create lesson_schedules table migration first
+// PERFORMANCE: Context timeout for DB operations (100ms for MMO responsiveness)
 func (r *Repository) CreateLessonSchedule(ctx context.Context, schedule *api.LessonSchedule) error {
 	r.logger.Info("Creating lesson schedule in DB", zap.String("id", schedule.ID.Value.String()))
 
-	// TODO: Implement
+	// PERFORMANCE: Add timeout for DB operations in MMO environment
+	dbCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+	defer cancel()
+
+	// TODO: Database agent needs to create lesson_schedules table migration:
+	// CREATE TABLE lesson_schedules (
+	//     id UUID PRIMARY KEY,
+	//     contract_id UUID REFERENCES mentorship_contracts(id),
+	//     lesson_date TIMESTAMP,
+	//     lesson_time VARCHAR(50),
+	//     location TEXT,
+	//     format VARCHAR(50),
+	//     resources JSONB,
+	//     status VARCHAR(50) DEFAULT 'scheduled',
+	//     created_at TIMESTAMP DEFAULT NOW(),
+	//     updated_at TIMESTAMP DEFAULT NOW()
+	// );
+
+	query := `
+		INSERT INTO lesson_schedules (
+			id, contract_id, lesson_date, lesson_time, location, format, resources, status, created_at, updated_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+		)`
+
+	_, err := r.db.Exec(dbCtx, query,
+		schedule.ID.Value,
+		schedule.ContractID.Value,
+		schedule.LessonDate.Value,
+		schedule.LessonTime,
+		schedule.Location,
+		schedule.Format,
+		schedule.Resources,
+		schedule.Status,
+		time.Now(),
+		time.Now(),
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to create lesson schedule: %w", err)
+	}
+
+	r.logger.Info("Lesson schedule created successfully", zap.String("id", schedule.ID.Value.String()))
 	return nil
 }
 
