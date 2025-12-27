@@ -61,6 +61,202 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
+			case 'a': // Prefix: "auctions"
+
+				if l := len("auctions"); len(elem) >= l && elem[0:l] == "auctions" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch r.Method {
+					case "GET":
+						s.handleGetAuctionsRequest([0]string{}, elemIsEscaped, w, r)
+					case "POST":
+						s.handleCreateAuctionRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET,POST")
+					}
+
+					return
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'm': // Prefix: "my"
+						origElem := elem
+						if l := len("my"); len(elem) >= l && elem[0:l] == "my" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							switch r.Method {
+							case "GET":
+								s.handleGetMyAuctionsRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+						switch elem[0] {
+						case '-': // Prefix: "-bids"
+
+							if l := len("-bids"); len(elem) >= l && elem[0:l] == "-bids" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "GET":
+									s.handleGetMyBidsRequest([0]string{}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "GET")
+								}
+
+								return
+							}
+
+						}
+
+						elem = origElem
+					}
+					// Param: "auction_id"
+					// Match until "/"
+					idx := strings.IndexByte(elem, '/')
+					if idx < 0 {
+						idx = len(elem)
+					}
+					args[0] = elem[:idx]
+					elem = elem[idx:]
+
+					if len(elem) == 0 {
+						switch r.Method {
+						case "GET":
+							s.handleGetAuctionDetailsRequest([1]string{
+								args[0],
+							}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "GET")
+						}
+
+						return
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'b': // Prefix: "b"
+
+							if l := len("b"); len(elem) >= l && elem[0:l] == "b" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'i': // Prefix: "id"
+
+								if l := len("id"); len(elem) >= l && elem[0:l] == "id" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "POST":
+										s.handlePlaceBidRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "POST")
+									}
+
+									return
+								}
+
+							case 'u': // Prefix: "uyout"
+
+								if l := len("uyout"); len(elem) >= l && elem[0:l] == "uyout" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch r.Method {
+									case "POST":
+										s.handleBuyoutAuctionRequest([1]string{
+											args[0],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, "POST")
+									}
+
+									return
+								}
+
+							}
+
+						case 'c': // Prefix: "cancel"
+
+							if l := len("cancel"); len(elem) >= l && elem[0:l] == "cancel" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "POST":
+									s.handleCancelAuctionRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "POST")
+								}
+
+								return
+							}
+
+						}
+
+					}
+
+				}
+
 			case 'h': // Prefix: "health"
 
 				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
@@ -324,6 +520,236 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
+			case 'a': // Prefix: "auctions"
+
+				if l := len("auctions"); len(elem) >= l && elem[0:l] == "auctions" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "GET":
+						r.name = GetAuctionsOperation
+						r.summary = "Get auctions list"
+						r.operationID = "getAuctions"
+						r.operationGroup = ""
+						r.pathPattern = "/auctions"
+						r.args = args
+						r.count = 0
+						return r, true
+					case "POST":
+						r.name = CreateAuctionOperation
+						r.summary = "Create auction"
+						r.operationID = "createAuction"
+						r.operationGroup = ""
+						r.pathPattern = "/auctions"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/"
+
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						break
+					}
+					switch elem[0] {
+					case 'm': // Prefix: "my"
+						origElem := elem
+						if l := len("my"); len(elem) >= l && elem[0:l] == "my" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							switch method {
+							case "GET":
+								r.name = GetMyAuctionsOperation
+								r.summary = "Get my auctions"
+								r.operationID = "getMyAuctions"
+								r.operationGroup = ""
+								r.pathPattern = "/auctions/my"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+						switch elem[0] {
+						case '-': // Prefix: "-bids"
+
+							if l := len("-bids"); len(elem) >= l && elem[0:l] == "-bids" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "GET":
+									r.name = GetMyBidsOperation
+									r.summary = "Get my bids"
+									r.operationID = "getMyBids"
+									r.operationGroup = ""
+									r.pathPattern = "/auctions/my-bids"
+									r.args = args
+									r.count = 0
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
+
+						elem = origElem
+					}
+					// Param: "auction_id"
+					// Match until "/"
+					idx := strings.IndexByte(elem, '/')
+					if idx < 0 {
+						idx = len(elem)
+					}
+					args[0] = elem[:idx]
+					elem = elem[idx:]
+
+					if len(elem) == 0 {
+						switch method {
+						case "GET":
+							r.name = GetAuctionDetailsOperation
+							r.summary = "Get auction details"
+							r.operationID = "getAuctionDetails"
+							r.operationGroup = ""
+							r.pathPattern = "/auctions/{auction_id}"
+							r.args = args
+							r.count = 1
+							return r, true
+						default:
+							return
+						}
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case 'b': // Prefix: "b"
+
+							if l := len("b"); len(elem) >= l && elem[0:l] == "b" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								break
+							}
+							switch elem[0] {
+							case 'i': // Prefix: "id"
+
+								if l := len("id"); len(elem) >= l && elem[0:l] == "id" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "POST":
+										r.name = PlaceBidOperation
+										r.summary = "Place bid on auction"
+										r.operationID = "placeBid"
+										r.operationGroup = ""
+										r.pathPattern = "/auctions/{auction_id}/bid"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
+								}
+
+							case 'u': // Prefix: "uyout"
+
+								if l := len("uyout"); len(elem) >= l && elem[0:l] == "uyout" {
+									elem = elem[l:]
+								} else {
+									break
+								}
+
+								if len(elem) == 0 {
+									// Leaf node.
+									switch method {
+									case "POST":
+										r.name = BuyoutAuctionOperation
+										r.summary = "Buyout auction"
+										r.operationID = "buyoutAuction"
+										r.operationGroup = ""
+										r.pathPattern = "/auctions/{auction_id}/buyout"
+										r.args = args
+										r.count = 1
+										return r, true
+									default:
+										return
+									}
+								}
+
+							}
+
+						case 'c': // Prefix: "cancel"
+
+							if l := len("cancel"); len(elem) >= l && elem[0:l] == "cancel" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "POST":
+									r.name = CancelAuctionOperation
+									r.summary = "Cancel auction"
+									r.operationID = "cancelAuction"
+									r.operationGroup = ""
+									r.pathPattern = "/auctions/{auction_id}/cancel"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
+
+					}
+
+				}
+
 			case 'h': // Prefix: "health"
 
 				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {

@@ -6,12 +6,20 @@ package api
 type OperationName = string
 
 const (
+	BuyoutAuctionOperation               OperationName = "BuyoutAuction"
+	CancelAuctionOperation               OperationName = "CancelAuction"
 	CancelTradeOperation                 OperationName = "CancelTrade"
+	CreateAuctionOperation               OperationName = "CreateAuction"
 	CreateTradeListingOperation          OperationName = "CreateTradeListing"
 	GetActiveTradesOperation             OperationName = "GetActiveTrades"
+	GetAuctionDetailsOperation           OperationName = "GetAuctionDetails"
+	GetAuctionsOperation                 OperationName = "GetAuctions"
 	GetMarketOverviewOperation           OperationName = "GetMarketOverview"
+	GetMyAuctionsOperation               OperationName = "GetMyAuctions"
+	GetMyBidsOperation                   OperationName = "GetMyBids"
 	GetPlayerTransactionHistoryOperation OperationName = "GetPlayerTransactionHistory"
 	GetTradeDetailsOperation             OperationName = "GetTradeDetails"
 	HealthCheckOperation                 OperationName = "HealthCheck"
+	PlaceBidOperation                    OperationName = "PlaceBid"
 	ReadinessCheckOperation              OperationName = "ReadinessCheck"
 )

@@ -13,6 +13,26 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// BuyoutAuction implements buyoutAuction operation.
+//
+// Instantly purchase auction at buyout price.
+// **BACKEND NOTE:** Immediate completion with no bidding period.
+//
+// POST /auctions/{auction_id}/buyout
+func (UnimplementedHandler) BuyoutAuction(ctx context.Context, params BuyoutAuctionParams) (r BuyoutAuctionRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CancelAuction implements cancelAuction operation.
+//
+// Cancel auction (seller only, if no bids placed).
+// **BACKEND NOTE:** Only possible before first bid is placed.
+//
+// POST /auctions/{auction_id}/cancel
+func (UnimplementedHandler) CancelAuction(ctx context.Context, params CancelAuctionParams) (r CancelAuctionRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CancelTrade implements cancelTrade operation.
 //
 // Cancel an active trade listing (seller only).
@@ -20,6 +40,16 @@ var _ Handler = UnimplementedHandler{}
 //
 // DELETE /trade/{trade_id}
 func (UnimplementedHandler) CancelTrade(ctx context.Context, params CancelTradeParams) (r CancelTradeRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// CreateAuction implements createAuction operation.
+//
+// Create a new auction listing.
+// **BACKEND NOTE:** Validates item ownership and locks item inventory.
+//
+// POST /auctions
+func (UnimplementedHandler) CreateAuction(ctx context.Context, req *CreateAuctionRequest) (r CreateAuctionRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -44,6 +74,25 @@ func (UnimplementedHandler) GetActiveTrades(ctx context.Context, params GetActiv
 	return r, ht.ErrNotImplemented
 }
 
+// GetAuctionDetails implements getAuctionDetails operation.
+//
+// Get detailed information about a specific auction including bid history.
+//
+// GET /auctions/{auction_id}
+func (UnimplementedHandler) GetAuctionDetails(ctx context.Context, params GetAuctionDetailsParams) (r GetAuctionDetailsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetAuctions implements getAuctions operation.
+//
+// Get paginated list of auctions with filtering and sorting.
+// **BACKEND NOTE:** Hot path - optimized for 1000+ RPS with Redis caching.
+//
+// GET /auctions
+func (UnimplementedHandler) GetAuctions(ctx context.Context, params GetAuctionsParams) (r GetAuctionsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetMarketOverview implements getMarketOverview operation.
 //
 // Get aggregated market statistics and active trade counts.
@@ -51,6 +100,24 @@ func (UnimplementedHandler) GetActiveTrades(ctx context.Context, params GetActiv
 //
 // GET /market/overview
 func (UnimplementedHandler) GetMarketOverview(ctx context.Context) (r GetMarketOverviewRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetMyAuctions implements getMyAuctions operation.
+//
+// Get auctions created by the authenticated user (seller view).
+//
+// GET /auctions/my
+func (UnimplementedHandler) GetMyAuctions(ctx context.Context, params GetMyAuctionsParams) (r GetMyAuctionsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetMyBids implements getMyBids operation.
+//
+// Get auctions where the authenticated user has placed bids (bidder view).
+//
+// GET /auctions/my-bids
+func (UnimplementedHandler) GetMyBids(ctx context.Context, params GetMyBidsParams) (r GetMyBidsRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -79,6 +146,16 @@ func (UnimplementedHandler) GetTradeDetails(ctx context.Context, params GetTrade
 //
 // GET /health
 func (UnimplementedHandler) HealthCheck(ctx context.Context) (r HealthCheckRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// PlaceBid implements placeBid operation.
+//
+// Place a bid on an active auction. Minimum bid increment is 5%.
+// **BACKEND NOTE:** Atomic operation with balance check and bid validation.
+//
+// POST /auctions/{auction_id}/bid
+func (UnimplementedHandler) PlaceBid(ctx context.Context, req *PlaceBidRequest, params PlaceBidParams) (r PlaceBidRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

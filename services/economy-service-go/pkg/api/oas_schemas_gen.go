@@ -10,6 +10,739 @@ import (
 	"github.com/google/uuid"
 )
 
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/AuctionBid
+type AuctionBid struct {
+	ID        uuid.UUID `json:"id"`
+	AuctionID uuid.UUID `json:"auction_id"`
+	BidderID  uuid.UUID `json:"bidder_id"`
+	CreatedAt time.Time `json:"created_at"`
+	// Bid amount in minor units.
+	Amount int64 `json:"amount"`
+}
+
+// GetID returns the value of ID.
+func (s *AuctionBid) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetAuctionID returns the value of AuctionID.
+func (s *AuctionBid) GetAuctionID() uuid.UUID {
+	return s.AuctionID
+}
+
+// GetBidderID returns the value of BidderID.
+func (s *AuctionBid) GetBidderID() uuid.UUID {
+	return s.BidderID
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *AuctionBid) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetAmount returns the value of Amount.
+func (s *AuctionBid) GetAmount() int64 {
+	return s.Amount
+}
+
+// SetID sets the value of ID.
+func (s *AuctionBid) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetAuctionID sets the value of AuctionID.
+func (s *AuctionBid) SetAuctionID(val uuid.UUID) {
+	s.AuctionID = val
+}
+
+// SetBidderID sets the value of BidderID.
+func (s *AuctionBid) SetBidderID(val uuid.UUID) {
+	s.BidderID = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *AuctionBid) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetAmount sets the value of Amount.
+func (s *AuctionBid) SetAmount(val int64) {
+	s.Amount = val
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/AuctionDetail
+type AuctionDetail struct {
+	Auction AuctionDetailAuction `json:"auction"`
+	Bids    []AuctionBid         `json:"bids"`
+}
+
+// GetAuction returns the value of Auction.
+func (s *AuctionDetail) GetAuction() AuctionDetailAuction {
+	return s.Auction
+}
+
+// GetBids returns the value of Bids.
+func (s *AuctionDetail) GetBids() []AuctionBid {
+	return s.Bids
+}
+
+// SetAuction sets the value of Auction.
+func (s *AuctionDetail) SetAuction(val AuctionDetailAuction) {
+	s.Auction = val
+}
+
+// SetBids sets the value of Bids.
+func (s *AuctionDetail) SetBids(val []AuctionBid) {
+	s.Bids = val
+}
+
+func (*AuctionDetail) buyoutAuctionRes()     {}
+func (*AuctionDetail) cancelAuctionRes()     {}
+func (*AuctionDetail) createAuctionRes()     {}
+func (*AuctionDetail) getAuctionDetailsRes() {}
+func (*AuctionDetail) placeBidRes()          {}
+
+// Merged schema.
+type AuctionDetailAuction struct {
+	ID              uuid.UUID                    `json:"id"`
+	ItemID          uuid.UUID                    `json:"item_id"`
+	SellerID        uuid.UUID                    `json:"seller_id"`
+	CurrentBidderID OptNilUUID                   `json:"current_bidder_id"`
+	ExpiresAt       time.Time                    `json:"expires_at"`
+	Status          AuctionStatus                `json:"status"`
+	Currency        AuctionDetailAuctionCurrency `json:"currency"`
+	// Starting price in minor units.
+	StartPrice int64 `json:"start_price"`
+	// Current highest bid in minor units.
+	CurrentBid int64 `json:"current_bid"`
+	// Buyout price in minor units.
+	BuyoutPrice OptNilInt64 `json:"buyout_price"`
+	Quantity    int32       `json:"quantity"`
+	BidCount    int32       `json:"bid_count"`
+	// Final sale price in minor units.
+	SoldPrice       OptNilInt64    `json:"sold_price"`
+	SoldAt          OptNilDateTime `json:"sold_at"`
+	WinningBidderID OptNilUUID     `json:"winning_bidder_id"`
+}
+
+// GetID returns the value of ID.
+func (s *AuctionDetailAuction) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetItemID returns the value of ItemID.
+func (s *AuctionDetailAuction) GetItemID() uuid.UUID {
+	return s.ItemID
+}
+
+// GetSellerID returns the value of SellerID.
+func (s *AuctionDetailAuction) GetSellerID() uuid.UUID {
+	return s.SellerID
+}
+
+// GetCurrentBidderID returns the value of CurrentBidderID.
+func (s *AuctionDetailAuction) GetCurrentBidderID() OptNilUUID {
+	return s.CurrentBidderID
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *AuctionDetailAuction) GetExpiresAt() time.Time {
+	return s.ExpiresAt
+}
+
+// GetStatus returns the value of Status.
+func (s *AuctionDetailAuction) GetStatus() AuctionStatus {
+	return s.Status
+}
+
+// GetCurrency returns the value of Currency.
+func (s *AuctionDetailAuction) GetCurrency() AuctionDetailAuctionCurrency {
+	return s.Currency
+}
+
+// GetStartPrice returns the value of StartPrice.
+func (s *AuctionDetailAuction) GetStartPrice() int64 {
+	return s.StartPrice
+}
+
+// GetCurrentBid returns the value of CurrentBid.
+func (s *AuctionDetailAuction) GetCurrentBid() int64 {
+	return s.CurrentBid
+}
+
+// GetBuyoutPrice returns the value of BuyoutPrice.
+func (s *AuctionDetailAuction) GetBuyoutPrice() OptNilInt64 {
+	return s.BuyoutPrice
+}
+
+// GetQuantity returns the value of Quantity.
+func (s *AuctionDetailAuction) GetQuantity() int32 {
+	return s.Quantity
+}
+
+// GetBidCount returns the value of BidCount.
+func (s *AuctionDetailAuction) GetBidCount() int32 {
+	return s.BidCount
+}
+
+// GetSoldPrice returns the value of SoldPrice.
+func (s *AuctionDetailAuction) GetSoldPrice() OptNilInt64 {
+	return s.SoldPrice
+}
+
+// GetSoldAt returns the value of SoldAt.
+func (s *AuctionDetailAuction) GetSoldAt() OptNilDateTime {
+	return s.SoldAt
+}
+
+// GetWinningBidderID returns the value of WinningBidderID.
+func (s *AuctionDetailAuction) GetWinningBidderID() OptNilUUID {
+	return s.WinningBidderID
+}
+
+// SetID sets the value of ID.
+func (s *AuctionDetailAuction) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetItemID sets the value of ItemID.
+func (s *AuctionDetailAuction) SetItemID(val uuid.UUID) {
+	s.ItemID = val
+}
+
+// SetSellerID sets the value of SellerID.
+func (s *AuctionDetailAuction) SetSellerID(val uuid.UUID) {
+	s.SellerID = val
+}
+
+// SetCurrentBidderID sets the value of CurrentBidderID.
+func (s *AuctionDetailAuction) SetCurrentBidderID(val OptNilUUID) {
+	s.CurrentBidderID = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *AuctionDetailAuction) SetExpiresAt(val time.Time) {
+	s.ExpiresAt = val
+}
+
+// SetStatus sets the value of Status.
+func (s *AuctionDetailAuction) SetStatus(val AuctionStatus) {
+	s.Status = val
+}
+
+// SetCurrency sets the value of Currency.
+func (s *AuctionDetailAuction) SetCurrency(val AuctionDetailAuctionCurrency) {
+	s.Currency = val
+}
+
+// SetStartPrice sets the value of StartPrice.
+func (s *AuctionDetailAuction) SetStartPrice(val int64) {
+	s.StartPrice = val
+}
+
+// SetCurrentBid sets the value of CurrentBid.
+func (s *AuctionDetailAuction) SetCurrentBid(val int64) {
+	s.CurrentBid = val
+}
+
+// SetBuyoutPrice sets the value of BuyoutPrice.
+func (s *AuctionDetailAuction) SetBuyoutPrice(val OptNilInt64) {
+	s.BuyoutPrice = val
+}
+
+// SetQuantity sets the value of Quantity.
+func (s *AuctionDetailAuction) SetQuantity(val int32) {
+	s.Quantity = val
+}
+
+// SetBidCount sets the value of BidCount.
+func (s *AuctionDetailAuction) SetBidCount(val int32) {
+	s.BidCount = val
+}
+
+// SetSoldPrice sets the value of SoldPrice.
+func (s *AuctionDetailAuction) SetSoldPrice(val OptNilInt64) {
+	s.SoldPrice = val
+}
+
+// SetSoldAt sets the value of SoldAt.
+func (s *AuctionDetailAuction) SetSoldAt(val OptNilDateTime) {
+	s.SoldAt = val
+}
+
+// SetWinningBidderID sets the value of WinningBidderID.
+func (s *AuctionDetailAuction) SetWinningBidderID(val OptNilUUID) {
+	s.WinningBidderID = val
+}
+
+type AuctionDetailAuctionCurrency string
+
+const (
+	AuctionDetailAuctionCurrencyCredits AuctionDetailAuctionCurrency = "credits"
+)
+
+// AllValues returns all AuctionDetailAuctionCurrency values.
+func (AuctionDetailAuctionCurrency) AllValues() []AuctionDetailAuctionCurrency {
+	return []AuctionDetailAuctionCurrency{
+		AuctionDetailAuctionCurrencyCredits,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AuctionDetailAuctionCurrency) MarshalText() ([]byte, error) {
+	switch s {
+	case AuctionDetailAuctionCurrencyCredits:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AuctionDetailAuctionCurrency) UnmarshalText(data []byte) error {
+	switch AuctionDetailAuctionCurrency(data) {
+	case AuctionDetailAuctionCurrencyCredits:
+		*s = AuctionDetailAuctionCurrencyCredits
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Status of an auction.
+// Ref: #/components/schemas/AuctionStatus
+type AuctionStatus string
+
+const (
+	AuctionStatusActive    AuctionStatus = "active"
+	AuctionStatusSold      AuctionStatus = "sold"
+	AuctionStatusExpired   AuctionStatus = "expired"
+	AuctionStatusCancelled AuctionStatus = "cancelled"
+)
+
+// AllValues returns all AuctionStatus values.
+func (AuctionStatus) AllValues() []AuctionStatus {
+	return []AuctionStatus{
+		AuctionStatusActive,
+		AuctionStatusSold,
+		AuctionStatusExpired,
+		AuctionStatusCancelled,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AuctionStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case AuctionStatusActive:
+		return []byte(s), nil
+	case AuctionStatusSold:
+		return []byte(s), nil
+	case AuctionStatusExpired:
+		return []byte(s), nil
+	case AuctionStatusCancelled:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AuctionStatus) UnmarshalText(data []byte) error {
+	switch AuctionStatus(data) {
+	case AuctionStatusActive:
+		*s = AuctionStatusActive
+		return nil
+	case AuctionStatusSold:
+		*s = AuctionStatusSold
+		return nil
+	case AuctionStatusExpired:
+		*s = AuctionStatusExpired
+		return nil
+	case AuctionStatusCancelled:
+		*s = AuctionStatusCancelled
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/AuctionSummary
+type AuctionSummary struct {
+	ID              uuid.UUID              `json:"id"`
+	ItemID          uuid.UUID              `json:"item_id"`
+	SellerID        uuid.UUID              `json:"seller_id"`
+	CurrentBidderID OptNilUUID             `json:"current_bidder_id"`
+	ExpiresAt       time.Time              `json:"expires_at"`
+	Status          AuctionStatus          `json:"status"`
+	Currency        AuctionSummaryCurrency `json:"currency"`
+	// Starting price in minor units.
+	StartPrice int64 `json:"start_price"`
+	// Current highest bid in minor units.
+	CurrentBid int64 `json:"current_bid"`
+	// Buyout price in minor units.
+	BuyoutPrice OptNilInt64 `json:"buyout_price"`
+	Quantity    int32       `json:"quantity"`
+	BidCount    int32       `json:"bid_count"`
+}
+
+// GetID returns the value of ID.
+func (s *AuctionSummary) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetItemID returns the value of ItemID.
+func (s *AuctionSummary) GetItemID() uuid.UUID {
+	return s.ItemID
+}
+
+// GetSellerID returns the value of SellerID.
+func (s *AuctionSummary) GetSellerID() uuid.UUID {
+	return s.SellerID
+}
+
+// GetCurrentBidderID returns the value of CurrentBidderID.
+func (s *AuctionSummary) GetCurrentBidderID() OptNilUUID {
+	return s.CurrentBidderID
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *AuctionSummary) GetExpiresAt() time.Time {
+	return s.ExpiresAt
+}
+
+// GetStatus returns the value of Status.
+func (s *AuctionSummary) GetStatus() AuctionStatus {
+	return s.Status
+}
+
+// GetCurrency returns the value of Currency.
+func (s *AuctionSummary) GetCurrency() AuctionSummaryCurrency {
+	return s.Currency
+}
+
+// GetStartPrice returns the value of StartPrice.
+func (s *AuctionSummary) GetStartPrice() int64 {
+	return s.StartPrice
+}
+
+// GetCurrentBid returns the value of CurrentBid.
+func (s *AuctionSummary) GetCurrentBid() int64 {
+	return s.CurrentBid
+}
+
+// GetBuyoutPrice returns the value of BuyoutPrice.
+func (s *AuctionSummary) GetBuyoutPrice() OptNilInt64 {
+	return s.BuyoutPrice
+}
+
+// GetQuantity returns the value of Quantity.
+func (s *AuctionSummary) GetQuantity() int32 {
+	return s.Quantity
+}
+
+// GetBidCount returns the value of BidCount.
+func (s *AuctionSummary) GetBidCount() int32 {
+	return s.BidCount
+}
+
+// SetID sets the value of ID.
+func (s *AuctionSummary) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetItemID sets the value of ItemID.
+func (s *AuctionSummary) SetItemID(val uuid.UUID) {
+	s.ItemID = val
+}
+
+// SetSellerID sets the value of SellerID.
+func (s *AuctionSummary) SetSellerID(val uuid.UUID) {
+	s.SellerID = val
+}
+
+// SetCurrentBidderID sets the value of CurrentBidderID.
+func (s *AuctionSummary) SetCurrentBidderID(val OptNilUUID) {
+	s.CurrentBidderID = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *AuctionSummary) SetExpiresAt(val time.Time) {
+	s.ExpiresAt = val
+}
+
+// SetStatus sets the value of Status.
+func (s *AuctionSummary) SetStatus(val AuctionStatus) {
+	s.Status = val
+}
+
+// SetCurrency sets the value of Currency.
+func (s *AuctionSummary) SetCurrency(val AuctionSummaryCurrency) {
+	s.Currency = val
+}
+
+// SetStartPrice sets the value of StartPrice.
+func (s *AuctionSummary) SetStartPrice(val int64) {
+	s.StartPrice = val
+}
+
+// SetCurrentBid sets the value of CurrentBid.
+func (s *AuctionSummary) SetCurrentBid(val int64) {
+	s.CurrentBid = val
+}
+
+// SetBuyoutPrice sets the value of BuyoutPrice.
+func (s *AuctionSummary) SetBuyoutPrice(val OptNilInt64) {
+	s.BuyoutPrice = val
+}
+
+// SetQuantity sets the value of Quantity.
+func (s *AuctionSummary) SetQuantity(val int32) {
+	s.Quantity = val
+}
+
+// SetBidCount sets the value of BidCount.
+func (s *AuctionSummary) SetBidCount(val int32) {
+	s.BidCount = val
+}
+
+type AuctionSummaryCurrency string
+
+const (
+	AuctionSummaryCurrencyCredits AuctionSummaryCurrency = "credits"
+)
+
+// AllValues returns all AuctionSummaryCurrency values.
+func (AuctionSummaryCurrency) AllValues() []AuctionSummaryCurrency {
+	return []AuctionSummaryCurrency{
+		AuctionSummaryCurrencyCredits,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AuctionSummaryCurrency) MarshalText() ([]byte, error) {
+	switch s {
+	case AuctionSummaryCurrencyCredits:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AuctionSummaryCurrency) UnmarshalText(data []byte) error {
+	switch AuctionSummaryCurrency(data) {
+	case AuctionSummaryCurrencyCredits:
+		*s = AuctionSummaryCurrencyCredits
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Merged schema.
+// Ref: #/components/schemas/AuctionWithBid
+type AuctionWithBid struct {
+	ID              uuid.UUID              `json:"id"`
+	ItemID          uuid.UUID              `json:"item_id"`
+	SellerID        uuid.UUID              `json:"seller_id"`
+	CurrentBidderID OptNilUUID             `json:"current_bidder_id"`
+	ExpiresAt       time.Time              `json:"expires_at"`
+	Status          AuctionStatus          `json:"status"`
+	Currency        AuctionWithBidCurrency `json:"currency"`
+	// Starting price in minor units.
+	StartPrice int64 `json:"start_price"`
+	// Current highest bid in minor units.
+	CurrentBid int64 `json:"current_bid"`
+	// Buyout price in minor units.
+	BuyoutPrice OptNilInt64 `json:"buyout_price"`
+	Quantity    int32       `json:"quantity"`
+	BidCount    int32       `json:"bid_count"`
+	// User's bid amount in minor units.
+	MyBidAmount int64 `json:"my_bid_amount"`
+	// When user placed their bid.
+	MyBidTime time.Time `json:"my_bid_time"`
+}
+
+// GetID returns the value of ID.
+func (s *AuctionWithBid) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetItemID returns the value of ItemID.
+func (s *AuctionWithBid) GetItemID() uuid.UUID {
+	return s.ItemID
+}
+
+// GetSellerID returns the value of SellerID.
+func (s *AuctionWithBid) GetSellerID() uuid.UUID {
+	return s.SellerID
+}
+
+// GetCurrentBidderID returns the value of CurrentBidderID.
+func (s *AuctionWithBid) GetCurrentBidderID() OptNilUUID {
+	return s.CurrentBidderID
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *AuctionWithBid) GetExpiresAt() time.Time {
+	return s.ExpiresAt
+}
+
+// GetStatus returns the value of Status.
+func (s *AuctionWithBid) GetStatus() AuctionStatus {
+	return s.Status
+}
+
+// GetCurrency returns the value of Currency.
+func (s *AuctionWithBid) GetCurrency() AuctionWithBidCurrency {
+	return s.Currency
+}
+
+// GetStartPrice returns the value of StartPrice.
+func (s *AuctionWithBid) GetStartPrice() int64 {
+	return s.StartPrice
+}
+
+// GetCurrentBid returns the value of CurrentBid.
+func (s *AuctionWithBid) GetCurrentBid() int64 {
+	return s.CurrentBid
+}
+
+// GetBuyoutPrice returns the value of BuyoutPrice.
+func (s *AuctionWithBid) GetBuyoutPrice() OptNilInt64 {
+	return s.BuyoutPrice
+}
+
+// GetQuantity returns the value of Quantity.
+func (s *AuctionWithBid) GetQuantity() int32 {
+	return s.Quantity
+}
+
+// GetBidCount returns the value of BidCount.
+func (s *AuctionWithBid) GetBidCount() int32 {
+	return s.BidCount
+}
+
+// GetMyBidAmount returns the value of MyBidAmount.
+func (s *AuctionWithBid) GetMyBidAmount() int64 {
+	return s.MyBidAmount
+}
+
+// GetMyBidTime returns the value of MyBidTime.
+func (s *AuctionWithBid) GetMyBidTime() time.Time {
+	return s.MyBidTime
+}
+
+// SetID sets the value of ID.
+func (s *AuctionWithBid) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetItemID sets the value of ItemID.
+func (s *AuctionWithBid) SetItemID(val uuid.UUID) {
+	s.ItemID = val
+}
+
+// SetSellerID sets the value of SellerID.
+func (s *AuctionWithBid) SetSellerID(val uuid.UUID) {
+	s.SellerID = val
+}
+
+// SetCurrentBidderID sets the value of CurrentBidderID.
+func (s *AuctionWithBid) SetCurrentBidderID(val OptNilUUID) {
+	s.CurrentBidderID = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *AuctionWithBid) SetExpiresAt(val time.Time) {
+	s.ExpiresAt = val
+}
+
+// SetStatus sets the value of Status.
+func (s *AuctionWithBid) SetStatus(val AuctionStatus) {
+	s.Status = val
+}
+
+// SetCurrency sets the value of Currency.
+func (s *AuctionWithBid) SetCurrency(val AuctionWithBidCurrency) {
+	s.Currency = val
+}
+
+// SetStartPrice sets the value of StartPrice.
+func (s *AuctionWithBid) SetStartPrice(val int64) {
+	s.StartPrice = val
+}
+
+// SetCurrentBid sets the value of CurrentBid.
+func (s *AuctionWithBid) SetCurrentBid(val int64) {
+	s.CurrentBid = val
+}
+
+// SetBuyoutPrice sets the value of BuyoutPrice.
+func (s *AuctionWithBid) SetBuyoutPrice(val OptNilInt64) {
+	s.BuyoutPrice = val
+}
+
+// SetQuantity sets the value of Quantity.
+func (s *AuctionWithBid) SetQuantity(val int32) {
+	s.Quantity = val
+}
+
+// SetBidCount sets the value of BidCount.
+func (s *AuctionWithBid) SetBidCount(val int32) {
+	s.BidCount = val
+}
+
+// SetMyBidAmount sets the value of MyBidAmount.
+func (s *AuctionWithBid) SetMyBidAmount(val int64) {
+	s.MyBidAmount = val
+}
+
+// SetMyBidTime sets the value of MyBidTime.
+func (s *AuctionWithBid) SetMyBidTime(val time.Time) {
+	s.MyBidTime = val
+}
+
+type AuctionWithBidCurrency string
+
+const (
+	AuctionWithBidCurrencyCredits AuctionWithBidCurrency = "credits"
+)
+
+// AllValues returns all AuctionWithBidCurrency values.
+func (AuctionWithBidCurrency) AllValues() []AuctionWithBidCurrency {
+	return []AuctionWithBidCurrency{
+		AuctionWithBidCurrencyCredits,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AuctionWithBidCurrency) MarshalText() ([]byte, error) {
+	switch s {
+	case AuctionWithBidCurrencyCredits:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AuctionWithBidCurrency) UnmarshalText(data []byte) error {
+	switch AuctionWithBidCurrency(data) {
+	case AuctionWithBidCurrencyCredits:
+		*s = AuctionWithBidCurrencyCredits
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type BearerAuth struct {
 	Token string
 	Roles []string
@@ -34,6 +767,50 @@ func (s *BearerAuth) SetToken(val string) {
 func (s *BearerAuth) SetRoles(val []string) {
 	s.Roles = val
 }
+
+type BuyoutAuctionBadRequest Error
+
+func (*BuyoutAuctionBadRequest) buyoutAuctionRes() {}
+
+type BuyoutAuctionConflict Error
+
+func (*BuyoutAuctionConflict) buyoutAuctionRes() {}
+
+type BuyoutAuctionForbidden Error
+
+func (*BuyoutAuctionForbidden) buyoutAuctionRes() {}
+
+type BuyoutAuctionInternalServerError Error
+
+func (*BuyoutAuctionInternalServerError) buyoutAuctionRes() {}
+
+type BuyoutAuctionNotFound Error
+
+func (*BuyoutAuctionNotFound) buyoutAuctionRes() {}
+
+type BuyoutAuctionUnauthorized Error
+
+func (*BuyoutAuctionUnauthorized) buyoutAuctionRes() {}
+
+type CancelAuctionConflict Error
+
+func (*CancelAuctionConflict) cancelAuctionRes() {}
+
+type CancelAuctionForbidden Error
+
+func (*CancelAuctionForbidden) cancelAuctionRes() {}
+
+type CancelAuctionInternalServerError Error
+
+func (*CancelAuctionInternalServerError) cancelAuctionRes() {}
+
+type CancelAuctionNotFound Error
+
+func (*CancelAuctionNotFound) cancelAuctionRes() {}
+
+type CancelAuctionUnauthorized Error
+
+func (*CancelAuctionUnauthorized) cancelAuctionRes() {}
 
 type CancelTradeConflict Error
 
@@ -62,6 +839,132 @@ func (s *CancelTradeOK) SetResult(val TradeResult) {
 }
 
 func (*CancelTradeOK) cancelTradeRes() {}
+
+type CreateAuctionBadRequest Error
+
+func (*CreateAuctionBadRequest) createAuctionRes() {}
+
+type CreateAuctionForbidden Error
+
+func (*CreateAuctionForbidden) createAuctionRes() {}
+
+type CreateAuctionInternalServerError Error
+
+func (*CreateAuctionInternalServerError) createAuctionRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/CreateAuctionRequest
+type CreateAuctionRequest struct {
+	// ID of the item to auction.
+	ItemID   uuid.UUID                    `json:"item_id"`
+	Currency CreateAuctionRequestCurrency `json:"currency"`
+	// Starting price in minor units.
+	StartPrice int64 `json:"start_price"`
+	// Optional buyout price in minor units.
+	BuyoutPrice OptNilInt64 `json:"buyout_price"`
+	Quantity    int32       `json:"quantity"`
+	// Auction duration in hours.
+	DurationHours int32 `json:"duration_hours"`
+}
+
+// GetItemID returns the value of ItemID.
+func (s *CreateAuctionRequest) GetItemID() uuid.UUID {
+	return s.ItemID
+}
+
+// GetCurrency returns the value of Currency.
+func (s *CreateAuctionRequest) GetCurrency() CreateAuctionRequestCurrency {
+	return s.Currency
+}
+
+// GetStartPrice returns the value of StartPrice.
+func (s *CreateAuctionRequest) GetStartPrice() int64 {
+	return s.StartPrice
+}
+
+// GetBuyoutPrice returns the value of BuyoutPrice.
+func (s *CreateAuctionRequest) GetBuyoutPrice() OptNilInt64 {
+	return s.BuyoutPrice
+}
+
+// GetQuantity returns the value of Quantity.
+func (s *CreateAuctionRequest) GetQuantity() int32 {
+	return s.Quantity
+}
+
+// GetDurationHours returns the value of DurationHours.
+func (s *CreateAuctionRequest) GetDurationHours() int32 {
+	return s.DurationHours
+}
+
+// SetItemID sets the value of ItemID.
+func (s *CreateAuctionRequest) SetItemID(val uuid.UUID) {
+	s.ItemID = val
+}
+
+// SetCurrency sets the value of Currency.
+func (s *CreateAuctionRequest) SetCurrency(val CreateAuctionRequestCurrency) {
+	s.Currency = val
+}
+
+// SetStartPrice sets the value of StartPrice.
+func (s *CreateAuctionRequest) SetStartPrice(val int64) {
+	s.StartPrice = val
+}
+
+// SetBuyoutPrice sets the value of BuyoutPrice.
+func (s *CreateAuctionRequest) SetBuyoutPrice(val OptNilInt64) {
+	s.BuyoutPrice = val
+}
+
+// SetQuantity sets the value of Quantity.
+func (s *CreateAuctionRequest) SetQuantity(val int32) {
+	s.Quantity = val
+}
+
+// SetDurationHours sets the value of DurationHours.
+func (s *CreateAuctionRequest) SetDurationHours(val int32) {
+	s.DurationHours = val
+}
+
+type CreateAuctionRequestCurrency string
+
+const (
+	CreateAuctionRequestCurrencyCredits CreateAuctionRequestCurrency = "credits"
+)
+
+// AllValues returns all CreateAuctionRequestCurrency values.
+func (CreateAuctionRequestCurrency) AllValues() []CreateAuctionRequestCurrency {
+	return []CreateAuctionRequestCurrency{
+		CreateAuctionRequestCurrencyCredits,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CreateAuctionRequestCurrency) MarshalText() ([]byte, error) {
+	switch s {
+	case CreateAuctionRequestCurrencyCredits:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CreateAuctionRequestCurrency) UnmarshalText(data []byte) error {
+	switch CreateAuctionRequestCurrency(data) {
+	case CreateAuctionRequestCurrencyCredits:
+		*s = CreateAuctionRequestCurrencyCredits
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type CreateAuctionUnauthorized Error
+
+func (*CreateAuctionUnauthorized) createAuctionRes() {}
 
 type CreateTradeListingBadRequest Error
 
@@ -249,11 +1152,6 @@ func (s *Error) SetDetails(val *ErrorDetails) {
 // SetCode sets the value of Code.
 func (s *Error) SetCode(val int32) {
 	s.Code = val
-}
-
-// Error implements error interface
-func (s *Error) Error() string {
-	return s.Message
 }
 
 func (*Error) getActiveTradesRes()             {}
@@ -483,6 +1381,325 @@ func (s *GetActiveTradesTradeType) UnmarshalText(data []byte) error {
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+type GetAuctionDetailsInternalServerError Error
+
+func (*GetAuctionDetailsInternalServerError) getAuctionDetailsRes() {}
+
+type GetAuctionDetailsNotFound Error
+
+func (*GetAuctionDetailsNotFound) getAuctionDetailsRes() {}
+
+type GetAuctionDetailsUnauthorized Error
+
+func (*GetAuctionDetailsUnauthorized) getAuctionDetailsRes() {}
+
+type GetAuctionsBadRequest Error
+
+func (*GetAuctionsBadRequest) getAuctionsRes() {}
+
+type GetAuctionsInternalServerError Error
+
+func (*GetAuctionsInternalServerError) getAuctionsRes() {}
+
+type GetAuctionsOK struct {
+	Auctions   []AuctionSummary `json:"auctions"`
+	Total      OptInt           `json:"total"`
+	NextOffset OptNilInt        `json:"next_offset"`
+}
+
+// GetAuctions returns the value of Auctions.
+func (s *GetAuctionsOK) GetAuctions() []AuctionSummary {
+	return s.Auctions
+}
+
+// GetTotal returns the value of Total.
+func (s *GetAuctionsOK) GetTotal() OptInt {
+	return s.Total
+}
+
+// GetNextOffset returns the value of NextOffset.
+func (s *GetAuctionsOK) GetNextOffset() OptNilInt {
+	return s.NextOffset
+}
+
+// SetAuctions sets the value of Auctions.
+func (s *GetAuctionsOK) SetAuctions(val []AuctionSummary) {
+	s.Auctions = val
+}
+
+// SetTotal sets the value of Total.
+func (s *GetAuctionsOK) SetTotal(val OptInt) {
+	s.Total = val
+}
+
+// SetNextOffset sets the value of NextOffset.
+func (s *GetAuctionsOK) SetNextOffset(val OptNilInt) {
+	s.NextOffset = val
+}
+
+func (*GetAuctionsOK) getAuctionsRes() {}
+
+type GetAuctionsSort string
+
+const (
+	GetAuctionsSortEndingSoon GetAuctionsSort = "ending_soon"
+	GetAuctionsSortPriceAsc   GetAuctionsSort = "price_asc"
+	GetAuctionsSortPriceDesc  GetAuctionsSort = "price_desc"
+	GetAuctionsSortNewest     GetAuctionsSort = "newest"
+)
+
+// AllValues returns all GetAuctionsSort values.
+func (GetAuctionsSort) AllValues() []GetAuctionsSort {
+	return []GetAuctionsSort{
+		GetAuctionsSortEndingSoon,
+		GetAuctionsSortPriceAsc,
+		GetAuctionsSortPriceDesc,
+		GetAuctionsSortNewest,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetAuctionsSort) MarshalText() ([]byte, error) {
+	switch s {
+	case GetAuctionsSortEndingSoon:
+		return []byte(s), nil
+	case GetAuctionsSortPriceAsc:
+		return []byte(s), nil
+	case GetAuctionsSortPriceDesc:
+		return []byte(s), nil
+	case GetAuctionsSortNewest:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetAuctionsSort) UnmarshalText(data []byte) error {
+	switch GetAuctionsSort(data) {
+	case GetAuctionsSortEndingSoon:
+		*s = GetAuctionsSortEndingSoon
+		return nil
+	case GetAuctionsSortPriceAsc:
+		*s = GetAuctionsSortPriceAsc
+		return nil
+	case GetAuctionsSortPriceDesc:
+		*s = GetAuctionsSortPriceDesc
+		return nil
+	case GetAuctionsSortNewest:
+		*s = GetAuctionsSortNewest
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetAuctionsStatus string
+
+const (
+	GetAuctionsStatusActive    GetAuctionsStatus = "active"
+	GetAuctionsStatusSold      GetAuctionsStatus = "sold"
+	GetAuctionsStatusExpired   GetAuctionsStatus = "expired"
+	GetAuctionsStatusCancelled GetAuctionsStatus = "cancelled"
+)
+
+// AllValues returns all GetAuctionsStatus values.
+func (GetAuctionsStatus) AllValues() []GetAuctionsStatus {
+	return []GetAuctionsStatus{
+		GetAuctionsStatusActive,
+		GetAuctionsStatusSold,
+		GetAuctionsStatusExpired,
+		GetAuctionsStatusCancelled,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetAuctionsStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case GetAuctionsStatusActive:
+		return []byte(s), nil
+	case GetAuctionsStatusSold:
+		return []byte(s), nil
+	case GetAuctionsStatusExpired:
+		return []byte(s), nil
+	case GetAuctionsStatusCancelled:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetAuctionsStatus) UnmarshalText(data []byte) error {
+	switch GetAuctionsStatus(data) {
+	case GetAuctionsStatusActive:
+		*s = GetAuctionsStatusActive
+		return nil
+	case GetAuctionsStatusSold:
+		*s = GetAuctionsStatusSold
+		return nil
+	case GetAuctionsStatusExpired:
+		*s = GetAuctionsStatusExpired
+		return nil
+	case GetAuctionsStatusCancelled:
+		*s = GetAuctionsStatusCancelled
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetAuctionsUnauthorized Error
+
+func (*GetAuctionsUnauthorized) getAuctionsRes() {}
+
+type GetMyAuctionsInternalServerError Error
+
+func (*GetMyAuctionsInternalServerError) getMyAuctionsRes() {}
+
+type GetMyAuctionsOK struct {
+	Auctions   []AuctionSummary `json:"auctions"`
+	Total      OptInt           `json:"total"`
+	NextOffset OptNilInt        `json:"next_offset"`
+}
+
+// GetAuctions returns the value of Auctions.
+func (s *GetMyAuctionsOK) GetAuctions() []AuctionSummary {
+	return s.Auctions
+}
+
+// GetTotal returns the value of Total.
+func (s *GetMyAuctionsOK) GetTotal() OptInt {
+	return s.Total
+}
+
+// GetNextOffset returns the value of NextOffset.
+func (s *GetMyAuctionsOK) GetNextOffset() OptNilInt {
+	return s.NextOffset
+}
+
+// SetAuctions sets the value of Auctions.
+func (s *GetMyAuctionsOK) SetAuctions(val []AuctionSummary) {
+	s.Auctions = val
+}
+
+// SetTotal sets the value of Total.
+func (s *GetMyAuctionsOK) SetTotal(val OptInt) {
+	s.Total = val
+}
+
+// SetNextOffset sets the value of NextOffset.
+func (s *GetMyAuctionsOK) SetNextOffset(val OptNilInt) {
+	s.NextOffset = val
+}
+
+func (*GetMyAuctionsOK) getMyAuctionsRes() {}
+
+type GetMyAuctionsStatus string
+
+const (
+	GetMyAuctionsStatusActive    GetMyAuctionsStatus = "active"
+	GetMyAuctionsStatusSold      GetMyAuctionsStatus = "sold"
+	GetMyAuctionsStatusExpired   GetMyAuctionsStatus = "expired"
+	GetMyAuctionsStatusCancelled GetMyAuctionsStatus = "cancelled"
+)
+
+// AllValues returns all GetMyAuctionsStatus values.
+func (GetMyAuctionsStatus) AllValues() []GetMyAuctionsStatus {
+	return []GetMyAuctionsStatus{
+		GetMyAuctionsStatusActive,
+		GetMyAuctionsStatusSold,
+		GetMyAuctionsStatusExpired,
+		GetMyAuctionsStatusCancelled,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetMyAuctionsStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case GetMyAuctionsStatusActive:
+		return []byte(s), nil
+	case GetMyAuctionsStatusSold:
+		return []byte(s), nil
+	case GetMyAuctionsStatusExpired:
+		return []byte(s), nil
+	case GetMyAuctionsStatusCancelled:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetMyAuctionsStatus) UnmarshalText(data []byte) error {
+	switch GetMyAuctionsStatus(data) {
+	case GetMyAuctionsStatusActive:
+		*s = GetMyAuctionsStatusActive
+		return nil
+	case GetMyAuctionsStatusSold:
+		*s = GetMyAuctionsStatusSold
+		return nil
+	case GetMyAuctionsStatusExpired:
+		*s = GetMyAuctionsStatusExpired
+		return nil
+	case GetMyAuctionsStatusCancelled:
+		*s = GetMyAuctionsStatusCancelled
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetMyAuctionsUnauthorized Error
+
+func (*GetMyAuctionsUnauthorized) getMyAuctionsRes() {}
+
+type GetMyBidsInternalServerError Error
+
+func (*GetMyBidsInternalServerError) getMyBidsRes() {}
+
+type GetMyBidsOK struct {
+	Auctions   []AuctionWithBid `json:"auctions"`
+	Total      OptInt           `json:"total"`
+	NextOffset OptNilInt        `json:"next_offset"`
+}
+
+// GetAuctions returns the value of Auctions.
+func (s *GetMyBidsOK) GetAuctions() []AuctionWithBid {
+	return s.Auctions
+}
+
+// GetTotal returns the value of Total.
+func (s *GetMyBidsOK) GetTotal() OptInt {
+	return s.Total
+}
+
+// GetNextOffset returns the value of NextOffset.
+func (s *GetMyBidsOK) GetNextOffset() OptNilInt {
+	return s.NextOffset
+}
+
+// SetAuctions sets the value of Auctions.
+func (s *GetMyBidsOK) SetAuctions(val []AuctionWithBid) {
+	s.Auctions = val
+}
+
+// SetTotal sets the value of Total.
+func (s *GetMyBidsOK) SetTotal(val OptInt) {
+	s.Total = val
+}
+
+// SetNextOffset sets the value of NextOffset.
+func (s *GetMyBidsOK) SetNextOffset(val OptNilInt) {
+	s.NextOffset = val
+}
+
+func (*GetMyBidsOK) getMyBidsRes() {}
+
+type GetMyBidsUnauthorized Error
+
+func (*GetMyBidsUnauthorized) getMyBidsRes() {}
 
 type GetPlayerTransactionHistoryTransactionType string
 
@@ -958,6 +2175,144 @@ func (o OptGetActiveTradesTradeType) Or(d GetActiveTradesTradeType) GetActiveTra
 	return d
 }
 
+// NewOptGetAuctionsSort returns new OptGetAuctionsSort with value set to v.
+func NewOptGetAuctionsSort(v GetAuctionsSort) OptGetAuctionsSort {
+	return OptGetAuctionsSort{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetAuctionsSort is optional GetAuctionsSort.
+type OptGetAuctionsSort struct {
+	Value GetAuctionsSort
+	Set   bool
+}
+
+// IsSet returns true if OptGetAuctionsSort was set.
+func (o OptGetAuctionsSort) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetAuctionsSort) Reset() {
+	var v GetAuctionsSort
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetAuctionsSort) SetTo(v GetAuctionsSort) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetAuctionsSort) Get() (v GetAuctionsSort, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetAuctionsSort) Or(d GetAuctionsSort) GetAuctionsSort {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetAuctionsStatus returns new OptGetAuctionsStatus with value set to v.
+func NewOptGetAuctionsStatus(v GetAuctionsStatus) OptGetAuctionsStatus {
+	return OptGetAuctionsStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetAuctionsStatus is optional GetAuctionsStatus.
+type OptGetAuctionsStatus struct {
+	Value GetAuctionsStatus
+	Set   bool
+}
+
+// IsSet returns true if OptGetAuctionsStatus was set.
+func (o OptGetAuctionsStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetAuctionsStatus) Reset() {
+	var v GetAuctionsStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetAuctionsStatus) SetTo(v GetAuctionsStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetAuctionsStatus) Get() (v GetAuctionsStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetAuctionsStatus) Or(d GetAuctionsStatus) GetAuctionsStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetMyAuctionsStatus returns new OptGetMyAuctionsStatus with value set to v.
+func NewOptGetMyAuctionsStatus(v GetMyAuctionsStatus) OptGetMyAuctionsStatus {
+	return OptGetMyAuctionsStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetMyAuctionsStatus is optional GetMyAuctionsStatus.
+type OptGetMyAuctionsStatus struct {
+	Value GetMyAuctionsStatus
+	Set   bool
+}
+
+// IsSet returns true if OptGetMyAuctionsStatus was set.
+func (o OptGetMyAuctionsStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetMyAuctionsStatus) Reset() {
+	var v GetMyAuctionsStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetMyAuctionsStatus) SetTo(v GetMyAuctionsStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetMyAuctionsStatus) Get() (v GetMyAuctionsStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetMyAuctionsStatus) Or(d GetMyAuctionsStatus) GetMyAuctionsStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptGetPlayerTransactionHistoryTransactionType returns new OptGetPlayerTransactionHistoryTransactionType with value set to v.
 func NewOptGetPlayerTransactionHistoryTransactionType(v GetPlayerTransactionHistoryTransactionType) OptGetPlayerTransactionHistoryTransactionType {
 	return OptGetPlayerTransactionHistoryTransactionType{
@@ -1176,6 +2531,69 @@ func (o OptNilInt) Or(d int) int {
 	return d
 }
 
+// NewOptNilInt64 returns new OptNilInt64 with value set to v.
+func NewOptNilInt64(v int64) OptNilInt64 {
+	return OptNilInt64{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilInt64 is optional nullable int64.
+type OptNilInt64 struct {
+	Value int64
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilInt64 was set.
+func (o OptNilInt64) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilInt64) Reset() {
+	var v int64
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilInt64) SetTo(v int64) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilInt64) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilInt64) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v int64
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilInt64) Get() (v int64, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilInt64) Or(d int64) int64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilUUID returns new OptNilUUID with value set to v.
 func NewOptNilUUID(v uuid.UUID) OptNilUUID {
 	return OptNilUUID{
@@ -1330,6 +2748,48 @@ func (o OptUUID) Or(d uuid.UUID) uuid.UUID {
 	}
 	return d
 }
+
+type PlaceBidBadRequest Error
+
+func (*PlaceBidBadRequest) placeBidRes() {}
+
+type PlaceBidConflict Error
+
+func (*PlaceBidConflict) placeBidRes() {}
+
+type PlaceBidForbidden Error
+
+func (*PlaceBidForbidden) placeBidRes() {}
+
+type PlaceBidInternalServerError Error
+
+func (*PlaceBidInternalServerError) placeBidRes() {}
+
+type PlaceBidNotFound Error
+
+func (*PlaceBidNotFound) placeBidRes() {}
+
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
+// 30-50%.
+// Ref: #/components/schemas/PlaceBidRequest
+type PlaceBidRequest struct {
+	// Bid amount in minor units.
+	Amount int64 `json:"amount"`
+}
+
+// GetAmount returns the value of Amount.
+func (s *PlaceBidRequest) GetAmount() int64 {
+	return s.Amount
+}
+
+// SetAmount sets the value of Amount.
+func (s *PlaceBidRequest) SetAmount(val int64) {
+	s.Amount = val
+}
+
+type PlaceBidUnauthorized Error
+
+func (*PlaceBidUnauthorized) placeBidRes() {}
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
