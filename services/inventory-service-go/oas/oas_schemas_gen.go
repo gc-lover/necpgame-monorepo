@@ -342,9 +342,7 @@ type Error struct {
 	Domain  OptString `json:"domain"`
 	// Additional error context.
 	Details *ErrorDetails `json:"details"`
-	// Entity tag for optimistic locking.
-	ETag OptString `json:"ETag"`
-	Code int32     `json:"code"`
+	Code    int32         `json:"code"`
 }
 
 // GetMessage returns the value of Message.
@@ -360,11 +358,6 @@ func (s *Error) GetDomain() OptString {
 // GetDetails returns the value of Details.
 func (s *Error) GetDetails() *ErrorDetails {
 	return s.Details
-}
-
-// GetETag returns the value of ETag.
-func (s *Error) GetETag() OptString {
-	return s.ETag
 }
 
 // GetCode returns the value of Code.
@@ -385,11 +378,6 @@ func (s *Error) SetDomain(val OptString) {
 // SetDetails sets the value of Details.
 func (s *Error) SetDetails(val *ErrorDetails) {
 	s.Details = val
-}
-
-// SetETag sets the value of ETag.
-func (s *Error) SetETag(val OptString) {
-	s.ETag = val
 }
 
 // SetCode sets the value of Code.

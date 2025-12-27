@@ -894,23 +894,16 @@ func (s *Error) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.ETag.Set {
-			e.FieldStart("ETag")
-			s.ETag.Encode(e)
-		}
-	}
-	{
 		e.FieldStart("code")
 		e.Int32(s.Code)
 	}
 }
 
-var jsonFieldsNameOfError = [5]string{
+var jsonFieldsNameOfError = [4]string{
 	0: "message",
 	1: "domain",
 	2: "details",
-	3: "ETag",
-	4: "code",
+	3: "code",
 }
 
 // Decode decodes Error from json.
@@ -956,18 +949,8 @@ func (s *Error) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"details\"")
 			}
-		case "ETag":
-			if err := func() error {
-				s.ETag.Reset()
-				if err := s.ETag.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"ETag\"")
-			}
 		case "code":
-			requiredBitSet[0] |= 1 << 4
+			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
 				v, err := d.Int32()
 				s.Code = int32(v)
@@ -988,7 +971,7 @@ func (s *Error) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00010001,
+		0b00001001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
