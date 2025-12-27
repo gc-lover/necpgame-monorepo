@@ -1,0 +1,1786 @@
+# Issue: #140927104
+metadata:
+  id: content-narrative-quest-drug-transportation-miami-2020-2029
+  title: "Quest: Drug Transportation Miami (Miami 2020-2029)"
+  document_type: content
+  category: narrative
+  status: approved
+  version: "1.0.0"
+  last_updated: 2025-12-27T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-27T00:00:00Z
+  owners:
+    - role: content_director
+      contact: content@necp.game
+  tags:
+    - narrative
+    - quest
+    - cyberpunk
+    - miami
+    - drug-trafficking
+    - smuggling
+    - cartel-operations
+    - urban-crime
+  topics:
+    - drug-cartels
+    - smuggling-routes
+    - undercover-operations
+    - cartel-wars
+    - chemical-labs
+    - street-dealers
+  related_systems:
+    - narrative-service
+    - quest-service
+    - criminal-system
+    - smuggling-dynamics
+  related_documents:
+    - id: content-quests-master-list-2020-2093
+      relation: references
+    - id: mechanics-drug-mechanics
+      relation: implements
+  source: shared/docs/knowledge/canon/narrative/quests/drug-transportation-miami-2020-2029.md
+  visibility: internal
+  audience:
+    - content
+    - narrative
+    - live-ops
+  risk_level: high
+
+review:
+  chain:
+    - role: content_director
+      reviewer: Content Review Cell
+      reviewed_at: 2025-12-27T00:00:00Z
+      status: approved
+  next_actions: []
+
+summary:
+  problem: Создать квест о перевозке наркотиков в Майами
+  goal: Исследовать темы наркотрафика, картельных войн и подпольной экономики
+  essence: В неоновых трущобах Майами где синтетические наркотики текут рекой, а импланты гонщиков заменяют адреналин, каждый груз - это игра со смертью в цифровом аду
+  key_points:
+    - Квест сочетает элементы контрабанды, картельных конфликтов и киберпанковых технологий
+    - Множественные ветки: путь гонщика, информатора, картельного солдата, независимого дилера
+    - Исследование темы зависимости в эпоху технологических наркотиков
+    - Возможность разных исходов от разрушения картеля до создания собственной империи
+
+content:
+  sections:
+    - id: miami_drug_traffic
+      title: Майами Наркотрафик — Перевозка в Киберпанке
+      body: |
+        Майами 2020-2029 — наркотрафик эволюционировал вместе с технологиями.
+        В эпоху киберпанка традиционные картели используют дроны для доставки,
+        импланты для усиления гонщиков, хакерские атаки для саботажа конкурентов.
+        Игрок попадает в этот мир, когда становится свидетелем неудачной сделки
+        и получает предложение перевезти особо ценный груз. Квест включает
+        навигацию по опасным маршрутам, уклонение от полиции и корпоративных
+        патрулей, установление контактов с картельными боссами, и принятие
+        решений, которые могут изменить баланс сил в наркобизнесе Майами.
+
+    - id: quest_narrative
+      title: Сюжетная линия
+      body: |
+        Игрок становится частью мира наркотрафика Майами, где каждый выбор
+        влияет на судьбу картелей. Квест включает выбор фракции, участие в
+        перевозках, сбор союзников и финальный выбор между разрушением
+        наркобизнеса или доминированием в нем.
+
+quest_definition:
+  level_min: 15
+  level_max: 30
+  estimated_duration: 85
+  difficulty: hard
+  category: narrative
+  type: criminal_operations
+  rewards:
+    experience: 25000
+    currency: { type: eddies, amount: 42000 }
+    items: [{ name: "Cartel Loyalty Ring", type: quest_item, rarity: epic }]
+  prerequisites:
+    - completed: tutorial_basics
+    - faction_reputation: { faction: miami_cartels, level: 1 }
+  faction_impact:
+    - faction: miami_cartels
+      impact: +50
+    - faction: corporate_enforcers
+      impact: -35
+    - faction: street_gangs
+      impact: +30
+    - faction: police_precinct
+      impact: -40
+  location: miami_underworld
+  time_restriction: anytime
+
+quest_flow:
+  entry_point: failed_deal_witness
+  nodes:
+    - id: failed_deal_witness
+      type: initiation
+      title: "Свидетель неудачной сделки"
+      description: "Игрок становится свидетелем провалившейся наркосделки."
+      objectives:
+        - "Расследовать инцидент"
+        - "Выбрать сторону в конфликте"
+      choices:
+        - id: help_cartel
+          title: "Помочь картелю"
+          description: "Присоединиться к наркоторговцам для восстановления груза"
+          requirements: { trait: opportunistic, level: 1 }
+          next_node: cartel_ally_joined
+        - id: steal_cargo
+          title: "Украсть груз"
+          description: "Воспользоваться ситуацией для личной выгоды"
+          requirements: {}
+          next_node: cargo_thief_became
+        - id: report_police
+          title: "Сообщить полиции"
+          description: "Донести информацию властям за награду"
+          requirements: { trait: lawful, level: 1 }
+          next_node: police_informant_became
+
+    - id: cartel_ally_joined
+      type: alliance
+      title: "Присоединился к союзникам картеля"
+      description: "Игрок становится частью наркоторговой операции."
+      objectives:
+        - "Узнать о картельной иерархии"
+        - "Получить первое задание"
+      choices:
+        - id: transport_drugs
+          title: "Перевозить наркотики"
+          description: "Стать гонщиком для доставки груза"
+          requirements: { skill: driving, level: 2 }
+          next_node: drug_transporter_became
+        - id: guard_territory
+          title: "Охранять территорию"
+          description: "Защищать картельные владения от конкурентов"
+          requirements: { skill: combat, level: 2 }
+          next_node: territory_guard_became
+        - id: infiltrate_competitor
+          title: "Проникнуть к конкуренту"
+          description: "Шпионить за враждебным картелем"
+          requirements: { skill: stealth, level: 2 }
+          next_node: competitor_infiltrator_became
+
+    - id: cargo_thief_became
+      type: criminal
+      title: "Стал вором груза"
+      description: "Игрок решает украсть наркотики для перепродажи."
+      objectives:
+        - "Скрыть улики"
+        - "Найти покупателя"
+      choices:
+        - id: sell_to_competitor
+          title: "Продать конкуренту"
+          description: "Перепродажа украденного груза враждебному картелю"
+          requirements: {}
+          next_node: competitor_buyer_found
+        - id: sell_on_street
+          title: "Продать на улице"
+          description: "Распределить груз среди уличных дилеров"
+          requirements: { skill: streetwise, level: 1 }
+          next_node: street_distribution_started
+        - id: keep_for_personal_use
+          title: "Оставить для себя"
+          description: "Использовать наркотики лично"
+          requirements: { trait: hedonistic, level: 1 }
+          next_node: personal_stash_created
+
+    - id: police_informant_became
+      type: informant
+      title: "Стал полицейским информатором"
+      description: "Игрок решает сотрудничать с правоохранительными органами."
+      objectives:
+        - "Собрать доказательства"
+        - "Организовать засаду"
+      choices:
+        - id: setup_sting_operation
+          title: "Организовать операцию под прикрытием"
+          description: "Внедриться в картель для сбора улик"
+          requirements: { skill: deception, level: 2 }
+          next_node: sting_operation_setup
+        - id: provide_intelligence
+          title: "Предоставить разведданные"
+          description: "Донести информацию о картельных операциях"
+          requirements: {}
+          next_node: intelligence_provided
+        - id: testify_court
+          title: "Дать показания в суде"
+          description: "Стать свидетелем обвинения"
+          requirements: { trait: courageous, level: 2 }
+          next_node: court_testimony_given
+
+    - id: drug_transporter_became
+      type: transporter
+      title: "Стал перевозчиком наркотиков"
+      description: "Игрок специализируется на доставке грузов картеля."
+      objectives:
+        - "Изучить маршруты"
+        - "Оснастить транспорт"
+      choices:
+        - id: use_stealth_vehicle
+          title: "Использовать скрытный транспорт"
+          description: "Перевозить груз незаметно"
+          requirements: { skill: stealth, level: 3 }
+          next_node: stealth_transport_used
+        - id: use_speed_vehicle
+          title: "Использовать скоростной транспорт"
+          description: "Доставлять груз на высокой скорости"
+          requirements: { skill: driving, level: 4 }
+          next_node: speed_transport_used
+        - id: use_drone_delivery
+          title: "Использовать дрон-доставку"
+          description: "Доставлять груз с помощью дронов"
+          requirements: { skill: hacking, level: 3 }
+          next_node: drone_delivery_implemented
+
+    - id: territory_guard_became
+      type: enforcer
+      title: "Стал охранником территории"
+      description: "Игрок защищает картельные владения от посягательств."
+      objectives:
+        - "Организовать патрули"
+        - "Отразить атаки"
+      choices:
+        - id: setup_defenses
+          title: "Организовать оборону"
+          description: "Установить укрепления и ловушки"
+          requirements: { skill: engineering, level: 1 }
+          next_node: defenses_established
+        - id: recruit_enforcers
+          title: "Нанять enforcers"
+          description: "Собрать команду для защиты территории"
+          requirements: { skill: leadership, level: 2 }
+          next_node: enforcers_recruited
+        - id: intimidate_locals
+          title: "Запугать местных"
+          description: "Убедить жителей не вмешиваться"
+          requirements: { trait: intimidating, level: 1 }
+          next_node: locals_intimidated
+
+    - id: competitor_infiltrator_became
+      type: spy
+      title: "Стал шпионом у конкурента"
+      description: "Игрок проникает во враждебный картель под прикрытием."
+      objectives:
+        - "Собрать информацию"
+        - "Не раскрыть себя"
+      choices:
+        - id: pose_as_buyer
+          title: "Прикинуться покупателем"
+          description: "Внедриться под видом клиента"
+          requirements: { skill: deception, level: 3 }
+          next_node: buyer_disguise_used
+        - id: pose_as_supplier
+          title: "Прикинуться поставщиком"
+          description: "Внедриться под видом поставщика"
+          requirements: { skill: negotiation, level: 2 }
+          next_node: supplier_disguise_used
+        - id: hack_communications
+          title: "Взломать коммуникации"
+          description: "Получить информацию через хакинг"
+          requirements: { skill: hacking, level: 4 }
+          next_node: communications_hacked
+
+    - id: competitor_buyer_found
+      type: dealer
+      title: "Найден покупатель у конкурента"
+      description: "Украденный груз продан враждебному картелю."
+      objectives:
+        - "Завершить сделку"
+        - "Избежать обнаружения"
+      choices:
+        - id: double_cross_buyer
+          title: "Обмануть покупателя"
+          description: "Украсть деньги после сделки"
+          requirements: { trait: treacherous, level: 2 }
+          next_node: buyer_double_crossed
+        - id: establish_relationship
+          title: "Установить отношения"
+          description: "Создать долгосрочное партнерство"
+          requirements: { skill: networking, level: 1 }
+          next_node: relationship_established
+        - id: disappear_with_money
+          title: "Исчезнуть с деньгами"
+          description: "Уйти в подполье с прибылью"
+          requirements: { skill: evasion, level: 2 }
+          next_node: disappeared_with_profit
+
+    - id: street_distribution_started
+      type: retailer
+      title: "Начато уличное распространение"
+      description: "Наркотики распределяются через сеть уличных дилеров."
+      objectives:
+        - "Организовать сеть"
+        - "Управлять рисками"
+      choices:
+        - id: build_dealer_network
+          title: "Создать сеть дилеров"
+          description: "Нанять и обучить уличных продавцов"
+          requirements: { skill: management, level: 2 }
+          next_node: dealer_network_built
+        - id: sell_directly
+          title: "Продавать напрямую"
+          description: "Самому заниматься продажами"
+          requirements: { trait: hands_on, level: 1 }
+          next_node: direct_sales_started
+        - id: create_brand
+          title: "Создать бренд"
+          description: "Разработать узнаваемый продукт"
+          requirements: { skill: marketing, level: 1 }
+          next_node: brand_created
+
+    - id: personal_stash_created
+      type: addict
+      title: "Создан личный запас"
+      description: "Наркотики оставлены для личного использования."
+      objectives:
+        - "Экспериментировать с эффектами"
+        - "Избегать зависимости"
+      choices:
+        - id: become_addict
+          title: "Стать зависимым"
+          description: "Поддаться зависимости от наркотиков"
+          requirements: {}
+          next_node: addiction_developed
+        - id: use_strategically
+          title: "Использовать стратегически"
+          description: "Применять наркотики для усиления способностей"
+          requirements: { trait: calculated, level: 2 }
+          next_node: strategic_use_implemented
+        - id: sell_excess
+          title: "Продать излишки"
+          description: "Перепродать неиспользованные наркотики"
+          requirements: { skill: business, level: 1 }
+          next_node: excess_sold
+
+    - id: sting_operation_setup
+      type: undercover
+      title: "Организована операция под прикрытием"
+      description: "Игрок внедрен в картель для сбора доказательств."
+      objectives:
+        - "Собрать улики"
+        - "Координировать с полицией"
+      choices:
+        - id: gather_evidence
+          title: "Собрать доказательства"
+          description: "Документировать картельные операции"
+          requirements: { skill: investigation, level: 2 }
+          next_node: evidence_gathered
+        - id: bust_small_operation
+          title: "Разгромить мелкую операцию"
+          description: "Ликвидировать небольшую картельную ячейку"
+          requirements: { skill: combat, level: 2 }
+          next_node: small_operation_busted
+        - id: identify_boss
+          title: "Опознать босса"
+          description: "Выявить лидера картеля"
+          requirements: { skill: perception, level: 3 }
+          next_node: boss_identified
+
+    - id: intelligence_provided
+      type: informant
+      title: "Предоставлена разведка"
+      description: "Информация о картеле передана полиции."
+      objectives:
+        - "Получить награду"
+        - "Обеспечить безопасность"
+      choices:
+        - id: continue_providing
+          title: "Продолжить предоставление"
+          description: "Стать постоянным информатором"
+          requirements: {}
+          next_node: continued_intelligence
+        - id: negotiate_protection
+          title: "Договориться о защите"
+          description: "Получить защиту от картельной мести"
+          requirements: { skill: negotiation, level: 2 }
+          next_node: protection_negotiated
+        - id: disappear_quietly
+          title: "Исчезнуть тихо"
+          description: "Уйти в тень после предоставления информации"
+          requirements: { skill: stealth, level: 2 }
+          next_node: quietly_disappeared
+
+    - id: court_testimony_given
+      type: witness
+      title: "Даны показания в суде"
+      description: "Игрок выступает свидетелем обвинения в суде."
+      objectives:
+        - "Выступить убедительно"
+        - "Пережить перекрестный допрос"
+      choices:
+        - id: testimony_believed
+          title: "Показания поверили"
+          description: "Суд принимает свидетельские показания"
+          requirements: { trait: credible, level: 2 }
+          next_node: testimony_accepted
+        - id: testimony_discredited
+          title: "Показания дискредитированы"
+          description: "Показания признаны ненадежными"
+          requirements: {}
+          next_node: testimony_rejected
+        - id: threatened_intimidated
+          title: "Угрожают запугиванием"
+          description: "Картель пытается заставить замолчать"
+          requirements: {}
+          next_node: intimidation_attempted
+
+    - id: stealth_transport_used
+      type: smuggler
+      title: "Использован скрытный транспорт"
+      description: "Груз перевозится незаметно для властей."
+      objectives:
+        - "Избегать обнаружения"
+        - "Доставить груз вовремя"
+      choices:
+        - id: successful_delivery
+          title: "Успешная доставка"
+          description: "Груз доставлен без происшествий"
+          requirements: { skill: stealth, level: 4 }
+          next_node: delivery_successful
+        - id: close_call
+          title: "Опасное происшествие"
+          description: "Почти поймали, но удалось уйти"
+          requirements: {}
+          next_node: close_call_experienced
+        - id: cargo_seized
+          title: "Груз изъят"
+          description: "Транспорт обнаружен и конфискован"
+          requirements: {}
+          next_node: cargo_seized_outcome
+
+    - id: speed_transport_used
+      type: racer
+      title: "Использован скоростной транспорт"
+      description: "Груз доставляется на предельной скорости."
+      objectives:
+        - "Обогнать преследователей"
+        - "Избежать столкновений"
+      choices:
+        - id: high_speed_success
+          title: "Успех на высокой скорости"
+          description: "Груз доставлен несмотря на погони"
+          requirements: { skill: driving, level: 5 }
+          next_node: high_speed_delivery_success
+        - id: crash_occurred
+          title: "Произошла авария"
+          description: "Транспорт разбился во время погони"
+          requirements: {}
+          next_node: crash_accident_happened
+        - id: pursuit_escaped
+          title: "Погоня оставлена позади"
+          description: "Преследователи отстали"
+          requirements: { skill: evasion, level: 3 }
+          next_node: pursuit_successfully_evaded
+
+    - id: drone_delivery_implemented
+      type: tech_smuggler
+      title: "Внедрена дрон-доставка"
+      description: "Груз доставляется с помощью автономных дронов."
+      objectives:
+        - id: program_drones
+          title: "Запрограммировать дроны"
+          description: "Настроить маршрут и поведение дронов"
+          requirements: { skill: programming, level: 2 }
+          next_node: drones_programmed
+        - id: avoid_detection
+          title: "Избегать обнаружения"
+          description: "Сделать дроны незаметными для радаров"
+          requirements: { skill: hacking, level: 3 }
+          next_node: detection_avoided
+        - id: counter_hacks
+          title: "Противодействовать хаку"
+          description: "Защитить дроны от враждебного взлома"
+          requirements: { skill: cybersecurity, level: 2 }
+          next_node: hacks_countered
+
+    - id: defenses_established
+      type: fortification
+      title: "Оборона установлена"
+      description: "Территория картеля защищена укреплениями."
+      objectives:
+        - "Отразить атаки"
+        - "Поддерживать оборону"
+      choices:
+        - id: repel_attackers
+          title: "Отразить нападающих"
+          description: "Успешно защитить территорию"
+          requirements: { skill: defense, level: 2 }
+          next_node: attackers_repelled
+        - id: territory_lost
+          title: "Территория потеряна"
+          description: "Оборона прорвана конкурентами"
+          requirements: {}
+          next_node: territory_lost_to_attackers
+        - id: counter_attack
+          title: "Контратака"
+          description: "Перейти в наступление на захватчиков"
+          requirements: { skill: tactics, level: 2 }
+          next_node: counterattack_launched
+
+    - id: enforcers_recruited
+      type: recruitment
+      title: "Enforcers наняты"
+      description: "Собрана команда для защиты картельных интересов."
+      objectives:
+        - "Обучить команду"
+        - "Координировать действия"
+      choices:
+        - id: loyal_team_built
+          title: "Построена лояльная команда"
+          description: "Команда надежна и эффективна"
+          requirements: { skill: leadership, level: 3 }
+          next_node: loyal_team_established
+        - id: betrayal_within
+          title: "Предательство внутри"
+          description: "Кто-то из команды предает картель"
+          requirements: {}
+          next_node: internal_betrayal_discovered
+        - id: team_disbands
+          title: "Команда распадается"
+          description: "Enforcers уходят из-за низкой оплаты"
+          requirements: {}
+          next_node: team_disbanded
+
+    - id: locals_intimidated
+      type: intimidation
+      title: "Местные запуганы"
+      description: "Жители района боятся вмешиваться в картельные дела."
+      objectives:
+        - "Поддерживать страх"
+        - "Мониторить лояльность"
+      choices:
+        - id: fear_maintained
+          title: "Страх поддержан"
+          description: "Местные остаются лояльными из страха"
+          requirements: {}
+          next_node: fear_effective
+        - id: resistance_grows
+          title: "Сопротивление растет"
+          description: "Жители начинают сопротивляться запугиванию"
+          requirements: {}
+          next_node: resistance_growing
+        - id: community_uprising
+          title: "Восстание сообщества"
+          description: "Местные организуют сопротивление картелю"
+          requirements: {}
+          next_node: community_uprising_started
+
+    - id: buyer_disguise_used
+      type: infiltration
+      title: "Использован маскарад покупателя"
+      description: "Проникновение во враждебный картель под видом клиента."
+      objectives:
+        - "Собрать информацию"
+        - "Выйти живым"
+      choices:
+        - id: intel_successfully_gathered
+          title: "Разведка успешно собрана"
+          description: "Получена ценная информация"
+          requirements: { skill: deception, level: 4 }
+          next_node: intelligence_successfully_gathered
+        - id: cover_blown
+          title: "Легенда раскрыта"
+          description: "Маскарад разоблачен"
+          requirements: {}
+          next_node: cover_compromised
+        - id: double_agent_opportunity
+          title: "Возможность двойного агента"
+          description: "Предложение работать на обе стороны"
+          requirements: { trait: flexible, level: 2 }
+          next_node: double_agent_opportunity_arose
+
+    - id: supplier_disguise_used
+      type: supplier_infiltration
+      title: "Использован маскарад поставщика"
+      description: "Проникновение под видом поставщика химикатов."
+      objectives:
+        - "Установить доверие"
+        - "Получить доступ"
+      choices:
+        - id: supply_chain_disrupted
+          title: "Цепочка поставок нарушена"
+          description: "Удалось саботировать поставки конкурента"
+          requirements: { skill: sabotage, level: 2 }
+          next_node: supply_chain_successfully_disrupted
+        - id: genuine_supplier_became
+          title: "Стал настоящим поставщиком"
+          description: "Пришлось действительно поставлять химикаты"
+          requirements: {}
+          next_node: genuine_supplier_role_adopted
+        - id: busted_during_delivery
+          title: "Пойман во время доставки"
+          description: "Раскрыт во время поставки"
+          requirements: {}
+          next_node: busted_during_delivery_attempt
+
+    - id: communications_hacked
+      type: cyber_spy
+      title: "Коммуникации взломаны"
+      description: "Получен доступ к переписке враждебного картеля."
+      objectives:
+        - "Анализировать данные"
+        - "Планировать действия"
+      choices:
+        - id: major_plot_uncovered
+          title: "Крупный заговор раскрыт"
+          description: "Найдена информация о большой операции"
+          requirements: { skill: analysis, level: 2 }
+          next_node: major_plot_revealed
+        - id: false_information_planted
+          title: "Ложная информация посеяна"
+          description: "Введена дезинформация в коммуникации"
+          requirements: { skill: manipulation, level: 3 }
+          next_node: false_information_successfully_planted
+        - id: hack_detected
+          title: "Взлом обнаружен"
+          description: "Противник заметил несанкционированный доступ"
+          requirements: {}
+          next_node: hack_detected_countermeasures_taken
+
+    - id: buyer_double_crossed
+      type: betrayal
+      title: "Покупатель обманут"
+      description: "Деньги украдены после завершения сделки."
+      objectives:
+        - "Скрыть следы"
+        - "Потратить деньги"
+      choices:
+        - id: profit_secured
+          title: "Прибыль обеспечена"
+          description: "Деньги успешно присвоены"
+          requirements: { skill: money_laundering, level: 1 }
+          next_node: profit_successfully_secured
+        - id: revenge_sought
+          title: "Месть ищется"
+          description: "Обманутый покупатель начинает охоту"
+          requirements: {}
+          next_node: revenge_pursued
+        - id: alliance_formed
+          title: "Альянс сформирован"
+          description: "Неожиданно возникло партнерство"
+          requirements: { trait: charming, level: 1 }
+          next_node: unexpected_alliance_formed
+
+    - id: relationship_established
+      type: partnership
+      title: "Отношения установлены"
+      description: "Создано долгосрочное партнерство с конкурентом."
+      objectives:
+        - "Развить сотрудничество"
+        - "Расширить операции"
+      choices:
+        - id: joint_venture_created
+          title: "Совместное предприятие создано"
+          description: "Два картеля объединяют усилия"
+          requirements: { skill: negotiation, level: 3 }
+          next_node: joint_venture_established
+        - id: partnership_dissolves
+          title: "Партнерство распадается"
+          description: "Сотрудничество заканчивается конфликтом"
+          requirements: {}
+          next_node: partnership_broken
+        - id: territory_expanded
+          title: "Территория расширена"
+          description: "Партнерство позволяет захватить новые районы"
+          requirements: {}
+          next_node: territory_successfully_expanded
+
+    - id: disappeared_with_profit
+      type: fugitive
+      title: "Исчез с прибылью"
+      description: "Игрок уходит в подполье с украденными деньгами."
+      objectives:
+        - "Лечь на дно"
+        - "Избегать погони"
+      choices:
+        - id: new_identity_created
+          title: "Новая личность создана"
+          description: "Успешно скрылся от преследования"
+          requirements: { skill: forgery, level: 2 }
+          next_node: new_identity_established
+        - id: tracked_down
+          title: "Выслежен"
+          description: "Погоня настигает игрока"
+          requirements: {}
+          next_node: tracked_down_caught
+        - id: start_own_operation
+          title: "Начать собственную операцию"
+          description: "Использовать деньги для запуска бизнеса"
+          requirements: { skill: entrepreneurship, level: 1 }
+          next_node: own_operation_started
+
+    - id: dealer_network_built
+      type: empire_builder
+      title: "Сеть дилеров создана"
+      description: "Организована распределительная сеть по всему городу."
+      objectives:
+        - "Управлять сетью"
+        - "Максимизировать прибыль"
+      choices:
+        - id: network_prosperous
+          title: "Сеть процветает"
+          description: "Бизнес расширяется и приносит доход"
+          requirements: { skill: business_management, level: 2 }
+          next_node: network_prosperous_outcome
+        - id: network_infiltrated
+          title: "Сеть infiltrated"
+          description: "Полиция внедряет агентов в сеть"
+          requirements: {}
+          next_node: network_compromised_by_infiltration
+        - id: internal_conflict
+          title: "Внутренний конфликт"
+          description: "Дилеры конфликтуют из-за территорий"
+          requirements: {}
+          next_node: internal_conflicts_arise
+
+    - id: direct_sales_started
+      type: street_dealer
+      title: "Начаты прямые продажи"
+      description: "Игрок сам занимается продажей на улицах."
+      objectives:
+        - "Привлекать клиентов"
+        - "Избегать полиции"
+      choices:
+        - id: loyal_customer_base
+          title: "База лояльных клиентов"
+          description: "Постоянные покупатели обеспечивают стабильный доход"
+          requirements: { trait: personable, level: 1 }
+          next_node: customer_base_established
+        - id: police_attention_drawn
+          title: "Внимание полиции привлечено"
+          description: "Продажи замечают правоохранительные органы"
+          requirements: {}
+          next_node: police_attention_attracted
+        - id: rival_dealers_compete
+          title: "Конкурирующие дилеры соперничают"
+          description: "Другие продавцы пытаются вытеснить с рынка"
+          requirements: {}
+          next_node: rival_competition_increases
+
+    - id: brand_created
+      type: marketer
+      title: "Бренд создан"
+      description: "Продукт получил узнаваемое имя и репутацию."
+      objectives:
+        - "Продвигать бренд"
+        - "Поддерживать качество"
+      choices:
+        - id: brand_recognized
+          title: "Бренд признан"
+          description: "Продукт становится популярным в городе"
+          requirements: { skill: branding, level: 2 }
+          next_node: brand_recognition_achieved
+        - id: brand_tarnished
+          title: "Бренд запятнан"
+          description: "Плохое качество портит репутацию"
+          requirements: {}
+          next_node: brand_reputation_damaged
+        - id: corporate_interest
+          title: "Корпоративный интерес"
+          description: "Крупная корпорация хочет купить бренд"
+          requirements: {}
+          next_node: corporate_buyout_offered
+
+    - id: addiction_developed
+      type: downfall
+      title: "Зависимость развилась"
+      description: "Игрок поддался зависимости от наркотиков."
+      objectives:
+        - "Бороться с зависимостью"
+        - "Поддерживать функциональность"
+      choices:
+        - id: rehabilitation_sought
+          title: "Реабилитация найдена"
+          description: "Игрок проходит лечение от зависимости"
+          requirements: { trait: determined, level: 2 }
+          next_node: rehabilitation_successful
+        - id: addiction_controls
+          title: "Зависимость контролирует"
+          description: "Наркотики разрушают жизнь игрока"
+          requirements: {}
+          next_node: addiction_dominates_life
+        - id: overdose_occurs
+          title: "Происходит передозировка"
+          description: "Игрок оказывается на грани смерти"
+          requirements: {}
+          next_node: overdose_critical_situation
+
+    - id: strategic_use_implemented
+      type: enhancement
+      title: "Стратегическое использование внедрено"
+      description: "Наркотики применяются для улучшения способностей."
+      objectives:
+        - "Оптимизировать дозировки"
+        - "Избегать побочных эффектов"
+      choices:
+        - id: abilities_enhanced
+          title: "Способности усилены"
+          description: "Наркотики дают значительное преимущество"
+          requirements: { skill: pharmacology, level: 1 }
+          next_node: enhanced_abilities_achieved
+        - id: tolerance_builds
+          title: "Толерантность нарастает"
+          description: "Нужны все большие дозы для эффекта"
+          requirements: {}
+          next_node: tolerance_increases
+        - id: side_effects_emerge
+          title: "Побочные эффекты возникают"
+          description: "Наркотики вызывают проблемы со здоровьем"
+          requirements: {}
+          next_node: side_effects_manifest
+
+    - id: excess_sold
+      type: businessman
+      title: "Излишки проданы"
+      description: "Неиспользованные наркотики перепроданы с прибылью."
+      objectives:
+        - "Найти покупателей"
+        - "Максимизировать прибыль"
+      choices:
+        - id: profitable_sale
+          title: "Прибыльная продажа"
+          description: "Излишки проданы с хорошей наценкой"
+          requirements: { skill: negotiation, level: 1 }
+          next_node: profitable_sale_completed
+        - id: suspicious_buyers
+          title: "Подозрительные покупатели"
+          description: "Покупатели оказываются undercover полицией"
+          requirements: {}
+          next_node: buyers_reveal_undercover
+        - id: bulk_deal_arranged
+          title: "Оптовая сделка устроена"
+          description: "Найден крупный покупатель для всего запаса"
+          requirements: { skill: networking, level: 2 }
+          next_node: bulk_deal_successfully_arranged
+
+    - id: evidence_gathered
+      type: investigator
+      title: "Доказательства собраны"
+      description: "Собрана достаточная информация для арестов."
+      objectives:
+        - "Передать доказательства"
+        - "Организовать рейд"
+      choices:
+        - id: major_bust_successful
+          title: "Крупный арест успешен"
+          description: "Картельная операция ликвидирована"
+          requirements: { skill: coordination, level: 2 }
+          next_node: major_bust_achieved
+        - id: evidence_compromised
+          title: "Доказательства скомпрометированы"
+          description: "Улики признаны недопустимыми в суде"
+          requirements: {}
+          next_node: evidence_ruled_inadmissible
+        - id: personal_risk_increases
+          title: "Личный риск возрастает"
+          description: "Картель узнает о предательстве"
+          requirements: {}
+          next_node: personal_risk_heightened
+
+    - id: small_operation_busted
+      type: tactical_strike
+      title: "Мелкая операция разгромлена"
+      description: "Небольшая картельная ячейка ликвидирована."
+      objectives:
+        - "Извлечь уроки"
+        - "Планировать следующий шаг"
+      choices:
+        - id: momentum_builds
+          title: "Импульс нарастает"
+          description: "Успех вдохновляет на дальнейшие действия"
+          requirements: {}
+          next_node: momentum_builds_for_larger_operations
+        - id: cartel_retaliates
+          title: "Картель мстит"
+          description: "Картель отвечает на удар"
+          requirements: {}
+          next_node: cartel_retaliation_occurs
+        - id: internal_conflicts_exposed
+          title: "Внутренние конфликты раскрыты"
+          description: "Разгром выявляет проблемы в картеле"
+          requirements: { skill: analysis, level: 1 }
+          next_node: internal_cartel_conflicts_revealed
+
+    - id: boss_identified
+      type: revelation
+      title: "Босс опознан"
+      description: "Лидер картеля идентифицирован и локализован."
+      objectives:
+        - "Спланировать захват"
+        - "Собрать команду"
+      choices:
+        - id: boss_arrested
+          title: "Босс арестован"
+          description: "Лидер картеля взят под стражу"
+          requirements: { skill: strategy, level: 3 }
+          next_node: boss_successfully_arrested
+        - id: boss_eludes_capture
+          title: "Босс уходит от захвата"
+          description: "Лидер сбегает перед арестом"
+          requirements: {}
+          next_node: boss_evades_capture
+        - id: boss_offers_deal
+          title: "Босс предлагает сделку"
+          description: "Лидер предлагает сотрудничество"
+          requirements: { trait: pragmatic, level: 1 }
+          next_node: boss_deal_proposed
+
+    - id: continued_intelligence
+      type: ongoing_informant
+      title: "Продолжено предоставление разведки"
+      description: "Игрок становится постоянным источником информации."
+      objectives:
+        - "Поддерживать поток информации"
+        - "Обеспечивать безопасность"
+      choices:
+        - id: valuable_asset_becomes
+          title: "Становится ценным активом"
+          description: "Информация игрока становится crucial для полиции"
+          requirements: {}
+          next_node: valuable_asset_status_achieved
+        - id: burnout_occurs
+          title: "Происходит выгорание"
+          description: "Стресс от двойной жизни становится слишком большим"
+          requirements: {}
+          next_node: informant_burnout_happens
+        - id: cartel_discovers_traitor
+          title: "Картель обнаруживает предателя"
+          description: "Игрок разоблачен как информатор"
+          requirements: {}
+          next_node: traitor_discovered_consequences
+
+    - id: protection_negotiated
+      type: protected_informant
+      title: "Защита согласована"
+      description: "Полиция обеспечивает безопасность информатора."
+      objectives:
+        - "Воспользоваться защитой"
+        - "Продолжить работу"
+      choices:
+        - id: witness_protection_entered
+          title: "Вступил в программу защиты свидетелей"
+          description: "Полная смена личности и локации"
+          requirements: {}
+          next_node: witness_protection_program_entered
+        - id: local_protection_arranged
+          title: "Местная защита устроена"
+          description: "Защита в текущем городе"
+          requirements: {}
+          next_node: local_protection_established
+        - id: protection_insufficient
+          title: "Защита недостаточна"
+          description: "Меры безопасности не срабатывают"
+          requirements: {}
+          next_node: protection_proves_inadequate
+
+    - id: quietly_disappeared
+      type: ghost
+      title: "Тихо исчез"
+      description: "Игрок уходит в тень без следа."
+      objectives:
+        - "Начать новую жизнь"
+        - "Избегать обнаружения"
+      choices:
+        - id: successful_new_life
+          title: "Успешная новая жизнь"
+          description: "Начинает жизнь под новым именем"
+          requirements: { skill: adaptation, level: 2 }
+          next_node: new_life_successfully_started
+        - id: past_catches_up
+          title: "Прошлое догоняет"
+          description: "Старые связи находят игрока"
+          requirements: {}
+          next_node: past_connections_reemerge
+        - id: return_to_crime
+          title: "Возвращение к преступлению"
+          description: "Не может отказаться от криминальной жизни"
+          requirements: { trait: addicted_to_adrenaline, level: 1 }
+          next_node: crime_life_resumed
+
+    - id: testimony_accepted
+      type: conviction
+      title: "Показания приняты"
+      description: "Суд принимает свидетельские показания игрока."
+      objectives:
+        - "Завершить судебный процесс"
+        - "Получить награду"
+      choices:
+        - id: convictions_achieved
+          title: "Осуждения достигнуты"
+          description: "Ключевые фигуры картеля осуждены"
+          requirements: {}
+          next_node: convictions_successfully_obtained
+        - id: appeals_file
+          title: "Поданы апелляции"
+          description: "Осужденные обжалуют приговор"
+          requirements: {}
+          next_node: appeals_process_begins
+        - id: hung_jury
+          title: "Зависшее жюри"
+          description: "Жюри не может прийти к единому решению"
+          requirements: {}
+          next_node: hung_jury_results
+
+    - id: testimony_rejected
+      type: failure
+      title: "Показания отклонены"
+      description: "Показания признаны ненадежными в суде."
+      objectives:
+        - "Анализировать причины"
+        - "Рассмотреть варианты"
+      choices:
+        - id: civil_lawsuit_attempted
+          title: "Попытка гражданского иска"
+          description: "Подать иск против картеля в гражданском суде"
+          requirements: { skill: law, level: 1 }
+          next_node: civil_lawsuit_filed
+        - id: media_campaign_launched
+          title: "Медиа-кампания запущена"
+          description: "Распространить историю в СМИ"
+          requirements: { skill: public_relations, level: 1 }
+          next_node: media_campaign_successful
+        - id: personal_vengeance_sought
+          title: "Личная месть найдена"
+          description: "Взять правосудие в свои руки"
+          requirements: { trait: vengeful, level: 2 }
+          next_node: personal_vengeance_pursued
+
+    - id: intimidation_attempted
+      type: threat
+      title: "Запугивание предпринято"
+      description: "Картель пытается заставить свидетеля замолчать."
+      objectives:
+        - "Противостоять угрозам"
+        - "Обеспечить безопасность"
+      choices:
+        - id: intimidation_resisted
+          title: "Запугиванию сопротивляются"
+          description: "Угрозы игнорируются, свидетель продолжает"
+          requirements: { trait: courageous, level: 3 }
+          next_node: intimidation_successfully_resisted
+        - id: safety_concerns_arise
+          title: "Возникают опасения безопасности"
+          description: "Угрозы заставляют переосмыслить участие"
+          requirements: {}
+          next_node: safety_concerns_force_reconsideration
+        - id: deal_offered
+          title: "Предложена сделка"
+          description: "Картель предлагает отступные за молчание"
+          requirements: {}
+          next_node: silence_deal_proposed
+
+    - id: delivery_successful
+      type: triumph
+      title: "Доставка успешна"
+      description: "Груз доставлен без происшествий."
+      objectives:
+        - "Получить оплату"
+        - "Планировать следующую доставку"
+      choices:
+        - id: reputation_grows
+          title: "Репутация растет"
+          description: "Успех укрепляет положение в картеле"
+          requirements: {}
+          next_node: reputation_significantly_grows
+        - id: jealousy_arises
+          title: "Возникает ревность"
+          description: "Другие гонщики завидуют успеху"
+          requirements: {}
+          next_node: jealousy_from_peers_arises
+        - id: bigger_jobs_offered
+          title: "Предложены большие задания"
+          description: "Успех открывает двери к крупным операциям"
+          requirements: {}
+          next_node: bigger_assignments_received
+
+    - id: close_call_experienced
+      type: narrow_escape
+      title: "Опасное происшествие пережито"
+      description: "Почти поймали, но удалось уйти."
+      objectives:
+        - "Проанализировать инцидент"
+        - "Улучшить методы"
+      choices:
+        - id: lessons_learned
+          title: "Уроки извлечены"
+          description: "Опыт делает игрока лучше"
+          requirements: { trait: adaptable, level: 1 }
+          next_node: lessons_from_close_call_applied
+        - id: paranoia_develops
+          title: "Развивается паранойя"
+          description: "Близкий вызов вызывает постоянную тревогу"
+          requirements: {}
+          next_node: paranoia_begins_to_affect_performance
+        - id: change_methods
+          title: "Изменить методы"
+          description: "Перейти к более безопасным подходам"
+          requirements: { trait: cautious, level: 1 }
+          next_node: smuggling_methods_changed
+
+    - id: cargo_seized_outcome
+      type: failure
+      title: "Груз изъят - результат"
+      description: "Транспорт обнаружен и конфискован."
+      objectives:
+        - "Минимизировать потери"
+        - "Объяснить неудачу"
+      choices:
+        - id: scapegoat_found
+          title: "Найден козел отпущения"
+          description: "Вина возложена на другого"
+          requirements: { trait: manipulative, level: 1 }
+          next_node: scapegoat_successfully_blamed
+        - id: personal_responsibility
+          title: "Личная ответственность"
+          description: "Игрок берет вину на себя"
+          requirements: { trait: honorable, level: 1 }
+          next_node: responsibility_personally_accepted
+        - id: investigation_launched
+          title: "Расследование начато"
+          description: "Картель расследует причины неудачи"
+          requirements: {}
+          next_node: internal_investigation_initiated
+
+    - id: high_speed_delivery_success
+      type: adrenaline_rush
+      title: "Успех доставки на высокой скорости"
+      description: "Груз доставлен несмотря на интенсивную погоню."
+      objectives:
+        - "Восстановиться от адреналина"
+        - "Поделиться опытом"
+      choices:
+        - id: legendary_status_achieved
+          title: "Легендарный статус достигнут"
+          description: "Игрок становится легендой среди гонщиков"
+          requirements: {}
+          next_node: legendary_status_among_smugglers
+        - id: police_interest_increases
+          title: "Интерес полиции возрастает"
+          description: "Полиция начинает охотиться специально за игроком"
+          requirements: {}
+          next_node: police_target_priority_becomes
+        - id: rival_challenge_issued
+          title: "Бросен вызов соперника"
+          description: "Другие гонщики бросают вызов мастерству"
+          requirements: {}
+          next_node: rival_challenges_issued
+
+    - id: crash_accident_happened
+      type: disaster
+      title: "Произошла авария катастрофы"
+      description: "Транспорт разбился во время погони."
+      objectives:
+        - "Выжить в аварии"
+        - "Спасти груз если возможно"
+      choices:
+        - id: miraculous_survival
+          title: "Чудесное выживание"
+          description: "Игрок выживает вопреки всему"
+          requirements: { trait: lucky, level: 2 }
+          next_node: miraculous_survival_achieved
+        - id: serious_injuries
+          title: "Серьезные травмы"
+          description: "Игрок получает тяжелые ранения"
+          requirements: {}
+          next_node: serious_injuries_sustained
+        - id: cargo_lost_forever
+          title: "Груз потерян навсегда"
+          description: "Наркотики уничтожены в аварии"
+          requirements: {}
+          next_node: cargo_completely_destroyed
+
+    - id: pursuit_successfully_evaded
+      type: evasion_expert
+      title: "Погоня успешно оставлена позади"
+      description: "Преследователи отстали без аварий."
+      objectives:
+        - "Анализировать успех"
+        - "Улучшить навыки"
+      choices:
+        - id: evasion_techniques_refined
+          title: "Техники уклонения усовершенствованы"
+          description: "Опыт улучшает навыки вождения"
+          requirements: { skill: driving, level: 2 }
+          next_node: evasion_techniques_improved
+        - id: false_sense_security
+          title: "Ложное чувство безопасности"
+          description: "Успех создает переоценку способностей"
+          requirements: {}
+          next_node: overconfidence_develops
+        - id: police_change_tactics
+          title: "Полиция меняет тактику"
+          description: "Власти адаптируются к методам игрока"
+          requirements: {}
+          next_node: police_adapt_strategies
+
+    - id: drones_programmed
+      type: automation
+      title: "Дроны запрограммированы"
+      description: "Дроны настроены для автономной доставки."
+      objectives:
+        - "Тестировать систему"
+        - "Мониторить доставку"
+      choices:
+        - id: flawless_delivery
+          title: "Безупречная доставка"
+          description: "Дроны выполняют задачу идеально"
+          requirements: { skill: programming, level: 3 }
+          next_node: delivery_flawlessly_executed
+        - id: technical_glitches
+          title: "Технические сбои"
+          description: "Дроны сталкиваются с проблемами"
+          requirements: {}
+          next_node: technical_problems_occur
+        - id: drone_hijacked
+          title: "Дрон захвачен"
+          description: "Кто-то перехватывает контроль над дронами"
+          requirements: {}
+          next_node: drone_control_hijacked
+
+    - id: detection_avoided
+      type: stealth_tech
+      title: "Обнаружение избегнуто"
+      description: "Дроны остаются незаметными для систем обнаружения."
+      objectives:
+        - "Поддерживать stealth"
+        - "Обновлять countermeasures"
+      choices:
+        - id: invisible_transport
+          title: "Невидимый транспорт"
+          description: "Дроны полностью избегают обнаружения"
+          requirements: { skill: hacking, level: 4 }
+          next_node: transport_remains_completely_invisible
+        - id: close_detection_call
+          title: "Близкий вызов обнаружения"
+          description: "Почти обнаружены, но удалось уйти"
+          requirements: {}
+          next_node: detection_barely_avoided
+        - id: new_detection_tech
+          title: "Новая технология обнаружения"
+          description: "Власти внедряют новые методы обнаружения"
+          requirements: {}
+          next_node: new_detection_technology_emerges
+
+    - id: hacks_countered
+      type: cybersecurity
+      title: "Хаки противодействованы"
+      description: "Дроны защищены от враждебного взлома."
+      objectives:
+        - "Укреплять защиту"
+        - "Мониторить угрозы"
+      choices:
+        - id: impenetrable_defense
+          title: "Непроницаемая оборона"
+          description: "Дроны полностью защищены от хаков"
+          requirements: { skill: cybersecurity, level: 4 }
+          next_node: defense_proves_impenetrable
+        - id: sophisticated_attack
+          title: "Софisticated атака"
+          description: "Вражеский хакер преодолевает защиту"
+          requirements: {}
+          next_node: sophisticated_hack_succeeds
+        - id: defense_upgrade_needed
+          title: "Нужен апгрейд обороны"
+          description: "Текущая защита недостаточна"
+          requirements: {}
+          next_node: defense_upgrades_required
+
+    - id: attackers_repelled
+      type: victory
+      title: "Нападающие отбиты"
+      description: "Территория успешно защищена от атаки."
+      objectives:
+        - "Укрепить оборону"
+        - "Анализировать тактику врага"
+      choices:
+        - id: defensive_legend
+          title: "Легенда обороны"
+          description: "Победа делает игрока легендой"
+          requirements: {}
+          next_node: defensive_legend_status_achieved
+        - id: costly_victory
+          title: "Дорогая победа"
+          description: "Победа достигнута с большими потерями"
+          requirements: {}
+          next_node: victory_achieved_at_high_cost
+        - id: enemy_weakened
+          title: "Враг ослаблен"
+          description: "Атака значительно ослабила противника"
+          requirements: { skill: tactics, level: 2 }
+          next_node: enemy_forces_significantly_weakened
+
+    - id: territory_lost_to_attackers
+      type: defeat
+      title: "Территория потеряна нападающим"
+      description: "Оборона прорвана, территория захвачена."
+      objectives:
+        - "Организовать отступление"
+        - "Планировать контрнаступление"
+      choices:
+        - id: guerrilla_warfare
+          title: "Партизанская война"
+          description: "Переход к скрытым атакам на захватчиков"
+          requirements: { skill: guerrilla_tactics, level: 1 }
+          next_node: guerrilla_campaign_launched
+        - id: negotiate_surrender
+          title: "Переговоры о капитуляции"
+          description: "Сдаться и сохранить жизни"
+          requirements: { trait: pragmatic, level: 1 }
+          next_node: surrender_terms_negotiated
+        - id: last_stand_attempted
+          title: "Последняя оборона предпринята"
+          description: "Отчаянная попытка удержать территорию"
+          requirements: { trait: stubborn, level: 2 }
+          next_node: last_stand_failed
+
+    - id: counterattack_launched
+      type: offense
+      title: "Контратака начата"
+      description: "Переход в наступление на захватчиков."
+      objectives:
+        - "Восстановить территорию"
+        - "Нанести урон врагу"
+      choices:
+        - id: territory_recovered
+          title: "Территория восстановлена"
+          description: "Успешное контрнаступление возвращает контроль"
+          requirements: { skill: military_strategy, level: 2 }
+          next_node: territory_successfully_recovered
+        - id: counterattack_repelled
+          title: "Контратака отбита"
+          description: "Нападающие отражают контратаку"
+          requirements: {}
+          next_node: counterattack_forcefully_repelled
+        - id: stalemate_achieved
+          title: "Пат достигнут"
+          description: "Стороны застаиваются в позиционной войне"
+          requirements: {}
+          next_node: bloody_stalemate_established
+
+    - id: loyal_team_established
+      type: brotherhood
+      title: "Лояльная команда установлена"
+      description: "Команда enforcers надежна и эффективна."
+      objectives:
+        - "Поддерживать лояльность"
+        - "Расширять команду"
+      choices:
+        - id: elite_unit_formed
+          title: "Элитный отряд сформирован"
+          description: "Команда становится элитной силой"
+          requirements: { skill: leadership, level: 4 }
+          next_node: elite_enforcer_unit_created
+        - id: team_politics_emerge
+          title: "Политика команды возникает"
+          description: "Внутренние конфликты ослабляют команду"
+          requirements: {}
+          next_node: internal_team_politics_develop
+        - id: external_threats_arise
+          title: "Внешние угрозы возникают"
+          description: "Другие силы пытаются подкупить команду"
+          requirements: {}
+          next_node: external_influences_attempt_corruption
+
+    - id: internal_betrayal_discovered
+      type: treachery
+      title: "Внутреннее предательство обнаружено"
+      description: "Один из enforcers предает картель."
+      objectives:
+        - "Обезвредить предателя"
+        - "Восстановить доверие"
+      choices:
+        - id: traitor_eliminated
+          title: "Предатель устранен"
+          description: "Предатель ликвидирован, доверие восстановлено"
+          requirements: { trait: ruthless, level: 1 }
+          next_node: traitor_successfully_eliminated
+        - id: damage_control_needed
+          title: "Нужен контроль ущерба"
+          description: "Предательство нанесло значительный ущерб"
+          requirements: {}
+          next_node: damage_control_operations_initiated
+        - id: chain_reaction
+          title: "Цепная реакция"
+          description: "Предательство вызывает серию отступничеств"
+          requirements: {}
+          next_node: chain_reaction_of_betrayals
+
+    - id: team_disbanded
+      type: dissolution
+      title: "Команда распущена"
+      description: "Enforcers уходят из-за низкой оплаты."
+      objectives:
+        - "Найти замену"
+        - "Пересмотреть бюджет"
+      choices:
+        - id: new_recruits_found
+          title: "Найдены новые рекруты"
+          description: "Команда заменена новыми людьми"
+          requirements: { skill: recruitment, level: 1 }
+          next_node: new_team_successfully_recruited
+        - id: solo_operation_mode
+          title: "Режим одиночной операции"
+          description: "Игрок работает без команды"
+          requirements: { trait: independent, level: 1 }
+          next_node: solo_operations_mode_adopted
+        - id: territory_abandoned
+          title: "Территория оставлена"
+          description: "Без защиты территория теряется"
+          requirements: {}
+          next_node: territory_forced_abandonment
+
+    - id: fear_effective
+      type: control
+      title: "Страх эффективен"
+      description: "Местные остаются лояльными из страха."
+      objectives:
+        - "Поддерживать контроль"
+        - "Мониторить лояльность"
+      choices:
+        - id: iron_fisted_rule
+          title: "Правление железным кулаком"
+          description: "Полный контроль через страх"
+          requirements: {}
+          next_node: iron_fisted_control_established
+        - id: fear_turns_to_hate
+          title: "Страх превращается в ненависть"
+          description: "Репрессии вызывают сопротивление"
+          requirements: {}
+          next_node: fear_transforms_to_active_resistance
+        - id: selective_enforcement
+          title: "Селективное обеспечение"
+          description: "Страх применяется избирательно"
+          requirements: { trait: calculating, level: 1 }
+          next_node: selective_intimidation_strategy
+
+    - id: resistance_growing
+      type: uprising
+      title: "Сопротивление растет"
+      description: "Жители начинают сопротивляться запугиванию."
+      objectives:
+        - "Подавить сопротивление"
+        - "Изменить подход"
+      choices:
+        - id: increased_intimidation
+          title: "Увеличенное запугивание"
+          description: "Усиление репрессий подавляет сопротивление"
+          requirements: { trait: authoritarian, level: 1 }
+          next_node: resistance_crushed_through_intimidation
+        - id: compromise_attempted
+          title: "Компромисс предпринят"
+          description: "Предложение уступок местным"
+          requirements: { trait: diplomatic, level: 1 }
+          next_node: compromise_with_locals_reached
+        - id: full_uprising
+          title: "Полное восстание"
+          description: "Сопротивление перерастает в открытый бунт"
+          requirements: {}
+          next_node: full_scale_uprising_occurs
+
+    - id: community_uprising_started
+      type: revolution
+      title: "Восстание сообщества начато"
+      description: "Местные организуют сопротивление картелю."
+      objectives:
+        - "Подавить восстание"
+        - "Минимизировать потери"
+      choices:
+        - id: uprising_quelled
+          title: "Восстание подавлено"
+          description: "Бунт жестко подавлен"
+          requirements: { skill: crowd_control, level: 2 }
+          next_node: uprising_bloodily_suppressed
+        - id: negotiated_settlement
+          title: "Переговорное урегулирование"
+          description: "Достигнуто соглашение с повстанцами"
+          requirements: { skill: negotiation, level: 3 }
+          next_node: negotiated_settlement_achieved
+        - id: territory_lost_uprising
+          title: "Территория потеряна в восстании"
+          description: "Восстание приводит к потере контроля"
+          requirements: {}
+          next_node: territory_lost_to_uprising
+
+    - id: intelligence_successfully_gathered
+      type: espionage_success
+      title: "Разведка успешно собрана"
+      description: "Получена ценная информация о картеле."
+      objectives:
+        - "Проанализировать данные"
+        - "Спланировать использование"
+      choices:
+        - id: strategic_advantage_gained
+          title: "Стратегическое преимущество получено"
+          description: "Информация дает значительное преимущество"
+          requirements: { skill: strategy, level: 2 }
+          next_node: strategic_advantage_securely_held
+        - id: information_leaked
+          title: "Информация слита"
+          description: "Кто-то узнает о полученной информации"
+          requirements: {}
+          next_node: intelligence_leak_occurs
+        - id: false_intelligence
+          title: "Ложная разведка"
+          description: "Информация оказывается дезинформацией"
+          requirements: {}
+          next_node: intelligence_proves_false
+
+    - id: cover_compromised
+      type: exposure
+      title: "Легенда скомпрометирована"
+      description: "Маскарад разоблачен."
+      objectives:
+        - "Бежать или драться"
+        - "Минимизировать ущерб"
+      choices:
+        - id: narrow_escape_made
+          title: "Узкий побег сделан"
+          description: "Удалось уйти от захвата"
+          requirements: { skill: evasion, level: 3 }
+          next_node: narrow_escape_from_exposure
+        - id: captured_and_interrogated
+          title: "Захвачен и допрошен"
+          description: "Попал в руки врага"
+          requirements: {}
+          next_node: captured_for_interrogation
+        - id: turn_double_agent
+          title: "Стать двойным агентом"
+          description: "Предложить услуги обеим сторонам"
+          requirements: { trait: opportunistic, level: 3 }
+          next_node: double_agent_role_assumed
+
+    - id: double_agent_opportunity_arose
+      type: duality
+      title: "Возможность двойного агента возникла"
+      description: "Предложение работать на обе стороны."
+      objectives:
+        - "Сбалансировать лояльности"
+        - "Максимизировать прибыль"
+      choices:
+        - id: successful_duality
+          title: "Успешная двойственность"
+          description: "Удалось обмануть обе стороны"
+          requirements: { skill: deception, level: 5 }
+          next_node: duality_successfully_maintained
+        - id: exposure_inevitable
+          title: "Разоблачение неизбежно"
+          description: "Рано или поздно обман раскроется"
+          requirements: {}
+          next_node: double_agent_exposed
+        - id: choose_side_decision
+          title: "Выбор стороны - решение"
+          description: "Пришлось выбрать одну сторону"
+          requirements: { trait: decisive, level: 1 }
+          next_node: definitive_side_chosen
+
+    - id: supply_chain_successfully_disrupted
+      type: sabotage_success
+      title: "Цепочка поставок успешно нарушена"
+      description: "Удалось саботировать поставки конкурента."
+      objectives:
+        - "Укрепить преимущество"
+        - "Избегать ответных мер"
+      choices:
+        - id: competitor_weakened
+          title: "Конкурент ослаблен"
+          description: "Саботаж значительно ослабил противника"
+          requirements: {}
+          next_node: competitor_significantly_weakened
+        - id: retaliation_expected
+          title: "Ответные меры ожидаются"
+          description: "Противник готовится к мести"
+          requirements: {}
+          next_node: retaliation_inevitably_follows
+        - id: market_opportunity
+          title: "Рыночная возможность"
+          description: "Ослабление конкурента открывает новые возможности"
+          requirements: { skill: business, level: 1 }
+          next_node: market_opportunity_exploited
+
+    - id: genuine_supplier_role_adopted
+      type: transition
+      title: "Роль настоящего поставщика принята"
+      description: "Пришлось действительно поставлять химикаты."
+      objectives:
+        - "Управлять поставками"
+        - "Поддерживать доверие"
+      choices:
+        - id: successful_integration
+          title: "Успешная интеграция"
+          description: "Стал полноценным членом картеля"
+          requirements: { skill: adaptation, level: 2 }
+          next_node: fully_integrated_supplier
+        - id: quality_issues_arise
+          title: "Возникают проблемы качества"
+          description: "Поставляемый продукт вызывает жалобы"
+          requirements: {}
+          next_node: quality_complaints_received
+        - id: internal_conflicts_supplier
+          title: "Внутренние конфликты поставщика"
+          description: "Конфликты с другими поставщиками"
+          requirements: {}
+          next_node: supplier_rivalries_develop
+
+    - id: busted_during_delivery_attempt
+      type: capture
+      title: "Пойман во время попытки доставки"
+      description: "Раскрыт во время поставки."
+      objectives:
+        - "Выпутаться из ситуации"
+        - "Минимизировать последствия"
+      choices:
+        - id: convincing_escape
+          title: "Убедительный побег"
+          description: "Удалось убедительно объяснить ситуацию"
+          requirements: { skill: deception, level: 4 }
+          next_node: convincing_escape_achieved
+        - id: exposed_as_spy
+          title: "Разоблачен как шпион"
+          description: "Истинная цель раскрыта"
+          requirements: {}
+          next_node: spy_identity_exposed
+        - id: defection_offered
+          title: "Предложен defection"
+          description: "Предложение присоединиться к картелю"
+          requirements: {}
+          next_node: defection_opportunity_presented
+
+    - id: major_plot_revealed
+      type: conspiracy
+      title: "Крупный заговор раскрыт"
+      description: "Найдена информация о большой операции."
+      objectives:
+        - "Решить как использовать"
+        - "Обеспечить безопасность"
+      choices:
+        - id: plot_disrupted
+          title: "Заговор нарушен"
+          description: "Операция сорвана до выполнения"
+          requirements: { skill: sabotage, level: 2 }
+          next_node: major_plot_successfully_disrupted
+        - id: information_sold
+          title: "Информация продана"
+          description: "Секреты проданы заинтересованным сторонам"
+          requirements: { trait: mercenary, level: 1 }
+          next_node: intelligence_profitably_sold
+        - id: personal_gain_sought
+          title: "Личная выгода найдена"
+          description: "Информация использована для личных целей"
+          requirements: { trait: self_interested, level 2 }
+          next_node: personal_advantage_exploited
+
+    - id: false_information_successfully_planted
+      type: misinformation
+      title: "Ложная информация успешно посеяна"
+      description: "Введена дезинформация в коммуникации."
+      objectives:
+        - "Наблюдать за эффектом"
+        - "Поддерживать обман"
+      choices:
+        - id: confusion_created
+          title: "Смута создана"
+          description: "Дезинформация вызывает хаос у противника"
+          requirements: {}
+          next_node: enemy_confusion_maximized
+        - id: disinformation_discovered
+          title: "Дезинформация обнаружена"
+          description: "Противник распознает ложную информацию"
+          requirements: {}
+          next_node: false_information_exposed
+        - id: own_side_deceived
+          title: "Собственная сторона обманута"
+          description: "Дезинформация вводит в заблуждение союзников"
+          requirements: {}
+          next_node: unintended_own_side_deception
+
+    - id: hack_detected_countermeasures_taken
+      type: detection
+      title: "Взлом обнаружен - countermeasures приняты"
+      description: "Противник заметил несанкционированный доступ."
+      objectives:
+        - "Отвести подозрения"
+        - "Улучшить stealth"
+      choices:
+        - id: suspicion_deflected
+          title: "Подозрения отвлечены"
+          description: "Удалось убедить, что взлом был случайным"
+          requirements: { skill: deception, level: 3 }
+          next_node: suspicion_successfully_deflected
+        - id: trace_back_attempt
+          title: "Попытка trace back"
+          description: "Противник пытается отследить источник"
+          requirements: {}
+          next_node: trace_back_initiated
+        - id: security_upgrade_triggered
+          title: "Апгрейд безопасности инициирован"
+          description: "Взлом приводит к улучшению защиты противника"
+          requirements: {}
+          next_node: enemy_security_improved
+
+    - id: quest_completed_cartel_loyalty
+      type: completion
+      title: "Квест завершен лояльностью картелю"
+      description: "Игрок становится ценным членом картельной организации."
+      objectives:
+        - "Получить награды"
+        - "Завершить квест"
+      rewards:
+        experience: 25000
+        currency: { type: eddies, amount: 42000 }
+        items: [{ name: "Cartel Loyalty Ring", type: quest_item, rarity: epic }]
+      next_quests: []
+
+    - id: quest_completed_independent_empire
+      type: completion
+      title: "Квест завершен независимой империей"
+      description: "Игрок создает собственную наркоторговую империю."
+      objectives:
+        - "Получить награды"
+        - "Завершить квест"
+      rewards:
+        experience: 35000
+        currency: { type: eddies, amount: 60000 }
+        items: [{ name: "Empire Builder Crown", type: quest_item, rarity: legendary }]
+      next_quests: []
+
+    - id: quest_completed_police_hero
+      type: completion
+      title: "Квест завершен героем полиции"
+      description: "Игрок становится героем в борьбе с наркоторговлей."
+      objectives:
+        - "Получить награды"
+        - "Завершить квест"
+      rewards:
+        experience: 30000
+        currency: { type: eddies, amount: 50000 }
+        items: [{ name: "Police Hero Medal", type: quest_item, rarity: epic }]
+      next_quests: []
+
+    - id: quest_completed_destroyed_cartels
+      type: completion
+      title: "Квест завершен разрушенными картелями"
+      description: "Наркоторговля в городе значительно ослаблена."
+      objectives:
+        - "Получить награды"
+        - "Завершить квест"
+      rewards:
+        experience: 32000
+        currency: { type: eddies, amount: 55000 }
+        items: [{ name: "Cartel Destroyer Trophy", type: quest_item, rarity: legendary }]
+      next_quests: []
+
+    - id: quest_completed_addict_downfall
+      type: completion
+      title: "Квест завершен падением наркомана"
+      description: "Зависимость разрушает жизнь игрока."
+      objectives:
+        - "Получить награды"
+        - "Завершить квест"
+      rewards:
+        experience: 8000
+        currency: { type: eddies, amount: 12000 }
+        items: [{ name: "Addiction Lesson Token", type: quest_item, rarity: common }]
+      next_quests: []
