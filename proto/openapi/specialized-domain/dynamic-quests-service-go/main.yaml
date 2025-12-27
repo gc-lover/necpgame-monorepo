@@ -1,0 +1,1438 @@
+openapi: 3.0.3
+info:
+  title: Dynamic Quests Service API
+  description: |
+    **Enterprise-grade Dynamic Quests Service API**
+
+    Manages dynamic, choice-driven quests with reputation systems for MMORPG gameplay.
+
+    **Key Features:**
+    - Dynamic quest generation based on player choices
+    - Reputation tracking (Corporate/Street/Humanity scores)
+    - Choice point management with branching narratives
+    - Multiple ending variations per quest
+    - Real-time quest state synchronization
+
+    **Performance Targets:**
+    - P99 <25ms for quest operations
+    - 2000+ RPS sustained load
+    - <40MB memory per service instance
+    - 95%+ cache hit rate for quest states
+
+    **BACKEND NOTE:** Fields ordered for struct alignment (30-50% memory savings expected)
+  version: 1.0.0
+  contact:
+    name: API Designer Team
+    email: api-designer@necpgame.com
+
+servers:
+  - url: https://api.necpgame.com/gameplay/dynamic-quests
+    description: Production server
+  - url: http://localhost:8080
+    description: Local development server
+
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: '**Enterprise health check** - Returns service health status with structured logging'
+      operationId: getHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /ready:
+    get:
+      summary: Readiness check endpoint
+      description: '**Enterprise readiness check** - Validates database connectivity and service dependencies'
+      operationId: getReady
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is ready to handle requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+        '503':
+          description: Service is not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/quests:
+    get:
+      summary: List available quests
+      description: |
+        '**Enterprise quest discovery** - Retrieves filtered quest definitions with player level and reputation matching
+
+        Supports pagination, filtering by player attributes, and reputation-based quest availability.
+
+        **Performance:** <15ms P95 with Redis caching, optimized for 1000+ concurrent players'
+      operationId: listQuests
+      tags:
+        - Quest Management
+      parameters:
+        - name: player_level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 1
+          description: Player character level for quest filtering
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Player ID for reputation-based filtering
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of quests to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: List of available quests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestListResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create quest definition
+      description: |
+        '**Enterprise quest authoring** - Creates new dynamic quest definition with choice points and reputation impacts
+
+        Supports complex narrative structures with branching endings and reputation consequences.
+
+        **Performance:** <50ms P95 with transaction safety, optimized for content pipeline'
+      operationId: createQuest
+      tags:
+        - Quest Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuestRequest'
+      responses:
+        '201':
+          description: Quest created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateQuestResponse'
+        '400':
+          description: Invalid quest data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/quests/{questId}:
+    get:
+      summary: Get quest definition
+      description: '**Enterprise quest retrieval** - Fetches complete quest definition with all choice points and endings'
+      operationId: getQuest
+      tags:
+        - Quest Management
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique quest identifier
+      responses:
+        '200':
+          description: Quest definition retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestDefinition'
+        '404':
+          description: Quest not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update quest definition
+      description: '**Enterprise quest editing** - Updates existing quest with new content and choice points'
+      operationId: updateQuest
+      tags:
+        - Quest Management
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique quest identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuestRequest'
+      responses:
+        '200':
+          description: Quest updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateQuestResponse'
+        '400':
+          description: Invalid quest data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Quest not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete quest definition
+      description: '**Enterprise quest removal** - Soft deletes quest definition (preserves player progress)'
+      operationId: deleteQuest
+      tags:
+        - Quest Management
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique quest identifier
+      responses:
+        '204':
+          description: Quest deleted successfully
+        '404':
+          description: Quest not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/quests/{questId}/start:
+    post:
+      summary: Start quest for player
+      description: |
+        '**Enterprise quest initialization** - Begins quest instance for player with reputation snapshot
+
+        Creates player quest state, records starting reputation, initializes choice history.
+
+        **Performance:** <20ms P95 with transaction safety, optimized for quest acceptance spikes'
+      operationId: startQuest
+      tags:
+        - Quest Progress
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique quest identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartQuestRequest'
+      responses:
+        '200':
+          description: Quest started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartQuestResponse'
+        '400':
+          description: Invalid request or quest already started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Quest not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/quests/{questId}/state:
+    get:
+      summary: Get player quest state
+      description: |
+        '**Enterprise state retrieval** - Fetches current player quest progress with choice history
+
+        Returns complete quest state for client synchronization and UI updates.
+
+        **Performance:** <10ms P95 with Redis caching, optimized for real-time state polling'
+      operationId: getQuestState
+      tags:
+        - Quest Progress
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique quest identifier
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player identifier
+      responses:
+        '200':
+          description: Quest state retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerQuestState'
+        '400':
+          description: Missing player_id parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Quest state not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/quests/{questId}/choices:
+    post:
+      summary: Process player choice
+      description: |
+        '**Enterprise choice processing** - Records player decision and advances quest state
+
+        Updates reputation scores, records choice history, determines next quest state.
+
+        **Performance:** <30ms P95 with reputation calculations, optimized for choice-heavy gameplay'
+      operationId: makeChoice
+      tags:
+        - Quest Progress
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique quest identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MakeChoiceRequest'
+      responses:
+        '200':
+          description: Choice processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MakeChoiceResponse'
+        '400':
+          description: Invalid choice data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Quest or choice point not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/quests/{questId}/complete:
+    post:
+      summary: Complete quest
+      description: |
+        '**Enterprise quest completion** - Finalizes quest with chosen ending and reputation updates
+
+        Records completion timestamp, applies final reputation changes, unlocks achievements.
+
+        **Performance:** <40ms P95 with achievement triggers, optimized for quest completion rewards'
+      operationId: completeQuest
+      tags:
+        - Quest Progress
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique quest identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteQuestRequest'
+      responses:
+        '200':
+          description: Quest completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompleteQuestResponse'
+        '400':
+          description: Quest cannot be completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Quest not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/players/{playerId}/quests:
+    get:
+      summary: Get player's active quests
+      description: |
+        '**Enterprise player dashboard** - Lists all player quests with progress indicators
+
+        Returns quest states, completion percentages, reputation impacts.
+
+        **Performance:** <25ms P95 with player data aggregation, optimized for dashboard loading'
+      operationId: getPlayerQuests
+      tags:
+        - Player Management
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player identifier
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, available]
+            default: active
+          description: Quest status filter
+      responses:
+        '200':
+          description: Player quests retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerQuestsResponse'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/players/{playerId}/reputation:
+    get:
+      summary: Get player reputation
+      description: |
+        '**Enterprise reputation tracking** - Retrieves complete player reputation profile
+
+        Includes Corporate/Street reputation scores, humanity rating, faction standing.
+
+        **Performance:** <10ms P95 with cached reputation data, optimized for UI displays'
+      operationId: getPlayerReputation
+      tags:
+        - Player Management
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player identifier
+      responses:
+        '200':
+          description: Player reputation retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerReputation'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/admin/import:
+    post:
+      summary: Import quests from YAML files
+      description: |
+        '**Enterprise content import** - Bulk imports quest definitions from structured YAML files
+
+        Processes quest files, validates data integrity, creates database entries.
+
+        **Performance:** <200ms per quest file with batch processing, optimized for content pipeline'
+      operationId: importQuests
+      tags:
+        - Administration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportQuestsRequest'
+      responses:
+        '200':
+          description: Quests imported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportQuestsResponse'
+        '400':
+          description: Invalid import data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Import failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/admin/reset:
+    post:
+      summary: Reset player progress (admin only)
+      description: |
+        '**Enterprise admin utility** - Resets player quest progress for testing/debugging
+
+        Clears quest states, choice history, reputation changes. Requires admin privileges.
+
+        **Security:** Admin-only endpoint with audit logging'
+      operationId: resetPlayerProgress
+      tags:
+        - Administration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetProgressRequest'
+      responses:
+        '200':
+          description: Player progress reset successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetProgressResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Reset failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    # BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%
+
+    Error:
+      type: object
+      required:
+        - error
+        - status
+        - code
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Quest not found"
+        status:
+          type: string
+          description: HTTP status text
+          example: "Not Found"
+        code:
+          type: integer
+          description: HTTP status code
+          example: 404
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        request_id:
+          type: string
+          description: Request identifier for tracing
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+        - timestamp
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        service:
+          type: string
+          example: "dynamic-quests-service"
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: "1.0.0"
+
+    ReadinessResponse:
+      type: object
+      required:
+        - status
+        - service
+        - timestamp
+      properties:
+        status:
+          type: string
+          example: "ready"
+        service:
+          type: string
+          example: "dynamic-quests-service"
+        timestamp:
+          type: string
+          format: date-time
+        database_status:
+          type: string
+          enum: [connected, disconnected]
+          example: "connected"
+
+    QuestDefinition:
+      type: object
+      required:
+        - quest_id
+        - title
+        - description
+        - quest_type
+        - min_level
+        - max_level
+        - choice_points
+        - ending_variations
+        - reputation_impacts
+        - created_at
+        - updated_at
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+          description: Unique quest identifier
+        title:
+          type: string
+          maxLength: 200
+          description: Quest display title
+        description:
+          type: string
+          maxLength: 2000
+          description: Detailed quest description
+        quest_type:
+          type: string
+          enum: [dynamic, linear, branching]
+          default: dynamic
+          description: Quest structure type
+        min_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Minimum player level requirement
+        max_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Maximum player level requirement
+        choice_points:
+          type: object
+          description: Available choice points in quest
+          additionalProperties:
+            $ref: '#/components/schemas/ChoicePoint'
+        ending_variations:
+          type: object
+          description: Possible quest endings with conditions
+          additionalProperties:
+            $ref: '#/components/schemas/EndingVariation'
+        reputation_impacts:
+          type: object
+          description: Reputation changes per choice
+          additionalProperties:
+            $ref: '#/components/schemas/ReputationImpact'
+        created_at:
+          type: string
+          format: date-time
+          description: Quest creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp
+
+    ChoicePoint:
+      type: object
+      required:
+        - point_id
+        - description
+        - choices
+      properties:
+        point_id:
+          type: string
+          description: Unique identifier for choice point
+        description:
+          type: string
+          description: Context for the choice
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChoiceOption'
+          minItems: 2
+          maxItems: 5
+
+    ChoiceOption:
+      type: object
+      required:
+        - choice_id
+        - text
+        - reputation_impact
+      properties:
+        choice_id:
+          type: string
+          description: Unique choice identifier
+        text:
+          type: string
+          description: Choice display text
+        reputation_impact:
+          $ref: '#/components/schemas/ReputationImpact'
+
+    EndingVariation:
+      type: object
+      required:
+        - ending_id
+        - title
+        - description
+        - conditions
+      properties:
+        ending_id:
+          type: string
+          description: Unique ending identifier
+        title:
+          type: string
+          description: Ending display title
+        description:
+          type: string
+          description: Ending narrative description
+        conditions:
+          type: array
+          items:
+            type: string
+          description: Required choice sequence for this ending
+
+    ReputationImpact:
+      type: object
+      properties:
+        corporate_rep:
+          type: integer
+          minimum: -100
+          maximum: 100
+          default: 0
+          description: Corporate reputation change
+        street_rep:
+          type: integer
+          minimum: -100
+          maximum: 100
+          default: 0
+          description: Street reputation change
+        humanity_score:
+          type: integer
+          minimum: -50
+          maximum: 50
+          default: 0
+          description: Humanity score change
+        faction_standing:
+          type: string
+          enum: [ally, friendly, neutral, hostile, enemy]
+          description: Faction relationship change
+
+    QuestListResponse:
+      type: object
+      required:
+        - quests
+        - count
+        - total
+      properties:
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestDefinition'
+        count:
+          type: integer
+          description: Number of quests returned
+        total:
+          type: integer
+          description: Total available quests
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+
+    PaginationInfo:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: Items per page
+        offset:
+          type: integer
+          description: Current offset
+        has_more:
+          type: boolean
+          description: Whether more items are available
+
+    CreateQuestRequest:
+      type: object
+      required:
+        - quest_id
+        - title
+        - description
+        - quest_type
+        - min_level
+        - max_level
+        - choice_points
+        - ending_variations
+        - reputation_impacts
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        quest_type:
+          type: string
+          enum: [dynamic, linear, branching]
+          default: dynamic
+        min_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        max_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        choice_points:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ChoicePoint'
+        ending_variations:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EndingVariation'
+        reputation_impacts:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ReputationImpact'
+
+    CreateQuestResponse:
+      type: object
+      required:
+        - message
+        - quest_id
+        - created_at
+      properties:
+        message:
+          type: string
+          example: "Quest created successfully"
+        quest_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    UpdateQuestRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        quest_type:
+          type: string
+          enum: [dynamic, linear, branching]
+        min_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        max_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        choice_points:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ChoicePoint'
+        ending_variations:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EndingVariation'
+        reputation_impacts:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ReputationImpact'
+
+    UpdateQuestResponse:
+      type: object
+      required:
+        - message
+        - quest_id
+        - updated_at
+      properties:
+        message:
+          type: string
+          example: "Quest updated successfully"
+        quest_id:
+          type: string
+          format: uuid
+        updated_at:
+          type: string
+          format: date-time
+
+    PlayerQuestState:
+      type: object
+      required:
+        - player_id
+        - quest_id
+        - current_state
+        - choice_history
+        - reputation_snapshot
+        - started_at
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        quest_id:
+          type: string
+          format: uuid
+          description: Quest identifier
+        current_state:
+          type: string
+          enum: [available, active, completed, failed]
+          description: Current quest progress state
+        choice_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChoiceRecord'
+          description: History of player choices
+        reputation_snapshot:
+          $ref: '#/components/schemas/PlayerReputation'
+          description: Reputation at quest start
+        started_at:
+          type: string
+          format: date-time
+          description: Quest start timestamp
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Quest completion timestamp
+        ending_achieved:
+          type: string
+          nullable: true
+          description: Which ending was achieved
+
+    ChoiceRecord:
+      type: object
+      required:
+        - choice_id
+        - choice_point
+        - choice_value
+        - timestamp
+        - reputation_before
+        - reputation_after
+      properties:
+        choice_id:
+          type: string
+          description: Unique choice identifier
+        choice_point:
+          type: string
+          description: Choice point identifier
+        choice_value:
+          type: string
+          description: Selected choice value
+        timestamp:
+          type: string
+          format: date-time
+          description: Choice timestamp
+        reputation_before:
+          $ref: '#/components/schemas/PlayerReputation'
+        reputation_after:
+          $ref: '#/components/schemas/PlayerReputation'
+
+    PlayerReputation:
+      type: object
+      required:
+        - player_id
+        - corporate_rep
+        - street_rep
+        - humanity_score
+        - faction_standing
+        - last_updated
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        corporate_rep:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          description: Corporate reputation score
+        street_rep:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          description: Street reputation score
+        humanity_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Humanity rating (0-100 scale)
+        faction_standing:
+          type: string
+          enum: [ally, friendly, neutral, hostile, enemy]
+          description: Overall faction relationship
+        last_updated:
+          type: string
+          format: date-time
+          description: Last reputation update timestamp
+
+    StartQuestRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+
+    StartQuestResponse:
+      type: object
+      required:
+        - message
+        - player_id
+        - quest_id
+        - started_at
+      properties:
+        message:
+          type: string
+          example: "Quest started successfully"
+        player_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        started_at:
+          type: string
+          format: date-time
+
+    MakeChoiceRequest:
+      type: object
+      required:
+        - player_id
+        - choice
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        choice:
+          $ref: '#/components/schemas/PlayerChoice'
+
+    PlayerChoice:
+      type: object
+      required:
+        - choice_point
+        - choice_value
+      properties:
+        choice_point:
+          type: string
+          description: Choice point identifier
+        choice_value:
+          type: string
+          description: Selected choice value
+        metadata:
+          type: object
+          description: Additional choice metadata
+
+    MakeChoiceResponse:
+      type: object
+      required:
+        - message
+        - player_id
+        - quest_id
+        - choice_processed
+        - new_state
+        - reputation_updated
+      properties:
+        message:
+          type: string
+          example: "Choice processed successfully"
+        player_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        choice_processed:
+          $ref: '#/components/schemas/ChoiceRecord'
+        new_state:
+          type: string
+          enum: [active, completed, failed]
+          description: New quest state after choice
+        reputation_updated:
+          $ref: '#/components/schemas/PlayerReputation'
+        next_choice_points:
+          type: array
+          items:
+            type: string
+          description: Available next choice points
+
+    CompleteQuestRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        force_complete:
+          type: boolean
+          default: false
+          description: Force completion (admin override)
+
+    CompleteQuestResponse:
+      type: object
+      required:
+        - message
+        - player_id
+        - quest_id
+        - ending_achieved
+        - completed_at
+        - final_reputation
+      properties:
+        message:
+          type: string
+          example: "Quest completed successfully"
+        player_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        ending_achieved:
+          type: string
+          description: Which ending was achieved
+        completed_at:
+          type: string
+          format: date-time
+        final_reputation:
+          $ref: '#/components/schemas/PlayerReputation'
+        rewards_granted:
+          type: array
+          items:
+            type: string
+          description: Granted rewards/achievements
+
+    PlayerQuestsResponse:
+      type: object
+      required:
+        - player_id
+        - quests
+        - active_count
+        - completed_count
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerQuestState'
+        active_count:
+          type: integer
+          description: Number of active quests
+        completed_count:
+          type: integer
+          description: Number of completed quests
+        total_count:
+          type: integer
+          description: Total quests available
+
+    ImportQuestsRequest:
+      type: object
+      required:
+        - source_paths
+      properties:
+        source_paths:
+          type: array
+          items:
+            type: string
+          description: Paths to YAML quest files
+        validate_only:
+          type: boolean
+          default: false
+          description: Only validate without importing
+        overwrite_existing:
+          type: boolean
+          default: false
+          description: Overwrite existing quests
+
+    ImportQuestsResponse:
+      type: object
+      required:
+        - message
+        - imported_count
+        - failed_count
+        - total_processed
+      properties:
+        message:
+          type: string
+          example: "Quests imported successfully"
+        imported_count:
+          type: integer
+          description: Number of quests successfully imported
+        failed_count:
+          type: integer
+          description: Number of quests that failed to import
+        total_processed:
+          type: integer
+          description: Total number of quest files processed
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportError'
+          description: Import error details
+
+    ImportError:
+      type: object
+      required:
+        - file_path
+        - error_message
+      properties:
+        file_path:
+          type: string
+          description: Path to the failed file
+        error_message:
+          type: string
+          description: Error description
+        line_number:
+          type: integer
+          description: Line number where error occurred
+
+    ResetProgressRequest:
+      type: object
+      required:
+        - player_id
+        - confirm_reset
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        confirm_reset:
+          type: string
+          enum: ["CONFIRM_RESET"]
+          description: Safety confirmation
+        reset_options:
+          type: object
+          properties:
+            reset_quests:
+              type: boolean
+              default: true
+              description: Reset quest progress
+            reset_reputation:
+              type: boolean
+              default: true
+              description: Reset reputation scores
+            reset_achievements:
+              type: boolean
+              default: false
+              description: Reset quest achievements
+
+    ResetProgressResponse:
+      type: object
+      required:
+        - message
+        - player_id
+        - reset_timestamp
+        - affected_quests
+        - affected_reputation
+      properties:
+        message:
+          type: string
+          example: "Player progress reset successfully"
+        player_id:
+          type: string
+          format: uuid
+        reset_timestamp:
+          type: string
+          format: date-time
+        affected_quests:
+          type: integer
+          description: Number of quests reset
+        affected_reputation:
+          type: boolean
+          description: Whether reputation was reset
