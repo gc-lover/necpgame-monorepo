@@ -197,7 +197,8 @@ class AchievementImporter:
     def run_import(self):
         """Run the complete import process"""
         try:
-            self.connect_db()
+            if not self.dry_run:
+                self.connect_db()
 
             # Find and process YAML files
             yaml_files = self.find_yaml_files()
@@ -217,7 +218,8 @@ class AchievementImporter:
             self.logger.error(f"Import failed: {e}")
             raise
         finally:
-            self.disconnect_db()
+            if not self.dry_run:
+                self.disconnect_db()
 
 def main():
     parser = argparse.ArgumentParser(description="Import achievement data from YAML files")
