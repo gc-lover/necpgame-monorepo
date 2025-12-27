@@ -139,7 +139,6 @@ type ParticipationUpdate struct {
 	Contributions []string
 	LastUpdated   time.Time
 }
-}
 
 // GetActiveEvents retrieves all currently active world events
 // PERFORMANCE: Uses prepared statement for 20-30% performance boost on hot path
