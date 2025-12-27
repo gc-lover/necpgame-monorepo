@@ -1,0 +1,318 @@
+metadata:
+  id: reputation-system
+  title: 'Репутационная система NECPGAME'
+  document_type: mechanics
+  category: social
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-12-27T11:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-27T11:00:00Z
+  processed_by: content-writer
+  processed_at: 2025-12-27T11:00:00Z
+  github_issue_number: 140890885
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - reputation
+    - social
+    - relationships
+    - progression
+  topics:
+    - reputation-mechanics
+    - social-interaction
+    - faction-relations
+  related_systems:
+    - social-service
+    - reputation-service
+    - economy-service
+    - world-service
+  related_documents:
+    - id: reputation-formulas
+      relation: detailed_formulas
+      title: Формулы расчета репутации
+      link: knowledge/mechanics/social/reputation-formulas.yaml
+    - id: reputation-tiers-detailed
+      relation: detailed_tiers
+      title: Детальные уровни репутации
+      link: knowledge/mechanics/social/reputation-tiers-detailed.yaml
+    - id: reputation-decay-recovery
+      relation: decay_mechanics
+      title: Decay и recovery репутации
+      link: knowledge/mechanics/social/reputation-decay-recovery.yaml
+    - id: relationships-system
+      relation: complements
+      title: Система отношений и связей
+      link: knowledge/mechanics/social/relationships-system.yaml
+  source: shared/docs/knowledge/mechanics/social/reputation-system.md
+  visibility: internal
+  audience:
+    - concept
+    - design
+    - systems
+    - social-balance
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: content-writer
+      reviewed_at: 2025-12-27T11:00:00Z
+      status: approved
+  next_actions: [ ]
+summary:
+  problem: Необходима комплексная репутационная система для управления социальными взаимодействиями в Night City.
+  goal: Создать единую систему репутации, объединяющую уровни, формулы, decay и recovery для фракций, NPC и игроков.
+  essence: Репутация - это динамическая валюта социального капитала в киберпанк-мире, влияющая на все аспекты игрового опыта.
+  key_points:
+    - Шкала репутации от -100 (Hated) до +100 (Legendary) с 7 уровнями
+    - Формулы расчета с множественными модификаторами (класс, происхождение, квесты, проверки)
+    - Система естественного decay со временем и множественными путями recovery
+    - Интеграция с фракциями, NPC, экономикой и мировыми событиями
+    - Визуальная обратная связь и атмосферные эффекты в стиле Cyberpunk 2077
+content:
+  sections:
+    - id: world_lore
+      title: 'Репутация в Night City'
+      body: |
+        В мире Cyberpunk 2077 репутация — это не просто число, это валюта выживания. Каждый твой выбор, каждое действие, каждая сделка оставляет цифровой след в корпоративных базах данных. Репутация определяет цены в магазинах, доступ к территориям, реакцию NPC и твою судьбу в этом жестоком городе.
+
+        **Цифровая репутация** фиксируется в блокчейне социальных связей. Высокий рейтинг открывает двери в корпоративные башни, низкий — отправляет в подпольные районы. В Night City доверие покупается кровью и теряется одним предательством.
+      mechanics_links:
+        - mechanics/social/reputation-tiers-detailed.yaml#world_lore
+      assets: [ ]
+
+    - id: reputation_scale
+      title: 'Шкала репутации -100…+100'
+      body: |
+        Система использует семизонную шкалу от абсолютной ненависти до легендарного статуса:
+
+        - **Hated (-100…-76):** Полная блокировка территорий, максимальные цены, агрессия NPC
+        - **Hostile (-75…-51):** Ограниченный доступ, высокие наценки, усиленная охрана
+        - **Unfriendly (-50…-26):** Ограниченные квесты, повышенные цены, базовые сервисы
+        - **Neutral (-25…+25):** Стандартные условия, базовый доступ, нормальные цены
+        - **Friendly (+26…+50):** VIP сервисы, скидки, рекрутинг NPC, дополнительные квесты
+        - **Honored (+51…+75):** Фракционные бонусы, эксклюзивные локации, ускоренное восстановление
+        - **Legendary (+76…+100):** Уникальные награды, полная поддержка фракций, события по заказу
+
+        Каждый уровень имеет визуальную индикацию в UI и атмосферные эффекты в мире игры.
+      mechanics_links:
+        - mechanics/social/reputation-tiers-detailed.yaml#scale_overview
+        - mechanics/social/reputation-tiers-detailed.yaml#hated_hostile
+        - mechanics/social/reputation-tiers-detailed.yaml#unfriendly_neutral
+        - mechanics/social/reputation-tiers-detailed.yaml#friendly_honored
+        - mechanics/social/reputation-tiers-detailed.yaml#legendary
+      assets: [ ]
+
+    - id: calculation_formulas
+      title: 'Формулы расчета репутации'
+      body: |
+        Изменение репутации рассчитывается по комплексной формуле с множественными модификаторами:
+
+        ```
+        reputationChange = baseChange × (1 + classBonus) × (1 + originBonus) ×
+                          (1 + questBonus) × (1 + skillCheckBonus) × (1 + conflictModifier)
+
+        finalReputation = currentReputation + reputationChange
+        ```
+
+        **Базовые изменения:**
+        - Выполнение квестов фракции: +5…+50 (в зависимости от сложности)
+        - Убийство члена фракции: -20…-100
+        - Торговые сделки: ±1…±10 (в зависимости от суммы)
+        - Социальные взаимодействия: ±2…±15
+
+        **Модификаторы:**
+        - Класс персонажа (Solo получает больше от боевых действий)
+        - Происхождение (Nomad получает бонусы от кочевников)
+        - Качество выполнения (критический успех +25%)
+        - Конфликты фракций (действия против союзников влияют на всю коалицию)
+      mechanics_links:
+        - mechanics/social/reputation-formulas.yaml#change_formula
+        - mechanics/social/reputation-formulas.yaml#final_formula
+        - mechanics/social/reputation-formulas.yaml#class_origin_modifiers
+      assets: [ ]
+
+    - id: decay_recovery
+      title: 'Естественный decay и восстановление'
+      body: |
+        Репутация не статична — она требует постоянного поддержания. Без активных взаимодействий репутация постепенно уменьшается, но может быть восстановлена множественными способами.
+
+        **Естественный decay:**
+        - Ежедневный: -0.5%…-2% (зависит от силы отношений)
+        - Еженедельный: дополнительный -1% для неактивных связей
+        - Ежемесячный: -5% для связей без взаимодействия >30 дней
+
+        **Методы восстановления:**
+        - Выполнение квестов фракции (+5-15% за квест)
+        - Дарение подарков (+2-10% в зависимости от ценности)
+        - Участие в социальных событиях (+3-8%)
+        - Публичные проявления лояльности (+1-5%)
+        - Кризисное вмешательство (+15-30%)
+        - Долгосрочные обязательства (+5-15% в течение времени)
+
+        **Контекстные модификаторы:**
+        - Время суток (утро +10% к восстановлению)
+        - Локация (своя территория +15% к восстановлению)
+        - Ситуация (поддержка в бою +30% к восстановлению)
+      mechanics_links:
+        - mechanics/social/reputation-decay-recovery.yaml#decay_mechanics
+        - mechanics/social/reputation-decay-recovery.yaml#recovery_methods
+        - mechanics/social/reputation-decay-recovery.yaml#context_modifiers
+      assets: [ ]
+
+    - id: faction_integration
+      title: 'Интеграция с фракциями и миром'
+      body: |
+        Репутация влияет на все аспекты игрового мира Night City:
+
+        **Экономика:**
+        - Цены в магазинах (скидки до 25% при высокой репутации)
+        - Доступ к VIP сервисам и эксклюзивным товарам
+        - Торговые лимиты и кредитные условия
+
+        **Игровые механики:**
+        - Доступ к территориям и локациям
+        - Реакция NPC (от враждебности до лояльности)
+        - Сложность проверок (модификатор DC = floor(reputation/10) × -1)
+        - Доступ к квестам и контрактам
+
+        **Социальные связи:**
+        - Переход репутации между фракциями (матрица конфликтов)
+        - Влияние на союзников и противников
+        - Социальный капитал и сетевое взаимодействие
+
+        **Мировые события:**
+        - Участие в faction wars и политических интригах
+        - Доступ к эксклюзивным событиям
+        - Влияние на нарратив и исходы квестов
+      mechanics_links:
+        - mechanics/social/reputation-formulas.yaml#access_and_discounts
+        - mechanics/social/reputation-formulas.yaml#faction_relations
+        - mechanics/social/reputation-formulas.yaml#heat_system
+      assets: [ ]
+
+    - id: ui_feedback
+      title: 'Визуальная обратная связь'
+      body: |
+        Репутация отображается через комплексную систему визуальной обратной связи:
+
+        **В интерфейсе:**
+        - Цветовая шкала (красный → оранжевый → желтый → зеленый → синий → фиолетовый → золотой)
+        - Уровневые иконки и значки статуса
+        - Прогресс-бары восстановления и decay
+        - Уведомления об изменениях
+
+        **В игровом мире:**
+        - Атмосферные эффекты (неоновые индикаторы, голографические статусы)
+        - Реакция окружения (охрана, NPC, транспорт)
+        - Динамическое освещение и звуковые эффекты
+        - Контекстные подсказки и предупреждения
+
+        **В социальных взаимодействиях:**
+        - Статус в профилях игроков и NPC
+        - Социальные фиды и новости
+        - Репутационные ачивки и награды
+        - Исторические графики и тренды
+      mechanics_links:
+        - mechanics/social/reputation-decay-recovery.yaml#player_engagement
+      assets: [ ]
+
+    - id: technical_integration
+      title: 'Техническая интеграция'
+      body: |
+        Репутационная система интегрирована со всеми ключевыми сервисами:
+
+        **API и события:**
+        - REST API для запросов состояния репутации
+        - Kafka события для изменений репутации
+        - WebSocket обновления в реальном времени
+
+        **База данных:**
+        - Временные метки значений репутации
+        - Кэши расчетов decay
+        - Логи событий восстановления
+
+        **Производительность:**
+        - Эффективные алгоритмы decay
+        - Кэшированные запросы отношений
+        - Асинхронная обработка массовых обновлений
+
+        **Аналитика:**
+        - Метрики стабильности репутации
+        - Отчеты по социальному капиталу
+        - Прогнозы retention и вовлеченности
+      mechanics_links:
+        - mechanics/social/reputation-decay-recovery.yaml#technical_implementation
+      assets: [ ]
+
+    - id: balance_philosophy
+      title: 'Балансная философия'
+      body: |
+        Репутационная система балансирует между удержанием игроков и прогрессией:
+
+        **Удержание игроков:**
+        - Множественные пути восстановления для разных стилей игры
+        - Grace periods для неактивных игроков
+        - Предупреждения перед критическими порогами
+
+        **Прогрессионная глубина:**
+        - Репутационный gating для ценного контента
+        - Создание urgency без чрезмерного наказания
+        - Награды за долгосрочную лояльность
+
+        **Социальная динамика:**
+        - Сетевые эффекты отношений
+        - Групповое разделение репутации
+        - Эмерджентные социальные паттерны
+
+        **Игровая глубина:**
+        - Моральные выборы с долгосрочными последствиями
+        - Политические интриги и фракционные войны
+        - Персональные истории через социальные связи
+      mechanics_links:
+        - mechanics/social/reputation-decay-recovery.yaml#balance_considerations
+      assets: [ ]
+appendix:
+  glossary:
+    - term: Репутация
+      definition: Числовая шкала отношения фракций и NPC к игроку (-100…+100)
+    - term: Decay
+      definition: Естественное снижение репутации со временем без взаимодействия
+    - term: Recovery
+      definition: Действия игрока по восстановлению репутации
+    - term: Социальный капитал
+      definition: Накопленная ценность социальных связей и репутации
+    - term: Heat
+      definition: Негативный статус, влияющий на сложность проверок и события
+  references: [ ]
+  decisions:
+    - decision: Единая шкала -100…+100
+      rationale: Обеспечивает простоту понимания и баланс между уровнями
+      alternatives_considered: ["Множественные шкалы по фракциям", "Процентная система 0-100"]
+      impact: Упрощает UI и расчеты, но ограничивает гранулярность
+    - decision: Естественный decay
+      rationale: Создает реалистичные социальные отношения, требующие поддержания
+      alternatives_considered: ["Статичная репутация", "Только положительные изменения"]
+      impact: Увеличивает вовлеченность, но требует дополнительных механик recovery
+    - decision: Множественные пути recovery
+      rationale: Поддерживает разные стили игры и предотвращает frustration
+      alternatives_considered: ["Один основной путь", "Только через квесты"]
+      impact: Увеличивает доступность, но усложняет баланс
+implementation:
+  github_issue: 140890885
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: [ ]
+  status: completed
+  completed_at: 2025-12-27T11:00:00Z
+  completed_by: content-writer
+history:
+  - version: '1.0.0'
+    date: 2025-12-27
+    author: content-writer
+    changes: Создан основной файл репутационной системы, объединяющий все компоненты (формулы, уровни, decay/recovery) с интеграцией в мир Cyberpunk 2077.
+validation:
+  checksum: ''
+  schema_version: '1.0'
