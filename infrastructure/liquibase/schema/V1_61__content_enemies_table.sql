@@ -2,6 +2,8 @@
 -- liquibase formatted sql
 
 --changeset author:necpgame dbms:postgresql
+
+BEGIN;
 --comment: Create knowledge.enemies table for enemy management
 
 -- Table: knowledge.enemies
@@ -137,3 +139,5 @@ ON COLUMN knowledge.enemies.metadata IS 'Additional enemy metadata';
 -- BACKEND NOTE: Core table for combat and AI systems
 -- Expected memory per row: ~1KB
 -- Hot queries: Enemies by location/level, faction filtering
+
+COMMIT;

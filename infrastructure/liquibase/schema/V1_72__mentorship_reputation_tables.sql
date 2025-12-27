@@ -2,6 +2,8 @@
 -- liquibase formatted sql
 
 --changeset author:necpgame dbms:postgresql
+
+BEGIN;
 --comment: Create mentorship reputation calculation tables for mentor performance metrics
 
 -- Table: mentorship.student_reviews
@@ -129,3 +131,5 @@ COMMENT ON COLUMN mentorship.academy_ratings.rated_by IS 'User ID who gave this 
 -- Expected queries: Complex aggregations with CTEs, frequent mentor reputation lookups
 -- Cache strategy: Redis cache for reputation scores, TTL 30m, invalidate on new reviews/ratings
 -- Performance: Single query with CTE aggregation for real-time reputation calculation
+
+COMMIT;

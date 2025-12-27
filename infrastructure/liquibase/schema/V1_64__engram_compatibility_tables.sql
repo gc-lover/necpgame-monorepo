@@ -1,6 +1,9 @@
+-- Issue: #123
 -- Engram Compatibility Tables for Character Engram Compatibility Service Go
 -- BACKEND NOTE: High-performance tables for real-time engram compatibility calculations
 -- Optimized for 1000+ RPS compatibility checks with zero allocations in hot path
+
+BEGIN;
 
 -- Table for tracking active engrams per character
 CREATE TABLE IF NOT EXISTS gameplay.character_active_engrams
@@ -168,3 +171,5 @@ CREATE TRIGGER trigger_engram_conflicts_resolved_at
 -- - Triggers maintain data consistency automatically
 -- - Cache table prevents redundant calculations
 -- - Cleanup functions help maintain performance over time
+
+COMMIT;

@@ -1,6 +1,8 @@
 -- Create table for project documentation (YAML files from knowledge/)
 -- This table stores all project documentation, designs, mechanics, and specifications
 
+
+BEGIN;
 CREATE TABLE IF NOT EXISTS project.documentation (
     id BIGSERIAL PRIMARY KEY,
     doc_id VARCHAR(255) NOT NULL UNIQUE, -- from metadata.id
@@ -47,3 +49,5 @@ COMMENT ON COLUMN project.documentation.category IS 'Document category within it
 COMMENT ON COLUMN project.documentation.content IS 'Full content of the document as JSONB';
 COMMENT ON COLUMN project.documentation.metadata IS 'Complete metadata section as JSONB';
 COMMENT ON COLUMN project.documentation.source_file IS 'Relative path to source YAML file';
+
+COMMIT;

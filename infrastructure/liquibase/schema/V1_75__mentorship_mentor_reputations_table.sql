@@ -2,6 +2,8 @@
 -- liquibase formatted sql
 
 --changeset author:necpgame dbms:postgresql
+
+BEGIN;
 --comment: Create mentorship.mentor_reputations table for mentor discovery and ranking
 
 -- Table: mentorship.mentor_reputations
@@ -71,3 +73,5 @@ COMMENT ON COLUMN mentorship.mentor_reputations.updated_at IS 'Reputation record
 -- Performance: Partial indexes for common filters, composite indexes for ranking
 -- Cache strategy: Redis cache for top mentors, TTL 5m, invalidate on reputation updates
 -- Scaling: Partitioning by availability_status for large mentor pools
+
+COMMIT;

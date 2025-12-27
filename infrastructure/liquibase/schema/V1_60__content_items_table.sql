@@ -2,6 +2,8 @@
 -- liquibase formatted sql
 
 --changeset author:necpgame dbms:postgresql
+
+BEGIN;
 --comment: Create gameplay.items table for item management
 
 -- Table: gameplay.items
@@ -128,3 +130,5 @@ ON COLUMN gameplay.items.metadata IS 'Additional item metadata';
 -- BACKEND NOTE: Core table for inventory and economy systems
 -- Expected memory per row: ~1KB
 -- Hot queries: Items by category/rarity, property searches
+
+COMMIT;

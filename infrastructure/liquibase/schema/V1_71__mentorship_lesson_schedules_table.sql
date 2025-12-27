@@ -2,6 +2,8 @@
 -- liquibase formatted sql
 
 --changeset author:necpgame dbms:postgresql
+
+BEGIN;
 --comment: Create mentorship.lesson_schedules table for lesson scheduling system
 
 -- Table: mentorship.lesson_schedules
@@ -67,3 +69,5 @@ COMMENT ON COLUMN mentorship.lesson_schedules.updated_at IS 'Schedule last updat
 -- Expected memory per row: ~512 bytes (JSONB resources)
 -- Hot queries: SELECT by contract_id, status, date_range
 -- Cache strategy: Redis cache for upcoming lessons, TTL 30m
+
+COMMIT;

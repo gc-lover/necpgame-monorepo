@@ -2,6 +2,8 @@
 -- liquibase formatted sql
 
 --changeset author:necpgame dbms:postgresql
+
+BEGIN;
 --comment: Create narrative.npc_definitions table for NPC management
 
 -- Table: narrative.npc_definitions
@@ -99,3 +101,5 @@ ON COLUMN narrative.npc_definitions.updated_at IS 'NPC last update timestamp';
 -- BACKEND NOTE: Optimized for narrative queries and dialogue system
 -- Expected memory per row: ~512 bytes
 -- Hot queries: NPCs by faction/location, dialogue lookups
+
+COMMIT;

@@ -2,6 +2,8 @@
 -- liquibase formatted sql
 
 --changeset author:necpgame dbms:postgresql
+
+BEGIN;
 --comment: Create narrative.dialogue_nodes table for dialogue management
 
 -- Table: narrative.dialogue_nodes
@@ -82,3 +84,5 @@ ON COLUMN narrative.dialogue_nodes.updated_at IS 'Dialogue last update timestamp
 -- BACKEND NOTE: Core table for dialogue system
 -- Expected memory per row: ~1KB
 -- Hot queries: Dialogues by NPC/quest, condition matching
+
+COMMIT;

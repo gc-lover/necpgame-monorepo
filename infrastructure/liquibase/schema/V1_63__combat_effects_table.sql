@@ -2,6 +2,8 @@
 -- BACKEND NOTE: High-performance table for real-time combat effects management
 -- Optimized for 1000+ RPS damage calculations with zero allocations in hot path
 
+
+BEGIN;
 CREATE TABLE IF NOT EXISTS gameplay.combat_effects
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -83,3 +85,5 @@ COMMENT ON COLUMN gameplay.combat_effects.max_stacks IS 'Maximum allowed stacks 
 -- Context timeouts: All operations use 5s timeout for reliability
 
 -- Issue: #2251
+
+COMMIT;

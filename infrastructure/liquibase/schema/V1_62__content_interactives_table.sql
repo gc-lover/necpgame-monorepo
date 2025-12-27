@@ -2,6 +2,8 @@
 -- liquibase formatted sql
 
 --changeset author:necpgame dbms:postgresql
+
+BEGIN;
 --comment: Create knowledge.interactives table for interactive object management
 
 -- Table: knowledge.interactives
@@ -132,3 +134,5 @@ ON COLUMN knowledge.interactives.metadata IS 'Additional interactive metadata';
 -- BACKEND NOTE: World-building table for interactive elements
 -- Expected memory per row: ~1KB
 -- Hot queries: Interactives by location/category, requirement checks
+
+COMMIT;

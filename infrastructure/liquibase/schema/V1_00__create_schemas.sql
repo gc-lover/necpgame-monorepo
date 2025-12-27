@@ -2,6 +2,8 @@
 -- liquibase formatted sql
 
 --changeset author:necpgame dbms:postgresql
+
+BEGIN;
 --comment: Create main database schemas for NECPGAME
 
 -- Create main schemas
@@ -21,3 +23,5 @@ COMMENT ON SCHEMA knowledge IS 'Knowledge base tables (lore, world-building, doc
 
 -- BACKEND NOTE: Schema separation provides logical data organization
 -- and allows for different access patterns per microservice
+
+COMMIT;

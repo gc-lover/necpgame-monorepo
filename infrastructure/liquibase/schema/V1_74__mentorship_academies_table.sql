@@ -2,6 +2,8 @@
 -- liquibase formatted sql
 
 --changeset author:necpgame dbms:postgresql
+
+BEGIN;
 --comment: Create mentorship.academies table for educational institutions and programs
 
 -- Table: mentorship.academies
@@ -73,3 +75,5 @@ COMMENT ON COLUMN mentorship.academies.updated_at IS 'Academy last update timest
 -- Performance: Full-text search, composite indexes for common filters
 -- Cache strategy: Redis cache for academy listings, TTL 1h
 -- Scaling: Partitioning by academy_type for large datasets
+
+COMMIT;

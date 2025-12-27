@@ -2,6 +2,8 @@
 -- liquibase formatted sql
 
 --changeset author:necpgame dbms:postgresql
+
+BEGIN;
 --comment: Create knowledge.lore_entries table for lore management
 
 -- Table: knowledge.lore_entries
@@ -98,3 +100,5 @@ ON COLUMN knowledge.lore_entries.updated_at IS 'Lore last update timestamp';
 -- BACKEND NOTE: Full-text search optimized table
 -- Expected memory per row: ~2KB
 -- Hot queries: Category filtering, full-text search, tag matching
+
+COMMIT;

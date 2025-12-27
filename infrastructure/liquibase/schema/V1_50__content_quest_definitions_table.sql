@@ -4,6 +4,8 @@
 --changeset author:necpgame dbms:postgresql
 --comment: Create gameplay.quest_definitions table for quest management
 
+BEGIN;
+
 -- Table: gameplay.quest_definitions
 CREATE TABLE IF NOT EXISTS gameplay.quest_definitions
 (
@@ -112,3 +114,5 @@ ON COLUMN gameplay.quest_definitions.updated_at IS 'Quest last update timestamp'
 -- Expected memory per row: ~256 bytes
 -- Hot queries: SELECT by status/level_range, JSONB searches
 -- Cache strategy: Redis cache for active quests, TTL 1h
+
+COMMIT;

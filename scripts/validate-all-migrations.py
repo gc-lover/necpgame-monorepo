@@ -229,7 +229,7 @@ def validate_migration_file(filepath):
 
 
 def main():
-    migrations_dir = Path("infrastructure/liquibase/migrations")
+    migrations_dir = Path("infrastructure/liquibase/schema")
 
     if not migrations_dir.exists():
         print(f"[ERROR] Migrations directory not found: {migrations_dir}")

@@ -2,6 +2,8 @@
 -- liquibase formatted sql
 
 --changeset author:necpgame dbms:postgresql
+
+BEGIN;
 --comment: Create mentorship.lessons table for lesson tracking and completion
 
 -- Table: mentorship.lessons
@@ -76,3 +78,5 @@ COMMENT ON COLUMN mentorship.lessons.updated_at IS 'Lesson last update timestamp
 -- Performance: Composite indexes for complex aggregations
 -- Cache strategy: Redis cache for recent lessons, TTL 15m
 -- Monitoring: Track lesson completion rates for mentor performance
+
+COMMIT;
