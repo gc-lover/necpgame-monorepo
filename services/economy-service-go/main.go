@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
@@ -137,6 +139,89 @@ func initHTTPServer(logger *zap.Logger, dbPool *pgxpool.Pool, tokenAuth *jwtauth
 
 	// Mount Ogen-generated routes (to be generated)
 	// api.HandlerFromMux(economyServer, r)
+
+	// Additional custom routes for enhanced economy features
+	r.Route("/api/v1/economy", func(r chi.Router) {
+		r.Use(jwtauth.Verifier(tokenAuth))
+		r.Use(jwtauth.Authenticator(tokenAuth))
+
+		// Currency management
+		r.Get("/currencies", func(w http.ResponseWriter, r *http.Request) {
+			result, err := economyServer.GetCurrencies(w, r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			// Response would be marshaled here
+		})
+
+		// Market analytics
+		r.Get("/market/prices", func(w http.ResponseWriter, r *http.Request) {
+			// Parse query parameters
+			params := api.GetMarketPricesParams{}
+			if timeWindow := r.URL.Query().Get("time_window"); timeWindow != "" {
+				params.TimeWindow = api.NewOptGetMarketPricesParamsTimeWindow(api.GetMarketPricesParamsTimeWindow(timeWindow))
+			}
+			result, err := economyServer.GetMarketPrices(w, r, params)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			// Response would be marshaled here
+		})
+
+		// Player economic statistics
+		r.Get("/players/{playerId}/stats", func(w http.ResponseWriter, r *http.Request) {
+			playerID, err := uuid.Parse(chi.URLParam(r, "playerId"))
+			if err != nil {
+				http.Error(w, "Invalid player ID", http.StatusBadRequest)
+				return
+			}
+			params := api.GetPlayerEconomicStatsParams{PlayerId: playerID}
+			result, err := economyServer.GetPlayerEconomicStats(w, r, params)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			// Response would be marshaled here
+		})
+
+		// Crafting execution
+		r.Post("/crafting/execute", func(w http.ResponseWriter, r *http.Request) {
+			var req api.ExecuteCraftingRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, "Invalid request body", http.StatusBadRequest)
+				return
+			}
+			result, err := economyServer.ExecuteCrafting(w, r, &req)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			// Response would be marshaled here
+		})
+
+		// Bulk market data for analytics
+		r.Get("/market/bulk", func(w http.ResponseWriter, r *http.Request) {
+			params := api.GetBulkMarketDataParams{}
+			result, err := economyServer.GetBulkMarketData(w, r, params)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			// Response would be marshaled here
+		})
+	})
 
 	// Fallback health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
