@@ -33,15 +33,15 @@ class GoServiceGenerator:
         self.openapi = openapi_manager
         self.file_manager = file_manager
         self.command_runner = command_runner
-        self.logger = logger
+        self.logger = logger.get_logger("GoServiceGenerator")
 
     def generate_domain_service(self, domain: str, skip_bundle: bool = False,
                                 skip_test: bool = False, dry_run: bool = False) -> None:
         """Generate complete Go service for a domain with PERFORMANCE optimizations"""
         try:
             # Get paths with error checking
-            openapi_dir = Path(self.config.config.get('openapi_dir', 'proto/openapi'))
-            services_dir = Path(self.config.config.get('services_dir', 'services'))
+            openapi_dir = self.config.get_openapi_dir()
+            services_dir = self.config.get_services_dir()
 
             domain_dir = openapi_dir / domain
             if not domain_dir.exists():
@@ -71,9 +71,36 @@ class GoServiceGenerator:
             # PERFORMANCE: Initialize Go module with optimized settings
             self._initialize_go_modules(service_dir, service_name, dry_run)
 
-            # PERFORMANCE: Test compilation with timeout and resource limits
-            if not skip_test and not dry_run:
-                self._test_compilation(service_dir, service_name)
+        # PERFORMANCE: Test compilation with timeout and resource limits
+        if not skip_test and not dry_run:
+            self._test_compilation(service_dir, service_name)
+
+        except Exception as e:
+            self.logger.error(f"Failed to generate service for domain {domain}: {e}")
+            raise
+
+    def _bundle_openapi_spec(self, domain: str, service_dir: Path, openapi_dir: Path, dry_run: bool) -> Optional[Path]:
+        """Bundle OpenAPI spec using redocly in service directory"""
+        main_yaml = openapi_dir / domain / "main.yaml"
+        if not main_yaml.exists():
+            raise FileNotFoundError(f"Main YAML not found: {main_yaml}")
+
+        # PERFORMANCE: Create bundled file in service directory, not project root
+        bundled_file = service_dir / "openapi-bundled.yaml"
+
+        if not dry_run:
+            # Use redocly to bundle the spec
+            try:
+                self.command_runner.run([
+                    'npx', '--yes', '@redocly/cli', 'bundle',
+                    str(main_yaml), '-o', str(bundled_file)
+                ])
+                self.logger.info(f"Bundled OpenAPI spec: {bundled_file}")
+            except Exception as e:
+                self.logger.error(f"Failed to bundle OpenAPI spec: {e}")
+                raise
+
+        return bundled_file
 
             self.logger.info(f"Successfully generated {service_name}")
 
@@ -113,7 +140,7 @@ def main():
         )
         logger.info(f"Successfully generated service for domain: {args.domain}")
     except Exception as e:
-        logger.error(f"Failed to generate service: {e}")
+        print(f"ERROR: Failed to generate service: {e}")
         return 1
 
     return 0

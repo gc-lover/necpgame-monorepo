@@ -1,0 +1,387 @@
+metadata:
+  id: "implementation-quest-branching-mechanics"
+  title: "Механика ветвления квестов и последствия выборов"
+  type: "game_mechanics_design_document"
+  status: "active"
+  version: "1.0"
+  created: "2025-12-27"
+  updated: "2025-12-27"
+
+overview:
+  description: |
+    Система ветвления квестов позволяет игрокам принимать значимые решения,
+    которые влияют на развитие сюжета, отношения с фракциями и долгосрочные
+    последствия в мире NECPGAME. Ветвление реализовано через JSONB структуру
+    в базе данных с поддержкой сложных условий и динамических переходов.
+
+  goals:
+    - Создать глубокий нарратив с множеством путей развития
+    - Обеспечить replayability через разные выборы
+    - Сделать выборы значимыми с долгосрочными последствиями
+    - Поддерживать производительность в MMORPG масштабе
+
+core_mechanics:
+  branching_structure:
+    description: "Базовая структура ветвления квестов"
+    json_schema:
+      type: "object"
+      properties:
+        version:
+          type: "string"
+          description: "Версия схемы ветвления"
+        entry_point:
+          type: "string"
+          description: "ID начального узла"
+        nodes:
+          type: "object"
+          description: "Словарь всех узлов ветвления"
+          patternProperties:
+            ".*":
+              oneOf:
+                - "$ref": "#/definitions/choice_node"
+                - "$ref": "#/definitions/quest_node"
+                - "$ref": "#/definitions/condition_node"
+                - "$ref": "#/definitions/end_node"
+
+    node_types:
+      choice_node:
+        description: "Узел выбора - игрок выбирает из вариантов"
+        properties:
+          type: { const: "choice" }
+          title: { type: "string" }
+          description: { type: "string" }
+          options:
+            type: "array"
+            items:
+              type: "object"
+              properties:
+                id: { type: "string" }
+                title: { type: "string" }
+                description: { type: "string" }
+                requirements: { type: "object" }
+                rewards: { type: "object" }
+                next_node: { type: "string" }
+
+      quest_node:
+        description: "Узел квеста - выполнение заданий"
+        properties:
+          type: { const: "quest" }
+          title: { type: "string" }
+          description: { type: "string" }
+          objectives: { type: "array" }
+          rewards: { type: "object" }
+          next_node: { type: "string" }
+
+      condition_node:
+        description: "Условный узел - проверка условий"
+        properties:
+          type: { const: "condition" }
+          condition: { type: "string" }
+          true_node: { type: "string" }
+          false_node: { type: "string" }
+
+      end_node:
+        description: "Конечный узел - завершение ветви"
+        properties:
+          type: { const: "end" }
+          outcome: { type: "string" }
+          rewards: { type: "object" }
+          consequences: { type: "array" }
+
+player_choice_consequences:
+  immediate_effects:
+    - narrative_changes: "Изменение диалогов и событий"
+    - faction_reputation: "Изменение отношений с фракциями"
+    - quest_unlocks: "Открытие/закрытие новых квестов"
+    - item_rewards: "Разные награды за выборы"
+
+  long_term_effects:
+    - world_state_changes: "Изменение состояния мира"
+    - character_development: "Влияние на развитие персонажа"
+    - faction_alliances: "Изменение альянсов и конфликтов"
+    - economic_impact: "Экономические последствия"
+
+  branching_types:
+    narrative_branches:
+      description: "Выборы влияют только на сюжет"
+      examples:
+        - "Помочь корпорации или мятежникам"
+        - "Раскрыть правду или сохранить тайну"
+        - "Спасение NPC или жертва ради цели"
+
+    relationship_branches:
+      description: "Выборы влияют на отношения с персонажами/фракциями"
+      examples:
+        - "Лояльность фракции A или B"
+        - "Романтические отношения с NPC"
+        - "Дружба или вражда с персонажем"
+
+    gameplay_branches:
+      description: "Выборы влияют на геймплей"
+      examples:
+        - "Выбор класса или специализации"
+        - "Выбор локации для развития"
+        - "Выбор союзников для команд"
+
+implementation_examples:
+  zen_garden_quest_branching:
+    description: "Ветвление для квеста 'Сад Дзен'"
+    branching_logic:
+      version: "1.0"
+      entry_point: "corporate_investigation"
+      nodes:
+        corporate_investigation:
+          type: "quest"
+          title: "Расследование корпорации"
+          description: "Исследовать тайны Арасаки в Саду Дзен"
+          objectives:
+            - "Найти скрытый сервер"
+            - "Скачать данные проекта"
+          next_node: "data_decision"
+
+        data_decision:
+          type: "choice"
+          title: "Судьба данных"
+          description: "Что делать с украденными данными Арасаки?"
+          options:
+            - id: "publish_data"
+              title: "Опубликовать данные"
+              description: "Разоблачить корпорацию публично"
+              requirements: {}
+              rewards: { reputation: { freedom_fighters: 200 } }
+              next_node: "public_outrage"
+            - id: "sell_data"
+              title: "Продать данные"
+              description: "Получить прибыль от продажи информации"
+              requirements: { currency: 1000 }
+              rewards: { currency: 5000, reputation: { underworld: 100 } }
+              next_node: "black_market_deal"
+            - id: "destroy_data"
+              title: "Уничтожить данные"
+              description: "Сохранить тайну и гармонию"
+              requirements: { meditation_skill: 30 }
+              rewards: { reputation: { zen_traditions: 300 } }
+              next_node: "zen_enlightenment"
+
+        public_outrage:
+          type: "quest"
+          title: "Общественный скандал"
+          description: "Корпорация в кризисе, но начинается война"
+          objectives: ["Выжить в корпоративной охоте"]
+          rewards: { xp: 1500, reputation: { freedom_fighters: 500 } }
+          next_node: "corporate_war"
+
+        black_market_deal:
+          type: "quest"
+          title: "Сделка на черном рынке"
+          description: "Продажа данных конкурентам Арасаки"
+          objectives: ["Встретиться с покупателем", "Получить оплату"]
+          rewards: { currency: 8000, reputation: { underworld: 200 } }
+          next_node: "corporate_retaliation"
+
+        zen_enlightenment:
+          type: "quest"
+          title: "Дзен просветление"
+          description: "Достигнуть истинной гармонии через отказ от конфликта"
+          objectives: ["Медитировать в саду", "Достичь внутреннего покоя"]
+          rewards: { xp: 1000, reputation: { zen_traditions: 800 } }
+          next_node: "peaceful_resolution"
+
+        corporate_war:
+          type: "end"
+          outcome: "war_path"
+          consequences:
+            - "Арасaka в войне с повстанцами"
+            - "Увеличены награды за голову игрока"
+            - "+500 репутации повстанцам"
+
+        corporate_retaliation:
+          type: "end"
+          outcome: "profit_path"
+          consequences:
+            - "Арасaka теряет конкурентное преимущество"
+            - "Игрок получает доступ к черному рынку"
+            - "+1000 валюты, -200 репутации корпорациям"
+
+        peaceful_resolution:
+          type: "end"
+          outcome: "harmony_path"
+          consequences:
+            - "Сад Дзен становится нейтральной зоной"
+            - "Игрок получает доступ к медитационным техникам"
+            - "+300 репутации ко всем фракциям"
+
+  pokemon_war_epic_branching:
+    description: "Сложное ветвление для квеста Pokemon Go War"
+    branching_logic:
+      version: "1.0"
+      entry_point: "faction_choice"
+      nodes:
+        faction_choice:
+          type: "choice"
+          title: "Выбор фракции"
+          description: "Присоединиться к одной из фракций Pokemon"
+          options:
+            - id: "valor"
+              title: "Team Valor"
+              description: "Агрессивные завоеватели, красный цвет"
+              requirements: { charisma: 25 }
+              next_node: "valor_campaign"
+            - id: "mystic"
+              title: "Team Mystic"
+              description: "Стратегические защитники, синий цвет"
+              requirements: { intelligence: 25 }
+              next_node: "mystic_campaign"
+            - id: "instinct"
+              title: "Team Instinct"
+              description: "Хаотичные охотники, желтый цвет"
+              requirements: { agility: 25 }
+              next_node: "instinct_campaign"
+
+        valor_campaign:
+          type: "quest"
+          title: "Кампания Valor"
+          description: "Завоевать территорию силой"
+          objectives: ["Захватить 5 гимов", "Убить лидера Mystic"]
+          next_node: "legendary_choice"
+
+        mystic_campaign:
+          type: "quest"
+          title: "Кампания Mystic"
+          description: "Защитить территорию стратегией"
+          objectives: ["Установить баррикады", "Разведать позиции"]
+          next_node: "legendary_choice"
+
+        instinct_campaign:
+          type: "quest"
+          title: "Кампания Instinct"
+          description: "Охотиться за легендарными Pokemon"
+          objectives: ["Найти редкие Pokemon", "Избегать прямых столкновений"]
+          next_node: "legendary_choice"
+
+        legendary_choice:
+          type: "choice"
+          title: "Легендарный Pokemon"
+          description: "Выбрать цель для финальной битвы"
+          options:
+            - id: "mewtwo"
+              title: "Mewtwo"
+              description: "Психические атаки, сложная тактика"
+              requirements: { faction_alignment: "mystic" }
+              next_node: "mewtwo_battle"
+            - id: "charizard"
+              title: "Charizard"
+              description: "Огненные атаки, прямое столкновение"
+              requirements: { faction_alignment: "valor" }
+              next_node: "charizard_battle"
+            - id: "dragonite"
+              title: "Dragonite"
+              description: "Неожиданные атаки, хаотичная битва"
+              requirements: { faction_alignment: "instinct" }
+              next_node: "dragonite_battle"
+
+        mewtwo_battle:
+          type: "quest"
+          title: "Битва с Mewtwo"
+          description: "Стратегическая битва с псионикой"
+          objectives: ["Использовать психические атаки", "Избегать прямого боя"]
+          next_node: "victory_ceremony"
+
+        charizard_battle:
+          type: "quest"
+          title: "Битва с Charizard"
+          description: "Прямое огненное столкновение"
+          objectives: ["Использовать огненные атаки", "Пережить урон"]
+          next_node: "victory_ceremony"
+
+        dragonite_battle:
+          type: "quest"
+          title: "Битва с Dragonite"
+          description: "Хаотичная битва с драконом"
+          objectives: ["Адаптироваться к неожиданным атакам", "Использовать скорость"]
+          next_node: "victory_ceremony"
+
+        victory_ceremony:
+          type: "end"
+          outcome: "pokemon_master"
+          consequences:
+            - "Игрок становится мастером Pokemon фракции"
+            - "Получение легендарного Pokemon"
+            - "Изменение баланса сил в Токио"
+
+performance_optimization:
+  database_optimizations:
+    - GIN индексы на JSONB поля для быстрого поиска
+    - Частичные индексы для активных ветвлений
+    - Кеширование часто используемых ветвлений в Redis
+    - Асинхронная обработка сложных условий
+
+  memory_management:
+    - Ленивая загрузка больших ветвлений
+    - Сериализация состояния игрока в компактном формате
+    - Очистка завершенных ветвлений через 30 дней
+    - Компрессия исторических данных выборов
+
+  scaling_considerations:
+    - Горизонтальное партиционирование по player_id
+    - Read replicas для аналитики ветвлений
+    - CDN для статических данных ветвлений
+    - Rate limiting для сложных выборов
+
+player_experience_design:
+  choice_feedback:
+    - Немедленное визуальное подтверждение выбора
+    - Предварительный просмотр последствий
+    - Возможность отмены выбора в течение 30 секунд
+    - Подробное объяснение последствий после выбора
+
+  progression_tracking:
+    - Визуальная карта ветвлений в интерфейсе
+    - Статистика принятых решений по типам
+    - Достижения за разные стили игры
+    - Возможность переигрывания с другими выборами
+
+  accessibility_features:
+    - Предупреждения о необратимых выборах
+    - Сохранение альтернативных путей
+    - Подсказки для новичков
+    - Адаптация сложности ветвлений
+
+testing_methodology:
+  unit_tests:
+    - Валидация JSON схемы ветвлений
+    - Тестирование всех возможных путей
+    - Проверка условий и требований
+    - Тестирование производительности
+
+  integration_tests:
+    - Тестирование с реальными данными игроков
+    - Проверка сохранения состояния ветвлений
+    - Тестирование многопользовательских сценариев
+    - Нагрузочное тестирование на 10k+ игроков
+
+  qa_testing:
+    - Тестирование всех комбинаций выборов
+    - Проверка баланса наград и последствий
+    - Тестирование UI для ветвлений
+    - Кроссплатформенное тестирование
+
+implementation_roadmap:
+  phase_1: "Базовая структура ветвлений"
+  phase_2: "Условные переходы и требования"
+  phase_3: "Комплексные последствия выборов"
+  phase_4: "Аналитика и оптимизация"
+  phase_5: "Динамические ветвления на основе мира"
+
+backwards_compatibility:
+  migration_strategy:
+    - Автоматическое обновление существующих квестов
+    - Сохранение состояния игроков при обновлениях
+    - Graceful degradation для старых клиентов
+    - Feature flags для поэтапного развертывания
+
+  data_migration:
+    - Конвертация старых quest_definitions
+    - Перенос player_quest_progress данных
+    - Валидация целостности после миграции
+    - Rollback планы на случай проблем
