@@ -126,10 +126,11 @@ def _generate_migration(quest_data: Dict[str, Any], quest_file: Path) -> Dict[st
 
     # Prepare metadata JSON
     project_root = Path(__file__).parent.parent
+    absolute_quest_file = quest_file.resolve()
     metadata_json = {
         'id': metadata['id'],
         'version': metadata.get('version', '2.0.0'),
-        'source_file': str(quest_file.relative_to(project_root))
+        'source_file': str(absolute_quest_file.relative_to(project_root))
     }
 
     # Prepare rewards JSON
