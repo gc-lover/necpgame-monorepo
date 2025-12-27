@@ -351,7 +351,14 @@ INSERT INTO gameplay.quest_rewards (
 ('tokyo-part3-midnight-market-2098', 'item', 'midnight-market-pass', 1, 1.0, true, NOW(), NOW()),
 ('tokyo-part3-midnight-market-2098', 'currency', 'cyber-credits', 4000, 1.0, true, NOW(), NOW()),
 ('tokyo-part3-midnight-market-2098', 'item', 'random-rare-item', 1, 0.5, false, NOW(), NOW()),
-('tokyo-part3-midnight-market-2098', 'contact', 'black-market-contacts', 1, 1.0, true, NOW(), NOW());
+('tokyo-part3-midnight-market-2098', 'contact', 'black-market-contacts', 1, 1.0, true, NOW(), NOW()),
+
+-- Football Hooligans rewards
+('london-football-hooligans-2061-2077', 'reputation', 'neon-devils-or-iron-wolves', 50, 1.0, true, NOW(), NOW()),
+('london-football-hooligans-2061-2077', 'item', 'cyber-football-boots', 1, 1.0, true, NOW(), NOW()),
+('london-football-hooligans-2061-2077', 'implant', 'adrenaline-surge', 1, 1.0, true, NOW(), NOW()),
+('london-football-hooligans-2061-2077', 'lore', 'corporate-sports-corruption-files', 1, 1.0, true, NOW(), NOW()),
+('london-football-hooligans-2061-2077', 'currency', 'eddies', 20000, 1.0, true, NOW(), NOW());
 
 -- Insert quest prerequisites
 INSERT INTO gameplay.quest_prerequisites (
@@ -382,6 +389,11 @@ INSERT INTO gameplay.quest_prerequisites (
 
 -- Midnight Market prerequisites
 ('tokyo-part3-midnight-market-2098', 'neural_level', 'neural_implant_level', 5, NOW(), NOW()),
-('tokyo-part3-midnight-market-2098', 'cyberware_tier', 'cyberware_tier', 2, NOW(), NOW()); -- advanced = 2
+('tokyo-part3-midnight-market-2098', 'cyberware_tier', 'cyberware_tier', 2, NOW(), NOW()), -- advanced = 2
+
+-- Football Hooligans prerequisites
+('london-football-hooligans-2061-2077', 'player_level', 'level', 15, NOW(), NOW()),
+('london-football-hooligans-2061-2077', 'location', 'current_location', 1, NOW(), NOW()), -- london = 1
+('london-football-hooligans-2061-2077', 'reputation', 'street_cred', 25, NOW(), NOW());
 
 COMMIT;
