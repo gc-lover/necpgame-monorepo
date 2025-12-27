@@ -157,7 +157,7 @@ class BaseContentMigrationGenerator(ABC):
             'metadata': json.dumps({
                 'id': metadata.get('id'),
                 'version': metadata.get('version', '1.0.0'),
-                'source_file': str(yaml_file.relative_to(self.project_root))
+                'source_file': str(yaml_file.relative_to(self.project_root) if yaml_file.is_relative_to(self.project_root) else yaml_file)
             }, default=JsonSerializer.json_serializer, ensure_ascii=False)
         }
 

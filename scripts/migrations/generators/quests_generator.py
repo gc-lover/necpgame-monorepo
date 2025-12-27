@@ -60,6 +60,7 @@ class QuestMigrationGenerator(BaseContentMigrationGenerator):
             }
 
         return {
+            'id': metadata.get('id', f"quest-{yaml_file.stem}"),
             'quest_id': metadata.get('id', f"quest-{yaml_file.stem}"),
             'title': metadata.get('title', 'Unknown Quest'),
             'description': spec.get('summary', {}).get('essence', ''),
