@@ -302,6 +302,60 @@ func (v *Validator) ValidateStartLessonRequest(ctx context.Context, req *api.Sta
 	return nil
 }
 
+// ValidateCreateAcademyRequest validates academy creation request
+func (v *Validator) ValidateCreateAcademyRequest(ctx context.Context, req *api.CreateAcademyRequest) error {
+	v.logger.Debug("Validating CreateAcademyRequest")
+
+	if req == nil {
+		return errors.New("request cannot be nil")
+	}
+
+	// Required fields validation
+	if req.Name == "" {
+		return errors.New("name cannot be empty")
+	}
+	if req.Description == "" {
+		return errors.New("description cannot be empty")
+	}
+	if req.AcademyType == "" {
+		return errors.New("academy_type cannot be empty")
+	}
+	if req.Location == "" {
+		return errors.New("location cannot be empty")
+	}
+
+	// Length validation
+	if len(req.Name) > 200 {
+		return errors.New("name cannot exceed 200 characters")
+	}
+	if len(req.Description) > 5000 {
+		return errors.New("description cannot exceed 5000 characters")
+	}
+	if len(req.Location) > 500 {
+		return errors.New("location cannot exceed 500 characters")
+	}
+
+	// Academy type validation
+	validAcademyTypes := map[string]bool{
+		"general":     true,
+		"specialized": true,
+		"corporate":   true,
+		"community":   true,
+		"premium":     true,
+	}
+	if !validAcademyTypes[req.AcademyType] {
+		return fmt.Errorf("invalid academy_type: %s (must be one of: general, specialized, corporate, community, premium)", req.AcademyType)
+	}
+
+	// Tuition fee validation
+	if req.TuitionFee.IsSet() && req.TuitionFee.Value < 0 {
+		return errors.New("tuition_fee cannot be negative")
+	}
+
+	v.logger.Debug("CreateAcademyRequest validation passed")
+	return nil
+}
+
 // validateSkillProgress validates skill progress JSON structure
 func (v *Validator) validateSkillProgress(skillProgress map[string]interface{}) error {
 	// Basic structure validation - ensure it's a valid JSON object

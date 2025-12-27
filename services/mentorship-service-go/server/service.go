@@ -286,6 +286,13 @@ func (s *MentorshipService) GetAcademies(ctx context.Context, academyType api.Op
 // CreateAcademy creates a new academy
 func (s *MentorshipService) CreateAcademy(ctx context.Context, req *api.CreateAcademyRequest) (*api.Academy, error) {
 	s.metrics.RecordRequest("CreateAcademy")
+	s.logger.Info("Creating academy", zap.String("name", req.Name), zap.String("academy_type", req.AcademyType))
+
+	// Validate academy creation request
+	if err := s.validator.ValidateCreateAcademyRequest(ctx, req); err != nil {
+		s.metrics.RecordError("CreateAcademy")
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
 
 	academy := &api.Academy{
 		ID:          api.NewOptUUID(uuid.New()),
@@ -303,6 +310,8 @@ func (s *MentorshipService) CreateAcademy(ctx context.Context, req *api.CreateAc
 		return nil, fmt.Errorf("failed to create academy: %w", err)
 	}
 
+	s.metrics.RecordSuccess("CreateAcademy")
+	s.logger.Info("Academy created successfully", zap.String("academy_id", academy.ID.Value.String()))
 	return academy, nil
 }
 

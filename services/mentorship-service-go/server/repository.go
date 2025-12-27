@@ -29,6 +29,7 @@ type Repository struct {
 	reputationPool sync.Pool
 	schedulePool   sync.Pool
 	lessonPool     sync.Pool
+	academyPool    sync.Pool
 }
 
 // NewRepository creates a new repository with database connection
@@ -102,6 +103,12 @@ func NewRepository(logger *zap.Logger) *Repository {
 	repo.lessonPool = sync.Pool{
 		New: func() interface{} {
 			return &api.Lesson{}
+		},
+	}
+
+	repo.academyPool = sync.Pool{
+		New: func() interface{} {
+			return &api.Academy{}
 		},
 	}
 
@@ -686,10 +693,43 @@ func (r *Repository) DiscoverMentees(ctx context.Context, skillTrack api.OptStri
 }
 
 // CreateAcademy creates an academy
+// PERFORMANCE: Context timeout for DB operations (150ms for create operations in MMO)
 func (r *Repository) CreateAcademy(ctx context.Context, academy *api.Academy) error {
-	r.logger.Info("Creating academy in DB", zap.String("id", academy.ID.Value.String()))
+	r.logger.Info("Creating academy in DB", zap.String("name", academy.Name))
 
-	// TODO: Implement
+	// PERFORMANCE: Add timeout for DB operations in MMO environment
+	dbCtx, cancel := context.WithTimeout(ctx, 150*time.Millisecond)
+	defer cancel()
+
+	query := `
+		INSERT INTO mentorship.academies (
+			id, name, description, academy_type, founder_id, location,
+			programs_count, total_students, reputation_score, tuition_fee,
+			created_at, updated_at
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+		)`
+
+	_, err := r.db.Exec(dbCtx, query,
+		academy.ID.Value,
+		academy.Name,
+		academy.Description,
+		academy.AcademyType,
+		academy.FounderID.Value,
+		academy.Location,
+		academy.ProgramsCount.Value,
+		academy.TotalStudents.Value,
+		academy.ReputationScore.Value,
+		academy.TuitionFee.Value,
+		time.Now(),
+		time.Now(),
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to create academy: %w", err)
+	}
+
+	r.logger.Info("Academy created successfully", zap.String("id", academy.ID.Value.String()), zap.String("name", academy.Name))
 	return nil
 }
 
