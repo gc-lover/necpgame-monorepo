@@ -127,8 +127,8 @@ func TestVoiceChatService_CreateVoiceChannel_Success(t *testing.T) {
 	// 	MaxUsers:    maxUsers,
 	// 	IsLocked:    false,
 	// 	CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}
+	// 	UpdatedAt:   time.Now(),
+	// }
 
 	mockRepo.On("CreateVoiceChannel", ctx, mock.AnythingOfType("*server.VoiceChannel")).Return(nil)
 

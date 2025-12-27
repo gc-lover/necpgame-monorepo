@@ -6,8 +6,6 @@ package server
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"testing"
 	"time"
