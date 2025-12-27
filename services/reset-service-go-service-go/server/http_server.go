@@ -13,8 +13,13 @@ type ResetservicegoService struct {
 }
 
 func NewResetservicegoService() *ResetservicegoService {
+	server, err := api.NewServer(NewHandler(), nil) // nil for security handler
+	if err != nil {
+		panic(err) // In production, handle this properly
+	}
+
 	return &ResetservicegoService{
-		api: api.NewServer(&Handler{}),
+		api: server,
 	}
 }
 

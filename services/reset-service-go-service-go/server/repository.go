@@ -9,8 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"reset-service-go-service-go/pkg/api"
-
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 

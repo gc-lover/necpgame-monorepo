@@ -10,11 +10,9 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"sync"
 	"syscall"
 	"time"
 
-	"reset-service-go-service-go/pkg/api"
 	"reset-service-go-service-go/server"
 )
 
@@ -26,10 +24,6 @@ func main() {
 
 	// PERFORMANCE: Preallocate logger to avoid allocations
 	logger := log.New(os.Stdout, "[reset-service-go] ", log.LstdFlags)
-
-	// PERFORMANCE: Context with timeout for initialization
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 
 	// PERFORMANCE: Initialize service with memory pooling
 	svc := server.NewResetservicegoService()
