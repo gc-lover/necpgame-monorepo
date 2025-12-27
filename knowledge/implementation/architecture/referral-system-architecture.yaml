@@ -398,3 +398,251 @@ architecture:
           - id: UUID PRIMARY KEY
           - character_id: UUID FOREIGN KEY
           - milestone_level: INTEGER
+          - required_referrals: INTEGER
+          - current_referrals: INTEGER
+          - reward_type: VARCHAR(50)
+          - reward_amount: INTEGER
+          - bonus_reward_type: VARCHAR(50)
+          - bonus_reward_amount: INTEGER
+          - is_completed: BOOLEAN
+          - completed_at: TIMESTAMP
+          - is_reward_claimed: BOOLEAN
+          - reward_claimed_at: TIMESTAMP
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: referral_leaderboard
+        description: Лидерборд рефералов
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - rank: INTEGER
+          - total_referrals: INTEGER
+          - active_referrals: INTEGER
+          - milestone_referrals: INTEGER
+          - total_rewards: DECIMAL(10,2)
+          - last_updated: TIMESTAMP
+          - created_at: TIMESTAMP
+
+      - name: referral_rewards
+        description: Награды реферальной системы
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - referral_id: UUID FOREIGN KEY
+          - reward_type: VARCHAR(50)
+          - reward_amount: INTEGER
+          - currency_type: VARCHAR(20)
+          - item_id: UUID
+          - status: ENUM (pending, distributed, claimed, expired)
+          - distributed_at: TIMESTAMP
+          - claimed_at: TIMESTAMP
+          - expires_at: TIMESTAMP
+          - created_at: TIMESTAMP
+
+      - name: referral_analytics
+        description: Аналитические данные реферальной системы
+        columns:
+          - id: UUID PRIMARY KEY
+          - date: DATE
+          - total_codes_generated: INTEGER
+          - total_registrations: INTEGER
+          - total_active_referrals: INTEGER
+          - total_milestone_reached: INTEGER
+          - total_rewards_distributed: DECIMAL(10,2)
+          - conversion_rate: DECIMAL(5,4)
+          - created_at: TIMESTAMP
+
+  indexes:
+    - table: referral_codes
+      columns: [character_id]
+      type: btree
+      purpose: быстрый поиск кодов по персонажу
+    - table: referral_codes
+      columns: [code]
+      type: hash
+      purpose: уникальная проверка кодов
+    - table: referrals
+      columns: [referrer_id, status]
+      type: btree
+      purpose: фильтрация рефералов по рефереру и статусу
+    - table: referrals
+      columns: [referred_id]
+      type: btree
+      purpose: быстрый поиск реферала по ID
+    - table: referral_milestones
+      columns: [character_id, is_completed]
+      type: btree
+      purpose: активные milestones по персонажу
+    - table: referral_leaderboard
+      columns: [rank]
+      type: btree
+      purpose: сортировка лидерборда
+    - table: referral_rewards
+      columns: [character_id, status]
+      type: btree
+      purpose: награды по персонажу и статусу
+    - table: referral_analytics
+      columns: [date]
+      type: btree
+      purpose: аналитика по датам
+
+  security:
+    authentication:
+      - JWT tokens для всех API запросов
+      - Character ID валидация для доступа к персональным данным
+      - Rate limiting: 100 requests/minute per character
+    authorization:
+      - Только владелец персонажа может управлять своими рефералами
+      - Только владелец персонажа может получать свои награды
+      - Админ доступ для модерации и аналитики
+    encryption:
+      - HTTPS для всех соединений
+      - AES-256 для чувствительных данных в БД
+      - JWT подписи с RS256
+
+  monitoring:
+    metrics:
+      - referral_codes_generated_total
+      - referral_registrations_total
+      - referral_milestones_completed_total
+      - referral_rewards_distributed_total
+      - referral_api_response_time
+      - referral_db_query_duration
+    alerts:
+      - Высокая латентность API (>500ms)
+      - Высокая нагрузка на БД (>80% CPU)
+      - Ошибки генерации кодов (>1% от общего числа)
+      - Проблемы с распределением наград
+    logging:
+      - Структурированные логи с correlation ID
+      - Аудит всех операций с наградами
+      - Трекинг всех изменений в лидерборде
+
+  integrations:
+    character_service:
+      events_consumed:
+        - character.created - создание нового персонажа
+        - character.level-up - повышение уровня персонажа
+        - character.deleted - удаление персонажа
+      apis_called:
+        - GET /api/v1/characters/{id} - получение информации о персонаже
+        - GET /api/v1/characters/{id}/level - получение уровня персонажа
+
+    economy_service:
+      events_published:
+        - economy.transaction.created - создание транзакции награды
+      apis_called:
+        - POST /api/v1/economy/transactions - создание транзакции
+        - GET /api/v1/economy/balances/{characterId} - проверка баланса
+
+    notification_service:
+      events_published:
+        - notification.referral-milestone - уведомление о milestone
+        - notification.referral-reward - уведомление о награде
+      apis_called:
+        - POST /api/v1/notifications - отправка уведомления
+
+    analytics_service:
+      events_published:
+        - analytics.referral-event - событие аналитики рефералов
+      apis_called:
+        - POST /api/v1/analytics/events - отправка события аналитики
+
+    realtime_gateway:
+      websockets:
+        - wss://api.necpgame.com/v1/referral/{characterId} - поток обновлений
+      events_published:
+        - realtime.referral-update - обновление реферальных данных
+
+  deployment:
+    docker:
+      base_image: golang:1.21-alpine
+      ports: [8090]
+      environment:
+        - DB_HOST=referral-db
+        - REDIS_HOST=referral-redis
+        - KAFKA_HOSTS=kafka-cluster
+      healthcheck: /health
+    kubernetes:
+      replicas: 3
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+      configmaps:
+        - referral-config
+      secrets:
+        - referral-secrets
+    database:
+      type: PostgreSQL 15+
+      connection_pool: 10-50 connections
+      migration_tool: Liquibase
+    cache:
+      type: Redis Cluster
+      purpose: кэширование лидерборда и частых запросов
+    message_queue:
+      type: Apache Kafka
+      topics:
+        - referral-events
+        - referral-analytics
+
+  scaling:
+    horizontal:
+      - Автоматическое масштабирование на основе CPU (>70%)
+      - Минимум 3 реплики, максимум 10 реплик
+    database:
+      - Read replicas для запросов аналитики
+      - Sharding по character_id для больших объемов данных
+    cache:
+      - Redis Cluster с автоматическим шардингом
+      - TTL для кэшированных данных: 5-30 минут
+
+  technical_requirements:
+    implementation:
+      - Go 1.21+ с generics
+      - Clean Architecture (domain, application, infrastructure layers)
+      - CQRS pattern для команд и запросов
+      - Event Sourcing для критичных операций
+      - Repository pattern для работы с БД
+    testing:
+      - Unit тесты: ">80% coverage"
+      - Integration тесты для всех API endpoints
+      - Load тесты: 1000 RPS sustained
+      - Chaos engineering для отказоустойчивости
+    documentation:
+      - OpenAPI 3.0 спецификация
+      - API documentation с примерами
+      - Architecture Decision Records (ADRs)
+      - Runbooks для эксплуатации
+
+  risk_assessment:
+    high_risk:
+      - Дублирование реферальных кодов (unique constraints)
+      - Потеря наград при сбоях (ACID транзакции)
+      - Несогласованность лидерборда (eventual consistency)
+    mitigation:
+      - Валидация уникальности кодов на уровне приложения и БД
+      - Saga pattern для распределенных транзакций
+      - Conflict resolution для обновления лидерборда
+    monitoring:
+      - SLIs/SLOs для всех критичных операций
+      - Automated canary deployments
+      - Rollback procedures
+
+  success_criteria:
+    functional:
+      - Генерация уникальных кодов: <100ms
+      - Регистрация по коду: <300ms
+      - Обновление лидерборда: <200ms
+      - Выдача наград: 99.9% успешность
+    non_functional:
+      - 99.9% uptime
+      - P95 latency <500ms
+      - Support 100,000+ concurrent users
+      - Zero data loss for rewards
+
+# Issue: #140891087
