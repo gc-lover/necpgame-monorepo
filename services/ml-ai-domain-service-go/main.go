@@ -32,14 +32,14 @@ import (
 
 // Validation errors
 var (
-	ErrInvalidModelName     = errors.New("invalid model name: must be 3-100 characters, alphanumeric with hyphens/underscores")
-	ErrInvalidModelType     = errors.New("invalid model type: must be one of classification, regression, recommendation, anomaly_detection, clustering")
-	ErrInvalidAlgorithm     = errors.New("invalid algorithm: must be 2-50 characters")
-	ErrInvalidTrainingData  = errors.New("invalid training data: must provide at least 100 samples")
+	ErrInvalidModelName      = errors.New("invalid model name: must be 3-100 characters, alphanumeric with hyphens/underscores")
+	ErrInvalidModelType      = errors.New("invalid model type: must be one of classification, regression, recommendation, anomaly_detection, clustering")
+	ErrInvalidAlgorithm      = errors.New("invalid algorithm: must be 2-50 characters")
+	ErrInvalidTrainingData   = errors.New("invalid training data: must provide at least 100 samples")
 	ErrInvalidPredictionData = errors.New("invalid prediction data: input features cannot be empty")
-	ErrModelNotFound       = errors.New("model not found")
-	ErrTrainingJobNotFound = errors.New("training job not found")
-	ErrInvalidBatchSize    = errors.New("invalid batch size: must be between 1 and 1000")
+	ErrModelNotFound         = errors.New("model not found")
+	ErrTrainingJobNotFound   = errors.New("training job not found")
+	ErrInvalidBatchSize      = errors.New("invalid batch size: must be between 1 and 1000")
 )
 
 // DatabaseConfig holds database connection configuration
@@ -75,17 +75,17 @@ func NewValidator() *Validator {
 // NewDatabaseConfig creates database configuration with optimized connection pooling for MMORPG
 func NewDatabaseConfig() *DatabaseConfig {
 	return &DatabaseConfig{
-		Host:         getEnvOrDefault("DB_HOST", "localhost"),
-		Port:         5432, // PostgreSQL default
-		User:         getEnvOrDefault("DB_USER", "ml_ai_user"),
-		Password:     getEnvOrDefault("DB_PASSWORD", ""),
-		Database:     getEnvOrDefault("DB_NAME", "ml_ai_db"),
-		SSLMode:      getEnvOrDefault("DB_SSL_MODE", "disable"),
+		Host:     getEnvOrDefault("DB_HOST", "localhost"),
+		Port:     5432, // PostgreSQL default
+		User:     getEnvOrDefault("DB_USER", "ml_ai_user"),
+		Password: getEnvOrDefault("DB_PASSWORD", ""),
+		Database: getEnvOrDefault("DB_NAME", "ml_ai_db"),
+		SSLMode:  getEnvOrDefault("DB_SSL_MODE", "disable"),
 
 		// Optimized for MMORPG ML/AI service with high concurrent load
-		MaxOpenConns: 50,                // Allow up to 50 concurrent connections (high for ML workloads)
-		MaxIdleConns: 10,                // Keep 10 idle connections ready
-		MaxLifetime:  30 * time.Minute,  // Recycle connections every 30 minutes
+		MaxOpenConns: 50,               // Allow up to 50 concurrent connections (high for ML workloads)
+		MaxIdleConns: 10,               // Keep 10 idle connections ready
+		MaxLifetime:  30 * time.Minute, // Recycle connections every 30 minutes
 	}
 }
 
@@ -274,8 +274,8 @@ func initializeDatabase() (*sql.DB, error) {
 	}
 
 	// Configure connection pooling for high-performance ML workloads
-	db.SetMaxOpenConns(config.MaxOpenConns) // Allow many concurrent connections for ML predictions
-	db.SetMaxIdleConns(config.MaxIdleConns) // Keep connections ready for frequent requests
+	db.SetMaxOpenConns(config.MaxOpenConns)   // Allow many concurrent connections for ML predictions
+	db.SetMaxIdleConns(config.MaxIdleConns)   // Keep connections ready for frequent requests
 	db.SetConnMaxLifetime(config.MaxLifetime) // Recycle connections to prevent stale connections
 
 	// Test the connection
@@ -528,13 +528,13 @@ func (s *Service) checkDatabaseHealth(ctx context.Context) map[string]interface{
 	// Get connection pool statistics
 	stats := s.db.Stats()
 	health["connection_pool"] = map[string]interface{}{
-		"open_connections":     stats.OpenConnections,
-		"in_use_connections":   stats.InUse,
-		"idle_connections":     stats.Idle,
+		"open_connections":    stats.OpenConnections,
+		"in_use_connections":  stats.InUse,
+		"idle_connections":    stats.Idle,
 		"wait_count":          stats.WaitCount,
-		"wait_duration_ms":     stats.WaitDuration.Milliseconds(),
-		"max_idle_closed":      stats.MaxIdleTimeClosed,
-		"max_lifetime_closed":  stats.MaxLifetimeClosed,
+		"wait_duration_ms":    stats.WaitDuration.Milliseconds(),
+		"max_idle_closed":     stats.MaxIdleTimeClosed,
+		"max_lifetime_closed": stats.MaxLifetimeClosed,
 	}
 
 	// Check for connection pool issues
@@ -549,9 +549,9 @@ func (s *Service) checkDatabaseHealth(ctx context.Context) map[string]interface{
 // checkModelsHealth verifies ML models are accessible and valid
 func (s *Service) checkModelsHealth() map[string]interface{} {
 	health := map[string]interface{}{
-		"status":         "healthy",
-		"total_models":   len(s.models),
-		"active_models":  0,
+		"status":          "healthy",
+		"total_models":    len(s.models),
+		"active_models":   0,
 		"training_models": 0,
 	}
 
@@ -629,9 +629,9 @@ func (s *Service) checkTrainingJobsHealth() map[string]interface{} {
 // checkSystemResources monitors system-level resources
 func (s *Service) checkSystemResources() map[string]interface{} {
 	health := map[string]interface{}{
-		"status":        "healthy",
-		"goroutines":    getNumGoroutines(),
-		"uptime":        getUptime(),
+		"status":     "healthy",
+		"goroutines": getNumGoroutines(),
+		"uptime":     getUptime(),
 	}
 
 	// Check for too many goroutines (potential memory leak)
