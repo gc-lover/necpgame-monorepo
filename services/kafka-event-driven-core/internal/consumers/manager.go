@@ -664,4 +664,6 @@ func (cb *CircuitBreaker) GetState() string {
 func (cb *CircuitBreaker) Reset() {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
-	cb.s
+	cb.state = "closed"
+	cb.failures = 0
+}
