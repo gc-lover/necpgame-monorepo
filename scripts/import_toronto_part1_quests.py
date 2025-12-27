@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Toronto Part 1 Quests Import Script
+Toronto Part 3 Quests Import Script
 Imports Toronto quest data from YAML files to Liquibase YAML format for database insertion.
-Processes Part 1 (files 1-5).
+Processes Part 3 (files 11-15).
 """
 
 import os
@@ -51,7 +51,7 @@ def process_quest_data(quest_data, file_path):
 
 def create_liquibase_yaml(quests, output_file):
     """Create a Liquibase YAML file for inserting quests."""
-    changeset_id = f"data_quests_toronto_part1_import_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    changeset_id = f"data_quests_toronto_part3_import_{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
     liquibase_data = {
         'databaseChangeLog': [
