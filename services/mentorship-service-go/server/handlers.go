@@ -72,7 +72,10 @@ func (h *Handler) GetMentorshipContract(ctx context.Context, params api.GetMento
 
 	contract, err := h.service.GetMentorshipContract(ctx, params.ContractID)
 	if err != nil {
-		return api.GetMentorshipContractOK{}, nil // TODO: Proper error handling
+		h.logger.Error("Failed to get mentorship contract",
+			zap.String("contract_id", params.ContractID.String()),
+			zap.Error(err))
+		return nil, err // Return error to trigger proper HTTP error response
 	}
 
 	return api.GetMentorshipContractOK{Data: *contract}, nil
@@ -84,7 +87,10 @@ func (h *Handler) UpdateMentorshipContract(ctx context.Context, params api.Updat
 
 	contract, err := h.service.UpdateMentorshipContract(ctx, params.ContractID, req)
 	if err != nil {
-		return api.UpdateMentorshipContractOK{}, nil // TODO: Proper error handling
+		h.logger.Error("Failed to update mentorship contract",
+			zap.String("contract_id", params.ContractID.String()),
+			zap.Error(err))
+		return nil, err // Return error to trigger proper HTTP error response
 	}
 
 	return api.UpdateMentorshipContractOK{Data: *contract}, nil
@@ -92,12 +98,19 @@ func (h *Handler) UpdateMentorshipContract(ctx context.Context, params api.Updat
 
 // GetLessonSchedules implements getLessonSchedules
 func (h *Handler) GetLessonSchedules(ctx context.Context, params api.GetLessonSchedulesParams) (api.GetLessonSchedulesRes, error) {
-	h.logger.Info("GetLessonSchedules called")
+	h.logger.Info("GetLessonSchedules called", zap.String("contract_id", params.ContractID.String()))
 
-	// TODO: Implement
+	schedules, err := h.service.GetLessonSchedules(ctx, params.ContractID)
+	if err != nil {
+		h.logger.Error("Failed to get lesson schedules",
+			zap.String("contract_id", params.ContractID.String()),
+			zap.Error(err))
+		return nil, err
+	}
+
 	return api.GetLessonSchedulesOK{
 		Data: api.SchedulesListResponse{
-			Schedules: []*api.LessonSchedule{},
+			Schedules: schedules,
 		},
 	}, nil
 }
@@ -108,7 +121,10 @@ func (h *Handler) CreateLessonSchedule(ctx context.Context, params api.CreateLes
 
 	schedule, err := h.service.CreateLessonSchedule(ctx, params.ContractID, req)
 	if err != nil {
-		return api.CreateLessonScheduleCreated{}, nil // TODO: Proper error handling
+		h.logger.Error("Failed to create lesson schedule",
+			zap.String("contract_id", params.ContractID.String()),
+			zap.Error(err))
+		return nil, err // Return error to trigger proper HTTP error response
 	}
 
 	return api.CreateLessonScheduleCreated{Data: *schedule}, nil

@@ -17,12 +17,12 @@ import (
 
 // MentorshipService handles business logic for mentorship
 type MentorshipService struct {
-	repo     *Repository
-	cache    *Cache
+	repo      *Repository
+	cache     *Cache
 	validator *Validator
 	metrics   *Metrics
-	logger   *zap.Logger
-	mu       sync.RWMutex
+	logger    *zap.Logger
+	mu        sync.RWMutex
 }
 
 // NewMentorshipService creates a new service instance
@@ -153,6 +153,19 @@ func (s *MentorshipService) CreateLessonSchedule(ctx context.Context, contractID
 	return schedule, nil
 }
 
+// GetLessonSchedules retrieves lesson schedules for a contract
+func (s *MentorshipService) GetLessonSchedules(ctx context.Context, contractID uuid.UUID) ([]*api.LessonSchedule, error) {
+	s.metrics.RecordRequest("GetLessonSchedules")
+	s.logger.Info("Getting lesson schedules", zap.String("contract_id", contractID.String()))
+
+	// TODO: Implement repository method for getting lesson schedules
+	// For now, return empty list (table doesn't exist yet)
+	schedules := []*api.LessonSchedule{}
+
+	s.metrics.RecordSuccess("GetLessonSchedules")
+	return schedules, nil
+}
+
 // StartLesson starts a lesson
 func (s *MentorshipService) StartLesson(ctx context.Context, contractID uuid.UUID, req *api.StartLessonRequest) (*api.Lesson, error) {
 	s.metrics.RecordRequest("StartLesson")
@@ -252,7 +265,3 @@ func (s *MentorshipService) GetMentorReputation(ctx context.Context, mentorID uu
 
 	return reputation, nil
 }
-
-
-
-

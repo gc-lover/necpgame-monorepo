@@ -27,6 +27,7 @@ type Repository struct {
 	mentorPool     sync.Pool
 	menteePool     sync.Pool
 	reputationPool sync.Pool
+	schedulePool   sync.Pool
 }
 
 // NewRepository creates a new repository with database connection
@@ -88,6 +89,12 @@ func NewRepository(logger *zap.Logger) *Repository {
 	repo.reputationPool = sync.Pool{
 		New: func() interface{} {
 			return &api.MentorReputation{}
+		},
+	}
+
+	repo.schedulePool = sync.Pool{
+		New: func() interface{} {
+			return &api.LessonSchedule{}
 		},
 	}
 
@@ -376,6 +383,69 @@ func (r *Repository) CreateLessonSchedule(ctx context.Context, schedule *api.Les
 
 	r.logger.Info("Lesson schedule created successfully", zap.String("id", schedule.ID.Value.String()))
 	return nil
+}
+
+// GetLessonSchedules retrieves lesson schedules for a contract
+// NOTE: Requires lesson_schedules table to be created by Database agent
+// PERFORMANCE: Context timeout for DB operations (150ms for list operations in MMO)
+func (r *Repository) GetLessonSchedules(ctx context.Context, contractID uuid.UUID) ([]*api.LessonSchedule, error) {
+	r.logger.Info("Retrieving lesson schedules from DB", zap.String("contract_id", contractID.String()))
+
+	// PERFORMANCE: Add timeout for DB operations in MMO environment
+	dbCtx, cancel := context.WithTimeout(ctx, 150*time.Millisecond)
+	defer cancel()
+
+	// TODO: Database agent needs to create lesson_schedules table
+	// For now, return empty list
+	query := `
+		SELECT id, contract_id, lesson_date, lesson_time, location, format, resources, status, created_at, updated_at
+		FROM mentorship.lesson_schedules
+		WHERE contract_id = $1
+		ORDER BY lesson_date ASC, lesson_time ASC
+	`
+
+	rows, err := r.db.Query(dbCtx, query, contractID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query lesson schedules: %w", err)
+	}
+	defer rows.Close()
+
+	var schedules []*api.LessonSchedule
+	for rows.Next() {
+		schedule := r.schedulePool.Get().(*api.LessonSchedule)
+		*schedule = api.LessonSchedule{} // Reset
+
+		err := rows.Scan(
+			&schedule.ID.Value,
+			&schedule.ContractID.Value,
+			&schedule.LessonDate.Value,
+			&schedule.LessonTime,
+			&schedule.Location,
+			&schedule.Format,
+			&schedule.Resources,
+			&schedule.Status,
+			&schedule.CreatedAt.Value,
+			&schedule.UpdatedAt.Value,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan lesson schedule: %w", err)
+		}
+
+		schedule.ID.Set = true
+		schedule.ContractID.Set = true
+		schedule.LessonDate.Set = true
+		schedule.CreatedAt.Set = true
+		schedule.UpdatedAt.Set = true
+
+		schedules = append(schedules, schedule)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating lesson schedules: %w", err)
+	}
+
+	r.logger.Info("Retrieved lesson schedules", zap.String("contract_id", contractID.String()), zap.Int("count", len(schedules)))
+	return schedules, nil
 }
 
 // CreateLesson creates a lesson
