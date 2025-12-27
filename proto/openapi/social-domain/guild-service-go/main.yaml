@@ -885,7 +885,88 @@ components:
           example: 500
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 
-    # Import module schemas
-    $ref: './modules/guild-core.yaml#/components/schemas'
-    $ref: './modules/member-management.yaml#/components/schemas'
-    $ref: './modules/guild-content.yaml#/components/schemas'
+    # Basic guild schemas for initial generation
+    Guild:
+      type: object
+      required:
+      - guild_id
+      - name
+      - leader_id
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          maxLength: 50
+          example: "Shadow Syndicate"
+        leader_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    GuildSettings:
+      type: object
+      properties:
+        is_recruiting:
+          type: boolean
+          example: true
+        recruitment_requirements:
+          type: object
+          properties:
+            min_level:
+              type: integer
+              minimum: 1
+              example: 10
+
+    GuildMember:
+      type: object
+      required:
+      - player_id
+      - role
+      - joined_at
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        role:
+          type: string
+          enum: [member, officer, leader]
+          example: member
+        joined_at:
+          type: string
+          format: date-time
+          example: '2025-12-23T23:54:00Z'
+
+    GuildAnnouncement:
+      type: object
+      required:
+      - announcement_id
+      - title
+      - content
+      - author_id
+      - created_at
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440003
+        title:
+          type: string
+          maxLength: 100
+          example: "New Guild Event"
+        content:
+          type: string
+          maxLength: 1000
+          example: "Join us for the upcoming raid!"
+        author_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-12-23T23:54:00Z'

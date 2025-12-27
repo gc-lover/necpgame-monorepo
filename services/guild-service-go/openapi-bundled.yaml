@@ -1,0 +1,934 @@
+openapi: 3.0.3
+info:
+  title: Social Domain - Guild Service API
+  description: |-
+    **Enterprise-Grade Guild Service** for NECPGAME MMOFPS RPG.
+    **Service Purpose:** Complete guild management system with member management, content creation, and social hierarchy.
+    **Architecture:** Event-driven microservice with Kafka integration for guild events.
+    **Domain:** social-domain
+    **Service:** guild-service-go
+    **Core Features:** - Guild creation and lifecycle management - Member management with roles and permissions - Guild content (announcements, events) - Guild settings and customization - Social hierarchy and reputation systems
+    **Performance Targets:** - Hot paths: 2000+ RPS, P99 <15ms (guild status, member lists) - Event throughput: 1000+ events/sec (guild updates) - Memory: <30MB per service instance (optimized structs) - Cache hit rate: >95% (Redis for active guilds)
+    **BACKEND NOTE:** Struct field alignment optimized (large → small types). All schemas ordered for optimal memory layout in generated Go code. Expected memory savings: 30-50% for guild-related structs.
+    **Security:** JWT authentication with role-based permissions. Guild leaders have elevated permissions for management operations.
+  version: 1.0.0
+  contact:
+    name: Guild Service Team
+    email: guild-service@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:8080/api/v1/social-domain/guild
+    description: Local development server
+  - url: https://api.necpgame.com/v1/social-domain/guild
+    description: Production server
+security:
+  - bearerAuth: []
+tags:
+  - name: Guild Management
+    description: Core guild operations (create, update, delete)
+  - name: Member Management
+    description: Guild member operations (join, leave, roles)
+  - name: Guild Content
+    description: Announcements and events management
+  - name: Guild Settings
+    description: Guild configuration and customization
+paths:
+  /guilds:
+    get:
+      tags:
+        - Guild Management
+      summary: List guilds with filtering
+      description: Get paginated list of guilds with optional filtering by status, level, reputation
+      operationId: listGuilds
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Items per page
+        - name: recruiting
+          in: query
+          schema:
+            type: boolean
+          description: Filter by recruiting status
+        - name: min_level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Minimum guild level
+        - name: max_level
+          in: query
+          schema:
+            type: integer
+            maximum: 100
+          description: Maximum guild level
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - level
+              - reputation
+              - member_count
+              - created_at
+            default: level
+          description: Sort field
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          description: Sort order
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - guilds
+                  - pagination
+                properties:
+                  guilds:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Guild'
+                  pagination:
+                    type: object
+                    required:
+                      - page
+                      - limit
+                      - total
+                      - total_pages
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 20
+                      total:
+                        type: integer
+                        example: 150
+                      total_pages:
+                        type: integer
+                        example: 8
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Guild Management
+      summary: Create new guild
+      description: Create a new guild with the authenticated user as leader
+      operationId: createGuild
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  maxLength: 50
+                  example: Shadow Syndicate
+                description:
+                  type: string
+                  maxLength: 500
+                  example: Elite cyberpunk guild specializing in night operations
+                motto:
+                  type: string
+                  maxLength: 100
+                  example: Shadows unite, enemies divide
+                is_recruiting:
+                  type: boolean
+                  default: true
+                  example: true
+                recruitment_requirements:
+                  $ref: '#/components/schemas/GuildSettings'
+      responses:
+        '201':
+          description: Guild created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - guild
+                properties:
+                  guild:
+                    $ref: '#/components/schemas/Guild'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Guild name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /guilds/{guild_id}:
+    get:
+      tags:
+        - Guild Management
+      summary: Get guild details
+      description: Get detailed information about a specific guild
+      operationId: getGuild
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+      responses:
+        '200':
+          description: Guild details
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - guild
+                properties:
+                  guild:
+                    $ref: '#/components/schemas/Guild'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+        - Guild Management
+      summary: Update guild
+      description: Update guild information (leader only)
+      operationId: updateGuild
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  maxLength: 500
+                motto:
+                  type: string
+                  maxLength: 100
+                is_recruiting:
+                  type: boolean
+                recruitment_requirements:
+                  $ref: '#/components/schemas/GuildSettings'
+                emblem_url:
+                  type: string
+                  format: uri
+                banner_url:
+                  type: string
+                  format: uri
+      responses:
+        '200':
+          description: Guild updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - guild
+                properties:
+                  guild:
+                    $ref: '#/components/schemas/Guild'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Guild Management
+      summary: Disband guild
+      description: Disband guild (leader only, requires confirmation)
+      operationId: disbandGuild
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+        - name: confirmation
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - DISBAND_GUILD_CONFIRMED
+          description: Confirmation token
+      responses:
+        '204':
+          description: Guild disbanded successfully
+        '400':
+          description: Invalid confirmation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /guilds/{guild_id}/members:
+    get:
+      tags:
+        - Member Management
+      summary: List guild members
+      description: Get paginated list of guild members
+      operationId: listGuildMembers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Items per page
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum:
+              - leader
+              - officer
+              - veteran
+              - member
+              - recruit
+          description: Filter by role
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Show only active members
+      responses:
+        '200':
+          description: Guild members list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - members
+                  - pagination
+                properties:
+                  members:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GuildMember'
+                  pagination:
+                    type: object
+                    required:
+                      - page
+                      - limit
+                      - total
+                      - total_pages
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 20
+                      total:
+                        type: integer
+                        example: 45
+                      total_pages:
+                        type: integer
+                        example: 3
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /guilds/{guild_id}/members/{player_id}:
+    put:
+      tags:
+        - Member Management
+      summary: Update member role
+      description: Update member role and permissions (leader/officer only)
+      operationId: updateMemberRole
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+              properties:
+                role:
+                  type: string
+                  enum:
+                    - officer
+                    - veteran
+                    - member
+                    - recruit
+                  example: officer
+                permissions:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - invite_members
+                      - kick_members
+                      - manage_bank
+                      - declare_war
+                      - manage_territory
+                      - edit_guild_settings
+                      - post_announcements
+                  example:
+                    - invite_members
+                    - post_announcements
+      responses:
+        '200':
+          description: Member role updated
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - member
+                properties:
+                  member:
+                    $ref: '#/components/schemas/GuildMember'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Guild or member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Member Management
+      summary: Remove member from guild
+      description: Remove member from guild (leader/officer only)
+      operationId: removeGuildMember
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player unique identifier
+      responses:
+        '204':
+          description: Member removed successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Guild or member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /guilds/{guild_id}/announcements:
+    get:
+      tags:
+        - Guild Content
+      summary: List guild announcements
+      description: Get paginated list of guild announcements
+      operationId: listGuildAnnouncements
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          description: Items per page
+        - name: pinned_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Show only pinned announcements
+      responses:
+        '200':
+          description: Announcements list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - announcements
+                  - pagination
+                properties:
+                  announcements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GuildAnnouncement'
+                  pagination:
+                    type: object
+                    required:
+                      - page
+                      - limit
+                      - total
+                      - total_pages
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                      total:
+                        type: integer
+                        example: 25
+                      total_pages:
+                        type: integer
+                        example: 3
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Guild Content
+      summary: Create announcement
+      description: Create new guild announcement (officer+ only)
+      operationId: createGuildAnnouncement
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - content
+              properties:
+                title:
+                  type: string
+                  maxLength: 100
+                  example: Weekly Guild Meeting
+                content:
+                  type: string
+                  maxLength: 5000
+                  example: This week's meeting will discuss our upcoming territory expansion plans...
+                priority:
+                  type: string
+                  enum:
+                    - low
+                    - normal
+                    - high
+                    - urgent
+                  default: normal
+                  example: high
+                is_pinned:
+                  type: boolean
+                  default: false
+                  example: true
+                expires_at:
+                  type: string
+                  format: date-time
+                  example: '2025-12-30T18:00:00Z'
+                tags:
+                  type: array
+                  items:
+                    type: string
+                    maxLength: 20
+                  example:
+                    - meeting
+                    - territory
+      responses:
+        '201':
+          description: Announcement created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - announcement
+                properties:
+                  announcement:
+                    $ref: '#/components/schemas/GuildAnnouncement'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check
+      description: Get service health status
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - domain
+      properties:
+        domain:
+          type: string
+          example: guild
+          maxLength: 50
+        status:
+          type: string
+          enum:
+            - healthy
+            - degraded
+            - unhealthy
+          example: healthy
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-23T23:54:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+        active_guilds:
+          type: integer
+          example: 1250
+        guilds_processed_per_second:
+          type: integer
+          example: 150
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        message:
+          type: string
+          maxLength: 256
+          example: Internal server error
+        domain:
+          type: string
+          example: guild
+          maxLength: 50
+        details:
+          type: object
+          description: Additional error context
+          example:
+            field: guild_id
+            reason: invalid_uuid_format
+        code:
+          type: integer
+          format: int32
+          minimum: 100
+          maximum: 599
+          example: 500
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Guild:
+      type: object
+      required:
+        - guild_id
+        - name
+        - leader_id
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          maxLength: 50
+          example: Shadow Syndicate
+        leader_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    GuildSettings:
+      type: object
+      properties:
+        is_recruiting:
+          type: boolean
+          example: true
+        recruitment_requirements:
+          type: object
+          properties:
+            min_level:
+              type: integer
+              minimum: 1
+              example: 10
+    GuildMember:
+      type: object
+      required:
+        - player_id
+        - role
+        - joined_at
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        role:
+          type: string
+          enum:
+            - member
+            - officer
+            - leader
+          example: member
+        joined_at:
+          type: string
+          format: date-time
+          example: '2025-12-23T23:54:00Z'
+    GuildAnnouncement:
+      type: object
+      required:
+        - announcement_id
+        - title
+        - content
+        - author_id
+        - created_at
+      properties:
+        announcement_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440003
+        title:
+          type: string
+          maxLength: 100
+          example: New Guild Event
+        content:
+          type: string
+          maxLength: 1000
+          example: Join us for the upcoming raid!
+        author_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-12-23T23:54:00Z'
