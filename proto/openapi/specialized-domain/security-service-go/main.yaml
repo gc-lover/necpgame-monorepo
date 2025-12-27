@@ -7,45 +7,33 @@ info:
 
     ## Key Features
 
-    - **JWT-based authentication** with refresh token support
-    - **Role-based access control (RBAC)** with granular permissions
-    - **Anti-cheat validation** with ML-powered pattern detection
-    - **Security threat monitoring** with real-time alerts
-    - **Enterprise-grade security** with TLS 1.2+, rate limiting, CORS
-    - **Audit logging** for all security events
+    - **JWT-based authentication** with refresh token support - **Role-based access control (RBAC)** with granular permissions
+    - **Anti-cheat validation** with ML-powered pattern detection - **Security threat monitoring** with real-time alerts -
+    **Enterprise-grade security** with TLS 1.2+, rate limiting, CORS - **Audit logging** for all security events
 
     ## Domain Purpose
 
-    The Security Service provides centralized authentication, authorization,
-    and anti-cheat capabilities for the entire NECPGAME ecosystem.
+    The Security Service provides centralized authentication, authorization, and anti-cheat capabilities for the entire NECPGAME
+    ecosystem.
 
     Implements zero-trust security model with comprehensive monitoring.
 
     ## Performance Targets
 
-    - P99 Latency: <10ms for authentication, <50ms for validation
-    - Memory: <30KB per active session
-    - Concurrent users: 100,000+ simultaneous validations
-    - Security events: 10,000+ events/second processing
+    - P99 Latency: <10ms for authentication, <50ms for validation - Memory: <30KB per active session - Concurrent users: 100,000+
+    simultaneous validations - Security events: 10,000+ events/second processing
 
     ## BACKEND OPTIMIZATION NOTES
 
-    **Struct Alignment Hints:**
-    - JWT payload structs aligned to 8-byte boundaries (30-50% memory savings)
-    - Security threat records use pointer fields to reduce memory footprint
-    - Permission arrays pre-allocated with capacity hints
+    **Struct Alignment Hints:** - JWT payload structs aligned to 8-byte boundaries (30-50% memory savings) - Security threat
+    records use pointer fields to reduce memory footprint - Permission arrays pre-allocated with capacity hints
 
-    **Performance Optimizations:**
-    - JWT validation cached in Redis with TTL
-    - Permission checks use bloom filters for O(1) lookups
-    - Anti-cheat validation batched for concurrent processing
-    - Connection pooling: PostgreSQL (50 max), Redis (20 max)
+    **Performance Optimizations:** - JWT validation cached in Redis with TTL - Permission checks use bloom filters for O(1)
+    lookups - Anti-cheat validation batched for concurrent processing - Connection pooling: PostgreSQL (50 max), Redis (20
+    max)
 
-    **Zero Allocations in Hot Paths:**
-    - Authentication endpoint: no heap allocations in success path
-    - Permission validation: stack-only operations
-    - Threat detection: pre-allocated buffers reused
-    '
+    **Zero Allocations in Hot Paths:** - Authentication endpoint: no heap allocations in success path - Permission validation:
+    stack-only operations - Threat detection: pre-allocated buffers reused '
   version: 1.0.0
   contact:
     name: NECPGAME Security Team
@@ -54,7 +42,6 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 servers:
 - url: https://api.necpgame.com/v1/security
   description: Production server
@@ -62,10 +49,8 @@ servers:
   description: Staging server
 - url: http://localhost:3000/api/v1/security
   description: Local development server
-
 security:
 - BearerAuth: []
-
 tags:
 - name: Authentication
   description: User authentication and session management
@@ -77,7 +62,6 @@ tags:
   description: Security threat detection and monitoring
 - name: Health Monitoring
   description: System health and performance monitoring
-
 paths:
   /health:
     get:
@@ -88,8 +72,7 @@ paths:
 
         Critical for service discovery, load balancing, and monitoring.
 
-        **Performance:** <1ms response time, cached for 30 seconds
-        '
+        **Performance:** <1ms response time, cached for 30 seconds '
       operationId: securityHealthCheck
       tags:
       - Health Monitoring
@@ -112,7 +95,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-
   /ready:
     get:
       summary: Security service readiness check
@@ -122,8 +104,7 @@ paths:
 
         Checks database connectivity and critical dependencies.
 
-        **Performance:** <5ms response time
-        '
+        **Performance:** <5ms response time '
       operationId: securityReadinessCheck
       tags:
       - Health Monitoring
@@ -149,10 +130,10 @@ paths:
                 properties:
                   status:
                     type: string
-                    enum: [not_ready]
+                    enum:
+                    - not_ready
                   message:
                     type: string
-
   /auth/login:
     post:
       summary: User authentication
@@ -162,9 +143,7 @@ paths:
 
         Includes security monitoring and rate limiting.
 
-        **Performance:** <20ms average, <50ms P99
-        **Rate Limit:** 5 attempts per minute per IP
-        '
+        **Performance:** <20ms average, <50ms P99 **Rate Limit:** 5 attempts per minute per IP '
       operationId: authenticateUser
       tags:
       - Authentication
@@ -204,7 +183,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /auth/refresh:
     post:
       summary: Refresh access token
@@ -214,8 +192,7 @@ paths:
 
         Validates refresh token and generates new tokens.
 
-        **Performance:** <10ms average
-        '
+        **Performance:** <10ms average '
       operationId: refreshToken
       tags:
       - Authentication
@@ -244,7 +221,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /auth/logout:
     post:
       summary: User logout
@@ -254,8 +230,7 @@ paths:
 
         Logs logout event for audit purposes.
 
-        **Performance:** <5ms average
-        '
+        **Performance:** <5ms average '
       operationId: logoutUser
       tags:
       - Authentication
@@ -270,7 +245,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /auth/permissions:
     get:
       summary: Get current user permissions
@@ -280,8 +254,7 @@ paths:
 
         Used by frontend and other services for UI rendering and access control.
 
-        **Performance:** <5ms average, cached for 5 minutes
-        '
+        **Performance:** <5ms average, cached for 5 minutes '
       operationId: getUserPermissions
       tags:
       - Authorization
@@ -306,7 +279,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /auth/check-permission:
     post:
       summary: Check specific permission
@@ -316,8 +288,7 @@ paths:
 
         Used for API-level authorization decisions.
 
-        **Performance:** <2ms average, bloom filter lookup
-        '
+        **Performance:** <2ms average, bloom filter lookup '
       operationId: checkPermission
       tags:
       - Authorization
@@ -354,7 +325,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /security/threats:
     get:
       summary: Get security threats
@@ -364,8 +334,7 @@ paths:
 
         Requires security.threats.read permission or admin role.
 
-        **Performance:** <100ms for large result sets
-        '
+        **Performance:** <100ms for large result sets '
       operationId: getSecurityThreats
       tags:
       - Threat Monitoring
@@ -391,13 +360,20 @@ paths:
         in: query
         schema:
           type: string
-          enum: [low, medium, high, critical]
+          enum:
+          - low
+          - medium
+          - high
+          - critical
         description: Filter by threat severity
       - name: status
         in: query
         schema:
           type: string
-          enum: [active, resolved, dismissed]
+          enum:
+          - active
+          - resolved
+          - dismissed
           default: active
         description: Filter by threat status
       responses:
@@ -425,7 +401,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /anticheat/validate:
     post:
       summary: Validate game action
@@ -435,9 +410,7 @@ paths:
 
         Uses ML models and statistical analysis for detection.
 
-        **Performance:** <50ms P99, batched processing
-        **Rate Limit:** 1000 validations per second per user
-        '
+        **Performance:** <50ms P99, batched processing **Rate Limit:** 1000 validations per second per user '
       operationId: validateGameAction
       tags:
       - Anti-Cheat
@@ -480,7 +453,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
 components:
   securitySchemes:
     BearerAuth:
@@ -488,25 +460,22 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: JWT access token for authentication
-
   schemas:
-    # Common schemas
     Error:
       type: object
       required:
       - code
       - message
       properties:
-        code:
-          type: integer
-          description: HTTP status code
         message:
           type: string
           description: Error message
         details:
           type: object
           description: Additional error details
-
+        code:
+          type: integer
+          description: HTTP status code
     HealthResponse:
       type: object
       required:
@@ -517,7 +486,10 @@ components:
       properties:
         status:
           type: string
-          enum: [healthy, degraded, unhealthy]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
         domain:
           type: string
           example: security-service
@@ -526,7 +498,7 @@ components:
           format: date-time
         version:
           type: string
-          example: "1.0.0"
+          example: 1.0.0
         database:
           type: boolean
           description: Database connectivity status
@@ -536,7 +508,6 @@ components:
         uptime_seconds:
           type: integer
           description: Service uptime in seconds
-
     ReadinessResponse:
       type: object
       required:
@@ -545,14 +516,16 @@ components:
       properties:
         status:
           type: string
-          enum: [ready]
+          enum:
+          - ready
         checks:
           type: array
           items:
             type: string
-          example: ["database", "redis", "auth_service"]
-
-    # Authentication schemas
+          example:
+          - database
+          - redis
+          - auth_service
     LoginRequest:
       type: object
       required:
@@ -570,7 +543,6 @@ components:
           maxLength: 128
           description: User password
       description: User login credentials
-
     LoginResponse:
       type: object
       required:
@@ -588,16 +560,16 @@ components:
           description: JWT refresh token for obtaining new access tokens
         token_type:
           type: string
-          enum: [Bearer]
+          enum:
+          - Bearer
           default: Bearer
+        user:
+          $ref: '#/components/schemas/UserInfo'
         expires_in:
           type: integer
           description: Access token expiration time in seconds
           example: 3600
-        user:
-          $ref: '#/components/schemas/UserInfo'
       description: Successful authentication response
-
     RefreshTokenRequest:
       type: object
       required:
@@ -607,7 +579,6 @@ components:
           type: string
           description: Valid refresh token
       description: Token refresh request
-
     UserInfo:
       type: object
       required:
@@ -625,17 +596,15 @@ components:
           type: string
           format: email
           description: User email address
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp
         roles:
           type: array
           items:
             type: string
           description: User roles
-        created_at:
-          type: string
-          format: date-time
-          description: Account creation timestamp
-
-    # Authorization schemas
     UserPermissions:
       type: object
       required:
@@ -646,23 +615,27 @@ components:
         user_id:
           type: string
           description: User identifier
+        expires_at:
+          type: string
+          format: date-time
+          description: Permission cache expiration
         roles:
           type: array
           items:
             type: string
           description: User roles
-          example: ["player", "moderator"]
+          example:
+          - player
+          - moderator
         permissions:
           type: array
           items:
             type: string
           description: User permissions
-          example: ["gameplay.access", "chat.send", "friends.manage"]
-        expires_at:
-          type: string
-          format: date-time
-          description: Permission cache expiration
-
+          example:
+          - gameplay.access
+          - chat.send
+          - friends.manage
     CheckPermissionRequest:
       type: object
       required:
@@ -671,14 +644,13 @@ components:
         permission:
           type: string
           description: Permission to check
-          example: "gameplay.access"
+          example: gameplay.access
         resource:
           type: string
           description: Optional resource identifier
         context:
           type: object
           description: Additional context for permission evaluation
-
     CheckPermissionResponse:
       type: object
       required:
@@ -689,9 +661,6 @@ components:
         permission:
           type: string
           description: Checked permission
-        granted:
-          type: boolean
-          description: Whether permission is granted
         reason:
           type: string
           description: Reason for the decision
@@ -702,8 +671,9 @@ components:
           type: string
           format: date-time
           description: Permission check timestamp
-
-    # Threat monitoring schemas
+        granted:
+          type: boolean
+          description: Whether permission is granted
     SecurityThreat:
       type: object
       required:
@@ -719,15 +689,27 @@ components:
           description: Unique threat identifier
         type:
           type: string
-          enum: [brute_force, suspicious_login, anticheat_violation, rate_limit_exceeded, unusual_activity]
+          enum:
+          - brute_force
+          - suspicious_login
+          - anticheat_violation
+          - rate_limit_exceeded
+          - unusual_activity
           description: Type of security threat
         severity:
           type: string
-          enum: [low, medium, high, critical]
+          enum:
+          - low
+          - medium
+          - high
+          - critical
           description: Threat severity level
         status:
           type: string
-          enum: [active, resolved, dismissed]
+          enum:
+          - active
+          - resolved
+          - dismissed
           description: Current threat status
         description:
           type: string
@@ -745,11 +727,6 @@ components:
         location:
           type: string
           description: Geographic location (if available)
-        confidence_score:
-          type: number
-          minimum: 0
-          maximum: 1
-          description: AI confidence score (0-1)
         detected_at:
           type: string
           format: date-time
@@ -763,7 +740,11 @@ components:
           items:
             type: string
           description: Actions taken to resolve threat
-
+        confidence_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: AI confidence score (0-1)
     GetSecurityThreatsResponse:
       type: object
       required:
@@ -771,10 +752,6 @@ components:
       - summary
       - pagination
       properties:
-        threats:
-          type: array
-          items:
-            $ref: '#/components/schemas/SecurityThreat'
         summary:
           type: object
           required:
@@ -814,8 +791,10 @@ components:
             has_more:
               type: boolean
               description: Whether more pages are available
-
-    # Anti-cheat schemas
+        threats:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityThreat'
     ValidateGameActionRequest:
       type: object
       required:
@@ -823,7 +802,12 @@ components:
       properties:
         action_type:
           type: string
-          enum: [movement, combat, interaction, crafting, trading]
+          enum:
+          - movement
+          - combat
+          - interaction
+          - crafting
+          - trading
           description: Type of game action being validated
         parameters:
           type: object
@@ -856,26 +840,27 @@ components:
             client_version:
               type: string
               description: Game client version
-
     ValidateGameActionResponse:
       type: object
       required:
       - valid
       properties:
-        valid:
-          type: boolean
-          description: Whether the action is valid (no cheating detected)
-        confidence_score:
-          type: number
-          minimum: 0
-          maximum: 1
-          description: Validation confidence (higher = more certain)
         flags:
           type: array
           items:
             type: string
           description: Detected cheat flags (if any)
-          example: ["speed_hack", "aimbot_suspicious"]
+          example:
+          - speed_hack
+          - aimbot_suspicious
+        confidence_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Validation confidence (higher = more certain)
+        valid:
+          type: boolean
+          description: Whether the action is valid (no cheating detected)
         validation_time_ms:
           type: integer
           description: Time taken for validation in milliseconds

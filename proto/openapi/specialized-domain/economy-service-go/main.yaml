@@ -3,100 +3,49 @@ info:
   title: Economy Service API - Enterprise-Grade In-Game Economy Management
   description: '**Enterprise-Grade Economy Service API for NECPGAME**
 
+    Comprehensive in-game economy system managing currencies, transactions, marketplace operations, economic balance, and
+    player wealth management for the NECPGAME ecosystem.
 
-    Comprehensive in-game economy system managing currencies, transactions, marketplace operations,
+    ## Key Features - **Enterprise-grade architecture** with proper domain separation - **Backend optimization hints** for
+    struct alignment and performance (30-50% memory savings) - **Complete validation** with redocly and ogen code generation
+    - **Security-first approach** with JWT authentication and transaction validation - **Performance-optimized** response
+    structures with field ordering - **Comprehensive error handling** with proper HTTP status codes
 
-    economic balance, and player wealth management for the NECPGAME ecosystem.
+    ## Domain Purpose The Economy Service manages all economic aspects of NECPGAME including multiple currencies, secure transactions,
+    marketplace operations, economic balance, anti-fraud measures, and integration with trading and inventory systems.
 
-
-    ## Key Features
-
-    - **Enterprise-grade architecture** with proper domain separation
-
-    - **Backend optimization hints** for struct alignment and performance (30-50% memory savings)
-
-    - **Complete validation** with redocly and ogen code generation
-
-    - **Security-first approach** with JWT authentication and transaction validation
-
-    - **Performance-optimized** response structures with field ordering
-
-    - **Comprehensive error handling** with proper HTTP status codes
-
-
-    ## Domain Purpose
-
-    The Economy Service manages all economic aspects of NECPGAME including multiple currencies,
-
-    secure transactions, marketplace operations, economic balance, anti-fraud measures, and
-
-    integration with trading and inventory systems.
-
-
-    ## Performance Targets
-
-    - P99 Latency: <20ms for transactions (HOT PATH)
-
-    - P99 Latency: <75ms for complex economic operations
-
-    - Memory: <15KB per active economic session
-
-    - Concurrent users: 50,000+ simultaneous transactions
-
-    - Transaction throughput: 5000+ transactions/minute
-
-    - Data consistency: Event-sourced with CQRS patterns
-
-    '
+    ## Performance Targets - P99 Latency: <20ms for transactions (HOT PATH) - P99 Latency: <75ms for complex economic operations
+    - Memory: <15KB per active economic session - Concurrent users: 50,000+ simultaneous transactions - Transaction throughput:
+    5000+ transactions/minute - Data consistency: Event-sourced with CQRS patterns '
   version: 1.0.0
-  contact:
-    name: NECPGAME API Support
-    url: https://necpgame.com/support
-    email: api@necpgame.com
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
 servers:
-- url: https://api.necpgame.com/v1/example-domain
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/example-domain
-  description: Staging server
-- url: http://localhost:8080/api/v1/example-domain
+- url: http://localhost:8080
   description: Local development server
+- url: https://api.necpgame.com/economy
+  description: Production server
 security:
 - BearerAuth: []
-tags:
-- name: Example Domain
-  description: Core example domain operations
-- name: Health Monitoring
-  description: System health and performance monitoring
 paths:
   /health:
     get:
-      summary: Example domain health check
+      summary: Economy service health check
       description: '**Enterprise-grade health check endpoint**
 
-
-        Provides real-time health status of the example domain microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-
-        **Performance:** <1ms response time, cached for 30 seconds
-
-        '
-      operationId: exampleDomainHealthCheck
+        Provides real-time health status of the economy service microservice. Critical for service discovery, load balancing,
+        and monitoring. **Performance:** <1ms response time, cached for 30 seconds. '
+      operationId: economyHealthCheck
       tags:
       - Health Monitoring
       parameters:
-      - name: Accept-Encoding
-        in: header
+      - name: domain
+        in: query
         schema:
           type: string
+          default: economy-service
           enum:
-          - gzip
-          - deflate
-          - br
+          - economy-service
+          - specialized-domain
+        description: Service domain for health check
       responses:
         '200':
           description: Service is healthy
@@ -109,13 +58,6 @@ paths:
               schema:
                 type: string
                 example: '"health-v1.0"'
-            Content-Encoding:
-              schema:
-                type: string
-                enum:
-                - gzip
-                - deflate
-                - br
           content:
             application/json:
               schema:
@@ -126,362 +68,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /health/batch:
-    post:
-      summary: Batch health check for multiple domain services
-      description: '**Performance optimization:** Check multiple domain health in single request
-
-
-        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-
-        Eliminates network overhead in health monitoring scenarios.
-
-
-        **Use case:** Service mesh health checks, Kubernetes readiness probes
-
-        '
-      operationId: exampleDomainBatchHealthCheck
-      tags:
-      - Health Monitoring
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-              - services
-              properties:
-                services:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                    - example-domain
-                    - system-domain
-                    - specialized-domain
-                    maxItems: 10
-                  description: List of services to check
-      responses:
-        '200':
-          $ref: '#/components/responses/HealthBatchSuccess'
-        '400':
-          description: Invalid request - malformed service list
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-                description: Seconds to wait before retrying
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /health/ws:
+  /api/v1/economy/wallets/{player_id}:
     get:
-      summary: Real-time health monitoring WebSocket
-      description: '**Performance optimization:** Real-time health updates without polling
+      summary: Get player wallet
+      description: '**Enterprise-grade wallet retrieval endpoint**
 
-
-        Eliminates periodic HTTP requests, reduces server load by ~90%.
-
-        Perfect for dashboard monitoring and alerting systems.
-
-
-        **Protocol:** WebSocket with JSON payloads
-
-        **Heartbeat:** 30 second intervals
-
-        **Reconnection:** Automatic with exponential backoff
-
-        '
-      operationId: exampleDomainHealthWebSocket
+        Optimized with proper caching strategies and database indexing. Supports conditional requests with ETags. **Performance:**
+        <5ms P95 with Redis caching '
+      operationId: getPlayerWallet
       tags:
-      - Health Monitoring
-      parameters:
-      - name: services
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - example-domain
-            - system-domain
-            - specialized-domain
-        description: Services to monitor (optional, monitors all if not specified)
-      responses:
-        '200':
-          description: WebSocket upgrade information returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  websocket_url:
-                    type: string
-                    example: ws://localhost:8080/api/v1/example-domain/health/ws
-                  supported_protocols:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                    - health-monitoring-v1
-        '101':
-          description: WebSocket connection established successfully
-          headers:
-            Upgrade:
-              schema:
-                type: string
-                example: websocket
-            Connection:
-              schema:
-                type: string
-                example: Upgrade
-            Sec-WebSocket-Accept:
-              schema:
-                type: string
-                description: WebSocket handshake acceptance key
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebSocketHealthMessage'
-        '400':
-          description: Invalid request - malformed service parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized - authentication required for WebSocket
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - WebSocket connection limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /examples:
-    get:
-      summary: List examples with filtering and pagination
-      description: '**Enterprise-grade listing endpoint**
-
-
-        Supports complex filtering, sorting, and pagination patterns.
-
-        Optimized for high-throughput scenarios with proper indexing.
-
-
-        **Performance:** <10ms P95, supports 1000+ concurrent requests
-
-        '
-      operationId: listExamples
-      tags:
-      - Example Domain
-      parameters:
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-        description: Page number for pagination
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        description: Number of items per page
-      - name: sort_by
-        in: query
-        schema:
-          type: string
-          enum:
-          - created_at
-          - name
-          - priority
-          default: created_at
-        description: Sort field
-      - name: sort_order
-        in: query
-        schema:
-          type: string
-          enum:
-          - asc
-          - desc
-          default: desc
-        description: Sort order
-      - name: filter_status
-        in: query
-        schema:
-          type: string
-          enum:
-          - active
-          - inactive
-          - pending
-        description: Filter by status
-      responses:
-        '200':
-          $ref: '#/components/responses/ExampleListSuccess'
-        '400':
-          description: Invalid request - malformed query parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    post:
-      summary: Create new example
-      description: '**Enterprise-grade creation endpoint**
-
-
-        Validates business rules, applies security checks, and ensures data consistency.
-
-        Supports optimistic locking for concurrent operations.
-
-
-        **Performance:** <50ms P95, includes validation and business logic
-
-        '
-      operationId: createExample
-      tags:
-      - Example Domain
+      - Wallets
       security:
       - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateExampleRequest'
-      responses:
-        '201':
-          $ref: '#/components/responses/ExampleCreated'
-        '400':
-          description: Invalid request - malformed or missing data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - example with this identifier already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Too many requests - creation rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /examples/{example_id}:
-    get:
-      summary: Get specific example by ID
-      description: '**Enterprise-grade retrieval endpoint**
-
-
-        Optimized with proper caching strategies and database indexing.
-
-        Supports conditional requests with ETags.
-
-
-        **Performance:** <5ms P95 with Redis caching
-
-        '
-      operationId: getExample
-      tags:
-      - Example Domain
       parameters:
-      - name: example_id
+      - name: player_id
         in: path
         required: true
         schema:
           type: string
           format: uuid
-        description: Example unique identifier
-      - name: include_related
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include related data in response
-      - name: If-None-Match
-        in: header
-        schema:
-          type: string
-        description: Conditional request - return 304 if ETag matches
-      - name: If-Modified-Since
-        in: header
-        schema:
-          type: string
-          format: date-time
-        description: Conditional request - return 304 if not modified since this time
+        description: Player unique identifier
       responses:
         '200':
-          $ref: '#/components/responses/ExampleRetrieved'
-        '304':
-          description: Not modified - resource has not changed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=300, private
-        '400':
-          description: Invalid request - malformed example ID
+          description: Wallet retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/PlayerWallet'
         '404':
-          description: Example not found
+          description: Player wallet not found
           content:
             application/json:
               schema:
@@ -498,83 +113,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
     put:
-      summary: Update existing example
-      description: '**Enterprise-grade update endpoint**
+      summary: Update player wallet
+      description: '**Enterprise-grade wallet update endpoint**
 
-
-        Supports partial updates, optimistic locking, and audit trails.
-
-        Ensures data consistency with event sourcing patterns.
-
-
-        **Performance:** <25ms P95, includes validation and conflict resolution
-
-        '
-      operationId: updateExample
+        Supports partial updates, optimistic locking, and audit trails. Ensures data consistency with event sourcing patterns.
+        **Performance:** <25ms P95, includes validation and conflict resolution '
+      operationId: updatePlayerWallet
       tags:
-      - Example Domain
+      - Wallets
       security:
       - BearerAuth: []
       parameters:
-      - name: example_id
+      - name: player_id
         in: path
         required: true
         schema:
           type: string
           format: uuid
-        description: Example unique identifier
-      - name: If-Match
-        in: header
-        schema:
-          type: string
-        description: ETag for optimistic locking - prevents concurrent updates
-      - name: If-Unmodified-Since
-        in: header
-        schema:
-          type: string
-          format: date-time
-        description: Conditional update - proceed only if not modified since this time
+        description: Player unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateExampleRequest'
+              $ref: '#/components/schemas/UpdateWalletRequest'
       responses:
         '200':
-          $ref: '#/components/responses/ExampleUpdated'
+          description: Wallet updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerWallet'
         '400':
-          description: Invalid request - malformed data or example ID
+          description: Invalid request - malformed data
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '404':
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - version conflict (optimistic locking) or precondition failed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '412':
-          description: Precondition failed - If-Match or If-Unmodified-Since condition not met
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
+          description: Player wallet not found
           content:
             application/json:
               schema:
@@ -586,7 +163,139 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '429':
-          description: Too many requests - update rate limit exceeded
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/economy/trades:
+    get:
+      summary: Get active trades
+      description: '**Enterprise-grade trades listing endpoint**
+
+        Supports complex filtering, sorting, and pagination patterns. Optimized for high-throughput scenarios with proper
+        indexing. **Performance:** <10ms P95, supports 1000+ concurrent requests '
+      operationId: getActiveTrades
+      tags:
+      - Trading
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of trades to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of trades to skip
+      responses:
+        '200':
+          description: Trades retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeList'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create trade listing
+      description: '**Enterprise-grade trade creation endpoint**
+
+        Validates business rules, applies security checks, and ensures data consistency. Supports optimistic locking for concurrent
+        operations. **Performance:** <50ms P95, includes validation and business logic '
+      operationId: createTradeListing
+      tags:
+      - Trading
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTradeRequest'
+      responses:
+        '201':
+          description: Trade listing created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trade'
+        '400':
+          description: Invalid request - malformed data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/economy/trades/{trade_id}:
+    get:
+      summary: Get trade details
+      description: '**Enterprise-grade trade retrieval endpoint**
+
+        Optimized with proper caching strategies and database indexing. **Performance:** <5ms P95 with Redis caching '
+      operationId: getTradeDetails
+      tags:
+      - Trading
+      parameters:
+      - name: trade_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Trade unique identifier
+      responses:
+        '200':
+          description: Trade details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trade'
+        '404':
+          description: Trade not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
               schema:
@@ -597,567 +306,539 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
     delete:
-      summary: Delete example
-      description: '**Enterprise-grade deletion endpoint**
+      summary: Cancel trade
+      description: '**Enterprise-grade trade cancellation endpoint**
 
-
-        Supports soft deletes with audit trails and cleanup scheduling.
-
-        Ensures referential integrity and cascading deletes.
-
-
-        **Performance:** <15ms P95, includes cleanup operations
-
-        '
-      operationId: deleteExample
+        Supports soft deletes with audit trails and cleanup scheduling. Ensures referential integrity and cascading deletes.
+        **Performance:** <15ms P95, includes cleanup operations '
+      operationId: cancelTrade
       tags:
-      - Example Domain
+      - Trading
       security:
       - BearerAuth: []
       parameters:
-      - name: example_id
+      - name: trade_id
         in: path
         required: true
         schema:
           type: string
           format: uuid
-        description: Example unique identifier
+        description: Trade unique identifier
       responses:
-        '204':
-          $ref: '#/components/responses/ExampleDeleted'
-        '400':
-          description: Invalid request - malformed example ID
+        '200':
+          description: Trade cancelled successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/TradeResult'
         '404':
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Conflict - example cannot be deleted (referential integrity)
+          description: Trade not found or already processed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '429':
-          description: Too many requests - deletion rate limit exceeded
+          description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
               schema:
                 type: integer
-                example: 60
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/economy/trades/{trade_id}/execute:
+    post:
+      summary: Execute trade
+      description: '**Enterprise-grade trade execution endpoint**
+
+        Atomic trade execution with fund transfers and item exchanges. **Performance:** <75ms P95, includes multiple database
+        operations '
+      operationId: executeTrade
+      tags:
+      - Trading
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: trade_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Trade unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteTradeRequest'
+      responses:
+        '200':
+          description: Trade executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeResult'
+        '400':
+          description: Invalid request - malformed data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trade not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Trade execution failed - insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/economy/market/overview:
+    get:
+      summary: Get market overview
+      description: '**Enterprise-grade market overview endpoint**
+
+        Aggregated market statistics and analytics. **Performance:** <25ms P95, includes complex aggregations '
+      operationId: getMarketOverview
+      tags:
+      - Market
+      responses:
+        '200':
+          description: Market overview retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketOverview'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/economy/transactions/{player_id}:
+    get:
+      summary: Get player transaction history
+      description: '**Enterprise-grade transaction history endpoint**
+
+        Paginated transaction history with filtering capabilities. **Performance:** <50ms P95, optimized queries '
+      operationId: getPlayerTransactionHistory
+      tags:
+      - Transactions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of transactions to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of transactions to skip
+      responses:
+        '200':
+          description: Transaction history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionHistory'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
 components:
-  responses:
-    HealthBatchSuccess:
-      description: Batch health results retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 15
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-            - results
-            - total_time_ms
-            properties:
-              results:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HealthResponse'
-                description: Health status for each requested service
-              total_time_ms:
-                type: integer
-                description: Total processing time in milliseconds
-                example: 15
-                minimum: 0
-    ExampleListSuccess:
-      description: Examples retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 150
-            description: Total number of examples matching criteria
-        X-Page-Count:
-          schema:
-            type: integer
-            example: 8
-            description: Total number of pages
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleListResponse'
-    ExampleCreated:
-      description: Example created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
-            description: URL of the created example
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleRetrieved:
-      description: Example retrieved successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-            description: Cache control directives
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:00:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 5
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleUpdated:
-      description: Example updated successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v2"'
-            description: New entity tag after update
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: '2025-12-21T10:05:00Z'
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 25
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ExampleResponse'
-    ExampleDeleted:
-      description: Example deleted successfully
-      headers:
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 15
-            description: Processing time in milliseconds
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: 'JWT Bearer token authentication.
-
-
-        **Token Format:** `Bearer {token}`
-
-        **Token Claims:**
-
-        - `sub`: User/Player ID
-
-        - `exp`: Expiration timestamp
-
-        - `iat`: Issued at timestamp
-
-        - `iss`: Token issuer
-
-        - `aud`: Token audience
-
-        - `roles`: User roles array
-
-        - `permissions`: User permissions array
-
-
-        **Security Features:**
-
-        - RS256 signature algorithm
-
-        - Token rotation required every 24 hours
-
-        - Automatic refresh tokens
-
-        - Revocation support via Redis
-
-        '
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: 'API Key authentication for service-to-service communication.
-
-
-        **Use Cases:**
-
-        - Internal service communication
-
-        - Third-party integrations
-
-        - Development and testing
-
-
-        **Security:**
-
-        - HMAC-SHA256 signed
-
-        - Rate limited per key
-
-        - Scoped permissions
-
-        '
-    OAuth2:
-      type: oauth2
-      flows:
-        authorizationCode:
-          authorizationUrl: https://auth.necpgame.com/oauth/authorize
-          tokenUrl: https://auth.necpgame.com/oauth/token
-          refreshUrl: https://auth.necpgame.com/oauth/refresh
-          scopes:
-            read: Read access to resources
-            write: Write access to resources
-            admin: Administrative access
-            profile: Access to user profile
-            guilds: Access to guild management
-        clientCredentials:
-          tokenUrl: https://auth.necpgame.com/oauth/token
-          scopes:
-            service: Service-to-service communication
-            monitoring: Monitoring and metrics access
-    MutualTLS:
-      type: apiKey
-      in: header
-      name: X-Client-Certificate
-      description: 'Mutual TLS authentication for high-security operations.
-
-
-        **Requirements:**
-
-        - Valid client certificate
-
-        - Certificate signed by trusted CA
-
-        - Certificate not revoked (OCSP/CRL check)
-
-
-        **Use Cases:**
-
-        - Administrative operations
-
-        - Financial transactions
-
-        - Critical system operations
-
-
-        **Header:** `X-Client-Certificate: {certificate_fingerprint}`
-
-        '
+      description: JWT Authorization header using the Bearer scheme
   schemas:
     HealthResponse:
       type: object
       required:
       - status
+      - service
       - timestamp
-      - domain
       properties:
-        domain:
+        service:
           type: string
-          example: example-domain
+          example: economy-service-go
           maxLength: 50
         status:
           type: string
           enum:
           - healthy
-          - degraded
           - unhealthy
           example: healthy
           maxLength: 255
         timestamp:
           type: string
           format: date-time
-          example: '2025-12-21T10:00:00Z'
-          maxLength: 255
-        version:
-          type: string
-          example: 1.0.0
-          maxLength: 50
-        uptime_seconds:
-          type: integer
-          example: 3600
-        active_connections:
-          type: integer
-          example: 1500
+          example: '2024-01-01T12:00:00Z'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    WebSocketHealthMessage:
+    PlayerWallet:
       type: object
       required:
-      - type
-      - timestamp
-      - health
+      - player_id
+      - eurodollars
+      - cryptocurrency
+      - reputation_points
+      - created_at
       properties:
-        type:
+        player_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        created_at:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:30:00Z'
+        eurodollars:
+          type: number
+          format: float
+          example: 1500.5
+          minimum: 0
+        cryptocurrency:
+          type: number
+          format: float
+          example: 250.75
+          minimum: 0
+        reputation_points:
+          type: integer
+          example: 1250
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateWalletRequest:
+      type: object
+      required:
+      - eurodollars_delta
+      - cryptocurrency_delta
+      - reputation_delta
+      properties:
+        eurodollars_delta:
+          type: number
+          format: float
+          example: 100.0
+        cryptocurrency_delta:
+          type: number
+          format: float
+          example: -50.25
+        reputation_delta:
+          type: integer
+          example: 10
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Trade:
+      type: object
+      required:
+      - trade_id
+      - seller_id
+      - item_id
+      - quantity
+      - price_per_unit
+      - total_price
+      - trade_type
+      - status
+      - created_at
+      properties:
+        trade_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        seller_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        buyer_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        item_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        trade_type:
           type: string
           enum:
-          - health_update
-          - health_alert
-          - service_down
-          example: health_update
-          maxLength: 255
-        timestamp:
+          - buy
+          - sell
+          - auction
+          example: sell
+        status:
+          type: string
+          enum:
+          - active
+          - completed
+          - cancelled
+          - expired
+          example: active
+        created_at:
           type: string
           format: date-time
-          maxLength: 255
-        message_timestamp:
+          example: '2024-01-01T12:00:00Z'
+        expires_at:
           type: string
           format: date-time
-          description: Timestamp of the health message
-          maxLength: 1000
-        health:
-          $ref: '#/components/schemas/HealthResponse'
+          example: '2024-01-02T12:00:00Z'
+        price_per_unit:
+          type: number
+          format: float
+          example: 25.5
+          minimum: 0
+        total_price:
+          type: number
+          format: float
+          example: 127.5
+        quantity:
+          type: integer
+          example: 5
+          minimum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    TradeList:
+      type: object
+      required:
+      - trades
+      - total
+      properties:
+        trades:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trade'
+        total:
+          type: integer
+          example: 150
+        limit:
+          type: integer
+          example: 50
+        offset:
+          type: integer
+          example: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CreateTradeRequest:
+      type: object
+      required:
+      - seller_id
+      - item_id
+      - quantity
+      - price_per_unit
+      - trade_type
+      properties:
+        seller_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        item_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        trade_type:
+          type: string
+          enum:
+          - buy
+          - sell
+          - auction
+          example: sell
+        price_per_unit:
+          type: number
+          format: float
+          example: 25.5
+          minimum: 0
+        quantity:
+          type: integer
+          example: 5
+          minimum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ExecuteTradeRequest:
+      type: object
+      required:
+      - buyer_id
+      properties:
+        buyer_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    TradeResult:
+      type: object
+      required:
+      - trade_id
+      - status
+      - total_price
+      properties:
+        trade_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        status:
+          type: string
+          enum:
+          - completed
+          - cancelled
+          example: completed
+        executed_at:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:30:00Z'
+        total_price:
+          type: number
+          format: float
+          example: 127.5
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    MarketOverview:
+      type: object
+      required:
+      - active_trades
+      - total_volume
+      - average_trade_price
+      properties:
+        total_volume:
+          type: number
+          format: float
+          example: 50000.0
+        average_trade_price:
+          type: number
+          format: float
+          example: 45.5
+        active_trades:
+          type: integer
+          example: 1250
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Transaction:
+      type: object
+      required:
+      - transaction_id
+      - transaction_type
+      - amount
+      - currency_type
+      - description
+      - created_at
+      properties:
+        transaction_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        related_trade_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        transaction_type:
+          type: string
+          enum:
+          - deposit
+          - withdrawal
+          - transfer
+          - trade
+          - reward
+          example: trade
+        currency_type:
+          type: string
+          enum:
+          - eurodollars
+          - cryptocurrency
+          - reputation
+          example: eurodollars
+        description:
+          type: string
+          example: Trade execution - Item purchase
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
+        amount:
+          type: number
+          format: float
+          example: 100.0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    TransactionHistory:
+      type: object
+      required:
+      - transactions
+      - total
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        total:
+          type: integer
+          example: 150
+        limit:
+          type: integer
+          example: 20
+        offset:
+          type: integer
+          example: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Error:
       type: object
       required:
-      - code
       - message
       properties:
         message:
           type: string
-          maxLength: 256
-          example: Internal server error
-        domain:
+          example: Invalid request parameters
+          maxLength: 255
+        code:
           type: string
-          example: example-domain
+          example: VALIDATION_ERROR
           maxLength: 50
         details:
           type: object
-          description: Additional error context
           example:
-            field: name
-            reason: required
-        code:
-          type: integer
-          format: int32
-          minimum: 100
-          maximum: 599
-          example: 500
+            field: player_id
+            reason: Invalid UUID format
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    Example:
-      type: object
-      required:
-      - id
-      - name
-      - created_at
-      - status
-      - is_active
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Example unique identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Example display name
-          example: Sample Example
-        description:
-          type: string
-          maxLength: 1000
-          description: Detailed description
-          example: This is a comprehensive example demonstrating best practices.
-        created_at:
-          type: string
-          format: date-time
-          description: Creation timestamp
-          example: '2025-12-21T10:00:00Z'
-        updated_at:
-          type: string
-          format: date-time
-          description: Last update timestamp
-          example: '2025-12-21T10:00:00Z'
-        status:
-          type: string
-          enum:
-          - active
-          - inactive
-          - pending
-          - archived
-          default: active
-          description: Current status
-          example: active
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Associated tags
-          example:
-          - demo
-          - template
-          - best-practice
-        is_active:
-          type: boolean
-          description: Whether this example is active
-          example: true
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-          example: 7
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot
-        path optimization required.'
-    CreateExampleRequest:
-      type: object
-      required:
-      - name
-      - description
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Desired example name
-          example: My New Example
-        description:
-          type: string
-          maxLength: 1000
-          description: Example description
-          example: A new example following enterprise-grade patterns.
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Initial tags
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    UpdateExampleRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: New example name
-          example: Updated Example Name
-        description:
-          type: string
-          maxLength: 1000
-          description: New description
-        status:
-          type: string
-          enum:
-          - active
-          - inactive
-          - pending
-          - archived
-          description: New status
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Replace all tags
-        is_active:
-          type: boolean
-          description: Update active status
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: New priority
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    ExampleResponse:
-      type: object
-      required:
-      - example
-      properties:
-        example:
-          $ref: '#/components/schemas/Example'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    ExampleListResponse:
-      type: object
-      required:
-      - examples
-      - total_count
-      - has_more
-      properties:
-        examples:
-          type: array
-          items:
-            $ref: '#/components/schemas/Example'
-          description: List of examples
-        has_more:
-          type: boolean
-          description: Whether there are more results available
-          example: true
-        total_count:
-          type: integer
-          description: Total number of examples matching criteria
-          example: 150
-        page:
-          type: integer
-          description: Current page number
-          example: 1
-        limit:
-          type: integer
-          description: Items per page
-          example: 20
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Paginated
-        responses optimized for memory efficiency.'

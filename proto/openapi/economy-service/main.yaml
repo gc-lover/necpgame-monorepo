@@ -1,0 +1,184 @@
+# Issue: #2255 - Backend: Реализация economy-service-go
+
+openapi: 3.0.3
+info:
+  title: Economy Service API
+  description: |
+    Базовый API для экономических механик игры.
+
+    **Основные возможности:**
+    - Управление инвентарем персонажа
+    - Валютные операции
+    - Торговля предметами
+    - Крафтинг и рецепты
+
+    **Performance:**
+    - Hot endpoints: GET /economy/inventory, POST /economy/trade
+    - Expected load: 1k RPS, P99 <50ms
+    - Event-based для большинства операций
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Inventory
+    description: Управление инвентарем
+  - name: Trading
+    description: Торговля
+  - name: Crafting
+    description: Крафтинг
+  - name: Currencies
+    description: Валюты
+
+paths:
+  # Основной обзор экономики
+  /economy/overview:
+    get:
+      tags:
+        - Inventory
+      summary: Получить обзор экономического состояния игрока
+      operationId: getEconomyOverview
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Обзор экономики
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EconomyOverview"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # Управление инвентарем
+  /economy/inventory/{characterId}:
+    get:
+      tags:
+        - Inventory
+      summary: Получить инвентарь персонажа
+      operationId: getCharacterInventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Инвентарь персонажа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterInventory"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # Валюты
+  /economy/currencies:
+    get:
+      tags:
+        - Currencies
+      summary: Получить доступные валюты
+      operationId: getCurrencies
+      responses:
+        "200":
+          description: Список валют
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currencies:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Currency"
+
+  # Торговля
+  /economy/trade:
+    post:
+      tags:
+        - Trading
+      summary: Создать торговую сессию
+      operationId: createTrade
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTradeRequest"
+      responses:
+        "201":
+          description: Торговля создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSession"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # Крафтинг
+  /economy/crafting/recipes:
+    get:
+      tags:
+        - Crafting
+      summary: Получить рецепты крафта
+      operationId: getCraftingRecipes
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список рецептов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recipes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CraftingRecipe"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "../../common-schemas.yaml#/components/securitySchemes/BearerAuth"
+
+  responses:
+    BadRequest:
+      $ref: "../../common-schemas.yaml#/components/responses/BadRequest"
+    Unauthorized:
+      $ref: "../../common-schemas.yaml#/components/responses/Unauthorized"
+    InternalServerError:
+      $ref: "../../common-schemas.yaml#/components/responses/InternalServerError"
+
+security:
+  - BearerAuth: [ ]
+

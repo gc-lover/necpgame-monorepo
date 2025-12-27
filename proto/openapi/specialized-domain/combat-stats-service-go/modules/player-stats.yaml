@@ -1,6 +1,3 @@
-# Player Statistics Module
-# Issue: #2246
-
 paths:
   /players/{player_id}/stats:
     get:
@@ -17,33 +14,33 @@ paths:
         '
       operationId: getPlayerCombatStats
       tags:
-        - Player Performance
+      - Player Performance
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Player unique identifier
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum:
-              - hourly
-              - daily
-              - weekly
-              - monthly
-              - all_time
-            default: daily
-          description: Time period for statistics
-        - name: include_trends
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include performance trend analysis
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - hourly
+          - daily
+          - weekly
+          - monthly
+          - all_time
+          default: daily
+        description: Time period for statistics
+      - name: include_trends
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include performance trend analysis
       responses:
         '200':
           description: Player combat statistics retrieved successfully
@@ -97,17 +94,17 @@ paths:
         '
       operationId: updatePlayerCombatStats
       tags:
-        - Player Performance
+      - Player Performance
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Player unique identifier
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
       requestBody:
         required: true
         content:
@@ -144,30 +141,66 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
 components:
   schemas:
     PlayerCombatStats:
       type: object
       required:
-        - player_id
-        - total_kills
-        - total_deaths
-        - total_damage_dealt
-        - total_damage_received
-        - accuracy_percentage
-        - headshot_percentage
-        - average_session_duration
-        - win_rate
-        - favorite_weapon
-        - rank
-        - updated_at
+      - player_id
+      - total_kills
+      - total_deaths
+      - total_damage_dealt
+      - total_damage_received
+      - accuracy_percentage
+      - headshot_percentage
+      - average_session_duration
+      - win_rate
+      - favorite_weapon
+      - rank
+      - updated_at
       properties:
         player_id:
           type: string
           format: uuid
           description: Player unique identifier
           example: 550e8400-e29b-41d4-a716-446655440000
+        favorite_weapon:
+          type: string
+          description: Most used weapon name
+          example: Malorian Arms 3516
+          maxLength: 100
+        updated_at:
+          type: string
+          format: date-time
+          description: Last statistics update timestamp
+          example: '2025-12-23T23:54:00Z'
+        accuracy_percentage:
+          type: number
+          format: float
+          description: Overall shooting accuracy (0.0-100.0)
+          example: 68.5
+          minimum: 0.0
+          maximum: 100.0
+        headshot_percentage:
+          type: number
+          format: float
+          description: Headshot accuracy percentage
+          example: 24.3
+          minimum: 0.0
+          maximum: 100.0
+        win_rate:
+          type: number
+          format: float
+          description: Win rate percentage (0.0-100.0)
+          example: 54.7
+          minimum: 0.0
+          maximum: 100.0
+        kd_ratio:
+          type: number
+          format: float
+          description: Kill/Death ratio
+          example: 1.2
+          minimum: 0.0
         total_kills:
           type: integer
           format: int64
@@ -192,53 +225,16 @@ components:
           description: Total damage received from enemies
           example: 2150000
           minimum: 0
-        accuracy_percentage:
-          type: number
-          format: float
-          description: Overall shooting accuracy (0.0-100.0)
-          example: 68.5
-          minimum: 0.0
-          maximum: 100.0
-        headshot_percentage:
-          type: number
-          format: float
-          description: Headshot accuracy percentage
-          example: 24.3
-          minimum: 0.0
-          maximum: 100.0
         average_session_duration:
           type: integer
           description: Average combat session duration in seconds
           example: 1250
           minimum: 0
-        win_rate:
-          type: number
-          format: float
-          description: Win rate percentage (0.0-100.0)
-          example: 54.7
-          minimum: 0.0
-          maximum: 100.0
-        favorite_weapon:
-          type: string
-          description: Most used weapon name
-          example: "Malorian Arms 3516"
-          maxLength: 100
         rank:
           type: integer
           description: Current player rank
           example: 1250
           minimum: 0
-        updated_at:
-          type: string
-          format: date-time
-          description: Last statistics update timestamp
-          example: '2025-12-23T23:54:00Z'
-        kd_ratio:
-          type: number
-          format: float
-          description: Kill/Death ratio
-          example: 1.20
-          minimum: 0.0
         total_sessions:
           type: integer
           format: int32
@@ -264,14 +260,13 @@ components:
           description: Longest win streak
           example: 23
           minimum: 0
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot path optimization required for real-time updates.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot
+        path optimization required for real-time updates.'
     PlayerCombatStatsResponse:
       type: object
       required:
-        - stats
+      - stats
       properties:
-        stats:
-          $ref: '#/components/schemas/PlayerCombatStats'
         trends:
           type: object
           description: Performance trend analysis (optional)
@@ -279,32 +274,34 @@ components:
             kd_ratio_trend:
               type: string
               enum:
-                - improving
-                - declining
-                - stable
+              - improving
+              - declining
+              - stable
               example: improving
             accuracy_trend:
               type: string
               enum:
-                - improving
-                - declining
-                - stable
+              - improving
+              - declining
+              - stable
               example: stable
+        stats:
+          $ref: '#/components/schemas/PlayerCombatStats'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdatePlayerStatsRequest:
       type: object
       required:
-        - session_stats
+      - session_stats
       properties:
         session_stats:
           type: object
           required:
-            - kills
-            - deaths
-            - damage_dealt
-            - damage_received
-            - session_duration
-            - weapons_used
+          - kills
+          - deaths
+          - damage_dealt
+          - damage_received
+          - session_duration
+          - weapons_used
           properties:
             kills:
               type: integer
@@ -331,9 +328,9 @@ components:
               items:
                 type: object
                 required:
-                  - weapon_id
-                  - shots_fired
-                  - hits
+                - weapon_id
+                - shots_fired
+                - hits
                 properties:
                   weapon_id:
                     type: string
@@ -356,8 +353,8 @@ components:
               items:
                 type: object
                 required:
-                  - ability_id
-                  - times_used
+                - ability_id
+                - times_used
                 properties:
                   ability_id:
                     type: string
@@ -370,17 +367,18 @@ components:
             session_outcome:
               type: string
               enum:
-                - victory
-                - defeat
-                - draw
+              - victory
+              - defeat
+              - draw
               example: victory
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Optimized for batch processing.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Optimized
+        for batch processing.'
     PlayerStatsUpdateResponse:
       type: object
       required:
-        - player_id
-        - updated_at
-        - success
+      - player_id
+      - updated_at
+      - success
       properties:
         player_id:
           type: string
@@ -390,13 +388,6 @@ components:
           type: string
           format: date-time
           example: '2025-12-23T23:54:00Z'
-        success:
-          type: boolean
-          example: true
-        new_rank:
-          type: integer
-          description: Updated player rank after stats update
-          example: 1251
         achievements_unlocked:
           type: array
           items:
@@ -404,6 +395,13 @@ components:
             maxLength: 100
           description: Any new achievements unlocked
           example:
-            - "Sharpshooter"
-            - "Combo Master"
+          - Sharpshooter
+          - Combo Master
+        success:
+          type: boolean
+          example: true
+        new_rank:
+          type: integer
+          description: Updated player rank after stats update
+          example: 1251
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

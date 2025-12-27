@@ -289,3 +289,54 @@ components:
     responses:
       '101':
         description: WebSocket connection established
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - service
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          example: healthy
+        service:
+          type: string
+          example: economy-service-go
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-27T07:00:00Z'
+        version:
+          type: string
+          example: '1.0.0'
+        uptime_seconds:
+          type: integer
+          example: 3600
+        active_connections:
+          type: integer
+          example: 1500
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    WebSocketHealthMessage:
+      type: object
+      required:
+        - type
+        - timestamp
+        - health
+      properties:
+        type:
+          type: string
+          enum: [health_update, health_alert, service_down]
+          example: health_update
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-27T07:00:00Z'
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
