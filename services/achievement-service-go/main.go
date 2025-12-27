@@ -68,12 +68,7 @@ func main() {
 	tokenAuth := jwtauth.New("HS256", []byte(cfg.JWTSecret), nil)
 
 	// Initialize server with optimized handlers
-	config := &server.Config{
-		CacheTTL:          cfg.CacheTTL,
-		ProgressBatchSize: cfg.ProgressBatchSize,
-		RedisURL:          cfg.RedisURL,
-	}
-	srv := server.NewServer(db, logger, tokenAuth, config)
+	srv := server.NewServer(db, logger, tokenAuth)
 
 	// Create router with ogen handlers wrapped in middleware
 	ogenHandler := srv.CreateRouter()

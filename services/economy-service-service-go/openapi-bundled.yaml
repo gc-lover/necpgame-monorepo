@@ -1,0 +1,422 @@
+# Issue: #2255 - Backend: Реализация economy-service-go
+
+openapi: 3.0.3
+info:
+  title: Economy Service API
+  description: |
+    Базовый API для экономических механик игры.
+
+    **Основные возможности:**
+    - Управление инвентарем персонажа
+    - Валютные операции
+    - Торговля предметами
+    - Крафтинг и рецепты
+
+    **Performance:**
+    - Hot endpoints: GET /economy/inventory, POST /economy/trade
+    - Expected load: 1k RPS, P99 <50ms
+    - Event-based для большинства операций
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+
+tags:
+  - name: Inventory
+    description: Управление инвентарем
+  - name: Trading
+    description: Торговля
+  - name: Crafting
+    description: Крафтинг
+  - name: Currencies
+    description: Валюты
+
+paths:
+  # Основной обзор экономики
+  /economy/overview:
+    get:
+      tags:
+        - Inventory
+      summary: Получить обзор экономического состояния игрока
+      operationId: getEconomyOverview
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Обзор экономики
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EconomyOverview"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # Управление инвентарем
+  /economy/inventory/{characterId}:
+    get:
+      tags:
+        - Inventory
+      summary: Получить инвентарь персонажа
+      operationId: getCharacterInventory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Инвентарь персонажа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterInventory"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # Валюты
+  /economy/currencies:
+    get:
+      tags:
+        - Currencies
+      summary: Получить доступные валюты
+      operationId: getCurrencies
+      responses:
+        "200":
+          description: Список валют
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currencies:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Currency"
+
+  # Торговля
+  /economy/trade:
+    post:
+      tags:
+        - Trading
+      summary: Создать торговую сессию
+      operationId: createTrade
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTradeRequest"
+      responses:
+        "201":
+          description: Торговля создана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSession"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # Крафтинг
+  /economy/crafting/recipes:
+    get:
+      tags:
+        - Crafting
+      summary: Получить рецепты крафта
+      operationId: getCraftingRecipes
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Список рецептов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recipes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CraftingRecipe"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    EconomyOverview:
+      type: object
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        balance:
+          type: object
+          properties:
+            primaryCurrency:
+              type: integer
+              format: int64
+            premiumCurrency:
+              type: integer
+              format: int64
+        inventory:
+          type: object
+          properties:
+            totalItems:
+              type: integer
+            equippedItems:
+              type: integer
+            maxSlots:
+              type: integer
+        activeTrades:
+          type: integer
+        lastActivity:
+          type: string
+          format: date-time
+
+    CharacterInventory:
+      type: object
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryItem"
+        equipment:
+          type: array
+          items:
+            $ref: "#/components/schemas/EquippedItem"
+        totalSlots:
+          type: integer
+        usedSlots:
+          type: integer
+
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        itemType:
+          type: string
+        quantity:
+          type: integer
+        quality:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+        durability:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    EquippedItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        itemType:
+          type: string
+        slot:
+          type: string
+          enum: [head, body, hands, legs, feet, weapon, shield, accessory1, accessory2]
+
+    Currency:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        symbol:
+          type: string
+        exchangeRate:
+          type: number
+          format: float
+
+    CreateTradeRequest:
+      type: object
+      required:
+        - sellerId
+        - buyerId
+        - items
+      properties:
+        sellerId:
+          type: string
+          format: uuid
+        buyerId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        currency:
+          type: integer
+          format: int64
+        durationMinutes:
+          type: integer
+          minimum: 5
+          maximum: 1440
+          default: 30
+
+    TradeItem:
+      type: object
+      required:
+        - itemId
+        - quantity
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+
+    TradeSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sellerId:
+          type: string
+          format: uuid
+        buyerId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        currency:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [pending, active, completed, cancelled]
+        expiresAt:
+          type: string
+          format: date-time
+
+    CraftingRecipe:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        resultItem:
+          type: string
+        ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/CraftingIngredient"
+        craftingTime:
+          type: integer
+        levelRequired:
+          type: integer
+
+    CraftingIngredient:
+      type: object
+      required:
+        - itemType
+        - quantity
+      properties:
+        itemType:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+
+  responses:
+    BadRequest:
+      description: Неправильный запрос
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
+
+    Unauthorized:
+      description: Неавторизован
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "unauthorized"
+              message:
+                type: string
+                example: "Invalid or expired token"
+
+    NotFound:
+      description: Не найдено
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "not_found"
+              message:
+                type: string
+                example: "Resource not found"
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "internal_error"
+              message:
+                type: string
+                example: "An unexpected error occurred"
+
+security:
+  - BearerAuth: [ ]
+

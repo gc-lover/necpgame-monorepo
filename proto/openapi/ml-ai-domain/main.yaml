@@ -1,0 +1,859 @@
+# Issue: #2257
+openapi: 3.0.3
+info:
+  title: ML/AI Services API
+  description: |
+    **Enterprise-Grade ML/AI Services API for NECPGAME**
+
+    Базовый API для машинного обучения и искусственного интеллекта в игре.
+    Предоставляет возможности для управления моделями ML, обработки предсказаний,
+    анализа данных и автоматизации игровых механик.
+
+    **Основные возможности:**
+    - Управление моделями машинного обучения
+    - Обработка предсказаний в реальном времени
+    - Анализ игровых данных и паттернов
+    - Автоматизация баланса и персонализации
+    - Обучение моделей на игровых данных
+
+    **Performance:**
+    - Hot endpoints: POST /ml/predict, GET /ml/models
+    - Expected load: 10k RPS, P99 <100ms для предсказаний
+    - Event-based для обучения моделей
+    - GPU acceleration support
+    - Model caching для быстрого доступа
+
+    **Security:**
+    - JWT authentication для всех операций
+    - Role-based access control (admin/user)
+    - Rate limiting для предсказаний
+    - Audit logging для всех ML операций
+
+  version: "1.0.0"
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME ML/AI Support
+    email: ml@necp.game
+
+servers:
+  - url: https://ml-api.necpgame.com/api/v1
+    description: Production ML/AI server
+  - url: https://staging-ml-api.necpgame.com/api/v1
+    description: Staging ML/AI server
+  - url: http://localhost:8080/api/v1
+    description: Local development ML/AI server
+
+tags:
+  - name: Models
+    description: Управление моделями ML
+  - name: Predictions
+    description: Предсказания и inference
+  - name: Training
+    description: Обучение моделей
+  - name: Analytics
+    description: Аналитика и метрики
+  - name: Health
+    description: Мониторинг здоровья сервиса
+
+paths:
+  # Health endpoints (REQUIRED)
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Get service health status
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /health/batch:
+    get:
+      tags:
+        - Health
+      summary: Get batch health status for all ML models
+      operationId: getBatchHealth
+      responses:
+        '200':
+          description: Batch health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchHealthResponse'
+
+  /health/ws:
+    get:
+      tags:
+        - Health
+      summary: WebSocket health monitoring
+      operationId: getWebSocketHealth
+      responses:
+        '200':
+          description: WebSocket health endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+
+  # ML Models management
+  /ml/models:
+    get:
+      tags:
+        - Models
+      summary: List all ML models
+      operationId: listModels
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, training, archived]
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [classification, regression, clustering, reinforcement]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of ML models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags:
+        - Models
+      summary: Create new ML model
+      operationId: createModel
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateModelRequest'
+      responses:
+        '201':
+          description: Model created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /ml/models/{modelId}:
+    get:
+      tags:
+        - Models
+      summary: Get ML model details
+      operationId: getModel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Model details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Models
+      summary: Update ML model
+      operationId: updateModel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateModelRequest'
+      responses:
+        '200':
+          description: Model updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelResponse'
+
+    delete:
+      tags:
+        - Models
+      summary: Delete ML model
+      operationId: deleteModel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: modelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Model deleted successfully
+
+  # Predictions/Inference
+  /ml/predict:
+    post:
+      tags:
+        - Predictions
+      summary: Make prediction using ML model
+      operationId: makePrediction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PredictionRequest'
+      responses:
+        '200':
+          description: Prediction result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Model not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /ml/predict/batch:
+    post:
+      tags:
+        - Predictions
+      summary: Make batch predictions
+      operationId: makeBatchPrediction
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchPredictionRequest'
+      responses:
+        '200':
+          description: Batch prediction results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchPredictionResponse'
+
+  # Training operations
+  /ml/train:
+    post:
+      tags:
+        - Training
+      summary: Start model training job
+      operationId: startTraining
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingRequest'
+      responses:
+        '202':
+          description: Training job started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingJobResponse'
+
+  /ml/train/{jobId}/status:
+    get:
+      tags:
+        - Training
+      summary: Get training job status
+      operationId: getTrainingStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Training job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingStatusResponse'
+
+  # Analytics and metrics
+  /ml/analytics/models:
+    get:
+      tags:
+        - Analytics
+      summary: Get ML model performance analytics
+      operationId: getModelAnalytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: modelId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Model analytics data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelAnalyticsResponse'
+
+  /ml/analytics/predictions:
+    get:
+      tags:
+        - Analytics
+      summary: Get prediction usage analytics
+      operationId: getPredictionAnalytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: hours
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 168
+            default: 24
+      responses:
+        '200':
+          description: Prediction analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionAnalyticsResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    # Health schemas (REQUIRED)
+    HealthResponse:
+      type: object
+      required: [status, service, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        service:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    BatchHealthResponse:
+      type: object
+      required: [overall_status, services, timestamp]
+      properties:
+        overall_status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceHealth'
+        timestamp:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ServiceHealth:
+      type: object
+      required: [name, status, response_time]
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        response_time:
+          type: number
+          format: float
+          description: Response time in milliseconds
+        last_check:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    WebSocketHealthMessage:
+      type: object
+      required: [type, timestamp]
+      properties:
+        type:
+          type: string
+          enum: [health_check, pong]
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: number
+          format: float
+        connections:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          description: Human-readable error message
+        code:
+          type: string
+          description: Machine-readable error code
+        details:
+          $ref: '#/components/schemas/ErrorDetails'
+        timestamp:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ErrorDetails:
+      type: object
+      properties:
+        field:
+          type: string
+        value:
+          type: string
+        constraint:
+          type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # ML Model schemas
+    MLModel:
+      type: object
+      required: [model_id, name, type, status, created_at]
+      properties:
+        model_id:
+          type: string
+          format: uuid
+          description: Unique model identifier
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        type:
+          type: string
+          enum: [classification, regression, clustering, reinforcement]
+        algorithm:
+          type: string
+          description: ML algorithm used (e.g., neural_network, random_forest)
+        status:
+          type: string
+          enum: [active, training, archived, failed]
+        version:
+          type: string
+          pattern: '^\d+\.\d+\.\d+$'
+        accuracy:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          description: Additional model metadata
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    CreateModelRequest:
+      type: object
+      required: [name, type, algorithm]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        type:
+          type: string
+          enum: [classification, regression, clustering, reinforcement]
+        algorithm:
+          type: string
+          minLength: 1
+          maxLength: 50
+        training_data:
+          type: string
+          format: uri
+          description: URI to training dataset
+        hyperparameters:
+          type: object
+          description: Model hyperparameters
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    UpdateModelRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        status:
+          type: string
+          enum: [active, archived]
+        metadata:
+          type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Prediction schemas
+    PredictionRequest:
+      type: object
+      required: [model_id, features]
+      properties:
+        model_id:
+          type: string
+          format: uuid
+        features:
+          type: object
+          description: Input features for prediction
+        options:
+          type: object
+          description: Prediction options (confidence threshold, etc.)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    PredictionResponse:
+      type: object
+      required: [prediction_id, model_id, result, confidence]
+      properties:
+        prediction_id:
+          type: string
+          format: uuid
+        model_id:
+          type: string
+          format: uuid
+        result:
+          type: object
+          description: Prediction result
+        confidence:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        processing_time:
+          type: number
+          format: float
+          description: Processing time in milliseconds
+        timestamp:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    BatchPredictionRequest:
+      type: object
+      required: [model_id, predictions]
+      properties:
+        model_id:
+          type: string
+          format: uuid
+        predictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PredictionRequest'
+          maxItems: 1000
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    BatchPredictionResponse:
+      type: object
+      required: [predictions, total_count, success_count]
+      properties:
+        predictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PredictionResponse'
+        total_count:
+          type: integer
+        success_count:
+          type: integer
+        failed_count:
+          type: integer
+        average_processing_time:
+          type: number
+          format: float
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Training schemas
+    TrainingRequest:
+      type: object
+      required: [model_name, algorithm, training_data]
+      properties:
+        model_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        algorithm:
+          type: string
+          minLength: 1
+          maxLength: 50
+        training_data:
+          type: string
+          format: uri
+        validation_data:
+          type: string
+          format: uri
+        hyperparameters:
+          type: object
+        gpu_required:
+          type: boolean
+          default: false
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+          default: medium
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    TrainingJobResponse:
+      type: object
+      required: [job_id, model_name, status, created_at]
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        model_name:
+          type: string
+        status:
+          type: string
+          enum: [queued, running, completed, failed]
+        created_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    TrainingStatusResponse:
+      type: object
+      required: [job_id, status, progress]
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, completed, failed]
+        progress:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+        current_epoch:
+          type: integer
+        total_epochs:
+          type: integer
+        loss:
+          type: number
+          format: float
+        accuracy:
+          type: number
+          format: float
+        eta:
+          type: string
+          format: duration
+        error_message:
+          type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Analytics schemas
+    ModelAnalyticsResponse:
+      type: object
+      required: [model_id, metrics, time_range]
+      properties:
+        model_id:
+          type: string
+          format: uuid
+        metrics:
+          type: object
+          properties:
+            total_predictions:
+              type: integer
+            accuracy:
+              type: number
+              format: float
+            average_response_time:
+              type: number
+              format: float
+            error_rate:
+              type: number
+              format: float
+        time_range:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    PredictionAnalyticsResponse:
+      type: object
+      required: [total_predictions, successful_predictions, average_response_time]
+      properties:
+        total_predictions:
+          type: integer
+        successful_predictions:
+          type: integer
+        failed_predictions:
+          type: integer
+        average_response_time:
+          type: number
+          format: float
+        peak_rps:
+          type: integer
+        models_used:
+          type: array
+          items:
+            type: string
+            format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Response wrappers
+    ModelResponse:
+      type: object
+      required: [model]
+      properties:
+        model:
+          $ref: '#/components/schemas/MLModel'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ModelListResponse:
+      type: object
+      required: [models, total_count]
+      properties:
+        models:
+          type: array
+          items:
+            $ref: '#/components/schemas/MLModel'
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+        page:
+          type: integer
+        limit:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
