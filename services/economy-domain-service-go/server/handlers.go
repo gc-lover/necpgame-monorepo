@@ -1,65 +1,31 @@
-// Issue: #backend-economy_domain
-// PERFORMANCE: Memory pooling, context timeouts, zero allocations
-
 package server
 
 import (
-	"context"
-	"sync"
-	"time"
+    "context"
+    "time"
 
-	"economy-domain-service-go/pkg/api"
+    "economy-domain-service-go/pkg/api"
+    "go.uber.org/zap"
 )
 
-// Logger interface for structured logging
-type Logger interface {
-	Info(msg string, args ...interface{})
-	Error(msg string, args ...interface{})
-}
-
-// PERFORMANCE: Memory pool for response objects to reduce GC pressure
-var responsePool = sync.Pool{
-	New: func() interface{} {
-		return &api.HealthResponse{}
-	},
-}
-
-// Handler implements the generated API server interface
-// PERFORMANCE: Struct aligned for memory efficiency (large fields first)
 type Handler struct {
-	service *Service        // 8 bytes (pointer)
-	logger   Logger        // 8 bytes (interface)
-	pool     *sync.Pool    // 8 bytes (pointer)
-	// Add padding if needed for alignment
-	_pad [0]byte
+    service *Service
+    logger  *zap.Logger
 }
 
-// NewHandler creates a new handler instance with PERFORMANCE optimizations
 func NewHandler() *Handler {
-	return &Handler{
-		service: NewService(),
-		pool:    &responsePool,
-	}
+    logger, _ := zap.NewProduction()
+    return &Handler{
+        service: NewService(),
+        logger:  logger,
+    }
 }
 
-// GetEconomyHealth implements the health check endpoint
-// PERFORMANCE: Uses memory pool to reduce GC pressure, context timeout for reliability
+// GetEconomyHealth implements the Handler interface for health check
 func (h *Handler) GetEconomyHealth(ctx context.Context) (*api.HealthResponse, error) {
-	// PERFORMANCE: Context timeout to prevent hanging requests
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	// PERFORMANCE: Get response from pool instead of allocating new
-	response := responsePool.Get().(*api.HealthResponse)
-	defer responsePool.Put(response)
-
-	// Reset response for reuse
-	*response = api.HealthResponse{}
-
-	// Implement health check logic
-	response.Status.SetTo("healthy")
-	response.Domain.SetTo("economy")
-	response.Timestamp.SetTo(time.Now())
-
-	return response, nil
+    return &api.HealthResponse{
+        Status:    api.NewOptString("healthy"),
+        Domain:    api.NewOptString("economy-domain"),
+        Timestamp: api.NewOptDateTime(time.Now()),
+    }, nil
 }

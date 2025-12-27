@@ -7,13 +7,15 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
-	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/pkg/models"
+	serverModels "github.com/gc-lover/necpgame-monorepo/services/guild-service-go/server"
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
@@ -115,8 +117,8 @@ type CachedGuild struct {
 	Reputation  int       `json:"reputation"`
 }
 
-// serializeGuild converts server.Guild to CachedGuild for Redis storage
-func serializeGuild(guild *server.Guild) *CachedGuild {
+// serializeGuild converts models.Guild to CachedGuild for Redis storage
+func serializeGuild(guild *models.Guild) *CachedGuild {
 	return &CachedGuild{
 		ID:          guild.ID,
 		Name:        guild.Name,
@@ -132,9 +134,9 @@ func serializeGuild(guild *server.Guild) *CachedGuild {
 	}
 }
 
-// deserializeGuild converts CachedGuild back to server.Guild
-func deserializeGuild(cached *CachedGuild) *server.Guild {
-	return &server.Guild{
+// deserializeGuild converts CachedGuild back to models.Guild
+func deserializeGuild(cached *CachedGuild) *models.Guild {
+	return &models.Guild{
 		ID:          cached.ID,
 		Name:        cached.Name,
 		Description: cached.Description,
@@ -150,7 +152,7 @@ func deserializeGuild(cached *CachedGuild) *server.Guild {
 }
 
 // setGuildCache stores guild in Redis cache
-func (r *Repository) setGuildCache(ctx context.Context, guild *server.Guild) error {
+func (r *Repository) setGuildCache(ctx context.Context, guild *models.Guild) error {
 	cacheKey := "guild:" + guild.ID.String()
 	cached := serializeGuild(guild)
 
@@ -172,7 +174,7 @@ func (r *Repository) setGuildCache(ctx context.Context, guild *server.Guild) err
 }
 
 // getGuildCache retrieves guild from Redis cache
-func (r *Repository) getGuildCache(ctx context.Context, guildID uuid.UUID) (*server.Guild, error) {
+func (r *Repository) getGuildCache(ctx context.Context, guildID uuid.UUID) (*models.Guild, error) {
 	cacheKey := "guild:" + guildID.String()
 
 	data, err := r.redis.Get(ctx, cacheKey).Result()
@@ -211,7 +213,7 @@ func (r *Repository) invalidateGuildCache(ctx context.Context, guildID uuid.UUID
 }
 
 // ListGuilds retrieves a paginated list of guilds
-func (r *Repository) ListGuilds(ctx context.Context, limit, offset int, sortBy string) ([]*server.Guild, error) {
+func (r *Repository) ListGuilds(ctx context.Context, limit, offset int, sortBy string) ([]*models.Guild, error) {
 	r.logger.Infof("Listing guilds with limit: %d, offset: %d, sort: %s", limit, offset, sortBy)
 
 	if limit <= 0 || limit > 100 {
@@ -250,9 +252,9 @@ func (r *Repository) ListGuilds(ctx context.Context, limit, offset int, sortBy s
 	}
 	defer rows.Close()
 
-	var guilds []*server.Guild
+	var guilds []*models.Guild
 	for rows.Next() {
-		var guild server.Guild
+		var guild models.Guild
 		err := rows.Scan(
 			&guild.ID, &guild.Name, &guild.Description, &guild.LeaderID,
 			&guild.CreatedAt, &guild.UpdatedAt, &guild.MemberCount,
@@ -275,7 +277,7 @@ func (r *Repository) ListGuilds(ctx context.Context, limit, offset int, sortBy s
 }
 
 // CreateGuild creates a new guild in the database
-func (r *Repository) CreateGuild(ctx context.Context, name, description string, leaderID uuid.UUID) (*server.Guild, error) {
+func (r *Repository) CreateGuild(ctx context.Context, name, description string, leaderID uuid.UUID) (*models.Guild, error) {
 	r.logger.Infof("Creating guild in database: %s", name)
 
 	query := `
@@ -284,7 +286,7 @@ func (r *Repository) CreateGuild(ctx context.Context, name, description string, 
 		RETURNING id, name, description, leader_id, created_at, updated_at, member_count, max_members, level, experience, reputation
 	`
 
-	var guild server.Guild
+	var guild models.Guild
 	err := r.db.QueryRowContext(ctx, query, name, description, leaderID).Scan(
 		&guild.ID, &guild.Name, &guild.Description, &guild.LeaderID,
 		&guild.CreatedAt, &guild.UpdatedAt, &guild.MemberCount,
@@ -300,7 +302,7 @@ func (r *Repository) CreateGuild(ctx context.Context, name, description string, 
 }
 
 // GetGuild retrieves a guild from database or cache
-func (r *Repository) GetGuild(ctx context.Context, guildID uuid.UUID) (*server.Guild, error) {
+func (r *Repository) GetGuild(ctx context.Context, guildID uuid.UUID) (*models.Guild, error) {
 	r.logger.Infof("Getting guild: %s", guildID)
 
 	// Try cache first
@@ -320,7 +322,7 @@ func (r *Repository) GetGuild(ctx context.Context, guildID uuid.UUID) (*server.G
 		WHERE id = $1 AND is_active = true AND deleted_at IS NULL
 	`
 
-	var guild server.Guild
+	var guild models.Guild
 	err := r.db.QueryRowContext(ctx, query, guildID).Scan(
 		&guild.ID, &guild.Name, &guild.Description, &guild.LeaderID,
 		&guild.CreatedAt, &guild.UpdatedAt, &guild.MemberCount,
@@ -539,7 +541,7 @@ func (r *Repository) RemoveGuildMember(ctx context.Context, guildID, userID uuid
 }
 
 // CreateAnnouncement creates a new announcement
-func (r *Repository) CreateAnnouncement(ctx context.Context, guildID, authorID uuid.UUID, title, content string) (*server.GuildAnnouncement, error) {
+func (r *Repository) CreateAnnouncement(ctx context.Context, guildID, authorID uuid.UUID, title, content string) (*models.GuildAnnouncement, error) {
 	r.logger.Infof("Creating announcement for guild %s in database", guildID)
 
 	query := `
@@ -548,7 +550,7 @@ func (r *Repository) CreateAnnouncement(ctx context.Context, guildID, authorID u
 		RETURNING id, guild_id, title, content, author_id, created_at, updated_at, is_pinned
 	`
 
-	var announcement server.GuildAnnouncement
+	var announcement models.GuildAnnouncement
 	err := r.db.QueryRowContext(ctx, query, guildID, authorID, title, content).Scan(
 		&announcement.ID, &announcement.GuildID, &announcement.Title,
 		&announcement.Content, &announcement.AuthorID, &announcement.CreatedAt,
@@ -564,7 +566,7 @@ func (r *Repository) CreateAnnouncement(ctx context.Context, guildID, authorID u
 }
 
 // ListMembers retrieves guild members
-func (r *Repository) ListMembers(ctx context.Context, guildID uuid.UUID) ([]*server.GuildMember, error) {
+func (r *Repository) ListMembers(ctx context.Context, guildID uuid.UUID) ([]*models.GuildMember, error) {
 	r.logger.Infof("Listing members for guild: %s", guildID)
 
 	query := `
@@ -581,9 +583,9 @@ func (r *Repository) ListMembers(ctx context.Context, guildID uuid.UUID) ([]*ser
 	}
 	defer rows.Close()
 
-	var members []*server.GuildMember
+	var members []*models.GuildMember
 	for rows.Next() {
-		var member server.GuildMember
+		var member models.GuildMember
 		err := rows.Scan(&member.UserID, &member.GuildID, &member.Role, &member.JoinedAt)
 		if err != nil {
 			r.logger.Errorf("Failed to scan member: %v", err)
@@ -602,7 +604,7 @@ func (r *Repository) ListMembers(ctx context.Context, guildID uuid.UUID) ([]*ser
 }
 
 // ListAnnouncements retrieves guild announcements
-func (r *Repository) ListAnnouncements(ctx context.Context, guildID uuid.UUID, limit, offset int) ([]*server.GuildAnnouncement, error) {
+func (r *Repository) ListAnnouncements(ctx context.Context, guildID uuid.UUID, limit, offset int) ([]*models.GuildAnnouncement, error) {
 	r.logger.Infof("Listing announcements for guild: %s", guildID)
 
 	if limit <= 0 || limit > 50 {
@@ -627,9 +629,9 @@ func (r *Repository) ListAnnouncements(ctx context.Context, guildID uuid.UUID, l
 	}
 	defer rows.Close()
 
-	var announcements []*server.GuildAnnouncement
+	var announcements []*models.GuildAnnouncement
 	for rows.Next() {
-		var announcement server.GuildAnnouncement
+		var announcement models.GuildAnnouncement
 		err := rows.Scan(
 			&announcement.ID, &announcement.GuildID, &announcement.Title,
 			&announcement.Content, &announcement.AuthorID, &announcement.CreatedAt,
@@ -652,7 +654,7 @@ func (r *Repository) ListAnnouncements(ctx context.Context, guildID uuid.UUID, l
 }
 
 // GetPlayerGuilds retrieves guilds for a specific player
-func (r *Repository) GetPlayerGuilds(ctx context.Context, playerID uuid.UUID) ([]*server.Guild, error) {
+func (r *Repository) GetPlayerGuilds(ctx context.Context, playerID uuid.UUID) ([]*models.Guild, error) {
 	r.logger.Infof("Getting guilds for player: %s", playerID)
 
 	query := `
@@ -671,9 +673,9 @@ func (r *Repository) GetPlayerGuilds(ctx context.Context, playerID uuid.UUID) ([
 	}
 	defer rows.Close()
 
-	var guilds []*server.Guild
+	var guilds []*models.Guild
 	for rows.Next() {
-		var guild server.Guild
+		var guild models.Guild
 		err := rows.Scan(
 			&guild.ID, &guild.Name, &guild.Description, &guild.LeaderID,
 			&guild.CreatedAt, &guild.UpdatedAt, &guild.MemberCount,
@@ -693,4 +695,308 @@ func (r *Repository) GetPlayerGuilds(ctx context.Context, playerID uuid.UUID) ([
 
 	r.logger.Infof("Successfully retrieved %d guilds for player %s", len(guilds), playerID)
 	return guilds, nil
+}
+
+// Voice Channel Repository Methods
+// Issue: #2263 - WebRTC Signaling Service Integration with Guild System
+
+// CreateVoiceChannel creates a new voice channel in the database
+func (r *Repository) CreateVoiceChannel(ctx context.Context, channel *models.GuildVoiceChannel) error {
+	r.logger.Infof("Creating voice channel: %s for guild: %s", channel.Name, channel.GuildID)
+
+	query := `
+		INSERT INTO social.guild_voice_channels (
+			id, guild_id, name, description, channel_id, max_users, is_private,
+			created_by, created_at, updated_at, status
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+	`
+
+	_, err := r.db.ExecContext(ctx, query,
+		channel.ID, channel.GuildID, channel.Name, channel.Description,
+		channel.ChannelID, channel.MaxUsers, channel.IsPrivate,
+		channel.CreatedBy, channel.CreatedAt, channel.UpdatedAt, channel.Status)
+
+	if err != nil {
+		r.logger.Errorf("Failed to create voice channel: %v", err)
+		return err
+	}
+
+	r.logger.Infof("Voice channel created successfully: %s", channel.ID)
+	return nil
+}
+
+// GetVoiceChannel retrieves a voice channel by ID
+func (r *Repository) GetVoiceChannel(ctx context.Context, channelID uuid.UUID) (*models.GuildVoiceChannel, error) {
+	r.logger.Infof("Getting voice channel: %s", channelID)
+
+	query := `
+		SELECT id, guild_id, name, description, channel_id, max_users, is_private,
+		       created_by, created_at, updated_at, status
+		FROM social.guild_voice_channels
+		WHERE id = $1 AND status = 'active'
+	`
+
+	var channel models.GuildVoiceChannel
+	err := r.db.QueryRowContext(ctx, query, channelID).Scan(
+		&channel.ID, &channel.GuildID, &channel.Name, &channel.Description,
+		&channel.ChannelID, &channel.MaxUsers, &channel.IsPrivate,
+		&channel.CreatedBy, &channel.CreatedAt, &channel.UpdatedAt, &channel.Status)
+
+	if err != nil {
+		r.logger.Errorf("Failed to get voice channel: %v", err)
+		return nil, err
+	}
+
+	return &channel, nil
+}
+
+// ListVoiceChannels lists all voice channels for a guild
+func (r *Repository) ListVoiceChannels(ctx context.Context, guildID uuid.UUID) ([]*models.GuildVoiceChannel, error) {
+	r.logger.Infof("Listing voice channels for guild: %s", guildID)
+
+	query := `
+		SELECT id, guild_id, name, description, channel_id, max_users, is_private,
+		       created_by, created_at, updated_at, status
+		FROM social.guild_voice_channels
+		WHERE guild_id = $1 AND status = 'active'
+		ORDER BY created_at ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, guildID)
+	if err != nil {
+		r.logger.Errorf("Failed to list voice channels: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var channels []*models.GuildVoiceChannel
+	for rows.Next() {
+		var channel models.GuildVoiceChannel
+		err := rows.Scan(
+			&channel.ID, &channel.GuildID, &channel.Name, &channel.Description,
+			&channel.ChannelID, &channel.MaxUsers, &channel.IsPrivate,
+			&channel.CreatedBy, &channel.CreatedAt, &channel.UpdatedAt, &channel.Status)
+		if err != nil {
+			r.logger.Errorf("Failed to scan voice channel: %v", err)
+			return nil, err
+		}
+		channels = append(channels, &channel)
+	}
+
+	if err = rows.Err(); err != nil {
+		r.logger.Errorf("Error iterating voice channels: %v", err)
+		return nil, err
+	}
+
+	r.logger.Infof("Successfully retrieved %d voice channels for guild %s", len(channels), guildID)
+	return channels, nil
+}
+
+// UpdateVoiceChannel updates voice channel settings
+func (r *Repository) UpdateVoiceChannel(ctx context.Context, channelID uuid.UUID, name, description string, maxUsers int) error {
+	r.logger.Infof("Updating voice channel: %s", channelID)
+
+	query := `
+		UPDATE social.guild_voice_channels
+		SET name = $1, description = $2, max_users = $3, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $4 AND status = 'active'
+	`
+
+	result, err := r.db.ExecContext(ctx, query, name, description, maxUsers, channelID)
+	if err != nil {
+		r.logger.Errorf("Failed to update voice channel: %v", err)
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		r.logger.Errorf("Failed to get rows affected: %v", err)
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("voice channel not found or not active")
+	}
+
+	r.logger.Infof("Voice channel updated successfully: %s", channelID)
+	return nil
+}
+
+// DeleteVoiceChannel marks a voice channel as deleted
+func (r *Repository) DeleteVoiceChannel(ctx context.Context, channelID uuid.UUID) error {
+	r.logger.Infof("Deleting voice channel: %s", channelID)
+
+	query := `
+		UPDATE social.guild_voice_channels
+		SET status = 'inactive', updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1 AND status = 'active'
+	`
+
+	result, err := r.db.ExecContext(ctx, query, channelID)
+	if err != nil {
+		r.logger.Errorf("Failed to delete voice channel: %v", err)
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		r.logger.Errorf("Failed to get rows affected: %v", err)
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("voice channel not found or not active")
+	}
+
+	r.logger.Infof("Voice channel deleted successfully: %s", channelID)
+	return nil
+}
+
+// Voice Participant Methods
+
+// AddVoiceParticipant adds a user to a voice channel
+func (r *Repository) AddVoiceParticipant(ctx context.Context, participant *models.GuildVoiceParticipant) error {
+	r.logger.Infof("Adding voice participant: %s to channel: %s", participant.UserID, participant.ChannelID)
+
+	query := `
+		INSERT INTO social.guild_voice_participants (
+			user_id, channel_id, guild_id, joined_at, is_muted, is_deafened, webrtc_id
+		) VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`
+
+	_, err := r.db.ExecContext(ctx, query,
+		participant.UserID, participant.ChannelID, participant.GuildID,
+		participant.JoinedAt, participant.IsMuted, participant.IsDeafened, participant.WebRTCID)
+
+	if err != nil {
+		r.logger.Errorf("Failed to add voice participant: %v", err)
+		return err
+	}
+
+	r.logger.Infof("Voice participant added successfully")
+	return nil
+}
+
+// RemoveVoiceParticipant removes a user from a voice channel
+func (r *Repository) RemoveVoiceParticipant(ctx context.Context, channelID, userID uuid.UUID) error {
+	r.logger.Infof("Removing voice participant: %s from channel: %s", userID, channelID)
+
+	query := `
+		DELETE FROM social.guild_voice_participants
+		WHERE channel_id = $1 AND user_id = $2
+	`
+
+	result, err := r.db.ExecContext(ctx, query, channelID, userID)
+	if err != nil {
+		r.logger.Errorf("Failed to remove voice participant: %v", err)
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		r.logger.Errorf("Failed to get rows affected: %v", err)
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("participant not found in voice channel")
+	}
+
+	r.logger.Infof("Voice participant removed successfully")
+	return nil
+}
+
+// GetVoiceParticipant checks if a user is in a voice channel
+func (r *Repository) GetVoiceParticipant(ctx context.Context, channelID, userID uuid.UUID) (*models.GuildVoiceParticipant, error) {
+	r.logger.Infof("Getting voice participant: %s in channel: %s", userID, channelID)
+
+	query := `
+		SELECT user_id, channel_id, guild_id, joined_at, is_muted, is_deafened, webrtc_id
+		FROM social.guild_voice_participants
+		WHERE channel_id = $1 AND user_id = $2
+	`
+
+	var participant models.GuildVoiceParticipant
+	err := r.db.QueryRowContext(ctx, query, channelID, userID).Scan(
+		&participant.UserID, &participant.ChannelID, &participant.GuildID,
+		&participant.JoinedAt, &participant.IsMuted, &participant.IsDeafened, &participant.WebRTCID)
+
+	if err != nil {
+		r.logger.Errorf("Failed to get voice participant: %v", err)
+		return nil, err
+	}
+
+	return &participant, nil
+}
+
+// ListVoiceParticipants lists all participants in a voice channel
+func (r *Repository) ListVoiceParticipants(ctx context.Context, channelID uuid.UUID) ([]*models.GuildVoiceParticipant, error) {
+	r.logger.Infof("Listing voice participants for channel: %s", channelID)
+
+	query := `
+		SELECT user_id, channel_id, guild_id, joined_at, is_muted, is_deafened, webrtc_id
+		FROM social.guild_voice_participants
+		WHERE channel_id = $1
+		ORDER BY joined_at ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, channelID)
+	if err != nil {
+		r.logger.Errorf("Failed to list voice participants: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var participants []*models.GuildVoiceParticipant
+	for rows.Next() {
+		var participant models.GuildVoiceParticipant
+		err := rows.Scan(
+			&participant.UserID, &participant.ChannelID, &participant.GuildID,
+			&participant.JoinedAt, &participant.IsMuted, &participant.IsDeafened, &participant.WebRTCID)
+		if err != nil {
+			r.logger.Errorf("Failed to scan voice participant: %v", err)
+			return nil, err
+		}
+		participants = append(participants, &participant)
+	}
+
+	if err = rows.Err(); err != nil {
+		r.logger.Errorf("Error iterating voice participants: %v", err)
+		return nil, err
+	}
+
+	r.logger.Infof("Successfully retrieved %d voice participants for channel %s", len(participants), channelID)
+	return participants, nil
+}
+
+// CountVoiceParticipants counts participants in a voice channel
+func (r *Repository) CountVoiceParticipants(ctx context.Context, channelID uuid.UUID) (int, error) {
+	r.logger.Infof("Counting voice participants for channel: %s", channelID)
+
+	query := `SELECT COUNT(*) FROM social.guild_voice_participants WHERE channel_id = $1`
+
+	var count int
+	err := r.db.QueryRowContext(ctx, query, channelID).Scan(&count)
+	if err != nil {
+		r.logger.Errorf("Failed to count voice participants: %v", err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
+// RemoveAllVoiceParticipants removes all participants from a voice channel
+func (r *Repository) RemoveAllVoiceParticipants(ctx context.Context, channelID uuid.UUID) error {
+	r.logger.Infof("Removing all voice participants from channel: %s", channelID)
+
+	query := `DELETE FROM social.guild_voice_participants WHERE channel_id = $1`
+
+	_, err := r.db.ExecContext(ctx, query, channelID)
+	if err != nil {
+		r.logger.Errorf("Failed to remove all voice participants: %v", err)
+		return err
+	}
+
+	r.logger.Infof("All voice participants removed from channel: %s", channelID)
+	return nil
 }

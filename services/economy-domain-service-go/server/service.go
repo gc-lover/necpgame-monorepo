@@ -1,58 +1,32 @@
-// Issue: #backend-economy_domain
-// PERFORMANCE: Worker pools, batch operations, memory pooling
-
 package server
 
 import (
-	"context"
-	"sync"
-	"time"
+    "context"
+    "sync"
 
-	"economy-domain-service-go/pkg/api"
+    "economy-domain-service-go/pkg/api"
+    "go.uber.org/zap"
 )
 
-// PERFORMANCE: Worker pool for concurrent operations
-const maxWorkers = 10
-var workerPool = make(chan struct{}, maxWorkers)
-
-// Service contains business logic for economy-domain
-// PERFORMANCE: Struct aligned (pointers first, then values)
 type Service struct {
-	repo      *Repository    // 8 bytes (pointer)
-	workers   chan struct{} // 8 bytes (pointer)
-	pool      *sync.Pool    // 8 bytes (pointer)
-	// Padding for alignment
-	_pad [0]byte
+    repo   *Repository
+    logger *zap.Logger
+    pool   *sync.Pool
 }
 
-// NewService creates a new service instance with PERFORMANCE optimizations
 func NewService() *Service {
-	return &Service{
-		repo:    NewRepository(),
-		workers: workerPool,
-		pool: &sync.Pool{
-			New: func() interface{} {
-				return &api.HealthResponse{}
-			},
-		},
-	}
+    logger, _ := zap.NewProduction()
+    return &Service{
+        repo:   NewRepository(),
+        logger: logger,
+        pool: &sync.Pool{
+            New: func() interface{} {
+                return &api.HealthResponse{}
+            },
+        },
+    }
 }
 
-// HealthCheck performs a health check with PERFORMANCE optimizations
 func (s *Service) HealthCheck(ctx context.Context) error {
-	// PERFORMANCE: Acquire worker from pool (limit concurrency)
-	select {
-	case s.workers <- struct{}{}:
-		defer func() { <-s.workers }() // Release worker
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-time.After(5 * time.Second): // Timeout
-		return context.DeadlineExceeded
-	}
-
-	// PERFORMANCE: Check repository health with timeout
-	healthCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-
-	return s.repo.HealthCheck(healthCtx)
+    return s.repo.HealthCheck(ctx)
 }

@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/internal/repository"
-	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/pkg/models"
 )
 
 // Service handles business logic
@@ -304,5 +304,288 @@ func (s *Service) LeaveGuild(ctx context.Context, guildID, playerID uuid.UUID) e
 		return err
 	}
 
+	return nil
+}
+
+// WebRTC Voice Channel Integration Methods
+// Issue: #2263 - WebRTC Signaling Service Integration with Guild System
+
+// CreateVoiceChannel creates a new voice channel for the guild
+func (s *Service) CreateVoiceChannel(ctx context.Context, guildID uuid.UUID, name, description string, maxUsers int, isPrivate bool, creatorID uuid.UUID) (*server.GuildVoiceChannel, error) {
+	s.logger.Infof("Creating voice channel %s for guild %s", name, guildID)
+
+	// Validate guild membership and permissions
+	member, err := s.repo.GetGuildMember(ctx, guildID, creatorID)
+	if err != nil {
+		return nil, fmt.Errorf("user is not a guild member: %v", err)
+	}
+
+	if member.Role != "leader" && member.Role != "officer" {
+		return nil, fmt.Errorf("insufficient permissions: only leaders and officers can create voice channels")
+	}
+
+	// Validate input
+	if len(name) < 2 || len(name) > 50 {
+		return nil, fmt.Errorf("channel name must be between 2 and 50 characters")
+	}
+
+	if maxUsers < 1 || maxUsers > 50 {
+		return nil, fmt.Errorf("max users must be between 1 and 50")
+	}
+
+	// Create WebRTC signaling channel (simulate API call)
+	channelID, err := s.createWebRTCChannel(ctx, name, maxUsers)
+	if err != nil {
+		s.logger.Errorf("Failed to create WebRTC channel: %v", err)
+		return nil, fmt.Errorf("failed to create signaling channel: %v", err)
+	}
+
+	// Create voice channel in database
+	channel := &server.GuildVoiceChannel{
+		ID:          uuid.New(),
+		GuildID:     guildID,
+		Name:        name,
+		Description: description,
+		ChannelID:   channelID,
+		MaxUsers:    maxUsers,
+		IsPrivate:   isPrivate,
+		CreatedBy:   creatorID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		Status:      "active",
+	}
+
+	err = s.repo.CreateVoiceChannel(ctx, channel)
+	if err != nil {
+		s.logger.Errorf("Failed to create voice channel in database: %v", err)
+		// Cleanup WebRTC channel on failure
+		s.cleanupWebRTCChannel(ctx, channelID)
+		return nil, err
+	}
+
+	s.logger.Infof("Voice channel created successfully: %s", channel.ID)
+	return channel, nil
+}
+
+// GetVoiceChannel retrieves a voice channel by ID
+func (s *Service) GetVoiceChannel(ctx context.Context, channelID uuid.UUID) (*server.GuildVoiceChannel, error) {
+	s.logger.Infof("Getting voice channel: %s", channelID)
+
+	channel, err := s.repo.GetVoiceChannel(ctx, channelID)
+	if err != nil {
+		s.logger.Errorf("Failed to get voice channel: %v", err)
+		return nil, err
+	}
+
+	return channel, nil
+}
+
+// ListVoiceChannels lists all voice channels for a guild
+func (s *Service) ListVoiceChannels(ctx context.Context, guildID uuid.UUID) ([]*server.GuildVoiceChannel, error) {
+	s.logger.Infof("Listing voice channels for guild: %s", guildID)
+
+	channels, err := s.repo.ListVoiceChannels(ctx, guildID)
+	if err != nil {
+		s.logger.Errorf("Failed to list voice channels: %v", err)
+		return nil, err
+	}
+
+	return channels, nil
+}
+
+// UpdateVoiceChannel updates voice channel settings
+func (s *Service) UpdateVoiceChannel(ctx context.Context, channelID uuid.UUID, name, description string, maxUsers int) error {
+	s.logger.Infof("Updating voice channel: %s", channelID)
+
+	// Get existing channel
+	channel, err := s.repo.GetVoiceChannel(ctx, channelID)
+	if err != nil {
+		return fmt.Errorf("voice channel not found: %v", err)
+	}
+
+	// Validate permissions (creator or guild officer/leader)
+	userIDStr := ctx.Value("user_id").(string)
+	userID, _ := uuid.Parse(userIDStr)
+
+	member, err := s.repo.GetGuildMember(ctx, channel.GuildID, userID)
+	if err != nil || (member.Role != "leader" && member.Role != "officer" && channel.CreatedBy != userID) {
+		return fmt.Errorf("insufficient permissions to update channel")
+	}
+
+	// Validate input
+	if len(name) < 2 || len(name) > 50 {
+		return fmt.Errorf("channel name must be between 2 and 50 characters")
+	}
+
+	if maxUsers < 1 || maxUsers > 50 {
+		return fmt.Errorf("max users must be between 1 and 50")
+	}
+
+	// Update WebRTC channel settings
+	err = s.updateWebRTCChannel(ctx, channel.ChannelID, name, maxUsers)
+	if err != nil {
+		s.logger.Errorf("Failed to update WebRTC channel: %v", err)
+		return fmt.Errorf("failed to update signaling channel: %v", err)
+	}
+
+	// Update database
+	err = s.repo.UpdateVoiceChannel(ctx, channelID, name, description, maxUsers)
+	if err != nil {
+		s.logger.Errorf("Failed to update voice channel: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+// DeleteVoiceChannel deletes a voice channel
+func (s *Service) DeleteVoiceChannel(ctx context.Context, channelID uuid.UUID) error {
+	s.logger.Infof("Deleting voice channel: %s", channelID)
+
+	// Get existing channel
+	channel, err := s.repo.GetVoiceChannel(ctx, channelID)
+	if err != nil {
+		return fmt.Errorf("voice channel not found: %v", err)
+	}
+
+	// Validate permissions
+	userIDStr := ctx.Value("user_id").(string)
+	userID, _ := uuid.Parse(userIDStr)
+
+	member, err := s.repo.GetGuildMember(ctx, channel.GuildID, userID)
+	if err != nil || (member.Role != "leader" && member.Role != "officer" && channel.CreatedBy != userID) {
+		return fmt.Errorf("insufficient permissions to delete channel")
+	}
+
+	// Remove all participants first
+	err = s.repo.RemoveAllVoiceParticipants(ctx, channelID)
+	if err != nil {
+		s.logger.Errorf("Failed to remove participants: %v", err)
+		// Continue with deletion
+	}
+
+	// Delete from database
+	err = s.repo.DeleteVoiceChannel(ctx, channelID)
+	if err != nil {
+		s.logger.Errorf("Failed to delete voice channel: %v", err)
+		return err
+	}
+
+	// Cleanup WebRTC channel
+	err = s.cleanupWebRTCChannel(ctx, channel.ChannelID)
+	if err != nil {
+		s.logger.Errorf("Failed to cleanup WebRTC channel: %v", err)
+		// Don't fail the operation for cleanup errors
+	}
+
+	return nil
+}
+
+// JoinVoiceChannel allows a user to join a voice channel
+func (s *Service) JoinVoiceChannel(ctx context.Context, channelID, userID uuid.UUID) (*server.GuildVoiceParticipant, error) {
+	s.logger.Infof("User %s joining voice channel %s", userID, channelID)
+
+	// Get channel info
+	channel, err := s.repo.GetVoiceChannel(ctx, channelID)
+	if err != nil {
+		return nil, fmt.Errorf("voice channel not found: %v", err)
+	}
+
+	// Check if user is guild member
+	_, err = s.repo.GetGuildMember(ctx, channel.GuildID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("user is not a guild member")
+	}
+
+	// Check channel capacity
+	participantCount, err := s.repo.CountVoiceParticipants(ctx, channelID)
+	if err != nil {
+		s.logger.Errorf("Failed to count participants: %v", err)
+		return nil, fmt.Errorf("failed to check channel capacity")
+	}
+
+	if participantCount >= channel.MaxUsers {
+		return nil, fmt.Errorf("voice channel is full")
+	}
+
+	// Check if already in channel
+	existing, err := s.repo.GetVoiceParticipant(ctx, channelID, userID)
+	if err == nil && existing != nil {
+		return nil, fmt.Errorf("user is already in this voice channel")
+	}
+
+	// Generate WebRTC participant ID
+	webrtcID := fmt.Sprintf("participant-%s-%s", channelID.String()[:8], userID.String()[:8])
+
+	// Create participant record
+	participant := &server.GuildVoiceParticipant{
+		UserID:     userID,
+		ChannelID:  channelID,
+		GuildID:    channel.GuildID,
+		JoinedAt:   time.Now(),
+		IsMuted:    false,
+		IsDeafened: false,
+		WebRTCID:   webrtcID,
+	}
+
+	err = s.repo.AddVoiceParticipant(ctx, participant)
+	if err != nil {
+		s.logger.Errorf("Failed to add voice participant: %v", err)
+		return nil, err
+	}
+
+	s.logger.Infof("User joined voice channel successfully")
+	return participant, nil
+}
+
+// LeaveVoiceChannel allows a user to leave a voice channel
+func (s *Service) LeaveVoiceChannel(ctx context.Context, channelID, userID uuid.UUID) error {
+	s.logger.Infof("User %s leaving voice channel %s", userID, channelID)
+
+	err := s.repo.RemoveVoiceParticipant(ctx, channelID, userID)
+	if err != nil {
+		s.logger.Errorf("Failed to remove voice participant: %v", err)
+		return err
+	}
+
+	s.logger.Infof("User left voice channel successfully")
+	return nil
+}
+
+// ListVoiceParticipants lists all participants in a voice channel
+func (s *Service) ListVoiceParticipants(ctx context.Context, channelID uuid.UUID) ([]*server.GuildVoiceParticipant, error) {
+	s.logger.Infof("Listing participants for voice channel: %s", channelID)
+
+	participants, err := s.repo.ListVoiceParticipants(ctx, channelID)
+	if err != nil {
+		s.logger.Errorf("Failed to list voice participants: %v", err)
+		return nil, err
+	}
+
+	return participants, nil
+}
+
+// Helper methods for WebRTC integration
+
+// createWebRTCChannel creates a new WebRTC signaling channel
+func (s *Service) createWebRTCChannel(ctx context.Context, name string, maxUsers int) (string, error) {
+	// This would make an HTTP call to WebRTC signaling service
+	// For now, simulate with a generated ID
+	channelID := fmt.Sprintf("webrtc-ch-%s-%d", name, time.Now().Unix())
+	s.logger.Infof("Created WebRTC channel: %s", channelID)
+	return channelID, nil
+}
+
+// updateWebRTCChannel updates WebRTC channel settings
+func (s *Service) updateWebRTCChannel(ctx context.Context, channelID, name string, maxUsers int) error {
+	// This would make an HTTP call to WebRTC signaling service
+	s.logger.Infof("Updated WebRTC channel: %s", channelID)
+	return nil
+}
+
+// cleanupWebRTCChannel removes a WebRTC signaling channel
+func (s *Service) cleanupWebRTCChannel(ctx context.Context, channelID string) error {
+	// This would make an HTTP call to WebRTC signaling service
+	s.logger.Infof("Cleaned up WebRTC channel: %s", channelID)
 	return nil
 }

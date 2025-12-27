@@ -97,14 +97,14 @@ import (
     "syscall"
     "time"
 
-    "{domain}-service-go/pkg/api"
-    "{domain}-service-go/server"
+    "{service_name}/pkg/api"
+    "{service_name}/server"
 )
 
 func main() {{
     logger := log.New(os.Stdout, "[{domain}] ", log.LstdFlags)
 
-    svc := server.New{domain_title}Service()
+    svc := server.NewEconomyService()
 
     server := &http.Server{{
         Addr:    ":8080",
@@ -115,7 +115,7 @@ func main() {{
     signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
     go func() {{
-        logger.Printf("Starting {domain} service on :8080")
+        logger.Printf("Starting {domain} service on :8080 (GOGC={performance_config})")
         if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {{
             logger.Fatalf("HTTP server error: %v", err)
         }}
@@ -1199,7 +1199,7 @@ import (
 // Tests full request/response cycle
 
 func TestHealthCheck(t *testing.T) {{
-    svc := server.New{domain_title}Service()
+    svc := server.NewEconomyService()
 
     req := httptest.NewRequest("GET", "/health", nil)
     w := httptest.NewRecorder()
@@ -1212,7 +1212,7 @@ func TestHealthCheck(t *testing.T) {{
 }}
 
 func TestServiceStartup(t *testing.T) {{
-    svc := server.New{domain_title}Service()
+    svc := server.NewEconomyService()
 
     // Test that service starts without panicking
     server := httptest.NewServer(svc.Handler())

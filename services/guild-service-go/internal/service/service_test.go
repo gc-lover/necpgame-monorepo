@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 
-	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/internal/models"
+	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/pkg/models"
 )
 
 func TestGuildService_ValidateGuild(t *testing.T) {
