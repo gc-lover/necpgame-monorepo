@@ -1037,6 +1037,7 @@ func (h *MLAIHandler) MakeBatchPrediction(ctx context.Context, req *api.BatchPre
 	// Set timeout for batch prediction (2 seconds - allows time for multiple predictions)
 	batchCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
+	_ = batchCtx // Context ready for future batch ML inference operations
 
 	// Validate batch size
 	if err := h.service.validator.ValidateBatchSize(len(req.Predictions)); err != nil {
