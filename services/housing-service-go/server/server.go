@@ -195,9 +195,68 @@ func (s *Server) GetApartment(ctx context.Context, params api.GetApartmentParams
 		}, nil
 	}
 
-	// TODO: Query apartment details from database
-	// For now, return mock apartment data
-	apartment := s.getMockApartment(apartmentID)
+	// Query apartment details from database
+	var apartment api.ApartmentResponse
+	var ownerID *uuid.UUID
+	var furnitureSlotsUsed int
+	var prestigeScore int
+	var location string
+	var accessSettings string
+	var apartmentType string
+	var price int
+	var furnitureSlots int
+	var description *string
+	var features []byte
+
+	err = s.db.QueryRow(ctx, `
+		SELECT a.id, a.owner_id, a.location, a.access_settings,
+		       a.furniture_slots_used, a.prestige_score, a.created_at, a.updated_at,
+		       at.type, at.price, at.furniture_slots, at.description, at.features
+		FROM gameplay.apartments a
+		JOIN gameplay.apartment_types at ON a.apartment_type_id = at.type
+		WHERE a.id = $1
+	`, apartmentID).Scan(
+		&apartment.ApartmentID, &ownerID, &location, &accessSettings,
+		&furnitureSlotsUsed, &prestigeScore, &apartment.CreatedAt, &apartment.LastModified,
+		&apartmentType, &price, &furnitureSlots, &description, &features)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return &api.GetApartmentNotFound{
+				Error: api.Error{
+					Code:    "APARTMENT_NOT_FOUND",
+					Message: "Apartment not found",
+				},
+			}, nil
+		}
+		s.logger.Error("Failed to query apartment", zap.Error(err))
+		return nil, fmt.Errorf("database query failed: %w", err)
+	}
+
+	// Set response fields
+	apartment.Address = location
+	apartment.Size = furnitureSlots // Using furniture slots as size indicator
+	apartment.Price = price
+	apartment.Status = "available"
+	if ownerID != nil {
+		apartment.Status = "owned"
+		apartment.OwnerID = api.NewOptUUID(*ownerID)
+	}
+
+	if description != nil {
+		apartment.Description = api.NewOptString(*description)
+	}
+
+	// Parse features JSONB
+	var featureList []string
+	if err := json.Unmarshal(features, &featureList); err != nil {
+		s.logger.Warn("Failed to parse apartment features", zap.Error(err))
+		featureList = []string{}
+	}
+	apartment.Features = featureList
+
+	apartment.FurnitureCount = api.NewOptInt(furnitureSlotsUsed)
+	apartment.PrestigeLevel = api.NewOptInt(prestigeScore)
 
 	return &api.ApartmentResponse{
 		ApartmentID:   apartment.ApartmentID,
@@ -689,10 +748,47 @@ func (s *Server) getMockApartment(apartmentID uuid.UUID) api.ApartmentResponse {
 }
 
 func (s *Server) updateApartmentSettings(apartmentID uuid.UUID, settings *api.ApartmentSettings) settingsUpdateResult {
-	// Simulate settings update
+	// Check if apartment exists and user has permission to update it
+	var ownerID uuid.UUID
+	err := s.db.QueryRow(context.Background(), `
+		SELECT owner_id FROM gameplay.apartments WHERE id = $1
+	`, apartmentID).Scan(&ownerID)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return settingsUpdateResult{
+				Success: false,
+				Error:   "Apartment not found",
+			}
+		}
+		s.logger.Error("Failed to check apartment ownership", zap.Error(err))
+		return settingsUpdateResult{
+			Success: false,
+			Error:   "Database error",
+		}
+	}
+
+	// TODO: Check if current user is the owner (requires user context)
+	// For now, assume permission granted
+
+	// Update apartment access settings
+	_, err = s.db.Exec(context.Background(), `
+		UPDATE gameplay.apartments
+		SET access_settings = $1, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2
+	`, settings.Privacy, apartmentID)
+
+	if err != nil {
+		s.logger.Error("Failed to update apartment settings", zap.Error(err))
+		return settingsUpdateResult{
+			Success: false,
+			Error:   "Failed to update settings",
+		}
+	}
+
 	return settingsUpdateResult{
 		Success:       true,
-		UpdatedFields: []string{"privacy", "allow_visitors"},
+		UpdatedFields: []string{"access_settings"},
 	}
 }
 
