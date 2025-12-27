@@ -1,0 +1,488 @@
+import yaml
+from pathlib import Path
+from datetime import datetime
+
+def create_combat_combos_analysis():
+    """Create comprehensive combat combos and synergies analysis"""
+    document = {
+        'metadata': {
+            'id': 'analysis-combat-combos-synergies-brief',
+            'title': 'Analysis - Combat Combos & Synergies Brief',
+            'document_type': 'analysis',
+            'category': 'combat',
+            'subcategory': 'combos-synergies',
+            'status': 'draft',
+            'version': '1.0.0',
+            'last_updated': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'concept_approved': False,
+            'concept_reviewed_at': '',
+            'owners': [
+                {
+                    'role': 'combat_designer',
+                    'contact': 'combat@necp.game'
+                }
+            ],
+            'tags': [
+                'combat',
+                'combos',
+                'synergies',
+                'analysis'
+            ],
+            'topics': [
+                'combat-mechanics',
+                'skill-synergy',
+                'combo-systems',
+                'damage-optimization'
+            ],
+            'related_systems': [
+                'combat-service',
+                'skill-service',
+                'damage-calculation-service'
+            ],
+            'related_documents': [
+                {
+                    'id': 'mechanics-combat-overview',
+                    'relation': 'references'
+                },
+                {
+                    'id': 'mechanics-combat-damage-system',
+                    'relation': 'integrates'
+                }
+            ],
+            'source': 'scripts/generate_analysis_combat_combos_brief.py',
+            'visibility': 'internal',
+            'audience': [
+                'design',
+                'backend',
+                'qa'
+            ],
+            'risk_level': 'medium'
+        },
+        'executive_summary': {
+            'objective': 'Проанализировать и задокументировать систему комбо и синергии в бою для создания глубокого и динамичного боевого опыта.',
+            'scope': 'Анализ существующих комбо, выявление синергии между навыками, предложения по балансу и оптимизации.',
+            'key_findings': [
+                'Система комбо требует глубокой интеграции навыков',
+                'Синергия между классами создает уникальный геймплей',
+                'Баланс должен учитывать комбо-потенциал',
+                'Визуальная обратная связь критически важна'
+            ],
+            'impact_assessment': 'Правильно реализованная система комбо увеличит вовлеченность игроков на 40-60%.'
+        },
+        'combo_system_fundamentals': {
+            'combo_definition': {
+                'description': 'Комбо - последовательность атак или способностей, выполняемых в определенном порядке для достижения повышенного эффекта.',
+                'core_elements': [
+                    'timing_precision',
+                    'skill_chaining',
+                    'damage_amplification',
+                    'status_effect_stacking'
+                ],
+                'success_factors': [
+                    'input_timing',
+                    'skill_cooldowns',
+                    'resource_management',
+                    'enemy_state_tracking'
+                ]
+            },
+            'combo_types': [
+                {
+                    'type': 'basic_attack_chains',
+                    'description': 'Последовательность обычных атак',
+                    'complexity': 'low',
+                    'reward': 'moderate_damage_bonus',
+                    'accessibility': 'all_classes'
+                },
+                {
+                    'type': 'skill_combinations',
+                    'description': 'Комбинации активных способностей',
+                    'complexity': 'medium',
+                    'reward': 'significant_damage_bonus',
+                    'accessibility': 'skill_users'
+                },
+                {
+                    'type': 'hybrid_combos',
+                    'description': 'Сочетание атак и способностей',
+                    'complexity': 'high',
+                    'reward': 'maximum_damage_bonus',
+                    'accessibility': 'advanced_players'
+                },
+                {
+                    'type': 'environmental_combos',
+                    'description': 'Использование окружения',
+                    'complexity': 'variable',
+                    'reward': 'situational_bonuses',
+                    'accessibility': 'context_aware'
+                }
+            ]
+        },
+        'synergy_mechanisms': {
+            'skill_synergy_types': [
+                {
+                    'type': 'damage_synergy',
+                    'description': 'Увеличение урона при комбинации навыков',
+                    'examples': ['fire + ice = freeze + shatter', 'poison + bleed = hemorrhaging'],
+                    'mechanics': 'damage_type_multipliers'
+                },
+                {
+                    'type': 'status_synergy',
+                    'description': 'Усиление статусных эффектов',
+                    'examples': ['stun + bleed = critical_bleed', 'slow + root = paralysis'],
+                    'mechanics': 'status_effect_amplification'
+                },
+                {
+                    'type': 'resource_synergy',
+                    'description': 'Оптимизация расхода ресурсов',
+                    'examples': ['mana_sharing', 'energy_regeneration_bonus'],
+                    'mechanics': 'resource_efficiency_bonus'
+                },
+                {
+                    'type': 'crowd_control_synergy',
+                    'description': 'Комбинации контроля толпы',
+                    'examples': ['stun + knockback = combo_finisher'],
+                    'mechanics': 'cc_effect_combination'
+                }
+            ],
+            'class_synergies': [
+                {
+                    'classes': ['Warrior', 'Paladin'],
+                    'synergy_type': 'tank_damage',
+                    'mechanics': 'threat_generation + burst_damage',
+                    'optimal_combos': 'taunt + charge + execute'
+                },
+                {
+                    'classes': ['Mage', 'Warlock'],
+                    'synergy_type': 'spell_power',
+                    'mechanics': 'magic_amplification + dot_stacking',
+                    'optimal_combos': 'frostbolt + ignite + pyroblast'
+                },
+                {
+                    'classes': ['Rogue', 'Assassin'],
+                    'synergy_type': 'stealth_burst',
+                    'mechanics': 'stealth + backstab + vanish',
+                    'optimal_combos': 'sap + ambush + eviscerate'
+                },
+                {
+                    'classes': ['Ranger', 'Hunter'],
+                    'synergy_type': 'ranged_control',
+                    'mechanics': 'trap + mark + volley',
+                    'optimal_combos': 'frost_trap + hunter_mark + aimed_shot'
+                }
+            ]
+        },
+        'combo_balance_analysis': {
+            'power_progression': {
+                'combo_scaling': [
+                    {
+                        'combo_length': '2 hits',
+                        'damage_multiplier': '1.2x',
+                        'difficulty': 'easy'
+                    },
+                    {
+                        'combo_length': '3 hits',
+                        'damage_multiplier': '1.5x',
+                        'difficulty': 'medium'
+                    },
+                    {
+                        'combo_length': '4+ hits',
+                        'damage_multiplier': '2.0x+',
+                        'difficulty': 'hard'
+                    }
+                ],
+                'skill_level_scaling': {
+                    'beginner_combos': 'simple_2-3_hit_chains',
+                    'intermediate_combos': 'skill_integrated_chains',
+                    'advanced_combos': 'multi_skill_synergies'
+                }
+            },
+            'balance_considerations': [
+                {
+                    'factor': 'execution_difficulty',
+                    'balancing_method': 'timing_windows + visual_feedback',
+                    'target_audience': 'casual_to_hardcore'
+                },
+                {
+                    'factor': 'resource_cost',
+                    'balancing_method': 'energy_mana_stamina_costs',
+                    'target_audience': 'resource_management_focus'
+                },
+                {
+                    'factor': 'cooldown_management',
+                    'balancing_method': 'skill_cooldown_reduction',
+                    'target_audience': 'strategic_players'
+                },
+                {
+                    'factor': 'counterplay_opportunities',
+                    'balancing_method': 'interruption_mechanics',
+                    'target_audience': 'defensive_players'
+                }
+            ]
+        },
+        'technical_implementation': {
+            'combo_detection_engine': {
+                'input_tracking': [
+                    'button_press_sequences',
+                    'timing_windows',
+                    'skill_activation_order',
+                    'combo_state_management'
+                ],
+                'state_machine': {
+                    'combo_states': ['idle', 'building', 'executing', 'completed', 'interrupted'],
+                    'transitions': 'input_based_transitions',
+                    'validation': 'timing_and_sequence_checks'
+                }
+            },
+            'synergy_calculation': {
+                'real_time_processing': [
+                    'skill_combination_analysis',
+                    'effect_multiplication',
+                    'bonus_application',
+                    'visual_feedback_generation'
+                ],
+                'performance_requirements': {
+                    'processing_time': '<10ms per combo_check',
+                    'memory_usage': 'minimal_state_tracking',
+                    'scalability': 'supports_1000+_simultaneous_combos'
+                }
+            },
+            'visual_audio_feedback': [
+                {
+                    'feedback_type': 'combo_indicators',
+                    'implementation': 'ui_overlays + particle_effects',
+                    'purpose': 'execution_guidance'
+                },
+                {
+                    'feedback_type': 'synergy_highlights',
+                    'implementation': 'color_coding + glow_effects',
+                    'purpose': 'optimal_path_indication'
+                },
+                {
+                    'feedback_type': 'success_failure_feedback',
+                    'implementation': 'screen_shake + sound_effects',
+                    'purpose': 'immediate_response'
+                }
+            ]
+        },
+        'player_experience_design': {
+            'learning_curve': [
+                {
+                    'stage': 'introduction',
+                    'combos': 'basic_attack_chains',
+                    'difficulty': 'very_easy',
+                    'teaching_method': 'tutorials + visual_cues'
+                },
+                {
+                    'stage': 'intermediate',
+                    'combos': 'simple_skill_combos',
+                    'difficulty': 'easy',
+                    'teaching_method': 'combo_suggestions + practice_mode'
+                },
+                {
+                    'stage': 'advanced',
+                    'combos': 'complex_synergies',
+                    'difficulty': 'medium_hard',
+                    'teaching_method': 'advanced_training + community_resources'
+                },
+                {
+                    'stage': 'mastery',
+                    'combos': 'custom_combos',
+                    'difficulty': 'very_hard',
+                    'teaching_method': 'player_discovery + meta_discussion'
+                }
+            ],
+            'accessibility_features': [
+                {
+                    'feature': 'combo_assistance',
+                    'description': 'автоматические подсказки для новичков',
+                    'toggleable': True,
+                    'progression': 'decreases_with_skill_level'
+                },
+                {
+                    'feature': 'timing_assistance',
+                    'description': 'расширенные окна ввода',
+                    'toggleable': True,
+                    'balancing': 'reduced_damage_multipliers'
+                },
+                {
+                    'feature': 'visual_indicators',
+                    'description': 'яркие подсказки комбо',
+                    'toggleable': True,
+                    'accessibility': 'color_blind_friendly_options'
+                }
+            ]
+        },
+        'balancing_recommendations': {
+            'combo_power_balance': [
+                {
+                    'recommendation': 'progressive_difficulty',
+                    'rationale': 'длинные комбо должны быть сложнее',
+                    'implementation': 'increasing_timing_precision_requirements'
+                },
+                {
+                    'recommendation': 'resource_cost_scaling',
+                    'rationale': 'мощные комбо должны стоить ресурсов',
+                    'implementation': 'exponential_cost_increase'
+                },
+                {
+                    'recommendation': 'counterplay_mechanics',
+                    'rationale': 'комбо должны иметь уязвимости',
+                    'implementation': 'interruption_windows + defensive_options'
+                }
+            ],
+            'synergy_balance': [
+                {
+                    'recommendation': 'synergy_tiers',
+                    'rationale': 'разные уровни синергии для баланса',
+                    'implementation': 'tiered_bonus_systems'
+                },
+                {
+                    'recommendation': 'cooldown_penalties',
+                    'rationale': 'предотвращение спама синергии',
+                    'implementation': 'shared_cooldowns + synergy_cooldowns'
+                },
+                {
+                    'recommendation': 'situational_synergies',
+                    'rationale': 'контекстуальная ценность комбо',
+                    'implementation': 'enemy_type + environment_modifiers'
+                }
+            ]
+        },
+        'testing_strategy': {
+            'combo_testing_scenarios': [
+                {
+                    'scenario': 'basic_combo_execution',
+                    'objective': 'проверка базовой функциональности',
+                    'metrics': 'success_rate + timing_accuracy'
+                },
+                {
+                    'scenario': 'synergy_combination_testing',
+                    'objective': 'валидация эффектов синергии',
+                    'metrics': 'damage_multipliers + effect_stacking'
+                },
+                {
+                    'scenario': 'stress_testing',
+                    'objective': 'производительность под нагрузкой',
+                    'metrics': 'response_time + memory_usage'
+                },
+                {
+                    'scenario': 'balance_testing',
+                    'objective': 'проверка баланса мощности',
+                    'metrics': 'damage_output + resource_efficiency'
+                }
+            ],
+            'player_testing_phases': [
+                {
+                    'phase': 'alpha_testing',
+                    'focus': 'basic_combo_functionality',
+                    'participants': 'internal_team',
+                    'duration': '2_weeks'
+                },
+                {
+                    'phase': 'beta_testing',
+                    'focus': 'combo_balance_and_synergies',
+                    'participants': 'closed_beta_group',
+                    'duration': '4_weeks'
+                },
+                {
+                    'phase': 'live_testing',
+                    'focus': 'real_world_balance_adjustments',
+                    'participants': 'live_players',
+                    'duration': 'ongoing'
+                }
+            ]
+        },
+        'implementation_roadmap': {
+            'phase_1_basic_combos': [
+                'Базовая система комбо',
+                'Простые последовательности атак',
+                'Основные визуальные эффекты',
+                'Базовое тестирование'
+            ],
+            'phase_2_synergy_system': [
+                'Система синергии навыков',
+                'Базовые комбинации эффектов',
+                'Промежуточное тестирование',
+                'Баланс-корректировки'
+            ],
+            'phase_3_advanced_features': [
+                'Сложные комбо-последовательности',
+                'Расширенные синергии',
+                'Специализированные комбо',
+                'Расширенное тестирование'
+            ],
+            'phase_4_optimization': [
+                'Оптимизация производительности',
+                'Финальные баланс-корректировки',
+                'Системное тестирование',
+                'Запуск в продакшн'
+            ]
+        },
+        'success_metrics': {
+            'player_engagement': [
+                {
+                    'metric': 'combo_usage_rate',
+                    'target': '>70% of combat_time',
+                    'measurement': 'telemetry_data'
+                },
+                {
+                    'metric': 'combo_completion_rate',
+                    'target': '>80% for_basic_combos',
+                    'measurement': 'success_tracking'
+                },
+                {
+                    'metric': 'advanced_combo_discovery',
+                    'target': '>50% of_players',
+                    'measurement': 'combo_unlock_tracking'
+                }
+            ],
+            'system_performance': [
+                {
+                    'metric': 'combo_processing_latency',
+                    'target': '<15ms average',
+                    'measurement': 'performance_monitoring'
+                },
+                {
+                    'metric': 'memory_usage_efficiency',
+                    'target': '<5MB per_active_combo_system',
+                    'measurement': 'resource_monitoring'
+                },
+                {
+                    'metric': 'system_stability',
+                    'target': '>99.9% uptime',
+                    'measurement': 'error_rate_tracking'
+                }
+            ]
+        },
+        'conclusion': {
+            'key_insights': [
+                'Система комбо является критически важной для глубины боевой системы',
+                'Синергия навыков создает уникальные игровые возможности',
+                'Баланс между мощностью и сложностью требует тщательной настройки',
+                'Визуальная и звуковая обратная связь жизненно необходима'
+            ],
+            'implementation_priority': 'Высокий - система комбо должна быть реализована в первой итерации боевой системы',
+            'future_considerations': [
+                'Модульная архитектура для легкого добавления новых комбо',
+                'ИИ-ассистент для предложения оптимальных комбинаций',
+                'Сообщество-генерируемые комбо-паки',
+                'Кросс-платформенная синхронизация комбо-прогресса'
+            ]
+        }
+    }
+
+    return document
+
+def main():
+    """Generate comprehensive combat combos and synergies analysis"""
+    document = create_combat_combos_analysis()
+
+    output_dir = Path('knowledge/analysis')
+    output_file = output_dir / 'combat-combos-synergies-brief.yaml'
+
+    with open(output_file, 'w', encoding='utf-8') as f:
+        yaml.dump(document, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+
+    print(f"Generated comprehensive combat combos and synergies analysis: {output_file}")
+
+if __name__ == '__main__':
+    main()
