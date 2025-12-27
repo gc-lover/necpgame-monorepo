@@ -395,6 +395,7 @@ type ErrorDetails struct{}
 type ErrorHeaders struct {
 	RetryAfter OptInt
 	Response   Error
+	Etag       OptString // ETag header for optimistic locking
 }
 
 // GetRetryAfter returns the value of RetryAfter.
@@ -405,6 +406,16 @@ func (s *ErrorHeaders) GetRetryAfter() OptInt {
 // GetResponse returns the value of Response.
 func (s *ErrorHeaders) GetResponse() Error {
 	return s.Response
+}
+
+// GetEtag returns the value of Etag.
+func (s *ErrorHeaders) GetEtag() OptString {
+	return s.Etag
+}
+
+// SetEtag sets the value of Etag.
+func (s *ErrorHeaders) SetEtag(val OptString) {
+	s.Etag = val
 }
 
 // SetRetryAfter sets the value of RetryAfter.
