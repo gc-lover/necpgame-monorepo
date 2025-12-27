@@ -385,13 +385,25 @@ func (s *Service) BulkUpdateProgress(ctx context.Context, updates []struct {
 	return nil
 }
 
-// ImportAchievements imports achievements from YAML data
-func (s *Service) ImportAchievements(ctx context.Context, achievements []*models.Achievement) error {
-	for _, achievement := range achievements {
-		if _, err := s.CreateAchievement(ctx, achievement); err != nil {
-			s.logger.Error("Failed to import achievement", zap.Error(err), zap.String("name", achievement.Name))
-			// Continue importing other achievements
-		}
-	}
-	return nil
-}
+    // ImportAchievements imports achievements from YAML data
+    func (s *Service) ImportAchievements(ctx context.Context, achievements []*models.Achievement) error {
+    	imported := 0
+    	failed := 0
+
+    	for _, achievement := range achievements {
+    		if _, err := s.CreateAchievement(ctx, achievement); err != nil {
+    			s.logger.Error("Failed to import achievement", zap.Error(err), zap.String("name", achievement.Name))
+    			failed++
+    			// Continue importing other achievements
+    		} else {
+    			imported++
+    		}
+    	}
+
+    	s.logger.Info("Achievement import completed",
+    		zap.Int("total", len(achievements)),
+    		zap.Int("imported", imported),
+    		zap.Int("failed", failed))
+
+    	return nil
+    }

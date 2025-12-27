@@ -89,12 +89,26 @@ type AchievementEvent struct {
 	Timestamp time.Time              `json:"timestamp"`
 }
 
-// AchievementMilestone represents major milestones in the achievement system
-type AchievementMilestone struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Threshold   int       `json:"threshold"`   // Number of achievements required
-	Rewards     []Reward  `json:"rewards"`
-	IsActive    bool      `json:"is_active"`
-}
+    // AchievementMilestone represents major milestones in the achievement system
+    type AchievementMilestone struct {
+    	ID          uuid.UUID `json:"id"`
+    	Name        string    `json:"name"`
+    	Description string    `json:"description"`
+    	Threshold   int       `json:"threshold"`   // Number of achievements required
+    	Rewards     []Reward  `json:"rewards"`
+    	IsActive    bool      `json:"is_active"`
+    }
+
+    // AchievementImportRequest represents a request to import achievements
+    type AchievementImportRequest struct {
+    	Achievements []*Achievement `json:"achievements"`
+    	DryRun       bool           `json:"dry_run,omitempty"` // If true, validate without importing
+    }
+
+    // AchievementImportResponse represents the response from an achievement import
+    type AchievementImportResponse struct {
+    	Total     int `json:"total"`
+    	Imported  int `json:"imported"`
+    	Failed    int `json:"failed"`
+    	Validated bool `json:"validated,omitempty"`
+    }

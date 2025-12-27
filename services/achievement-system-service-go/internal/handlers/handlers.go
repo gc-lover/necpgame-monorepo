@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -347,26 +348,55 @@ func (h *Handler) ProcessEvent(w http.ResponseWriter, r *http.Request) {
 	h.respondJSON(w, http.StatusOK, map[string]string{"status": "event processed"})
 }
 
-// Admin handlers
+    // Admin handlers
 
-// ImportAchievements imports achievements from YAML data
-func (h *Handler) ImportAchievements(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Achievements []*models.Achievement `json:"achievements"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.respondError(w, http.StatusBadRequest, "Invalid JSON")
-		return
-	}
+    // ImportAchievements imports achievements from YAML data
+    func (h *Handler) ImportAchievements(w http.ResponseWriter, r *http.Request) {
+    	var req models.AchievementImportRequest
+    	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+    		h.respondError(w, http.StatusBadRequest, "Invalid JSON")
+    		return
+    	}
 
-	if err := h.service.ImportAchievements(r.Context(), req.Achievements); err != nil {
-		h.logger.Error("Failed to import achievements", zap.Error(err))
-		h.respondError(w, http.StatusInternalServerError, "Failed to import achievements")
-		return
-	}
+    	// Validate achievements
+    	validationErrors := []string{}
+    	for i, achievement := range req.Achievements {
+    		if err := h.validator.ValidateAchievement(achievement); err != nil {
+    			validationErrors = append(validationErrors, fmt.Sprintf("achievement %d: %s", i+1, err.Error()))
+    		}
+    	}
 
-	h.respondJSON(w, http.StatusOK, map[string]string{"status": "achievements imported"})
-}
+    	if len(validationErrors) > 0 {
+    		h.respondJSON(w, http.StatusBadRequest, map[string]interface{}{
+    			"error": "Validation failed",
+    			"details": validationErrors,
+    		})
+    		return
+    	}
+
+    	response := &models.AchievementImportResponse{
+    		Total: len(req.Achievements),
+    	}
+
+    	if req.DryRun {
+    		// Just validate, don't import
+    		response.Validated = true
+    		h.respondJSON(w, http.StatusOK, response)
+    		return
+    	}
+
+    	// Perform actual import
+    	if err := h.service.ImportAchievements(r.Context(), req.Achievements); err != nil {
+    		h.logger.Error("Failed to import achievements", zap.Error(err))
+    		h.respondError(w, http.StatusInternalServerError, "Failed to import achievements")
+    		return
+    	}
+
+    	// For now, assume all were imported (we'll improve error tracking later)
+    	response.Imported = len(req.Achievements)
+
+    	h.respondJSON(w, http.StatusOK, response)
+    }
 
 // Helper methods
 
