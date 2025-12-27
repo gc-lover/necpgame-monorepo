@@ -23,23 +23,27 @@ def load_yaml_file(file_path):
 def process_quest_data(quest_data, file_path):
     """Process individual quest data into database format."""
     try:
+        # Extract data from quest_definition section
+        quest_def = quest_data.get('quest_definition', {})
+        metadata = quest_data.get('metadata', {})
+
         quest = {
-            'quest_id': quest_data.get('id', ''),
-            'title': quest_data.get('title', ''),
-            'description': quest_data.get('description', ''),
-            'type': quest_data.get('quest_type', 'side'),
-            'level_min': quest_data.get('level_min', 1),
-            'level_max': quest_data.get('level_max', 50),
-            'rewards': json.dumps(quest_data.get('rewards', {}), ensure_ascii=False),
-            'objectives': json.dumps(quest_data.get('objectives', []), ensure_ascii=False),
-            'location': quest_data.get('location', ''),
-            'npc_start': quest_data.get('npc_start', ''),
-            'npc_end': quest_data.get('npc_end', ''),
-            'prerequisites': json.dumps(quest_data.get('prerequisites', []), ensure_ascii=False),
-            'follow_up_quests': json.dumps(quest_data.get('follow_up_quests', []), ensure_ascii=False),
-            'time_limit': quest_data.get('time_limit', None),
-            'is_repeatable': quest_data.get('is_repeatable', False),
-            'faction': quest_data.get('faction', ''),
+            'quest_id': metadata.get('id', ''),
+            'title': quest_def.get('title', metadata.get('title', '')),
+            'description': quest_def.get('description', ''),
+            'type': quest_def.get('quest_type', 'side'),
+            'level_min': quest_def.get('level_min', 1),
+            'level_max': quest_def.get('level_max', 50),
+            'rewards': json.dumps(quest_def.get('rewards', {}), ensure_ascii=False),
+            'objectives': json.dumps(quest_def.get('objectives', []), ensure_ascii=False),
+            'location': quest_def.get('location', 'sao_paulo'),
+            'npc_start': quest_def.get('npc_start', ''),
+            'npc_end': quest_def.get('npc_end', ''),
+            'prerequisites': json.dumps(quest_def.get('requirements', {}).get('required_quests', []), ensure_ascii=False),
+            'follow_up_quests': json.dumps(quest_def.get('follow_up_quests', []), ensure_ascii=False),
+            'time_limit': quest_def.get('time_limit', None),
+            'is_repeatable': quest_def.get('is_repeatable', False),
+            'faction': quest_def.get('faction', ''),
             'created_at': datetime.now().isoformat(),
             'updated_at': datetime.now().isoformat(),
             'source_file': file_path
