@@ -19,7 +19,6 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/gc-lover/necpgame-monorepo/services/combat-damage-service-go/pkg/api"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-damage-service-go/server"
 )
 

@@ -3,10 +3,8 @@ package server
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 
 	"github.com/gc-lover/necpgame-monorepo/services/combat-damage-service-go/pkg/api"
 )
