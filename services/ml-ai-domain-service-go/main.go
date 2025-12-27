@@ -41,13 +41,13 @@ type Service struct {
 
 // MLModel represents a machine learning model
 type MLModel struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Type        string    `json:"type"`
-	Version     string    `json:"version"`
-	Status      string    `json:"status"`
-	Accuracy    float64   `json:"accuracy"`
-	LastUpdated time.Time `json:"last_updated"`
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	Type        string                 `json:"type"`
+	Version     string                 `json:"version"`
+	Status      string                 `json:"status"`
+	Accuracy    float64                `json:"accuracy"`
+	LastUpdated time.Time              `json:"last_updated"`
 	Metadata    map[string]interface{} `json:"metadata"`
 }
 
@@ -86,9 +86,9 @@ func (s *Service) initializeSampleModels() {
 		Accuracy:    0.87,
 		LastUpdated: time.Now(),
 		Metadata: map[string]interface{}{
-			"features":       []string{"playtime", "purchases", "social_activity", "combat_stats"},
-			"classes":        []string{"casual", "regular", "hardcore", "whale"},
-			"training_size":  1000000,
+			"features":        []string{"playtime", "purchases", "social_activity", "combat_stats"},
+			"classes":         []string{"casual", "regular", "hardcore", "whale"},
+			"training_size":   1000000,
 			"gpu_accelerated": true,
 		},
 	}
@@ -102,10 +102,10 @@ func (s *Service) initializeSampleModels() {
 		Accuracy:    0.92,
 		LastUpdated: time.Now(),
 		Metadata: map[string]interface{}{
-			"algorithm":      "collaborative_filtering",
-			"features":       []string{"purchase_history", "item_categories", "player_level", "faction"},
-			"items_count":    50000,
-			"users_count":    500000,
+			"algorithm":   "collaborative_filtering",
+			"features":    []string{"purchase_history", "item_categories", "player_level", "faction"},
+			"items_count": 50000,
+			"users_count": 500000,
 		},
 	}
 
@@ -118,9 +118,9 @@ func (s *Service) initializeSampleModels() {
 		Accuracy:    0.95,
 		LastUpdated: time.Now(),
 		Metadata: map[string]interface{}{
-			"algorithm":      "isolation_forest",
-			"contamination":  0.01,
-			"features":       []string{"transaction_amount", "frequency", "location", "time_pattern"},
+			"algorithm":           "isolation_forest",
+			"contamination":       0.01,
+			"features":            []string{"transaction_amount", "frequency", "location", "time_pattern"},
 			"false_positive_rate": 0.02,
 		},
 	}
@@ -268,10 +268,10 @@ func (h *MLAIHandler) GetBatchHealth(ctx context.Context) (*api.BatchHealthRespo
 	h.service.mu.RUnlock()
 
 	return &api.BatchHealthResponse{
-		Status:       api.NewOptString("healthy"),
-		Service:      api.NewOptString("ml-ai-domain"),
-		ModelsCount:  api.NewOptInt(modelCount),
-		Timestamp:    api.NewOptDateTime(time.Now()),
+		Status:      api.NewOptString("healthy"),
+		Service:     api.NewOptString("ml-ai-domain"),
+		ModelsCount: api.NewOptInt(modelCount),
+		Timestamp:   api.NewOptDateTime(time.Now()),
 	}, nil
 }
 
@@ -380,12 +380,12 @@ func (h *MLAIHandler) GetPredictionAnalytics(ctx context.Context, params api.Get
 
 	// Generate mock prediction analytics
 	return &api.PredictionAnalyticsResponse{
-		TimeRange:           api.NewOptString(params.TimeRange),
-		TotalPredictions:    api.NewOptInt(125000),
-		AverageLatency:      api.NewOptFloat64(35.2),
-		SuccessRate:         api.NewOptFloat64(0.987),
-		MostUsedModel:       api.NewOptString("player-behavior-predictor"),
-		Timestamp:           api.NewOptDateTime(time.Now()),
+		TimeRange:        api.NewOptString(params.TimeRange),
+		TotalPredictions: api.NewOptInt(125000),
+		AverageLatency:   api.NewOptFloat64(35.2),
+		SuccessRate:      api.NewOptFloat64(0.987),
+		MostUsedModel:    api.NewOptString("player-behavior-predictor"),
+		Timestamp:        api.NewOptDateTime(time.Now()),
 	}, nil
 }
 
@@ -402,7 +402,7 @@ func (h *MLAIHandler) GetTrainingStatus(ctx context.Context, params api.GetTrain
 	} else if status == "completed" {
 		p := 1.0
 		progress = &p
-		a := rand.Float64() * 0.2 + 0.8
+		a := rand.Float64()*0.2 + 0.8
 		accuracy = &a
 	}
 
