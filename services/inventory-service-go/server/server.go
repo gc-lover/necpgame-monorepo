@@ -70,48 +70,69 @@ func (s *Server) CreateExample(ctx context.Context, req *oas.CreateExampleReques
 		return &oas.CreateExampleInternalServerError{}, fmt.Errorf("failed to create example: %w", err)
 	}
 
-	// Return response
-	return &oas.CreateExampleResponse{
-		Id:          exampleID,
+	// Create the response with proper structure
+	example := oas.Example{
+		ID:          exampleID,
 		Name:        req.Name,
-		Description: req.Description,
+		Description: oas.OptString{Value: req.Description, Set: true},
 		CreatedAt:   time.Now(),
-	}, nil
+		Status:      oas.ExampleStatusActive, // Assuming default status
+		IsActive:    true,
+	}
+
+	response := oas.ExampleResponse{
+		Example: example,
+	}
+
+	headers := oas.ExampleCreatedHeaders{
+		Response: response,
+		Etag:     oas.OptString{Value: fmt.Sprintf("\"%s\"", exampleID), Set: true},
+	}
+
+	return &headers, nil
 }
 
 // GetExample - get example by ID
 func (s *Server) GetExample(ctx context.Context, params oas.GetExampleParams) (oas.GetExampleRes, error) {
-	// Get pre-allocated response object from pool
-	resp := s.examplePool.Get().(*oas.ExampleResponse)
-	defer s.examplePool.Put(resp)
-
+	var id uuid.UUID
 	var name, description string
 	var createdAt time.Time
+	var isActive bool
 
 	err := s.db.QueryRow(ctx, `
-		SELECT name, description, created_at
+		SELECT id, name, description, created_at, is_active
 		FROM inventory.examples
-		WHERE id = $1`, params.ExampleId).Scan(&name, &description, &createdAt)
+		WHERE id = $1`, params.ExampleID).Scan(&id, &name, &description, &createdAt, &isActive)
 
 	if err != nil {
 		return &oas.GetExampleNotFound{}, nil
 	}
 
-	resp.Id = params.ExampleId
-	resp.Name = name
-	resp.Description = oas.OptString{
-		Value: description,
-		Set:   true,
+	example := oas.Example{
+		ID:          id,
+		Name:        name,
+		Description: oas.OptString{Value: description, Set: true},
+		CreatedAt:   createdAt,
+		Status:      oas.ExampleStatusActive,
+		IsActive:    isActive,
 	}
-	resp.CreatedAt = createdAt
 
-	return resp, nil
+	response := oas.ExampleResponse{
+		Example: example,
+	}
+
+	headers := oas.ExampleRetrievedHeaders{
+		Response: response,
+		Etag:     oas.OptString{Value: fmt.Sprintf("\"%s\"", id), Set: true},
+	}
+
+	return &headers, nil
 }
 
 // ListExamples - list all examples
 func (s *Server) ListExamples(ctx context.Context, params oas.ListExamplesParams) (oas.ListExamplesRes, error) {
 	rows, err := s.db.Query(ctx, `
-		SELECT id, name, description, created_at
+		SELECT id, name, description, created_at, is_active
 		FROM inventory.examples
 		ORDER BY created_at DESC`)
 
@@ -126,16 +147,23 @@ func (s *Server) ListExamples(ctx context.Context, params oas.ListExamplesParams
 		var id uuid.UUID
 		var name, description string
 		var createdAt time.Time
+		var isActive bool
 
-		if err := rows.Scan(&id, &name, &description, &createdAt); err != nil {
+		if err := rows.Scan(&id, &name, &description, &createdAt, &isActive); err != nil {
 			continue
 		}
 
-		examples = append(examples, oas.ExampleResponse{
-			Id:          id,
+		example := oas.Example{
+			ID:          id,
 			Name:        name,
 			Description: oas.OptString{Value: description, Set: true},
 			CreatedAt:   createdAt,
+			Status:      oas.ExampleStatusActive,
+			IsActive:    isActive,
+		}
+
+		examples = append(examples, oas.ExampleResponse{
+			Example: example,
 		})
 	}
 
@@ -157,21 +185,25 @@ func (s *Server) UpdateExample(ctx context.Context, req *oas.UpdateExampleReques
 		UPDATE inventory.examples
 		SET name = $1, description = $2, updated_at = $3
 		WHERE id = $4`,
-		req.Name, req.Description, time.Now(), params.ExampleId)
+		req.Name, req.Description, time.Now(), params.ExampleID)
 
 	if err != nil {
 		s.logger.Error("Failed to update example", zap.Error(err))
 		return &oas.UpdateExampleInternalServerError{}, fmt.Errorf("failed to update example: %w", err)
 	}
 
-	return &oas.UpdateExampleResponse{Updated: true}, nil
+	headers := oas.ExampleUpdatedHeaders{
+		Etag: oas.OptString{Value: fmt.Sprintf("\"%s\"", params.ExampleID), Set: true},
+	}
+
+	return &headers, nil
 }
 
 // DeleteExample - delete example by ID
 func (s *Server) DeleteExample(ctx context.Context, params oas.DeleteExampleParams) (oas.DeleteExampleRes, error) {
 	_, err := s.db.Exec(ctx, `
 		DELETE FROM inventory.examples
-		WHERE id = $1`, params.ExampleId)
+		WHERE id = $1`, params.ExampleID)
 
 	if err != nil {
 		s.logger.Error("Failed to delete example", zap.Error(err))
@@ -183,20 +215,25 @@ func (s *Server) DeleteExample(ctx context.Context, params oas.DeleteExamplePara
 
 // ExampleDomainHealthCheck - health check
 func (s *Server) ExampleDomainHealthCheck(ctx context.Context, params oas.ExampleDomainHealthCheckParams) (oas.ExampleDomainHealthCheckRes, error) {
-	// Get pre-allocated response object from pool
-	resp := s.healthPool.Get().(*oas.HealthResponse)
-	defer s.healthPool.Put(resp)
-
 	// Check database connectivity
 	if err := s.db.Ping(ctx); err != nil {
-		resp.Status = oas.HealthResponseStatusUnhealthy
-		resp.Message = oas.OptString{Value: "Database connection failed", Set: true}
-		return resp, nil
+		response := oas.HealthResponse{
+			Status:  oas.HealthResponseStatusUnhealthy,
+			Message: oas.OptString{Value: "Database connection failed", Set: true},
+		}
+		return &response, nil
 	}
 
-	resp.Status = oas.HealthResponseStatusHealthy
-	resp.Timestamp = time.Now()
-	return resp, nil
+	response := oas.HealthResponse{
+		Status:    oas.HealthResponseStatusHealthy,
+		Timestamp: time.Now(),
+	}
+
+	headers := oas.HealthResponseHeaders{
+		Response: response,
+	}
+
+	return &headers, nil
 }
 
 // ExampleDomainBatchHealthCheck - batch health check

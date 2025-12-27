@@ -42,7 +42,7 @@ func encodeCreateExampleResponse(response CreateExampleRes, w http.ResponseWrite
 					Explode: false,
 				}
 				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.ETag.Get(); ok {
+					if val, ok := response.Etag.Get(); ok {
 						return e.EncodeValue(conv.StringToString(val))
 					}
 					return nil
@@ -399,7 +399,7 @@ func encodeExampleDomainHealthCheckResponse(response ExampleDomainHealthCheckRes
 					Explode: false,
 				}
 				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.ETag.Get(); ok {
+					if val, ok := response.Etag.Get(); ok {
 						return e.EncodeValue(conv.StringToString(val))
 					}
 					return nil
@@ -638,7 +638,7 @@ func encodeGetExampleResponse(response GetExampleRes, w http.ResponseWriter, spa
 					Explode: false,
 				}
 				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.ETag.Get(); ok {
+					if val, ok := response.Etag.Get(); ok {
 						return e.EncodeValue(conv.StringToString(val))
 					}
 					return nil
@@ -714,7 +714,7 @@ func encodeGetExampleResponse(response GetExampleRes, w http.ResponseWriter, spa
 					Explode: false,
 				}
 				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.ETag.Get(); ok {
+					if val, ok := response.Etag.Get(); ok {
 						return e.EncodeValue(conv.StringToString(val))
 					}
 					return nil
@@ -1013,7 +1013,7 @@ func encodeUpdateExampleResponse(response UpdateExampleRes, w http.ResponseWrite
 					Explode: false,
 				}
 				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.ETag.Get(); ok {
+					if val, ok := response.Etag.Get(); ok {
 						return e.EncodeValue(conv.StringToString(val))
 					}
 					return nil
@@ -1101,7 +1101,7 @@ func encodeUpdateExampleResponse(response UpdateExampleRes, w http.ResponseWrite
 					Explode: false,
 				}
 				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.ETag.Get(); ok {
+					if val, ok := response.Etag.Get(); ok {
 						return e.EncodeValue(conv.StringToString(val))
 					}
 					return nil
@@ -1133,7 +1133,7 @@ func encodeUpdateExampleResponse(response UpdateExampleRes, w http.ResponseWrite
 					Explode: false,
 				}
 				if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
-					if val, ok := response.ETag.Get(); ok {
+					if val, ok := response.Etag.Get(); ok {
 						return e.EncodeValue(conv.StringToString(val))
 					}
 					return nil

@@ -553,7 +553,7 @@ func (s *Example) SetPriority(val OptInt) {
 // ExampleCreatedHeaders wraps ExampleResponse with response headers.
 type ExampleCreatedHeaders struct {
 	CacheControl OptString
-	ETag         OptString
+	Etag         OptString
 	Location     OptString
 	Response     ExampleResponse
 }
@@ -563,9 +563,9 @@ func (s *ExampleCreatedHeaders) GetCacheControl() OptString {
 	return s.CacheControl
 }
 
-// GetETag returns the value of ETag.
-func (s *ExampleCreatedHeaders) GetETag() OptString {
-	return s.ETag
+// GetEtag returns the value of Etag.
+func (s *ExampleCreatedHeaders) GetEtag() OptString {
+	return s.Etag
 }
 
 // GetLocation returns the value of Location.
@@ -583,9 +583,9 @@ func (s *ExampleCreatedHeaders) SetCacheControl(val OptString) {
 	s.CacheControl = val
 }
 
-// SetETag sets the value of ETag.
-func (s *ExampleCreatedHeaders) SetETag(val OptString) {
-	s.ETag = val
+// SetEtag sets the value of ETag.
+func (s *ExampleCreatedHeaders) SetEtag(val OptString) {
+	s.Etag = val
 }
 
 // SetLocation sets the value of Location.
@@ -995,7 +995,7 @@ func (s *ExampleResponse) SetExample(val Example) {
 // ExampleRetrievedHeaders wraps ExampleResponse with response headers.
 type ExampleRetrievedHeaders struct {
 	CacheControl    OptString
-	ETag            OptString
+	Etag            OptString
 	LastModified    OptDateTime
 	XProcessingTime OptInt
 	Response        ExampleResponse
@@ -1006,9 +1006,9 @@ func (s *ExampleRetrievedHeaders) GetCacheControl() OptString {
 	return s.CacheControl
 }
 
-// GetETag returns the value of ETag.
-func (s *ExampleRetrievedHeaders) GetETag() OptString {
-	return s.ETag
+// GetEtag returns the value of ETag.
+func (s *ExampleRetrievedHeaders) GetEtag() OptString {
+	return s.Etag
 }
 
 // GetLastModified returns the value of LastModified.
@@ -1031,9 +1031,9 @@ func (s *ExampleRetrievedHeaders) SetCacheControl(val OptString) {
 	s.CacheControl = val
 }
 
-// SetETag sets the value of ETag.
-func (s *ExampleRetrievedHeaders) SetETag(val OptString) {
-	s.ETag = val
+// SetEtag sets the value of ETag.
+func (s *ExampleRetrievedHeaders) SetEtag(val OptString) {
+	s.Etag = val
 }
 
 // SetLastModified sets the value of LastModified.
@@ -1111,15 +1111,15 @@ func (s *ExampleStatus) UnmarshalText(data []byte) error {
 
 // ExampleUpdatedHeaders wraps ExampleResponse with response headers.
 type ExampleUpdatedHeaders struct {
-	ETag            OptString
+	Etag            OptString
 	LastModified    OptDateTime
 	XProcessingTime OptInt
 	Response        ExampleResponse
 }
 
-// GetETag returns the value of ETag.
-func (s *ExampleUpdatedHeaders) GetETag() OptString {
-	return s.ETag
+// GetEtag returns the value of ETag.
+func (s *ExampleUpdatedHeaders) GetEtag() OptString {
+	return s.Etag
 }
 
 // GetLastModified returns the value of LastModified.
@@ -1137,9 +1137,9 @@ func (s *ExampleUpdatedHeaders) GetResponse() ExampleResponse {
 	return s.Response
 }
 
-// SetETag sets the value of ETag.
-func (s *ExampleUpdatedHeaders) SetETag(val OptString) {
-	s.ETag = val
+// SetEtag sets the value of ETag.
+func (s *ExampleUpdatedHeaders) SetEtag(val OptString) {
+	s.Etag = val
 }
 
 // SetLastModified sets the value of LastModified.
@@ -1170,7 +1170,7 @@ func (*GetExampleNotFound) getExampleRes() {}
 // GetExampleNotModified is response for GetExample operation.
 type GetExampleNotModified struct {
 	CacheControl OptString
-	ETag         OptString
+	Etag         OptString
 }
 
 // GetCacheControl returns the value of CacheControl.
@@ -1178,9 +1178,9 @@ func (s *GetExampleNotModified) GetCacheControl() OptString {
 	return s.CacheControl
 }
 
-// GetETag returns the value of ETag.
-func (s *GetExampleNotModified) GetETag() OptString {
-	return s.ETag
+// GetEtag returns the value of ETag.
+func (s *GetExampleNotModified) GetEtag() OptString {
+	return s.Etag
 }
 
 // SetCacheControl sets the value of CacheControl.
@@ -1188,9 +1188,9 @@ func (s *GetExampleNotModified) SetCacheControl(val OptString) {
 	s.CacheControl = val
 }
 
-// SetETag sets the value of ETag.
-func (s *GetExampleNotModified) SetETag(val OptString) {
-	s.ETag = val
+// SetEtag sets the value of ETag.
+func (s *GetExampleNotModified) SetEtag(val OptString) {
+	s.Etag = val
 }
 
 func (*GetExampleNotModified) getExampleRes() {}
@@ -1404,7 +1404,7 @@ func (*HealthResponse) exampleDomainHealthCheckRes() {}
 type HealthResponseHeaders struct {
 	CacheControl    OptString
 	ContentEncoding OptExampleDomainHealthCheckOKContentEncoding
-	ETag            OptString
+	Etag            OptString
 	Response        HealthResponse
 }
 
@@ -1418,9 +1418,9 @@ func (s *HealthResponseHeaders) GetContentEncoding() OptExampleDomainHealthCheck
 	return s.ContentEncoding
 }
 
-// GetETag returns the value of ETag.
-func (s *HealthResponseHeaders) GetETag() OptString {
-	return s.ETag
+// GetEtag returns the value of ETag.
+func (s *HealthResponseHeaders) GetEtag() OptString {
+	return s.Etag
 }
 
 // GetResponse returns the value of Response.
@@ -1438,9 +1438,9 @@ func (s *HealthResponseHeaders) SetContentEncoding(val OptExampleDomainHealthChe
 	s.ContentEncoding = val
 }
 
-// SetETag sets the value of ETag.
-func (s *HealthResponseHeaders) SetETag(val OptString) {
-	s.ETag = val
+// SetEtag sets the value of ETag.
+func (s *HealthResponseHeaders) SetEtag(val OptString) {
+	s.Etag = val
 }
 
 // SetResponse sets the value of Response.

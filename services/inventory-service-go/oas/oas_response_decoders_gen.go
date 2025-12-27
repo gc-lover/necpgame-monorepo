@@ -124,7 +124,7 @@ func decodeCreateExampleResponse(resp *http.Response) (res CreateExampleRes, _ e
 							}(); err != nil {
 								return err
 							}
-							wrapper.ETag.SetTo(wrapperDotETagVal)
+							wrapper.Etag.SetTo(wrapperDotETagVal)
 							return nil
 						}); err != nil {
 							return err
@@ -1075,7 +1075,7 @@ func decodeExampleDomainHealthCheckResponse(resp *http.Response) (res ExampleDom
 							}(); err != nil {
 								return err
 							}
-							wrapper.ETag.SetTo(wrapperDotETagVal)
+							wrapper.Etag.SetTo(wrapperDotETagVal)
 							return nil
 						}); err != nil {
 							return err
@@ -1701,7 +1701,7 @@ func decodeGetExampleResponse(resp *http.Response) (res GetExampleRes, _ error) 
 							}(); err != nil {
 								return err
 							}
-							wrapper.ETag.SetTo(wrapperDotETagVal)
+							wrapper.Etag.SetTo(wrapperDotETagVal)
 							return nil
 						}); err != nil {
 							return err
@@ -1857,7 +1857,7 @@ func decodeGetExampleResponse(resp *http.Response) (res GetExampleRes, _ error) 
 						}(); err != nil {
 							return err
 						}
-						wrapper.ETag.SetTo(wrapperDotETagVal)
+						wrapper.Etag.SetTo(wrapperDotETagVal)
 						return nil
 					}); err != nil {
 						return err
@@ -2677,7 +2677,7 @@ func decodeUpdateExampleResponse(resp *http.Response) (res UpdateExampleRes, _ e
 							}(); err != nil {
 								return err
 							}
-							wrapper.ETag.SetTo(wrapperDotETagVal)
+							wrapper.Etag.SetTo(wrapperDotETagVal)
 							return nil
 						}); err != nil {
 							return err
@@ -2923,7 +2923,7 @@ func decodeUpdateExampleResponse(resp *http.Response) (res UpdateExampleRes, _ e
 							}(); err != nil {
 								return err
 							}
-							wrapper.ETag.SetTo(wrapperDotETagVal)
+							wrapper.Etag.SetTo(wrapperDotETagVal)
 							return nil
 						}); err != nil {
 							return err
@@ -3007,7 +3007,7 @@ func decodeUpdateExampleResponse(resp *http.Response) (res UpdateExampleRes, _ e
 							}(); err != nil {
 								return err
 							}
-							wrapper.ETag.SetTo(wrapperDotETagVal)
+							wrapper.Etag.SetTo(wrapperDotETagVal)
 							return nil
 						}); err != nil {
 							return err
