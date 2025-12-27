@@ -32,11 +32,106 @@ type CraftingHandler struct {
 
 // GetRecipesByCategory implements getRecipesByCategory operation
 func (h *CraftingHandler) GetRecipesByCategory(ctx context.Context, params api.GetRecipesByCategoryParams) (api.GetRecipesByCategoryRes, error) {
-	// TODO: Implement actual recipe retrieval logic from database
-	// For now, return empty list as placeholder
+	// BACKEND NOTE: Recipe retrieval with filtering by category, tier, and quality
+	// TODO: Replace with actual database query when crafting_recipes table is created
+	
+	// Parse parameters
+	limit := 20
+	if params.Limit.IsSet() {
+		limit = params.Limit.Value
+	}
+	offset := 0
+	if params.Offset.IsSet() {
+		offset = params.Offset.Value
+	}
+	
+	// Mock recipes data - will be replaced with DB query
+	recipes := []api.Recipe{}
+	
+	// Filter by category if provided
+	categoryFilter := ""
+	if params.Category.IsSet() {
+		categoryFilter = string(params.Category.Value)
+	}
+	
+	// Mock recipe data based on filters
+	if categoryFilter == "" || categoryFilter == "weapons" {
+		recipes = append(recipes, api.Recipe{
+			ID:          uuid.MustParse("00000000-0000-0000-0000-000000000001"),
+			Name:        "Cyberpunk Pistol",
+			Description: api.NewOptString("A basic cyberpunk pistol"),
+			Category:    api.RecipeCategoryWeapons,
+			Tier:        1,
+			Quality:     50,
+			SuccessRate: 0.75,
+			Duration:    300,
+			Materials: []api.RecipeMaterial{
+				{ItemID: uuid.MustParse("00000000-0000-0000-0000-000000000010"), Quantity: 5},
+			},
+			CreatedAt: api.NewOptDateTime(time.Now().Add(-24 * time.Hour)),
+			UpdatedAt: api.NewOptDateTime(time.Now()),
+		})
+	}
+	
+	if categoryFilter == "" || categoryFilter == "armor" {
+		recipes = append(recipes, api.Recipe{
+			ID:          uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+			Name:        "Basic Armor Vest",
+			Description: api.NewOptString("A basic protective vest"),
+			Category:    api.RecipeCategoryArmor,
+			Tier:        1,
+			Quality:     40,
+			SuccessRate: 0.70,
+			Duration:    450,
+			Materials: []api.RecipeMaterial{
+				{ItemID: uuid.MustParse("00000000-0000-0000-0000-000000000011"), Quantity: 3},
+			},
+			CreatedAt: api.NewOptDateTime(time.Now().Add(-48 * time.Hour)),
+			UpdatedAt: api.NewOptDateTime(time.Now()),
+		})
+	}
+	
+	// Apply tier filter
+	if params.Tier.IsSet() {
+		filtered := []api.Recipe{}
+		for _, recipe := range recipes {
+			if recipe.Tier == params.Tier.Value {
+				filtered = append(filtered, recipe)
+			}
+		}
+		recipes = filtered
+	}
+	
+	// Apply quality filter
+	if params.Quality.IsSet() {
+		filtered := []api.Recipe{}
+		for _, recipe := range recipes {
+			if recipe.Quality >= params.Quality.Value {
+				filtered = append(filtered, recipe)
+			}
+		}
+		recipes = filtered
+	}
+	
+	// Apply pagination
+	total := len(recipes)
+	start := offset
+	end := offset + limit
+	if start > total {
+		start = total
+	}
+	if end > total {
+		end = total
+	}
+	if start < end {
+		recipes = recipes[start:end]
+	} else {
+		recipes = []api.Recipe{}
+	}
+	
 	return &api.RecipeListResponse{
-		Recipes: []api.Recipe{},
-		Total:   0,
+		Recipes: recipes,
+		Total:   total,
 	}, nil
 }
 
