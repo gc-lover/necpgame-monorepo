@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 
-	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/pkg/api"
+	"economy-service-go/pkg/api"
 )
 
 func setupTestHandler() (*EconomyHandler, sqlmock.Sqlmock) {

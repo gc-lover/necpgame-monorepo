@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
-	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/pkg/api"
+	"economy-service-go/pkg/api"
 )
 
 // BACKEND NOTE: Enterprise-grade business logic with MMOFPS optimizations
