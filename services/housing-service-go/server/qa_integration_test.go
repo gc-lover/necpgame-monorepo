@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"housing-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/housing-service-go/pkg/api"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -759,5 +759,4 @@ func BenchmarkFurnitureCatalog(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
-}</contents>
-</xai:function_call">Создал полный набор интеграционных тестов для housing-service-go, включая все требуемые функции: покупка квартир, управление мебелью, посещения, лидерборд престижа и health check. Все тесты используют mock данные и проверяют корректность работы API.
+}

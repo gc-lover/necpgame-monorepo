@@ -45,6 +45,10 @@ class QuestMigrationGenerator(BaseContentMigrationGenerator):
         content = spec.get('content', {})
         summary = spec.get('summary', {})
 
+        # Also check for questDefinition (camelCase) as fallback
+        if not quest_def:
+            quest_def = spec.get('questDefinition', {})
+
         # Handle both old format (quest_definition) and new format (content/summary)
         if not quest_def:
             if content:
@@ -70,13 +74,11 @@ class QuestMigrationGenerator(BaseContentMigrationGenerator):
                 }
 
         return {
-            'id': metadata.get('id', f"quest-{yaml_file.stem}"),
-            'quest_id': metadata.get('id', f"quest-{yaml_file.stem}"),
             'title': metadata.get('title', 'Unknown Quest'),
             'description': summary.get('essence', ''),
             'status': 'active',  # Default status from schema
-            'level_min': quest_def.get('level_min'),
-            'level_max': quest_def.get('level_max'),
+            'level_min': quest_def.get('level_min', 1),  # Default level_min = 1
+            'level_max': quest_def.get('level_max', 100),  # Default level_max = 100
             'rewards': json.dumps(quest_def.get('rewards', {}), default=JsonSerializer.json_serializer, ensure_ascii=False),
             'objectives': json.dumps(quest_def.get('objectives', []), default=JsonSerializer.json_serializer, ensure_ascii=False)
         }
