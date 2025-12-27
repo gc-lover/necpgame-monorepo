@@ -21,6 +21,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
@@ -37,6 +38,35 @@ type Service struct {
 	// ML model cache
 	models map[string]*MLModel
 	mu     sync.RWMutex
+
+	// Training jobs cache
+	trainingJobs map[uuid.UUID]*TrainingJob
+	trainingMu   sync.RWMutex
+
+	// Predictions cache (for analytics)
+	predictions []*PredictionRecord
+	predMu      sync.RWMutex
+}
+
+// TrainingJob represents a model training job
+type TrainingJob struct {
+	JobID      uuid.UUID
+	ModelName  string
+	Status     string
+	Progress   float64
+	Accuracy   float64
+	StartTime  time.Time
+	EndTime    *time.Time
+	CreatedAt  time.Time
+}
+
+// PredictionRecord represents a prediction for analytics
+type PredictionRecord struct {
+	PredictionID uuid.UUID
+	ModelID      uuid.UUID
+	Timestamp    time.Time
+	Success      bool
+	Latency      float64
 }
 
 // MLModel represents a machine learning model
@@ -64,9 +94,11 @@ func NewService() (*Service, error) {
 	db := &sql.DB{} // Placeholder for actual database connection
 
 	service := &Service{
-		logger: logger,
-		db:     db,
-		models: make(map[string]*MLModel),
+		logger:       logger,
+		db:           db,
+		models:       make(map[string]*MLModel),
+		trainingJobs: make(map[uuid.UUID]*TrainingJob),
+		predictions:  make([]*PredictionRecord, 0),
 	}
 
 	// Initialize sample ML models for demonstration
@@ -153,26 +185,20 @@ func (s *Service) createRouter() chi.Router {
 	// Prometheus metrics endpoint
 	r.Handle("/metrics", promhttp.Handler())
 
-	// API routes
-	r.Route("/api/v1", func(r chi.Router) {
-		// Bearer token authentication middleware would be added here
-		r.Use(s.authMiddleware)
+	// Initialize OpenAPI handler
+	handler := &MLAIHandler{
+		service: s,
+		logger:  s.logger,
+	}
 
-		// Initialize OpenAPI handler
-		handler := &MLAIHandler{
-			service: s,
-			logger:  s.logger,
-		}
+	// Create OpenAPI server
+	srv, err := api.NewServer(handler, nil)
+	if err != nil {
+		s.logger.Fatal("Failed to create OpenAPI server", zap.Error(err))
+	}
 
-		// Create OpenAPI server
-		srv, err := api.NewServer(handler, nil)
-		if err != nil {
-			s.logger.Fatal("Failed to create OpenAPI server", zap.Error(err))
-		}
-
-		// Mount OpenAPI server
-		r.Mount("/api/v1", srv)
-	})
+	// Mount OpenAPI server with authentication middleware
+	r.With(s.authMiddleware).Mount("/api/v1", srv)
 
 	return r
 }
@@ -255,23 +281,29 @@ func (h *MLAIHandler) GetHealth(ctx context.Context) (*api.HealthResponse, error
 	h.logger.Info("Processing health check request")
 
 	return &api.HealthResponse{
-		Status:    api.NewOptString("healthy"),
-		Timestamp: api.NewOptDateTime(time.Now()),
+		Status:    api.HealthResponseStatusHealthy,
+		Service:   "ml-ai-domain",
+		Timestamp: time.Now(),
+		Version:   api.NewOptString("1.0.0"),
 	}, nil
 }
 
 func (h *MLAIHandler) GetBatchHealth(ctx context.Context) (*api.BatchHealthResponse, error) {
 	h.logger.Info("Processing batch health check request")
 
-	h.service.mu.RLock()
-	modelCount := len(h.service.models)
-	h.service.mu.RUnlock()
+	services := []api.ServiceHealth{
+		{
+			Name:        "ml-ai-domain",
+			Status:      api.ServiceHealthStatusHealthy,
+			ResponseTime: float32(10.5),
+			LastCheck:   api.NewOptDateTime(time.Now()),
+		},
+	}
 
 	return &api.BatchHealthResponse{
-		Status:      api.NewOptString("healthy"),
-		Service:     api.NewOptString("ml-ai-domain"),
-		ModelsCount: api.NewOptInt(modelCount),
-		Timestamp:   api.NewOptDateTime(time.Now()),
+		OverallStatus: api.BatchHealthResponseOverallStatusHealthy,
+		Services:      services,
+		Timestamp:     time.Now(),
 	}, nil
 }
 
@@ -279,11 +311,12 @@ func (h *MLAIHandler) CreateModel(ctx context.Context, req *api.CreateModelReque
 	h.logger.Info("Processing create model request")
 
 	// Create new model
-	modelID := fmt.Sprintf("model_%d", time.Now().Unix())
+	modelID := uuid.New()
+	modelIDStr := modelID.String()
 	model := &MLModel{
-		ID:          modelID,
-		Name:        req.Name.Value,
-		Type:        req.Type.Value,
+		ID:          modelIDStr,
+		Name:        req.Name,
+		Type:        string(req.Type),
 		Version:     "1.0.0",
 		Status:      "training",
 		Accuracy:    0.0,
@@ -292,54 +325,69 @@ func (h *MLAIHandler) CreateModel(ctx context.Context, req *api.CreateModelReque
 	}
 
 	h.service.mu.Lock()
-	h.service.models[modelID] = model
+	h.service.models[modelIDStr] = model
 	h.service.mu.Unlock()
 
-	return &api.ModelResponse{
-		Id:          api.NewOptString(modelID),
-		Name:        api.NewOptString(model.Name),
-		Type:        api.NewOptString(model.Type),
+	apiModel := api.MLModel{
+		ModelID:     modelID,
+		Name:        model.Name,
+		Type:        api.MLModelType(model.Type),
+		Status:      api.MLModelStatusTraining,
 		Version:     api.NewOptString(model.Version),
-		Status:      api.NewOptString(model.Status),
-		Accuracy:    api.NewOptFloat64(model.Accuracy),
-		Description: api.NewOptString(fmt.Sprintf("New %s model", model.Type)),
-		CreatedAt:   api.NewOptDateTime(model.LastUpdated),
+		Accuracy:    api.NewOptFloat32(float32(model.Accuracy)),
+		CreatedAt:   model.LastUpdated,
 		UpdatedAt:   api.NewOptDateTime(model.LastUpdated),
+	}
+
+	return &api.ModelResponse{
+		Model: apiModel,
 	}, nil
 }
 
 func (h *MLAIHandler) GetModel(ctx context.Context, params api.GetModelParams) (api.GetModelRes, error) {
-	h.logger.Info("Processing get model request", zap.String("modelId", params.ModelId))
+	h.logger.Info("Processing get model request", zap.String("modelId", params.ModelId.String()))
 
+	modelIDStr := params.ModelId.String()
 	h.service.mu.RLock()
-	model, exists := h.service.models[params.ModelId]
+	model, exists := h.service.models[modelIDStr]
 	h.service.mu.RUnlock()
 
 	if !exists {
-		return &api.ErrorResponse{Message: api.NewOptString("Model not found")}, nil
+		return &api.Error{
+			Message: "Model not found",
+		}, nil
 	}
 
-	metadataJSON, _ := json.Marshal(model.Metadata)
+	modelID, _ := uuid.Parse(model.ID)
+	apiModel := api.MLModel{
+		ModelID:     modelID,
+		Name:        model.Name,
+		Type:        api.MLModelType(model.Type),
+		Status:      api.MLModelStatus(model.Status),
+		Version:     api.NewOptString(model.Version),
+		Accuracy:    api.NewOptFloat32(float32(model.Accuracy)),
+		CreatedAt:   model.LastUpdated.Add(-24 * time.Hour),
+		UpdatedAt:   api.NewOptDateTime(model.LastUpdated),
+	}
+
+	if model.Metadata != nil {
+		metadataJSON, _ := json.Marshal(model.Metadata)
+		var metadata api.MLModelMetadata
+		_ = json.Unmarshal(metadataJSON, &metadata)
+		apiModel.Metadata = &metadata
+	}
 
 	return &api.ModelResponse{
-		Id:          api.NewOptString(model.ID),
-		Name:        api.NewOptString(model.Name),
-		Type:        api.NewOptString(model.Type),
-		Version:     api.NewOptString(model.Version),
-		Status:      api.NewOptString(model.Status),
-		Accuracy:    api.NewOptFloat64(model.Accuracy),
-		Description: api.NewOptString(fmt.Sprintf("%s model for predictions", model.Type)),
-		Metadata:    api.NewOptString(string(metadataJSON)),
-		CreatedAt:   api.NewOptDateTime(model.LastUpdated.Add(-24 * time.Hour)),
-		UpdatedAt:   api.NewOptDateTime(model.LastUpdated),
+		Model: apiModel,
 	}, nil
 }
 
 func (h *MLAIHandler) DeleteModel(ctx context.Context, params api.DeleteModelParams) error {
-	h.logger.Info("Processing delete model request", zap.String("modelId", params.ModelId))
+	h.logger.Info("Processing delete model request", zap.String("modelId", params.ModelId.String()))
 
+	modelIDStr := params.ModelId.String()
 	h.service.mu.Lock()
-	delete(h.service.models, params.ModelId)
+	delete(h.service.models, modelIDStr)
 	h.service.mu.Unlock()
 
 	return nil
@@ -348,82 +396,474 @@ func (h *MLAIHandler) DeleteModel(ctx context.Context, params api.DeleteModelPar
 func (h *MLAIHandler) GetModelAnalytics(ctx context.Context, params api.GetModelAnalyticsParams) (*api.ModelAnalyticsResponse, error) {
 	h.logger.Info("Processing model analytics request")
 
-	h.service.mu.RLock()
-	modelCount := len(h.service.models)
-	activeModels := 0
-	totalAccuracy := 0.0
+	var modelID uuid.UUID
+	if params.ModelId.IsSet() {
+		modelID = params.ModelId.Value
+	} else {
+		modelID = uuid.New()
+	}
 
+	h.service.mu.RLock()
+	totalPredictions := 0
+	totalAccuracy := float32(0.0)
+	activeModels := 0
 	for _, model := range h.service.models {
 		if model.Status == "active" {
 			activeModels++
-			totalAccuracy += model.Accuracy
+			totalAccuracy += float32(model.Accuracy)
 		}
+		totalPredictions += 1000 // Mock value
 	}
 	h.service.mu.RUnlock()
 
-	avgAccuracy := 0.0
+	avgAccuracy := float32(0.0)
 	if activeModels > 0 {
-		avgAccuracy = totalAccuracy / float64(activeModels)
+		avgAccuracy = totalAccuracy / float32(activeModels)
+	}
+
+	startDate := time.Now().Add(-24 * time.Hour)
+	endDate := time.Now()
+	if params.StartDate.IsSet() {
+		startDate = params.StartDate.Value
+	}
+	if params.EndDate.IsSet() {
+		endDate = params.EndDate.Value
 	}
 
 	return &api.ModelAnalyticsResponse{
-		TimeRange:       api.NewOptString(params.TimeRange),
-		TotalModels:     api.NewOptInt(modelCount),
-		ActiveModels:    api.NewOptInt(activeModels),
-		AverageAccuracy: api.NewOptFloat64(avgAccuracy),
-		Timestamp:       api.NewOptDateTime(time.Now()),
+		ModelID: modelID,
+		Metrics: api.ModelAnalyticsResponseMetrics{
+			TotalPredictions:    api.NewOptInt(totalPredictions),
+			Accuracy:            api.NewOptFloat32(avgAccuracy),
+			AverageResponseTime: api.NewOptFloat32(35.2),
+			ErrorRate:           api.NewOptFloat32(0.02),
+		},
+		TimeRange: api.ModelAnalyticsResponseTimeRange{
+			Start: api.NewOptDateTime(startDate),
+			End:   api.NewOptDateTime(endDate),
+		},
 	}, nil
 }
 
 func (h *MLAIHandler) GetPredictionAnalytics(ctx context.Context, params api.GetPredictionAnalyticsParams) (*api.PredictionAnalyticsResponse, error) {
 	h.logger.Info("Processing prediction analytics request")
 
-	// Generate mock prediction analytics
+	h.service.predMu.RLock()
+	totalPredictions := len(h.service.predictions)
+	successfulPredictions := 0
+	totalLatency := float32(0.0)
+	modelsUsed := make(map[uuid.UUID]bool)
+
+	for _, pred := range h.service.predictions {
+		if pred.Success {
+			successfulPredictions++
+		}
+		totalLatency += float32(pred.Latency)
+		modelsUsed[pred.ModelID] = true
+	}
+	h.service.predMu.RUnlock()
+
+	avgLatency := float32(0.0)
+	if totalPredictions > 0 {
+		avgLatency = totalLatency / float32(totalPredictions)
+	}
+
+	modelsUsedList := make([]uuid.UUID, 0, len(modelsUsed))
+	for modelID := range modelsUsed {
+		modelsUsedList = append(modelsUsedList, modelID)
+	}
+
+	if totalPredictions == 0 {
+		// Return mock data if no predictions
+		totalPredictions = 125000
+		successfulPredictions = 123375
+		avgLatency = 35.2
+	}
+
 	return &api.PredictionAnalyticsResponse{
-		TimeRange:        api.NewOptString(params.TimeRange),
-		TotalPredictions: api.NewOptInt(125000),
-		AverageLatency:   api.NewOptFloat64(35.2),
-		SuccessRate:      api.NewOptFloat64(0.987),
-		MostUsedModel:    api.NewOptString("player-behavior-predictor"),
-		Timestamp:        api.NewOptDateTime(time.Now()),
+		TotalPredictions:      totalPredictions,
+		SuccessfulPredictions: successfulPredictions,
+		FailedPredictions:     api.NewOptInt(totalPredictions - successfulPredictions),
+		AverageResponseTime:   avgLatency,
+		PeakRps:               api.NewOptInt(1000),
+		ModelsUsed:            modelsUsedList,
 	}, nil
 }
 
 func (h *MLAIHandler) GetTrainingStatus(ctx context.Context, params api.GetTrainingStatusParams) (*api.TrainingStatusResponse, error) {
-	h.logger.Info("Processing training status request", zap.String("jobId", params.JobId))
+	h.logger.Info("Processing training status request", zap.String("jobId", params.JobId.String()))
 
-	// Simulate training status
-	status := []string{"running", "completed", "failed"}[rand.Intn(3)]
+	h.service.trainingMu.RLock()
+	job, exists := h.service.trainingJobs[params.JobId]
+	h.service.trainingMu.RUnlock()
 
-	var progress, accuracy *float64
-	if status == "running" {
-		p := rand.Float64()
-		progress = &p
-	} else if status == "completed" {
-		p := 1.0
-		progress = &p
-		a := rand.Float64()*0.2 + 0.8
-		accuracy = &a
+	if !exists {
+		// Return default status if job not found
+		return &api.TrainingStatusResponse{
+			JobID:    params.JobId,
+			Status:   api.TrainingStatusResponseStatusQueued,
+			Progress: 0.0,
+		}, nil
+	}
+
+	status := api.TrainingStatusResponseStatusQueued
+	switch job.Status {
+	case "running":
+		status = api.TrainingStatusResponseStatusRunning
+	case "completed":
+		status = api.TrainingStatusResponseStatusCompleted
+	case "failed":
+		status = api.TrainingStatusResponseStatusFailed
 	}
 
 	response := &api.TrainingStatusResponse{
-		JobId:     api.NewOptString(params.JobId),
-		Status:    api.NewOptString(status),
-		StartTime: api.NewOptDateTime(time.Now().Add(-10 * time.Minute)),
+		JobID:    params.JobId,
+		Status:   status,
+		Progress: float32(job.Progress),
 	}
 
-	if progress != nil {
-		response.Progress.SetTo(*progress)
-	}
-	if accuracy != nil {
-		response.Accuracy.SetTo(*accuracy)
-	}
-	if status != "running" {
-		endTime := time.Now()
-		response.EndTime.SetTo(endTime)
+	if job.Accuracy > 0 {
+		response.Accuracy = api.NewOptFloat32(float32(job.Accuracy))
 	}
 
 	return response, nil
+}
+
+func (h *MLAIHandler) GetWebSocketHealth(ctx context.Context) (*api.WebSocketHealthMessage, error) {
+	h.logger.Info("Processing WebSocket health check request")
+
+	return &api.WebSocketHealthMessage{
+		Type:      api.WebSocketHealthMessageTypeHealthCheck,
+		Timestamp: time.Now(),
+		Uptime:    api.NewOptFloat32(3600.0),
+		Connections: api.NewOptInt(0),
+	}, nil
+}
+
+func (h *MLAIHandler) ListModels(ctx context.Context, params api.ListModelsParams) (api.ListModelsRes, error) {
+	h.logger.Info("Processing list models request",
+		zap.Any("status", params.Status),
+		zap.Any("type", params.Type),
+		zap.Any("page", params.Page),
+		zap.Any("limit", params.Limit))
+
+	h.service.mu.RLock()
+	allModels := make([]*MLModel, 0, len(h.service.models))
+	for _, model := range h.service.models {
+		allModels = append(allModels, model)
+	}
+	h.service.mu.RUnlock()
+
+	// Filter by status if provided
+	if params.Status.IsSet() {
+		filtered := make([]*MLModel, 0)
+		statusValue := string(params.Status.Value)
+		for _, model := range allModels {
+			if model.Status == statusValue {
+				filtered = append(filtered, model)
+			}
+		}
+		allModels = filtered
+	}
+
+	// Filter by type if provided
+	if params.Type.IsSet() {
+		filtered := make([]*MLModel, 0)
+		typeValue := string(params.Type.Value)
+		for _, model := range allModels {
+			if model.Type == typeValue {
+				filtered = append(filtered, model)
+			}
+		}
+		allModels = filtered
+	}
+
+	// Pagination
+	page := 1
+	if params.Page.IsSet() {
+		page = params.Page.Value
+	}
+	limit := 20
+	if params.Limit.IsSet() {
+		limit = params.Limit.Value
+		if limit > 100 {
+			limit = 100
+		}
+		if limit < 1 {
+			limit = 1
+		}
+	}
+
+	startIdx := (page - 1) * limit
+	endIdx := startIdx + limit
+	totalCount := len(allModels)
+	hasMore := endIdx < totalCount
+
+	if startIdx > totalCount {
+		startIdx = totalCount
+	}
+	if endIdx > totalCount {
+		endIdx = totalCount
+	}
+
+	var models []*MLModel
+	if startIdx < totalCount {
+		models = allModels[startIdx:endIdx]
+	} else {
+		models = []*MLModel{}
+	}
+
+	// Convert to API models
+	apiModels := make([]api.MLModel, 0, len(models))
+	for _, model := range models {
+		modelID, _ := uuid.Parse(model.ID)
+		apiModel := api.MLModel{
+			ModelID:     modelID,
+			Name:        model.Name,
+			Type:        api.MLModelType(model.Type),
+			Status:      api.MLModelStatus(model.Status),
+			Version:     api.NewOptString(model.Version),
+			Accuracy:    api.NewOptFloat32(float32(model.Accuracy)),
+			CreatedAt:   model.LastUpdated,
+			UpdatedAt:   api.NewOptDateTime(model.LastUpdated),
+		}
+
+		if model.Metadata != nil {
+			metadataJSON, _ := json.Marshal(model.Metadata)
+			apiModel.Metadata = &api.MLModelMetadata{}
+			_ = json.Unmarshal(metadataJSON, apiModel.Metadata)
+		}
+
+		apiModels = append(apiModels, apiModel)
+	}
+
+	return &api.ModelListResponse{
+		Models:     apiModels,
+		TotalCount: totalCount,
+		HasMore:    api.NewOptBool(hasMore),
+		Page:       api.NewOptInt(page),
+		Limit:      api.NewOptInt(limit),
+	}, nil
+}
+
+func (h *MLAIHandler) MakePrediction(ctx context.Context, req *api.PredictionRequest) (api.MakePredictionRes, error) {
+	h.logger.Info("Processing prediction request", zap.String("modelId", req.ModelID.String()))
+
+	startTime := time.Now()
+
+	// Check if model exists
+	h.service.mu.RLock()
+	modelIDStr := req.ModelID.String()
+	_, exists := h.service.models[modelIDStr]
+	h.service.mu.RUnlock()
+
+	if !exists {
+		return &api.MakePredictionNotFound{
+			Message: "Model not found",
+		}, nil
+	}
+
+	// Simulate prediction processing
+	processingTime := time.Since(startTime).Milliseconds()
+	confidence := 0.7 + rand.Float64()*0.25 // Random confidence between 0.7 and 0.95
+
+	// Create prediction result
+	predictionID := uuid.New()
+
+	// Record prediction for analytics
+	h.service.predMu.Lock()
+	h.service.predictions = append(h.service.predictions, &PredictionRecord{
+		PredictionID: predictionID,
+		ModelID:      req.ModelID,
+		Timestamp:    time.Now(),
+		Success:      true,
+		Latency:      float64(processingTime),
+	})
+	// Keep only last 10000 predictions
+	if len(h.service.predictions) > 10000 {
+		h.service.predictions = h.service.predictions[len(h.service.predictions)-10000:]
+	}
+	h.service.predMu.Unlock()
+
+	return &api.PredictionResponse{
+		PredictionID:   predictionID,
+		ModelID:        req.ModelID,
+		Result:         api.PredictionResponseResult{},
+		Confidence:     float32(confidence),
+		ProcessingTime: api.NewOptFloat32(float32(processingTime)),
+		Timestamp:      api.NewOptDateTime(time.Now()),
+	}, nil
+}
+
+func (h *MLAIHandler) MakeBatchPrediction(ctx context.Context, req *api.BatchPredictionRequest) (*api.BatchPredictionResponse, error) {
+	h.logger.Info("Processing batch prediction request",
+		zap.String("modelId", req.ModelID.String()),
+		zap.Int("count", len(req.Predictions)))
+
+	// Check if model exists
+	h.service.mu.RLock()
+	modelIDStr := req.ModelID.String()
+	_, exists := h.service.models[modelIDStr]
+	h.service.mu.RUnlock()
+
+	if !exists {
+		return &api.BatchPredictionResponse{
+			Predictions:  []api.PredictionResponse{},
+			TotalCount:   0,
+			SuccessCount: 0,
+			FailedCount:  api.NewOptInt(len(req.Predictions)),
+		}, nil
+	}
+
+	// Process batch predictions
+	predictions := make([]api.PredictionResponse, 0, len(req.Predictions))
+	successCount := 0
+	failedCount := 0
+	totalLatency := float64(0)
+
+	for range req.Predictions {
+		startTime := time.Now()
+		processingTime := time.Since(startTime).Milliseconds()
+		confidence := 0.7 + rand.Float64()*0.25
+
+		predictionID := uuid.New()
+		prediction := api.PredictionResponse{
+			PredictionID:   predictionID,
+			ModelID:        req.ModelID,
+			Result:         api.PredictionResponseResult{},
+			Confidence:     float32(confidence),
+			ProcessingTime: api.NewOptFloat32(float32(processingTime)),
+			Timestamp:      api.NewOptDateTime(time.Now()),
+		}
+
+		predictions = append(predictions, prediction)
+		successCount++
+		totalLatency += float64(processingTime)
+
+		// Record for analytics
+		h.service.predMu.Lock()
+		h.service.predictions = append(h.service.predictions, &PredictionRecord{
+			PredictionID: predictionID,
+			ModelID:      req.ModelID,
+			Timestamp:    time.Now(),
+			Success:      true,
+			Latency:      float64(processingTime),
+		})
+		if len(h.service.predictions) > 10000 {
+			h.service.predictions = h.service.predictions[len(h.service.predictions)-10000:]
+		}
+		h.service.predMu.Unlock()
+	}
+
+	avgLatency := float32(0)
+	if successCount > 0 {
+		avgLatency = float32(totalLatency / float64(successCount))
+	}
+
+	return &api.BatchPredictionResponse{
+		Predictions:           predictions,
+		TotalCount:            len(req.Predictions),
+		SuccessCount:          successCount,
+		FailedCount:           api.NewOptInt(failedCount),
+		AverageProcessingTime: api.NewOptFloat32(avgLatency),
+	}, nil
+}
+
+func (h *MLAIHandler) StartTraining(ctx context.Context, req *api.TrainingRequest) (*api.TrainingJobResponse, error) {
+	h.logger.Info("Processing start training request",
+		zap.String("modelName", req.ModelName),
+		zap.String("algorithm", req.Algorithm))
+
+	// Create training job
+	jobID := uuid.New()
+	job := &TrainingJob{
+		JobID:     jobID,
+		ModelName: req.ModelName,
+		Status:    "queued",
+		Progress:  0.0,
+		StartTime: time.Now(),
+		CreatedAt: time.Now(),
+	}
+
+	h.service.trainingMu.Lock()
+	h.service.trainingJobs[jobID] = job
+	h.service.trainingMu.Unlock()
+
+	// Simulate async training start
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		h.service.trainingMu.Lock()
+		if j, ok := h.service.trainingJobs[jobID]; ok {
+			j.Status = "running"
+		}
+		h.service.trainingMu.Unlock()
+	}()
+
+	estimatedCompletion := time.Now().Add(30 * time.Minute)
+
+	return &api.TrainingJobResponse{
+		JobID:               jobID,
+		ModelName:           req.ModelName,
+		Status:              api.TrainingJobResponseStatusQueued,
+		CreatedAt:           time.Now(),
+		EstimatedCompletion: api.NewOptDateTime(estimatedCompletion),
+	}, nil
+}
+
+func (h *MLAIHandler) UpdateModel(ctx context.Context, req *api.UpdateModelRequest, params api.UpdateModelParams) (*api.ModelResponse, error) {
+	h.logger.Info("Processing update model request", zap.String("modelId", params.ModelId.String()))
+
+	modelIDStr := params.ModelId.String()
+
+	h.service.mu.Lock()
+	model, exists := h.service.models[modelIDStr]
+	if !exists {
+		h.service.mu.Unlock()
+		return nil, fmt.Errorf("model not found")
+	}
+
+	// Update model fields
+	if req.Name.IsSet() {
+		model.Name = req.Name.Value
+	}
+	if req.Description.IsSet() {
+		// Description would be stored in metadata in real implementation
+		_ = req.Description.Value // Suppress unused warning
+	}
+	if req.Status.IsSet() {
+		model.Status = string(req.Status.Value)
+	}
+	if req.Metadata != nil {
+		// Update metadata
+		metadataJSON, _ := json.Marshal(req.Metadata)
+		_ = json.Unmarshal(metadataJSON, &model.Metadata)
+	}
+
+	model.LastUpdated = time.Now()
+	h.service.mu.Unlock()
+
+	modelID, _ := uuid.Parse(model.ID)
+	apiModel := api.MLModel{
+		ModelID:     modelID,
+		Name:        model.Name,
+		Type:        api.MLModelType(model.Type),
+		Status:      api.MLModelStatus(model.Status),
+		Version:     api.NewOptString(model.Version),
+		Accuracy:    api.NewOptFloat32(float32(model.Accuracy)),
+		CreatedAt:   model.LastUpdated.Add(-24 * time.Hour),
+		UpdatedAt:   api.NewOptDateTime(model.LastUpdated),
+	}
+
+	if model.Metadata != nil {
+		metadataJSON, _ := json.Marshal(model.Metadata)
+		var metadata api.MLModelMetadata
+		_ = json.Unmarshal(metadataJSON, &metadata)
+		apiModel.Metadata = &metadata
+	}
+
+	return &api.ModelResponse{
+		Model: apiModel,
+	}, nil
 }
 
 func main() {
