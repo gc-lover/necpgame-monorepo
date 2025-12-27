@@ -54,15 +54,16 @@ func NewServer(db *pgxpool.Pool, logger *zap.Logger, tokenAuth interface{}) *Ser
 	return s
 }
 
-// HousingServiceHealthCheck implements api.ServerInterface
-func (s *Server) HousingServiceHealthCheck(ctx context.Context) (api.HousingServiceHealthCheckRes, error) {
+// HousingServiceHealthCheck implements api.Handler
+func (s *Server) HousingServiceHealthCheck(ctx context.Context) (*api.HousingServiceHealthCheckOK, error) {
 	// Check database connectivity
 	if err := s.db.Ping(ctx); err != nil {
 		s.logger.Error("Database health check failed", zap.Error(err))
-		return &api.HousingServiceHealthCheckBadRequest{
-			Error: api.Error{
-				Code:    "DATABASE_UNAVAILABLE",
-				Message: "Database connection failed",
+		return &api.HousingServiceHealthCheckOK{
+			StatusCode: 500,
+			Response: api.HousingServiceHealthCheckOKApplicationJSON{
+				Status:  "unhealthy",
+				Message: api.NewOptString("Database connection failed"),
 			},
 		}, nil
 	}
@@ -70,27 +71,31 @@ func (s *Server) HousingServiceHealthCheck(ctx context.Context) (api.HousingServ
 	// Get connection stats
 	stats := s.db.Stat()
 
-	return &api.HealthResponse{
-		Status:           "healthy",
-		Timestamp:        time.Now(),
-		Version:          api.NewOptString("1.0.0"),
-		UptimeSeconds:    api.NewOptInt(0), // TODO: Implement uptime tracking
-		ActiveConnections: api.NewOptInt(int(stats.TotalConns())),
+	return &api.HousingServiceHealthCheckOK{
+		Response: api.HousingServiceHealthCheckOKApplicationJSON{
+			Status:           "healthy",
+			Timestamp:        api.NewOptString(time.Now().Format(time.RFC3339)),
+			Version:          api.NewOptString("1.0.0"),
+			UptimeSeconds:    api.NewOptInt(0), // TODO: Implement uptime tracking
+			ActiveConnections: api.NewOptInt(int(stats.TotalConns())),
+		},
 	}, nil
 }
 
-// GetAvailableApartments implements api.ServerInterface
-func (s *Server) GetAvailableApartments(ctx context.Context, params api.GetAvailableApartmentsParams) (api.GetAvailableApartmentsRes, error) {
+// GetAvailableApartments implements api.Handler
+func (s *Server) GetAvailableApartments(ctx context.Context) (*api.GetAvailableApartmentsOK, error) {
 	// Set timeout for apartment listing (300ms max for database queries)
 	ctx, cancel := context.WithTimeout(ctx, 300*time.Millisecond)
 	defer cancel()
 
 	// TODO: Implement database query with proper filtering and pagination
 	// For now, return mock apartments data
-	apartments := s.getMockApartments(20, 0) // Mock data
+	apartmentTypes := s.getMockApartmentTypes()
 
-	return &api.AvailableApartmentsResponse{
-		Apartments: apartments,
+	return &api.GetAvailableApartmentsOK{
+		Response: api.GetAvailableApartmentsOKApplicationJSON{
+			Apartments: apartmentTypes,
+		},
 	}, nil
 }
 

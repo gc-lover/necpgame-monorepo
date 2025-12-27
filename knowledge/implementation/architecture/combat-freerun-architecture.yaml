@@ -4,7 +4,7 @@ metadata:
   document_type: architecture
   category: systems
   status: draft
-  version: "1.1.0"
+  version: "1.2.0"
   last_updated: 2025-11-30T19:25:00Z
   owners:
     - role: architect
@@ -94,7 +94,15 @@ architecture:
         - POST /api/v1/gameplay/combat/freerun/actions/air-dash - выполнение Air Dash
         - POST /api/v1/gameplay/combat/freerun/actions/wall-kick - выполнение Wall Kick
         - POST /api/v1/gameplay/combat/freerun/actions/vault - выполнение Vault
+        - POST /api/v1/gameplay/combat/freerun/actions/air-dash - выполнение Air Dash
+        - POST /api/v1/gameplay/combat/freerun/actions/wall-kick - выполнение Wall Kick
+        - POST /api/v1/gameplay/combat/freerun/actions/roof-jump - выполнение Roof Jump
+        - POST /api/v1/gameplay/combat/freerun/actions/wire-slide - выполнение Wire Slide
+        - POST /api/v1/gameplay/combat/freerun/actions/hook-grab - выполнение Hook Grab
+        - POST /api/v1/gameplay/combat/freerun/actions/gravibot-boost - выполнение Gravibot Boost
+        - POST /api/v1/gameplay/combat/freerun/actions/cyberware-sprint - активация Leg Implant Sprint
         - POST /api/v1/gameplay/combat/freerun/combo - выполнение комбо паркура
+        - POST /api/v1/gameplay/combat/freerun/combo/acrobatics - выполнение комбо акробатики
         - POST /api/v1/gameplay/combat/freerun/movement-attack - атака во время движения
         - POST /api/v1/gameplay/combat/freerun/movement-combo - комбо из движения
         - GET /api/v1/gameplay/combat/freerun/stamina - состояние выносливости
@@ -118,7 +126,19 @@ architecture:
         - combat.freerun.air-dash: выполнение Air Dash
         - combat.freerun.wall-kick: выполнение Wall Kick
         - combat.freerun.vault: выполнение Vault
+        - combat.freerun.air-dash.started: начало Air Dash
+        - combat.freerun.air-dash.ended: окончание Air Dash
+        - combat.freerun.wall-kick: выполнение Wall Kick
+        - combat.freerun.roof-jump: выполнение Roof Jump
+        - combat.freerun.wire-slide.started: начало Wire Slide
+        - combat.freerun.wire-slide.ended: окончание Wire Slide
+        - combat.freerun.hook-grab: выполнение Hook Grab
+        - combat.freerun.gravibot-boost.started: начало Gravibot Boost
+        - combat.freerun.gravibot-boost.ended: окончание Gravibot Boost
+        - combat.freerun.cyberware-sprint.started: начало Cyberware Sprint
+        - combat.freerun.cyberware-sprint.ended: окончание Cyberware Sprint
         - combat.freerun.combo: выполнение комбо паркура
+        - combat.freerun.acrobatics-combo: выполнение комбо акробатики
         - combat.freerun.movement-attack: атака во время движения
         - combat.freerun.movement-combo: комбо из движения
         - combat.freerun.stamina: изменение выносливости
@@ -132,79 +152,220 @@ architecture:
         - quest.trigger: триггеры квестов
         - progression.skill-updated: обновление навыков
 
-  freerun_elements:
-    - name: roof_jump
-      description: Прыжки между крышами
-      stamina_cost: 20
-      automation_level: "auto/manual"
+  acrobatics_elements:
+    basic_acrobatics:
+      - name: wall_run
+        description: Бег по стенам - позволяет вертикальное перемещение по стенам
+        stamina_cost: 15
+        stamina_per_second: 15
+        cooldown: 0.5
+        automation_level: "auto/manual"
+        max_duration: 3.0
+        min_speed: 8.0
+        max_speed: 12.0
+        transition_bonus: "Может переходить в другие элементы акробатики"
+        combat_integration: "Возможны атаки с стены"
 
-    - name: wall_climb
-      description: Лазание по стенам
-      stamina_cost: 15
-      automation_level: "auto/manual"
+      - name: double_jump
+        description: Двойной прыжок - второй прыжок в воздухе для продления полета
+        stamina_cost: 12
+        cooldown: 0.1
+        automation_level: "auto/manual"
+        height_bonus: 2.5
+        air_control: 0.8
+        combo_window: 1.5
+        transition_bonus: "Может переходить в Air Dash или Wall Run"
 
-    - name: wire_slide
-      description: Скольжение по проводам
-      stamina_cost: 10
-      automation_level: "auto/manual"
+      - name: slide
+        description: Скольжение - быстрое скольжение по горизонтальным поверхностям
+        stamina_cost: 6
+        cooldown: 0.2
+        automation_level: "auto/manual"
+        max_duration: 2.0
+        speed_multiplier: 1.8
+        low_profile: true
+        transition_bonus: "Может переходить в Wall Run или Vault"
 
-    - name: rock_climb
-      description: Скалолазание
-      stamina_cost: 25
-      automation_level: "manual"
+    advanced_acrobatics:
+      - name: air_dash
+        description: Воздушный рывок - мощный рывок в воздухе для изменения траектории
+        stamina_cost: 18
+        cooldown: 2.0
+        automation_level: "manual"
+        dash_distance: 8.0
+        dash_speed: 25.0
+        air_control_recovery: 1.2
+        combo_multiplier: 1.5
+        transition_bonus: "Идеален для изменения направления в комбо"
 
-    - name: hook_grab
-      description: Захват крюками
-      stamina_cost: 12
-      automation_level: "auto/manual"
+      - name: wall_kick
+        description: Отталкивание от стены - мощное отталкивание для изменения направления
+        stamina_cost: 10
+        cooldown: 0.3
+        automation_level: "auto/manual"
+        kick_force: 15.0
+        angle_control: 45
+        height_gain: 3.0
+        wall_detection_range: 2.0
+        transition_bonus: "Отличный для смены направления в воздухе"
 
-    - name: gravibot
-      description: Использование гравиботов
-      stamina_cost: 30
-      automation_level: "auto/manual"
+      - name: vault
+        description: Перепрыгивание - плавное перепрыгивание через препятствия
+        stamina_cost: 8
+        cooldown: 0.1
+        automation_level: "auto/manual"
+        vault_height: 2.0
+        vault_distance: 4.0
+        obstacle_detection: 3.0
+        momentum_preservation: 0.9
+        transition_bonus: "Плавный переход через препятствия"
 
-    - name: leg_implant
-      description: Использование имплантов для ног
-      stamina_cost: 18
-      automation_level: "auto/manual"
+    environmental_elements:
+      - name: roof_jump
+        description: Прыжки между крышами - специализированные прыжки для высотных зданий
+        stamina_cost: 20
+        automation_level: "auto/manual"
+        building_detection: true
+        height_calculation: "Автоматический расчет безопасной высоты"
 
-    - name: wall_run
-      description: Бег по стенам
-      stamina_cost: 15
-      stamina_per_second: 15
-      automation_level: "auto/manual"
-      category: "basic_acrobatics"
+      - name: wire_slide
+        description: Скольжение по проводам - использование городской инфраструктуры
+        stamina_cost: 10
+        automation_level: "auto/manual"
+        wire_detection: true
+        momentum_transfer: 0.95
+        safety_system: "Автоматическое отцепление при угрозе"
 
-    - name: double_jump
-      description: Двойной прыжок
-      stamina_cost: 12
-      automation_level: "auto/manual"
-      category: "basic_acrobatics"
+      - name: hook_grab
+        description: Захват крюками - использование grappling hook системы
+        stamina_cost: 12
+        automation_level: "auto/manual"
+        hook_range: 15.0
+        retraction_speed: 20.0
+        swing_physics: true
 
-    - name: slide
-      description: Скольжение
-      stamina_cost: 6
-      automation_level: "auto/manual"
-      category: "basic_acrobatics"
+      - name: gravibot_boost
+        description: Ускорение с гравиботами - использование антигравитационных устройств
+        stamina_cost: 25
+        automation_level: "auto/manual"
+        boost_duration: 5.0
+        speed_multiplier: 2.2
+        gravity_modulation: 0.3
 
-    - name: air_dash
-      description: Воздушный рывок
-      stamina_cost: 12
-      cooldown: 2.0
-      automation_level: "manual"
-      category: "advanced_acrobatics"
+    cyberware_elements:
+      - name: leg_implant_sprint
+        description: Импланты ног для спринта - кибернетическое усиление бега
+        stamina_cost: 18
+        automation_level: "auto/manual"
+        speed_bonus: 1.4
+        duration: 10.0
+        heat_generation: 15
 
-    - name: wall_kick
-      description: Отталкивание от стены
-      stamina_cost: 8
-      automation_level: "auto/manual"
-      category: "advanced_acrobatics"
+      - name: neural_reflex_boost
+        description: Нейронное ускорение рефлексов - улучшение реакции для акробатики
+        stamina_cost: 22
+        automation_level: "auto/manual"
+        reaction_time_bonus: 0.8
+        prediction_accuracy: 0.85
+        duration: 8.0
 
-    - name: vault
-      description: Перепрыгивание
-      stamina_cost: 5
-      automation_level: "auto/manual"
-      category: "basic_acrobatics"
+      - name: balance_augmentation
+        description: Улучшение баланса - кибернетическая стабилизация
+        stamina_cost: 14
+        automation_level: "auto/manual"
+        stability_bonus: 0.9
+        fall_damage_reduction: 0.7
+        always_active: true
+
+  acrobatics_combos:
+    basic_combos:
+      - name: wall_run_to_double_jump
+        description: Wall Run + Double Jump для вертикального ускорения
+        sequence: ["wall_run", "double_jump"]
+        stamina_cost: 27
+        bonus_multiplier: 1.2
+        transition_time: 0.3
+
+      - name: slide_to_wall_run
+        description: Slide + Wall Run для быстрого вертикального подъема
+        sequence: ["slide", "wall_run"]
+        stamina_cost: 21
+        bonus_multiplier: 1.15
+        transition_time: 0.2
+
+    advanced_combos:
+      - name: air_dash_wall_kick
+        description: Air Dash + Wall Kick для сложных маневров
+        sequence: ["air_dash", "wall_kick"]
+        stamina_cost: 28
+        bonus_multiplier: 1.4
+        transition_time: 0.4
+        difficulty: "expert"
+
+      - name: vault_air_dash
+        description: Vault + Air Dash для преодоления больших расстояний
+        sequence: ["vault", "air_dash"]
+        stamina_cost: 26
+        bonus_multiplier: 1.3
+        transition_time: 0.5
+
+    environmental_combos:
+      - name: wire_slide_hook_grab
+        description: Wire Slide + Hook Grab для городской навигации
+        sequence: ["wire_slide", "hook_grab"]
+        stamina_cost: 22
+        bonus_multiplier: 1.25
+        transition_time: 0.6
+
+      - name: roof_jump_gravibot
+        description: Roof Jump + Gravibot для высотного паркура
+        sequence: ["roof_jump", "gravibot_boost"]
+        stamina_cost: 45
+        bonus_multiplier: 1.5
+        transition_time: 0.8
+
+  acrobatics_integration:
+    combat_integration:
+      - name: aerial_attacks
+        description: Атаки с воздуха во время акробатических элементов
+        compatible_elements: ["wall_run", "air_dash", "double_jump"]
+        damage_multiplier: 1.3
+        accuracy_penalty: 0.8
+
+      - name: momentum_attacks
+        description: Атаки с использованием импульса движения
+        compatible_elements: ["slide", "wall_kick"]
+        damage_multiplier: 1.4
+        knockback_bonus: 1.5
+
+      - name: combo_finisher
+        description: Завершающие атаки из акробатических комбо
+        compatible_combos: ["air_dash_wall_kick", "vault_air_dash"]
+        damage_multiplier: 2.0
+        critical_chance: 0.25
+
+    ability_integration:
+      - name: dash_abilities
+        description: Способности использующие dash механику
+        compatible_elements: ["air_dash"]
+        ability_types: ["teleport", "phase", "burst"]
+
+      - name: wall_abilities
+        description: Способности для взаимодействия со стенами
+        compatible_elements: ["wall_run", "wall_kick"]
+        ability_types: ["climb", "explode", "grapple"]
+
+    progression_integration:
+      - name: skill_unlocks
+        description: Разблокировка элементов акробатики через навыки
+        basic_threshold: 5
+        advanced_threshold: 15
+        environmental_threshold: 25
+
+      - name: implant_upgrades
+        description: Улучшения имплантов для акробатики
+        cyberware_level: 2
+        neural_level: 3
 
   control_modes:
     - name: basic
@@ -275,7 +436,7 @@ architecture:
         columns:
           - id: UUID PRIMARY KEY
           - character_id: UUID FOREIGN KEY
-          - action_type: ENUM (roof_jump, wall_climb, wire_slide, rock_climb, hook_grab, gravibot, leg_implant, wall_run, double_jump, slide, air_dash, wall_kick, vault)
+          - action_type: ENUM (roof_jump, wall_climb, wire_slide, rock_climb, hook_grab, gravibot_boost, leg_implant_sprint, wall_run, double_jump, slide, air_dash, wall_kick, vault, neural_reflex_boost, balance_augmentation)
           - position_before: JSONB
           - position_after: JSONB
           - stamina_cost: INTEGER
@@ -484,6 +645,20 @@ diagrams:
   reference: combat-freerun-architecture-spec.yaml
 
 history:
+  - version: '1.2.0'
+    date: 2025-12-27
+    author: Architect Agent
+    changes: |
+      Расширена архитектура Freerun с детальными элементами акробатики:
+      - Добавлена классификация: basic_acrobatics, advanced_acrobatics, environmental_elements, cyberware_elements
+      - Детально описаны параметры каждого элемента (stamina_cost, cooldown, automation_level, bonuses)
+      - Добавлены acrobatics_combos: basic_combos, advanced_combos, environmental_combos
+      - Добавлена интеграция с боевой системой: aerial_attacks, momentum_attacks, combo_finisher
+      - Добавлена интеграция со способностями: dash_abilities, wall_abilities
+      - Добавлена интеграция с прогрессией: skill_unlocks, implant_upgrades
+      - Добавлены новые API endpoints для всех элементов акробатики
+      - Добавлены новые события для акробатических элементов
+      - Обновлена структура БД с новыми типами действий
   - version: '1.1.0'
     date: 2025-11-30
     author: Architect Agent
@@ -503,6 +678,6 @@ history:
       - Описаны API endpoints и WebSocket каналы
       - Спроектированы потоки данных
       - Определена структура БД
-      - Добавлены элементы акробатики (wall_run, double_jump, slide, air_dash, wall_kick, vault)
+      - Добавлены базовые элементы акробатики (wall_run, double_jump, slide, air_dash, wall_kick, vault)
       - Добавлена спецификация тикрейта и сетевой нагрузки
 

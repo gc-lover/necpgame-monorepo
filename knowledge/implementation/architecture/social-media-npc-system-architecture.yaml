@@ -1,0 +1,481 @@
+metadata:
+  id: social-media-npc-system-architecture
+  title: Архитектура системы медийных NPC (инфлюенсеры и стримеры)
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-27T20:25:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - social
+    - npc
+    - media
+    - influencers
+    - streamers
+    - viral
+  related_systems:
+    - social-service
+    - character-service
+    - quest-service
+    - economy-service
+    - analytics-service
+  related_documents:
+    - id: social-media-npc-system
+      relation: implements
+  github_issue: 142071521
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - content
+    - gameplay
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать архитектуру системы медийных NPC (инфлюенсеров и стримеров)
+    как полноценных игровых персонажей, которые:
+    - Создают контент и влияют на игровую экономику
+    - Имеют подписчиков и рейтинг влияния
+    - Генерируют вирусный контент и тренды
+    - Могут быть завербованы игроками
+    - Участвуют в квестах и событиях
+    - Влияют на репутацию и социальные связи
+  goal: |
+    Создать архитектурную схему медийных NPC с определением:
+    - Компонентов управления медийными NPC
+    - Системы влияния и подписчиков
+    - Механики создания и распространения контента
+    - Интеграций с экономической и социальной системами
+    - API для взаимодействия с медийными NPC
+    - Структуры БД для хранения данных о медийных NPC
+  essence: |
+    Полная архитектура системы медийных NPC, интегрирующая инфлюенсеров и стримеров
+    как активных участников игрового мира с влиянием на экономику, социальные связи и контент.
+
+architecture:
+  overview: |
+    Архитектура системы медийных NPC состоит из следующих компонентов:
+    1. Media NPC Manager - управление медийными NPC
+    2. Content Generator - генерация контента
+    3. Influence Calculator - расчет влияния и рейтинга
+    4. Viral Spread Engine - распространение вирусного контента
+    5. Recruitment System - система вербовки медийных NPC
+    6. Analytics Collector - сбор аналитики влияния
+    7. Reputation Tracker - отслеживание репутации
+
+  microservices:
+    - name: social-service
+      port: 8084
+      responsibility: |
+        Обработка медийных NPC:
+        - Управление медийными NPC
+        - Генерация контента
+        - Расчет влияния
+        - Распространение контента
+        - Система вербовки
+        - Сбор аналитики
+        - Отслеживание репутации
+      components:
+        - media-npc-manager: управление медийными NPC
+        - content-generator: генерация контента
+        - influence-calculator: расчет влияния
+        - viral-spread-engine: распространение контента
+        - recruitment-system: вербовка NPC
+        - analytics-collector: сбор аналитики
+        - reputation-tracker: отслеживание репутации
+      endpoints:
+        - GET /api/v1/social/media-npcs - список медийных NPC
+        - GET /api/v1/social/media-npcs/{npcId} - информация о медийном NPC
+        - GET /api/v1/social/media-npcs/{npcId}/content - контент NPC
+        - GET /api/v1/social/media-npcs/{npcId}/influence - рейтинг влияния
+        - GET /api/v1/social/media-npcs/{npcId}/followers - подписчики
+        - POST /api/v1/social/media-npcs/{npcId}/recruit - вербовка NPC
+        - POST /api/v1/social/media-npcs/{npcId}/content/create - создание контента
+        - POST /api/v1/social/media-npcs/{npcId}/content/share - распространение контента
+        - GET /api/v1/social/media-npcs/trending - трендовый контент
+        - GET /api/v1/social/media-npcs/influencers/top - топ инфлюенсеров
+        - GET /api/v1/social/media-npcs/streamers/live - живые стримы
+      websocket_channels:
+        - wss://api.necp.game/v1/social/media-npcs/{npcId}/live - поток контента NPC
+        - wss://api.necp.game/v1/social/media-npcs/trending - тренды в реальном времени
+      events_published:
+        - social.media-npc.content-created: создан контент
+        - social.media-npc.content-viral: контент стал вирусным
+        - social.media-npc.influence-changed: изменилось влияние
+        - social.media-npc.recruited: NPC завербован
+        - social.media-npc.trend-started: начался тренд
+        - social.media-npc.collaboration: коллаборация NPC
+      events_subscribed:
+        - character.created: создан персонаж
+        - economy.transaction: транзакция
+        - social.interaction: социальное взаимодействие
+        - quest.completed: квест завершен
+        - achievement.unlocked: достижение разблокировано
+
+  media_npc_types:
+    influencers:
+      - name: fashion_influencer
+        description: Модные инфлюенсеры, влияют на одежду и стиль
+        influence_type: fashion
+        follower_base: 50000
+        content_types: ["outfit_showcase", "style_tips", "brand_collaboration"]
+        economic_impact: "Влияет на цены косметики и одежды"
+
+      - name: tech_influencer
+        description: Технологические инфлюенсеры, продвигают импланты и гаджеты
+        influence_type: technology
+        follower_base: 30000
+        content_types: ["tech_reviews", "implant_showcase", "cyberware_tips"]
+        economic_impact: "Влияет на цены имплантов и технологий"
+
+      - name: lifestyle_influencer
+        description: Лайфстайл инфлюенсеры, показывают стиль жизни в мегаполисе
+        influence_type: lifestyle
+        follower_base: 75000
+        content_types: ["daily_vlogs", "lifestyle_tips", "city_tours"]
+        economic_impact: "Влияет на популярность локаций и услуг"
+
+      - name: gaming_influencer
+        description: Гейминговые инфлюенсеры, стримеры и обзорщики
+        influence_type: gaming
+        follower_base: 100000
+        content_types: ["game_reviews", "stream_highlights", "tournament_coverage"]
+        economic_impact: "Влияет на популярность игр и внутриигровые товары"
+
+    streamers:
+      - name: competitive_streamer
+        description: Профессиональные стримеры соревновательных игр
+        stream_type: competitive
+        viewer_base: 25000
+        specializations: ["fps_games", "strategy_games", "fighting_games"]
+        monetization: "Спонсорство, донаты, турнирные призы"
+
+      - name: entertainment_streamer
+        description: Развлекательные стримеры с шоу и взаимодействием
+        stream_type: entertainment
+        viewer_base: 50000
+        specializations: ["roleplay", "social_interaction", "variety_shows"]
+        monetization: "Донаты, подписки, мерч"
+
+      - name: educational_streamer
+        description: Образовательные стримеры, обучающие геймплею
+        stream_type: educational
+        viewer_base: 15000
+        specializations: ["tutorials", "guides", "advanced_techniques"]
+        monetization: "Платные курсы, спонсорство"
+
+  influence_system:
+    influence_metrics:
+      - name: follower_count
+        description: Количество подписчиков
+        weight: 0.4
+        calculation: "Количество уникальных подписчиков"
+
+      - name: engagement_rate
+        description: Уровень вовлеченности аудитории
+        weight: 0.3
+        calculation: "Лайки, комментарии, репосты / просмотры"
+
+      - name: content_quality
+        description: Качество производимого контента
+        weight: 0.2
+        calculation: "Алгоритмическая оценка контента AI"
+
+      - name: viral_coefficient
+        description: Коэффициент вирусности
+        weight: 0.1
+        calculation: "Количество вторичных взаимодействий"
+
+    influence_tiers:
+      - name: micro_influencer
+        follower_range: "1K-10K"
+        influence_score: "1-25"
+        perks: ["Локальное влияние", "Базовые коллаборации"]
+
+      - name: mid_tier_influencer
+        follower_range: "10K-100K"
+        influence_score: "26-50"
+        perks: ["Региональное влияние", "Брендовые контракты"]
+
+      - name: macro_influencer
+        follower_range: "100K-1M"
+        influence_score: "51-75"
+        perks: ["Национальное влияние", "VIP доступ"]
+
+      - name: celebrity_influencer
+        follower_range: "1M+"
+        influence_score: "76-100"
+        perks: ["Глобальное влияние", "Эксклюзивные сделки"]
+
+  content_system:
+    content_types:
+      - name: social_post
+        description: Посты в социальной сети
+        virality_potential: 0.6
+        engagement_time: "30 сек"
+        monetization: "Рекламные интеграции"
+
+      - name: live_stream
+        description: Прямые трансляции
+        virality_potential: 0.9
+        engagement_time: "15-60 мин"
+        monetization: "Донаты, подписки"
+
+      - name: video_content
+        description: Видео контент
+        virality_potential: 0.8
+        engagement_time: "5-15 мин"
+        monetization: "Реклама, спонсорство"
+
+      - name: collaborative_content
+        description: Совместный контент
+        virality_potential: 0.95
+        engagement_time: "Варьируется"
+        monetization: "Совместные бренды"
+
+    viral_mechanics:
+      - name: algorithmic_boost
+        description: Алгоритмическое продвижение контента
+        triggers: ["high_engagement", "trending_topics", "influencer_collaboration"]
+        boost_multiplier: "1.5-3.0x"
+
+      - name: social_sharing
+        description: Распространение через социальные сети
+        triggers: ["user_shares", "community_interaction"]
+        spread_rate: "Экспоненциальное распространение"
+
+      - name: cross_promotion
+        description: Кросс-продвижение между NPC
+        triggers: ["mutual_followers", "similar_audiences"]
+        synergy_bonus: "1.2-2.0x"
+
+  recruitment_system:
+    recruitment_methods:
+      - name: direct_approach
+        description: Прямой контакт с NPC
+        requirements: ["Достаточное влияние игрока", "Репутация в индустрии"]
+        success_rate: "30-70%"
+
+      - name: brand_deal
+        description: Предложение брендового контракта
+        requirements: ["Бренд репутация", "Финансовые ресурсы"]
+        success_rate: "50-90%"
+
+      - name: viral_challenge
+        description: Вызов на вирусный контент
+        requirements: ["Креативная идея", "Начальный бюджет"]
+        success_rate: "20-60%"
+
+    recruitment_benefits:
+      - name: exclusive_content
+        description: Эксклюзивный контент для бренда
+        value: "Увеличение продаж на 15-25%"
+
+      - name: brand_ambassador
+        description: Посол бренда в сообществе
+        value: "Повышение лояльности аудитории"
+
+      - name: co_creation
+        description: Совместное создание контента
+        value: "Уникальный маркетинговый контент"
+
+  economic_integration:
+    monetization_streams:
+      - name: sponsored_content
+        description: Спонсорский контент
+        revenue_model: "CPC (cost per click)"
+        avg_earnings: "500-5000 eddies per post"
+
+      - name: affiliate_marketing
+        description: Партнерский маркетинг
+        revenue_model: "Commission based"
+        avg_earnings: "2-15% от продаж"
+
+      - name: merchandise_sales
+        description: Продажа мерча
+        revenue_model: "Direct sales"
+        avg_earnings: "100-1000 eddies per item"
+
+      - name: live_donations
+        description: Донаты на стримах
+        revenue_model: "Direct contributions"
+        avg_earnings: "100-10000 eddies per stream"
+
+    market_influence:
+      - name: price_modulation
+        description: Влияние на рыночные цены
+        mechanism: "Спрос на товары увеличивается на 10-30%"
+        duration: "1-7 дней после вирусного контента"
+
+      - name: brand_loyalty
+        description: Увеличение лояльности брендам
+        mechanism: "Повышение доверия на 15-40%"
+        duration: "Постоянный эффект"
+
+      - name: trend_creation
+        description: Создание трендов
+        mechanism: "Новые тренды влияют на 20-50% аудитории"
+        duration: "1-4 недели"
+
+  data_flows:
+    content_creation_flow: |
+      1. Media NPC Manager получает запрос на создание контента
+      2. Content Generator анализирует тренды и аудиторию NPC
+      3. Content Generator генерирует контент на основе типа NPC
+      4. Influence Calculator оценивает потенциал вирусности
+      5. Content Generator сохраняет контент в БД
+      6. Viral Spread Engine начинает распространение
+      7. Social Service публикует событие social.media-npc.content-created
+      8. Realtime Gateway отправляет обновления подписчикам
+
+    influence_calculation_flow: |
+      1. Analytics Collector собирает метрики взаимодействия
+      2. Influence Calculator пересчитывает рейтинг влияния
+      3. Influence Calculator обновляет tier NPC
+      4. Reputation Tracker обновляет репутацию
+      5. Social Service публикует событие social.media-npc.influence-changed
+      6. Realtime Gateway отправляет обновления клиентам
+
+    viral_spread_flow: |
+      1. Viral Spread Engine анализирует новый контент
+      2. Viral Spread Engine определяет целевую аудиторию
+      3. Viral Spread Engine применяет алгоритмические бусты
+      4. Viral Spread Engine инициирует социальное распространение
+      5. Analytics Collector отслеживает распространение
+      6. При достижении порога вирусности публикуется событие social.media-npc.content-viral
+
+  database_structure:
+    tables:
+      - name: media_npcs
+        description: Медийные NPC (инфлюенсеры и стримеры)
+        columns:
+          - id: UUID PRIMARY KEY
+          - npc_type: ENUM (influencer, streamer)
+          - specialization: VARCHAR(100)
+          - influence_score: DECIMAL(5,2)
+          - influence_tier: VARCHAR(50)
+          - follower_count: INTEGER
+          - engagement_rate: DECIMAL(5,4)
+          - content_quality_score: DECIMAL(5,2)
+          - viral_coefficient: DECIMAL(5,4)
+          - reputation_score: DECIMAL(5,2)
+          - is_recruited: BOOLEAN
+          - recruited_by: UUID
+          - recruitment_date: TIMESTAMP
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: media_content
+        description: Контент медийных NPC
+        columns:
+          - id: UUID PRIMARY KEY
+          - npc_id: UUID FOREIGN KEY
+          - content_type: VARCHAR(50)
+          - title: TEXT
+          - content_data: JSONB
+          - view_count: INTEGER
+          - like_count: INTEGER
+          - share_count: INTEGER
+          - comment_count: INTEGER
+          - viral_score: DECIMAL(5,2)
+          - is_viral: BOOLEAN
+          - created_at: TIMESTAMP
+          - published_at: TIMESTAMP
+
+      - name: media_followers
+        description: Подписчики медийных NPC
+        columns:
+          - id: UUID PRIMARY KEY
+          - npc_id: UUID FOREIGN KEY
+          - follower_id: UUID FOREIGN KEY
+          - follow_date: TIMESTAMP
+          - engagement_score: DECIMAL(5,2)
+          - is_active: BOOLEAN
+
+      - name: media_influence_history
+        description: История изменения влияния
+        columns:
+          - id: UUID PRIMARY KEY
+          - npc_id: UUID FOREIGN KEY
+          - old_score: DECIMAL(5,2)
+          - new_score: DECIMAL(5,2)
+          - change_reason: TEXT
+          - change_date: TIMESTAMP
+
+      - name: media_trends
+        description: Тренды и вирусный контент
+        columns:
+          - id: UUID PRIMARY KEY
+          - content_id: UUID FOREIGN KEY
+          - trend_name: VARCHAR(255)
+          - trend_category: VARCHAR(100)
+          - reach_score: INTEGER
+          - duration_days: INTEGER
+          - economic_impact: DECIMAL(10,2)
+          - started_at: TIMESTAMP
+          - peaked_at: TIMESTAMP
+          - ended_at: TIMESTAMP
+
+      - name: media_analytics
+        description: Аналитические данные медийных NPC
+        columns:
+          - id: UUID PRIMARY KEY
+          - date: DATE
+          - npc_id: UUID FOREIGN KEY
+          - total_views: INTEGER
+          - total_engagement: INTEGER
+          - viral_content_count: INTEGER
+          - new_followers: INTEGER
+          - revenue_generated: DECIMAL(10,2)
+
+  integrations:
+    character_service: |
+      - Получение данных о персонажах для персонализации контента
+      - Учет характеристик персонажей при расчете влияния
+      - Интеграция с системой репутации персонажей
+
+    economy_service: |
+      - Создание транзакций за спонсорский контент
+      - Отслеживание экономического влияния трендов
+      - Расчет доходов от монетизации контента
+
+    quest_service: |
+      - Квесты на вербовку медийных NPC
+      - Квесты на создание вирусного контента
+      - Награды за успешные коллаборации
+
+    analytics_service: |
+      - Сбор детальной аналитики взаимодействия
+      - Отслеживание эффективности контента
+      - Прогнозирование вирусности
+
+    realtime_gateway: |
+      - Отправка уведомлений о новом контенте
+      - Live обновления во время стримов
+      - Realtime тренды и популярность
+
+  success_metrics:
+    engagement_metrics:
+      - follower_growth_rate: "Рост подписчиков в неделю"
+      - content_virality_rate: "Процент вирусного контента"
+      - audience_retention: "Удержание аудитории"
+      - cross_platform_reach: "Охват на разных платформах"
+
+    economic_metrics:
+      - revenue_per_follower: "Доход на подписчика"
+      - brand_lift_value: "Увеличение ценности бренда"
+      - market_share_influence: "Влияние на рыночную долю"
+      - roi_from_influencer_marketing: "ROI маркетинга через инфлюенсеров"
+
+    social_metrics:
+      - community_engagement_score: "Уровень вовлеченности сообщества"
+      - brand_loyalty_increase: "Рост лояльности бренду"
+      - user_generated_content_rate: "Рейт пользовательского контента"
+      - social_influence_score: "Общий рейтинг социального влияния"
+
+# Issue: #142071521
