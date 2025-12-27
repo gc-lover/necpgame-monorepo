@@ -164,8 +164,14 @@ func (s *Service) createRouter() chi.Router {
 			logger:  s.logger,
 		}
 
-		// Mount generated OpenAPI routes
-		api.HandlerFromMuxWithBaseURL(handler, r, "/api/v1")
+		// Create OpenAPI server
+		srv, err := api.NewServer(handler, nil)
+		if err != nil {
+			s.logger.Fatal("Failed to create OpenAPI server", zap.Error(err))
+		}
+
+		// Mount OpenAPI server
+		r.Mount("/api/v1", srv)
 	})
 
 	return r
