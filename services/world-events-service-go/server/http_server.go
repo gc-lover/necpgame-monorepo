@@ -5,7 +5,10 @@
 package server
 
 import (
+	"database/sql"
 	"net/http"
+
+	"github.com/go-redis/redis/v8"
 
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-service-go/pkg/api"
 )
@@ -16,9 +19,10 @@ type Server struct {
 }
 
 // NewServer creates a new HTTP server instance
-func NewServer() *Server {
-	// Create handler with PERFORMANCE optimizations
-	h := NewHandler()
+// PERFORMANCE: Dependency injection for database and cache
+func NewServer(db *sql.DB, redisClient *redis.Client) *Server {
+	// Create handler with PERFORMANCE optimizations and dependencies
+	h := NewHandler(db, redisClient)
 
 	// Create ogen server with middleware
 	handler, err := api.NewServer(h, nil) // TODO: Add security handler if needed

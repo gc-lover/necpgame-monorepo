@@ -6,9 +6,11 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"sync"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 
 	"github.com/gc-lover/necpgame-monorepo/services/world-events-service-go/pkg/api"
@@ -70,12 +72,17 @@ type Handler struct {
 }
 
 // NewHandler creates a new handler instance with PERFORMANCE optimizations
-func NewHandler() *Handler {
+func NewHandler(db *sql.DB, redisClient *redis.Client) *Handler {
+	repo := NewRepository(db)
+	cache := NewCache(redisClient)
+	service := NewService(repo, cache)
+	validator := NewValidator()
+
 	return &Handler{
-		service:   NewService(),
-		validator: NewValidator(),
-		cache:     NewCache(),
-		repo:      NewRepository(),
+		service:   service,
+		validator: validator,
+		cache:     cache,
+		repo:      repo,
 	}
 }
 

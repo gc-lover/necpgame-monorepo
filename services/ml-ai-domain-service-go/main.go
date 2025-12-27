@@ -42,7 +42,7 @@ var (
 	ErrInvalidBatchSize    = errors.New("invalid batch size: must be between 1 and 1000")
 )
 
-// Input validators
+// Validator provides input validation for ML/AI service
 type Validator struct {
 	modelNameRegex *regexp.Regexp
 	algorithmRegex *regexp.Regexp
@@ -121,10 +121,8 @@ func (v *Validator) ValidatePredictionInput(input interface{}) error {
 			return ErrInvalidPredictionData
 		}
 	default:
-		// For other types, just check if not nil
-		if data == nil {
-			return ErrInvalidPredictionData
-		}
+		// For other types, input is considered valid if not nil
+		// (checked above)
 	}
 
 	return nil
