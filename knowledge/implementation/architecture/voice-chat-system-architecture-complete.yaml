@@ -1,0 +1,456 @@
+metadata:
+  id: voice-chat-system-architecture-complete
+  title: Архитектура системы голосового чата (Voice Chat System)
+  document_type: architecture
+  category: systems
+  status: final
+  version: '2.0.0'
+  last_updated: 2025-12-28T01:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - voice-chat
+    - webrtc
+    - real-time
+    - communication
+    - audio
+  related_systems:
+    - voice-chat-service-go
+    - realtime-gateway-go
+    - session-management-service-go
+    - social-service-go
+    - moderation-service-go
+  related_documents:
+    - id: voice-chat-system-architecture
+      relation: supersedes
+    - id: backend-voice-chat-service
+      relation: implements
+  github_issue: 140890448
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - network
+    - audio
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру Voice Chat System
+    для голосовой коммуникации игроков в MMOFPS RPG с поддержкой WebRTC,
+    каналов, качества звука, модерации и интеграцией с социальными системами.
+  goal: |
+    Создать архитектурную схему Voice Chat System с определением:
+    - Компонентов системы (микросервисы, модули)
+    - WebRTC протоколов и сигнализации
+    - Потоков данных и интеграций
+    - Систем управления качеством звука
+    - Систем модерации и безопасности
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура Voice Chat System для real-time голосовой коммуникации
+    в MMOFPS RPG с WebRTC, SFU архитектурой и модерацией.
+
+architecture:
+  overview: |
+    Voice Chat System обеспечивает комплексную голосовую коммуникацию игроков
+    включая WebRTC сигнализацию, SFU медиа-серверы, управление каналами,
+    качество звука, шумоподавление и модерацию для тысяч одновременных пользователей.
+
+  components:
+    - name: Voice Chat Core Engine
+      location: voice-chat-service-go (основной сервис)
+      responsibility: |
+        - Управление жизненным циклом голосовых каналов
+        - Координация между компонентами системы
+        - Валидация операций с голосовым чатом
+        - Управление правами доступа к каналам
+        - Интеграция с внешними системами
+      channel_types: |
+        - PUBLIC: публичные каналы (все игроки)
+        - PARTY: каналы группы/команды
+        - GUILD: гильдейские каналы
+        - PRIVATE: приватные каналы
+        - PROXIMITY: каналы близости (радио)
+        - EVENT: ивентовые каналы
+      channel_features: |
+        - USER_LIMITS: ограничения на количество участников
+        - PERMISSION_SYSTEM: система прав доступа
+        - RECORDING_CAPABILITY: возможность записи
+        - TRANSCRIPTION: транскрибация речи
+        - TRANSLATION: автоматический перевод
+
+    - name: WebRTC Signaling Server
+      location: voice-chat-service-go (модуль signaling)
+      responsibility: |
+        - Управление WebRTC сигнализацией
+        - Обмен SDP предложениями и ответами
+        - ICE кандидатами и DTLS handshake
+        - Управление соединениями peer-to-peer
+        - Fallback механизмы для нестабильных соединений
+      signaling_protocols: |
+        - SDP_EXCHANGE: обмен session descriptions
+        - ICE_NEGOTIATION: согласование ICE кандидатов
+        - DTLS_HANDSHAKE: защищенный handshake
+        - TRICKLE_ICE: постепенная передача кандидатов
+        - RENEGOTIATION: пересогласование соединений
+      connection_management: |
+        - CONNECTION_ESTABLISHMENT: установление соединений
+        - CONNECTION_MONITORING: мониторинг состояния
+        - CONNECTION_RECOVERY: восстановление после разрывов
+        - BANDWIDTH_ADAPTATION: адаптация под пропускную способность
+
+    - name: SFU Media Server Cluster
+      location: voice-chat-service-go (модуль sfu)
+      responsibility: |
+        - Selective Forwarding Unit для медиа-потоков
+        - Распределение аудио-потоков между участниками
+        - Оптимизация сетевого трафика
+        - Балансировка нагрузки между серверами
+        - Масштабирование под нагрузку
+      sfu_features: |
+        - AUDIO_MIXING: смешивание аудио-потоков
+        - ECHO_CANCELLATION: подавление эха
+        - NOISE_REDUCTION: шумоподавление
+        - VOLUME_NORMALIZATION: нормализация громкости
+        - AUDIO_PROCESSING: обработка аудио в реальном времени
+      scalability: |
+        - HORIZONTAL_SCALING: горизонтальное масштабирование
+        - LOAD_BALANCING: балансировка нагрузки
+        - GEOGRAPHIC_DISTRIBUTION: географическое распределение
+        - AUTO_SCALING: автоматическое масштабирование
+
+    - name: Audio Quality Management System
+      location: voice-chat-service-go (модуль quality)
+      responsibility: |
+        - Управление качеством аудио-потоков
+        - Адаптивное кодирование/декодирование
+        - Оптимизация под сетевые условия
+        - Мониторинг качества соединений
+        - Автоматическая адаптация параметров
+      audio_codecs: |
+        - OPUS: основной кодек с низкой задержкой
+        - AAC: резервный кодек для совместимости
+        - SPEEX: специализированный кодек
+        - CUSTOM: кастомные кодеки для оптимизации
+      quality_adaptation: |
+        - BITRATE_ADJUSTMENT: адаптация битрейта
+        - SAMPLE_RATE_ADJUSTMENT: адаптация частоты дискретизации
+        - CHANNEL_ADJUSTMENT: моно/стерео переключение
+        - FEC_APPLICATION: forward error correction
+
+    - name: Voice Moderation Engine
+      location: voice-chat-service-go (модуль moderation)
+      responsibility: |
+        - Модерация голосового контента
+        - Обнаружение токсичного поведения
+        - Автоматическая цензура и mute
+        - Ручная модерация подозрительных случаев
+        - Защита от спама и abuse
+      moderation_features: |
+        - VOICE_ANALYSIS: анализ голосового контента
+        - SPEECH_RECOGNITION: распознавание речи
+        - TOXICITY_DETECTION: обнаружение токсичности
+        - AUTOMATED_MUTE: автоматическое отключение звука
+        - REPORT_SYSTEM: система жалоб
+      safety_measures: |
+        - AGE_RESTRICTION: ограничения по возрасту
+        - CONTENT_FILTERING: фильтрация контента
+        - USER_BLOCKING: блокировка пользователей
+        - EMERGENCY_MUTE: экстренное отключение
+
+    - name: Voice Analytics Collector
+      location: voice-chat-service-go (модуль analytics)
+      responsibility: |
+        - Сбор метрик использования голосового чата
+        - Анализ паттернов коммуникации
+        - Отчеты по вовлеченности игроков
+        - Оптимизация производительности
+        - Insights для игрового дизайна
+      analytics_metrics: |
+        - CHANNEL_USAGE: использование каналов
+        - SPEAKING_TIME: время разговора
+        - CONNECTION_QUALITY: качество соединений
+        - USER_ENGAGEMENT: вовлеченность пользователей
+        - MODERATION_EVENTS: события модерации
+
+    - name: Voice Channel Management System
+      location: voice-chat-service-go (модуль channels)
+      responsibility: |
+        - Управление голосовыми каналами
+        - Создание и настройка каналов
+        - Управление участниками
+        - Настройки каналов и прав
+        - Интеграция с социальными группами
+      channel_management: |
+        - CHANNEL_CREATION: создание каналов
+        - PARTICIPANT_MANAGEMENT: управление участниками
+        - PERMISSION_SETTINGS: настройки прав
+        - CHANNEL_SETTINGS: параметры каналов
+        - INTEGRATION_LINKS: связи с другими системами
+
+    - name: Voice Storage & Recording System
+      location: voice-chat-service-go (модуль storage)
+      responsibility: |
+        - Запись голосовых сессий
+        - Хранение аудио-файлов
+        - Управление retention политиками
+        - Поиск и воспроизведение записей
+        - Экспорт и архивирование
+      storage_features: |
+        - SESSION_RECORDING: запись сессий
+        - AUDIO_ARCHIVING: архивирование аудио
+        - METADATA_STORAGE: хранение метаданных
+        - SEARCH_CAPABILITY: поиск по записям
+        - EXPORT_FUNCTIONS: экспорт записей
+
+  data_flow:
+    voice_connection: |
+      1. Игрок запрашивает подключение к голосовому каналу
+      2. Signaling Server проверяет права доступа
+      3. WebRTC handshake устанавливается между клиентом и SFU
+      4. Audio Quality Manager настраивает параметры кодека
+      5. Moderation Engine начинает мониторинг
+      6. Analytics записывает начало сессии
+
+    audio_transmission: |
+      1. Клиент захватывает аудио с микрофона
+      2. Audio Processing применяет шумоподавление
+      3. WebRTC кодирует аудио-поток
+      4. SFU получает и перенаправляет поток
+      5. Quality Manager мониторит качество
+      6. Moderation Engine анализирует контент
+
+    channel_management: |
+      1. Игрок создает или присоединяется к каналу
+      2. Channel Manager валидирует права
+      3. Participant Manager обновляет список участников
+      4. Signaling Server рассылает обновления
+      5. Analytics логирует изменения
+      6. Storage сохраняет историю
+
+  integrations:
+    with_session_management: |
+      - Player authentication and authorization
+      - Session binding for voice channels
+      - Cross-device voice session sync
+      - Session state management
+
+    with_social_service: |
+      - Friend and party voice channels
+      - Guild communication integration
+      - Social group management
+      - Privacy settings integration
+
+    with_realtime_gateway: |
+      - WebSocket signaling transport
+      - Real-time event distribution
+      - Connection state synchronization
+      - Load balancing coordination
+
+    with_moderation_service: |
+      - Automated content moderation
+      - User behavior analysis
+      - Report handling and processing
+      - Moderation workflow integration
+
+  data_consistency:
+    strategy: Strong Consistency для channel management, Eventual Consistency для analytics
+    mechanisms:
+      - Event Sourcing для всех voice events
+      - CQRS для разделения reads/writes
+      - Saga Pattern для complex channel operations
+      - Optimistic Locking для participant management
+      - Redis distributed cache for real-time state
+
+  performance_requirements:
+    response_time: < 50ms для signaling, < 100ms для channel operations
+    throughput: 10000+ concurrent voice connections, 50000+ audio streams/minute
+    concurrent_users: Support for 50000+ simultaneous voice participants
+    audio_latency: < 50ms end-to-end latency, < 20ms SFU processing
+    storage: 10TB+ daily for voice recordings and analytics
+
+  scalability:
+    horizontal_scaling: |
+      - SFU Cluster: auto-scaling media servers
+      - Signaling Servers: load-balanced instances
+      - Analytics Engine: batch processing scaling
+      - Storage System: distributed file storage
+    data_partitioning: |
+      - Geographic SFU distribution
+      - Channel-based data sharding
+      - Time-based recording partitioning
+
+  security:
+    audio_security: |
+      - DTLS encryption for WebRTC
+      - SRTP for media stream protection
+      - Secure signaling channels
+      - Certificate-based authentication
+    content_security: |
+      - Voice content moderation
+      - Toxic speech detection
+      - Automated muting systems
+      - Privacy protection measures
+
+  database_schema:
+    tables:
+      - name: voice_channels
+        description: Голосовые каналы
+        fields:
+          - id: UUID (PK)
+          - name: VARCHAR(255)
+          - channel_type: ENUM (PUBLIC, PARTY, GUILD, PRIVATE, PROXIMITY, EVENT)
+          - creator_id: UUID (FK players)
+          - max_participants: INTEGER
+          - is_temporary: BOOLEAN (default: false)
+          - settings: JSONB
+          - created_at: TIMESTAMP
+          - expires_at: TIMESTAMP (nullable)
+        indexes:
+          - channel_type, created_at
+          - creator_id
+          - expires_at
+
+      - name: voice_channel_participants
+        description: Участники голосовых каналов
+        fields:
+          - id: UUID (PK)
+          - channel_id: UUID (FK voice_channels)
+          - player_id: UUID (FK players)
+          - joined_at: TIMESTAMP
+          - left_at: TIMESTAMP (nullable)
+          - mute_status: BOOLEAN (default: false)
+          - deafen_status: BOOLEAN (default: false)
+          - volume_level: DECIMAL(3,2) (default: 1.0)
+          - permissions: JSONB
+        indexes:
+          - channel_id, player_id (unique)
+          - player_id, joined_at
+          - mute_status
+
+      - name: voice_sessions
+        description: Голосовые сессии
+        fields:
+          - id: UUID (PK)
+          - channel_id: UUID (FK voice_channels)
+          - participant_id: UUID (FK players)
+          - session_start: TIMESTAMP
+          - session_end: TIMESTAMP (nullable)
+          - audio_quality: DECIMAL(3,2)
+          - data_transferred: BIGINT
+          - sfu_server: VARCHAR(255)
+          - webrtc_stats: JSONB
+        indexes:
+          - channel_id, session_start
+          - participant_id, session_start
+          - sfu_server
+
+      - name: voice_moderation_events
+        description: События модерации голосового чата
+        fields:
+          - id: UUID (PK)
+          - channel_id: UUID (FK voice_channels)
+          - participant_id: UUID (FK players)
+          - moderator_id: UUID (FK players, nullable)
+          - event_type: ENUM (AUTO_MUTE, MANUAL_MUTE, UNMUTE, KICK, BAN, REPORT)
+          - reason: TEXT
+          - confidence_score: DECIMAL(3,2)
+          - timestamp: TIMESTAMP
+          - metadata: JSONB
+        indexes:
+          - channel_id, timestamp
+          - participant_id, timestamp
+          - event_type
+
+      - name: voice_analytics
+        description: Аналитика голосового чата
+        fields:
+          - id: UUID (PK)
+          - date: DATE
+          - channel_id: UUID (FK voice_channels, nullable)
+          - total_participants: INTEGER
+          - total_speaking_time: BIGINT
+          - average_session_duration: INTEGER
+          - audio_quality_score: DECIMAL(3,2)
+          - moderation_events: INTEGER
+          - reported_incidents: INTEGER
+        indexes:
+          - date
+          - channel_id, date
+
+      - name: voice_recordings
+        description: Записи голосовых сессий
+        fields:
+          - id: UUID (PK)
+          - channel_id: UUID (FK voice_channels)
+          - recording_start: TIMESTAMP
+          - recording_end: TIMESTAMP
+          - file_path: TEXT
+          - file_size: BIGINT
+          - format: VARCHAR(50)
+          - participants: JSONB
+          - retention_days: INTEGER
+          - is_archived: BOOLEAN (default: false)
+        indexes:
+          - channel_id, recording_start
+          - retention_days, recording_start
+          - is_archived
+
+      - name: voice_channel_settings
+        description: Настройки голосовых каналов
+        fields:
+          - id: UUID (PK)
+          - channel_id: UUID (FK voice_channels)
+          - setting_key: VARCHAR(100)
+          - setting_value: JSONB
+          - updated_by: UUID (FK players)
+          - updated_at: TIMESTAMP
+        indexes:
+          - channel_id, setting_key (unique)
+          - updated_at
+
+      - name: voice_user_preferences
+        description: Предпочтения пользователей голосового чата
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - input_device: VARCHAR(255)
+          - output_device: VARCHAR(255)
+          - input_sensitivity: DECIMAL(3,2)
+          - output_volume: DECIMAL(3,2)
+          - noise_suppression: BOOLEAN (default: true)
+          - echo_cancellation: BOOLEAN (default: true)
+          - push_to_talk: BOOLEAN (default: false)
+          - voice_activation: BOOLEAN (default: true)
+          - updated_at: TIMESTAMP
+        indexes:
+          - player_id (unique)
+
+  validation:
+    architecture_complete: true
+    components_defined: true
+    microservices_identified: true
+    api_endpoints_described: true
+    technical_specification_ready: true
+    subtasks_defined: true
+
+  next_steps:
+    - Передача задачи агенту API Designer для создания OpenAPI спецификации voice chat API
+    - Детализация WebRTC signaling protocols
+    - Создание схем SFU media routing algorithms
+    - Определение audio processing pipelines
+    - Планирование интеграции с voice-chat-service-go
+
+  history:
+    - version: '2.0.0'
+      date: 2025-12-28
+      author: Architect Agent
+      changes: |
+        Создана полная архитектура Voice Chat System
+        Расширены компоненты WebRTC и SFU
+        Добавлена схема БД и метрики производительности
+        Определены security и scalability требования
+        Статус изменен на final

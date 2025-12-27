@@ -1,0 +1,444 @@
+metadata:
+  id: anti-cheat-system-architecture-complete
+  title: Архитектура системы античита (Anti-Cheat System)
+  document_type: architecture
+  category: systems
+  status: final
+  version: '2.0.0'
+  last_updated: 2025-12-28T01:15:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - anti-cheat
+    - security
+    - real-time
+    - validation
+  related_systems:
+    - anti-cheat-service-go
+    - realtime-gateway-go
+    - session-management-service-go
+    - gameplay-service-go
+    - analytics-service-go
+  related_documents:
+    - id: anti-cheat-system-architecture
+      relation: supersedes
+    - id: backend-anti-cheat-system
+      relation: implements
+  github_issue: 140889942
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - security
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать полную техническую архитектуру Anti-Cheat System
+    для обнаружения и предотвращения читерства в MMOFPS RPG с использованием
+    серверной валидации, reconciliation и поведенческого анализа.
+  goal: |
+    Создать архитектурную схему Anti-Cheat System с определением:
+    - Компонентов системы (микросервисы, модули)
+    - API endpoints для античита
+    - Потоков данных и интеграций
+    - Систем обнаружения читерства
+    - Систем валидации и reconciliation
+    - Технического задания для реализации
+  essence: |
+    Полная архитектура системы античита для обнаружения и предотвращения
+    читерства через серверную валидацию и поведенческий анализ.
+
+architecture:
+  overview: |
+    Anti-Cheat System обеспечивает комплексную защиту от читерства через серверную валидацию,
+    reconciliation с клиентом, поведенческий анализ и автоматическую реакцию на подозрительную активность
+    для поддержания fair-play в MMOFPS RPG.
+
+  components:
+    - name: Anti-Cheat Core Engine
+      location: anti-cheat-service-go (основной сервис)
+      responsibility: |
+        - Управление жизненным циклом античита
+        - Координация между компонентами системы
+        - Валидация операций и состояний
+        - Управление правами доступа
+        - Интеграция с внешними системами
+      cheat_detection_methods: |
+        - SERVER_AUTHORITATIVE: сервер имеет окончательное решение
+        - CLIENT_RECONCILIATION: синхронизация с клиентом
+        - BEHAVIOR_ANALYTICS: анализ паттернов поведения
+        - STATISTICAL_ANOMALY: статистические аномалии
+        - MACHINE_LEARNING: ML-модели обнаружения
+      detection_categories: |
+        - SPEED_HACK: обнаружение speed hack
+        - AIMBOT: обнаружение aim assist
+        - WALLHACK: обнаружение wallhack
+        - RESOURCE_HACK: манипуляция ресурсами
+        - BEHAVIOR_ANOMALY: аномальное поведение
+      endpoints:
+        - POST /api/v1/anti-cheat/validate - валидация действия игрока
+        - POST /api/v1/anti-cheat/report - отчет о подозрительной активности
+        - GET /api/v1/anti-cheat/status/{player_id} - статус античита игрока
+        - POST /api/v1/anti-cheat/ban - бан игрока
+
+    - name: Real-Time Validation Engine
+      location: anti-cheat-service-go (модуль validation)
+      responsibility: |
+        - Real-time валидация действий игрока
+        - Проверка физических ограничений
+        - Валидация позиций и траекторий
+        - Контроль частоты действий
+        - Обнаружение невозможных действий
+      validation_checks: |
+        - POSITION_VALIDATION: валидация позиций
+        - SPEED_VALIDATION: проверка скорости движения
+        - ACTION_FREQUENCY: частота действий
+        - HIT_REGISTRATION: регистрация попаданий
+        - RESOURCE_CONSUMPTION: потребление ресурсов
+      physical_constraints: |
+        - MAX_SPEED: максимальная скорость
+        - JUMP_HEIGHT: высота прыжка
+        - GRAVITY: гравитация
+        - COLLISION: обнаружение столкновений
+        - LINE_OF_SIGHT: линия видимости
+
+    - name: Reconciliation Manager
+      location: anti-cheat-service-go (модуль reconciliation)
+      responsibility: |
+        - Синхронизация состояния между клиентом и сервером
+        - Обнаружение расхождений
+        - Коррекция клиентского состояния
+        - Управление authoritative state
+        - Обработка lag compensation
+      reconciliation_methods: |
+        - STATE_SYNC: синхронизация состояния
+        - PREDICTION_CORRECTION: коррекция предсказаний
+        - LAG_COMPENSATION: компенсация задержек
+        - AUTHORITATIVE_CORRECTION: authoritative коррекция
+        - CLIENT_VALIDATION: валидация клиента
+      state_management: |
+        - PLAYER_POSITION: позиция игрока
+        - PLAYER_HEALTH: здоровье игрока
+        - INVENTORY_STATE: состояние инвентаря
+        - GAME_STATE: состояние игры
+        - TIMESTAMP_SYNC: синхронизация времени
+
+    - name: Behavior Analytics Engine
+      location: anti-cheat-service-go (модуль analytics)
+      responsibility: |
+        - Анализ паттернов поведения игроков
+        - Обнаружение статистических аномалий
+        - Машинное обучение для классификации
+        - Создание профилей игроков
+        - Прогнозирование подозрительной активности
+      behavioral_patterns: |
+        - AIM_ACCURACY: точность прицеливания
+        - MOVEMENT_PATTERNS: паттерны движения
+        - RESOURCE_USAGE: использование ресурсов
+        - SOCIAL_INTERACTIONS: социальные взаимодействия
+        - GAMEPLAY_STYLE: стиль игры
+      anomaly_detection: |
+        - STATISTICAL_OUTLIERS: статистические выбросы
+        - PATTERN_RECOGNITION: распознавание паттернов
+        - CLUSTER_ANALYSIS: кластерный анализ
+        - PREDICTIVE_MODELING: предиктивное моделирование
+
+    - name: Threat Response System
+      location: anti-cheat-service-go (модуль response)
+      responsibility: |
+        - Автоматическая реакция на угрозы
+        - Управление уровнями доверия игроков
+        - Применение санкций
+        - Уведомление администраторов
+        - Эскалация серьезных инцидентов
+      response_levels: |
+        - MONITOR: усиленный мониторинг
+        - WARNING: предупреждение игрока
+        - RESTRICTION: ограничение функционала
+        - SUSPENSION: временный бан
+        - PERMANENT_BAN: постоянный бан
+      automated_actions: |
+        - KICK_PLAYER: кик игрока
+        - MUTE_PLAYER: отключение голосового чата
+        - RESTRICT_FEATURES: ограничение функций
+        - FLAG_ACCOUNT: пометка аккаунта
+        - NOTIFY_ADMINS: уведомление администраторов
+
+    - name: Evidence Collection System
+      location: anti-cheat-service-go (модуль evidence)
+      responsibility: |
+        - Сбор доказательств нарушений
+        - Запись игровых сессий
+        - Сохранение telemetry данных
+        - Создание отчетов для review
+        - Управление retention политиками
+      evidence_types: |
+        - GAME_REPLAYS: записи игровых сессий
+        - TELEMETRY_DATA: телеметрия
+        - SCREENSHOTS: скриншоты
+        - LOG_FILES: логи системы
+        - PLAYER_REPORTS: жалобы игроков
+      storage_management: |
+        - COMPRESSED_STORAGE: сжатое хранение
+        - ENCRYPTED_STORAGE: шифрованное хранение
+        - RETENTION_POLICIES: политики хранения
+        - ARCHIVE_SYSTEM: система архивов
+
+    - name: Anti-Cheat Monitoring Dashboard
+      location: anti-cheat-service-go (модуль monitoring)
+      responsibility: |
+        - Real-time мониторинг системы античита
+        - Визуализация метрик и алертов
+        - Анализ эффективности обнаружения
+        - Отчеты для администраторов
+        - Производительность системы
+      monitoring_metrics: |
+        - DETECTION_RATE: процент обнаружения
+        - FALSE_POSITIVE_RATE: процент ложных срабатываний
+        - RESPONSE_TIME: время реакции
+        - SYSTEM_PERFORMANCE: производительность системы
+        - PLAYER_IMPACT: влияние на игроков
+
+    - name: Configuration Management System
+      location: anti-cheat-service-go (модуль config)
+      responsibility: |
+        - Управление конфигурациями античита
+        - Настройка правил обнаружения
+        - Управление threshold значениями
+        - A/B тестирование настроек
+        - Динамическое обновление правил
+      configuration_types: |
+        - DETECTION_RULES: правила обнаружения
+        - THRESHOLD_VALUES: пороговые значения
+        - RESPONSE_POLICIES: политики реакции
+        - EXEMPTION_RULES: правила исключений
+        - FEATURE_FLAGS: флаги функций
+
+  data_flow:
+    real_time_validation: |
+      1. Игрок выполняет действие в игре
+      2. Клиент отправляет действие на сервер
+      3. Validation Engine проверяет физические ограничения
+      4. Reconciliation Manager синхронизирует состояние
+      5. Analytics Engine анализирует паттерн
+      6. Response System реагирует при необходимости
+
+    anomaly_detection: |
+      1. Behavior Analytics собирает данные
+      2. ML модели анализируют паттерны
+      3. Обнаруживается аномалия
+      4. Evidence Collection сохраняет доказательства
+      5. Threat Response применяет санкции
+      6. Monitoring Dashboard обновляет метрики
+
+    incident_response: |
+      1. Обнаруживается серьезное нарушение
+      2. Evidence Collection собирает доказательства
+      3. Threat Response применяет санкции
+      4. Notification System уведомляет администраторов
+      5. Monitoring Dashboard логирует инцидент
+      6. Analytics обновляет модели
+
+  integrations:
+    with_realtime_gateway: |
+      - Real-time data streaming
+      - WebSocket communication
+      - Low-latency message routing
+      - Connection state monitoring
+
+    with_session_management: |
+      - Player session validation
+      - Account security integration
+      - Session anomaly detection
+      - Cross-session analysis
+
+    with_gameplay_service: |
+      - Game state validation
+      - Physics engine integration
+      - Combat system verification
+      - Inventory state checking
+
+    with_analytics_service: |
+      - Advanced behavioral analytics
+      - Machine learning integration
+      - Statistical modeling
+      - Predictive analysis
+
+  data_consistency:
+    strategy: Strong Consistency для security decisions, Eventual Consistency для analytics
+    mechanisms:
+      - Event Sourcing для всех security events
+      - CQRS для разделения reads/writes
+      - Saga Pattern для complex security operations
+      - Optimistic Locking для concurrent validations
+      - Redis distributed cache for real-time data
+
+  performance_requirements:
+    response_time: < 10ms для validation operations, < 50ms для complex analysis
+    throughput: 10000+ validations/minute, 50000+ events/minute
+    concurrent_users: Support for 100000+ simultaneous validations
+    detection_accuracy: > 95% true positive rate, < 5% false positive rate
+    memory: < 16GB per service instance
+
+  scalability:
+    horizontal_scaling: |
+      - Validation Engine: auto-scaling by load
+      - Analytics Engine: batch processing scaling
+      - Evidence Collection: distributed storage
+      - Monitoring Dashboard: read-heavy scaling
+    data_partitioning: |
+      - Player-based data sharding
+      - Time-based event partitioning
+      - Geographic region distribution
+
+  security:
+    data_security: |
+      - End-to-end encryption for sensitive data
+      - Secure evidence storage
+      - Access control for anti-cheat data
+      - Audit trails for all operations
+    system_security: |
+      - Anti-tampering protection
+      - Secure configuration management
+      - DDoS protection
+      - Intrusion detection
+
+  database_schema:
+    tables:
+      - name: player_cheat_incidents
+        description: Инциденты читерства игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - incident_type: ENUM (SPEED_HACK, AIMBOT, WALLHACK, RESOURCE_HACK, BEHAVIOR_ANOMALY)
+          - severity: ENUM (LOW, MEDIUM, HIGH, CRITICAL)
+          - confidence_score: DECIMAL(3,2)
+          - evidence_data: JSONB
+          - automated_response: ENUM (MONITOR, WARNING, RESTRICTION, SUSPENSION, BAN)
+          - manual_review_required: BOOLEAN (default: false)
+          - reviewed_by: UUID (FK admin_users, nullable)
+          - reviewed_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+        indexes:
+          - player_id, created_at
+          - incident_type, severity
+          - manual_review_required, created_at
+
+      - name: anti_cheat_validation_logs
+        description: Логи валидации античита
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - validation_type: ENUM (POSITION, SPEED, ACTION_FREQUENCY, HIT_REGISTRATION, RESOURCE_USE)
+          - client_value: DECIMAL(10,2)
+          - server_value: DECIMAL(10,2)
+          - discrepancy: DECIMAL(10,2)
+          - is_anomaly: BOOLEAN
+          - timestamp: TIMESTAMP
+          - game_session_id: UUID
+        indexes:
+          - player_id, timestamp
+          - validation_type, is_anomaly
+          - game_session_id
+
+      - name: player_trust_scores
+        description: Уровни доверия игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - trust_score: DECIMAL(5,2)
+          - risk_level: ENUM (LOW, MEDIUM, HIGH, CRITICAL)
+          - factors: JSONB
+          - last_updated: TIMESTAMP
+          - calculated_at: TIMESTAMP
+        indexes:
+          - player_id (unique)
+          - trust_score
+          - risk_level
+
+      - name: anti_cheat_evidence
+        description: Доказательства нарушений
+        fields:
+          - id: UUID (PK)
+          - incident_id: UUID (FK player_cheat_incidents)
+          - evidence_type: ENUM (REPLAY, TELEMETRY, SCREENSHOT, LOG, REPORT)
+          - file_path: TEXT
+          - metadata: JSONB
+          - retention_days: INTEGER
+          - created_at: TIMESTAMP
+        indexes:
+          - incident_id
+          - evidence_type
+          - retention_days, created_at
+
+      - name: anti_cheat_rules
+        description: Правила обнаружения античита
+        fields:
+          - id: UUID (PK)
+          - rule_name: VARCHAR(255)
+          - rule_type: ENUM (VALIDATION, ANALYTICS, BEHAVIOR)
+          - conditions: JSONB
+          - actions: JSONB
+          - is_active: BOOLEAN (default: true)
+          - priority: INTEGER
+          - created_at: TIMESTAMP
+        indexes:
+          - rule_type, is_active
+          - priority
+
+      - name: anti_cheat_metrics
+        description: Метрики античита
+        fields:
+          - id: UUID (PK)
+          - date: DATE
+          - total_validations: BIGINT
+          - anomalies_detected: INTEGER
+          - false_positives: INTEGER
+          - incidents_investigated: INTEGER
+          - bans_issued: INTEGER
+          - detection_accuracy: DECIMAL(5,4)
+          - average_response_time: INTEGER
+        indexes:
+          - date
+
+      - name: player_behavior_profiles
+        description: Профили поведения игроков
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK players)
+          - profile_data: JSONB
+          - risk_indicators: JSONB
+          - last_analyzed: TIMESTAMP
+          - model_version: VARCHAR(50)
+        indexes:
+          - player_id
+          - last_analyzed
+
+  validation:
+    architecture_complete: true
+    components_defined: true
+    microservices_identified: true
+    api_endpoints_described: true
+    technical_specification_ready: true
+    subtasks_defined: true
+
+  next_steps:
+    - Передача задачи агенту API Designer для создания OpenAPI спецификации anti-cheat API
+    - Детализация ML models для behavioral analysis
+    - Создание схем evidence collection and storage
+    - Определение detection rule engine
+    - Планирование интеграции с anti-cheat-service-go
+
+  history:
+    - version: '2.0.0'
+      date: 2025-12-28
+      author: Architect Agent
+      changes: |
+        Создана полная архитектура Anti-Cheat System
+        Расширены компоненты обнаружения читерства
+        Добавлена схема БД и метрики производительности
+        Определены security и scalability требования
+        Статус изменен на final
