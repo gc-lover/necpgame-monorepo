@@ -123,9 +123,10 @@ func main() {
 				r.Get("/everything-bigger", h.GetEverythingBiggerQuest) // GET /api/v1/quests/dallas/everything-bigger
 			})
 
-			// Buenos Aires Quests - Issue: #140929841
+			// Buenos Aires Quests - Issues: #140929841, #140929844
 			r.Route("/buenos-aires", func(r chi.Router) {
-				r.Get("/tango-dance", h.GetTangoDanceQuest) // GET /api/v1/quests/buenos-aires/tango-dance
+				r.Get("/tango-dance", h.GetTangoDanceQuest)      // GET /api/v1/quests/buenos-aires/tango-dance
+				r.Get("/la-boca-caminito", h.GetLaBocaCaminitoQuest) // GET /api/v1/quests/buenos-aires/la-boca-caminito
 			})
 		})
 

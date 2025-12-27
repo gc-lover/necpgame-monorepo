@@ -80,6 +80,16 @@ type GuildServiceInterface interface {
 	GetPlayerGuilds(ctx context.Context, playerID uuid.UUID) ([]*Guild, error)
 	JoinGuild(ctx context.Context, guildID, playerID uuid.UUID) error
 	LeaveGuild(ctx context.Context, guildID, playerID uuid.UUID) error
+
+	// WebRTC Voice Channel Integration
+	CreateVoiceChannel(ctx context.Context, guildID uuid.UUID, name, description string, maxUsers int, isPrivate bool, creatorID uuid.UUID) (*GuildVoiceChannel, error)
+	GetVoiceChannel(ctx context.Context, channelID uuid.UUID) (*GuildVoiceChannel, error)
+	ListVoiceChannels(ctx context.Context, guildID uuid.UUID) ([]*GuildVoiceChannel, error)
+	UpdateVoiceChannel(ctx context.Context, channelID uuid.UUID, name, description string, maxUsers int) error
+	DeleteVoiceChannel(ctx context.Context, channelID uuid.UUID) error
+	JoinVoiceChannel(ctx context.Context, channelID, userID uuid.UUID) (*GuildVoiceParticipant, error)
+	LeaveVoiceChannel(ctx context.Context, channelID, userID uuid.UUID) error
+	ListVoiceParticipants(ctx context.Context, channelID uuid.UUID) ([]*GuildVoiceParticipant, error)
 }
 
 // NewHandler creates a new handler instance
@@ -981,4 +991,253 @@ func (h *Handler) LeaveGuild(ctx context.Context, params api.LeaveGuildParams) (
 		zap.String("playerID", params.PlayerId.String()))
 
 	return &api.LeaveGuildOK{}, nil
+}
+
+// WebRTC Voice Channel Integration Methods
+// Issue: #2263 - WebRTC Signaling Service Integration with Guild System
+
+// CreateVoiceChannel implements POST /api/v1/guilds/{guildId}/voice-channels
+// PERFORMANCE: <50ms P95, creates voice channel and WebRTC signaling channel
+func (h *Handler) CreateVoiceChannel(ctx context.Context, params api.CreateVoiceChannelParams) (api.CreateVoiceChannelRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+	defer cancel()
+
+	// Extract user ID from context
+	userID := getUserIDFromContext(ctx)
+	if userID == "" {
+		return &api.CreateVoiceChannelUnauthorized{
+			Message: "Unauthorized",
+			Code:    401,
+		}, nil
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return &api.CreateVoiceChannelBadRequest{
+			Message: "Invalid user ID",
+			Code:    400,
+		}, nil
+	}
+
+	// Create voice channel
+	channel, err := h.service.CreateVoiceChannel(ctx, params.GuildId, params.Name, params.Description,
+		params.MaxUsers, params.IsPrivate, userUUID)
+	if err != nil {
+		h.logger.Error("Failed to create voice channel", zap.Error(err))
+		return &api.CreateVoiceChannelBadRequest{
+			Message: err.Error(),
+			Code:    400,
+		}, nil
+	}
+
+	h.logger.Info("Voice channel created successfully",
+		zap.String("guildID", params.GuildId.String()),
+		zap.String("channelID", channel.ID.String()),
+		zap.String("channelName", channel.Name))
+
+	return &api.CreateVoiceChannelOK{
+		Data: api.VoiceChannel{
+			Id:          &channel.ID,
+			GuildId:     &channel.GuildID,
+			Name:        &channel.Name,
+			Description: &channel.Description,
+			ChannelId:   &channel.ChannelID,
+			MaxUsers:    &channel.MaxUsers,
+			IsPrivate:   &channel.IsPrivate,
+			CreatedBy:   &channel.CreatedBy,
+			CreatedAt:   &channel.CreatedAt,
+			UpdatedAt:   &channel.UpdatedAt,
+			Status:      &channel.Status,
+		},
+	}, nil
+}
+
+// GetVoiceChannel implements GET /api/v1/guilds/{guildId}/voice-channels/{channelId}
+// PERFORMANCE: <10ms P95, cached channel retrieval
+func (h *Handler) GetVoiceChannel(ctx context.Context, params api.GetVoiceChannelParams) (api.GetVoiceChannelRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Millisecond)
+	defer cancel()
+
+	channel, err := h.service.GetVoiceChannel(ctx, params.ChannelId)
+	if err != nil {
+		h.logger.Error("Failed to get voice channel", zap.Error(err))
+		return &api.GetVoiceChannelNotFound{
+			Message: "Voice channel not found",
+			Code:    404,
+		}, nil
+	}
+
+	return &api.GetVoiceChannelOK{
+		Data: api.VoiceChannel{
+			Id:          &channel.ID,
+			GuildId:     &channel.GuildID,
+			Name:        &channel.Name,
+			Description: &channel.Description,
+			ChannelId:   &channel.ChannelID,
+			MaxUsers:    &channel.MaxUsers,
+			IsPrivate:   &channel.IsPrivate,
+			CreatedBy:   &channel.CreatedBy,
+			CreatedAt:   &channel.CreatedAt,
+			UpdatedAt:   &channel.UpdatedAt,
+			Status:      &channel.Status,
+		},
+	}, nil
+}
+
+// ListVoiceChannels implements GET /api/v1/guilds/{guildId}/voice-channels
+// PERFORMANCE: <25ms P95, paginated channel listing
+func (h *Handler) ListVoiceChannels(ctx context.Context, params api.ListVoiceChannelsParams) (api.ListVoiceChannelsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, 25*time.Millisecond)
+	defer cancel()
+
+	channels, err := h.service.ListVoiceChannels(ctx, params.GuildId)
+	if err != nil {
+		h.logger.Error("Failed to list voice channels", zap.Error(err))
+		return &api.ListVoiceChannelsBadRequest{
+			Message: err.Error(),
+			Code:    400,
+		}, nil
+	}
+
+	var apiChannels []api.VoiceChannel
+	for _, channel := range channels {
+		apiChannels = append(apiChannels, api.VoiceChannel{
+			Id:          &channel.ID,
+			GuildId:     &channel.GuildID,
+			Name:        &channel.Name,
+			Description: &channel.Description,
+			ChannelId:   &channel.ChannelID,
+			MaxUsers:    &channel.MaxUsers,
+			IsPrivate:   &channel.IsPrivate,
+			CreatedBy:   &channel.CreatedBy,
+			CreatedAt:   &channel.CreatedAt,
+			UpdatedAt:   &channel.UpdatedAt,
+			Status:      &channel.Status,
+		})
+	}
+
+	return &api.ListVoiceChannelsOK{
+		Data: apiChannels,
+	}, nil
+}
+
+// JoinVoiceChannel implements POST /api/v1/guilds/{guildId}/voice-channels/{channelId}/join
+// PERFORMANCE: <15ms P95, participant management
+func (h *Handler) JoinVoiceChannel(ctx context.Context, params api.JoinVoiceChannelParams) (api.JoinVoiceChannelRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Millisecond)
+	defer cancel()
+
+	// Extract user ID from context
+	userID := getUserIDFromContext(ctx)
+	if userID == "" {
+		return &api.JoinVoiceChannelUnauthorized{
+			Message: "Unauthorized",
+			Code:    401,
+		}, nil
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return &api.JoinVoiceChannelBadRequest{
+			Message: "Invalid user ID",
+			Code:    400,
+		}, nil
+	}
+
+	participant, err := h.service.JoinVoiceChannel(ctx, params.ChannelId, userUUID)
+	if err != nil {
+		h.logger.Error("Failed to join voice channel", zap.Error(err))
+		return &api.JoinVoiceChannelBadRequest{
+			Message: err.Error(),
+			Code:    400,
+		}, nil
+	}
+
+	h.logger.Info("User joined voice channel",
+		zap.String("channelID", params.ChannelId.String()),
+		zap.String("userID", userUUID.String()))
+
+	return &api.JoinVoiceChannelOK{
+		Data: api.VoiceParticipant{
+			UserId:     &participant.UserID,
+			ChannelId:  &participant.ChannelID,
+			GuildId:    &participant.GuildID,
+			JoinedAt:   &participant.JoinedAt,
+			IsMuted:    &participant.IsMuted,
+			IsDeafened: &participant.IsDeafened,
+			WebrtcId:   &participant.WebRTCID,
+		},
+	}, nil
+}
+
+// LeaveVoiceChannel implements POST /api/v1/guilds/{guildId}/voice-channels/{channelId}/leave
+// PERFORMANCE: <10ms P95, participant cleanup
+func (h *Handler) LeaveVoiceChannel(ctx context.Context, params api.LeaveVoiceChannelParams) (api.LeaveVoiceChannelRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Millisecond)
+	defer cancel()
+
+	// Extract user ID from context
+	userID := getUserIDFromContext(ctx)
+	if userID == "" {
+		return &api.LeaveVoiceChannelUnauthorized{
+			Message: "Unauthorized",
+			Code:    401,
+		}, nil
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return &api.LeaveVoiceChannelBadRequest{
+			Message: "Invalid user ID",
+			Code:    400,
+		}, nil
+	}
+
+	err = h.service.LeaveVoiceChannel(ctx, params.ChannelId, userUUID)
+	if err != nil {
+		h.logger.Error("Failed to leave voice channel", zap.Error(err))
+		return &api.LeaveVoiceChannelBadRequest{
+			Message: err.Error(),
+			Code:    400,
+		}, nil
+	}
+
+	h.logger.Info("User left voice channel",
+		zap.String("channelID", params.ChannelId.String()),
+		zap.String("userID", userUUID.String()))
+
+	return &api.LeaveVoiceChannelOK{}, nil
+}
+
+// ListVoiceParticipants implements GET /api/v1/guilds/{guildId}/voice-channels/{channelId}/participants
+// PERFORMANCE: <20ms P95, real-time participant listing
+func (h *Handler) ListVoiceParticipants(ctx context.Context, params api.ListVoiceParticipantsParams) (api.ListVoiceParticipantsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, 20*time.Millisecond)
+	defer cancel()
+
+	participants, err := h.service.ListVoiceParticipants(ctx, params.ChannelId)
+	if err != nil {
+		h.logger.Error("Failed to list voice participants", zap.Error(err))
+		return &api.ListVoiceParticipantsBadRequest{
+			Message: err.Error(),
+			Code:    400,
+		}, nil
+	}
+
+	var apiParticipants []api.VoiceParticipant
+	for _, participant := range participants {
+		apiParticipants = append(apiParticipants, api.VoiceParticipant{
+			UserId:     &participant.UserID,
+			ChannelId:  &participant.ChannelID,
+			GuildId:    &participant.GuildID,
+			JoinedAt:   &participant.JoinedAt,
+			IsMuted:    &participant.IsMuted,
+			IsDeafened: &participant.IsDeafened,
+			WebrtcId:   &participant.WebRTCID,
+		})
+	}
+
+	return &api.ListVoiceParticipantsOK{
+		Data: apiParticipants,
+	}, nil
 }

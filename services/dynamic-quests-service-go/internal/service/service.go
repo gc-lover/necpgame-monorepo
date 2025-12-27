@@ -1505,6 +1505,416 @@ func (s *Service) Get8MileRoadJourneyQuest(ctx context.Context) (*models.Dynamic
 	return quest, nil
 }
 
+// GetLaBocaCaminitoQuest returns the La Boca Caminito quest for Buenos Aires
+// Issue: #140929844
+func (s *Service) GetLaBocaCaminitoQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving La Boca Caminito quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "canon-quest-buenos-aires-2029-002-caminito",
+		Title:            "Буэнос-Айрес: La Boca и Caminito",
+		Description:      "Исследуйте яркий район La Boca, прогуляйтесь по знаменитой улице Caminito и погрузитесь в культуру итальянских иммигрантов",
+		QuestType:        "side",
+		MinLevel:         1,
+		MaxLevel:         0, // No max level
+		EstimatedDuration: 120,
+		Difficulty:       "easy",
+		Themes:           []string{"culture", "art", "sports", "history", "tourism"},
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "caminito_color_walk",
+				Sequence:    1,
+				Title:       "Прогулка по Caminito",
+				Description: "Пройдитесь по знаменитой пешеходной улице с разноцветными домами",
+				Context:     "Начало вашего путешествия по самому яркому району Буэнос-Айреса",
+				Choices: []models.Choice{
+					{
+						ID:             "photograph_colors",
+						Text:           "Фотографировать разноцветные дома",
+						Description:    "Сделать серию фотографий уникальной архитектуры района",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "aesthetics",
+								Value:       float64(10),
+								Probability: 1.0,
+								Description: "Увеличение эстетической репутации",
+							},
+							{
+								Type:        "skill_boost",
+								Target:      "cultural_awareness",
+								Value:       float64(5),
+								Probability: 1.0,
+								Description: "Улучшение навыка культурного восприятия",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "buy_art_souvenirs",
+						Text:           "Купить художественные сувениры",
+						Description:    "Приобрести местные поделки и картины",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "aesthetics",
+								Value:       float64(15),
+								Probability: 1.0,
+								Description: "Увеличение эстетической репутации",
+							},
+							{
+								Type:        "currency",
+								Target:      "player_wallet",
+								Value:       float64(-10),
+								Probability: 1.0,
+								Description: "Покупка сувениров",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "street_artists_dialogue",
+				Sequence:    2,
+				Title:       "Встреча с уличными артистами",
+				Description: "Поговорите с танцорами и музыкантами на улицах La Boca",
+				Context:     "Продолжите знакомство с живой культурой района",
+				Choices: []models.Choice{
+					{
+						ID:             "learn_tango_basics",
+						Text:           "Взять мини-урок танго",
+						Description:    "Освоить базовые шаги аргентинского танго",
+						Consequences: []models.Consequence{
+							{
+								Type:        "skill_boost",
+								Target:      "dance_skill",
+								Value:       float64(8),
+								Probability: 1.0,
+								Description: "Улучшение навыка танцев",
+							},
+							{
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(12),
+								Probability: 1.0,
+								Description: "Увеличение социальной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "listen_to_stories",
+						Text:           "Послушать истории артистов",
+						Description:    "Узнать о жизни района от местных жителей",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(15),
+								Probability: 1.0,
+								Description: "Увеличение культурной репутации",
+							},
+							{
+								Type:        "skill_boost",
+								Target:      "cultural_awareness",
+								Value:       float64(10),
+								Probability: 1.0,
+								Description: "Улучшение навыка культурного восприятия",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "artist_workshop_visit",
+				Sequence:    3,
+				Title:       "Мастерская художников",
+				Description: "Посетите студию, где узнаете историю разноцветных красок района",
+				Context:     "Погрузитесь в художественное наследие La Boca",
+				Choices: []models.Choice{
+					{
+						ID:             "paint_with_artists",
+						Text:           "Попробовать рисовать",
+						Description:    "Взять кисть и создать собственное произведение",
+						Consequences: []models.Consequence{
+							{
+								Type:        "skill_boost",
+								Target:      "artistic_skill",
+								Value:       float64(12),
+								Probability: 1.0,
+								Description: "Улучшение художественных навыков",
+							},
+							{
+								Type:        "reputation",
+								Target:      "aesthetics",
+								Value:       float64(18),
+								Probability: 1.0,
+								Description: "Значительное увеличение эстетической репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "learn_paint_history",
+						Text:           "Изучить историю красок",
+						Description:    "Узнать о корабельной краске и традициях района",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(20),
+								Probability: 1.0,
+								Description: "Значительное увеличение культурной репутации",
+							},
+							{
+								Type:        "skill_boost",
+								Target:      "cultural_awareness",
+								Value:       float64(15),
+								Probability: 1.0,
+								Description: "Значительное улучшение культурного восприятия",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "bombonera_stadium",
+				Sequence:    4,
+				Title:       "Стадион La Bombonera",
+				Description: "Посетите легендарный стадион Boca Juniors и познакомьтесь с фан-культурой",
+				Context:     "Кульминация путешествия - сердце аргентинского футбола",
+				Choices: []models.Choice{
+					{
+						ID:             "join_fans",
+						Text:           "Присоединиться к фанатам",
+						Description:    "Петь песни и поддерживать команду вместе с болельщиками",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(20),
+								Probability: 1.0,
+								Description: "Значительное увеличение социальной репутации",
+							},
+							{
+								Type:        "skill_boost",
+								Target:      "social_connections",
+								Value:       float64(10),
+								Probability: 1.0,
+								Description: "Улучшение навыка социальных связей",
+							},
+						},
+						RiskLevel:      "medium",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "explore_history",
+						Text:           "Изучить историю стадиона",
+						Description:    "Узнать о легендах Boca Juniors и Диего Марадоне",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(25),
+								Probability: 1.0,
+								Description: "Значительное увеличение культурной репутации",
+							},
+							{
+								Type:        "skill_boost",
+								Target:      "cultural_awareness",
+								Value:       float64(20),
+								Probability: 1.0,
+								Description: "Значительное улучшение культурного восприятия",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+			{
+				ID:          "final_event_choice",
+				Sequence:    5,
+				Title:       "Финальное событие",
+				Description: "Выберите, как завершить день в La Boca",
+				Context:     "Ваш последний выбор определит впечатление от района",
+				Choices: []models.Choice{
+					{
+						ID:             "evening_milonga",
+						Text:           "Вечерняя милонга",
+						Description:    "Закончить день танцами под звездами",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "cultural",
+								Value:       float64(30),
+								Probability: 1.0,
+								Description: "Максимальное увеличение культурной репутации",
+							},
+							{
+								Type:        "achievement",
+								Target:      "la_boca_master",
+								Value:       float64(1),
+								Probability: 1.0,
+								Description: "Получение достижения 'Хозяин La Boca'",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "street_celebration",
+						Text:           "Уличное празднование",
+						Description:    "Присоединиться к спонтанному празднику на улицах",
+						Consequences: []models.Consequence{
+							{
+								Type:        "reputation",
+								Target:      "social",
+								Value:       float64(25),
+								Probability: 1.0,
+								Description: "Значительное увеличение социальной репутации",
+							},
+							{
+								Type:        "achievement",
+								Target:      "la_boca_master",
+								Value:       float64(1),
+								Probability: 1.0,
+								Description: "Получение достижения 'Хозяин La Boca'",
+							},
+						},
+						RiskLevel:      "medium",
+						MoralAlignment: "good",
+					},
+				},
+				TimeLimit: nil,
+				Critical:  false,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "la_boca_artist",
+				Title:       "Художник La Boca",
+				Description: "Стали частью художественного наследия района",
+				Requirements: []string{"paint_with_artists", "learn_paint_history", "evening_milonga"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 1200},
+					{Type: "currency", Value: -20},
+					{Type: "achievement", Value: "la_boca_artist"},
+				},
+				Narrative: "Искусство La Boca теперь течет в ваших венах, как разноцветная краска на стенах района.",
+			},
+			{
+				ID:          "boca_fan",
+				Title:       "Фанат Boca Juniors",
+				Description: "Завоевали сердца болельщиков легендарного клуба",
+				Requirements: []string{"join_fans", "explore_history", "street_celebration"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 1100},
+					{Type: "currency", Value: -15},
+					{Type: "achievement", Value: "boca_fan"},
+				},
+				Narrative: "Вы стали частью великой традиции - поклонения команде, которая живет в сердцах миллионов.",
+			},
+			{
+				ID:          "cultural_explorer",
+				Title:       "Культурный исследователь",
+				Description: "Глубоко поняли дух итальянских иммигрантов La Boca",
+				Requirements: []string{"photograph_colors", "listen_to_stories", "learn_paint_history"},
+				Rewards: []models.Reward{
+					{Type: "experience", Value: 1000},
+					{Type: "currency", Value: -10},
+					{Type: "achievement", Value: "cultural_explorer_la_boca"},
+				},
+				Narrative: "История района открылась вам, как страницы старой книги о мечтах иммигрантов.",
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "la_boca_locals",
+				Change:      20,
+				Description: "Уважение местных жителей за интерес к их культуре",
+				ChoiceID:    "evening_milonga",
+			},
+			{
+				Faction:     "boca_juniors_fans",
+				Change:      15,
+				Description: "Симпатия фанатов Boca Juniors",
+				ChoiceID:    "join_fans",
+			},
+			{
+				Faction:     "buenos_aires_artists",
+				Change:      18,
+				Description: "Уважение художественного сообщества",
+				ChoiceID:    "paint_with_artists",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "La Boca, Buenos Aires, Argentina",
+			TimePeriod:  "2020-2029",
+			Weather:     "warm and colorful afternoon",
+			Situation:   "The vibrant streets of La Boca call to you with their rainbow houses and passionate culture",
+			Objectives: []string{
+				"Walk the colorful Caminito street and capture its beauty",
+				"Meet street artists and learn about tango traditions",
+				"Visit artist workshops and discover the paint history",
+				"Explore La Bombonera stadium and Boca Juniors culture",
+				"Choose your final celebration in La Boca",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "street_artist",
+				Name:        "Мария 'Ла Артиста' Гонсалес",
+				Role:        "Уличная художница",
+				Description: "Местная артистка, знающая все секреты красок La Boca",
+				Importance:  "primary",
+			},
+			{
+				ID:          "tango_dancer",
+				Name:        "Карлос 'Эль Тангуэро' Родригес",
+				Role:        "Уличный танцор",
+				Description: "Страстный тангеро, готовый научить основам танго",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "boca_fan",
+				Name:        "Хуан 'Ла Бомбонера' Мартинес",
+				Role:        "Фанат Boca Juniors",
+				Description: "Завзятый болельщик, знающий все легенды клуба",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "museum_curator",
+				Name:        "Доктор Анна 'Ла Хисторика' Лопес",
+				Role:        "Куратор музея",
+				Description: "Эксперт по истории итальянских иммигрантов в La Boca",
+				Importance:  "ally",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
 // GetRedWingsHockeyQuest returns the Red Wings Hockey quest for Detroit
 func (s *Service) GetRedWingsHockeyQuest(ctx context.Context) (*models.DynamicQuest, error) {
 	s.logger.Info("Retrieving Red Wings Hockey quest definition")

@@ -40,3 +40,29 @@ type GuildAnnouncement struct {
 	AuthorID  uuid.UUID `json:"author_id"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+// GuildVoiceChannel represents a guild voice channel integrated with WebRTC signaling
+type GuildVoiceChannel struct {
+	ID          uuid.UUID `json:"id"`
+	GuildID     uuid.UUID `json:"guild_id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	ChannelID   string    `json:"channel_id"`   // WebRTC signaling channel ID
+	MaxUsers    int       `json:"max_users"`
+	IsPrivate   bool      `json:"is_private"`
+	CreatedBy   uuid.UUID `json:"created_by"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Status      string    `json:"status"` // active, inactive, maintenance
+}
+
+// GuildVoiceParticipant represents a participant in a guild voice channel
+type GuildVoiceParticipant struct {
+	UserID      uuid.UUID `json:"user_id"`
+	ChannelID   uuid.UUID `json:"channel_id"`
+	GuildID     uuid.UUID `json:"guild_id"`
+	JoinedAt    time.Time `json:"joined_at"`
+	IsMuted     bool      `json:"is_muted"`
+	IsDeafened  bool      `json:"is_deafened"`
+	WebRTCID    string    `json:"webrtc_id"` // WebRTC signaling participant ID
+}

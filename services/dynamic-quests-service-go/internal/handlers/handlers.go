@@ -528,6 +528,21 @@ func (h *Handlers) GetTangoDanceQuest(w http.ResponseWriter, r *http.Request) {
 	h.respondJSON(w, http.StatusOK, quest)
 }
 
+// GetLaBocaCaminitoQuest handles GET /quests/buenos-aires/la-boca-caminito
+// Issue: #140929844
+func (h *Handlers) GetLaBocaCaminitoQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get La Boca Caminito quest request")
+
+	quest, err := h.service.GetLaBocaCaminitoQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get La Boca Caminito quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
 // GetOilLegacyQuest handles GET /quests/dallas/oil-legacy
 // Issue: #140928929
 func (h *Handlers) GetOilLegacyQuest(w http.ResponseWriter, r *http.Request) {
