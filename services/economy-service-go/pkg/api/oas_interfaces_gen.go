@@ -33,6 +33,18 @@ type GetAuctionsRes interface {
 	getAuctionsRes()
 }
 
+type GetCharacterInventoryRes interface {
+	getCharacterInventoryRes()
+}
+
+type GetCraftingRecipesRes interface {
+	getCraftingRecipesRes()
+}
+
+type GetEconomyOverviewRes interface {
+	getEconomyOverviewRes()
+}
+
 type GetMarketOverviewRes interface {
 	getMarketOverviewRes()
 }
@@ -49,6 +61,10 @@ type GetPlayerTransactionHistoryRes interface {
 	getPlayerTransactionHistoryRes()
 }
 
+type GetPlayerWalletRes interface {
+	getPlayerWalletRes()
+}
+
 type GetTradeDetailsRes interface {
 	getTradeDetailsRes()
 }
@@ -63,4 +79,8 @@ type PlaceBidRes interface {
 
 type ReadinessCheckRes interface {
 	readinessCheckRes()
+}
+
+type UpdatePlayerWalletRes interface {
+	updatePlayerWalletRes()
 }

@@ -22,257 +22,241 @@ type RelationshipManager struct {
 }
 
 type PlayerRelationship struct {
-    PlayerID     string
-    NPCID        string
-    Relationship RelationshipLevel
-    Trust        int
-    Loyalty      int
+    PlayerID      string
+    NPCID         string
+    RelationshipLevel int    // -100 to +100 scale
+    TrustLevel    int       // 0-100 scale
     LastInteraction time.Time
-    Events       []RelationshipEvent
+    Interactions  []InteractionRecord
+}
+
+type InteractionRecord struct {
+    Timestamp time.Time
+    Type      string // "dialogue", "trade", "quest", "combat"
+    Outcome   string // "positive", "negative", "neutral"
+    Impact    int    // relationship impact value
 }
 ```
 
-### 2. Quest/Order System (Система заказов)
+- **Ответственность:** Управление уровнем отношений между игроками и NPC, расчет репутации и влияния.
+- **Взаимодействие:** Получает события от других систем (диалоги, квесты, торговля) и обновляет отношения.
+
+### 2. Order System (Система заказов)
 
 ```go
 type OrderSystem struct {
-    activeOrders map[string]*PlayerOrder
-    orderQueue   chan *OrderRequest
-    workers      []*OrderWorker
+    activeOrders map[string]*PlayerOrder // orderID -> order
+    orderTemplates map[string]*OrderTemplate
+    executorPool *ExecutorPool
+    logger      *zap.Logger
 }
 
 type PlayerOrder struct {
     ID          string
     PlayerID    string
-    Type        OrderType // escort, delivery, assassination, etc.
+    Type        string // "delivery", "assassination", "collection", "escort"
     Target      string
     Reward      OrderReward
     Deadline    time.Time
-    Status      OrderStatus
-    AssignedNPC *NPC
+    Status      string // "open", "claimed", "completed", "failed", "expired"
+    ClaimedBy   string // NPC ID who claimed the order
+}
+
+type OrderReward struct {
+    Currency int
+    Items    []string
+    Reputation int
+    Experience int
+}
+
+type ExecutorPool struct {
+    availableNPCs map[string]*NPCExecutor
+    busyNPCs      map[string]*NPCExecutor
+    skillIndex    map[string][]string // skill -> npcIDs
 }
 ```
+
+- **Ответственность:** Управление заказами от игроков NPC-исполнителям, обработка выполнения заказов.
+- **Взаимодействие:** Интегрируется с квестовой системой и экономикой.
 
 ### 3. NPC Hiring System (Система найма NPC)
 
 ```go
 type NPCHiringSystem struct {
-    availableNPCs map[string]*HireableNPC
-    contracts     map[string]*NPCContract
-    scheduler     *NPCScheduler
+    availableNPCs map[string]*HirableNPC
+    hiredNPCs     map[string]*HiredNPC      // playerID -> hired NPCs
+    contractManager *ContractManager
+    logger        *zap.Logger
 }
 
-type HireableNPC struct {
+type HirableNPC struct {
+    NPCID       string
+    Name        string
+    Skills      []string
+    BaseCost    int
+    Availability string // "always", "limited", "quest_unlocked"
+    Requirements HirableRequirements
+}
+
+type HiredNPC struct {
+    NPCID       string
+    PlayerID    string
+    Contract    *NPCContract
+    Status      string // "active", "on_mission", "resting", "dismissed"
+    Loyalty     int    // 0-100 scale
+    Experience  int    // earned experience
+}
+
+type NPCContract struct {
+    Duration    time.Duration
+    Salary      int
+    Bonuses     []string
+    TerminationTerms string
+    SignedAt    time.Time
+    ExpiresAt   time.Time
+}
+```
+
+- **Ответственность:** Управление наймом NPC игроками, обработка контрактов и лояльности.
+- **Взаимодействие:** Работает с Relationship Manager для расчета лояльности.
+
+### 4. Social Quest Engine (Движок социальных квестов)
+
+```go
+type SocialQuestEngine struct {
+    activeQuests map[string]*SocialQuest
+    questGenerator *QuestGenerator
+    relationshipTracker *RelationshipTracker
+    logger       *zap.Logger
+}
+
+type SocialQuest struct {
+    ID          string
+    PlayerID    string
+    NPCID       string
+    Type        string // "relationship", "influence", "networking", "alliance"
+    Objectives  []QuestObjective
+    Rewards     SocialRewards
+    Status      string // "active", "completed", "failed"
+    Progress    map[string]int // objectiveID -> progress
+}
+
+type QuestObjective struct {
+    ID          string
+    Type        string // "improve_relationship", "gain_influence", "network_contacts"
+    Target      string
+    RequiredValue int
+    CurrentValue int
+}
+
+type SocialRewards struct {
+    RelationshipBonus int
+    InfluenceBonus    int
+    NewContacts      []string // NPC IDs
+    SpecialAccess    []string // unlocked locations/quests
+}
+```
+
+- **Ответственность:** Генерация и управление социальными квестами на основе отношений игрока.
+- **Взаимодействие:** Интегрируется с основной квестовой системой.
+
+### 5. Faction Dynamics (Динамика фракций)
+
+```go
+type FactionDynamics struct {
+    factions     map[string]*Faction
+    alliances    map[string][]string // factionID -> allied factionIDs
+    conflicts    map[string][]string // factionID -> conflicting factionIDs
+    influenceMap map[string]map[string]int // region -> faction -> influence
+    logger       *zap.Logger
+}
+
+type Faction struct {
     ID          string
     Name        string
-    Class       NPCClass
-    Skills      []NPCSkill
-    Price       int
-    Availability NPCAvailability
-    Reputation  int
+    Leader      string // NPC ID
+    Members     []string // NPC IDs
+    Reputation  int      // global reputation score
+    Resources   int      // economic power
+    MilitaryPower int    // combat strength
+    Influence   map[string]int // region -> influence level
 }
 ```
 
-## Система отношений
-
-### Уровни отношений
-- **Stranger** (0-10): Незнакомец
-- **Acquaintance** (11-30): Знакомый
-- **Friend** (31-60): Друг
-- **Close Friend** (61-90): Близкий друг
-- **Trusted Ally** (91+): Доверенный союзник
-
-### Факторы влияния
-- **Trust**: Доверие (влияет на торговлю, информацию)
-- **Loyalty**: Лояльность (влияет на помощь в бою)
-- **Reputation**: Репутация (влияет на социальный статус)
-
-## Типы заказов
-
-### 1. Escort Missions (Сопровождение)
-- Защита NPC во время путешествия
-- Безопасная доставка ценностей
-- Сопровождение караванов
-
-### 2. Delivery Quests (Доставка)
-- Передача сообщений
-- Доставка предметов
-- Срочные посылки
-
-### 3. Assassination Contracts (Контракты)
-- Устранение целей
-- Сбор информации
-- Саботаж
-
-### 4. Investigation Tasks (Расследования)
-- Поиск пропавших людей
-- Расследование преступлений
-- Сбор улик
-
-## Система найма NPC
-
-### Классы NPC
-- **Mercenary** (Наемник): Бойцы для сопровождения
-- **Courier** (Курьер): Специалисты по доставке
-- **Informant** (Информатор): Источники информации
-- **Specialist** (Специалист): Уникальные навыки
-
-### Навыки NPC
-- Combat Skills (Боевые навыки)
-- Stealth Skills (Скрытность)
-- Social Skills (Социальные навыки)
-- Technical Skills (Технические навыки)
-
-## API Интерфейсы
-
-### Relationship Management
-
-```go
-// Get player relationships
-GET /api/v1/social/relationships/{playerId}
-
-// Update relationship
-POST /api/v1/social/relationships/{playerId}/{npcId}
-
-// Get reputation with factions
-GET /api/v1/social/reputation/{playerId}
-```
-
-### Order System
-
-```go
-// Get available orders
-GET /api/v1/social/orders/available
-
-// Accept order
-POST /api/v1/social/orders/{orderId}/accept
-
-// Complete order
-POST /api/v1/social/orders/{orderId}/complete
-```
-
-### NPC Hiring
-
-```go
-// Get available NPCs for hire
-GET /api/v1/social/npcs/available
-
-// Hire NPC
-POST /api/v1/social/npcs/{npcId}/hire
-
-// Manage contract
-PUT /api/v1/social/contracts/{contractId}
-```
-
-## База данных
-
-### Таблицы отношений
-
-```sql
-CREATE TABLE player_relationships (
-    player_id VARCHAR(36) NOT NULL,
-    npc_id VARCHAR(36) NOT NULL,
-    relationship_level INT DEFAULT 0,
-    trust INT DEFAULT 0,
-    loyalty INT DEFAULT 0,
-    last_interaction TIMESTAMP,
-    PRIMARY KEY (player_id, npc_id)
-);
-
-CREATE TABLE relationship_events (
-    id VARCHAR(36) PRIMARY KEY,
-    player_id VARCHAR(36) NOT NULL,
-    npc_id VARCHAR(36) NOT NULL,
-    event_type VARCHAR(50) NOT NULL,
-    impact INT NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Таблицы заказов
-
-```sql
-CREATE TABLE player_orders (
-    id VARCHAR(36) PRIMARY KEY,
-    player_id VARCHAR(36) NOT NULL,
-    order_type VARCHAR(50) NOT NULL,
-    target VARCHAR(255),
-    reward_gold INT DEFAULT 0,
-    reward_items JSON,
-    deadline TIMESTAMP,
-    status VARCHAR(20) DEFAULT 'active',
-    assigned_npc_id VARCHAR(36),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Таблицы найма NPC
-
-```sql
-CREATE TABLE hireable_npcs (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    class VARCHAR(50) NOT NULL,
-    skills JSON,
-    base_price INT NOT NULL,
-    availability VARCHAR(20) DEFAULT 'available',
-    reputation INT DEFAULT 0
-);
-
-CREATE TABLE npc_contracts (
-    id VARCHAR(36) PRIMARY KEY,
-    player_id VARCHAR(36) NOT NULL,
-    npc_id VARCHAR(36) NOT NULL,
-    contract_type VARCHAR(50) NOT NULL,
-    duration_hours INT NOT NULL,
-    payment INT NOT NULL,
-    start_time TIMESTAMP,
-    end_time TIMESTAMP,
-    status VARCHAR(20) DEFAULT 'active'
-);
-```
-
-## Геймплейные механики
-
-### Динамические отношения
-- Отношения меняются на основе действий игрока
-- NPC помнят прошлые взаимодействия
-- Репутация влияет на доступ к контенту
-
-### Экономика заказов
-- Цены зависят от сложности и риска
-- Бонусы за своевременное выполнение
-- Штрафы за провал
-
-### NPC развитие
-- NPC могут улучшать навыки через контракты
-- Репутация влияет на доступность NPC
-- Специальные NPC с уникальными способностями
-
-## Мониторинг и аналитика
-
-### Метрики системы
-- Количество активных заказов
-- Уровень удовлетворенности NPC
-- Популярность различных типов заказов
-- Эффективность найма NPC
-
-### Логирование событий
-- Все изменения отношений
-- Выполнение заказов
-- Контракты найма
-- Социальные взаимодействия
+- **Ответственность:** Моделирование динамики между фракциями NPC, влияния на мир игры.
+- **Взаимодействие:** Влияет на доступ к контенту и NPC поведению.
 
 ## Интеграция с другими системами
 
-### Quest System
-- Социальные квесты зависят от отношений
-- Заказы могут быть частью квестовых линий
-
 ### Economy System
-- Торговля зависит от отношений
-- Награды за заказы влияют на экономику
+- Заказы влияют на рынок (цены, доступность товаров)
+- Репутация фракций влияет на торговые скидки
+- Нанятые NPC могут выполнять торговые миссии
+
+### Quest System
+- Социальные квесты генерируются на основе отношений
+- Заказы могут превращаться в полноценные квесты
+- Репутация влияет на доступ к эксклюзивным квестам
 
 ### Combat System
-- Найм NPC влияет на боевые возможности
-- Репутация влияет на союзников в бою
+- Отношения влияют на поведение NPC в бою (союзники/враги)
+- Нанятые NPC могут участвовать в боях
+- Фракционная принадлежность влияет на исходы конфликтов
+
+### World Events
+- Социальные события могут влиять на отношения
+- Заказы могут быть частью мировых событий
+- Репутация фракций влияет на исход событий
+
+## Примеры использования
+
+### Сценарий 1: Построение сети контактов
+Игрок начинает с низким уровнем влияния. Через диалоги, квесты и заказы он улучшает отношения с ключевыми NPC. Это открывает доступ к эксклюзивным заказам, информации и альянсам.
+
+### Сценарий 2: Управление фракциями
+Игрок может манипулировать отношениями между фракциями через заказы и социальные квесты. Это влияет на экономику регионов, доступность ресурсов и поведение NPC.
+
+### Сценарий 3: Постоянный компаньон
+Игрок нанимает NPC с уникальными навыками. Со временем NPC развивается, повышает лояльность и становится ценным союзником в различных активностях.
+
+## Технические требования
+
+### Производительность
+- Поддержка 1000+ одновременных игроков с социальными взаимодействиями
+- Эффективное хранение и кеширование отношений
+- Оптимизированные запросы к базе данных для расчета влияния
+
+### Масштабируемость
+- Горизонтальное масштабирование компонентов
+- Распределенное хранение социальных данных
+- Кеширование горячих данных (Redis)
+
+### Надежность
+- Транзакционная целостность операций с отношениями
+- Graceful handling сетевых сбоев
+- Backup и recovery социальных данных
+
+## Метрики и мониторинг
+
+- **Social Health Metrics:** Уровни отношений, репутация фракций, влияние игроков
+- **Order Fulfillment Rate:** Процент выполненных заказов
+- **NPC Utilization:** Процент занятых нанятых NPC
+- **Quest Completion:** Успешность социальных квестов
+- **Performance:** Время обработки социальных событий, latency запросов
+
+## Roadmap
+
+### Фаза 1: Core Relationships
+- Базовая система отношений игрок-NPC
+- Простые социальные квесты
+- Основные фракции
+
+### Фаза 2: Advanced Social Mechanics
+- Система заказов и найма NPC
+- Динамика фракций
+- Комплексные социальные цепочки
+
+### Фаза 3: World Integration
+- Интеграция с мировыми событиями
+- Глобальное влияние игроков
+- Эмерджентное повествование

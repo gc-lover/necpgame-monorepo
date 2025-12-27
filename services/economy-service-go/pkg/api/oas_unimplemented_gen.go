@@ -93,6 +93,36 @@ func (UnimplementedHandler) GetAuctions(ctx context.Context, params GetAuctionsP
 	return r, ht.ErrNotImplemented
 }
 
+// GetCharacterInventory implements getCharacterInventory operation.
+//
+// Get detailed player inventory with valuation.
+// **BACKEND NOTE:** Includes item values and capacity information.
+//
+// GET /players/{player_id}/inventory
+func (UnimplementedHandler) GetCharacterInventory(ctx context.Context, params GetCharacterInventoryParams) (r GetCharacterInventoryRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetCraftingRecipes implements getCraftingRecipes operation.
+//
+// Get paginated list of crafting recipes with filtering.
+// **BACKEND NOTE:** Supports complex filtering for crafting UI.
+//
+// GET /crafting/recipes
+func (UnimplementedHandler) GetCraftingRecipes(ctx context.Context, params GetCraftingRecipesParams) (r GetCraftingRecipesRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetEconomyOverview implements getEconomyOverview operation.
+//
+// Get comprehensive economy statistics and market trends.
+// **BACKEND NOTE:** Aggregated data for dashboard views.
+//
+// GET /economy/overview
+func (UnimplementedHandler) GetEconomyOverview(ctx context.Context, params GetEconomyOverviewParams) (r GetEconomyOverviewRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetMarketOverview implements getMarketOverview operation.
 //
 // Get aggregated market statistics and active trade counts.
@@ -131,6 +161,15 @@ func (UnimplementedHandler) GetPlayerTransactionHistory(ctx context.Context, par
 	return r, ht.ErrNotImplemented
 }
 
+// GetPlayerWallet implements getPlayerWallet operation.
+//
+// Get player wallet information and balances.
+//
+// GET /players/{player_id}/wallet
+func (UnimplementedHandler) GetPlayerWallet(ctx context.Context, params GetPlayerWalletParams) (r GetPlayerWalletRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetTradeDetails implements getTradeDetails operation.
 //
 // Get detailed information about a specific trade listing.
@@ -165,5 +204,14 @@ func (UnimplementedHandler) PlaceBid(ctx context.Context, req *PlaceBidRequest, 
 //
 // GET /readiness
 func (UnimplementedHandler) ReadinessCheck(ctx context.Context) (r ReadinessCheckRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// UpdatePlayerWallet implements updatePlayerWallet operation.
+//
+// Update player wallet balances (admin only).
+//
+// PUT /players/{player_id}/wallet
+func (UnimplementedHandler) UpdatePlayerWallet(ctx context.Context, req *UpdateWalletRequest, params UpdatePlayerWalletParams) (r UpdatePlayerWalletRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

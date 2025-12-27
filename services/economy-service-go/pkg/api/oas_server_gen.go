@@ -64,6 +64,27 @@ type Handler interface {
 	//
 	// GET /auctions
 	GetAuctions(ctx context.Context, params GetAuctionsParams) (GetAuctionsRes, error)
+	// GetCharacterInventory implements getCharacterInventory operation.
+	//
+	// Get detailed player inventory with valuation.
+	// **BACKEND NOTE:** Includes item values and capacity information.
+	//
+	// GET /players/{player_id}/inventory
+	GetCharacterInventory(ctx context.Context, params GetCharacterInventoryParams) (GetCharacterInventoryRes, error)
+	// GetCraftingRecipes implements getCraftingRecipes operation.
+	//
+	// Get paginated list of crafting recipes with filtering.
+	// **BACKEND NOTE:** Supports complex filtering for crafting UI.
+	//
+	// GET /crafting/recipes
+	GetCraftingRecipes(ctx context.Context, params GetCraftingRecipesParams) (GetCraftingRecipesRes, error)
+	// GetEconomyOverview implements getEconomyOverview operation.
+	//
+	// Get comprehensive economy statistics and market trends.
+	// **BACKEND NOTE:** Aggregated data for dashboard views.
+	//
+	// GET /economy/overview
+	GetEconomyOverview(ctx context.Context, params GetEconomyOverviewParams) (GetEconomyOverviewRes, error)
 	// GetMarketOverview implements getMarketOverview operation.
 	//
 	// Get aggregated market statistics and active trade counts.
@@ -90,6 +111,12 @@ type Handler interface {
 	//
 	// GET /players/{player_id}/transactions
 	GetPlayerTransactionHistory(ctx context.Context, params GetPlayerTransactionHistoryParams) (GetPlayerTransactionHistoryRes, error)
+	// GetPlayerWallet implements getPlayerWallet operation.
+	//
+	// Get player wallet information and balances.
+	//
+	// GET /players/{player_id}/wallet
+	GetPlayerWallet(ctx context.Context, params GetPlayerWalletParams) (GetPlayerWalletRes, error)
 	// GetTradeDetails implements getTradeDetails operation.
 	//
 	// Get detailed information about a specific trade listing.
@@ -115,6 +142,12 @@ type Handler interface {
 	//
 	// GET /readiness
 	ReadinessCheck(ctx context.Context) (ReadinessCheckRes, error)
+	// UpdatePlayerWallet implements updatePlayerWallet operation.
+	//
+	// Update player wallet balances (admin only).
+	//
+	// PUT /players/{player_id}/wallet
+	UpdatePlayerWallet(ctx context.Context, req *UpdateWalletRequest, params UpdatePlayerWalletParams) (UpdatePlayerWalletRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

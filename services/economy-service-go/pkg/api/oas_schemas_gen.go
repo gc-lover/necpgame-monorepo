@@ -545,6 +545,47 @@ func (s *AuctionSummaryCurrency) UnmarshalText(data []byte) error {
 	}
 }
 
+// BACKEND NOTE: Paginated auction list response.
+// Ref: #/components/schemas/AuctionSummaryList
+type AuctionSummaryList struct {
+	Auctions   []AuctionSummary `json:"auctions"`
+	Total      int              `json:"total"`
+	NextOffset OptNilInt        `json:"next_offset"`
+}
+
+// GetAuctions returns the value of Auctions.
+func (s *AuctionSummaryList) GetAuctions() []AuctionSummary {
+	return s.Auctions
+}
+
+// GetTotal returns the value of Total.
+func (s *AuctionSummaryList) GetTotal() int {
+	return s.Total
+}
+
+// GetNextOffset returns the value of NextOffset.
+func (s *AuctionSummaryList) GetNextOffset() OptNilInt {
+	return s.NextOffset
+}
+
+// SetAuctions sets the value of Auctions.
+func (s *AuctionSummaryList) SetAuctions(val []AuctionSummary) {
+	s.Auctions = val
+}
+
+// SetTotal sets the value of Total.
+func (s *AuctionSummaryList) SetTotal(val int) {
+	s.Total = val
+}
+
+// SetNextOffset sets the value of NextOffset.
+func (s *AuctionSummaryList) SetNextOffset(val OptNilInt) {
+	s.NextOffset = val
+}
+
+func (*AuctionSummaryList) getAuctionsRes()   {}
+func (*AuctionSummaryList) getMyAuctionsRes() {}
+
 // Merged schema.
 // Ref: #/components/schemas/AuctionWithBid
 type AuctionWithBid struct {
@@ -743,6 +784,46 @@ func (s *AuctionWithBidCurrency) UnmarshalText(data []byte) error {
 	}
 }
 
+// BACKEND NOTE: Paginated auctions with user bids.
+// Ref: #/components/schemas/AuctionWithBidList
+type AuctionWithBidList struct {
+	Auctions   []AuctionWithBid `json:"auctions"`
+	Total      int              `json:"total"`
+	NextOffset OptNilInt        `json:"next_offset"`
+}
+
+// GetAuctions returns the value of Auctions.
+func (s *AuctionWithBidList) GetAuctions() []AuctionWithBid {
+	return s.Auctions
+}
+
+// GetTotal returns the value of Total.
+func (s *AuctionWithBidList) GetTotal() int {
+	return s.Total
+}
+
+// GetNextOffset returns the value of NextOffset.
+func (s *AuctionWithBidList) GetNextOffset() OptNilInt {
+	return s.NextOffset
+}
+
+// SetAuctions sets the value of Auctions.
+func (s *AuctionWithBidList) SetAuctions(val []AuctionWithBid) {
+	s.Auctions = val
+}
+
+// SetTotal sets the value of Total.
+func (s *AuctionWithBidList) SetTotal(val int) {
+	s.Total = val
+}
+
+// SetNextOffset sets the value of NextOffset.
+func (s *AuctionWithBidList) SetNextOffset(val OptNilInt) {
+	s.NextOffset = val
+}
+
+func (*AuctionWithBidList) getMyBidsRes() {}
+
 type BearerAuth struct {
 	Token string
 	Roles []string
@@ -839,6 +920,302 @@ func (s *CancelTradeOK) SetResult(val TradeResult) {
 }
 
 func (*CancelTradeOK) cancelTradeRes() {}
+
+// BACKEND NOTE: Player inventory with valuation.
+// Ref: #/components/schemas/CharacterInventory
+type CharacterInventory struct {
+	PlayerID uuid.UUID       `json:"player_id"`
+	Items    []InventoryItem `json:"items"`
+	// Total inventory value in minor units.
+	TotalValue int64  `json:"total_value"`
+	Capacity   OptInt `json:"capacity"`
+	UsedSlots  OptInt `json:"used_slots"`
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *CharacterInventory) GetPlayerID() uuid.UUID {
+	return s.PlayerID
+}
+
+// GetItems returns the value of Items.
+func (s *CharacterInventory) GetItems() []InventoryItem {
+	return s.Items
+}
+
+// GetTotalValue returns the value of TotalValue.
+func (s *CharacterInventory) GetTotalValue() int64 {
+	return s.TotalValue
+}
+
+// GetCapacity returns the value of Capacity.
+func (s *CharacterInventory) GetCapacity() OptInt {
+	return s.Capacity
+}
+
+// GetUsedSlots returns the value of UsedSlots.
+func (s *CharacterInventory) GetUsedSlots() OptInt {
+	return s.UsedSlots
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *CharacterInventory) SetPlayerID(val uuid.UUID) {
+	s.PlayerID = val
+}
+
+// SetItems sets the value of Items.
+func (s *CharacterInventory) SetItems(val []InventoryItem) {
+	s.Items = val
+}
+
+// SetTotalValue sets the value of TotalValue.
+func (s *CharacterInventory) SetTotalValue(val int64) {
+	s.TotalValue = val
+}
+
+// SetCapacity sets the value of Capacity.
+func (s *CharacterInventory) SetCapacity(val OptInt) {
+	s.Capacity = val
+}
+
+// SetUsedSlots sets the value of UsedSlots.
+func (s *CharacterInventory) SetUsedSlots(val OptInt) {
+	s.UsedSlots = val
+}
+
+func (*CharacterInventory) getCharacterInventoryRes() {}
+
+// BACKEND NOTE: Complete crafting recipe specification.
+// Ref: #/components/schemas/CraftingRecipe
+type CraftingRecipe struct {
+	ID          uuid.UUID              `json:"id"`
+	Name        string                 `json:"name"`
+	Description OptNilString           `json:"description"`
+	Category    CraftingRecipeCategory `json:"category"`
+	Tier        int                    `json:"tier"`
+	Quality     int                    `json:"quality"`
+	SuccessRate float64                `json:"success_rate"`
+	// Crafting duration in seconds.
+	Duration     OptInt                `json:"duration"`
+	Materials    []RecipeMaterial      `json:"materials"`
+	Requirements OptRecipeRequirements `json:"requirements"`
+	CreatedAt    OptDateTime           `json:"created_at"`
+	UpdatedAt    OptDateTime           `json:"updated_at"`
+}
+
+// GetID returns the value of ID.
+func (s *CraftingRecipe) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *CraftingRecipe) GetName() string {
+	return s.Name
+}
+
+// GetDescription returns the value of Description.
+func (s *CraftingRecipe) GetDescription() OptNilString {
+	return s.Description
+}
+
+// GetCategory returns the value of Category.
+func (s *CraftingRecipe) GetCategory() CraftingRecipeCategory {
+	return s.Category
+}
+
+// GetTier returns the value of Tier.
+func (s *CraftingRecipe) GetTier() int {
+	return s.Tier
+}
+
+// GetQuality returns the value of Quality.
+func (s *CraftingRecipe) GetQuality() int {
+	return s.Quality
+}
+
+// GetSuccessRate returns the value of SuccessRate.
+func (s *CraftingRecipe) GetSuccessRate() float64 {
+	return s.SuccessRate
+}
+
+// GetDuration returns the value of Duration.
+func (s *CraftingRecipe) GetDuration() OptInt {
+	return s.Duration
+}
+
+// GetMaterials returns the value of Materials.
+func (s *CraftingRecipe) GetMaterials() []RecipeMaterial {
+	return s.Materials
+}
+
+// GetRequirements returns the value of Requirements.
+func (s *CraftingRecipe) GetRequirements() OptRecipeRequirements {
+	return s.Requirements
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *CraftingRecipe) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *CraftingRecipe) GetUpdatedAt() OptDateTime {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *CraftingRecipe) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *CraftingRecipe) SetName(val string) {
+	s.Name = val
+}
+
+// SetDescription sets the value of Description.
+func (s *CraftingRecipe) SetDescription(val OptNilString) {
+	s.Description = val
+}
+
+// SetCategory sets the value of Category.
+func (s *CraftingRecipe) SetCategory(val CraftingRecipeCategory) {
+	s.Category = val
+}
+
+// SetTier sets the value of Tier.
+func (s *CraftingRecipe) SetTier(val int) {
+	s.Tier = val
+}
+
+// SetQuality sets the value of Quality.
+func (s *CraftingRecipe) SetQuality(val int) {
+	s.Quality = val
+}
+
+// SetSuccessRate sets the value of SuccessRate.
+func (s *CraftingRecipe) SetSuccessRate(val float64) {
+	s.SuccessRate = val
+}
+
+// SetDuration sets the value of Duration.
+func (s *CraftingRecipe) SetDuration(val OptInt) {
+	s.Duration = val
+}
+
+// SetMaterials sets the value of Materials.
+func (s *CraftingRecipe) SetMaterials(val []RecipeMaterial) {
+	s.Materials = val
+}
+
+// SetRequirements sets the value of Requirements.
+func (s *CraftingRecipe) SetRequirements(val OptRecipeRequirements) {
+	s.Requirements = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *CraftingRecipe) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *CraftingRecipe) SetUpdatedAt(val OptDateTime) {
+	s.UpdatedAt = val
+}
+
+type CraftingRecipeCategory string
+
+const (
+	CraftingRecipeCategoryWeapons     CraftingRecipeCategory = "weapons"
+	CraftingRecipeCategoryArmor       CraftingRecipeCategory = "armor"
+	CraftingRecipeCategoryConsumables CraftingRecipeCategory = "consumables"
+	CraftingRecipeCategoryMaterials   CraftingRecipeCategory = "materials"
+)
+
+// AllValues returns all CraftingRecipeCategory values.
+func (CraftingRecipeCategory) AllValues() []CraftingRecipeCategory {
+	return []CraftingRecipeCategory{
+		CraftingRecipeCategoryWeapons,
+		CraftingRecipeCategoryArmor,
+		CraftingRecipeCategoryConsumables,
+		CraftingRecipeCategoryMaterials,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s CraftingRecipeCategory) MarshalText() ([]byte, error) {
+	switch s {
+	case CraftingRecipeCategoryWeapons:
+		return []byte(s), nil
+	case CraftingRecipeCategoryArmor:
+		return []byte(s), nil
+	case CraftingRecipeCategoryConsumables:
+		return []byte(s), nil
+	case CraftingRecipeCategoryMaterials:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *CraftingRecipeCategory) UnmarshalText(data []byte) error {
+	switch CraftingRecipeCategory(data) {
+	case CraftingRecipeCategoryWeapons:
+		*s = CraftingRecipeCategoryWeapons
+		return nil
+	case CraftingRecipeCategoryArmor:
+		*s = CraftingRecipeCategoryArmor
+		return nil
+	case CraftingRecipeCategoryConsumables:
+		*s = CraftingRecipeCategoryConsumables
+		return nil
+	case CraftingRecipeCategoryMaterials:
+		*s = CraftingRecipeCategoryMaterials
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// BACKEND NOTE: Paginated crafting recipes.
+// Ref: #/components/schemas/CraftingRecipeList
+type CraftingRecipeList struct {
+	Recipes    []CraftingRecipe `json:"recipes"`
+	Total      int              `json:"total"`
+	NextOffset OptNilInt        `json:"next_offset"`
+}
+
+// GetRecipes returns the value of Recipes.
+func (s *CraftingRecipeList) GetRecipes() []CraftingRecipe {
+	return s.Recipes
+}
+
+// GetTotal returns the value of Total.
+func (s *CraftingRecipeList) GetTotal() int {
+	return s.Total
+}
+
+// GetNextOffset returns the value of NextOffset.
+func (s *CraftingRecipeList) GetNextOffset() OptNilInt {
+	return s.NextOffset
+}
+
+// SetRecipes sets the value of Recipes.
+func (s *CraftingRecipeList) SetRecipes(val []CraftingRecipe) {
+	s.Recipes = val
+}
+
+// SetTotal sets the value of Total.
+func (s *CraftingRecipeList) SetTotal(val int) {
+	s.Total = val
+}
+
+// SetNextOffset sets the value of NextOffset.
+func (s *CraftingRecipeList) SetNextOffset(val OptNilInt) {
+	s.NextOffset = val
+}
+
+func (*CraftingRecipeList) getCraftingRecipesRes() {}
 
 type CreateAuctionBadRequest Error
 
@@ -1101,6 +1478,83 @@ func (s *CreateTradeRequestTradeType) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+// BACKEND NOTE: Aggregated economy statistics.
+// Ref: #/components/schemas/EconomyOverview
+type EconomyOverview struct {
+	TotalPlayers int `json:"total_players"`
+	ActiveTrades int `json:"active_trades"`
+	// Total volume in minor units.
+	TotalVolume  int64                       `json:"total_volume"`
+	MarketTrends EconomyOverviewMarketTrends `json:"market_trends"`
+}
+
+// GetTotalPlayers returns the value of TotalPlayers.
+func (s *EconomyOverview) GetTotalPlayers() int {
+	return s.TotalPlayers
+}
+
+// GetActiveTrades returns the value of ActiveTrades.
+func (s *EconomyOverview) GetActiveTrades() int {
+	return s.ActiveTrades
+}
+
+// GetTotalVolume returns the value of TotalVolume.
+func (s *EconomyOverview) GetTotalVolume() int64 {
+	return s.TotalVolume
+}
+
+// GetMarketTrends returns the value of MarketTrends.
+func (s *EconomyOverview) GetMarketTrends() EconomyOverviewMarketTrends {
+	return s.MarketTrends
+}
+
+// SetTotalPlayers sets the value of TotalPlayers.
+func (s *EconomyOverview) SetTotalPlayers(val int) {
+	s.TotalPlayers = val
+}
+
+// SetActiveTrades sets the value of ActiveTrades.
+func (s *EconomyOverview) SetActiveTrades(val int) {
+	s.ActiveTrades = val
+}
+
+// SetTotalVolume sets the value of TotalVolume.
+func (s *EconomyOverview) SetTotalVolume(val int64) {
+	s.TotalVolume = val
+}
+
+// SetMarketTrends sets the value of MarketTrends.
+func (s *EconomyOverview) SetMarketTrends(val EconomyOverviewMarketTrends) {
+	s.MarketTrends = val
+}
+
+func (*EconomyOverview) getEconomyOverviewRes() {}
+
+type EconomyOverviewMarketTrends struct {
+	PriceChanges OptFloat64 `json:"price_changes"`
+	PopularItems []string   `json:"popular_items"`
+}
+
+// GetPriceChanges returns the value of PriceChanges.
+func (s *EconomyOverviewMarketTrends) GetPriceChanges() OptFloat64 {
+	return s.PriceChanges
+}
+
+// GetPopularItems returns the value of PopularItems.
+func (s *EconomyOverviewMarketTrends) GetPopularItems() []string {
+	return s.PopularItems
+}
+
+// SetPriceChanges sets the value of PriceChanges.
+func (s *EconomyOverviewMarketTrends) SetPriceChanges(val OptFloat64) {
+	s.PriceChanges = val
+}
+
+// SetPopularItems sets the value of PopularItems.
+func (s *EconomyOverviewMarketTrends) SetPopularItems(val []string) {
+	s.PopularItems = val
 }
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
@@ -1402,44 +1856,6 @@ type GetAuctionsInternalServerError Error
 
 func (*GetAuctionsInternalServerError) getAuctionsRes() {}
 
-type GetAuctionsOK struct {
-	Auctions   []AuctionSummary `json:"auctions"`
-	Total      OptInt           `json:"total"`
-	NextOffset OptNilInt        `json:"next_offset"`
-}
-
-// GetAuctions returns the value of Auctions.
-func (s *GetAuctionsOK) GetAuctions() []AuctionSummary {
-	return s.Auctions
-}
-
-// GetTotal returns the value of Total.
-func (s *GetAuctionsOK) GetTotal() OptInt {
-	return s.Total
-}
-
-// GetNextOffset returns the value of NextOffset.
-func (s *GetAuctionsOK) GetNextOffset() OptNilInt {
-	return s.NextOffset
-}
-
-// SetAuctions sets the value of Auctions.
-func (s *GetAuctionsOK) SetAuctions(val []AuctionSummary) {
-	s.Auctions = val
-}
-
-// SetTotal sets the value of Total.
-func (s *GetAuctionsOK) SetTotal(val OptInt) {
-	s.Total = val
-}
-
-// SetNextOffset sets the value of NextOffset.
-func (s *GetAuctionsOK) SetNextOffset(val OptNilInt) {
-	s.NextOffset = val
-}
-
-func (*GetAuctionsOK) getAuctionsRes() {}
-
 type GetAuctionsSort string
 
 const (
@@ -1554,47 +1970,155 @@ type GetAuctionsUnauthorized Error
 
 func (*GetAuctionsUnauthorized) getAuctionsRes() {}
 
+type GetCharacterInventoryCategory string
+
+const (
+	GetCharacterInventoryCategoryWeapons     GetCharacterInventoryCategory = "weapons"
+	GetCharacterInventoryCategoryArmor       GetCharacterInventoryCategory = "armor"
+	GetCharacterInventoryCategoryConsumables GetCharacterInventoryCategory = "consumables"
+	GetCharacterInventoryCategoryMaterials   GetCharacterInventoryCategory = "materials"
+)
+
+// AllValues returns all GetCharacterInventoryCategory values.
+func (GetCharacterInventoryCategory) AllValues() []GetCharacterInventoryCategory {
+	return []GetCharacterInventoryCategory{
+		GetCharacterInventoryCategoryWeapons,
+		GetCharacterInventoryCategoryArmor,
+		GetCharacterInventoryCategoryConsumables,
+		GetCharacterInventoryCategoryMaterials,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetCharacterInventoryCategory) MarshalText() ([]byte, error) {
+	switch s {
+	case GetCharacterInventoryCategoryWeapons:
+		return []byte(s), nil
+	case GetCharacterInventoryCategoryArmor:
+		return []byte(s), nil
+	case GetCharacterInventoryCategoryConsumables:
+		return []byte(s), nil
+	case GetCharacterInventoryCategoryMaterials:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetCharacterInventoryCategory) UnmarshalText(data []byte) error {
+	switch GetCharacterInventoryCategory(data) {
+	case GetCharacterInventoryCategoryWeapons:
+		*s = GetCharacterInventoryCategoryWeapons
+		return nil
+	case GetCharacterInventoryCategoryArmor:
+		*s = GetCharacterInventoryCategoryArmor
+		return nil
+	case GetCharacterInventoryCategoryConsumables:
+		*s = GetCharacterInventoryCategoryConsumables
+		return nil
+	case GetCharacterInventoryCategoryMaterials:
+		*s = GetCharacterInventoryCategoryMaterials
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetCharacterInventoryInternalServerError Error
+
+func (*GetCharacterInventoryInternalServerError) getCharacterInventoryRes() {}
+
+type GetCharacterInventoryNotFound Error
+
+func (*GetCharacterInventoryNotFound) getCharacterInventoryRes() {}
+
+type GetCharacterInventoryUnauthorized Error
+
+func (*GetCharacterInventoryUnauthorized) getCharacterInventoryRes() {}
+
+type GetCraftingRecipesBadRequest Error
+
+func (*GetCraftingRecipesBadRequest) getCraftingRecipesRes() {}
+
+type GetCraftingRecipesCategory string
+
+const (
+	GetCraftingRecipesCategoryWeapons     GetCraftingRecipesCategory = "weapons"
+	GetCraftingRecipesCategoryArmor       GetCraftingRecipesCategory = "armor"
+	GetCraftingRecipesCategoryConsumables GetCraftingRecipesCategory = "consumables"
+	GetCraftingRecipesCategoryMaterials   GetCraftingRecipesCategory = "materials"
+)
+
+// AllValues returns all GetCraftingRecipesCategory values.
+func (GetCraftingRecipesCategory) AllValues() []GetCraftingRecipesCategory {
+	return []GetCraftingRecipesCategory{
+		GetCraftingRecipesCategoryWeapons,
+		GetCraftingRecipesCategoryArmor,
+		GetCraftingRecipesCategoryConsumables,
+		GetCraftingRecipesCategoryMaterials,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetCraftingRecipesCategory) MarshalText() ([]byte, error) {
+	switch s {
+	case GetCraftingRecipesCategoryWeapons:
+		return []byte(s), nil
+	case GetCraftingRecipesCategoryArmor:
+		return []byte(s), nil
+	case GetCraftingRecipesCategoryConsumables:
+		return []byte(s), nil
+	case GetCraftingRecipesCategoryMaterials:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetCraftingRecipesCategory) UnmarshalText(data []byte) error {
+	switch GetCraftingRecipesCategory(data) {
+	case GetCraftingRecipesCategoryWeapons:
+		*s = GetCraftingRecipesCategoryWeapons
+		return nil
+	case GetCraftingRecipesCategoryArmor:
+		*s = GetCraftingRecipesCategoryArmor
+		return nil
+	case GetCraftingRecipesCategoryConsumables:
+		*s = GetCraftingRecipesCategoryConsumables
+		return nil
+	case GetCraftingRecipesCategoryMaterials:
+		*s = GetCraftingRecipesCategoryMaterials
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetCraftingRecipesInternalServerError Error
+
+func (*GetCraftingRecipesInternalServerError) getCraftingRecipesRes() {}
+
+type GetCraftingRecipesUnauthorized Error
+
+func (*GetCraftingRecipesUnauthorized) getCraftingRecipesRes() {}
+
+type GetEconomyOverviewBadRequest Error
+
+func (*GetEconomyOverviewBadRequest) getEconomyOverviewRes() {}
+
+type GetEconomyOverviewInternalServerError Error
+
+func (*GetEconomyOverviewInternalServerError) getEconomyOverviewRes() {}
+
+type GetEconomyOverviewUnauthorized Error
+
+func (*GetEconomyOverviewUnauthorized) getEconomyOverviewRes() {}
+
 type GetMyAuctionsInternalServerError Error
 
 func (*GetMyAuctionsInternalServerError) getMyAuctionsRes() {}
-
-type GetMyAuctionsOK struct {
-	Auctions   []AuctionSummary `json:"auctions"`
-	Total      OptInt           `json:"total"`
-	NextOffset OptNilInt        `json:"next_offset"`
-}
-
-// GetAuctions returns the value of Auctions.
-func (s *GetMyAuctionsOK) GetAuctions() []AuctionSummary {
-	return s.Auctions
-}
-
-// GetTotal returns the value of Total.
-func (s *GetMyAuctionsOK) GetTotal() OptInt {
-	return s.Total
-}
-
-// GetNextOffset returns the value of NextOffset.
-func (s *GetMyAuctionsOK) GetNextOffset() OptNilInt {
-	return s.NextOffset
-}
-
-// SetAuctions sets the value of Auctions.
-func (s *GetMyAuctionsOK) SetAuctions(val []AuctionSummary) {
-	s.Auctions = val
-}
-
-// SetTotal sets the value of Total.
-func (s *GetMyAuctionsOK) SetTotal(val OptInt) {
-	s.Total = val
-}
-
-// SetNextOffset sets the value of NextOffset.
-func (s *GetMyAuctionsOK) SetNextOffset(val OptNilInt) {
-	s.NextOffset = val
-}
-
-func (*GetMyAuctionsOK) getMyAuctionsRes() {}
 
 type GetMyAuctionsStatus string
 
@@ -1659,44 +2183,6 @@ type GetMyBidsInternalServerError Error
 
 func (*GetMyBidsInternalServerError) getMyBidsRes() {}
 
-type GetMyBidsOK struct {
-	Auctions   []AuctionWithBid `json:"auctions"`
-	Total      OptInt           `json:"total"`
-	NextOffset OptNilInt        `json:"next_offset"`
-}
-
-// GetAuctions returns the value of Auctions.
-func (s *GetMyBidsOK) GetAuctions() []AuctionWithBid {
-	return s.Auctions
-}
-
-// GetTotal returns the value of Total.
-func (s *GetMyBidsOK) GetTotal() OptInt {
-	return s.Total
-}
-
-// GetNextOffset returns the value of NextOffset.
-func (s *GetMyBidsOK) GetNextOffset() OptNilInt {
-	return s.NextOffset
-}
-
-// SetAuctions sets the value of Auctions.
-func (s *GetMyBidsOK) SetAuctions(val []AuctionWithBid) {
-	s.Auctions = val
-}
-
-// SetTotal sets the value of Total.
-func (s *GetMyBidsOK) SetTotal(val OptInt) {
-	s.Total = val
-}
-
-// SetNextOffset sets the value of NextOffset.
-func (s *GetMyBidsOK) SetNextOffset(val OptNilInt) {
-	s.NextOffset = val
-}
-
-func (*GetMyBidsOK) getMyBidsRes() {}
-
 type GetMyBidsUnauthorized Error
 
 func (*GetMyBidsUnauthorized) getMyBidsRes() {}
@@ -1755,6 +2241,18 @@ func (s *GetPlayerTransactionHistoryTransactionType) UnmarshalText(data []byte) 
 		return errors.Errorf("invalid value: %q", data)
 	}
 }
+
+type GetPlayerWalletInternalServerError Error
+
+func (*GetPlayerWalletInternalServerError) getPlayerWalletRes() {}
+
+type GetPlayerWalletNotFound Error
+
+func (*GetPlayerWalletNotFound) getPlayerWalletRes() {}
+
+type GetPlayerWalletUnauthorized Error
+
+func (*GetPlayerWalletUnauthorized) getPlayerWalletRes() {}
 
 type GetTradeDetailsOK struct {
 	Trade Trade `json:"trade"`
@@ -1903,6 +2401,202 @@ func (*InternalServerError) getActiveTradesRes()             {}
 func (*InternalServerError) getPlayerTransactionHistoryRes() {}
 func (*InternalServerError) getTradeDetailsRes()             {}
 
+// BACKEND NOTE: Individual inventory item.
+// Ref: #/components/schemas/InventoryItem
+type InventoryItem struct {
+	ItemID   uuid.UUID             `json:"item_id"`
+	Quantity int32                 `json:"quantity"`
+	ItemType InventoryItemItemType `json:"item_type"`
+	Name     OptString             `json:"name"`
+	// Item value in minor units.
+	Value  OptInt64               `json:"value"`
+	Rarity OptInventoryItemRarity `json:"rarity"`
+}
+
+// GetItemID returns the value of ItemID.
+func (s *InventoryItem) GetItemID() uuid.UUID {
+	return s.ItemID
+}
+
+// GetQuantity returns the value of Quantity.
+func (s *InventoryItem) GetQuantity() int32 {
+	return s.Quantity
+}
+
+// GetItemType returns the value of ItemType.
+func (s *InventoryItem) GetItemType() InventoryItemItemType {
+	return s.ItemType
+}
+
+// GetName returns the value of Name.
+func (s *InventoryItem) GetName() OptString {
+	return s.Name
+}
+
+// GetValue returns the value of Value.
+func (s *InventoryItem) GetValue() OptInt64 {
+	return s.Value
+}
+
+// GetRarity returns the value of Rarity.
+func (s *InventoryItem) GetRarity() OptInventoryItemRarity {
+	return s.Rarity
+}
+
+// SetItemID sets the value of ItemID.
+func (s *InventoryItem) SetItemID(val uuid.UUID) {
+	s.ItemID = val
+}
+
+// SetQuantity sets the value of Quantity.
+func (s *InventoryItem) SetQuantity(val int32) {
+	s.Quantity = val
+}
+
+// SetItemType sets the value of ItemType.
+func (s *InventoryItem) SetItemType(val InventoryItemItemType) {
+	s.ItemType = val
+}
+
+// SetName sets the value of Name.
+func (s *InventoryItem) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetValue sets the value of Value.
+func (s *InventoryItem) SetValue(val OptInt64) {
+	s.Value = val
+}
+
+// SetRarity sets the value of Rarity.
+func (s *InventoryItem) SetRarity(val OptInventoryItemRarity) {
+	s.Rarity = val
+}
+
+type InventoryItemItemType string
+
+const (
+	InventoryItemItemTypeWeapon     InventoryItemItemType = "weapon"
+	InventoryItemItemTypeArmor      InventoryItemItemType = "armor"
+	InventoryItemItemTypeConsumable InventoryItemItemType = "consumable"
+	InventoryItemItemTypeMaterial   InventoryItemItemType = "material"
+	InventoryItemItemTypeCyberware  InventoryItemItemType = "cyberware"
+)
+
+// AllValues returns all InventoryItemItemType values.
+func (InventoryItemItemType) AllValues() []InventoryItemItemType {
+	return []InventoryItemItemType{
+		InventoryItemItemTypeWeapon,
+		InventoryItemItemTypeArmor,
+		InventoryItemItemTypeConsumable,
+		InventoryItemItemTypeMaterial,
+		InventoryItemItemTypeCyberware,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s InventoryItemItemType) MarshalText() ([]byte, error) {
+	switch s {
+	case InventoryItemItemTypeWeapon:
+		return []byte(s), nil
+	case InventoryItemItemTypeArmor:
+		return []byte(s), nil
+	case InventoryItemItemTypeConsumable:
+		return []byte(s), nil
+	case InventoryItemItemTypeMaterial:
+		return []byte(s), nil
+	case InventoryItemItemTypeCyberware:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *InventoryItemItemType) UnmarshalText(data []byte) error {
+	switch InventoryItemItemType(data) {
+	case InventoryItemItemTypeWeapon:
+		*s = InventoryItemItemTypeWeapon
+		return nil
+	case InventoryItemItemTypeArmor:
+		*s = InventoryItemItemTypeArmor
+		return nil
+	case InventoryItemItemTypeConsumable:
+		*s = InventoryItemItemTypeConsumable
+		return nil
+	case InventoryItemItemTypeMaterial:
+		*s = InventoryItemItemTypeMaterial
+		return nil
+	case InventoryItemItemTypeCyberware:
+		*s = InventoryItemItemTypeCyberware
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type InventoryItemRarity string
+
+const (
+	InventoryItemRarityCommon    InventoryItemRarity = "common"
+	InventoryItemRarityUncommon  InventoryItemRarity = "uncommon"
+	InventoryItemRarityRare      InventoryItemRarity = "rare"
+	InventoryItemRarityEpic      InventoryItemRarity = "epic"
+	InventoryItemRarityLegendary InventoryItemRarity = "legendary"
+)
+
+// AllValues returns all InventoryItemRarity values.
+func (InventoryItemRarity) AllValues() []InventoryItemRarity {
+	return []InventoryItemRarity{
+		InventoryItemRarityCommon,
+		InventoryItemRarityUncommon,
+		InventoryItemRarityRare,
+		InventoryItemRarityEpic,
+		InventoryItemRarityLegendary,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s InventoryItemRarity) MarshalText() ([]byte, error) {
+	switch s {
+	case InventoryItemRarityCommon:
+		return []byte(s), nil
+	case InventoryItemRarityUncommon:
+		return []byte(s), nil
+	case InventoryItemRarityRare:
+		return []byte(s), nil
+	case InventoryItemRarityEpic:
+		return []byte(s), nil
+	case InventoryItemRarityLegendary:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *InventoryItemRarity) UnmarshalText(data []byte) error {
+	switch InventoryItemRarity(data) {
+	case InventoryItemRarityCommon:
+		*s = InventoryItemRarityCommon
+		return nil
+	case InventoryItemRarityUncommon:
+		*s = InventoryItemRarityUncommon
+		return nil
+	case InventoryItemRarityRare:
+		*s = InventoryItemRarityRare
+		return nil
+	case InventoryItemRarityEpic:
+		*s = InventoryItemRarityEpic
+		return nil
+	case InventoryItemRarityLegendary:
+		*s = InventoryItemRarityLegendary
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
 // Ref: #/components/schemas/MarketOverview
@@ -1989,6 +2683,52 @@ func (s *MarketOverviewTopItemsItem) SetTradeCount(val OptInt) {
 // SetAveragePrice sets the value of AveragePrice.
 func (s *MarketOverviewTopItemsItem) SetAveragePrice(val OptFloat64) {
 	s.AveragePrice = val
+}
+
+// NewOptDateTime returns new OptDateTime with value set to v.
+func NewOptDateTime(v time.Time) OptDateTime {
+	return OptDateTime{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptDateTime is optional time.Time.
+type OptDateTime struct {
+	Value time.Time
+	Set   bool
+}
+
+// IsSet returns true if OptDateTime was set.
+func (o OptDateTime) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptDateTime) Reset() {
+	var v time.Time
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptDateTime) SetTo(v time.Time) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptDateTime) Get() (v time.Time, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptDateTime) Or(d time.Time) time.Time {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
 }
 
 // NewOptFloat64 returns new OptFloat64 with value set to v.
@@ -2267,6 +3007,98 @@ func (o OptGetAuctionsStatus) Or(d GetAuctionsStatus) GetAuctionsStatus {
 	return d
 }
 
+// NewOptGetCharacterInventoryCategory returns new OptGetCharacterInventoryCategory with value set to v.
+func NewOptGetCharacterInventoryCategory(v GetCharacterInventoryCategory) OptGetCharacterInventoryCategory {
+	return OptGetCharacterInventoryCategory{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetCharacterInventoryCategory is optional GetCharacterInventoryCategory.
+type OptGetCharacterInventoryCategory struct {
+	Value GetCharacterInventoryCategory
+	Set   bool
+}
+
+// IsSet returns true if OptGetCharacterInventoryCategory was set.
+func (o OptGetCharacterInventoryCategory) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetCharacterInventoryCategory) Reset() {
+	var v GetCharacterInventoryCategory
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetCharacterInventoryCategory) SetTo(v GetCharacterInventoryCategory) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetCharacterInventoryCategory) Get() (v GetCharacterInventoryCategory, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetCharacterInventoryCategory) Or(d GetCharacterInventoryCategory) GetCharacterInventoryCategory {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetCraftingRecipesCategory returns new OptGetCraftingRecipesCategory with value set to v.
+func NewOptGetCraftingRecipesCategory(v GetCraftingRecipesCategory) OptGetCraftingRecipesCategory {
+	return OptGetCraftingRecipesCategory{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetCraftingRecipesCategory is optional GetCraftingRecipesCategory.
+type OptGetCraftingRecipesCategory struct {
+	Value GetCraftingRecipesCategory
+	Set   bool
+}
+
+// IsSet returns true if OptGetCraftingRecipesCategory was set.
+func (o OptGetCraftingRecipesCategory) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetCraftingRecipesCategory) Reset() {
+	var v GetCraftingRecipesCategory
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetCraftingRecipesCategory) SetTo(v GetCraftingRecipesCategory) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetCraftingRecipesCategory) Get() (v GetCraftingRecipesCategory, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetCraftingRecipesCategory) Or(d GetCraftingRecipesCategory) GetCraftingRecipesCategory {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptGetMyAuctionsStatus returns new OptGetMyAuctionsStatus with value set to v.
 func NewOptGetMyAuctionsStatus(v GetMyAuctionsStatus) OptGetMyAuctionsStatus {
 	return OptGetMyAuctionsStatus{
@@ -2399,6 +3231,98 @@ func (o OptInt) Get() (v int, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptInt) Or(d int) int {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptInt64 returns new OptInt64 with value set to v.
+func NewOptInt64(v int64) OptInt64 {
+	return OptInt64{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInt64 is optional int64.
+type OptInt64 struct {
+	Value int64
+	Set   bool
+}
+
+// IsSet returns true if OptInt64 was set.
+func (o OptInt64) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInt64) Reset() {
+	var v int64
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInt64) SetTo(v int64) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInt64) Get() (v int64, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInt64) Or(d int64) int64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptInventoryItemRarity returns new OptInventoryItemRarity with value set to v.
+func NewOptInventoryItemRarity(v InventoryItemRarity) OptInventoryItemRarity {
+	return OptInventoryItemRarity{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptInventoryItemRarity is optional InventoryItemRarity.
+type OptInventoryItemRarity struct {
+	Value InventoryItemRarity
+	Set   bool
+}
+
+// IsSet returns true if OptInventoryItemRarity was set.
+func (o OptInventoryItemRarity) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptInventoryItemRarity) Reset() {
+	var v InventoryItemRarity
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptInventoryItemRarity) SetTo(v InventoryItemRarity) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptInventoryItemRarity) Get() (v InventoryItemRarity, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptInventoryItemRarity) Or(d InventoryItemRarity) InventoryItemRarity {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2594,6 +3518,69 @@ func (o OptNilInt64) Or(d int64) int64 {
 	return d
 }
 
+// NewOptNilString returns new OptNilString with value set to v.
+func NewOptNilString(v string) OptNilString {
+	return OptNilString{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilString is optional nullable string.
+type OptNilString struct {
+	Value string
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilString was set.
+func (o OptNilString) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilString) Reset() {
+	var v string
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilString) SetTo(v string) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilString) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilString) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v string
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilString) Get() (v string, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilString) Or(d string) string {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilUUID returns new OptNilUUID with value set to v.
 func NewOptNilUUID(v uuid.UUID) OptNilUUID {
 	return OptNilUUID{
@@ -2651,6 +3638,144 @@ func (o OptNilUUID) Get() (v uuid.UUID, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilUUID) Or(d uuid.UUID) uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRecipeRequirements returns new OptRecipeRequirements with value set to v.
+func NewOptRecipeRequirements(v RecipeRequirements) OptRecipeRequirements {
+	return OptRecipeRequirements{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRecipeRequirements is optional RecipeRequirements.
+type OptRecipeRequirements struct {
+	Value RecipeRequirements
+	Set   bool
+}
+
+// IsSet returns true if OptRecipeRequirements was set.
+func (o OptRecipeRequirements) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRecipeRequirements) Reset() {
+	var v RecipeRequirements
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRecipeRequirements) SetTo(v RecipeRequirements) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRecipeRequirements) Get() (v RecipeRequirements, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRecipeRequirements) Or(d RecipeRequirements) RecipeRequirements {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRecipeRequirementsFaction returns new OptRecipeRequirementsFaction with value set to v.
+func NewOptRecipeRequirementsFaction(v RecipeRequirementsFaction) OptRecipeRequirementsFaction {
+	return OptRecipeRequirementsFaction{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRecipeRequirementsFaction is optional RecipeRequirementsFaction.
+type OptRecipeRequirementsFaction struct {
+	Value RecipeRequirementsFaction
+	Set   bool
+}
+
+// IsSet returns true if OptRecipeRequirementsFaction was set.
+func (o OptRecipeRequirementsFaction) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRecipeRequirementsFaction) Reset() {
+	var v RecipeRequirementsFaction
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRecipeRequirementsFaction) SetTo(v RecipeRequirementsFaction) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRecipeRequirementsFaction) Get() (v RecipeRequirementsFaction, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRecipeRequirementsFaction) Or(d RecipeRequirementsFaction) RecipeRequirementsFaction {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRecipeRequirementsStationType returns new OptRecipeRequirementsStationType with value set to v.
+func NewOptRecipeRequirementsStationType(v RecipeRequirementsStationType) OptRecipeRequirementsStationType {
+	return OptRecipeRequirementsStationType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRecipeRequirementsStationType is optional RecipeRequirementsStationType.
+type OptRecipeRequirementsStationType struct {
+	Value RecipeRequirementsStationType
+	Set   bool
+}
+
+// IsSet returns true if OptRecipeRequirementsStationType was set.
+func (o OptRecipeRequirementsStationType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRecipeRequirementsStationType) Reset() {
+	var v RecipeRequirementsStationType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRecipeRequirementsStationType) SetTo(v RecipeRequirementsStationType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRecipeRequirementsStationType) Get() (v RecipeRequirementsStationType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRecipeRequirementsStationType) Or(d RecipeRequirementsStationType) RecipeRequirementsStationType {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -2790,6 +3915,281 @@ func (s *PlaceBidRequest) SetAmount(val int64) {
 type PlaceBidUnauthorized Error
 
 func (*PlaceBidUnauthorized) placeBidRes() {}
+
+// BACKEND NOTE: Player wallet with multiple currency balances.
+// Ref: #/components/schemas/PlayerWallet
+type PlayerWallet struct {
+	PlayerID uuid.UUID            `json:"player_id"`
+	Balances PlayerWalletBalances `json:"balances"`
+	// Total value across all currencies.
+	TotalValue  int64       `json:"total_value"`
+	LastUpdated OptDateTime `json:"last_updated"`
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *PlayerWallet) GetPlayerID() uuid.UUID {
+	return s.PlayerID
+}
+
+// GetBalances returns the value of Balances.
+func (s *PlayerWallet) GetBalances() PlayerWalletBalances {
+	return s.Balances
+}
+
+// GetTotalValue returns the value of TotalValue.
+func (s *PlayerWallet) GetTotalValue() int64 {
+	return s.TotalValue
+}
+
+// GetLastUpdated returns the value of LastUpdated.
+func (s *PlayerWallet) GetLastUpdated() OptDateTime {
+	return s.LastUpdated
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *PlayerWallet) SetPlayerID(val uuid.UUID) {
+	s.PlayerID = val
+}
+
+// SetBalances sets the value of Balances.
+func (s *PlayerWallet) SetBalances(val PlayerWalletBalances) {
+	s.Balances = val
+}
+
+// SetTotalValue sets the value of TotalValue.
+func (s *PlayerWallet) SetTotalValue(val int64) {
+	s.TotalValue = val
+}
+
+// SetLastUpdated sets the value of LastUpdated.
+func (s *PlayerWallet) SetLastUpdated(val OptDateTime) {
+	s.LastUpdated = val
+}
+
+func (*PlayerWallet) getPlayerWalletRes()    {}
+func (*PlayerWallet) updatePlayerWalletRes() {}
+
+type PlayerWalletBalances struct {
+	Credits        OptInt64 `json:"credits"`
+	PremiumCredits OptInt64 `json:"premium_credits"`
+	Tokens         OptInt64 `json:"tokens"`
+}
+
+// GetCredits returns the value of Credits.
+func (s *PlayerWalletBalances) GetCredits() OptInt64 {
+	return s.Credits
+}
+
+// GetPremiumCredits returns the value of PremiumCredits.
+func (s *PlayerWalletBalances) GetPremiumCredits() OptInt64 {
+	return s.PremiumCredits
+}
+
+// GetTokens returns the value of Tokens.
+func (s *PlayerWalletBalances) GetTokens() OptInt64 {
+	return s.Tokens
+}
+
+// SetCredits sets the value of Credits.
+func (s *PlayerWalletBalances) SetCredits(val OptInt64) {
+	s.Credits = val
+}
+
+// SetPremiumCredits sets the value of PremiumCredits.
+func (s *PlayerWalletBalances) SetPremiumCredits(val OptInt64) {
+	s.PremiumCredits = val
+}
+
+// SetTokens sets the value of Tokens.
+func (s *PlayerWalletBalances) SetTokens(val OptInt64) {
+	s.Tokens = val
+}
+
+// Material required for crafting.
+// Ref: #/components/schemas/RecipeMaterial
+type RecipeMaterial struct {
+	ItemID   uuid.UUID `json:"item_id"`
+	Quantity int32     `json:"quantity"`
+	Name     OptString `json:"name"`
+}
+
+// GetItemID returns the value of ItemID.
+func (s *RecipeMaterial) GetItemID() uuid.UUID {
+	return s.ItemID
+}
+
+// GetQuantity returns the value of Quantity.
+func (s *RecipeMaterial) GetQuantity() int32 {
+	return s.Quantity
+}
+
+// GetName returns the value of Name.
+func (s *RecipeMaterial) GetName() OptString {
+	return s.Name
+}
+
+// SetItemID sets the value of ItemID.
+func (s *RecipeMaterial) SetItemID(val uuid.UUID) {
+	s.ItemID = val
+}
+
+// SetQuantity sets the value of Quantity.
+func (s *RecipeMaterial) SetQuantity(val int32) {
+	s.Quantity = val
+}
+
+// SetName sets the value of Name.
+func (s *RecipeMaterial) SetName(val OptString) {
+	s.Name = val
+}
+
+// Requirements to craft the recipe.
+// Ref: #/components/schemas/RecipeRequirements
+type RecipeRequirements struct {
+	SkillLevel  OptInt                           `json:"skill_level"`
+	StationType OptRecipeRequirementsStationType `json:"station_type"`
+	Faction     OptRecipeRequirementsFaction     `json:"faction"`
+}
+
+// GetSkillLevel returns the value of SkillLevel.
+func (s *RecipeRequirements) GetSkillLevel() OptInt {
+	return s.SkillLevel
+}
+
+// GetStationType returns the value of StationType.
+func (s *RecipeRequirements) GetStationType() OptRecipeRequirementsStationType {
+	return s.StationType
+}
+
+// GetFaction returns the value of Faction.
+func (s *RecipeRequirements) GetFaction() OptRecipeRequirementsFaction {
+	return s.Faction
+}
+
+// SetSkillLevel sets the value of SkillLevel.
+func (s *RecipeRequirements) SetSkillLevel(val OptInt) {
+	s.SkillLevel = val
+}
+
+// SetStationType sets the value of StationType.
+func (s *RecipeRequirements) SetStationType(val OptRecipeRequirementsStationType) {
+	s.StationType = val
+}
+
+// SetFaction sets the value of Faction.
+func (s *RecipeRequirements) SetFaction(val OptRecipeRequirementsFaction) {
+	s.Faction = val
+}
+
+type RecipeRequirementsFaction string
+
+const (
+	RecipeRequirementsFactionNeutral     RecipeRequirementsFaction = "neutral"
+	RecipeRequirementsFactionCorporation RecipeRequirementsFaction = "corporation"
+	RecipeRequirementsFactionTechno      RecipeRequirementsFaction = "techno"
+	RecipeRequirementsFactionAnarchist   RecipeRequirementsFaction = "anarchist"
+)
+
+// AllValues returns all RecipeRequirementsFaction values.
+func (RecipeRequirementsFaction) AllValues() []RecipeRequirementsFaction {
+	return []RecipeRequirementsFaction{
+		RecipeRequirementsFactionNeutral,
+		RecipeRequirementsFactionCorporation,
+		RecipeRequirementsFactionTechno,
+		RecipeRequirementsFactionAnarchist,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s RecipeRequirementsFaction) MarshalText() ([]byte, error) {
+	switch s {
+	case RecipeRequirementsFactionNeutral:
+		return []byte(s), nil
+	case RecipeRequirementsFactionCorporation:
+		return []byte(s), nil
+	case RecipeRequirementsFactionTechno:
+		return []byte(s), nil
+	case RecipeRequirementsFactionAnarchist:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *RecipeRequirementsFaction) UnmarshalText(data []byte) error {
+	switch RecipeRequirementsFaction(data) {
+	case RecipeRequirementsFactionNeutral:
+		*s = RecipeRequirementsFactionNeutral
+		return nil
+	case RecipeRequirementsFactionCorporation:
+		*s = RecipeRequirementsFactionCorporation
+		return nil
+	case RecipeRequirementsFactionTechno:
+		*s = RecipeRequirementsFactionTechno
+		return nil
+	case RecipeRequirementsFactionAnarchist:
+		*s = RecipeRequirementsFactionAnarchist
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type RecipeRequirementsStationType string
+
+const (
+	RecipeRequirementsStationTypeBasic        RecipeRequirementsStationType = "basic"
+	RecipeRequirementsStationTypeAdvanced     RecipeRequirementsStationType = "advanced"
+	RecipeRequirementsStationTypeProfessional RecipeRequirementsStationType = "professional"
+	RecipeRequirementsStationTypeMaster       RecipeRequirementsStationType = "master"
+)
+
+// AllValues returns all RecipeRequirementsStationType values.
+func (RecipeRequirementsStationType) AllValues() []RecipeRequirementsStationType {
+	return []RecipeRequirementsStationType{
+		RecipeRequirementsStationTypeBasic,
+		RecipeRequirementsStationTypeAdvanced,
+		RecipeRequirementsStationTypeProfessional,
+		RecipeRequirementsStationTypeMaster,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s RecipeRequirementsStationType) MarshalText() ([]byte, error) {
+	switch s {
+	case RecipeRequirementsStationTypeBasic:
+		return []byte(s), nil
+	case RecipeRequirementsStationTypeAdvanced:
+		return []byte(s), nil
+	case RecipeRequirementsStationTypeProfessional:
+		return []byte(s), nil
+	case RecipeRequirementsStationTypeMaster:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *RecipeRequirementsStationType) UnmarshalText(data []byte) error {
+	switch RecipeRequirementsStationType(data) {
+	case RecipeRequirementsStationTypeBasic:
+		*s = RecipeRequirementsStationTypeBasic
+		return nil
+	case RecipeRequirementsStationTypeAdvanced:
+		*s = RecipeRequirementsStationTypeAdvanced
+		return nil
+	case RecipeRequirementsStationTypeProfessional:
+		*s = RecipeRequirementsStationTypeProfessional
+		return nil
+	case RecipeRequirementsStationTypeMaster:
+		*s = RecipeRequirementsStationTypeMaster
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
 // 30-50%.
@@ -3400,3 +4800,168 @@ func (*Unauthorized) createTradeListingRes()          {}
 func (*Unauthorized) getActiveTradesRes()             {}
 func (*Unauthorized) getPlayerTransactionHistoryRes() {}
 func (*Unauthorized) getTradeDetailsRes()             {}
+
+type UpdatePlayerWalletBadRequest Error
+
+func (*UpdatePlayerWalletBadRequest) updatePlayerWalletRes() {}
+
+type UpdatePlayerWalletForbidden Error
+
+func (*UpdatePlayerWalletForbidden) updatePlayerWalletRes() {}
+
+type UpdatePlayerWalletInternalServerError Error
+
+func (*UpdatePlayerWalletInternalServerError) updatePlayerWalletRes() {}
+
+type UpdatePlayerWalletNotFound Error
+
+func (*UpdatePlayerWalletNotFound) updatePlayerWalletRes() {}
+
+type UpdatePlayerWalletUnauthorized Error
+
+func (*UpdatePlayerWalletUnauthorized) updatePlayerWalletRes() {}
+
+// BACKEND NOTE: Wallet update operation for admin use.
+// Ref: #/components/schemas/UpdateWalletRequest
+type UpdateWalletRequest struct {
+	Operation UpdateWalletRequestOperation `json:"operation"`
+	Currency  UpdateWalletRequestCurrency  `json:"currency"`
+	Amount    int64                        `json:"amount"`
+	Reason    OptString                    `json:"reason"`
+}
+
+// GetOperation returns the value of Operation.
+func (s *UpdateWalletRequest) GetOperation() UpdateWalletRequestOperation {
+	return s.Operation
+}
+
+// GetCurrency returns the value of Currency.
+func (s *UpdateWalletRequest) GetCurrency() UpdateWalletRequestCurrency {
+	return s.Currency
+}
+
+// GetAmount returns the value of Amount.
+func (s *UpdateWalletRequest) GetAmount() int64 {
+	return s.Amount
+}
+
+// GetReason returns the value of Reason.
+func (s *UpdateWalletRequest) GetReason() OptString {
+	return s.Reason
+}
+
+// SetOperation sets the value of Operation.
+func (s *UpdateWalletRequest) SetOperation(val UpdateWalletRequestOperation) {
+	s.Operation = val
+}
+
+// SetCurrency sets the value of Currency.
+func (s *UpdateWalletRequest) SetCurrency(val UpdateWalletRequestCurrency) {
+	s.Currency = val
+}
+
+// SetAmount sets the value of Amount.
+func (s *UpdateWalletRequest) SetAmount(val int64) {
+	s.Amount = val
+}
+
+// SetReason sets the value of Reason.
+func (s *UpdateWalletRequest) SetReason(val OptString) {
+	s.Reason = val
+}
+
+type UpdateWalletRequestCurrency string
+
+const (
+	UpdateWalletRequestCurrencyCredits        UpdateWalletRequestCurrency = "credits"
+	UpdateWalletRequestCurrencyPremiumCredits UpdateWalletRequestCurrency = "premium_credits"
+	UpdateWalletRequestCurrencyTokens         UpdateWalletRequestCurrency = "tokens"
+)
+
+// AllValues returns all UpdateWalletRequestCurrency values.
+func (UpdateWalletRequestCurrency) AllValues() []UpdateWalletRequestCurrency {
+	return []UpdateWalletRequestCurrency{
+		UpdateWalletRequestCurrencyCredits,
+		UpdateWalletRequestCurrencyPremiumCredits,
+		UpdateWalletRequestCurrencyTokens,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s UpdateWalletRequestCurrency) MarshalText() ([]byte, error) {
+	switch s {
+	case UpdateWalletRequestCurrencyCredits:
+		return []byte(s), nil
+	case UpdateWalletRequestCurrencyPremiumCredits:
+		return []byte(s), nil
+	case UpdateWalletRequestCurrencyTokens:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *UpdateWalletRequestCurrency) UnmarshalText(data []byte) error {
+	switch UpdateWalletRequestCurrency(data) {
+	case UpdateWalletRequestCurrencyCredits:
+		*s = UpdateWalletRequestCurrencyCredits
+		return nil
+	case UpdateWalletRequestCurrencyPremiumCredits:
+		*s = UpdateWalletRequestCurrencyPremiumCredits
+		return nil
+	case UpdateWalletRequestCurrencyTokens:
+		*s = UpdateWalletRequestCurrencyTokens
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type UpdateWalletRequestOperation string
+
+const (
+	UpdateWalletRequestOperationAdd      UpdateWalletRequestOperation = "add"
+	UpdateWalletRequestOperationSubtract UpdateWalletRequestOperation = "subtract"
+	UpdateWalletRequestOperationSet      UpdateWalletRequestOperation = "set"
+)
+
+// AllValues returns all UpdateWalletRequestOperation values.
+func (UpdateWalletRequestOperation) AllValues() []UpdateWalletRequestOperation {
+	return []UpdateWalletRequestOperation{
+		UpdateWalletRequestOperationAdd,
+		UpdateWalletRequestOperationSubtract,
+		UpdateWalletRequestOperationSet,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s UpdateWalletRequestOperation) MarshalText() ([]byte, error) {
+	switch s {
+	case UpdateWalletRequestOperationAdd:
+		return []byte(s), nil
+	case UpdateWalletRequestOperationSubtract:
+		return []byte(s), nil
+	case UpdateWalletRequestOperationSet:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *UpdateWalletRequestOperation) UnmarshalText(data []byte) error {
+	switch UpdateWalletRequestOperation(data) {
+	case UpdateWalletRequestOperationAdd:
+		*s = UpdateWalletRequestOperationAdd
+		return nil
+	case UpdateWalletRequestOperationSubtract:
+		*s = UpdateWalletRequestOperationSubtract
+		return nil
+	case UpdateWalletRequestOperationSet:
+		*s = UpdateWalletRequestOperationSet
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}

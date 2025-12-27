@@ -257,6 +257,46 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 				}
 
+			case 'c': // Prefix: "crafting/recipes"
+
+				if l := len("crafting/recipes"); len(elem) >= l && elem[0:l] == "crafting/recipes" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleGetCraftingRecipesRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET")
+					}
+
+					return
+				}
+
+			case 'e': // Prefix: "economy/overview"
+
+				if l := len("economy/overview"); len(elem) >= l && elem[0:l] == "economy/overview" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleGetEconomyOverviewRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET")
+					}
+
+					return
+				}
+
 			case 'h': // Prefix: "health"
 
 				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
@@ -318,26 +358,88 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 				switch elem[0] {
-				case '/': // Prefix: "/transactions"
+				case '/': // Prefix: "/"
 
-					if l := len("/transactions"); len(elem) >= l && elem[0:l] == "/transactions" {
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						// Leaf node.
-						switch r.Method {
-						case "GET":
-							s.handleGetPlayerTransactionHistoryRequest([1]string{
-								args[0],
-							}, elemIsEscaped, w, r)
-						default:
-							s.notAllowed(w, r, "GET")
+						break
+					}
+					switch elem[0] {
+					case 'i': // Prefix: "inventory"
+
+						if l := len("inventory"); len(elem) >= l && elem[0:l] == "inventory" {
+							elem = elem[l:]
+						} else {
+							break
 						}
 
-						return
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetCharacterInventoryRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					case 't': // Prefix: "transactions"
+
+						if l := len("transactions"); len(elem) >= l && elem[0:l] == "transactions" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetPlayerTransactionHistoryRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET")
+							}
+
+							return
+						}
+
+					case 'w': // Prefix: "wallet"
+
+						if l := len("wallet"); len(elem) >= l && elem[0:l] == "wallet" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "GET":
+								s.handleGetPlayerWalletRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							case "PUT":
+								s.handleUpdatePlayerWalletRequest([1]string{
+									args[0],
+								}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "GET,PUT")
+							}
+
+							return
+						}
+
 					}
 
 				}
@@ -750,6 +852,56 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 
 				}
 
+			case 'c': // Prefix: "crafting/recipes"
+
+				if l := len("crafting/recipes"); len(elem) >= l && elem[0:l] == "crafting/recipes" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = GetCraftingRecipesOperation
+						r.summary = "Get crafting recipes"
+						r.operationID = "getCraftingRecipes"
+						r.operationGroup = ""
+						r.pathPattern = "/crafting/recipes"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+			case 'e': // Prefix: "economy/overview"
+
+				if l := len("economy/overview"); len(elem) >= l && elem[0:l] == "economy/overview" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = GetEconomyOverviewOperation
+						r.summary = "Get economy overview"
+						r.operationID = "getEconomyOverview"
+						r.operationGroup = ""
+						r.pathPattern = "/economy/overview"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
 			case 'h': // Prefix: "health"
 
 				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
@@ -821,29 +973,102 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					break
 				}
 				switch elem[0] {
-				case '/': // Prefix: "/transactions"
+				case '/': // Prefix: "/"
 
-					if l := len("/transactions"); len(elem) >= l && elem[0:l] == "/transactions" {
+					if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 						elem = elem[l:]
 					} else {
 						break
 					}
 
 					if len(elem) == 0 {
-						// Leaf node.
-						switch method {
-						case "GET":
-							r.name = GetPlayerTransactionHistoryOperation
-							r.summary = "Get player transaction history"
-							r.operationID = "getPlayerTransactionHistory"
-							r.operationGroup = ""
-							r.pathPattern = "/players/{player_id}/transactions"
-							r.args = args
-							r.count = 1
-							return r, true
-						default:
-							return
+						break
+					}
+					switch elem[0] {
+					case 'i': // Prefix: "inventory"
+
+						if l := len("inventory"); len(elem) >= l && elem[0:l] == "inventory" {
+							elem = elem[l:]
+						} else {
+							break
 						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetCharacterInventoryOperation
+								r.summary = "Get player inventory"
+								r.operationID = "getCharacterInventory"
+								r.operationGroup = ""
+								r.pathPattern = "/players/{player_id}/inventory"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 't': // Prefix: "transactions"
+
+						if l := len("transactions"); len(elem) >= l && elem[0:l] == "transactions" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetPlayerTransactionHistoryOperation
+								r.summary = "Get player transaction history"
+								r.operationID = "getPlayerTransactionHistory"
+								r.operationGroup = ""
+								r.pathPattern = "/players/{player_id}/transactions"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
+					case 'w': // Prefix: "wallet"
+
+						if l := len("wallet"); len(elem) >= l && elem[0:l] == "wallet" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch method {
+							case "GET":
+								r.name = GetPlayerWalletOperation
+								r.summary = "Get player wallet"
+								r.operationID = "getPlayerWallet"
+								r.operationGroup = ""
+								r.pathPattern = "/players/{player_id}/wallet"
+								r.args = args
+								r.count = 1
+								return r, true
+							case "PUT":
+								r.name = UpdatePlayerWalletOperation
+								r.summary = "Update player wallet"
+								r.operationID = "updatePlayerWallet"
+								r.operationGroup = ""
+								r.pathPattern = "/players/{player_id}/wallet"
+								r.args = args
+								r.count = 1
+								return r, true
+							default:
+								return
+							}
+						}
+
 					}
 
 				}
