@@ -1316,6 +1316,13 @@ func (h *EconomyHandler) GetMyBids(w http.ResponseWriter, r *http.Request, param
 	}, nil
 }
 
+// Helper method to extract user ID from JWT context
+func (h *EconomyHandler) extractUserIDFromContext(ctx context.Context) string {
+	// In a real implementation, this would extract user ID from JWT claims
+	// For now, return a mock user ID for testing
+	return "550e8400-e29b-41d4-a716-446655440000"
+}
+
 // Additional enterprise-grade methods would include:
 // - Auction system management
 // - Market price analytics
