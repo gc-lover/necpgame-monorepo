@@ -53,8 +53,8 @@ type ChoiceResult struct {
 
 // StartQuest starts a quest for a player
 func (s *Service) StartQuest(ctx context.Context, playerID, questID string) error {
-	// Get quest definition
-	quest, err := s.repo.GetQuestDefinition(ctx, questID)
+	// Validate quest exists
+	_, err := s.repo.GetQuestDefinition(ctx, questID)
 	if err != nil {
 		return fmt.Errorf("quest not found: %w", err)
 	}
