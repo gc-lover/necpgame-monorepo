@@ -168,6 +168,7 @@ func setupRouter(h *handlers.EasterEggsHandlers) *chi.Mux {
 		r.Post("/admin/easter-eggs", h.CreateEasterEgg)
 		r.Put("/admin/easter-eggs/{id}", h.UpdateEasterEgg)
 		r.Delete("/admin/easter-eggs/{id}", h.DeleteEasterEgg)
+		r.Post("/admin/import", h.ImportEasterEggs)
 	})
 
 	return r

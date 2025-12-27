@@ -5,6 +5,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -470,6 +471,50 @@ func (h *EasterEggsHandlers) DeleteEasterEgg(w http.ResponseWriter, r *http.Requ
 		"message": "Easter egg deleted successfully",
 		"id":      id,
 	})
+}
+
+// ImportEasterEggs handles bulk import of easter eggs from YAML data
+func (h *EasterEggsHandlers) ImportEasterEggs(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	defer h.metrics.ObserveRequestDuration("ImportEasterEggs", start)
+
+	// Parse request body containing YAML path or data
+	var req struct {
+		YAMLPath string `json:"yaml_path,omitempty"`
+		YAMLData string `json:"yaml_data,omitempty"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Errorf("Failed to decode import request: %v", err)
+		h.respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	var yamlPath string
+	if req.YAMLPath != "" {
+		yamlPath = req.YAMLPath
+	} else if req.YAMLData != "" {
+		// For inline YAML data, we'd need to write it to a temp file
+		// For now, we'll expect a file path
+		h.respondWithError(w, http.StatusBadRequest, "YAML data import not implemented, use yaml_path")
+		return
+	} else {
+		h.respondWithError(w, http.StatusBadRequest, "Either yaml_path or yaml_data must be provided")
+		return
+	}
+
+	// Call service import method
+	result, err := h.service.ImportEasterEggsFromYAML(r.Context(), yamlPath)
+	if err != nil {
+		h.logger.Errorf("Failed to import easter eggs from %s: %v", yamlPath, err)
+		h.respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Import failed: %v", err))
+		return
+	}
+
+	h.logger.Infof("Successfully imported %d easter eggs, %d errors",
+		result.SuccessfullyAdded, len(result.Errors))
+
+	h.respondWithJSON(w, http.StatusOK, result)
 }
 
 // Helper methods

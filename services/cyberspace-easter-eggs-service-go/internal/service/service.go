@@ -5,10 +5,8 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"time"
 
 	"go.uber.org/zap"
@@ -475,8 +473,7 @@ func (s *EasterEggsService) processEasterEggImport(ctx context.Context, yamlEgg 
 	}
 
 	discoveryMethod := models.DiscoveryMethod{
-		Type:        yamlEgg.DiscoveryMethod.Type,
-		Description: yamlEgg.DiscoveryMethod.Description,
+		Type: yamlEgg.DiscoveryMethod.Type,
 	}
 
 	// Convert rewards
