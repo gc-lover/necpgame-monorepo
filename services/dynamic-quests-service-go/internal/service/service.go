@@ -3017,6 +3017,435 @@ func (s *Service) GetLakeMichiganQuest(ctx context.Context) (*models.DynamicQues
 	return quest, nil
 }
 
+// GetCubsWrigleyFieldQuest returns the Chicago Cubs Wrigley Field quest for Chicago
+// Issue: #140928959
+func (s *Service) GetCubsWrigleyFieldQuest(ctx context.Context) (*models.DynamicQuest, error) {
+	s.logger.Info("Retrieving Chicago Cubs Wrigley Field quest definition")
+
+	quest := &models.DynamicQuest{
+		QuestID:          "canon-quest-005-cubs-wrigley-field",
+		Title:            "Чикаго — Chicago Cubs на Wrigley Field",
+		Description:      "Посетите исторический матч Chicago Cubs на легендарном Wrigley Field с традициями и атмосферой",
+		QuestType:        "side",
+		MinLevel:         5,
+		MaxLevel:         0, // No max level
+		EstimatedDuration: 45,
+		Difficulty:       "medium",
+		Themes:           []string{"sports", "baseball", "tradition", "chicago", "culture", "history"},
+		Status:           "active",
+		ChoicePoints: []models.ChoicePoint{
+			{
+				ID:          "ticket_purchase",
+				Sequence:    1,
+				Title:       "Приобретение билетов",
+				Description: "Выберите тип билетов на матч",
+				Context:     "Wrigley Field предлагает разные зоны с уникальной атмосферой",
+				Choices: []models.Choice{
+					{
+						ID:             "bleacher_seats",
+						Text:           "Билеты на bleacher seats",
+						Description:    "Стоячие места с лучшей атмосферой и криками фанатов",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "sport",
+								Value:    float64(25),
+								Probability: 1.0,
+								Description: "Максимальная спортивная репутация",
+							},
+							{
+								Type:     "currency",
+								Target:   "spending",
+								Value:    float64(-80),
+								Probability: 1.0,
+								Description: "Более дорогие билеты",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "box_seats",
+						Text:           "Билеты в ложу",
+						Description:    "Комфортные сидячие места с едой и напитками",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "elite",
+								Value:    float64(15),
+								Probability: 1.0,
+								Description: "Репутация среди элиты",
+							},
+							{
+								Type:     "currency",
+								Target:   "spending",
+								Value:    float64(-120),
+								Probability: 1.0,
+								Description: "Самые дорогие билеты",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "standing_room",
+						Text:           "Стоячие места у поля",
+						Description:    "Дешевые билеты близко к полю, но без сидений",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "sport",
+								Value:    float64(15),
+								Probability: 1.0,
+								Description: "Хорошая спортивная репутация",
+							},
+							{
+								Type:     "currency",
+								Target:   "spending",
+								Value:    float64(-40),
+								Probability: 1.0,
+								Description: "Самые дешевые билеты",
+							},
+						},
+						RiskLevel:      "medium",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: true,
+			},
+			{
+				ID:          "stadium_exploration",
+				Sequence:    2,
+				Title:       "Исследование стадиона",
+				Description: "Что исследовать на стадионе?",
+				Context:     "Wrigley Field полон исторических достопримечательностей",
+				Choices: []models.Choice{
+					{
+						ID:             "ivy_wall",
+						Text:           "Изучить плющ на стене",
+						Description:    "Легендарный плющ, который растет на стене с 1937 года",
+						Consequences: []models.Consequence{
+							{
+								Type:     "skill_boost",
+								Target:   "knowledge",
+								Value:    float64(10),
+								Probability: 1.0,
+								Description: "Увеличение знаний о истории",
+							},
+							{
+								Type:     "achievement",
+								Target:   "ivy_explorer",
+								Value:    float64(1),
+								Probability: 1.0,
+								Description: "Достижение 'Исследователь плюща'",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "manual_scoreboard",
+						Text:           "Посмотреть ручное табло",
+						Description:    "Уникальное ручное табло, которое обновляется вручную",
+						Consequences: []models.Consequence{
+							{
+								Type:     "skill_boost",
+								Target:   "attention",
+								Value:    float64(8),
+								Probability: 1.0,
+								Description: "Улучшение внимательности",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "dugout_area",
+						Text:           "Подойти к скамейке игроков",
+						Description:    "Посмотреть на игроков и тренерский состав",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "sport",
+								Value:    float64(12),
+								Probability: 1.0,
+								Description: "Дополнительная спортивная репутация",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: false,
+			},
+			{
+				ID:          "seventh_inning",
+				Sequence:    3,
+				Title:       "Седьмой иннинг",
+				Description: "Как участвовать в традиции седьмого иннинга?",
+				Context:     "В седьмом иннинге все встают и поют 'Take Me Out to the Ball Game'",
+				Choices: []models.Choice{
+					{
+						ID:             "lead_singing",
+						Text:           "Вести хор",
+						Description:    "Стать лидером и вести толпу в пении",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "social",
+								Value:    float64(20),
+								Probability: 1.0,
+								Description: "Максимальная социальная репутация",
+							},
+							{
+								Type:     "skill_boost",
+								Target:   "charisma",
+								Value:    float64(15),
+								Probability: 1.0,
+								Description: "Увеличение харизмы",
+							},
+						},
+						RiskLevel:      "medium",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "enthusiastic_participation",
+						Text:           "Активно участвовать",
+						Description:    "Петь громко и танцевать вместе со всеми",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "social",
+								Value:    float64(12),
+								Probability: 1.0,
+								Description: "Хорошая социальная репутация",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "good",
+					},
+					{
+						ID:             "quiet_observation",
+						Text:           "Наблюдать молча",
+						Description:    "Стоять и смотреть, как поют другие",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "social",
+								Value:    float64(-5),
+								Probability: 1.0,
+								Description: "Небольшое снижение социальной репутации",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+				},
+				Critical: false,
+			},
+			{
+				ID:          "curse_story",
+				Sequence:    4,
+				Title:       "История проклятия козла",
+				Description: "Как отнестись к легенде о проклятии?",
+				Context:     "Фанат расскажет легенду о проклятии козла, которое держало Cubs без чемпионства 71 год",
+				Choices: []models.Choice{
+					{
+						ID:             "believe_curse",
+						Text:           "Поверить в проклятие",
+						Description:    "Слушать внимательно и верить в сверхъестественное",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "superstitious",
+								Value:    float64(15),
+								Probability: 1.0,
+								Description: "Репутация среди суеверных",
+							},
+							{
+								Type:     "unlock",
+								Target:   "curse_lore",
+								Value:    float64(1),
+								Probability: 1.0,
+								Description: "Доступ к дополнительным легендам",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "skeptical_view",
+						Text:           "Отнестись скептически",
+						Description:    "Слушать историю, но считать её вымыслом",
+						Consequences: []models.Consequence{
+							{
+								Type:     "skill_boost",
+								Target:   "critical_thinking",
+								Value:    float64(10),
+								Probability: 1.0,
+								Description: "Улучшение критического мышления",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "neutral",
+					},
+					{
+						ID:             "dismiss_story",
+						Text:           "Проигнорировать рассказ",
+						Description:    "Не слушать историю и уйти",
+						Consequences: []models.Consequence{
+							{
+								Type:     "reputation",
+								Target:   "social",
+								Value:    float64(-10),
+								Probability: 1.0,
+								Description: "Снижение социальной репутации",
+							},
+							{
+								Type:     "missed_reward",
+								Target:   "merch",
+								Value:    float64(1),
+								Probability: 1.0,
+								Description: "Пропуск редкого мерча",
+							},
+						},
+						RiskLevel:      "low",
+						MoralAlignment: "bad",
+					},
+				},
+				Critical: false,
+			},
+		},
+		EndingVariations: []models.EndingVariation{
+			{
+				ID:          "ultimate_fan",
+				Title:       "Истинный фанат Cubs",
+				Description: "Полностью погрузились в культуру Chicago Cubs",
+				Requirements: []string{"bleacher_seats", "ivy_wall", "lead_singing", "believe_curse"},
+				Rewards: []models.Reward{
+					{
+						Type:  "experience",
+						Value: 1800,
+					},
+					{
+						Type:  "currency",
+						Value: 50,
+					},
+					{
+						Type:  "item",
+						Value: "cubs_vintage_hat",
+					},
+				},
+				Narrative: "Вы стали истинным фанатом Chicago Cubs, познав все традиции и легенды Wrigley Field.",
+			},
+			{
+				ID:          "casual_fan",
+				Title:       "Казуальный болельщик",
+				Description: "Насладились матчем, но не погрузились глубоко",
+				Requirements: []string{"standing_room", "manual_scoreboard", "enthusiastic_participation"},
+				Rewards: []models.Reward{
+					{
+						Type:  "experience",
+						Value: 1500,
+					},
+					{
+						Type:  "currency",
+						Value: 30,
+					},
+				},
+				Narrative: "Вы хорошо провели время на матче Chicago Cubs, но остались обычным зрителем.",
+			},
+			{
+				ID:          "elite_experience",
+				Title:       "Элитный опыт",
+				Description: "Посетили матч в комфорте ложи",
+				Requirements: []string{"box_seats"},
+				Rewards: []models.Reward{
+					{
+						Type:  "experience",
+						Value: 1600,
+					},
+					{
+						Type:  "currency",
+						Value: 20,
+					},
+					{
+						Type:  "item",
+						Value: "cubs_premium_merch",
+					},
+				},
+				Narrative: "Вы насладились матчем Chicago Cubs в комфорте элитной ложи с лучшим сервисом.",
+			},
+		},
+		ReputationImpacts: []models.ReputationImpact{
+			{
+				Faction:     "sport",
+				Change:      20,
+				Description: "Репутация среди спортивных фанатов",
+				ChoiceID:    "bleacher_seats",
+			},
+			{
+				Faction:     "social",
+				Change:      15,
+				Description: "Социальная репутация от участия в традициях",
+				ChoiceID:    "lead_singing",
+			},
+			{
+				Faction:     "elite",
+				Change:      10,
+				Description: "Репутация среди элиты города",
+				ChoiceID:    "box_seats",
+			},
+		},
+		NarrativeSetup: models.NarrativeSetup{
+			Location:    "Wrigley Field, Chicago, Illinois",
+			TimePeriod:  "2020-2029",
+			Weather:     "Perfect baseball weather - 75°F, sunny",
+			Situation:   "Historic Chicago Cubs baseball game at legendary Wrigley Field",
+			Objectives:  []string{
+				"Purchase tickets and enter through fan zone",
+				"Explore Wrigley Field landmarks (ivy wall, manual scoreboard, bleacher seats)",
+				"Join the seventh inning stretch singing tradition",
+				"Learn about the Curse of the Billy Goat from fan NPC",
+			},
+		},
+		KeyCharacters: []models.KeyCharacter{
+			{
+				ID:          "ticket_vendor",
+				Name:        "Ticket Vendor",
+				Role:        "Merchant",
+				Description: "Friendly vendor selling game tickets",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "seasoned_fan",
+				Name:        "Seasoned Cubs Fan",
+				Role:        "Storyteller",
+				Description: "Long-time fan who knows all the legends and traditions",
+				Importance:  "primary",
+			},
+			{
+				ID:          "stadium_guide",
+				Name:        "Stadium Guide",
+				Role:        "Tour Guide",
+				Description: "Official Wrigley Field guide showing historic sites",
+				Importance:  "secondary",
+			},
+			{
+				ID:          "concession_worker",
+				Name:        "Concession Worker",
+				Role:        "Vendor",
+				Description: "Sells food and drinks, shares game insights",
+				Importance:  "tertiary",
+			},
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	return quest, nil
+}
+
 // GetWillisTowerQuest returns the Willis Tower quest for Chicago
 // Issue: #140928947
 func (s *Service) GetWillisTowerQuest(ctx context.Context) (*models.DynamicQuest, error) {

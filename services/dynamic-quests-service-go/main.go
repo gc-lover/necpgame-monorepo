@@ -103,11 +103,12 @@ func main() {
 				r.Get("/revival-hope", h.GetRevivalHopeQuest)                // GET /api/v1/quests/detroit/revival-hope
 			})
 
-			// Chicago Quests - Issues: #140928947, #140928949, #140928958
+			// Chicago Quests - Issues: #140928947, #140928949, #140928958, #140928959
 			r.Route("/chicago", func(r chi.Router) {
 				r.Get("/willis-tower", h.GetWillisTowerQuest)     // GET /api/v1/quests/chicago/willis-tower
 				r.Get("/deep-dish-pizza", h.GetDeepDishPizzaQuest) // GET /api/v1/quests/chicago/deep-dish-pizza
 				r.Get("/lake-michigan", h.GetLakeMichiganQuest)   // GET /api/v1/quests/chicago/lake-michigan
+				r.Get("/cubs-wrigley-field", h.GetCubsWrigleyFieldQuest) // GET /api/v1/quests/chicago/cubs-wrigley-field
 			})
 
 			// Denver Quests - Issue: #140928923, #140928921

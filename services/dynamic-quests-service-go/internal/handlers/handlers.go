@@ -438,6 +438,21 @@ func (h *Handlers) GetLakeMichiganQuest(w http.ResponseWriter, r *http.Request) 
 	h.respondJSON(w, http.StatusOK, quest)
 }
 
+// GetCubsWrigleyFieldQuest handles GET /quests/chicago/cubs-wrigley-field
+// Issue: #140928959
+func (h *Handlers) GetCubsWrigleyFieldQuest(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("Handling get Chicago Cubs Wrigley Field quest request")
+
+	quest, err := h.service.GetCubsWrigleyFieldQuest(r.Context())
+	if err != nil {
+		h.logger.Errorf("Failed to get Chicago Cubs Wrigley Field quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
 // GetWillisTowerQuest handles GET /quests/chicago/willis-tower
 // Issue: #140928947
 func (h *Handlers) GetWillisTowerQuest(w http.ResponseWriter, r *http.Request) {
