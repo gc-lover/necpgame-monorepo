@@ -28,16 +28,25 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 import yaml
-import numpy as np
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
+import random
+import statistics
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from scripts.core.base_script import BaseScript
+
+# Try to import ML libraries, fallback to basic implementations
+try:
+    import numpy as np
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.model_selection import train_test_split
+    ML_AVAILABLE = True
+except ImportError:
+    ML_AVAILABLE = False
+    print("Warning: ML libraries not available, using rule-based prioritization")
 
 
 class GitHubProjectsClient:
@@ -362,28 +371,37 @@ class ConceptDirectorAutomation(BaseScript):
         """Analyze current workflow patterns and identify optimization opportunities."""
         self.logger.info(f"Analyzing workflow for scope: {scope}")
 
+        # Load current tasks for analysis
+        current_tasks = self._load_current_tasks(scope)
+
         # Analyze task completion patterns
         completion_patterns = self._analyze_task_completion_patterns(scope)
 
-        # Analyze bottleneck identification
+        # Analyze current bottlenecks
         bottlenecks = self._identify_bottlenecks(scope)
 
         # Analyze resource utilization
         resource_utilization = self._analyze_resource_utilization(scope)
 
-        # Generate recommendations
+        # Analyze task distribution and flow
+        task_flow = self._analyze_task_flow(current_tasks)
+
+        # Generate comprehensive recommendations
         recommendations = self._generate_workflow_recommendations(
-            completion_patterns, bottlenecks, resource_utilization
+            completion_patterns, bottlenecks, resource_utilization, task_flow
         )
 
         # Output results
         results = {
             'timestamp': datetime.now().isoformat(),
             'scope': scope,
+            'data_source': 'github_projects' if self.github_client else 'mock_data',
+            'current_tasks_count': len(current_tasks),
             'analysis': {
                 'completion_patterns': completion_patterns,
                 'bottlenecks': bottlenecks,
                 'resource_utilization': resource_utilization,
+                'task_flow': task_flow,
                 'recommendations': recommendations
             }
         }
@@ -394,19 +412,32 @@ class ConceptDirectorAutomation(BaseScript):
         """Intelligent task prioritization based on multiple factors."""
         self.logger.info(f"Prioritizing tasks for scope: {scope} with threshold: {threshold}")
 
-        # Load current tasks from GitHub Project
+        # Load current tasks
         tasks = self._load_current_tasks(scope)
 
-        # Calculate priority scores
+        if not tasks:
+            self.logger.warning("No tasks found for prioritization")
+            return
+
+        # Calculate priority scores using ML or rule-based approach
         prioritized_tasks = []
         for task in tasks:
-            priority_score = self._calculate_task_priority(task, scope)
+            if hasattr(self, 'ml_engine') and self.ml_engine.is_trained:
+                priority_score = self.ml_engine.predict_priority(task)
+            else:
+                priority_score = self._calculate_task_priority(task, scope)
+
             if priority_score >= threshold:
-                task['priority_score'] = priority_score
-                prioritized_tasks.append(task)
+                task_copy = task.copy()
+                task_copy['priority_score'] = priority_score
+                task_copy['priority_factors'] = self._analyze_priority_factors(task)
+                prioritized_tasks.append(task_copy)
 
         # Sort by priority
         prioritized_tasks.sort(key=lambda x: x['priority_score'], reverse=True)
+
+        # Generate recommendations
+        recommendations = self._generate_prioritization_recommendations(prioritized_tasks)
 
         # Output prioritized task list
         results = {
@@ -415,10 +446,16 @@ class ConceptDirectorAutomation(BaseScript):
             'threshold': threshold,
             'total_tasks_analyzed': len(tasks),
             'prioritized_tasks_count': len(prioritized_tasks),
-            'prioritized_tasks': prioritized_tasks
+            'ml_enabled': self.ml_engine.is_trained if hasattr(self, 'ml_engine') else False,
+            'prioritized_tasks': prioritized_tasks,
+            'recommendations': recommendations
         }
 
         self._output_results(results, f'task_prioritization_{scope}', output_format)
+
+        # Optionally update GitHub with recommendations
+        if self.github_client and len(prioritized_tasks) > 0:
+            self._update_github_with_priorities(prioritized_tasks[:5])  # Top 5 tasks
 
     def _optimize_workflow(self, scope: str, output_format: str) -> None:
         """Optimize workflow processes for better efficiency."""
@@ -540,16 +577,122 @@ class ConceptDirectorAutomation(BaseScript):
             'optimization_opportunities': ['Implement resource pooling']
         }
 
-    def _generate_workflow_recommendations(self, patterns: Dict, bottlenecks: List, resources: Dict) -> List[str]:
-        """Generate workflow optimization recommendations."""
+    def _analyze_task_flow(self, tasks: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze task flow patterns and dependencies."""
+        flow_analysis = {
+            'task_distribution': {},
+            'status_distribution': {},
+            'age_distribution': {'new': 0, 'medium': 0, 'old': 0, 'overdue': 0},
+            'complexity_distribution': {'simple': 0, 'medium': 0, 'complex': 0},
+            'dependency_chains': 0,
+            'isolated_tasks': 0
+        }
+
+        for task in tasks:
+            # Task type distribution
+            task_type = task.get('type', 'UNKNOWN')
+            flow_analysis['task_distribution'][task_type] = \
+                flow_analysis['task_distribution'].get(task_type, 0) + 1
+
+            # Status distribution
+            status = task.get('status', 'unknown')
+            flow_analysis['status_distribution'][status] = \
+                flow_analysis['status_distribution'].get(status, 0) + 1
+
+            # Age distribution
+            age = task.get('age_days', 0)
+            if age <= 3:
+                flow_analysis['age_distribution']['new'] += 1
+            elif age <= 7:
+                flow_analysis['age_distribution']['medium'] += 1
+            elif age <= 14:
+                flow_analysis['age_distribution']['old'] += 1
+            else:
+                flow_analysis['age_distribution']['overdue'] += 1
+
+            # Complexity distribution
+            complexity_score = self._assess_task_complexity(task)
+            if complexity_score <= 0.3:
+                flow_analysis['complexity_distribution']['simple'] += 1
+            elif complexity_score <= 0.7:
+                flow_analysis['complexity_distribution']['medium'] += 1
+            else:
+                flow_analysis['complexity_distribution']['complex'] += 1
+
+            # Dependency analysis
+            dependencies = task.get('dependencies', [])
+            if dependencies:
+                flow_analysis['dependency_chains'] += 1
+            else:
+                flow_analysis['isolated_tasks'] += 1
+
+        return flow_analysis
+
+    def _assess_task_complexity(self, task: Dict[str, Any]) -> float:
+        """Assess task complexity on a 0-1 scale."""
+        complexity = 0.0
+
+        # Description length
+        desc_length = len(task.get('description', ''))
+        if desc_length > 1000:
+            complexity += 0.3
+        elif desc_length > 500:
+            complexity += 0.2
+        elif desc_length > 100:
+            complexity += 0.1
+
+        # Estimated hours
+        hours = task.get('estimated_hours', 0)
+        if hours > 80:
+            complexity += 0.4
+        elif hours > 40:
+            complexity += 0.2
+
+        # Dependencies
+        deps = len(task.get('dependencies', []))
+        complexity += min(deps * 0.1, 0.3)
+
+        # Tags indicating complexity
+        tags = str(task.get('tags', []))
+        if any(tag in tags.lower() for tag in ['complex', 'difficult', 'advanced']):
+            complexity += 0.2
+
+        return min(complexity, 1.0)
+
+    def _generate_workflow_recommendations(self, patterns: Dict, bottlenecks: List, resources: Dict, task_flow: Dict = None) -> List[str]:
+        """Generate comprehensive workflow optimization recommendations."""
         recommendations = []
 
+        # Analyze bottlenecks
         if bottlenecks:
             recommendations.append("Address identified bottlenecks through parallel processing")
+            for bottleneck in bottlenecks[:3]:  # Top 3 bottlenecks
+                recommendations.append(f"Critical: {bottleneck.get('description', 'Unknown bottleneck')}")
 
-        if resources['agent_utilization']['backend'] > 0.9:
+        # Analyze resource utilization
+        if resources.get('agent_utilization', {}).get('backend', 0) > 0.9:
             recommendations.append("Scale backend team or implement load balancing")
 
+        # Analyze task flow if available
+        if task_flow:
+            # Check task distribution balance
+            total_tasks = sum(task_flow['task_distribution'].values())
+            if total_tasks > 0:
+                backend_ratio = task_flow['task_distribution'].get('BACKEND', 0) / total_tasks
+                if backend_ratio > 0.6:
+                    recommendations.append("Backend tasks dominate workflow - consider redistributing workload")
+
+            # Check overdue tasks
+            overdue_ratio = task_flow['age_distribution'].get('overdue', 0) / max(total_tasks, 1)
+            if overdue_ratio > 0.2:
+                recommendations.append("High overdue task ratio - implement task aging alerts")
+
+            # Check dependency complexity
+            dep_ratio = task_flow['dependency_chains'] / max(total_tasks, 1)
+            if dep_ratio > 0.5:
+                recommendations.append("Complex dependency chains detected - consider breaking down interdependent tasks")
+
+        # General recommendations
         recommendations.extend([
             "Implement automated code review for basic checks",
             "Create standardized templates for common design patterns",
@@ -557,40 +700,423 @@ class ConceptDirectorAutomation(BaseScript):
             "Implement real-time progress tracking dashboard"
         ])
 
+        # ML-specific recommendations
+        if hasattr(self, 'ml_engine') and self.ml_engine.is_trained:
+            recommendations.append("ML-powered prioritization is active - review AI recommendations weekly")
+        else:
+            recommendations.append("Consider enabling ML training for better task prioritization")
+
         return recommendations
 
-    def _calculate_task_priority(self, task: Dict[str, Any], scope: str) -> float:
-        """Calculate intelligent priority score for a task."""
-        base_priority = 0.5
-
-        # Factor in task type priority
-        type_weights = {
-            'API': 0.9,
-            'BACKEND': 0.8,
-            'DATA': 0.7,
-            'MIGRATION': 0.6,
-            'UE5': 0.8
+    def _analyze_priority_factors(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze what factors contribute to task priority."""
+        factors = {
+            'task_type_weight': 0.0,
+            'age_bonus': 0.0,
+            'dependency_bonus': 0.0,
+            'business_impact_bonus': 0.0,
+            'complexity_multiplier': 1.0,
+            'total_score': 0.0
         }
-        if task.get('type') in type_weights:
-            base_priority *= type_weights[task['type']]
 
-        # Factor in dependencies
-        if task.get('dependencies'):
-            base_priority += 0.1 * len(task['dependencies'])
+        # Task type priority
+        type_weights = {
+            'API': 0.9, 'BACKEND': 0.8, 'UE5': 0.8,
+            'DATA': 0.7, 'MIGRATION': 0.6
+        }
+        task_type = task.get('type')
+        if task_type in type_weights:
+            factors['task_type_weight'] = type_weights[task_type]
 
-        # Factor in business impact
-        if task.get('business_impact') == 'high':
-            base_priority += 0.2
+        # Age bonus
+        age_days = task.get('age_days', 0)
+        if age_days > 7:
+            factors['age_bonus'] = min(age_days / 30.0 * 0.1, 0.15)
 
-        # Factor in age (older tasks get priority boost)
-        if task.get('age_days', 0) > 7:
-            base_priority += 0.1
+        # Dependency bonus
+        dependencies = task.get('dependencies', [])
+        if dependencies:
+            factors['dependency_bonus'] = min(len(dependencies) * 0.05, 0.15)
 
-        return min(base_priority, 1.0)
+        # Business impact bonus
+        business_impact = task.get('business_impact', 'medium')
+        impact_weights = {'high': 0.2, 'medium': 0.1, 'low': 0.0}
+        factors['business_impact_bonus'] = impact_weights.get(business_impact, 0.0)
+
+        # Complexity multiplier
+        complexity_indicators = [
+            len(task.get('description', '')) > 500,
+            'complex' in str(task.get('tags', [])),
+            task.get('estimated_hours', 0) > 40
+        ]
+        if any(complexity_indicators):
+            factors['complexity_multiplier'] = 1.2
+
+        # Calculate total
+        base_score = factors['task_type_weight']
+        bonuses = (factors['age_bonus'] + factors['dependency_bonus'] +
+                  factors['business_impact_bonus'])
+        factors['total_score'] = min((base_score + bonuses) * factors['complexity_multiplier'], 1.0)
+
+        return factors
+
+    def _generate_prioritization_recommendations(self, prioritized_tasks: List[Dict[str, Any]]) -> List[str]:
+        """Generate recommendations based on prioritization results."""
+        recommendations = []
+
+        if not prioritized_tasks:
+            return ["No high-priority tasks identified"]
+
+        # Analyze top tasks
+        top_tasks = prioritized_tasks[:3]
+
+        # Check for bottleneck patterns
+        high_priority_backend = sum(1 for t in top_tasks if t.get('type') == 'BACKEND')
+        if high_priority_backend >= 2:
+            recommendations.append("Consider scaling backend team - multiple high-priority backend tasks detected")
+
+        # Check for old tasks
+        old_tasks = sum(1 for t in prioritized_tasks if t.get('age_days', 0) > 14)
+        if old_tasks > len(prioritized_tasks) * 0.3:
+            recommendations.append("Review aging tasks - significant number of overdue items")
+
+        # Check for dependency chains
+        tasks_with_deps = sum(1 for t in prioritized_tasks if t.get('dependencies'))
+        if tasks_with_deps > len(prioritized_tasks) * 0.5:
+            recommendations.append("Complex dependency chains detected - consider parallel development streams")
+
+        # Default recommendations
+        if not recommendations:
+            recommendations.extend([
+                "Focus on top 3 prioritized tasks for maximum impact",
+                "Regular priority reassessment recommended (weekly)",
+                "Consider cross-team dependencies in planning"
+            ])
+
+        return recommendations
+
+    def _update_github_with_priorities(self, top_tasks: List[Dict[str, Any]]) -> None:
+        """Update GitHub issues with priority information."""
+        if not self.github_client:
+            return
+
+        try:
+            for task in top_tasks:
+                issue_number = task.get('issue_number')
+                if issue_number:
+                    comment_body = f"""## 🤖 AI Priority Analysis
+
+**Priority Score:** {task.get('priority_score', 0):.2f}
+
+### Priority Factors:
+- **Task Type:** {task.get('priority_factors', {}).get('task_type_weight', 0):.2f}
+- **Age Bonus:** {task.get('priority_factors', {}).get('age_bonus', 0):.2f}
+- **Dependencies:** {task.get('priority_factors', {}).get('dependency_bonus', 0):.2f}
+- **Business Impact:** {task.get('priority_factors', {}).get('business_impact_bonus', 0):.2f}
+
+### Recommendation:
+This task has been identified as high priority for immediate attention.
+
+*Generated by Concept Director Automation System*
+"""
+
+                    self.github_client.session.post(
+                        f"https://api.github.com/repos/gc-lover/necpgame-monorepo/issues/{issue_number}/comments",
+                        json={"body": comment_body}
+                    )
+
+        except Exception as e:
+            self.logger.warning(f"Failed to update GitHub with priorities: {e}")
+
+    def _predict_bottlenecks(self, scope: str, output_format: str) -> None:
+        """Predict potential workflow bottlenecks."""
+        self.logger.info(f"Predicting bottlenecks for scope: {scope}")
+
+        # Analyze current workflow state
+        current_tasks = self._load_current_tasks(scope)
+        workflow_metrics = self._analyze_workflow_metrics(current_tasks)
+
+        # Predict future bottlenecks
+        bottleneck_predictions = self._analyze_bottleneck_patterns(workflow_metrics)
+
+        # Generate mitigation strategies
+        mitigation_strategies = self._generate_bottleneck_mitigation(bottleneck_predictions)
+
+        results = {
+            'timestamp': datetime.now().isoformat(),
+            'scope': scope,
+            'current_workflow_state': workflow_metrics,
+            'bottleneck_predictions': bottleneck_predictions,
+            'mitigation_strategies': mitigation_strategies,
+            'prediction_horizon_days': 14
+        }
+
+        self._output_results(results, f'bottleneck_prediction_{scope}', output_format)
+
+    def _analyze_workflow_metrics(self, tasks: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Analyze current workflow metrics."""
+        metrics = {
+            'total_tasks': len(tasks),
+            'tasks_by_type': {},
+            'tasks_by_status': {},
+            'average_age_days': 0,
+            'overdue_tasks': 0,
+            'high_impact_tasks': 0
+        }
+
+        total_age = 0
+        for task in tasks:
+            # Count by type
+            task_type = task.get('type', 'UNKNOWN')
+            metrics['tasks_by_type'][task_type] = metrics['tasks_by_type'].get(task_type, 0) + 1
+
+            # Count by status
+            status = task.get('status', 'unknown')
+            metrics['tasks_by_status'][status] = metrics['tasks_by_status'].get(status, 0) + 1
+
+            # Age analysis
+            age = task.get('age_days', 0)
+            total_age += age
+            if age > 14:
+                metrics['overdue_tasks'] += 1
+
+            # Impact analysis
+            if task.get('business_impact') == 'high':
+                metrics['high_impact_tasks'] += 1
+
+        if tasks:
+            metrics['average_age_days'] = total_age / len(tasks)
+
+        return metrics
+
+    def _analyze_bottleneck_patterns(self, metrics: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Analyze patterns that indicate potential bottlenecks."""
+        bottlenecks = []
+
+        # Check for overloaded task types
+        for task_type, count in metrics['tasks_by_type'].items():
+            if count > metrics['total_tasks'] * 0.4:  # More than 40% of tasks
+                bottlenecks.append({
+                    'type': 'resource_overload',
+                    'category': task_type,
+                    'severity': 'high' if count > metrics['total_tasks'] * 0.6 else 'medium',
+                    'description': f"High concentration of {task_type} tasks ({count} tasks)",
+                    'predicted_impact': 'workflow_slowdown'
+                })
+
+        # Check for overdue tasks
+        overdue_ratio = metrics['overdue_tasks'] / max(metrics['total_tasks'], 1)
+        if overdue_ratio > 0.3:
+            bottlenecks.append({
+                'type': 'aging_tasks',
+                'category': 'general',
+                'severity': 'high',
+                'description': f"High ratio of overdue tasks ({metrics['overdue_tasks']}/{metrics['total_tasks']})",
+                'predicted_impact': 'project_delays'
+            })
+
+        # Check for high average age
+        if metrics['average_age_days'] > 10:
+            bottlenecks.append({
+                'type': 'slow_throughput',
+                'category': 'general',
+                'severity': 'medium',
+                'description': f"High average task age ({metrics['average_age_days']:.1f} days)",
+                'predicted_impact': 'reduced_velocity'
+            })
+
+        return bottlenecks
+
+    def _generate_bottleneck_mitigation(self, bottlenecks: List[Dict[str, Any]]) -> List[str]:
+        """Generate mitigation strategies for identified bottlenecks."""
+        strategies = []
+
+        for bottleneck in bottlenecks:
+            if bottleneck['type'] == 'resource_overload':
+                if bottleneck['category'] == 'BACKEND':
+                    strategies.append("Scale backend team or redistribute backend tasks to other team members")
+                elif bottleneck['category'] == 'API':
+                    strategies.append("Implement API automation tools or parallel API development streams")
+                else:
+                    strategies.append(f"Redistribute {bottleneck['category']} tasks across team members")
+
+            elif bottleneck['type'] == 'aging_tasks':
+                strategies.extend([
+                    "Conduct task triage session to reprioritize overdue items",
+                    "Implement task aging alerts for early intervention",
+                    "Consider breaking down large overdue tasks into smaller chunks"
+                ])
+
+            elif bottleneck['type'] == 'slow_throughput':
+                strategies.extend([
+                    "Review and optimize development processes",
+                    "Implement pair programming for complex tasks",
+                    "Consider additional training or mentoring for team members"
+                ])
+
+        if not strategies:
+            strategies.append("Current workflow shows good balance - continue monitoring")
+
+        return strategies
+
+    def _calculate_task_priority(self, task: Dict[str, Any], scope: str) -> float:
+        """Calculate intelligent priority score for a task (legacy method)."""
+        factors = self._analyze_priority_factors(task)
+        return factors['total_score']
+
+    def _train_ml_model(self) -> None:
+        """Train the ML prioritization model using historical data."""
+        self.logger.info("Training ML prioritization model...")
+
+        # Try to load historical task data
+        historical_data = self._load_historical_task_data()
+
+        if not historical_data:
+            self.logger.warning("No historical data available, using rule-based prioritization")
+            return
+
+        # Train the model
+        self.ml_engine.train(historical_data)
+        self.logger.info(f"ML model trained on {len(historical_data)} historical tasks")
+
+    def _load_historical_task_data(self) -> List[Dict[str, Any]]:
+        """Load historical task completion data for ML training."""
+        # Try to load from GitHub if available
+        if self.github_client:
+            try:
+                # Get completed tasks from the last 90 days
+                all_items = self.github_client.get_project_items()
+                historical_data = []
+
+                for item in all_items:
+                    if item.get('content_type') == 'Issue':
+                        issue_details = item.get('issue_details', {})
+
+                        # Check if task is completed and has sufficient data
+                        status = self._extract_field_value(item, 'Status')
+                        if status == 'Done':
+                            task_data = self._extract_task_features_from_item(item)
+                            if task_data:
+                                historical_data.append(task_data)
+
+                return historical_data[:500]  # Limit training data size
+
+            except Exception as e:
+                self.logger.warning(f"Failed to load historical data from GitHub: {e}")
+
+        # Fallback to mock data for development
+        return self._generate_mock_historical_data()
+
+    def _generate_mock_historical_data(self) -> List[Dict[str, Any]]:
+        """Generate mock historical data for ML training."""
+        mock_data = []
+        task_types = ['API', 'BACKEND', 'DATA', 'MIGRATION', 'UE5']
+        impacts = ['low', 'medium', 'high']
+
+        for i in range(200):
+            task = {
+                'type': np.random.choice(task_types),
+                'age_days': np.random.randint(1, 60),
+                'dependencies': np.random.choice([[], ['task_a'], ['task_a', 'task_b']], p=[0.7, 0.2, 0.1]),
+                'business_impact': np.random.choice(impacts),
+                'estimated_hours': np.random.randint(4, 80),
+                'description': f"Mock task {i} description" * np.random.randint(1, 5),
+                'tags': np.random.choice([[], ['complex'], ['urgent'], ['simple']], p=[0.6, 0.2, 0.1, 0.1]),
+                'actual_priority': np.random.random()  # This would be the ground truth priority
+            }
+            mock_data.append(task)
+
+        return mock_data
+
+    def _extract_task_features_from_item(self, item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Extract task features from GitHub project item."""
+        try:
+            issue_details = item.get('issue_details', {})
+
+            # Calculate age
+            created_at = issue_details.get('created_at')
+            if created_at:
+                created_date = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                age_days = (datetime.now(created_date.tzinfo) - created_date).days
+            else:
+                age_days = 0
+
+            # Extract other features
+            task_type = self._extract_field_value(item, 'TYPE')
+            business_impact = self._infer_business_impact(issue_details)
+
+            task_data = {
+                'type': task_type or 'UNKNOWN',
+                'age_days': age_days,
+                'dependencies': [],  # Would need more complex parsing
+                'business_impact': business_impact,
+                'estimated_hours': 0,  # Would need estimation logic
+                'description': issue_details.get('body', ''),
+                'tags': issue_details.get('labels', []),
+                'actual_priority': 0.5  # Default, would need expert labeling
+            }
+
+            return task_data
+
+        except Exception as e:
+            self.logger.warning(f"Failed to extract features from item {item.get('id')}: {e}")
+            return None
+
+    def _infer_business_impact(self, issue_details: Dict[str, Any]) -> str:
+        """Infer business impact from issue details."""
+        title = issue_details.get('title', '').lower()
+        body = issue_details.get('body', '').lower()
+        labels = [label.lower() for label in issue_details.get('labels', [])]
+
+        # High impact indicators
+        if any(keyword in title + body for keyword in ['critical', 'blocker', 'urgent', 'high priority']):
+            return 'high'
+
+        if any(label in ['bug', 'security', 'performance'] for label in labels):
+            return 'high'
+
+        # Medium impact indicators
+        if any(keyword in title + body for keyword in ['important', 'enhancement', 'feature']):
+            return 'medium'
+
+        return 'low'
+
+    def _extract_field_value(self, item: Dict[str, Any], field_name: str) -> Optional[str]:
+        """Extract field value from project item."""
+        fields = item.get('fields', [])
+        for field in fields:
+            if field.get('name') == field_name:
+                return field.get('value', {}).get('name')
+        return None
 
     def _load_current_tasks(self, scope: str) -> List[Dict[str, Any]]:
-        """Load current tasks from GitHub Project (simplified implementation)."""
-        # In real implementation, this would call GitHub API
+        """Load current tasks from GitHub Project."""
+        if self.github_client:
+            try:
+                # Get all Todo and In Progress tasks
+                items = self.github_client.get_project_items()
+
+                tasks = []
+                for item in items:
+                    if item.get('content_type') == 'Issue':
+                        status = self._extract_field_value(item, 'Status')
+                        if status in ['Todo', 'In Progress']:
+                            task = self._extract_task_features_from_item(item)
+                            if task:
+                                task['item_id'] = item['id']
+                                task['issue_number'] = item['content']['number']
+                                tasks.append(task)
+
+                # Filter by scope if specified
+                if scope != 'all':
+                    tasks = [t for t in tasks if self._task_matches_scope(t, scope)]
+
+                return tasks
+
+            except Exception as e:
+                self.logger.warning(f"Failed to load tasks from GitHub: {e}")
+
+        # Fallback to mock data
         return [
             {
                 'id': 'task_1',
@@ -599,7 +1125,9 @@ class ConceptDirectorAutomation(BaseScript):
                 'status': 'in_progress',
                 'age_days': 5,
                 'dependencies': ['design_doc'],
-                'business_impact': 'high'
+                'business_impact': 'high',
+                'item_id': 'mock_1',
+                'issue_number': 123
             },
             {
                 'id': 'task_2',
@@ -608,9 +1136,27 @@ class ConceptDirectorAutomation(BaseScript):
                 'status': 'todo',
                 'age_days': 2,
                 'dependencies': [],
-                'business_impact': 'medium'
+                'business_impact': 'medium',
+                'item_id': 'mock_2',
+                'issue_number': 124
             }
         ]
+
+    def _task_matches_scope(self, task: Dict[str, Any], scope: str) -> bool:
+        """Check if task matches the specified scope."""
+        task_type = task.get('type', '').lower()
+
+        scope_mappings = {
+            'backend': ['backend', 'api'],
+            'api': ['api'],
+            'data': ['data', 'migration'],
+            'combat': ['backend'],  # Assuming combat is backend
+            'economy': ['backend'],  # Assuming economy is backend
+            'social': ['backend'],   # Assuming social is backend
+        }
+
+        matching_types = scope_mappings.get(scope, [scope])
+        return task_type in matching_types
 
     def _output_results(self, results: Dict[str, Any], filename: str, format_type: str) -> None:
         """Output results in specified format."""
