@@ -105,6 +105,8 @@ func main() {
 		r.Route("/admin", func(r chi.Router) {
 			r.Post("/import", h.ImportQuests)            // POST /api/v1/admin/import
 			r.Post("/reset", h.ResetPlayerProgress)      // POST /api/v1/admin/reset
+			r.Get("/quests/{questId}/analytics", h.GetQuestAnalytics) // GET /api/v1/admin/quests/{id}/analytics
+			r.Post("/quests/generate", h.GenerateDynamicQuest)        // POST /api/v1/admin/quests/generate
 		})
 	})
 

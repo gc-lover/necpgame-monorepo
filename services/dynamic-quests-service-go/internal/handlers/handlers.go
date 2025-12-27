@@ -6,6 +6,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -15,6 +16,7 @@ import (
 
 	"necpgame/services/dynamic-quests-service-go/internal/repository"
 	"necpgame/services/dynamic-quests-service-go/internal/service"
+	"necpgame/services/dynamic-quests-service-go/pkg/models"
 )
 
 // Handlers handles HTTP requests
@@ -284,17 +286,68 @@ func (h *Handlers) GetPlayerReputation(w http.ResponseWriter, r *http.Request) {
 
 // ImportQuests handles POST /api/v1/admin/import - import quests from YAML files
 func (h *Handlers) ImportQuests(w http.ResponseWriter, r *http.Request) {
-	// This would integrate with the quest import script
-	// For now, return a placeholder response
+	ctx := r.Context()
+
+	// Read YAML data from request body
+	yamlData, err := io.ReadAll(r.Body)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Failed to read request body")
+		return
+	}
+
+	if len(yamlData) == 0 {
+		h.respondError(w, http.StatusBadRequest, "YAML data is required")
+		return
+	}
+
+	// Process YAML import
+	if err := h.service.ImportQuestsFromYAML(ctx, yamlData); err != nil {
+		h.logger.Errorf("Failed to import quests from YAML: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to import quests")
+		return
+	}
+
 	h.respondJSON(w, http.StatusOK, map[string]string{
-		"message": "Quest import functionality - implementation pending",
-		"status":  "placeholder",
+		"message": "Quests imported successfully from YAML",
+		"status":  "success",
 	})
 }
 
 // ResetPlayerProgress handles POST /api/v1/admin/reset - reset player progress (admin only)
 func (h *Handlers) ResetPlayerProgress(w http.ResponseWriter, r *http.Request) {
 	h.respondError(w, http.StatusNotImplemented, "Reset functionality not implemented")
+}
+
+// GetQuestAnalytics handles GET /api/v1/admin/quests/{questId}/analytics - get quest analytics
+func (h *Handlers) GetQuestAnalytics(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	questID := chi.URLParam(r, "questId")
+
+	analytics, err := h.service.GenerateQuestAnalytics(ctx, questID)
+	if err != nil {
+		h.logger.Errorf("Failed to generate quest analytics: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to generate analytics")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, analytics)
+}
+
+// GenerateDynamicQuest handles POST /api/v1/admin/quests/generate - generate dynamic quest
+func (h *Handlers) GenerateDynamicQuest(w http.ResponseWriter, r *http.Request) {
+	var req models.QuestGenerationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// Placeholder for dynamic quest generation
+	response := models.QuestGenerationResponse{
+		Success: false,
+		Error:   "Dynamic quest generation not implemented yet",
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
 // respondJSON sends a JSON response

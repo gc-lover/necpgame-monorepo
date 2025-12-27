@@ -343,3 +343,140 @@ func clamp(value, min, max int) int {
 	return value
 }
 
+// convertToDynamicQuest converts repository quest definition to new model
+func (s *Service) convertToDynamicQuest(questDef *repository.QuestDefinition) (*models.DynamicQuest, error) {
+	dynamicQuest := &models.DynamicQuest{
+		ID:          questDef.QuestID,
+		QuestID:     questDef.QuestID,
+		Title:       questDef.Title,
+		Description: questDef.Description,
+		QuestType:   questDef.QuestType,
+		MinLevel:    questDef.MinLevel,
+		MaxLevel:    questDef.MaxLevel,
+		CreatedAt:   questDef.CreatedAt,
+		UpdatedAt:   questDef.UpdatedAt,
+	}
+
+	// Parse choice points
+	if questDef.ChoicePoints != nil {
+		var choicePoints []models.ChoicePoint
+		if err := json.Unmarshal(questDef.ChoicePoints, &choicePoints); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal choice points: %w", err)
+		}
+		dynamicQuest.ChoicePoints = choicePoints
+	}
+
+	// Parse ending variations
+	if questDef.EndingVariations != nil {
+		var endingVariations []models.EndingVariation
+		if err := json.Unmarshal(questDef.EndingVariations, &endingVariations); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal ending variations: %w", err)
+		}
+		dynamicQuest.EndingVariations = endingVariations
+	}
+
+	// Parse reputation impacts
+	if questDef.ReputationImpacts != nil {
+		var reputationImpacts []models.ReputationImpact
+		if err := json.Unmarshal(questDef.ReputationImpacts, &reputationImpacts); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal reputation impacts: %w", err)
+		}
+		dynamicQuest.ReputationImpacts = reputationImpacts
+	}
+
+	return dynamicQuest, nil
+}
+
+// processAdvancedChoice processes a choice using the new model structure
+func (s *Service) processAdvancedChoice(choice QuestChoice, selectedChoice *models.Choice, dynamicQuest *models.DynamicQuest) (*ChoiceResult, error) {
+	result := &ChoiceResult{
+		NewState:       "active",
+		QuestCompleted: false,
+		Consequences:   []models.ConsequenceResult{},
+	}
+
+	// Process consequences
+	for _, consequence := range selectedChoice.Consequences {
+		consequenceResult := models.ConsequenceResult{
+			Type:        consequence.Type,
+			Description: consequence.Description,
+			Success:     true, // Assume success for now, could add probability logic
+		}
+
+		switch consequence.Type {
+		case "reputation":
+			if consequence.Target == "corporate" {
+				result.ReputationChanges.Corporate = int(consequence.Value.(float64))
+			} else if consequence.Target == "street" {
+				result.ReputationChanges.Street = int(consequence.Value.(float64))
+			} else if consequence.Target == "humanity" {
+				result.ReputationChanges.Humanity = int(consequence.Value.(float64))
+			}
+			consequenceResult.Value = consequence.Value
+
+		case "item":
+			consequenceResult.Value = consequence.Value
+
+		case "experience":
+			consequenceResult.Value = consequence.Value
+
+		case "quest_state":
+			if consequence.Target == "completed" {
+				result.QuestCompleted = true
+				result.EndingAchieved = choice.ChoiceValue
+			}
+			consequenceResult.Value = consequence.Value
+		}
+
+		result.Consequences = append(result.Consequences, consequenceResult)
+	}
+
+	// Determine next choice point (simplified logic)
+	if len(dynamicQuest.ChoicePoints) > 0 {
+		// Find next choice point in sequence
+		for i, cp := range dynamicQuest.ChoicePoints {
+			if cp.ID == choice.ChoicePoint && i+1 < len(dynamicQuest.ChoicePoints) {
+				result.NextChoicePoint = dynamicQuest.ChoicePoints[i+1].ID
+				break
+			}
+		}
+	}
+
+	// Determine new state based on choice
+	switch selectedChoice.MoralAlignment {
+	case "good":
+		result.NewState = "positive_path"
+	case "evil":
+		result.NewState = "negative_path"
+	default:
+		result.NewState = "neutral_path"
+	}
+
+	return result, nil
+}
+
+// ImportQuestsFromYAML imports quests from YAML files
+func (s *Service) ImportQuestsFromYAML(ctx context.Context, yamlData []byte) error {
+	// This would parse YAML and create quest definitions
+	// For now, return placeholder implementation
+	s.logger.Info("Quest import from YAML - placeholder implementation")
+	return fmt.Errorf("YAML import not implemented yet")
+}
+
+// GenerateQuestAnalytics generates analytics for quest performance
+func (s *Service) GenerateQuestAnalytics(ctx context.Context, questID string) (*models.QuestAnalytics, error) {
+	// Placeholder for analytics generation
+	analytics := &models.QuestAnalytics{
+		QuestID:         questID,
+		TotalPlayers:    0,
+		CompletionRate:  0.0,
+		PopularChoices:  make(map[string]int64),
+		EndingDistribution: make(map[string]int64),
+		DifficultyRatings: make(map[string]float64),
+		PlayerRetention: make(map[string]int64),
+	}
+
+	s.logger.Infof("Generated analytics for quest: %s", questID)
+	return analytics, nil
+}
+
