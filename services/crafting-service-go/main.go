@@ -26,10 +26,6 @@ func main() {
 	// PERFORMANCE: Preallocate logger to avoid allocations
 	logger := log.New(os.Stdout, "[crafting-service] ", log.LstdFlags)
 
-	// PERFORMANCE: Context with timeout for initialization
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
 	// PERFORMANCE: Initialize service with memory pooling
 	svc := server.NewCraftingService()
 
