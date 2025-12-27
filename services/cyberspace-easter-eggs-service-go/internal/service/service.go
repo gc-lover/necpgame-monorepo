@@ -5,15 +5,69 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 
 	"cyberspace-easter-eggs-service-go/internal/metrics"
 	"cyberspace-easter-eggs-service-go/pkg/models"
 	"cyberspace-easter-eggs-service-go/pkg/repository"
 )
+
+// YAML Import structures
+type EasterEggYAML struct {
+	ID              string              `yaml:"id"`
+	Name            string              `yaml:"name"`
+	Category        string              `yaml:"category"`
+	Difficulty      string              `yaml:"difficulty"`
+	Description     string              `yaml:"description"`
+	Content         string              `yaml:"content"`
+	Location        EasterEggLocationYAML `yaml:"location"`
+	DiscoveryMethod DiscoveryMethodYAML `yaml:"discovery_method"`
+	Rewards         []EasterEggRewardYAML `yaml:"rewards"`
+	LoreConnections []string            `yaml:"lore_connections"`
+	Hints           []HintYAML          `yaml:"hints"`
+}
+
+type EasterEggLocationYAML struct {
+	NetworkType   string   `yaml:"network_type"`
+	SpecificAreas []string `yaml:"specific_areas"`
+}
+
+type DiscoveryMethodYAML struct {
+	Type         string   `yaml:"type"`
+	Description  string   `yaml:"description"`
+	Requirements []string `yaml:"requirements"`
+}
+
+type EasterEggRewardYAML struct {
+	Type     string `yaml:"type"`
+	Value    int    `yaml:"value,omitempty"`
+	ItemID   string `yaml:"item_id,omitempty"`
+	ItemName string `yaml:"item_name,omitempty"`
+}
+
+type HintYAML struct {
+	Text    string `yaml:"text"`
+	Type    string `yaml:"type"`
+	Cost    int    `yaml:"cost"`
+	Enabled bool   `yaml:"enabled"`
+}
+
+type EasterEggsYAMLImport struct {
+	Metadata struct {
+		Sections []struct {
+			Title string `yaml:"title"`
+			Body  string `yaml:"body"`
+		} `yaml:"sections"`
+	} `yaml:"metadata"`
+	EasterEggs []EasterEggYAML `yaml:"easter_eggs"`
+}
 
 // EasterEggsServiceInterface defines the service interface
 type EasterEggsServiceInterface interface {
@@ -42,8 +96,19 @@ type EasterEggsServiceInterface interface {
 	GetActiveChallenges(ctx context.Context) ([]*models.EasterEggChallenge, error)
 	GetPlayerChallengeProgress(ctx context.Context, playerID, challengeID string) (int, error)
 
+	// Import operations
+	ImportEasterEggsFromYAML(ctx context.Context, yamlPath string) (*ImportResult, error)
+
 	// Health check
 	HealthCheck(ctx context.Context) error
+}
+
+// ImportResult represents the result of an import operation
+type ImportResult struct {
+	TotalProcessed    int      `json:"total_processed"`
+	SuccessfullyAdded int      `json:"successfully_added"`
+	Updated           int      `json:"updated"`
+	Errors            []string `json:"errors"`
 }
 
 // EasterEggsService implements EasterEggsServiceInterface
@@ -352,6 +417,110 @@ func (s *EasterEggsService) GetPlayerChallengeProgress(ctx context.Context, play
 	}
 
 	return progress, nil
+}
+
+// ImportEasterEggsFromYAML imports easter eggs from a YAML file
+func (s *EasterEggsService) ImportEasterEggsFromYAML(ctx context.Context, yamlPath string) (*ImportResult, error) {
+	s.metrics.IncrementRequests("ImportEasterEggsFromYAML")
+	defer s.metrics.ObserveRequestDuration("ImportEasterEggsFromYAML", time.Now())
+
+	s.logger.Infof("Starting import of easter eggs from YAML: %s", yamlPath)
+
+	// Read YAML file
+	yamlData, err := os.ReadFile(yamlPath)
+	if err != nil {
+		s.metrics.IncrementErrors()
+		s.logger.Errorf("Failed to read YAML file %s: %v", yamlPath, err)
+		return nil, fmt.Errorf("failed to read YAML file: %w", err)
+	}
+
+	// Parse YAML
+	var importData EasterEggsYAMLImport
+	if err := yaml.Unmarshal(yamlData, &importData); err != nil {
+		s.metrics.IncrementErrors()
+		s.logger.Errorf("Failed to parse YAML file %s: %v", yamlPath, err)
+		return nil, fmt.Errorf("failed to parse YAML: %w", err)
+	}
+
+	result := &ImportResult{
+		TotalProcessed: len(importData.EasterEggs),
+		Errors:         make([]string, 0),
+	}
+
+	s.logger.Infof("Processing %d easter eggs from YAML", result.TotalProcessed)
+
+	// Process each easter egg
+	for i, yamlEgg := range importData.EasterEggs {
+		if err := s.processEasterEggImport(ctx, yamlEgg); err != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("Easter egg %d (%s): %v", i+1, yamlEgg.ID, err))
+			s.logger.Warnf("Failed to import easter egg %s: %v", yamlEgg.ID, err)
+		} else {
+			result.SuccessfullyAdded++
+			s.logger.Debugf("Successfully imported easter egg: %s", yamlEgg.ID)
+		}
+	}
+
+	s.logger.Infof("Import completed: %d processed, %d successful, %d errors",
+		result.TotalProcessed, result.SuccessfullyAdded, len(result.Errors))
+
+	return result, nil
+}
+
+// processEasterEggImport processes a single easter egg from YAML
+func (s *EasterEggsService) processEasterEggImport(ctx context.Context, yamlEgg EasterEggYAML) error {
+	// Convert YAML structures to model structures
+	location := models.EasterEggLocation{
+		NetworkType:   yamlEgg.Location.NetworkType,
+		SpecificAreas: yamlEgg.Location.SpecificAreas,
+	}
+
+	discoveryMethod := models.DiscoveryMethod{
+		Type:        yamlEgg.DiscoveryMethod.Type,
+		Description: yamlEgg.DiscoveryMethod.Description,
+	}
+
+	// Convert rewards
+	rewards := make([]models.EasterEggReward, len(yamlEgg.Rewards))
+	for i, yamlReward := range yamlEgg.Rewards {
+		rewards[i] = models.EasterEggReward{
+			Type:     yamlReward.Type,
+			Value:    yamlReward.Value,
+			ItemID:   yamlReward.ItemID,
+			ItemName: yamlReward.ItemName,
+		}
+	}
+
+	// Create easter egg model
+	easterEgg := &models.EasterEgg{
+		ID:              yamlEgg.ID,
+		Name:            yamlEgg.Name,
+		Category:        yamlEgg.Category,
+		Difficulty:      yamlEgg.Difficulty,
+		Description:     yamlEgg.Description,
+		Content:         yamlEgg.Content,
+		Location:        location,
+		DiscoveryMethod: discoveryMethod,
+		Rewards:         rewards,
+		LoreConnections: yamlEgg.LoreConnections,
+		Status:          "active",
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+
+	// Check if easter egg already exists
+	existing, err := s.repo.GetEasterEgg(ctx, yamlEgg.ID)
+	if err != nil && err.Error() != "easter egg not found" {
+		return fmt.Errorf("failed to check existing easter egg: %w", err)
+	}
+
+	if existing != nil {
+		// Update existing easter egg
+		easterEgg.CreatedAt = existing.CreatedAt // Preserve creation time
+		return s.repo.UpdateEasterEgg(ctx, easterEgg)
+	} else {
+		// Create new easter egg
+		return s.repo.CreateEasterEgg(ctx, easterEgg)
+	}
 }
 
 // HealthCheck performs a health check

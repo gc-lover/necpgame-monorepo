@@ -27,7 +27,8 @@ class QuestMigrationGenerator(BaseContentMigrationGenerator):
             description="Generate Liquibase YAML migrations for quests from knowledge base",
             content_type="quests",
             input_dirs=[
-                "knowledge/canon/narrative/quests"
+                "knowledge/canon/narrative/quests",
+                "knowledge/canon/lore/timeline-author/quests"
             ],
             output_dir=str(Path(config.get('paths', 'migrations_output_dir')) / "gameplay" / "quests"),
             table_name="gameplay.quest_definitions"
