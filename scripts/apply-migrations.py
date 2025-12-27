@@ -44,8 +44,12 @@ def main():
         print("Connected to database")
 
         # Get all SQL migration files
-        migrations_dir = Path('../infrastructure/liquibase/migrations')
+        script_dir = Path(__file__).parent
+        project_root = script_dir.parent
+        migrations_dir = project_root / 'infrastructure' / 'liquibase' / 'migrations'
+        print(f"Looking for migrations in: {migrations_dir.absolute()}")
         sql_files = sorted(migrations_dir.glob('V*.sql'))
+        print(f"Found {len(sql_files)} SQL files: {[str(f.name) for f in sql_files[:3]]}")
 
         if not sql_files:
             print("No SQL migration files found")
