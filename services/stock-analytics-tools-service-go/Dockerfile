@@ -61,3 +61,4 @@ ENV GOMAXPROCS=4
 # Run the application
 CMD ["./stock-analytics-tools-service"]
 
+

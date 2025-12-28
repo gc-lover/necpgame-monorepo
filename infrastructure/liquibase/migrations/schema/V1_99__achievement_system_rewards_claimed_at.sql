@@ -12,3 +12,4 @@ ON player_achievements(rewards_claimed_at) WHERE rewards_claimed_at IS NOT NULL;
 -- Add comment for documentation
 COMMENT ON COLUMN player_achievements.rewards_claimed_at IS 'Timestamp when achievement rewards were claimed by the player';
 
+

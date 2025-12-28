@@ -170,3 +170,4 @@ func (e *CircuitBreakerError) Error() string {
 	return e.Message
 }
 
+

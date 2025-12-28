@@ -114,3 +114,4 @@ type PlayerState struct {
 - **Service Mesh**: Istio for traffic management and observability
 - **Database Sharding**: PostgreSQL partitioning by player region
 - **Redis Clustering**: Multi-region replication for global consistency
+

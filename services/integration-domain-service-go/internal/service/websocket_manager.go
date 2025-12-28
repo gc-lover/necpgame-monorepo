@@ -279,3 +279,4 @@ func generateConnectionID() string {
 	return fmt.Sprintf("ws_%d_%d", time.Now().Unix(), time.Now().UnixNano()%1000)
 }
 
+

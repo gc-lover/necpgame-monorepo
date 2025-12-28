@@ -139,3 +139,4 @@ CREATE TRIGGER update_regions_updated_at
     BEFORE UPDATE ON regions
     FOR EACH ROW
     EXECUTE FUNCTION update_regions_updated_at_column();
+

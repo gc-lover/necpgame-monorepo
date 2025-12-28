@@ -293,3 +293,4 @@ This service is part of the NECPGAME project and follows the project's licensing
 **Issue**: #141889233
 **Domain**: economy-domain
 **Service**: stock-analytics-charts-service-go
+
