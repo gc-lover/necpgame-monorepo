@@ -31,6 +31,9 @@ type Server struct {
 	websocketPool    sync.Pool
 }
 
+// Ensure Server implements api.Handler
+var _ api.Handler = (*Server)(nil)
+
 // NewServer creates a new server instance with optimized pools for chart data processing
 func NewServer(db *pgxpool.Pool, logger *zap.Logger, tokenAuth interface{}) *Server {
 	s := &Server{
@@ -106,14 +109,12 @@ func (s *Server) GetStockChart(ctx context.Context, params api.GetStockChartPara
 
 	// Parse limit with safety bounds
 	limit := 100 // default
-	if params.Limit.IsSet() {
-		if l, ok := params.Limit.Get(); ok {
-			limit = int(l)
-			if limit > 1000 {
-				limit = 1000 // Hard limit for performance
-			} else if limit < 1 {
-				limit = 1
-			}
+	if params.Limit != nil {
+		limit = *params.Limit
+		if limit > 1000 {
+			limit = 1000 // Hard limit for performance
+		} else if limit < 1 {
+			limit = 1
 		}
 	}
 
@@ -338,9 +339,9 @@ func (s *Server) getStockChartData(ctx context.Context, symbol, interval string,
 		Timeframe: interval,
 		Data:     data,
 		Metadata: &api.ChartMetadata{
-			TotalPoints:  len(data),
-			DataQuality:  "high",
-			LastUpdated:  time.Now().Format(time.RFC3339),
+			TotalPoints: len(data),
+			DataQuality: "high",
+			LastUpdated: time.Now().Format(time.RFC3339),
 		},
 	}, nil
 }
@@ -393,6 +394,8 @@ func (s *Server) calculateMACD(ctx context.Context, symbol string) (*api.MACDInd
 		SignalPeriod: 9,
 		Values: []api.MACDValue{
 			{Macd: 1.25, Signal: 1.18, Histogram: 0.07},
+			{Macd: 1.18, Signal: 1.22, Histogram: -0.04},
+			{Macd: 1.32, Signal: 1.25, Histogram: 0.07},
 		},
 	}, nil
 }

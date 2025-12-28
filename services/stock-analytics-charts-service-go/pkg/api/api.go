@@ -6,7 +6,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"time"
 )
 
 // Handler interface for stock analytics charts service
