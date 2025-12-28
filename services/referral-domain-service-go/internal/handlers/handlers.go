@@ -96,7 +96,7 @@ func (h *Handler) CreateReferralCode(w http.ResponseWriter, r *http.Request) {
 	code, err := h.service.CreateReferralCode(ctx, userID, req.Code, req.ExpiresAt, req.MaxUses)
 	if err != nil {
 		h.logger.Error("Failed to create referral code", zap.Error(err))
-		h.respondError(w, http.StatusInternalServerError, "Failed to create referral code")
+		h.respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -105,19 +105,19 @@ func (h *Handler) CreateReferralCode(w http.ResponseWriter, r *http.Request) {
 
 // ValidateReferralCode validates a referral code
 func (h *Handler) ValidateReferralCode(w http.ResponseWriter, r *http.Request) {
-	codeID := chi.URLParam(r, "codeID")
+	code := chi.URLParam(r, "codeID")
 
 	ctx := r.Context()
-	code, err := h.service.ValidateReferralCode(ctx, codeID)
+	referralCode, err := h.service.ValidateReferralCode(ctx, code)
 	if err != nil {
 		h.logger.Warn("Referral code validation failed",
-			zap.String("code", codeID),
+			zap.String("code", code),
 			zap.Error(err))
 		h.respondError(w, http.StatusBadRequest, "Invalid referral code")
 		return
 	}
 
-	h.respondJSON(w, http.StatusOK, code)
+	h.respondJSON(w, http.StatusOK, referralCode)
 }
 
 // Referral Registration handlers
@@ -125,8 +125,8 @@ func (h *Handler) ValidateReferralCode(w http.ResponseWriter, r *http.Request) {
 // CreateReferralRegistration creates a new referral registration
 func (h *Handler) CreateReferralRegistration(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		RefereeID      uuid.UUID `json:"referee_id"`
-		ReferralCodeID uuid.UUID `json:"referral_code_id"`
+		ReferredID    uuid.UUID `json:"referred_id"`
+		ReferralCode  string    `json:"referral_code"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -138,7 +138,7 @@ func (h *Handler) CreateReferralRegistration(w http.ResponseWriter, r *http.Requ
 	referrerID := uuid.New() // Placeholder
 
 	ctx := r.Context()
-	err := h.service.RegisterReferral(ctx, referrerID, req.RefereeID, req.ReferralCodeID)
+	err := h.service.RegisterReferral(ctx, referrerID, req.ReferredID, req.ReferralCode)
 	if err != nil {
 		h.logger.Error("Failed to create referral registration", zap.Error(err))
 		h.respondError(w, http.StatusInternalServerError, "Failed to create referral registration")
@@ -192,7 +192,7 @@ func (h *Handler) GetReferralLeaderboard(w http.ResponseWriter, r *http.Request)
 // ClaimReferralReward claims a referral reward
 func (h *Handler) ClaimReferralReward(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		MilestoneID uuid.UUID `json:"milestone_id"`
+		MilestoneLevel int `json:"milestone_level"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -204,7 +204,7 @@ func (h *Handler) ClaimReferralReward(w http.ResponseWriter, r *http.Request) {
 	userID := uuid.New() // Placeholder
 
 	ctx := r.Context()
-	err := h.service.ClaimReferralReward(ctx, userID, req.MilestoneID)
+	err := h.service.ClaimReferralReward(ctx, userID, req.MilestoneLevel)
 	if err != nil {
 		h.logger.Error("Failed to claim referral reward", zap.Error(err))
 		h.respondError(w, http.StatusBadRequest, err.Error())

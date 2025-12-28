@@ -36,12 +36,14 @@ func (s *Service) CreateReferralCode(ctx context.Context, ownerID uuid.UUID, cod
 
 	referralCode := &repository.ReferralCode{
 		ID:          uuid.New(),
+		CharacterID: ownerID,
 		Code:        code,
-		OwnerID:     ownerID,
-		IsActive:    true,
+		Prefix:      "REF",
+		CreatedAt:   time.Now(),
 		ExpiresAt:   expiresAt,
-		MaxUses:     maxUses,
-		CurrentUses: 0,
+		IsActive:    true,
+		UsageCount:  0,
+		MaxUsage:    maxUses,
 	}
 
 	if err := s.repo.CreateReferralCode(ctx, referralCode); err != nil {
@@ -68,7 +70,7 @@ func (s *Service) ValidateReferralCode(ctx context.Context, code string) (*repos
 
 	s.logger.Info("Referral code validated",
 		zap.String("code", code),
-		zap.String("owner_id", referralCode.OwnerID.String()))
+		zap.String("owner_id", referralCode.CharacterID.String()))
 
 	return referralCode, nil
 }
@@ -84,14 +86,16 @@ func (s *Service) GetUserReferralCodes(ctx context.Context, userID uuid.UUID) ([
 }
 
 // RegisterReferral registers a new user through referral
-func (s *Service) RegisterReferral(ctx context.Context, referrerID, refereeID uuid.UUID, referralCodeID uuid.UUID) error {
+func (s *Service) RegisterReferral(ctx context.Context, referrerID, refereeID uuid.UUID, referralCode string) error {
 	registration := &repository.ReferralRegistration{
-		ID:             uuid.New(),
-		ReferrerID:     referrerID,
-		RefereeID:      refereeID,
-		ReferralCodeID: referralCodeID,
-		Status:         "pending",
-		RegisteredAt:   time.Now(),
+		ID:           uuid.New(),
+		ReferrerID:   referrerID,
+		ReferredID:   refereeID,
+		ReferralCode: referralCode,
+		Status:       "pending",
+		RegisteredAt: time.Now(),
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	if err := s.repo.CreateReferralRegistration(ctx, registration); err != nil {
@@ -131,36 +135,37 @@ func (s *Service) GetReferralStatistics(ctx context.Context, userID uuid.UUID) (
 	return stats, nil
 }
 
-// ClaimReferralReward claims a referral reward
-func (s *Service) ClaimReferralReward(ctx context.Context, userID, milestoneID uuid.UUID) error {
-	// Check if user qualifies for the milestone
-	stats, err := s.GetReferralStatistics(ctx, userID)
+// ClaimReferralReward claims a referral reward for reaching a milestone
+func (s *Service) ClaimReferralReward(ctx context.Context, userID uuid.UUID, milestoneLevel int) error {
+	// Get the user's milestone for this level
+	milestone, err := s.repo.GetUserMilestone(ctx, userID, milestoneLevel)
 	if err != nil {
 		return err
 	}
-
-	milestone, err := s.repo.GetReferralMilestone(ctx, milestoneID)
-	if err != nil {
-		return err
+	if milestone == nil {
+		return fmt.Errorf("milestone not found for user and level")
 	}
 
-	if stats.ConvertedReferrals < milestone.Threshold {
-		return fmt.Errorf("user does not qualify for this milestone")
+	// Check if milestone is completed
+	if !milestone.IsCompleted {
+		return fmt.Errorf("milestone not yet completed")
 	}
 
 	// Check if reward already claimed
-	if existing, _ := s.repo.GetUserMilestoneReward(ctx, userID, milestoneID); existing != nil {
+	if milestone.IsRewardClaimed {
 		return fmt.Errorf("reward already claimed")
 	}
 
 	// Create reward record
 	reward := &repository.ReferralReward{
-		ID:          uuid.New(),
-		UserID:      userID,
-		MilestoneID: milestoneID,
-		Amount:      milestone.RewardValue,
-		Status:      "claimed",
-		ClaimedAt:   &time.Time{},
+		ID:           uuid.New(),
+		CharacterID:  userID,
+		RewardType:   milestone.RewardType,
+		RewardAmount: milestone.RewardAmount,
+		CurrencyType: "eddies",
+		Status:       "claimed",
+		ClaimedAt:    &time.Time{},
+		CreatedAt:    time.Now(),
 	}
 	*reward.ClaimedAt = time.Now()
 
@@ -169,10 +174,16 @@ func (s *Service) ClaimReferralReward(ctx context.Context, userID, milestoneID u
 		return err
 	}
 
+	// Update milestone to mark reward as claimed
+	if err := s.repo.UpdateMilestoneRewardClaimed(ctx, milestone.ID); err != nil {
+		s.logger.Error("Failed to update milestone reward claimed status", zap.Error(err))
+		return err
+	}
+
 	s.logger.Info("Referral reward claimed",
 		zap.String("user_id", userID.String()),
-		zap.String("milestone_id", milestoneID.String()),
-		zap.Float64("amount", milestone.RewardValue))
+		zap.Int("milestone_level", milestoneLevel),
+		zap.Int("amount", milestone.RewardAmount))
 
 	return nil
 }

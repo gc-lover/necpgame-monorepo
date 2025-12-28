@@ -247,6 +247,18 @@ func (r *Repository) GetUserMilestone(ctx context.Context, userID uuid.UUID, lev
 	return &milestone, nil
 }
 
+// UpdateMilestoneRewardClaimed updates a milestone to mark reward as claimed
+func (r *Repository) UpdateMilestoneRewardClaimed(ctx context.Context, milestoneID uuid.UUID) error {
+	query := `
+		UPDATE referral_milestones
+		SET is_reward_claimed = true, reward_claimed_at = $2, updated_at = $2
+		WHERE id = $1
+	`
+
+	_, err := r.db.ExecContext(ctx, query, milestoneID, time.Now())
+	return err
+}
+
 // GetUserMilestoneReward gets a user's reward for a specific milestone
 func (r *Repository) GetUserMilestoneReward(ctx context.Context, userID, milestoneID uuid.UUID) (*ReferralReward, error) {
 	query := `SELECT * FROM referral_rewards WHERE user_id = $1 AND milestone_id = $2`
