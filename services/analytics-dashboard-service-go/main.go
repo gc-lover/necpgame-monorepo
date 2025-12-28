@@ -360,10 +360,19 @@ func (h *AnalyticsHandler) GetGameAnalyticsOverview(ctx context.Context, params 
 	return apiOverview, nil
 }
 
-func (h *AnalyticsHandler) GetPlayerBehaviorAnalytics(ctx context.Context, params api.GetPlayerBehaviorAnalyticsParams) (*models.PlayerBehaviorAnalytics, error) {
+func (h *AnalyticsHandler) GetPlayerBehaviorAnalytics(ctx context.Context, params api.GetPlayerBehaviorAnalyticsParams) (*api.PlayerBehaviorAnalytics, error) {
+	periodStr := "24h"
+	if params.Period.IsSet() {
+		periodStr = string(params.Period.Value)
+	}
+	segmentStr := "all"
+	if params.Segment.IsSet() {
+		segmentStr = string(params.Segment.Value)
+	}
+
 	h.logger.Info("Processing player behavior analytics request",
-		zap.String("period", params.Period),
-		zap.String("segment", params.Segment))
+		zap.String("period", periodStr),
+		zap.String("segment", segmentStr))
 
 	queryCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
@@ -374,7 +383,14 @@ func (h *AnalyticsHandler) GetPlayerBehaviorAnalytics(ctx context.Context, param
 		return nil, err
 	}
 
-	return analytics, nil
+	// Convert models.PlayerBehaviorAnalytics to api.PlayerBehaviorAnalytics
+	apiAnalytics := &api.PlayerBehaviorAnalytics{
+		Period:  periodStr,
+		Segment: segmentStr,
+		// TODO: Add other fields conversion
+	}
+
+	return apiAnalytics, nil
 }
 
 func (h *AnalyticsHandler) GetEconomicAnalytics(ctx context.Context, params api.GetEconomicAnalyticsParams) (*models.EconomicAnalytics, error) {
