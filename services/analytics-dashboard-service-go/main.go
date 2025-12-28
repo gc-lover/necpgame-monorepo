@@ -300,8 +300,8 @@ func (h *AnalyticsHandler) AnalyticsServiceHealthCheck(ctx context.Context, para
 		CacheControl:   api.NewOptString("max-age=30"),
 		ETag:           api.NewOptString(fmt.Sprintf(`"%d"`, time.Now().Unix())),
 		Response: api.HealthResponse{
-			Service:             api.NewOptString("analytics-dashboard-service"),
-			Status:              api.NewOptString("healthy"),
+			Service:             "analytics-dashboard-service",
+			Status:              api.HealthResponseStatusHealthy,
 			Timestamp:           time.Now(),
 			Version:             api.NewOptString("1.0.0"),
 			UptimeSeconds:       api.NewOptInt(3600), // TODO: Track actual uptime
@@ -386,7 +386,6 @@ func (h *AnalyticsHandler) GetPlayerBehaviorAnalytics(ctx context.Context, param
 	// Convert models.PlayerBehaviorAnalytics to api.PlayerBehaviorAnalytics
 	apiAnalytics := &api.PlayerBehaviorAnalytics{
 		Period:  periodStr,
-		Segment: segmentStr,
 		// TODO: Add other fields conversion
 	}
 
@@ -394,13 +393,18 @@ func (h *AnalyticsHandler) GetPlayerBehaviorAnalytics(ctx context.Context, param
 }
 
 func (h *AnalyticsHandler) GetEconomicAnalytics(ctx context.Context, params api.GetEconomicAnalyticsParams) (*models.EconomicAnalytics, error) {
+	periodStr := "24h"
+	if params.Period.IsSet() {
+		periodStr = string(params.Period.Value)
+	}
+
 	h.logger.Info("Processing economic analytics request",
-		zap.String("period", params.Period))
+		zap.String("period", periodStr))
 
 	queryCtx, cancel := context.WithTimeout(ctx, 8*time.Second)
 	defer cancel()
 
-	analytics, err := h.service.GetEconomicAnalytics(queryCtx, params.Period)
+	analytics, err := h.service.GetEconomicAnalytics(queryCtx, periodStr)
 	if err != nil {
 		h.logger.Error("Failed to get economic analytics", zap.Error(err))
 		return nil, err
@@ -410,9 +414,18 @@ func (h *AnalyticsHandler) GetEconomicAnalytics(ctx context.Context, params api.
 }
 
 func (h *AnalyticsHandler) GetCombatAnalytics(ctx context.Context, params api.GetCombatAnalyticsParams) (*models.CombatAnalytics, error) {
+	periodStr := "24h"
+	if params.Period.IsSet() {
+		periodStr = string(params.Period.Value)
+	}
+	gameModeStr := "all"
+	if params.GameMode.IsSet() {
+		gameModeStr = string(params.GameMode.Value)
+	}
+
 	h.logger.Info("Processing combat analytics request",
-		zap.String("period", params.Period),
-		zap.String("game_mode", params.GameMode))
+		zap.String("period", periodStr),
+		zap.String("game_mode", gameModeStr))
 
 	queryCtx, cancel := context.WithTimeout(ctx, 12*time.Second)
 	defer cancel()
@@ -427,13 +440,18 @@ func (h *AnalyticsHandler) GetCombatAnalytics(ctx context.Context, params api.Ge
 }
 
 func (h *AnalyticsHandler) GetSocialAnalytics(ctx context.Context, params api.GetSocialAnalyticsParams) (*models.SocialAnalytics, error) {
+	periodStr := "24h"
+	if params.Period.IsSet() {
+		periodStr = string(params.Period.Value)
+	}
+
 	h.logger.Info("Processing social analytics request",
-		zap.String("period", params.Period))
+		zap.String("period", periodStr))
 
 	queryCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	analytics, err := h.service.GetSocialAnalytics(queryCtx, params.Period)
+	analytics, err := h.service.GetSocialAnalytics(queryCtx, periodStr)
 	if err != nil {
 		h.logger.Error("Failed to get social analytics", zap.Error(err))
 		return nil, err
@@ -443,13 +461,18 @@ func (h *AnalyticsHandler) GetSocialAnalytics(ctx context.Context, params api.Ge
 }
 
 func (h *AnalyticsHandler) GetRevenueAnalytics(ctx context.Context, params api.GetRevenueAnalyticsParams) (*models.RevenueAnalytics, error) {
+	periodStr := "24h"
+	if params.Period.IsSet() {
+		periodStr = string(params.Period.Value)
+	}
+
 	h.logger.Info("Processing revenue analytics request",
-		zap.String("period", params.Period))
+		zap.String("period", periodStr))
 
 	queryCtx, cancel := context.WithTimeout(ctx, 8*time.Second)
 	defer cancel()
 
-	analytics, err := h.service.GetRevenueAnalytics(queryCtx, params.Period)
+	analytics, err := h.service.GetRevenueAnalytics(queryCtx, periodStr)
 	if err != nil {
 		h.logger.Error("Failed to get revenue analytics", zap.Error(err))
 		return nil, err
@@ -459,13 +482,18 @@ func (h *AnalyticsHandler) GetRevenueAnalytics(ctx context.Context, params api.G
 }
 
 func (h *AnalyticsHandler) GetSystemPerformanceAnalytics(ctx context.Context, params api.GetSystemPerformanceAnalyticsParams) (*models.SystemPerformanceAnalytics, error) {
+	periodStr := "1h"
+	if params.Period.IsSet() {
+		periodStr = string(params.Period.Value)
+	}
+
 	h.logger.Info("Processing system performance analytics request",
-		zap.String("period", params.Period))
+		zap.String("period", periodStr))
 
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	analytics, err := h.service.GetSystemPerformanceAnalytics(queryCtx, params.Period)
+	analytics, err := h.service.GetSystemPerformanceAnalytics(queryCtx, periodStr)
 	if err != nil {
 		h.logger.Error("Failed to get system performance analytics", zap.Error(err))
 		return nil, err
@@ -474,25 +502,40 @@ func (h *AnalyticsHandler) GetSystemPerformanceAnalytics(ctx context.Context, pa
 	return analytics, nil
 }
 
-func (h *AnalyticsHandler) GetAnalyticsAlerts(ctx context.Context, params api.GetAnalyticsAlertsParams) (*models.AnalyticsAlerts, error) {
+func (h *AnalyticsHandler) GetAnalyticsAlerts(ctx context.Context, params api.GetAnalyticsAlertsParams) (*api.AnalyticsAlerts, error) {
+	severityStr := "all"
+	if params.Severity.IsSet() {
+		severityStr = string(params.Severity.Value)
+	}
+
 	h.logger.Info("Processing analytics alerts request",
-		zap.String("severity", params.Severity))
+		zap.String("severity", severityStr))
 
 	queryCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	alerts, err := h.service.GetAnalyticsAlerts(queryCtx, params.Severity, params.Acknowledged)
+	alerts, err := h.service.GetAnalyticsAlerts(queryCtx, severityStr, params.Acknowledged)
 	if err != nil {
 		h.logger.Error("Failed to get analytics alerts", zap.Error(err))
 		return nil, err
 	}
 
-	return alerts, nil
+	// Convert models.AnalyticsAlerts to api.AnalyticsAlerts
+	apiAlerts := &api.AnalyticsAlerts{
+		// TODO: Add conversion logic
+	}
+
+	return apiAlerts, nil
 }
 
-func (h *AnalyticsHandler) GenerateAnalyticsReport(ctx context.Context, params api.GenerateAnalyticsReportParams) (*models.AnalyticsReport, error) {
+func (h *AnalyticsHandler) GenerateAnalyticsReport(ctx context.Context, params api.GenerateAnalyticsReportParams) (api.GenerateAnalyticsReportRes, error) {
+	reportType := "comprehensive"
+	if params.ReportType.IsSet() {
+		reportType = string(params.ReportType.Value)
+	}
+
 	h.logger.Info("Processing analytics report generation request",
-		zap.String("report_type", params.ReportType))
+		zap.String("report_type", reportType))
 
 	queryCtx, cancel := context.WithTimeout(ctx, 30*time.Second) // Longer timeout for report generation
 	defer cancel()
@@ -503,7 +546,14 @@ func (h *AnalyticsHandler) GenerateAnalyticsReport(ctx context.Context, params a
 		return nil, err
 	}
 
-	return report, nil
+	// Convert models.AnalyticsReport to api.AnalyticsReport
+	apiReport := &api.AnalyticsReport{
+		ReportType: reportType,
+		Timestamp:  report.Timestamp,
+		// TODO: Add other fields conversion
+	}
+
+	return apiReport, nil
 }
 
 func main() {

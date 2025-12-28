@@ -23,6 +23,9 @@ import (
 	"combat-stats-service-go/internal/service"
 	"combat-stats-service-go/internal/repository"
 	"combat-stats-service-go/internal/metrics"
+
+	// Import enhanced error handling and logging
+	errorhandling "github.com/your-org/necpgame/scripts/core/error-handling"
 )
 
 func main() {
@@ -31,14 +34,19 @@ func main() {
 		os.Setenv("GOGC", "75") // Higher threshold for stats workloads
 	}
 
-	// Initialize structured logger
-	logger, err := zap.NewProduction()
+	// Initialize enhanced structured logger
+	loggerConfig := &errorhandling.LoggerConfig{
+		ServiceName: "combat-stats-service",
+		Level:       zap.InfoLevel,
+		Development: os.Getenv("ENV") == "development",
+		AddCaller:   true,
+	}
+
+	logger, err := errorhandling.NewLogger(loggerConfig)
 	if err != nil {
 		log.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
-
-	sugar := logger.Sugar()
 
 	// Load configuration
 	cfg, err := config.Load()

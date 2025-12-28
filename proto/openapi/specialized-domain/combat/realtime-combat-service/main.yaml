@@ -331,6 +331,66 @@ paths:
               schema:
                 $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
 
+  /sessions/{session_id}/spectate:
+    post:
+      summary: Spectate combat session
+      description: |
+        Allows a player to spectate an active combat session.
+
+        **BACKEND NOTE:** Grants read-only access to session events.
+        Supports multiple camera modes (free, follow_player, overview, cinematic).
+        Establishes WebSocket connection for spectator updates.
+      operationId: spectateCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/session-schemas.yaml#/components/schemas/SpectateRequest'
+      responses:
+        '200':
+          description: Successfully joined as spectator
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/session-schemas.yaml#/components/schemas/SpectateResponse'
+        '400':
+          description: Invalid spectate request
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to spectate session
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '429':
+          description: Too many spectators for session
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
   # WebSocket endpoint for real-time updates
   /ws/sessions/{session_id}:
     get:
@@ -400,6 +460,81 @@ paths:
                 $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
         '429':
           description: Connection rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  # Spectator WebSocket endpoint
+  /ws/sessions/{session_id}/spectate:
+    get:
+      summary: WebSocket connection for spectator updates
+      description: |
+        Establishes WebSocket connection for spectator real-time updates.
+
+        **BACKEND NOTE:** Read-only connection for spectators.
+        Supports camera mode changes, session event streaming.
+        Lower priority than player connections.
+      operationId: spectatorWebSocket
+      tags:
+        - Real-time Updates
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: JWT authentication token
+        - name: camera_mode
+          in: query
+          schema:
+            type: string
+            enum: [free, follow_player, overview, cinematic]
+            default: free
+          description: Initial spectator camera mode
+        - name: follow_target
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Player ID to follow (if camera_mode is follow_player)
+      responses:
+        '101':
+          description: Spectator WebSocket connection established
+          headers:
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+              description: WebSocket handshake confirmation
+        '400':
+          description: Invalid spectator connection parameters
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to spectate session
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session not found
           content:
             application/json:
               schema:

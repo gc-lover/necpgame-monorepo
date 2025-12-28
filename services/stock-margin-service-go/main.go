@@ -12,37 +12,39 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/gc-lover/necpgame-monorepo/services/stock-analytics-tools-service-go/pkg/api"
-	"github.com/gc-lover/necpgame-monorepo/services/stock-analytics-tools-service-go/server"
+	"github.com/gc-lover/necpgame-monorepo/services/stock-margin-service-go/server"
 )
 
-// Config holds all configuration for the stock analytics tools service
+// Config holds all configuration for the stock margin service
 type Config struct {
-	Port         string        `envconfig:"PORT" default:"8151"`
+	Port         string        `envconfig:"PORT" default:"8150"`
 	DatabaseURL  string        `envconfig:"DATABASE_URL" required:"true"`
 	JWTSecret    string        `envconfig:"JWT_SECRET" required:"true"`
 	LogLevel     string        `envconfig:"LOG_LEVEL" default:"info"`
-	ReadTimeout  time.Duration `envconfig:"READ_TIMEOUT" default:"30s"` // Longer for complex calculations
-	WriteTimeout time.Duration `envconfig:"WRITE_TIMEOUT" default:"30s"`
+	ReadTimeout  time.Duration `envconfig:"READ_TIMEOUT" default:"15s"`
+	WriteTimeout time.Duration `envconfig:"WRITE_TIMEOUT" default:"15s"`
 	IdleTimeout  time.Duration `envconfig:"IDLE_TIMEOUT" default:"60s"`
 
-	// Performance tuning for heavy analytical computations
-	MaxDBConnections    int           `envconfig:"MAX_DB_CONNECTIONS" default:"200"`
-	MinDBConnections    int           `envconfig:"MIN_DB_CONNECTIONS" default:"50"`
+	// Performance tuning for margin calculations
+	MaxDBConnections    int           `envconfig:"MAX_DB_CONNECTIONS" default:"150"`
+	MinDBConnections    int           `envconfig:"MIN_DB_CONNECTIONS" default:"30"`
 	DBConnMaxLifetime   time.Duration `envconfig:"DB_CONN_MAX_LIFETIME" default:"1h"`
 	DBConnMaxIdleTime   time.Duration `envconfig:"DB_CONN_MAX_IDLE_TIME" default:"30m"`
 
-	// Analytics specific configuration
-	RedisURL              string        `envconfig:"REDIS_URL" default:""`
-	CacheTTL              time.Duration `envconfig:"CACHE_TTL" default:"1h"` // Longer cache for expensive calculations
-	CalculationTimeout    time.Duration `envconfig:"CALCULATION_TIMEOUT" default:"5m"`
-	MaxConcurrentAnalysis int           `envconfig:"MAX_CONCURRENT_ANALYSIS" default:"10"`
-	MLModelPath           string        `envconfig:"ML_MODEL_PATH" default:"/models"`
+	// Margin specific configuration
+	RedisURL               string        `envconfig:"REDIS_URL" default:""`
+	CacheTTL               time.Duration `envconfig:"CACHE_TTL" default:"5m"`
+	MarginBatchSize        int           `envconfig:"MARGIN_BATCH_SIZE" default:"1000"`
+	MarginProcessingDelay  time.Duration `envconfig:"MARGIN_PROCESSING_DELAY" default:"100ms"`
+	MaxConcurrentMargins   int           `envconfig:"MAX_CONCURRENT_MARGINS" default:"50"`
+	MarginCallThreshold    float64       `envconfig:"MARGIN_CALL_THRESHOLD" default:"0.25"`
+	MaintenanceMargin      float64       `envconfig:"MAINTENANCE_MARGIN" default:"0.30"`
 }
 
 func main() {
@@ -59,23 +61,30 @@ func main() {
 	}
 	defer logger.Sync()
 
-	// Initialize database connection with performance optimizations for analytics
+	// Initialize database connection with performance optimizations for margin operations
 	db, err := initDatabase(cfg, logger)
 	if err != nil {
 		logger.Fatal("Failed to initialize database", zap.Error(err))
 	}
 	defer db.Close()
 
-	// Initialize JWT auth for analytics security
+	// Initialize JWT auth for margin trading security
+	tokenAuth := jwtauth.New("HS256", []byte(cfg.JWTSecret), nil)
 
-	// Initialize server with optimized handlers for complex analytical computations
-	srv := server.NewServer(db, logger)
+	// Initialize server with optimized handlers for margin calculations
+	serverCfg := server.Config{
+		MarginBatchSize:       cfg.MarginBatchSize,
+		MarginProcessingDelay: cfg.MarginProcessingDelay,
+		MaxConcurrentMargins:  cfg.MaxConcurrentMargins,
+		CacheTTL:              cfg.CacheTTL,
+		RedisURL:              cfg.RedisURL,
+		MarginCallThreshold:   cfg.MarginCallThreshold,
+		MaintenanceMargin:     cfg.MaintenanceMargin,
+	}
+	srv := server.NewServer(db, logger, tokenAuth, serverCfg)
 
 	// Create router with ogen handlers wrapped in middleware
-	ogenHandler, err := api.NewServer(srv)
-	if err != nil {
-		logger.Fatal("Failed to create API server", zap.Error(err))
-	}
+	ogenHandler := srv.CreateRouter()
 	r := setupRouter(ogenHandler, logger)
 
 	// Start HTTP server with graceful shutdown
@@ -89,12 +98,14 @@ func main() {
 
 	// Graceful shutdown handling
 	go func() {
-		logger.Info("Starting stock-analytics-tools-service-go server",
+		logger.Info("Starting stock-margin-service-go server",
 			zap.String("port", cfg.Port),
 			zap.Int("max_db_conns", cfg.MaxDBConnections),
 			zap.Duration("cache_ttl", cfg.CacheTTL),
-			zap.Duration("calculation_timeout", cfg.CalculationTimeout),
-			zap.Int("max_concurrent_analysis", cfg.MaxConcurrentAnalysis))
+			zap.Int("margin_batch_size", cfg.MarginBatchSize),
+			zap.Int("max_concurrent_margins", cfg.MaxConcurrentMargins),
+			zap.Float64("margin_call_threshold", cfg.MarginCallThreshold),
+			zap.Float64("maintenance_margin", cfg.MaintenanceMargin))
 		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Server failed to start", zap.Error(err))
 		}
@@ -104,7 +115,7 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	logger.Info("Shutting down stock analytics tools service...")
+	logger.Info("Shutting down stock margin service...")
 
 	// Graceful shutdown with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -114,7 +125,7 @@ func main() {
 		logger.Fatal("Server forced to shutdown", zap.Error(err))
 	}
 
-	logger.Info("Stock analytics tools service exited gracefully")
+	logger.Info("Stock margin service exited gracefully")
 }
 
 func initLogger(level string) (*zap.Logger, error) {
@@ -132,7 +143,7 @@ func initLogger(level string) (*zap.Logger, error) {
 		zapLevel = zapcore.InfoLevel
 	}
 
-	// Enterprise-grade logging configuration for complex financial analysis
+	// Enterprise-grade logging configuration for financial margin operations
 	config := zap.Config{
 		Level:            zap.NewAtomicLevelAt(zapLevel),
 		Development:      false,
@@ -166,15 +177,15 @@ func initDatabase(cfg Config, logger *zap.Logger) (*pgxpool.Pool, error) {
 		return nil, fmt.Errorf("failed to parse database URL: %w", err)
 	}
 
-	// Performance-optimized connection pool for heavy analytical workloads
+	// Performance-optimized connection pool for margin operations
 	config.MaxConns = int32(cfg.MaxDBConnections)
 	config.MinConns = int32(cfg.MinDBConnections)
 	config.MaxConnLifetime = cfg.DBConnMaxLifetime
 	config.MaxConnIdleTime = cfg.DBConnMaxIdleTime
 
-	// Analytics-specific optimizations
-	config.HealthCheckPeriod = 30 * time.Second // Frequent health checks for analytical consistency
-	config.MaxConnLifetimeJitter = 10 * time.Minute // Jitter to avoid connection storms
+	// Margin-specific optimizations
+	config.HealthCheckPeriod = 30 * time.Second // Frequent health checks for margin consistency
+	config.MaxConnLifetimeJitter = 5 * time.Minute // Jitter to avoid margin call processing storms
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
@@ -182,18 +193,18 @@ func initDatabase(cfg Config, logger *zap.Logger) (*pgxpool.Pool, error) {
 	}
 
 	// Test connection with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second) // Longer timeout for analytical DB
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	if err := pool.Ping(ctx); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	logger.Info("Database connection established for stock analytics tools service",
+	logger.Info("Database connection established for stock margin service",
 		zap.Int32("max_conns", config.MaxConns),
 		zap.Int32("min_conns", config.MinConns),
 		zap.Duration("max_lifetime", config.MaxConnLifetime),
-		zap.Duration("max_idle_time", config.MaxConnIdleTime))
+		zap.Int("margin_batch_size", cfg.MarginBatchSize))
 
 	return pool, nil
 }
@@ -201,20 +212,20 @@ func initDatabase(cfg Config, logger *zap.Logger) (*pgxpool.Pool, error) {
 func setupRouter(ogenHandler http.Handler, logger *zap.Logger) http.Handler {
 	r := chi.NewRouter()
 
-	// Enterprise-grade middleware stack optimized for analytical workloads
+	// Enterprise-grade middleware stack optimized for margin operations
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(10 * time.Minute)) // Very long timeout for complex calculations
+	r.Use(middleware.Timeout(30 * time.Second)) // Longer timeout for margin calculations
 
-	// Structured logging middleware with performance metrics for analytics
+	// Structured logging middleware with performance metrics for financial operations
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
 			defer func() {
-				logger.Info("HTTP Request - Analytics Tools",
+				logger.Info("HTTP Request - Stock Margin",
 					zap.String("method", r.Method),
 					zap.String("path", r.URL.Path),
 					zap.String("remote_ip", r.RemoteAddr),
@@ -227,22 +238,22 @@ func setupRouter(ogenHandler http.Handler, logger *zap.Logger) http.Handler {
 		})
 	})
 
-	// Security headers for financial analytics
+	// Security headers for financial margin operations
 	r.Use(middleware.SetHeader("X-Content-Type-Options", "nosniff"))
 	r.Use(middleware.SetHeader("X-Frame-Options", "DENY"))
 	r.Use(middleware.SetHeader("X-XSS-Protection", "1; mode=block"))
 	r.Use(middleware.SetHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains"))
 	r.Use(middleware.SetHeader("Content-Security-Policy", "default-src 'self'"))
 
-	// CORS for trading platforms and analytical tools integration
+	// CORS for trading platforms and margin management systems
 	r.Use(middleware.SetHeader("Access-Control-Allow-Origin", "*"))
 	r.Use(middleware.SetHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS"))
 	r.Use(middleware.SetHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With"))
 
-	// Rate limiting for expensive analytical operations (placeholder)
+	// Rate limiting for expensive margin operations (placeholder)
 	// In production, implement proper rate limiting middleware
 
-	// pprof endpoints for performance profiling of analytical calculations
+	// pprof endpoints for performance profiling of margin calculations
 	r.Mount("/debug", middleware.Profiler())
 
 	// Mount ogen handlers
@@ -251,5 +262,4 @@ func setupRouter(ogenHandler http.Handler, logger *zap.Logger) http.Handler {
 	return r
 }
 
-// Issue: #141889238
-
+// Issue: #141889264
