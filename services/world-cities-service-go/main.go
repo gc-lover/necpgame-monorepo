@@ -47,7 +47,15 @@ func main() {
 	}
 
 	// Initialize database connection
-	db, err := database.NewConnection(cfg.Database)
+	dbConfig := &database.DatabaseConfig{
+		Host:     cfg.Database.Host,
+		Port:     fmt.Sprintf("%d", cfg.Database.Port),
+		User:     cfg.Database.User,
+		Password: cfg.Database.Password,
+		Database: cfg.Database.DBName,
+		SSLMode:  cfg.Database.SSLMode,
+	}
+	db, err := database.NewDatabaseConnection(dbConfig)
 	if err != nil {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
@@ -58,14 +66,11 @@ func main() {
 		logger.Fatal("Failed to run migrations", zap.Error(err))
 	}
 
-	// Initialize repository layer
-	repo := database.NewCityRepository(db, logger)
-
-	// Initialize service layer
-	cityService := service.NewCityService(repo, logger)
+	// Initialize database layer
+	database := database.NewDatabase(db, logger)
 
 	// Initialize HTTP server
-	srv := server.NewServer(cityService, logger, cfg.Server)
+	srv := server.NewServer(database, logger)
 
 	// Start server in goroutine
 	go func() {

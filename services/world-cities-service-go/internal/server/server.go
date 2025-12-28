@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -20,6 +21,7 @@ type Server struct {
 	service *service.Service
 	logger  *zap.Logger
 	router  *chi.Mux
+	server  *http.Server
 }
 
 // NewServer creates a new server instance
@@ -69,8 +71,11 @@ func (s *Server) setupRouter() {
 	// City routes
 	r.Route("/api/v1/world-cities/cities", func(r chi.Router) {
 		r.Get("/", s.ListCities)
+		r.Post("/", s.CreateCity)
 		r.Get("/search", s.SearchCities)
 		r.Get("/{cityId}", s.GetCity)
+		r.Put("/{cityId}", s.UpdateCity)
+		r.Delete("/{cityId}", s.DeleteCity)
 		r.Get("/analytics", s.GetCitiesAnalytics)
 	})
 
@@ -80,6 +85,23 @@ func (s *Server) setupRouter() {
 // Handler returns the HTTP handler
 func (s *Server) Handler() http.Handler {
 	return s.router
+}
+
+// Start starts the HTTP server
+func (s *Server) Start() error {
+	s.server = &http.Server{
+		Addr:    ":8080", // Default port, can be made configurable
+		Handler: s.router,
+	}
+
+	s.logger.Info("Starting HTTP server", zap.String("addr", ":8080"))
+	return s.server.ListenAndServe()
+}
+
+// Shutdown gracefully shuts down the server
+func (s *Server) Shutdown(ctx context.Context) error {
+	s.logger.Info("Shutting down HTTP server")
+	return s.server.Shutdown(ctx)
 }
 
 // HealthCheck handles health check requests
@@ -216,6 +238,80 @@ func (s *Server) GetCity(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.respondJSON(w, http.StatusOK, response)
+}
+
+// CreateCity handles POST /api/v1/world-cities/cities
+func (s *Server) CreateCity(w http.ResponseWriter, r *http.Request) {
+	var req database.City
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// Generate new UUID for the city
+	req.ID = uuid.New()
+	req.CreatedAt = time.Now()
+	req.UpdatedAt = time.Now()
+
+	ctx := r.Context()
+	response, err := s.service.CreateCity(ctx, &req)
+	if err != nil {
+		s.logger.Error("Failed to create city", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to create city")
+		return
+	}
+
+	s.respondJSON(w, http.StatusCreated, response)
+}
+
+// UpdateCity handles PUT /api/v1/world-cities/cities/{cityId}
+func (s *Server) UpdateCity(w http.ResponseWriter, r *http.Request) {
+	cityIDStr := chi.URLParam(r, "cityId")
+	cityID, err := uuid.Parse(cityIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "Invalid city ID")
+		return
+	}
+
+	var req database.City
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// Set the ID from URL and update timestamp
+	req.ID = cityID
+	req.UpdatedAt = time.Now()
+
+	ctx := r.Context()
+	response, err := s.service.UpdateCity(ctx, cityID, &req)
+	if err != nil {
+		s.logger.Error("Failed to update city", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to update city")
+		return
+	}
+
+	s.respondJSON(w, http.StatusOK, response)
+}
+
+// DeleteCity handles DELETE /api/v1/world-cities/cities/{cityId}
+func (s *Server) DeleteCity(w http.ResponseWriter, r *http.Request) {
+	cityIDStr := chi.URLParam(r, "cityId")
+	cityID, err := uuid.Parse(cityIDStr)
+	if err != nil {
+		s.respondError(w, http.StatusBadRequest, "Invalid city ID")
+		return
+	}
+
+	ctx := r.Context()
+	err = s.service.DeleteCity(ctx, cityID)
+	if err != nil {
+		s.logger.Error("Failed to delete city", zap.Error(err))
+		s.respondError(w, http.StatusInternalServerError, "Failed to delete city")
+		return
+	}
+
+	s.respondJSON(w, http.StatusNoContent, nil)
 }
 
 // SearchCities handles GET /api/v1/world-cities/cities/search

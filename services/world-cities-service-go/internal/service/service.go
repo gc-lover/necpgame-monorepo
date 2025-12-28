@@ -141,6 +141,45 @@ func (s *Service) GetCitiesAnalytics(ctx context.Context) (map[string]interface{
 	return analytics, nil
 }
 
+// CreateCity creates a new city
+func (s *Service) CreateCity(ctx context.Context, city *database.City) (*CityResponse, error) {
+	created, err := s.db.CreateCity(ctx, city)
+	if err != nil {
+		s.logger.Error("Failed to create city", zap.Error(err))
+		return nil, fmt.Errorf("failed to create city: %w", err)
+	}
+
+	return &CityResponse{City: *created}, nil
+}
+
+// UpdateCity updates an existing city
+func (s *Service) UpdateCity(ctx context.Context, id uuid.UUID, city *database.City) (*CityResponse, error) {
+	updated, err := s.db.UpdateCity(ctx, id, city)
+	if err != nil {
+		if err.Error() == "city not found" {
+			return nil, err
+		}
+		s.logger.Error("Failed to update city", zap.Error(err))
+		return nil, fmt.Errorf("failed to update city: %w", err)
+	}
+
+	return &CityResponse{City: *updated}, nil
+}
+
+// DeleteCity removes a city
+func (s *Service) DeleteCity(ctx context.Context, id uuid.UUID) error {
+	err := s.db.DeleteCity(ctx, id)
+	if err != nil {
+		if err.Error() == "city not found" {
+			return err
+		}
+		s.logger.Error("Failed to delete city", zap.Error(err))
+		return fmt.Errorf("failed to delete city: %w", err)
+	}
+
+	return nil
+}
+
 // HealthCheck performs health check
 func (s *Service) HealthCheck(ctx context.Context) (*HealthResponse, error) {
 	// In production, this would check database connectivity, etc.
