@@ -134,9 +134,18 @@ func (s *Service) GetEconomicAnalytics(ctx context.Context, period string) (*mod
 
 // GetCombatAnalytics retrieves combat performance analytics
 func (s *Service) GetCombatAnalytics(ctx context.Context, params api.GetCombatAnalyticsParams) (*models.CombatAnalytics, error) {
+	period := "24h"
+	if params.Period.IsSet() {
+		period = string(params.Period.Value)
+	}
+	gameMode := "all"
+	if params.GameMode.IsSet() {
+		gameMode = string(params.GameMode.Value)
+	}
+
 	s.logger.Info("Processing combat analytics request",
-		zap.String("period", params.Period),
-		zap.String("game_mode", params.GameMode))
+		zap.String("period", period),
+		zap.String("game_mode", gameMode))
 
 	queryCtx, cancel := context.WithTimeout(ctx, 12*time.Second)
 	defer cancel()
@@ -221,7 +230,7 @@ func (s *Service) GetAnalyticsAlerts(ctx context.Context, severity string, ackno
 // GenerateAnalyticsReport generates custom analytics reports
 func (s *Service) GenerateAnalyticsReport(ctx context.Context, params api.GenerateAnalyticsReportParams) (*models.AnalyticsReport, error) {
 	s.logger.Info("Processing analytics report generation request",
-		zap.String("report_type", params.ReportType))
+		zap.String("report_type", string(params.ReportType)))
 
 	// Longer timeout for report generation
 	queryCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
