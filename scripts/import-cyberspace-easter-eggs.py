@@ -159,7 +159,7 @@ def main():
     parser.add_argument("--yaml-path", required=True,
                        help="Path to YAML file containing easter eggs")
     parser.add_argument("--api-url", default="http://localhost:8080/api/v1/admin/import",
-                       help="API endpoint URL for import")
+                       help="API endpoint URL for import (try without /api prefix if 404)")
     parser.add_argument("--dry-run", action="store_true",
                        help="Validate YAML structure without making HTTP request")
 
