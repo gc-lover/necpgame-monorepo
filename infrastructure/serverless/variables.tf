@@ -172,3 +172,59 @@ variable "s3_config" {
     lifecycle_rules = []
   }
 }
+
+variable "create_custom_domain" {
+  description = "Whether to create custom domain for API Gateway"
+  type        = bool
+  default     = false
+}
+
+variable "api_domain_name" {
+  description = "Custom domain name for API Gateway"
+  type        = string
+  default     = ""
+}
+
+variable "cloudfront_config" {
+  description = "CloudFront distribution configuration"
+  type = object({
+    enabled             = optional(bool, true)
+    ipv6_enabled        = optional(bool, true)
+    default_root_object = optional(string, "index.html")
+    price_class         = optional(string, "PriceClass_100")
+    cache_ttl = optional(object({
+      min_ttl     = optional(number, 0)
+      default_ttl = optional(number, 86400)
+      max_ttl     = optional(number, 31536000)
+    }), {
+      min_ttl     = 0
+      default_ttl = 86400
+      max_ttl     = 31536000
+    })
+  })
+  default = {
+    enabled             = true
+    ipv6_enabled        = true
+    default_root_object = "index.html"
+    price_class         = "PriceClass_100"
+    cache_ttl = {
+      min_ttl     = 0
+      default_ttl = 86400
+      max_ttl     = 31536000
+    }
+  }
+}
+
+variable "waf_config" {
+  description = "WAF configuration for API Gateway protection"
+  type = object({
+    enabled = optional(bool, true)
+    rate_limit = optional(number, 1000)
+    block_countries = optional(list(string), [])
+  })
+  default = {
+    enabled = true
+    rate_limit = 1000
+    block_countries = []
+  }
+}

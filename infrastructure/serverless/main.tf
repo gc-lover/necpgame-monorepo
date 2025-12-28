@@ -373,6 +373,272 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
   }
 }
 
+# API Gateway Deployment and Stage
+resource "aws_api_gateway_deployment" "necpgame_prod" {
+  depends_on = [
+    aws_api_gateway_integration.achievement_lambda,
+  ]
+
+  rest_api_id = aws_api_gateway_rest_api.necpgame_api.id
+  stage_name  = "prod"
+
+  variables = {
+    deployed_at = timestamp()
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_api_gateway_stage" "prod" {
+  deployment_id = aws_api_gateway_deployment.necpgame_prod.id
+  rest_api_id   = aws_api_gateway_rest_api.necpgame_api.id
+  stage_name    = "prod"
+}
+
+# CodePipeline for CI/CD
+resource "aws_codepipeline" "lambda_pipeline" {
+  name     = "necpgame-lambda-pipeline"
+  role_arn = aws_iam_role.codepipeline_role.arn
+
+  artifact_store {
+    location = aws_s3_bucket.codepipeline_bucket.bucket
+    type     = "S3"
+  }
+
+  stage {
+    name = "Source"
+
+    action {
+      name             = "Source"
+      category         = "Source"
+      owner            = "AWS"
+      provider         = "CodeCommit"
+      version          = "1"
+      output_artifacts = ["source_output"]
+
+      configuration = {
+        RepositoryName = "necpgame-monorepo"
+        BranchName     = "develop"
+      }
+    }
+  }
+
+  stage {
+    name = "Build"
+
+    action {
+      name             = "Build"
+      category         = "Build"
+      owner            = "AWS"
+      provider         = "CodeBuild"
+      input_artifacts  = ["source_output"]
+      output_artifacts = ["build_output"]
+      version          = "1"
+
+      configuration = {
+        ProjectName = aws_codebuild_project.lambda_build.name
+      }
+    }
+  }
+
+  stage {
+    name = "Deploy"
+
+    action {
+      name            = "Deploy"
+      category        = "Deploy"
+      owner           = "AWS"
+      provider        = "CloudFormation"
+      input_artifacts = ["build_output"]
+      version         = "1"
+
+      configuration = {
+        ActionMode    = "REPLACE_ON_FAILURE"
+        Capabilities  = "CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND"
+        StackName     = "necpgame-serverless-stack"
+        TemplatePath  = "build_output::template.yaml"
+      }
+    }
+  }
+}
+
+# CodeBuild for Lambda builds
+resource "aws_codebuild_project" "lambda_build" {
+  name          = "necpgame-lambda-build"
+  description   = "Build Lambda functions for NECPGAME serverless"
+  service_role  = aws_iam_role.codebuild_role.arn
+
+  artifacts {
+    type = "CODEPIPELINE"
+  }
+
+  environment {
+    compute_type                = "BUILD_GENERAL1_SMALL"
+    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
+    type                        = "LINUX_CONTAINER"
+    image_pull_credentials_type = "CODEBUILD"
+
+    environment_variable {
+      name  = "GO_VERSION"
+      value = "1.21"
+    }
+  }
+
+  source {
+    type = "CODEPIPELINE"
+  }
+
+  tags = {
+    Environment = "serverless"
+    Project     = "NECPGAME"
+  }
+}
+
+# S3 bucket for CodePipeline artifacts
+resource "aws_s3_bucket" "codepipeline_bucket" {
+  bucket = "necpgame-codepipeline-artifacts-${var.environment}"
+
+  tags = {
+    Environment = var.environment
+    Project     = "NECPGAME"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "codepipeline_versioning" {
+  bucket = aws_s3_bucket.codepipeline_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# IAM Roles for CI/CD
+resource "aws_iam_role" "codepipeline_role" {
+  name = "necpgame-codepipeline-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "codepipeline.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "codepipeline_policy" {
+  name = "necpgame-codepipeline-policy"
+  role = aws_iam_role.codepipeline_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+          "s3:GetBucketVersioning",
+          "s3:PutObject"
+        ]
+        Resource = [
+          aws_s3_bucket.codepipeline_bucket.arn,
+          "${aws_s3_bucket.codepipeline_bucket.arn}/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "codebuild:BatchGetBuilds",
+          "codebuild:StartBuild"
+        ]
+        Resource = aws_codebuild_project.lambda_build.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudformation:CreateStack",
+          "cloudformation:UpdateStack",
+          "cloudformation:DeleteStack",
+          "cloudformation:DescribeStacks",
+          "cloudformation:CreateChangeSet",
+          "cloudformation:ExecuteChangeSet"
+        ]
+        Resource = "arn:aws:cloudformation:*:*:stack/necpgame-*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:PassRole"
+        ]
+        Resource = aws_iam_role.lambda_role.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "codebuild_role" {
+  name = "necpgame-codebuild-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "codebuild.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "codebuild_policy" {
+  name = "necpgame-codebuild-policy"
+  role = aws_iam_role.codebuild_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:GetObjectVersion"
+        ]
+        Resource = [
+          aws_s3_bucket.codepipeline_bucket.arn,
+          "${aws_s3_bucket.codepipeline_bucket.arn}/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Resource = "arn:aws:ssm:*:*:parameter/necpgame/*"
+      }
+    ]
+  })
+}
+
 # Outputs
 output "api_gateway_url" {
   description = "API Gateway URL for serverless services"
