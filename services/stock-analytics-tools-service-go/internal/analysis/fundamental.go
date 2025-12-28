@@ -28,8 +28,8 @@ func NewFundamentalAnalyzer(db *pgxpool.Pool, logger *zap.Logger) *FundamentalAn
 	}
 }
 
-// GetFundamentalAnalysis retrieves fundamental analysis for a stock
-func (fa *FundamentalAnalyzer) GetFundamentalAnalysis(ctx context.Context, symbol string) (*api.FundamentalAnalysis, error) {
+// Analyze performs fundamental analysis for a stock
+func (fa *FundamentalAnalyzer) Analyze(ctx context.Context, symbol string) (*api.FundamentalAnalysis, error) {
 	// PERFORMANCE: Optimized database query for fundamental data
 	query := `
 		SELECT symbol, company_name, sector, industry, market_cap, employees,

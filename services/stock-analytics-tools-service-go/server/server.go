@@ -300,8 +300,8 @@ func (s *Server) BacktestStrategy(ctx context.Context, req *api.BacktestingReque
 	if err != nil {
 		s.logger.Error("Failed to backtest strategy",
 			zap.Strings("symbols", req.Symbols),
-			zap.Time("start_date", time.Time(req.StartDate)),
-			zap.Time("end_date", time.Time(req.EndDate)),
+			zap.String("start_date", req.StartDate),
+			zap.String("end_date", req.EndDate),
 			zap.Error(err))
 		return nil, fmt.Errorf("failed to backtest strategy: %w", err)
 	}
