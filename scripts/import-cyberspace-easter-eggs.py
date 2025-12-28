@@ -89,11 +89,8 @@ class EasterEggsImporter:
 
             # Make actual HTTP request to import
             try:
-                # Extract only easter_eggs array for import
-                import_data = {"easter_eggs": data["easter_eggs"]}
-
-                # Convert any non-serializable objects
-                import_data = self.convert_for_json(import_data)
+                # Send YAML file path to import endpoint
+                import_data = {"yaml_path": str(self.yaml_path)}
 
                 response = requests.post(
                     self.api_url,
