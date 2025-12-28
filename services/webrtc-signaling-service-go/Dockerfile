@@ -40,6 +40,9 @@ USER appuser
 # Expose port
 EXPOSE 8080
 
+# Set default environment variables
+ENV GUILD_SERVICE_URL=http://guild-service:8080/api/v1/social-domain/guild
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1

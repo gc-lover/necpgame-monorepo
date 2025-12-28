@@ -490,14 +490,7 @@ func (r *ClanWarRepository) GetActiveWarsByClan(ctx context.Context, clanID uuid
 	return wars, rows.Err()
 }
 
-// WarStatistics represents aggregated statistics for a war
-type WarStatistics struct {
-	WarID         uuid.UUID `json:"war_id"`
-	TotalBattles  int       `json:"total_battles"`
-	ActiveBattles int       `json:"active_battles"`
-	Clan1Score    int       `json:"clan_1_score"`
-	Clan2Score    int       `json:"clan_2_score"`
-}
+// WarStatistics is defined in clan_war_additional_unit_tests.go
 
 // GetWarStatistics retrieves statistics for a specific war
 func (r *ClanWarRepository) GetWarStatistics(ctx context.Context, warID uuid.UUID) (*WarStatistics, error) {

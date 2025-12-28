@@ -235,7 +235,7 @@ func (s *Service) JoinGuildVoiceChannel(ctx context.Context, channelID, userID u
 		return nil, err
 	}
 
-	if channel.Type != "guild" {
+	if channel.Type != "guild" || channel.GuildID == nil {
 		return nil, fmt.Errorf("channel is not a guild voice channel")
 	}
 
@@ -245,6 +245,16 @@ func (s *Service) JoinGuildVoiceChannel(ctx context.Context, channelID, userID u
 
 	if channel.CurrentUsers >= channel.MaxUsers {
 		return nil, fmt.Errorf("guild voice channel is full")
+	}
+
+	// Validate guild membership first
+	_, err = s.guildClient.ValidateGuildMembership(ctx, *channel.GuildID, userID)
+	if err != nil {
+		s.logger.Warn("User is not a guild member",
+			zap.String("guild_id", channel.GuildID.String()),
+			zap.String("user_id", userID.String()),
+			zap.Error(err))
+		return nil, fmt.Errorf("user is not a member of this guild")
 	}
 
 	// Check guild permissions
@@ -311,19 +321,42 @@ func (s *Service) JoinGuildVoiceChannel(ctx context.Context, channelID, userID u
 		// Don't return error as user is already added
 	}
 
-	// Get participants
+	// Get participants from voice channel
 	participants, err := s.repo.GetVoiceParticipants(ctx, channelID)
 	if err != nil {
 		s.logger.Error("Failed to get guild voice participants", zap.Error(err))
 		// Continue anyway
 	}
 
+	// Get guild members for username resolution
+	guildMembers, err := s.guildClient.GetGuildMembers(ctx, *channel.GuildID)
+	if err != nil {
+		s.logger.Warn("Failed to get guild members for username resolution",
+			zap.String("guild_id", channel.GuildID.String()),
+			zap.Error(err))
+		// Continue with placeholder usernames
+		guildMembers = nil
+	}
+
+	// Create member lookup map
+	memberMap := make(map[string]string)
+	if guildMembers != nil {
+		for _, member := range guildMembers {
+			memberMap[member.PlayerID.String()] = member.Username
+		}
+	}
+
 	// Convert to response format
 	participantInfos := make([]models.VoiceParticipantInfo, len(participants))
 	for i, p := range participants {
+		username := "User_" + p.UserID.String()[:8] // Default placeholder
+		if name, exists := memberMap[p.UserID.String()]; exists {
+			username = name
+		}
+
 		participantInfos[i] = models.VoiceParticipantInfo{
 			UserID:     p.UserID.String(),
-			Username:   "User_" + p.UserID.String()[:8], // Placeholder
+			Username:   username,
 			Role:       p.Role,
 			IsMuted:    p.IsMuted,
 			IsDeafened: p.IsDeafened,

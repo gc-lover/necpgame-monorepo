@@ -51,8 +51,11 @@ func main() {
 	// Initialize repository layer
 	repo := repository.NewRepository(db, redisClient, logger)
 
+	// Initialize guild service client
+	guildClient := service.NewGuildClient(cfg.GuildServiceURL, logger)
+
 	// Initialize service layer
-	svc := service.NewService(repo, logger)
+	svc := service.NewService(repo, guildClient, logger)
 
 	// Initialize handlers
 	h := handlers.NewHandlers(svc, logger)

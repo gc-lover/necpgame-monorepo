@@ -102,6 +102,9 @@ DATABASE_URL=postgres://user:password@localhost:5432/webrtc_signaling?sslmode=di
 # Redis
 REDIS_URL=redis://localhost:6379
 
+# Guild Service Integration
+GUILD_SERVICE_URL=http://localhost:8081/api/v1/social-domain/guild
+
 # WebRTC
 STUN_SERVER=stun:stun.l.google.com:19302
 TURN_SERVER=turn:turn.example.com:3478
@@ -263,6 +266,25 @@ WebRTC Signaling Service now includes comprehensive guild voice channel support:
   "require_approval": false
 }
 ```
+
+### Guild Integration Features
+
+**✅ FULLY INTEGRATED with Guild System:**
+- **Permission Validation**: Real-time validation against guild service
+- **Role-Based Access**: Leader, officer, member permissions enforced
+- **Member Verification**: Active guild membership required for voice channels
+- **Username Resolution**: Real usernames from guild service instead of UUIDs
+- **Security**: JWT tokens and guild membership validation
+
+**Guild Service Endpoints Used:**
+- `GET /guilds/{guild_id}/members` - Validate membership and get roles
+- `PUT /guilds/{guild_id}/members/{player_id}` - Update member permissions
+- Authentication via Bearer JWT tokens
+
+**Permission Levels:**
+- **Leader**: Full control over all guild voice channels
+- **Officer**: Can create/manage channels, moderate users
+- **Member**: Basic access to member-only channels
 
 #### Guild Voice Channel API
 ```javascript
