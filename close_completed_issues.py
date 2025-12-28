@@ -60,7 +60,7 @@ def close_issue(issue_number):
 def main():
     """Main function to close completed issues"""
     if not GITHUB_TOKEN:
-        print("❌ GITHUB_TOKEN environment variable not set")
+        print("[ERROR] GITHUB_TOKEN environment variable not set")
         return
 
     # List of issues to check (based on our analysis)
