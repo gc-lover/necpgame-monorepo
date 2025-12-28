@@ -285,10 +285,28 @@ type AnalyticsHandler struct {
 	logger  *zap.Logger
 }
 
+// AnalyticsServiceHealthCheck implements analyticsServiceHealthCheck operation
+func (h *AnalyticsHandler) AnalyticsServiceHealthCheck(ctx context.Context, params api.AnalyticsServiceHealthCheckParams) (api.AnalyticsServiceHealthCheckRes, error) {
+	h.logger.Info("Processing analytics service health check request")
+
+	// Create health response
+	health := &api.AnalyticsServiceHealthCheckOK{
+		Service:             "analytics-dashboard-service",
+		Status:              "healthy",
+		Timestamp:           time.Now(),
+		Version:             "1.0.0",
+		UptimeSeconds:       3600, // TODO: Track actual uptime
+		ActiveConnections:   1500, // TODO: Track actual connections
+		DataFreshnessSeconds: 30,
+	}
+
+	return health, nil
+}
+
 // Implement all required methods from the generated interface
 // PERFORMANCE: All methods include context timeouts and error handling
 
-func (h *AnalyticsHandler) GetGameAnalyticsOverview(ctx context.Context, params api.GetGameAnalyticsOverviewParams) (*models.GameAnalyticsOverview, error) {
+func (h *AnalyticsHandler) GetGameAnalyticsOverview(ctx context.Context, params api.GetGameAnalyticsOverviewParams) (api.GetGameAnalyticsOverviewRes, error) {
 	h.logger.Info("Processing game analytics overview request",
 		zap.String("period", params.Period))
 
@@ -304,7 +322,27 @@ func (h *AnalyticsHandler) GetGameAnalyticsOverview(ctx context.Context, params 
 		return nil, err
 	}
 
-	return overview, nil
+	// Convert models.GameAnalyticsOverview to api.GameAnalyticsOverview
+	apiOverview := &api.GameAnalyticsOverviewHeaders{
+		CacheControl:   api.NewOptString("max-age=30"),
+		ETag:           api.NewOptString(fmt.Sprintf(`"%s"`, overview.Timestamp.Format(time.RFC3339))),
+		XDataFreshness: api.NewOptInt(30),
+		Response: api.GameAnalyticsOverview{
+			Period:    overview.Period,
+			Timestamp: overview.Timestamp,
+			Summary: api.DashboardSummary{
+				ActiveUsers:         overview.Summary.ActiveUsers,
+				NewRegistrations:    overview.Summary.NewRegistrations,
+				TotalRevenue:        overview.Summary.TotalRevenue,
+				AverageSessionTime:  overview.Summary.AverageSessionTime,
+				ServerHealthScore:   overview.Summary.ServerHealthScore,
+				AlertsCount:         overview.Summary.AlertsCount,
+			},
+			// TODO: Add other fields as needed
+		},
+	}
+
+	return apiOverview, nil
 }
 
 func (h *AnalyticsHandler) GetPlayerBehaviorAnalytics(ctx context.Context, params api.GetPlayerBehaviorAnalyticsParams) (*models.PlayerBehaviorAnalytics, error) {
