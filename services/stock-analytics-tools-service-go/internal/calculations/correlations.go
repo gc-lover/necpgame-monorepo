@@ -64,7 +64,7 @@ func CalculateCorrelations(ctx context.Context, db *pgxpool.Pool, symbols []stri
 	for i, symbol := range symbols {
 		sum := 0.0
 		count := 0
-		for j, otherSymbol := range symbols {
+		for j := range symbols {
 			if i != j {
 				corr := matrix[i*len(symbols)+j]
 				if !math.IsNaN(corr) {
@@ -80,11 +80,26 @@ func CalculateCorrelations(ctx context.Context, db *pgxpool.Pool, symbols []stri
 		}
 	}
 
+	// Convert float64 matrix to [][]float32
+	matrix32 := make([][]float32, len(symbols))
+	for i := range matrix32 {
+		matrix32[i] = make([]float32, len(symbols))
+		for j := range matrix32[i] {
+			matrix32[i][j] = float32(matrix[i*len(symbols)+j])
+		}
+	}
+
+	// Convert average correlations to the expected type
+	avgCorr32 := make(api.CorrelationAnalysisAverageCorrelations)
+	for k, v := range averageCorrelations {
+		avgCorr32[k] = float32(v)
+	}
+
 	return &api.CorrelationAnalysis{
 		Symbols:             symbols,
-		Period:              period,
-		CorrelationMatrix:   matrix,
-		AverageCorrelations: averageCorrelations,
+		Period:              api.OptString{Value: period, Set: true},
+		CorrelationMatrix:   matrix32,
+		AverageCorrelations: api.OptCorrelationAnalysisAverageCorrelations{Value: avgCorr32, Set: true},
 	}, nil
 }
 

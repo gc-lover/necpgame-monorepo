@@ -74,13 +74,13 @@ func AnalyzeVolatility(ctx context.Context, db *pgxpool.Pool, symbol, period str
 	garchParams := estimateGARCHParameters(returns)
 
 	return &api.VolatilityAnalysis{
-		Symbol:               symbol,
-		Period:               period,
-		HistoricalVolatility: math.Round(historicalVolatility*10000) / 10000,
-		ImpliedVolatility:    math.Round(impliedVolatility*10000) / 10000,
-		RealizedVolatility:   math.Round(realizedVolatility*10000) / 10000,
+		Symbol:               api.OptString{Value: symbol, Set: true},
+		Period:               api.OptString{Value: period, Set: true},
+		HistoricalVolatility: api.OptFloat32{Value: float32(math.Round(historicalVolatility*10000) / 10000), Set: true},
+		ImpliedVolatility:    api.OptFloat32{Value: float32(math.Round(impliedVolatility*10000) / 10000), Set: true},
+		RealizedVolatility:   api.OptFloat32{Value: float32(math.Round(realizedVolatility*10000) / 10000), Set: true},
 		VolatilityCone:       volatilityCone,
-		GarchModel:          garchParams,
+		GarchModel:          api.OptGarchParameters{Value: garchParams, Set: true},
 	}, nil
 }
 
