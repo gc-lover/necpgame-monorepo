@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -17,9 +16,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
-	"gameplay-affixes-service-go/internal/handlers"
-	"gameplay-affixes-service-go/internal/repository"
-	"gameplay-affixes-service-go/internal/service"
 	"gameplay-affixes-service-go/internal/wiring"
 )
 

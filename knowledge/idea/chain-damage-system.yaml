@@ -1,0 +1,292 @@
+# Issue: #142131022
+metadata:
+  id: chain-damage-system
+  title: "Система цепного урона (молнии, EMP волны)"
+  document_type: idea
+  category: mechanics
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-12-28T17:00:00.000000
+  concept_approved: true
+  concept_reviewed_at: '2025-12-28T17:00:00.000000'
+  owners:
+    - role: game_designer
+      contact: gamedesign@necp.game
+  tags:
+    - chain-damage
+    - lightning
+    - emp
+    - area-effects
+    - tactical-combat
+  topics:
+    - damage-mechanics
+    - area-control
+    - tactical-depth
+    - environmental-interaction
+    - crowd-control
+  related_systems:
+    - combat-service
+    - physics-engine
+    - status-effect-service
+    - projectile-physics-service
+  related_documents:
+    - id: combat-mechanics-core
+      relation: extends
+    - id: persistent-projectile-effects
+      relation: related
+  source: internal-brainstorm
+  visibility: internal
+  audience:
+    - game-design
+    - narrative
+    - backend
+    - balance
+  risk_level: medium
+
+summary:
+  problem: Игроки нуждаются в системе, которая позволяет эффективно контролировать группы врагов и создавать тактические возможности через распространение урона между целями.
+  goal: Разработать систему цепного урона, которая добавляет глубину массовому бою, поощряет позиционирование и предоставляет разнообразные стратегические варианты.
+  essence: "Цепной урон — это электрический шторм в бутылке. Одна искра, и весь вражеский строй превращается в сеть взаимосвязанных целей, где падение одного влечет за собой падение всех."
+  key_mechanics:
+    - Chain Propagation: Урон распространяется между близкими целями
+    - Damage Attenuation: Ослабление урона с каждым прыжком
+    - Environmental Conduction: Окружение влияет на распространение
+    - Counterplay Mechanics: Способы разрыва цепей
+    - Visual Feedback: Четкая индикация цепных соединений
+
+core_mechanics:
+  chain_types:
+    description: "Основные типы цепного урона"
+    categories:
+      - lightning_chain:
+          name: "Молниевый цепной урон"
+          description: "Электрический разряд, прыгающий между целями"
+          mechanics: "High initial damage, rapid propagation, conductive surfaces"
+          advantages: "Fast chaining, predictable paths, environmental interaction"
+          disadvantages: "Damage attenuation, insulation resistance"
+      - emp_chain:
+          name: "EMP цепной урон"
+          description: "Электромагнитный импульс, выводящий из строя электронику"
+          mechanics: "Tech damage focus, system disruption, area denial"
+          advantages: "Effective vs machines, control effects, lingering effects"
+          disadvantages: "Ineffective vs organic, short range"
+      - plasma_chain:
+          name: "Плазменный цепной урон"
+          description: "Горячая плазма, плавящая и воспламеняющая"
+          mechanics: "Heat damage, fire trails, armor penetration"
+          advantages: "High sustained damage, environmental ignition"
+          disadvantages: "Slow propagation, heat dissipation"
+      - psychic_chain:
+          name: "Психический цепной урон"
+          description: "Ментальная связь, передающая боль и confusion"
+          mechanics: "Mind damage, status effects, neural overload"
+          advantages: "Ignores physical defenses, area control"
+          disadvantages: "Ineffective vs mindless, mental resistance"
+
+  propagation_mechanics:
+    description: "Механики распространения цепного урона"
+    mechanics:
+      - target_selection:
+          name: "Выбор целей"
+          description: "Алгоритмы определения следующей цели в цепи"
+          methods: "Closest target, highest threat, random selection"
+          factors: "Distance, line of sight, target priority"
+      - damage_attenuation:
+          name: "Ослабление урона"
+          description: "Уменьшение урона с каждым прыжком"
+          scaling: "Percentage reduction, minimum damage floor"
+          balance: "Chain length vs damage efficiency"
+      - jump_limitations:
+          name: "Ограничения прыжков"
+          description: "Максимальная длина цепи и условия распространения"
+          constraints: "Maximum jumps, range limits, environmental blocks"
+      - timing_mechanics:
+          name: "Механики тайминга"
+          description: "Время между прыжками и общая длительность"
+          dynamics: "Instant chains, delayed propagation, sustained effects"
+
+  environmental_factors:
+    description: "Влияние окружения на цепной урон"
+    factors:
+      - conductive_surfaces:
+          name: "Проводящие поверхности"
+          description: "Материалы, усиливающие или изменяющие распространение"
+          examples: "Metal floors, water, wiring networks"
+          mechanics: "Extended range, bonus jumps, altered paths"
+      - insulating_materials:
+          name: "Изолирующие материалы"
+          description: "Материалы, блокирующие или ослабляющие цепи"
+          examples: "Rubber, air gaps, electromagnetic shielding"
+          mechanics: "Chain breaking, damage reduction, path blocking"
+      - environmental_hazards:
+          name: "Окружные опасности"
+          description: "Естественные или созданные препятствия для цепей"
+          examples: "Walls, elevation changes, electromagnetic interference"
+          mechanics: "Path interruption, forced redirection, damage modification"
+      - weather_effects:
+          name: "Погодные эффекты"
+          description: "Влияние погоды на электрические и плазменные цепи"
+          examples: "Rain (conductivity boost), wind (dispersion)"
+          mechanics: "Damage amplification, range changes, unpredictability"
+
+  tactical_applications:
+    description: "Тактические применения цепного урона"
+    applications:
+      - crowd_control:
+          name: "Контроль толпы"
+          description: "Управление большими группами врагов"
+          tactics: "Chain initiation points, target prioritization, area denial"
+      - elite_threat_handling:
+          name: "Обработка элитных угроз"
+          description: "Цепи как способ связывания опасных целей"
+          tactics: "Boss chaining, minion clustering, damage multiplication"
+      - environmental_manipulation:
+          name: "Манипуляция окружением"
+          description: "Использование окружения для усиления цепей"
+          tactics: "Conduction exploitation, hazard creation, terrain modification"
+      - combo_opportunities:
+          name: "Комбо-возможности"
+          description: "Сочетание цепного урона с другими механиками"
+          tactics: "Status effect chaining, projectile combinations, ability synergies"
+
+  counterplay_mechanics:
+    description: "Механики противодействия цепному урону"
+    counterplay:
+      - chain_breaking:
+          name: "Разрыв цепей"
+          description: "Способы прерывания распространения"
+          methods: "Positioning, cover usage, chain absorption"
+      - resistance_measures:
+          name: "Меры сопротивления"
+          description: "Защита от цепного урона"
+          methods: "Insulation, grounding, electromagnetic shielding"
+      - disruption_techniques:
+          name: "Техники нарушения"
+          description: "Активное вмешательство в цепи"
+          methods: "EMP countermeasures, plasma dissipation, psychic blocking"
+      - adaptation_strategies:
+          name: "Стратегии адаптации"
+          description: "Изменение поведения для минимизации эффектов"
+          methods: "Spacing tactics, formation changes, target isolation"
+
+  visual_audio_design:
+    description: "Визуальный и аудиальный дизайн цепного урона"
+    design:
+      - chain_visualization:
+          name: "Визуализация цепей"
+          description: "Графическое представление распространения"
+          elements: "Lightning arcs, energy beams, particle trails"
+      - damage_indicators:
+          name: "Индикаторы урона"
+          description: "Визуальная обратная связь о уроне"
+          elements: "Damage numbers, effect overlays, status animations"
+      - environmental_effects:
+          name: "Эффекты окружения"
+          description: "Визуальные изменения в областях распространения"
+          elements: "Ground scorching, electrical discharges, plasma trails"
+      - audio_feedback:
+          name: "Аудиальная обратная связь"
+          description: "Звуковые эффекты распространения"
+          elements: "Chain crackles, impact sounds, sustained effects"
+
+  balance_considerations:
+    description: "Баланс системы для поддержания игрового опыта"
+    considerations:
+      - damage_scaling:
+          name: "Масштабирование урона"
+          description: "Баланс между мощностью и предсказуемостью"
+          mechanics: "Attenuation curves, maximum chain length, environmental modifiers"
+      - counterplay_accessibility:
+          name: "Доступность контрплея"
+          description: "Обеспечение возможности противодействия"
+          options: "Multiple counter-strategies, equipment availability"
+      - performance_impact:
+          name: "Влияние на производительность"
+          description: "Оптимизация расчетов цепного урона"
+          techniques: "Efficient algorithms, pre-calculations, visual optimizations"
+      - player_skill_expression:
+          name: "Выражение навыков игрока"
+          description: "Возможность для разных стилей игры"
+          diversity: "Positioning skills, timing mastery, environmental awareness"
+
+  progression_integration:
+    description: "Интеграция с системой прогрессии"
+    integration:
+      - skill_unlocks:
+          name: "Разблокировка навыков"
+          description: "Доступ к новым типам цепного урона"
+          progression: "Chain types, propagation improvements, special effects"
+      - equipment_upgrades:
+          name: "Апгрейды оборудования"
+          description: "Улучшение инструментов для цепного урона"
+          enhancements: "Range increases, damage boosts, chain modifiers"
+      - specialization_trees:
+          name: "Деревья специализации"
+          description: "Фокус на определенных аспектах цепного урона"
+          paths: "Lightning master, EMP specialist, plasma expert"
+      - mastery_achievements:
+          name: "Достижения мастерства"
+          description: "Награды за эффективное использование цепей"
+          rewards: "Unique abilities, cosmetic effects, reputation bonuses"
+
+  advanced_mechanics:
+    description: "Продвинутые механики цепного урона"
+    mechanics:
+      - chain_reflection:
+          name: "Отражение цепей"
+          description: "Возможность перенаправления цепей"
+          mechanics: "Conductive objects, enemy abilities, environmental features"
+      - chain_amplification:
+          name: "Усиление цепей"
+          description: "Увеличение мощности через комбинации"
+          mechanics: "Chain linking, power nodes, ability synergies"
+      - chain_types_mixing:
+          name: "Смешивание типов цепей"
+          description: "Комбинации разных типов урона"
+          mechanics: "Elemental combinations, effect chaining, hybrid chains"
+      - dynamic_chains:
+          name: "Динамические цепи"
+          description: "Цепи, адаптирующиеся к ситуации"
+          mechanics: "Path optimization, target switching, environmental adaptation"
+
+conclusion:
+  design_philosophy: |
+    Chain Damage System — это не просто механика area damage, а инструмент
+    тактического контроля поля боя. Цепи должны быть видимыми, предсказуемыми,
+    но при этом предоставлять пространство для креативности и стратегического мышления.
+    Каждая цепь — это история распространения, где один удар может определить
+    исход всей битвы.
+
+  player_experience: |
+    Игроки будут ощущать мощь контролируемого хаоса, где правильно размещенная
+    молния или EMP волна может перевернуть ход боя. Система должна поощрять
+    понимание позиционирования, тайминга и взаимодействия с окружением.
+
+appendix:
+  glossary:
+    - term: Chain Damage
+      definition: Урон, распространяющийся между несколькими целями
+    - term: Damage Attenuation
+      definition: Ослабление урона с каждым прыжком цепи
+    - term: Propagation Mechanics
+      definition: Правила распространения цепного урона
+    - term: Environmental Conduction
+      definition: Влияние окружения на распространение цепей
+  references: []
+  decisions:
+    - decision: Environmental interaction
+      rationale: Добавляет стратегическую глубину и разнообразие
+    - decision: Damage attenuation
+      rationale: Предотвращает доминирование и обеспечивает баланс
+
+implementation:
+  github_issue: 142131022
+  needs_task: false
+  queue_reference: []
+  blockers: []
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-28
+    author: game_design_team
+    changes: Создание детального описания системы цепного урона.
