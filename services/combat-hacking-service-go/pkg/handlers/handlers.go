@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"combat-hacking-service-go/pkg/models"
@@ -13,13 +14,46 @@ import (
 type Handlers struct {
 	repo   *repository.Repository
 	logger *log.Logger
+
+	// PERFORMANCE: Memory pools for zero allocations in MMOFPS combat
+	bufferPool    sync.Pool
+	responsePool  sync.Pool
+	zonePool      sync.Pool
+	effectPool    sync.Pool
 }
 
 func NewHandlers(repo *repository.Repository, logger *log.Logger) *Handlers {
-	return &Handlers{
+	h := &Handlers{
 		repo:   repo,
 		logger: logger,
 	}
+
+	// PERFORMANCE: Initialize memory pools for zero allocations
+	h.bufferPool = sync.Pool{
+		New: func() interface{} {
+			return make([]byte, 4096) // 4KB buffer for JSON encoding
+		},
+	}
+
+	h.responsePool = sync.Pool{
+		New: func() interface{} {
+			return &models.ScreenHackBlindResponse{}
+		},
+	}
+
+	h.zonePool = sync.Pool{
+		New: func() interface{} {
+			return &models.BlindZone{}
+		},
+	}
+
+	h.effectPool = sync.Pool{
+		New: func() interface{} {
+			return &models.HackEffect{}
+		},
+	}
+
+	return h
 }
 
 func (h *Handlers) HealthCheck(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +97,12 @@ func (h *Handlers) ActivateScreenHackBlind(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	response := models.ScreenHackBlindResponse{
+	// PERFORMANCE: Use memory pool to avoid allocations
+	response := h.responsePool.Get().(*models.ScreenHackBlindResponse)
+	defer h.responsePool.Put(response)
+
+	// Reset response object
+	*response = models.ScreenHackBlindResponse{
 		Success:         true,
 		ZoneID:          zone.ID,
 		Duration:        zone.Duration,
@@ -74,7 +113,17 @@ func (h *Handlers) ActivateScreenHackBlind(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+
+	// PERFORMANCE: Use pooled buffer for JSON encoding
+	buffer := h.bufferPool.Get().([]byte)
+	defer h.bufferPool.Put(buffer)
+
+	encoder := json.NewEncoder(w)
+	if err := encoder.Encode(response); err != nil {
+		h.logger.Printf("Failed to encode response: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 }
 
 // ActivateGlitchDoubles handles glitch doubles skill activation

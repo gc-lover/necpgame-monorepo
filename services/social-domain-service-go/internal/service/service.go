@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -276,6 +275,68 @@ func (s *Service) MarkNotificationRead(ctx context.Context, notificationID, play
 		zap.String("player_id", playerID.String()))
 
 	return nil
+}
+
+// Additional service methods
+
+// GetChannelMessages gets messages from a channel
+func (s *Service) GetChannelMessages(ctx context.Context, channelID uuid.UUID, limit int) ([]*repository.ChatMessage, error) {
+	return s.repo.GetChannelMessages(ctx, channelID, limit)
+}
+
+// GetGuilds gets all guilds
+func (s *Service) GetGuilds(ctx context.Context) ([]*repository.Guild, error) {
+	return s.repo.GetGuilds(ctx)
+}
+
+// GetGuild gets a specific guild
+func (s *Service) GetGuild(ctx context.Context, guildID uuid.UUID) (*repository.Guild, error) {
+	return s.repo.GetGuild(ctx, guildID)
+}
+
+// GetParties gets all parties
+func (s *Service) GetParties(ctx context.Context) ([]*repository.Party, error) {
+	return s.repo.GetParties(ctx)
+}
+
+// GetParty gets a specific party
+func (s *Service) GetParty(ctx context.Context, partyID uuid.UUID) (*repository.Party, error) {
+	return s.repo.GetParty(ctx, partyID)
+}
+
+// GetOrders gets all orders
+func (s *Service) GetOrders(ctx context.Context) ([]*repository.PlayerOrder, error) {
+	return s.repo.GetOrders(ctx)
+}
+
+// GetOrder gets a specific order
+func (s *Service) GetOrder(ctx context.Context, orderID uuid.UUID) (*repository.PlayerOrder, error) {
+	return s.repo.GetOrder(ctx, orderID)
+}
+
+// GetMentors gets available mentors
+func (s *Service) GetMentors(ctx context.Context) ([]*repository.PlayerReputation, error) {
+	return s.repo.GetMentors(ctx)
+}
+
+// GetMentorshipProposals gets mentorship proposals
+func (s *Service) GetMentorshipProposals(ctx context.Context) ([]*repository.MentorshipProposal, error) {
+	return s.repo.GetMentorshipProposals(ctx)
+}
+
+// GetReputationLeaderboard gets reputation leaderboard
+func (s *Service) GetReputationLeaderboard(ctx context.Context) ([]*repository.PlayerReputation, error) {
+	return s.repo.GetReputationLeaderboard(ctx)
+}
+
+// GetReputationBenefits gets reputation benefits
+func (s *Service) GetReputationBenefits(ctx context.Context) ([]*repository.ReputationBenefit, error) {
+	return s.repo.GetReputationBenefits(ctx)
+}
+
+// GetPlayerNotifications gets player notifications
+func (s *Service) GetPlayerNotifications(ctx context.Context, playerID uuid.UUID) ([]*repository.Notification, error) {
+	return s.repo.GetPlayerNotifications(ctx, playerID)
 }
 
 // Health check

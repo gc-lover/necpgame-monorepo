@@ -110,15 +110,21 @@ class WorldCitiesImporter:
             metadata = data.get('metadata', {})
             summary = data.get('summary', {})
             content = data.get('content', {})
+            city = data.get('city', {})
 
             # Build city data structure
+            # Debug coordinate extraction
+            lat = self._extract_coordinate(content, 'latitude')
+            lon = self._extract_coordinate(content, 'longitude')
+            logger.info(f"City {metadata.get('title', '')}: lat={lat}, lon={lon}")
+
             city_data = {
                 'city_id': metadata.get('id', ''),
                 'name': metadata.get('title', '').split(':')[0].strip(),
                 'continent': self._extract_continent(content),
                 'country': self._extract_country(content),
-                'latitude': self._extract_coordinate(content, 'latitude'),
-                'longitude': self._extract_coordinate(content, 'longitude'),
+                'latitude': lat,
+                'longitude': lon,
                 'population_2020': self._extract_population(content, 2020),
                 'population_2050': self._extract_population(content, 2050),
                 'population_2093': self._extract_population(content, 2093),
@@ -153,6 +159,10 @@ class WorldCitiesImporter:
     def _extract_continent(self, content: Dict) -> str:
         """Extract continent from content"""
         # Try different possible locations
+        if 'city' in content:
+            city_data = content['city']
+            if 'continent' in city_data:
+                return city_data['continent']
         if 'geography' in content:
             geo = content['geography']
             if 'continent' in geo:
@@ -166,6 +176,10 @@ class WorldCitiesImporter:
 
     def _extract_country(self, content: Dict) -> str:
         """Extract country from content"""
+        if 'city' in content:
+            city_data = content['city']
+            if 'country' in city_data:
+                return city_data['country']
         if 'geography' in content:
             geo = content['geography']
             if 'country' in geo:
@@ -178,6 +192,12 @@ class WorldCitiesImporter:
 
     def _extract_coordinate(self, content: Dict, coord_type: str) -> Optional[float]:
         """Extract latitude/longitude"""
+        # Try different possible locations for coordinates
+        if 'city' in content:
+            city_data = content['city']
+            coords = city_data.get('coordinates', {})
+            if coord_type in coords:
+                return float(coords[coord_type])
         if 'geography' in content:
             geo = content['geography']
             coords = geo.get('coordinates', {})
