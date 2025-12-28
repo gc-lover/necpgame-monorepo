@@ -77,8 +77,8 @@ func main() {
 	// Initialize service layer
 	combatStatsService := service.NewCombatStatsService(repo, metricsCollector, sugar)
 
-	// Initialize handlers
-	combatStatsHandlers := handlers.NewCombatStatsHandlers(combatStatsService, sugar)
+	// Initialize handlers with enhanced error handling
+	combatStatsHandlers := handlers.NewCombatStatsHandlers(combatStatsService, logger)
 
 	// Setup HTTP server
 	r := setupRouter(combatStatsHandlers, metricsCollector, sugar)
