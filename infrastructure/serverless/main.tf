@@ -51,7 +51,12 @@ module "lambda_functions" {
     "inventory-service",
     "economy-service",
     "combat-stats-service",
-    "analytics-service"
+    "analytics-service",
+    "guild-service",
+    "webrtc-signaling-service",
+    "voice-chat-service",
+    "tournament-service",
+    "cyberware-service"
   ])
 
   function_name = each.key
@@ -350,7 +355,12 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
     "inventory-service",
     "economy-service",
     "combat-stats-service",
-    "analytics-service"
+    "analytics-service",
+    "guild-service",
+    "webrtc-signaling-service",
+    "voice-chat-service",
+    "tournament-service",
+    "cyberware-service"
   ])
 
   alarm_name          = "necpgame-${each.key}-errors"
