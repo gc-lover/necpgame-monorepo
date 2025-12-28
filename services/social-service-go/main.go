@@ -17,10 +17,10 @@ import (
 	"github.com/go-redis/redis/v8"
 	_ "github.com/lib/pq"
 
-	"github.com/gc-lover/necpgame-monorepo/services/social-service-go/pkg/handlers"
-	"github.com/gc-lover/necpgame-monorepo/services/social-service-go/pkg/repository"
-	"github.com/gc-lover/necpgame-monorepo/services/social-service-go/pkg/cache"
-	"github.com/gc-lover/necpgame-monorepo/services/social-service-go/server"
+	"social-service-go/pkg/handlers"
+	"social-service-go/pkg/repository"
+	"social-service-go/pkg/cache"
+	"social-service-go/server"
 )
 
 func main() {

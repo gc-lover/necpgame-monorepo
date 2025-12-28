@@ -1,507 +1,296 @@
-# Issue: #142072496 - [Idea] Система триггеров и контекстной активации баек
+# Issue: #142072507
 metadata:
   id: urban-legends-trigger-system
-  title: Система триггеров и контекстной активации баек
+  title: "Система триггеров и контекстной активации баек"
   document_type: idea
   category: mechanics
   status: approved
-  version: '1.1.0'
-  last_updated: 2025-12-28T22:40:00Z
+  version: '1.0.0'
+  last_updated: 2025-12-28T17:00:00.000000
   concept_approved: true
-  concept_reviewed_at: '2025-12-28T22:40:00Z'
+  concept_reviewed_at: '2025-12-28T17:00:00.000000'
   owners:
-    - role: content_designer
-      contact: content@necp.game
+    - role: game_designer
+      contact: gamedesign@necp.game
   tags:
     - urban-legends
-    - contextual-storytelling
-    - dynamic-triggers
-    - player-immersion
-    - procedural-narrative
+    - triggers
+    - contextual-activation
+    - npc-behavior
+    - dynamic-narrative
   topics:
-    - interactive-narrative
-    - contextual-systems
-    - player-agency
+    - npc-ai
+    - contextual-storytelling
+    - player-engagement
     - world-reactivity
+    - narrative-timing
   related_systems:
     - narrative-service
-    - event-service
-    - player-tracking-service
+    - npc-behavior-service
+    - dialogue-system
+    - world-state-service
   related_documents:
-    - id: urban-legends-npc-integration
-      relation: complements
-      path: knowledge/idea/urban-legends-npc-integration.yaml
     - id: urban-legends-template-system
-      relation: uses
-      path: knowledge/idea/urban-legends-template-system.yaml
-    - id: urban-legends-spreading
-      relation: integrates
-      path: knowledge/idea/urban-legends-spreading-system.yaml
-  source: ''
+      relation: related
+    - id: urban-legends-npc-spread-system
+      relation: related
+  source: internal-brainstorm
   visibility: internal
   audience:
-    - concept
-    - content
-    - gameplay
-    - technical
+    - game-design
+    - narrative
+    - ai-behavior
+    - technical-design
   risk_level: medium
 
-review:
-  chain:
-    - role: content_designer
-      reviewer: 'Content Design Team'
-      reviewed_at: 2025-12-28T22:40:00Z
-      status: approved
-  next_actions: []
-
 summary:
-  problem: Городские легенды должны активироваться в подходящих контекстах - в нужное время, в нужном месте, для нужных игроков, создавая органичные и иммерсивные нарративы.
-  solution: Создать многоуровневую систему триггеров, которая анализирует контекст (действия игрока, окружение, время, социальные факторы) и активирует соответствующие легенды с подходящей интенсивностью.
-  impact: Превращает пассивные истории в интерактивные переживания, повышает эмоциональную вовлеченность игроков и создает персонализированные нарративы.
-  benefits:
-    - Contextual storytelling адаптирующийся к игроку
-    - Emergent narratives из комбинации триггеров
-    - Emotional engagement через timely storytelling
-    - Replayability через разные контекстуальные активации
+  problem: Городские легенды должны рассказываться в подходящие моменты, создавая органичное повествование, где контекст и обстоятельства определяют, какие истории NPC поделятся с игроками.
+  goal: Создать умную систему триггеров, которая анализирует контекст и выбирает наиболее подходящие легенды для каждого момента взаимодействия.
+  essence: "В мире NECPGAME истории оживают не тогда, когда мы их рассказываем, а тогда, когда мир готов их услышать. Каждая легенда — это ключ к пониманию момента."
+  key_mechanics:
+    - Contextual Analysis: Анализ текущей ситуации для выбора подходящих легенд
+    - Emotional Resonance: Сопоставление эмоций NPC с тематикой легенд
+    - Player State Awareness: Учет действий и состояния игрока
+    - Dynamic Timing: Выбор оптимального момента для рассказа
+    - Adaptive Relevance: Корректировка легенд под текущие события
 
-trigger_types:
-  spatial_triggers:
-    description: Триггеры, связанные с местоположением
-    categories:
-      - **Location-based**: активация при посещении конкретного места
-      - **Proximity-based**: активация при приближении к определенным объектам
-      - **Zone-based**: активация при входе в зоны влияния
-      - **Environmental**: активация на основе условий окружающей среды
-
-    examples:
-      - **Haunted building**: легенда о призраке активируется при входе в заброшенное здание
-      - **Crime scene**: история о преступлении всплывает при посещении места происшествия
-      - **Faction territory**: легенды фракции активируются в их контролируемых зонах
-      - **Weather-dependent**: разные легенды в дождь vs солнечную погоду
-
-  temporal_triggers:
-    description: Триггеры, связанные со временем
-    categories:
-      - **Time-of-day**: активация в определенное время суток
-      - **Seasonal**: активация в определенные сезоны
-      - **Event-based**: активация во время глобальных событий
-      - **Historical**: активация в anniversary событий
-
-    examples:
-      - **Midnight stories**: страшные легенды активируются после полуночи
-      - **Festival legends**: праздничные истории во время фестивалей
-      - **Anniversary tales**: легенды о прошлых событиях в их годовщины
-      - **Eclipse myths**: специальные легенды во время солнечных затмений
-
-  behavioral_triggers:
-    description: Триггеры, связанные с действиями игрока
-    categories:
-      - **Action-based**: активация после определенных действий
-      - **Skill-based**: активация при использовании определенных навыков
-      - **Quest-based**: активация во время выполнения квестов
-      - **Social-based**: активация в социальных взаимодействиях
-
-    examples:
-      - **Hacking trigger**: легенда о хакерском инциденте при взломе терминала
-      - **Combat trigger**: история о бойце активируется после победы в драке
-      - **Trading trigger**: легенда о мошенничестве при подозрительной сделке
-      - **Romance trigger**: история любви активируется в романтических ситуациях
-
-  contextual_triggers:
-    description: Триггеры, связанные с общим контекстом
-    categories:
-      - **Emotional state**: активация на основе эмоций игрока
-      - **Social context**: активация в присутствии определенных NPC
-      - **Economic context**: активация при определенных рыночных условиях
-      - **Faction relations**: активация на основе отношений с фракциями
-
-    examples:
-      - **Fear trigger**: страшные легенды когда игрок напуган
-      - **Trust trigger**: доверительные истории от NPC с высокой репутацией
-      - **Market crash**: легенды о финансовых кризисах во время рыночных падений
-      - **War trigger**: военные истории во время конфликтов фракций
-
-trigger_activation_system:
-  trigger_engine:
-    description: Двигатель активации триггеров
+core_mechanics:
+  trigger_framework:
+    description: "Базовая архитектура системы триггеров"
     components:
-      - **Context analyzer**: анализ текущего контекста игрока
-      - **Trigger matcher**: поиск подходящих триггеров
-      - **Priority resolver**: разрешение конфликтов приоритетов
-      - **Activation scheduler**: планирование активации легенд
+      - trigger_conditions:
+          name: "Условия триггера"
+          description: "Критерии, при которых легенда может быть активирована"
+          types: "Локация, время, события, состояние NPC/игрока"
+      - activation_priority:
+          name: "Приоритет активации"
+          description: "Определение, какая легенда рассказывается при конфликте"
+          factors: "Релевантность, urgency, эмоциональная сила"
+      - cooldown_system:
+          name: "Система cooldown"
+          description: "Предотвращение повторного рассказа одной легенды"
+          mechanics: "Временные ограничения, контекстные исключения"
+      - probability_weights:
+          name: "Весовые вероятности"
+          description: "Шансы активации различных легенд"
+          calculation: "На основе релевантности и случайности"
 
-    processing_pipeline:
-      1. **Context collection**: сбор данных о текущем состоянии
-      2. **Trigger evaluation**: оценка всех потенциальных триггеров
-      3. **Relevance scoring**: расчет релевантности для игрока
-      4. **Activation decision**: принятие решения об активации
-
-  activation_intensity:
-    description: Уровни интенсивности активации
-    levels:
-      - **Subtle**: косвенные упоминания в разговорах NPC
-      - **Moderate**: прямые отсылки к легенде
-      - **Intense**: детальный рассказ легенды
-      - **Immersive**: интерактивное переживание легенды
-
-    intensity_factors:
-      - **Player engagement**: уровень вовлеченности игрока
-      - **Legend relevance**: релевантность легенды для контекста
-      - **Emotional impact**: эмоциональное воздействие на игрока
-      - **Narrative importance**: важность для общего сюжета
-
-  cooldown_system:
-    description: Система кулдаунов для предотвращения спама
-    mechanics:
-      - **Trigger cooldowns**: задержки между активациями одного триггера
-      - **Legend cooldowns**: паузы между рассказами одной легенды
-      - **Context cooldowns**: задержки для похожих контекстов
-      - **Player fatigue**: предотвращение перегрузки информацией
-
-    adaptive_cooldowns:
-      - **Dynamic adjustment**: адаптация под поведением игрока
-      - **Context awareness**: учет контекста при расчете кулдаунов
-      - **Importance scaling**: важные легенды имеют меньшие кулдауны
-      - **Player preferences**: персонализация на основе предпочтений
-
-context_analysis_engine:
-  player_state_tracking:
-    description: Отслеживание состояния игрока
-    tracked_elements:
-      - **Location history**: недавние посещенные места
-      - **Action patterns**: повторяющиеся действия и привычки
-      - **Emotional state**: текущие эмоции и настроение
-      - **Social connections**: отношения с NPC и фракциями
-
-    state_inference:
-      - **Behavior clustering**: группировка похожих действий
-      - **Pattern recognition**: распознавание паттернов поведения
-      - **Context prediction**: предсказание будущих действий
-      - **Preference learning**: изучение предпочтений игрока
-
-  environmental_context:
-    description: Анализ окружающего контекста
+  contextual_analysis:
+    description: "Анализ контекста для выбора подходящих легенд"
     factors:
-      - **Physical environment**: характеристики места действия
-      - **Social environment**: присутствующие NPC и их состояния
-      - **Economic environment**: текущие рыночные условия
-      - **Political environment**: отношения между фракциями
+      - location_context:
+          name: "Локационный контекст"
+          description: "Связь легенды с текущим местоположением"
+          examples: "Легенды о конкретных зданиях, районах, событиях"
+      - temporal_context:
+          name: "Временной контекст"
+          description: "Связь с временем суток, сезоном, мировыми событиями"
+          examples: "Ночные истории, сезонные легенды, актуальные события"
+      - social_context:
+          name: "Социальный контекст"
+          description: "Отношения между NPC и игроком"
+          factors: "Доверие, фракционная принадлежность, личная история"
+      - emotional_context:
+          name: "Эмоциональный контекст"
+          description: "Эмоциональное состояние NPC"
+          triggers: "Страх, гнев, радость, любопытство"
 
-    dynamic_updates:
-      - **Real-time monitoring**: постоянный мониторинг изменений
-      - **Event correlation**: связь с глобальными событиями
-      - **Weather integration**: влияние погоды на контекст
-      - **Time progression**: изменения со временем
+  player_state_awareness:
+    description: "Учет состояния и действий игрока"
+    awareness:
+      - action_history:
+          name: "История действий"
+          description: "Недавние действия игрока влияют на выбор легенд"
+          examples: "После боя — истории о насилии, после взлома — технические легенды"
+      - player_progression:
+          name: "Прогрессия игрока"
+          description: "Уровень и навыки игрока определяют сложность легенд"
+          adaptation: "От простых историй новичкам до глубоких — опытным"
+      - inventory_state:
+          name: "Состояние инвентаря"
+          description: "Предметы у игрока могут триггерить связанные легенды"
+          examples: "Антикварный предмет — история о его происхождении"
+      - quest_status:
+          name: "Статус квестов"
+          description: "Текущие квесты игрока влияют на релевантные легенды"
+          integration: "Легенды могут давать подсказки или предупреждения"
 
-  narrative_context:
-    description: Нарративный контекст и история
-    elements:
-      - **Active quests**: текущие задания игрока
-      - **Known legends**: уже услышанные истории
-      - **Character development**: прогресс персонажа
-      - **World state**: текущее состояние мира игры
+  npc_behavior_integration:
+    description: "Интеграция с поведением NPC"
+    aspects:
+      - personality_traits:
+          name: "Черты личности"
+          description: "Личность NPC определяет стиль и выбор легенд"
+          examples: "Параноик рассказывает страшные истории, оптимист — вдохновляющие"
+      - relationship_dynamics:
+          name: "Динамика отношений"
+          description: "Отношения с игроком влияют на открытость NPC"
+          progression: "От осторожных историй к личным откровениям"
+      - daily_routines:
+          name: "Ежедневные рутины"
+          description: "Время суток и занятия NPC влияют на доступные легенды"
+          examples: "Бармен вечером рассказывает пьяные байки"
+      - faction_loyalty:
+          name: "Фракционная лояльность"
+          description: "Фракционная принадлежность фильтрует легенды"
+          filtering: "Только дружественные или нейтральные истории"
 
-    context_integration:
-      - **Quest synergy**: интеграция с активными квестами
-      - **Lore connections**: связи с существующим лором
-      - **Character arcs**: влияние на развитие персонажа
-      - **World building**: вклад в построение мира
+  activation_mechanisms:
+    description: "Механизмы активации легенд в диалогах"
+    mechanisms:
+      - conversational_triggers:
+          name: "Диалоговые триггеры"
+          description: "Ключевые слова и фразы активируют легенды"
+          examples: "Упоминание Blackwall — история о цифровых призраках"
+      - environmental_cues:
+          name: "Окружные подсказки"
+          description: "Элементы окружения запускают связанные легенды"
+          examples: "Вид на заброшенное здание — история о его прошлом"
+      - event_based:
+          name: "Событийные триггеры"
+          description: "Мировые события активируют релевантные легенды"
+          examples: "Blackwall breach — истории о подобных инцидентах"
+      - proactive_sharing:
+          name: "Проактивное деление"
+          description: "NPC сами предлагают легенды без запроса"
+          conditions: "Высокое доверие, подходящий момент"
 
-personalization_system:
-  player_profile_analysis:
-    description: Анализ профиля игрока
-    profile_elements:
-      - **Playstyle preferences**: предпочитаемые стили игры
-      - **Emotional responses**: реакции на разные типы контента
-      - **Knowledge level**: familiarity с миром игры
-      - **Social preferences**: предпочтения в социальных взаимодействиях
+  dynamic_timing:
+    description: "Выбор оптимального момента для рассказа"
+    timing:
+      - narrative_flow:
+          name: "Нарративный поток"
+          description: "Встраивание легенд в естественный ход разговора"
+          integration: "Переходы от бытового к легендарному"
+      - emotional_peaks:
+          name: "Эмоциональные пики"
+          description: "Рассказ в моменты высокой эмоциональной вовлеченности"
+          timing: "После драматических событий или открытий"
+      - attention_management:
+          name: "Управление вниманием"
+          description: "Выбор момента, когда игрок наиболее восприимчив"
+          factors: "Уровень усталости, интерес к теме"
+      - pacing_control:
+          name: "Контроль темпа"
+          description: "Распределение легенд для поддержания интереса"
+          mechanics: "Cooldown между историями, постепенное раскрытие"
 
-    adaptive_personalization:
-      - **Content filtering**: фильтрация контента по предпочтениям
-      - **Intensity adjustment**: адаптация интенсивности под игрока
-      - **Pacing control**: контроль темпа подачи информации
-      - **Trigger sensitivity**: чувствительность к триггерам
+  adaptive_relevance:
+    description: "Адаптация легенд под текущие обстоятельства"
+    adaptation:
+      - real_time_events:
+          name: "События реального времени"
+          description: "Легенды адаптируются под текущие мировые события"
+          examples: "Недавний Blackwall инцидент — свежие интерпретации"
+      - player_choices:
+          name: "Выборы игрока"
+          description: "Действия игрока влияют на интерпретацию легенд"
+          consequences: "Разные концовки историй в зависимости от выборов"
+      - world_state:
+          name: "Состояние мира"
+          description: "Глобальные изменения влияют на доступные легенды"
+          examples: "Война фракций — истории о героях и предателях"
+      - personal_experience:
+          name: "Личный опыт"
+          description: "Легенды NPC основаны на их личном опыте"
+          evolution: "Истории меняются с опытом NPC"
 
-  dynamic_difficulty:
-    description: Динамическая сложность нарративов
-    mechanics:
-      - **Emotional intensity**: адаптация эмоционального воздействия
-      - **Complexity scaling**: сложность историй под опыт игрока
-      - **Trigger frequency**: частота активации триггеров
-      - **Context depth**: глубина контекстуальной информации
+  technical_implementation:
+    description: "Технические аспекты реализации системы"
+    components:
+      - trigger_engine:
+          name: "Движок триггеров"
+          description: "Основной алгоритм анализа и активации"
+          features: "Многоуровневая оценка, приоритизация"
+      - context_analyzer:
+          name: "Анализатор контекста"
+          description: "Сбор и анализ contextual информации"
+          inputs: "Положение игрока, состояние NPC, мировые события"
+      - relevance_scorer:
+          name: "Оценщик релевантности"
+          description: "Расчет степени соответствия легенды ситуации"
+          algorithm: "Взвешенные факторы, machine learning адаптация"
+      - dialogue_integrator:
+          name: "Интегратор диалогов"
+          description: "Встраивание легенд в систему диалогов"
+          features: "Seamless transitions, dynamic branching"
 
-    player_adaptation:
-      - **Learning curve**: постепенное усложнение
-      - **Challenge balancing**: баланс между вызовом и комфортом
-      - **Engagement optimization**: оптимизация вовлеченности
-      - **Retention focus**: удержание внимания игрока
+  player_feedback:
+    description: "Обратная связь для игроков"
+    feedback:
+      - legend_indicators:
+          name: "Индикаторы легенд"
+          description: "Визуальные подсказки о доступных легендах"
+          types: "Иконки над NPC, подсветка диалоговых опций"
+      - context_tooltips:
+          name: "Контекстные подсказки"
+          description: "Объяснение, почему легенда активировалась"
+          information: "Текущий контекст, факторы влияния"
+      - legend_tracking:
+          name: "Отслеживание легенд"
+          description: "Журнал услышанных легенд и их последствий"
+          features: "Карта распространения, связи с квестами"
+      - engagement_metrics:
+          name: "Метрики вовлеченности"
+          description: "Статистика взаимодействия с системой легенд"
+          data: "Количество легенд, успешность триггеров"
 
-multi_layer_triggering:
-  primary_triggers:
-    description: Основные триггеры первого уровня
-    characteristics:
-      - **Direct activation**: прямое срабатывание по условиям
-      - **High priority**: высокий приоритет активации
-      - **Immediate response**: быстрая реакция системы
-      - **Clear conditions**: четкие условия срабатывания
+examples_scenarios:
+  description: "Примеры сценариев работы системы"
+  scenarios:
+    - bar_encounter:
+        context: "Игрок входит в бар после боя с Blackwall сущностью"
+        trigger: "Бармен замечает состояние игрока, активирует легенду о 'Цифровых охотниках'"
+        adaptation: "История адаптируется под недавний бой игрока"
+        outcome: "Игрок получает подсказку о слабостях подобных существ"
+    - street_conversation:
+        context: "Игрок спрашивает прохожего о заброшенном здании"
+        trigger: "Прохожий делится легендой о 'Призраке дата-центра'"
+        adaptation: "Детали легенды соответствуют текущему состоянию здания"
+        outcome: "Открывается побочный квест на исследование"
+    - faction_meeting:
+        context: "Игрок встречает члена фракции после выполнения задания"
+        trigger: "NPC рассказывает легенду о 'Героях фракции' для укрепления лояльности"
+        adaptation: "История включает элементы выполненного игроком задания"
+        outcome: "Повышение репутации и новые возможности"
 
-    examples:
-      - **Location entry**: вход в конкретное здание
-      - **Time milestone**: достижение определенного времени
-      - **Action completion**: завершение конкретного действия
-      - **Event occurrence**: наступление глобального события
+conclusion:
+  design_philosophy: |
+    Система триггеров — это мост между статичным лором и живым миром. Она превращает
+    коллекцию историй в органичную часть игрового опыта, где каждая легенда находит
+    свой идеальный момент для рассказа.
 
-  secondary_triggers:
-    description: Вторичные триггеры поддержки
-    characteristics:
-      - **Contextual enhancement**: усиление первичных триггеров
-      - **Background activation**: работа в фоне
-      - **Subtle influence**: косвенное влияние на контент
-      - **Conditional activation**: активация при определенных условиях
+  player_experience: |
+    Игроки будут ощущать мир как реагирующий на их действия, где NPC делятся
+    релевантными историями в подходящие моменты. Это создаст ощущение глубокой
+    связи с миром NECPGAME, где каждая легенда — это не просто история, а ключ
+    к пониманию текущего момента.
 
-    examples:
-      - **Mood amplification**: усиление историй под настроение
-      - **Social reinforcement**: поддержка через NPC взаимодействия
-      - **Environmental cues**: подсказки через окружение
-      - **Narrative foreshadowing**: намеки на будущие события
+appendix:
+  glossary:
+    - term: Trigger Framework
+      definition: Архитектура условий активации легенд
+    - term: Contextual Analysis
+      definition: Анализ ситуации для выбора подходящих легенд
+    - term: Dynamic Timing
+      definition: Выбор оптимального момента для рассказа
+    - term: Adaptive Relevance
+      definition: Корректировка легенд под обстоятельства
+  references: []
+  decisions:
+    - decision: Multi-factor trigger system
+      rationale: Обеспечивает гибкость и точность активации
+    - decision: Player state integration
+      rationale: Создает персонализированный и релевантный опыт
 
-  emergent_triggers:
-    description: Эмерджентные триггеры из комбинаций
-    characteristics:
-      - **Combination-based**: активация через комбинации факторов
-      - **Unpredictable**: неожиданные срабатывания
-      - **Dynamic creation**: создание новых триггеров на лету
-      - **Player-driven**: зависят от действий игрока
-
-    examples:
-      - **Pattern recognition**: триггеры из паттернов поведения
-      - **Social chain reactions**: цепные реакции в социальных сетях
-      - **Contextual synthesis**: синтез из множественных контекстов
-      - **Narrative convergence**: слияние нескольких сюжетных линий
-
-trigger_conflict_resolution:
-  priority_system:
-    description: Система приоритетов триггеров
-    priority_levels:
-      - **Critical**: системные триггеры (безопасность, важные события)
-      - **High**: сюжетно важные триггеры
-      - **Medium**: контекстуально релевантные триггеры
-      - **Low**: вспомогательные триггеры
-
-    priority_factors:
-      - **Narrative importance**: значимость для сюжета
-      - **Player impact**: влияние на игровой опыт
-      - **Timeliness**: urgency активации
-      - **Context relevance**: релевантность текущему контексту
-
-  conflict_resolution:
-    description: Разрешение конфликтов между триггерами
-    strategies:
-      - **Priority-based**: выбор по приоритету
-      - **Context-based**: выбор по релевантности контекста
-      - **Alternation**: чередование конкурирующих триггеров
-      - **Combination**: объединение нескольких триггеров
-
-    resolution_rules:
-      - **Dominance**: один триггер доминирует над другими
-      - **Coexistence**: несколько триггеров могут сосуществовать
-      - **Suppression**: слабые триггеры подавляются сильными
-      - **Fusion**: слияние конфликтующих триггеров
-
-performance_optimization:
-  trigger_caching:
-    description: Кеширование триггеров для производительности
-    techniques:
-      - **Spatial indexing**: индексация триггеров по местоположению
-      - **Temporal scheduling**: планирование по времени
-      - **Context hashing**: хеширование контекстных состояний
-      - **Result caching**: кеширование результатов оценки
-
-    cache_invalidation:
-      - **Event-driven**: инвалидация при изменениях
-      - **Time-based**: периодическая очистка кеша
-      - **Size-based**: очистка при превышении размера
-      - **Priority-based**: сохранение важных результатов
-
-  efficient_evaluation:
-    description: Эффективная оценка триггеров
-    optimizations:
-      - **Lazy evaluation**: отложенная оценка неактивных триггеров
-      - **Batch processing**: пакетная обработка множественных триггеров
-      - **Parallel computation**: параллельные вычисления
-      - **Approximation algorithms**: аппроксимация для сложных оценок
-
-    computational_limits:
-      - **Evaluation budget**: ограничение на время оценки
-      - **Concurrent triggers**: максимум одновременно активных триггеров
-      - **Memory constraints**: ограничения на использование памяти
-      - **CPU limits**: ограничения на использование процессора
-
-integration_interfaces:
-  narrative_service_integration:
-    description: Интеграция с narrative service
-    interfaces:
-      - **Legend retrieval**: получение подходящих легенд
-      - **Context sharing**: обмен контекстной информацией
-      - **Trigger coordination**: координация активации триггеров
-      - **Story state sync**: синхронизация состояния историй
-
-    data_flow:
-      - **Context input**: входящий поток контекстных данных
-      - **Trigger output**: исходящий поток активных триггеров
-      - **Legend delivery**: доставка выбранных легенд
-      - **Feedback loop**: обратная связь для улучшения
-
-  event_service_integration:
-    description: Интеграция с event service
-    interfaces:
-      - **Event subscription**: подписка на игровые события
-      - **Trigger registration**: регистрация триггеров событий
-      - **Event correlation**: корреляция событий с триггерами
-      - **State synchronization**: синхронизация состояний
-
-    event_types:
-      - **Player events**: события связанные с игроком
-      - **World events**: глобальные события мира
-      - **NPC events**: события связанные с NPC
-      - **System events**: технические события системы
-
-  player_tracking_integration:
-    description: Интеграция с player tracking service
-    interfaces:
-      - **Behavior tracking**: отслеживание поведения игрока
-      - **Preference learning**: изучение предпочтений
-      - **Context monitoring**: мониторинг контекста игрока
-      - **Engagement metrics**: метрики вовлеченности
-
-    tracking_data:
-      - **Action sequences**: последовательности действий
-      - **Location history**: история перемещений
-      - **Interaction patterns**: паттерны взаимодействий
-      - **Response analytics**: аналитика реакций
-
-quality_assurance:
-  trigger_testing:
-    description: Тестирование триггеров
-    methodologies:
-      - **Unit testing**: тестирование отдельных триггеров
-      - **Integration testing**: тестирование взаимодействия
-      - **Scenario testing**: тестирование в игровых сценариях
-      - **Performance testing**: тестирование производительности
-
-    test_coverage:
-      - **Edge cases**: граничные условия и исключения
-      - **Load testing**: тестирование под высокой нагрузкой
-      - **Compatibility testing**: тестирование совместимости
-      - **Regression testing**: тестирование на регрессии
-
-  balance_verification:
-    description: Проверка баланса системы
-    metrics:
-      - **Trigger frequency**: частота срабатывания триггеров
-      - **Content diversity**: разнообразие активируемого контента
-      - **Player experience**: качество опыта игрока
-      - **Narrative coherence**: связность нарративов
-
-    balance_adjustments:
-      - **Frequency tuning**: настройка частоты активации
-      - **Intensity scaling**: масштабирование интенсивности
-      - **Context weighting**: взвешивание контекстных факторов
-      - **Cooldown optimization**: оптимизация кулдаунов
-
-example_implementations:
-  haunted_building_scenario:
-    description: Сценарий с призраком в здании
-    trigger_sequence:
-      1. **Spatial trigger**: вход в заброшенное здание
-      2. **Time trigger**: активация после наступления темноты
-      3. **Behavioral trigger**: усиление при исследовании подвала
-      4. **Contextual trigger**: финальная легенда при обнаружении улик
-
-    activation_flow:
-      - **Initial whisper**: тихий шепот в пустых коридорах
-      - **Building tension**: постепенное нарастание напряжения
-      - **Climactic reveal**: кульминация с рассказом полной легенды
-      - **Resolution**: разрешение через действия игрока
-
-  social_chain_reaction:
-    description: Цепная реакция в социальной сети
-    trigger_cascade:
-      1. **Primary trigger**: игрок становится свидетелем события
-      2. **Secondary triggers**: NPC обсуждают событие в баре
-      3. **Emergent triggers**: легенда распространяется по городу
-      4. **Global impact**: влияние на экономику и политику
-
-    propagation_effects:
-      - **Economic changes**: изменения цен на товары
-      - **Social shifts**: изменения в отношениях фракций
-      - **Quest generation**: появление новых заданий
-      - **Player reputation**: изменение репутации игрока
-
-technical_architecture:
-  trigger_database:
-    description: База данных триггеров
-    structure:
-      - **Trigger definitions**: определения триггеров и условий
-      - **Context templates**: шаблоны контекстных состояний
-      - **Activation rules**: правила активации и приоритетов
-      - **Performance metadata**: метаданные для оптимизации
-
-    indexing_strategy:
-      - **Spatial indexing**: индексы для пространственных триггеров
-      - **Temporal indexing**: индексы для временных триггеров
-      - **Behavioral indexing**: индексы для поведенческих триггеров
-      - **Composite indexing**: составные индексы для комплексных условий
-
-  real_time_processing:
-    description: Обработка в реальном времени
-    requirements:
-      - **Low latency**: минимальная задержка активации
-      - **High throughput**: обработка множества триггеров
-      - **Scalable architecture**: масштабируемая архитектура
-      - **Fault tolerance**: устойчивость к сбоям
-
-    processing_pipeline:
-      - **Event ingestion**: прием входящих событий
-      - **Context enrichment**: обогащение контекстными данными
-      - **Trigger matching**: сопоставление с триггерами
-      - **Activation dispatch**: диспетчеризация активации
-
-future_enhancements:
-  ai_driven_adaptation:
-    description: AI-управляемая адаптация
-    features:
-      - **Predictive triggering**: предсказание оптимальных моментов активации
-      - **Emotional modeling**: моделирование эмоционального состояния игрока
-      - **Personalized narratives**: персонализированные нарративы
-      - **Adaptive difficulty**: адаптивная сложность историй
-
-  cross_session_persistence:
-    description: Персистентность между сессиями
-    features:
-      - **Long-term memory**: сохранение контекста между сессиями
-      - **Progressive storytelling**: постепенное развитие историй
-      - **Character continuity**: непрерывность персонажей
-      - **World evolution**: эволюция мира со временем
-
-  multi_modal_integration:
-    description: Мультимодальная интеграция
-    features:
-      - **Audio triggers**: активация через звуковые cues
-      - **Visual triggers**: активация через визуальные элементы
-      - **Tactile feedback**: тактильные триггеры
-      - **Olfactory integration**: интеграция запахов
+implementation:
+  github_issue: 142072507
+  needs_task: false
+  queue_reference: []
+  blockers: []
 
 history:
-  - version: '1.0.0'
+  - version: "1.0.0"
     date: 2025-12-28
-    author: content_designer
-    changes: Создан первоначальный документ системы триггеров городских легенд
-  - version: '1.1.0'
-    date: 2025-12-28
-    author: content_designer
-    changes: Расширена система с технической архитектурой, QA и планами развития.
-
-validation:
-  checksum: ''
-  schema_version: '1.0'
+    author: game_design_team
+    changes: Создание детального описания системы триггеров и контекстной активации баек.

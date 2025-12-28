@@ -1,4 +1,4 @@
-module github.com/gc-lover/necpgame-monorepo/services/social-service-go
+module social-service-go
 
 go 1.25.3
 
