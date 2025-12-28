@@ -31,17 +31,19 @@ func main() {
 	// Get database URL from environment
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		logger.Fatal("DATABASE_URL environment variable is required")
+		// Default for development
+		dbURL = "postgres://postgres:postgres@localhost:5432/necpgame?sslmode=disable"
+		logger.Warn("Using default DATABASE_URL", zap.String("url", dbURL))
 	}
 
-	// TODO: Initialize database connection pool
-	// TODO: Initialize repository and service
-	// TODO: Initialize HTTP server with generated API handlers
-	// TODO: Start server with graceful shutdown
+	// Initialize repository
+	repo, err := server.NewWorldRegionsRepository(dbURL)
+	if err != nil {
+		logger.Fatal("Failed to initialize repository", zap.Error(err))
+	}
 
-	// For now, demonstrate service structure
-	repo := &server.WorldRegionsRepository{}
-	service := &server.WorldRegionsService{}
+	// Initialize service
+	service := server.NewWorldRegionsService(repo)
 
 	logger.Info("World Regions Service initialized",
 		zap.String("status", "ready"),

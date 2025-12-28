@@ -325,6 +325,108 @@ func (h *Handler) LeaveParty(w http.ResponseWriter, r *http.Request) {
 	h.respondJSON(w, http.StatusNotImplemented, map[string]string{"status": "not implemented"})
 }
 
+// Relationships handlers
+
+// GetRelationships gets all relationships for a player
+func (h *Handler) GetRelationships(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// TODO: Get user ID from JWT
+	userID := uuid.New() // Placeholder
+
+	relationships, err := h.service.GetRelationships(ctx, userID)
+	if err != nil {
+		h.logger.Error("Failed to get relationships", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to get relationships")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, relationships)
+}
+
+// CreateRelationship creates a new relationship between players
+func (h *Handler) CreateRelationship(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		TargetUserID string `json:"target_user_id"`
+		RelationshipType string `json:"relationship_type"`
+		Message string `json:"message,omitempty"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	targetUserID, err := uuid.Parse(req.TargetUserID)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid target user ID")
+		return
+	}
+
+	// TODO: Get user ID from JWT
+	userID := uuid.New() // Placeholder
+
+	ctx := r.Context()
+	relationship, err := h.service.CreateRelationship(ctx, userID, targetUserID, req.RelationshipType, req.Message)
+	if err != nil {
+		h.logger.Error("Failed to create relationship", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to create relationship")
+		return
+	}
+
+	h.respondJSON(w, http.StatusCreated, relationship)
+}
+
+// GetRelationship gets a specific relationship by ID
+func (h *Handler) GetRelationship(w http.ResponseWriter, r *http.Request) {
+	relationshipIDStr := chi.URLParam(r, "relationshipID")
+	relationshipID, err := uuid.Parse(relationshipIDStr)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid relationship ID")
+		return
+	}
+
+	ctx := r.Context()
+	relationship, err := h.service.GetRelationship(ctx, relationshipID)
+	if err != nil {
+		h.logger.Error("Failed to get relationship", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to get relationship")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, relationship)
+}
+
+// UpdateRelationship updates an existing relationship
+func (h *Handler) UpdateRelationship(w http.ResponseWriter, r *http.Request) {
+	relationshipIDStr := chi.URLParam(r, "relationshipID")
+	relationshipID, err := uuid.Parse(relationshipIDStr)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid relationship ID")
+		return
+	}
+
+	var req struct {
+		Status string `json:"status,omitempty"`
+		Message string `json:"message,omitempty"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	ctx := r.Context()
+	err = h.service.UpdateRelationship(ctx, relationshipID, req.Status, req.Message)
+	if err != nil {
+		h.logger.Error("Failed to update relationship", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to update relationship")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, map[string]string{"status": "updated"})
+}
+
 // Orders handlers
 
 // GetOrders gets available player orders
