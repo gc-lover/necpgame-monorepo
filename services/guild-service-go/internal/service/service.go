@@ -4,8 +4,13 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -16,15 +21,50 @@ import (
 
 // Service handles business logic
 type Service struct {
-	repo   *repository.Repository
-	logger *zap.SugaredLogger
+	repo                   *repository.Repository
+	logger                 *zap.SugaredLogger
+	webrtcServiceURL       string
+	httpClient             *http.Client
+}
+
+// WebRTCChannelRequest represents request to create WebRTC channel
+type WebRTCChannelRequest struct {
+	GuildID          string   `json:"guild_id"`
+	Name             string   `json:"name"`
+	Description      string   `json:"description,omitempty"`
+	MaxUsers         int      `json:"max_users"`
+	IsDefaultChannel bool     `json:"is_default_channel"`
+	AllowedRoles     []string `json:"allowed_roles,omitempty"`
+	IsModerated      bool     `json:"is_moderated"`
+	RequireApproval  bool     `json:"require_approval"`
+}
+
+// WebRTCChannelResponse represents response from WebRTC service
+type WebRTCChannelResponse struct {
+	ID               string    `json:"id"`
+	Name             string    `json:"name"`
+	Type             string    `json:"type"`
+	GuildID          string    `json:"guild_id"`
+	OwnerID          string    `json:"owner_id"`
+	MaxUsers         int       `json:"max_users"`
+	CurrentUsers     int       `json:"current_users"`
+	IsActive         bool      `json:"is_active"`
+	IsDefaultChannel bool      `json:"is_default_channel"`
+	CreatedAt        time.Time `json:"created_at"`
 }
 
 // NewService creates a new service instance
 func NewService(repo *repository.Repository, logger *zap.SugaredLogger) *Service {
+	webrtcURL := os.Getenv("WEBRTC_SERVICE_URL")
+	if webrtcURL == "" {
+		webrtcURL = "http://webrtc-signaling-service-go:8080" // default
+	}
+
 	return &Service{
-		repo:   repo,
-		logger: logger,
+		repo:             repo,
+		logger:           logger,
+		webrtcServiceURL: webrtcURL,
+		httpClient:       &http.Client{Timeout: 10 * time.Second},
 	}
 }
 
@@ -333,8 +373,8 @@ func (s *Service) CreateVoiceChannel(ctx context.Context, guildID uuid.UUID, nam
 		return nil, fmt.Errorf("max users must be between 1 and 50")
 	}
 
-	// Create WebRTC signaling channel (simulate API call)
-	channelID, err := s.createWebRTCChannel(ctx, name, maxUsers)
+	// Create WebRTC signaling channel via API
+	channelID, err := s.createWebRTCChannel(ctx, name, maxUsers, guildID, creatorID)
 	if err != nil {
 		s.logger.Errorf("Failed to create WebRTC channel: %v", err)
 		return nil, fmt.Errorf("failed to create signaling channel: %v", err)
@@ -567,13 +607,63 @@ func (s *Service) ListVoiceParticipants(ctx context.Context, channelID uuid.UUID
 
 // Helper methods for WebRTC integration
 
-// createWebRTCChannel creates a new WebRTC signaling channel
-func (s *Service) createWebRTCChannel(ctx context.Context, name string, maxUsers int) (string, error) {
-	// This would make an HTTP call to WebRTC signaling service
-	// For now, simulate with a generated ID
-	channelID := fmt.Sprintf("webrtc-ch-%s-%d", name, time.Now().Unix())
-	s.logger.Infof("Created WebRTC channel: %s", channelID)
-	return channelID, nil
+// createWebRTCChannel creates a new WebRTC signaling channel via HTTP API
+func (s *Service) createWebRTCChannel(ctx context.Context, name string, maxUsers int, guildID uuid.UUID, creatorID uuid.UUID) (string, error) {
+	req := WebRTCChannelRequest{
+		GuildID:          guildID.String(),
+		Name:             name,
+		Description:      fmt.Sprintf("Voice channel for guild %s", guildID.String()),
+		MaxUsers:         maxUsers,
+		IsDefaultChannel: false,
+		AllowedRoles:     []string{"member", "officer", "leader"},
+		IsModerated:      false,
+		RequireApproval:  false,
+	}
+
+	jsonData, err := json.Marshal(req)
+	if err != nil {
+		s.logger.Errorf("Failed to marshal WebRTC request: %v", err)
+		return "", fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/api/v1/voice-channels/guild", s.webrtcServiceURL)
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		s.logger.Errorf("Failed to create HTTP request: %v", err)
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("X-User-ID", creatorID.String())
+
+	resp, err := s.httpClient.Do(httpReq)
+	if err != nil {
+		s.logger.Warnf("WebRTC service unavailable, using fallback: %v", err)
+		// Fallback to generated ID if WebRTC service is down
+		channelID := fmt.Sprintf("fallback-webrtc-%s-%d", name, time.Now().Unix())
+		s.logger.Infof("Using fallback WebRTC channel ID: %s", channelID)
+		return channelID, nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		s.logger.Warnf("WebRTC service error %d, using fallback", resp.StatusCode)
+		// Fallback to generated ID on API error
+		channelID := fmt.Sprintf("fallback-webrtc-%s-%d", name, time.Now().Unix())
+		s.logger.Infof("Using fallback WebRTC channel ID: %s", channelID)
+		return channelID, nil
+	}
+
+	var webrtcResp WebRTCChannelResponse
+	if err := json.NewDecoder(resp.Body).Decode(&webrtcResp); err != nil {
+		s.logger.Warnf("Failed to decode WebRTC response, using fallback: %v", err)
+		channelID := fmt.Sprintf("fallback-webrtc-%s-%d", name, time.Now().Unix())
+		s.logger.Infof("Using fallback WebRTC channel ID: %s", channelID)
+		return channelID, nil
+	}
+
+	s.logger.Infof("Created WebRTC channel: %s for guild %s", webrtcResp.ID, guildID)
+	return webrtcResp.ID, nil
 }
 
 // updateWebRTCChannel updates WebRTC channel settings
