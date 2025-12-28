@@ -2,55 +2,60 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"go.uber.org/zap"
 
 	"combat-stats-service-go/internal/service"
 	"combat-stats-service-go/internal/metrics"
 	"combat-stats-service-go/internal/repository"
+
+	// Import enhanced error handling and response
+	errorhandling "github.com/your-org/necpgame/scripts/core/error-handling"
 )
 
 // CombatStatsHandlers handles HTTP requests
 type CombatStatsHandlers struct {
-	service *service.CombatStatsService
-	logger  *zap.SugaredLogger
-	metrics *metrics.Collector
+	service  *service.CombatStatsService
+	logger   *errorhandling.Logger
+	responder *errorhandling.Responder
+	metrics  *metrics.Collector
 }
 
 // NewCombatStatsHandlers creates new combat stats handlers
-func NewCombatStatsHandlers(svc *service.CombatStatsService, logger *zap.SugaredLogger) *CombatStatsHandlers {
+func NewCombatStatsHandlers(svc *service.CombatStatsService, logger *errorhandling.Logger) *CombatStatsHandlers {
 	return &CombatStatsHandlers{
-		service: svc,
-		logger:  logger,
-		metrics: &metrics.Collector{}, // This should be passed from main
+		service:  svc,
+		logger:   logger,
+		responder: errorhandling.NewResponder(logger),
+		metrics:  &metrics.Collector{}, // This should be passed from main
 	}
 }
 
 // AuthMiddleware validates JWT tokens
 func (h *CombatStatsHandlers) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestID := r.Header.Get("X-Request-ID")
+
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			h.respondWithError(w, http.StatusUnauthorized, "Missing authorization header")
+			h.responder.UnauthorizedWithRequestID(w, "Missing authorization header", requestID)
 			return
 		}
 
 		// Simple token validation (should be replaced with proper JWT validation)
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			h.respondWithError(w, http.StatusUnauthorized, "Invalid authorization format")
+			h.responder.UnauthorizedWithRequestID(w, "Invalid authorization format", requestID)
 			return
 		}
 
 		// For now, just check if token is not empty
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		if token == "" {
-			h.respondWithError(w, http.StatusUnauthorized, "Empty token")
+			h.responder.UnauthorizedWithRequestID(w, "Empty token", requestID)
 			return
 		}
 
@@ -60,41 +65,67 @@ func (h *CombatStatsHandlers) AuthMiddleware(next http.Handler) http.Handler {
 
 // Health check endpoint
 func (h *CombatStatsHandlers) Health(w http.ResponseWriter, r *http.Request) {
-	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
-		"status":      "healthy",
-		"service":     "combat-stats-service",
-		"version":     "1.0.0",
-		"timestamp":   time.Now(),
-		"description": "Real-time combat statistics aggregation service",
-	})
+	requestID := r.Header.Get("X-Request-ID")
+
+	healthChecks := map[string]interface{}{
+		"database": "ok",
+		"redis":    "ok",
+		"service":  "healthy",
+	}
+
+	h.responder.SuccessWithRequestID(w, http.StatusOK,
+		map[string]interface{}{
+			"status":      "healthy",
+			"service":     "combat-stats-service",
+			"version":     "1.0.0",
+			"description": "Real-time combat statistics aggregation service",
+		},
+		healthChecks,
+		requestID,
+	)
 }
 
 // Readiness check endpoint
 func (h *CombatStatsHandlers) Ready(w http.ResponseWriter, r *http.Request) {
-	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
-		"status":    "ready",
-		"timestamp": time.Now(),
-	})
+	requestID := r.Header.Get("X-Request-ID")
+
+	h.responder.SuccessWithRequestID(w, http.StatusOK,
+		map[string]interface{}{
+			"status": "ready",
+		},
+		nil,
+		requestID,
+	)
 }
 
 // GetPlayerStats gets player combat statistics
 func (h *CombatStatsHandlers) GetPlayerStats(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	defer func() { h.metrics.ObserveRequestDuration(time.Since(start).Seconds()) }()
+	defer func() {
+		duration := time.Since(start).Seconds()
+		h.metrics.ObserveRequestDuration(duration)
+		h.logger.LogPerformanceMetric("get_player_stats_duration", duration,
+			map[string]string{"method": "GetPlayerStats"})
+	}()
+
+	requestID := r.Header.Get("X-Request-ID")
 
 	playerID := chi.URLParam(r, "playerId")
 	if playerID == "" {
-		h.respondWithError(w, http.StatusBadRequest, "Missing player ID")
+		h.responder.ValidationErrorWithRequestID(w, "Missing player ID",
+			map[string]interface{}{"playerId": "required"}, requestID)
 		return
 	}
 
 	stats, err := h.service.GetPlayerStats(r.Context(), playerID)
 	if err != nil {
-		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		gameErr := errorhandling.WrapError(err, errorhandling.ErrorTypeDatabase,
+			"PLAYER_STATS_RETRIEVAL_FAILED", "Failed to retrieve player statistics")
+		h.responder.ErrorWithRequestID(w, gameErr, requestID)
 		return
 	}
 
-	h.respondWithJSON(w, http.StatusOK, stats)
+	h.responder.SuccessWithRequestID(w, http.StatusOK, stats, nil, requestID)
 }
 
 // GetWeaponStats gets weapon-specific statistics
@@ -370,13 +401,3 @@ func (h *CombatStatsHandlers) GetMatchPerformance(w http.ResponseWriter, r *http
 }
 
 // Helper functions
-func (h *CombatStatsHandlers) respondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
-	response, _ := json.Marshal(payload)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	w.Write(response)
-}
-
-func (h *CombatStatsHandlers) respondWithError(w http.ResponseWriter, status int, message string) {
-	h.respondWithJSON(w, status, map[string]string{"error": message})
-}

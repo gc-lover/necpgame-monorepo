@@ -117,15 +117,17 @@ func main() {
 	sugar.Info("Server exited gracefully")
 }
 
-func setupRouter(handlers *handlers.CombatStatsHandlers, metrics *metrics.Collector, logger *zap.SugaredLogger) *chi.Mux {
+func setupRouter(handlers *handlers.CombatStatsHandlers, metrics *metrics.Collector, logger *errorhandling.Logger) *chi.Mux {
 	r := chi.NewRouter()
 
-	// Middleware
+	// Enhanced middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(30 * time.Second))
+	r.Use(errorhandling.LoggingMiddleware(logger))
+	r.Use(errorhandling.ErrorHandler(logger))
+	r.Use(errorhandling.RecoveryMiddleware(logger))
+	r.Use(errorhandling.TimeoutMiddleware(30 * time.Second))
+	r.Use(errorhandling.RateLimitMiddleware(logger))
 
 	// CORS
 	r.Use(cors.Handler(cors.Options{
