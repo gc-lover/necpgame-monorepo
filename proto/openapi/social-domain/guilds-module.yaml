@@ -1,0 +1,376 @@
+# Guilds Module - Social Domain
+# This module handles guild management, warfare, and social organization
+
+tags:
+  - name: Guilds
+    description: Guild management and warfare operations
+
+paths:
+  /guilds:
+    get:
+      summary: List guilds with filtering and pagination
+      operationId: listGuilds
+      tags:
+        - Guilds
+      parameters:
+        - name: faction
+          in: query
+          schema:
+            type: string
+            enum: [corporate, nomad, street_kid, mercenary, other]
+        - name: recruiting
+          in: query
+          schema:
+            type: boolean
+        - name: min_level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: max_level
+          in: query
+          schema:
+            type: integer
+            maximum: 100
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of guilds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildsListResponse'
+
+    post:
+      summary: Create a new guild
+      operationId: createGuild
+      tags:
+        - Guilds
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildRequest'
+      responses:
+        '201':
+          description: Guild created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildResponse'
+
+  /guilds/{guild_id}:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get guild details
+      operationId: getGuild
+      tags:
+        - Guilds
+      responses:
+        '200':
+          description: Guild details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildResponse'
+
+    put:
+      summary: Update guild information
+      operationId: updateGuild
+      tags:
+        - Guilds
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuildRequest'
+      responses:
+        '200':
+          description: Guild updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildResponse'
+
+    delete:
+      summary: Disband guild
+      operationId: deleteGuild
+      tags:
+        - Guilds
+      responses:
+        '204':
+          description: Guild disbanded successfully
+
+  /guilds/{guild_id}/members:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get guild members
+      operationId: getGuildMembers
+      tags:
+        - Guilds
+      responses:
+        '200':
+          description: Guild members list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMembersResponse'
+
+  /guilds/{guild_id}/join:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Join guild
+      operationId: joinGuild
+      tags:
+        - Guilds
+      responses:
+        '200':
+          description: Successfully joined guild
+
+  /guilds/{guild_id}/leave:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Leave guild
+      operationId: leaveGuild
+      tags:
+        - Guilds
+      responses:
+        '200':
+          description: Successfully left guild
+
+components:
+  schemas:
+    Guild:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - level
+        - member_count
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Guild unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        leader_id:
+          type: string
+          format: uuid
+          description: UUID of the guild leader
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Guild display name
+          example: Shadow Hunters
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+          example: Elite PvP guild focused on territory control and resource acquisition.
+        motto:
+          type: string
+          maxLength: 100
+          description: Guild motto/slogan
+          example: Conquer or Die
+        faction:
+          type: string
+          enum:
+            - corporate
+            - nomad
+            - street_kid
+            - mercenary
+            - other
+          description: Guild faction alignment
+          example: nomad
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp of guild creation
+          example: '2025-12-20T10:00:00Z'
+        last_activity:
+          type: string
+          format: date-time
+          description: Last guild activity timestamp
+          example: '2025-12-20T14:30:00Z'
+        win_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Guild PvP win rate
+          example: 0.67
+        is_recruiting:
+          type: boolean
+          description: Whether guild is accepting new members
+          example: true
+        is_active:
+          type: boolean
+          description: Indicates if the guild is active
+          example: true
+        has_bank:
+          type: boolean
+          description: Whether guild has bank functionality
+          example: true
+        level:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+          description: Guild level
+          example: 15
+        member_count:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 250
+          description: Current number of members
+          example: 75
+        max_members:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 250
+          description: Maximum allowed members
+
+    CreateGuildRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Guild name
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+        motto:
+          type: string
+          maxLength: 100
+          description: Guild motto
+        faction:
+          type: string
+          enum: [corporate, nomad, street_kid, mercenary, other]
+          description: Guild faction
+        is_recruiting:
+          type: boolean
+          default: true
+          description: Whether to accept new members
+
+    UpdateGuildRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 500
+        motto:
+          type: string
+          maxLength: 100
+        is_recruiting:
+          type: boolean
+
+    GuildResponse:
+      type: object
+      properties:
+        guild:
+          $ref: '#/components/schemas/Guild'
+
+    GuildsListResponse:
+      type: object
+      properties:
+        guilds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Guild'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            total_pages:
+              type: integer
+
+    GuildMember:
+      type: object
+      required:
+        - user_id
+        - username
+        - joined_at
+        - rank
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        joined_at:
+          type: string
+          format: date-time
+        rank:
+          type: string
+          enum: [leader, officer, member, recruit]
+        contributions:
+          type: integer
+          description: Guild contribution points
+        last_active:
+          type: string
+          format: date-time
+
+    GuildMembersResponse:
+      type: object
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildMember'

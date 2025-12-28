@@ -55,17 +55,121 @@ servers:
     description: Staging server
   - url: http://localhost:8080
     description: Local development server
-    email: api@social.necpgame.com
-servers:
-- url: http://localhost:8084/api/v1
-  description: Development server
-- url: https://api.necpgame.com/api/v1
-  description: Production server
-security:
-- BearerAuth: []
-tags:
-- name: Social
-  description: Social domain endpoints
+
+# Import modular components
+paths:
+  # Health check endpoints
+  /api/v1/social-domain/health:
+    $ref: './common/health-endpoints.yaml#/paths/~1api~1v1~1social-domain~1health'
+  /api/v1/social-domain/health/batch:
+    $ref: './common/health-endpoints.yaml#/paths/~1api~1v1~1social-domain~1health~1batch'
+  /api/v1/social-domain/health/ws:
+    $ref: './common/health-endpoints.yaml#/paths/~1api~1v1~1social-domain~1health~1ws'
+
+  # Guilds module
+  /guilds:
+    $ref: './guilds-module.yaml#/paths/~1guilds'
+  /guilds/{guild_id}:
+    $ref: './guilds-module.yaml#/paths/~1guilds~1{guild_id}'
+  /guilds/{guild_id}/members:
+    $ref: './guilds-module.yaml#/paths/~1guilds~1{guild_id}~1members'
+  /guilds/{guild_id}/join:
+    $ref: './guilds-module.yaml#/paths/~1guilds~1{guild_id}~1join'
+  /guilds/{guild_id}/leave:
+    $ref: './guilds-module.yaml#/paths/~1guilds~1{guild_id}~1leave'
+
+  # Notifications module
+  /notifications:
+    $ref: './notifications-module.yaml#/paths/~1notifications'
+  /notifications/{notification_id}:
+    $ref: './notifications-module.yaml#/paths/~1notifications~1{notification_id}'
+  /notifications/bulk/mark-read:
+    $ref: './notifications-module.yaml#/paths/~1notifications~1bulk~1mark-read'
+  /notifications/settings:
+    $ref: './notifications-module.yaml#/paths/~1notifications~1settings'
+  /notifications/stats:
+    $ref: './notifications-module.yaml#/paths/~1notifications~1stats'
+
+# Common components
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Common schemas
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [up, down, degraded]
+              response_time_ms:
+                type: number
+              last_check:
+                type: string
+                format: date-time
+        version:
+          type: string
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Human-readable error message
+          example: Invalid request parameters
+        details:
+          type: object
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          description: Request identifier for tracing
+
+    WebSocketHealthMessage:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [health_update, service_status]
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/HealthResponse'
+            - type: object
+              properties:
+                service:
+                  type: string
+                status:
+                  type: string
+                enum: [up, down, degraded]
+                message:
+                  type: string
 paths:
   /api/v1/social-domain/health:
     get:
