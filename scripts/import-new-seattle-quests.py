@@ -63,7 +63,7 @@ def load_quest_from_yaml(file_path):
         'title': data['metadata']['title'],
         'description': description,
         'level_min': level_min,
-        'level_max': level_max,
+        'level_max': level_max if level_max is not None else level_min + 10,  # Default to level_min + 10 if not specified
         'status': 'active',
         'quest_id': data['metadata']['id'],
         'rewards': json.dumps(rewards),
@@ -104,25 +104,22 @@ def main():
             # Insert into database
             cursor.execute("""
                 INSERT INTO gameplay.quest_definitions (
-                    quest_id, title, description, category, difficulty, level_requirement,
-                    rewards, objectives, is_active, created_at, updated_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (quest_id) DO UPDATE SET
-                    title = EXCLUDED.title,
-                    description = EXCLUDED.description,
-                    rewards = EXCLUDED.rewards,
-                    objectives = EXCLUDED.objectives,
-                    updated_at = EXCLUDED.updated_at
+                    title, description, status, level_min, level_max,
+                    metadata, rewards, objectives, created_at, updated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                quest_data['quest_id'],
                 quest_data['title'],
                 quest_data['description'],
-                'main',
-                'normal',
+                quest_data['status'],
                 quest_data['level_min'],
+                quest_data['level_max'],
+                json.dumps({
+                    'id': quest_data['quest_id'],
+                    'version': '1.0.0',
+                    'source_file': str(file_path)
+                }),
                 quest_data['rewards'],
                 quest_data['objectives'],
-                True,
                 quest_data['created_at'],
                 quest_data['updated_at']
             ))
