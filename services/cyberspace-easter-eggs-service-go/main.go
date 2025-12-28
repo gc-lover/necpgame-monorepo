@@ -147,6 +147,11 @@ func setupRouter(server *generated.ServerInterfaceWrapper, h *handlers.EasterEgg
 	// Health endpoint without authentication
 	r.Get("/health", h.HealthCheck)
 
+	// Health endpoint without authentication (before middleware)
+	r.Get("/health", func(w http.ResponseWriter, req *http.Request) {
+		h.HealthCheck(w, req)
+	})
+
 	// Use generated server for authenticated routes
 	r.Mount("/api", server)
 
