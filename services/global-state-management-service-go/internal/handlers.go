@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -72,8 +71,8 @@ func (gsm *GlobalStateManager) SyncPlayerStateHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "synced"})
 }
 
-// GetMatchState handles match state retrieval
-func (gsm *GlobalStateManager) GetMatchState(c *gin.Context) {
+// GetMatchStateHandler handles match state retrieval HTTP requests
+func (gsm *GlobalStateManager) GetMatchStateHandler(c *gin.Context) {
 	matchID := c.Param("matchId")
 
 	// Get match state from manager
@@ -89,8 +88,8 @@ func (gsm *GlobalStateManager) GetMatchState(c *gin.Context) {
 	c.JSON(http.StatusOK, state)
 }
 
-// UpdateMatchState handles match state updates
-func (gsm *GlobalStateManager) UpdateMatchState(c *gin.Context) {
+// UpdateMatchStateHandler handles match state updates HTTP requests
+func (gsm *GlobalStateManager) UpdateMatchStateHandler(c *gin.Context) {
 	matchID := c.Param("matchId")
 
 	var state MatchState
@@ -112,8 +111,8 @@ func (gsm *GlobalStateManager) UpdateMatchState(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "updated"})
 }
 
-// GetGlobalState handles global state retrieval
-func (gsm *GlobalStateManager) GetGlobalState(c *gin.Context) {
+// GetGlobalStateHandler handles global state retrieval HTTP requests
+func (gsm *GlobalStateManager) GetGlobalStateHandler(c *gin.Context) {
 	// Get global state from manager
 	state, err := gsm.GetGlobalState(c.Request.Context())
 	if err != nil {
@@ -125,8 +124,8 @@ func (gsm *GlobalStateManager) GetGlobalState(c *gin.Context) {
 	c.JSON(http.StatusOK, state)
 }
 
-// SyncGlobalState handles global state synchronization
-func (gsm *GlobalStateManager) SyncGlobalState(c *gin.Context) {
+// SyncGlobalStateHandler handles global state synchronization HTTP requests
+func (gsm *GlobalStateManager) SyncGlobalStateHandler(c *gin.Context) {
 	err := gsm.SyncGlobalState(c.Request.Context())
 	if err != nil {
 		gsm.logger.Error("Failed to sync global state", zap.Error(err))

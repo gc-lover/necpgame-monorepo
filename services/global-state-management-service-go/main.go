@@ -81,15 +81,15 @@ func main() {
 	{
 		state := v1.Group("/state")
 		{
-			state.GET("/player/:playerId", gsm.GetPlayerState)
-			state.PUT("/player/:playerId", gsm.UpdatePlayerState)
-			state.POST("/player/:playerId/sync", gsm.SyncPlayerState)
+			state.GET("/player/:playerId", gsm.GetPlayerStateHandler)
+			state.PUT("/player/:playerId", gsm.UpdatePlayerStateHandler)
+			state.POST("/player/:playerId/sync", gsm.SyncPlayerStateHandler)
 
-			state.GET("/match/:matchId", gsm.GetMatchState)
-			state.PUT("/match/:matchId", gsm.UpdateMatchState)
+			state.GET("/match/:matchId", gsm.GetMatchStateHandler)
+			state.PUT("/match/:matchId", gsm.UpdateMatchStateHandler)
 
-			state.GET("/global", gsm.GetGlobalState)
-			state.POST("/global/sync", gsm.SyncGlobalState)
+			state.GET("/global", gsm.GetGlobalStateHandler)
+			state.POST("/global/sync", gsm.SyncGlobalStateHandler)
 		}
 	}
 
