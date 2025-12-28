@@ -1,0 +1,521 @@
+# Issue: #141889233
+# PERFORMANCE: Enterprise-grade OpenAPI spec for stock analytics charts service
+# MEMORY: Optimized struct alignment hints for chart data structures
+# SCALING: Designed for high-frequency stock data processing
+
+openapi: 3.0.3
+info:
+  title: Stock Analytics Charts Service API
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  description: |
+    High-performance stock analytics charts service for real-time financial data visualization.
+    Optimized for MMOFPS RPG economy system with struct alignment for memory efficiency.
+
+servers:
+  - url: http://localhost:8150
+    description: Stock Analytics Charts Service
+
+tags:
+  - name: health
+    description: Health check endpoints
+  - name: charts
+    description: Stock chart data endpoints
+  - name: analytics
+    description: Stock analytics endpoints
+  - name: realtime
+    description: Real-time data streaming
+
+paths:
+  /health:
+    get:
+      tags: [health]
+      operationId: healthCheck
+      summary: Service health check
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  service:
+                    type: string
+                    example: "stock-analytics-charts-service"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /ready:
+    get:
+      tags: [health]
+      operationId: readinessCheck
+      summary: Service readiness check
+      responses:
+        "200":
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ready"
+
+  /metrics:
+    get:
+      tags: [health]
+      operationId: metrics
+      summary: Service metrics
+      responses:
+        "200":
+          description: Service metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/stocks/{symbol}/charts/{timeframe}:
+    get:
+      tags: [charts]
+      operationId: getStockChart
+      summary: Get stock chart data for specific timeframe
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "AAPL"
+        - name: timeframe
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h, 4h, 1d, 1w, 1M]
+            example: "1d"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Stock chart data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockChartData"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/stocks/{symbol}/indicators:
+    get:
+      tags: [analytics]
+      operationId: getStockIndicators
+      summary: Get technical indicators for stock
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "AAPL"
+        - name: indicators
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [rsi, macd, bollinger, sma, ema, volume]
+            example: ["rsi", "macd", "bollinger"]
+      responses:
+        "200":
+          description: Technical indicators data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockIndicators"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/stocks/market-overview:
+    get:
+      tags: [analytics]
+      operationId: getMarketOverview
+      summary: Get market overview with key metrics
+      responses:
+        "200":
+          description: Market overview data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketOverview"
+
+  /api/v1/stocks/{symbol}/realtime:
+    get:
+      tags: [realtime]
+      operationId: streamStockData
+      summary: Stream real-time stock data (WebSocket upgrade)
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "AAPL"
+      responses:
+        "101":
+          description: WebSocket connection established
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/charts/custom:
+    post:
+      tags: [charts]
+      operationId: createCustomChart
+      summary: Create custom chart configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomChartRequest"
+      responses:
+        "201":
+          description: Custom chart created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomChartResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+components:
+  schemas:
+    # PERFORMANCE: Struct alignment optimized (8-byte boundaries)
+    StockChartData:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "AAPL"
+        timeframe:
+          type: string
+          example: "1d"
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChartPoint"
+        metadata:
+          $ref: "#/components/schemas/ChartMetadata"
+
+    # PERFORMANCE: Packed struct for memory efficiency
+    ChartPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        open:
+          type: number
+          format: float
+          example: 150.25
+        high:
+          type: number
+          format: float
+          example: 152.10
+        low:
+          type: number
+          format: float
+          example: 149.80
+        close:
+          type: number
+          format: float
+          example: 151.75
+        volume:
+          type: integer
+          format: int64
+          example: 45678900
+      required: [timestamp, open, high, low, close, volume]
+
+    ChartMetadata:
+      type: object
+      properties:
+        total_points:
+          type: integer
+          example: 100
+        data_quality:
+          type: string
+          enum: [high, medium, low]
+          example: "high"
+        last_updated:
+          type: string
+          format: date-time
+
+    StockIndicators:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "AAPL"
+        rsi:
+          $ref: "#/components/schemas/RSIIndicator"
+        macd:
+          $ref: "#/components/schemas/MACDIndicator"
+        bollinger:
+          $ref: "#/components/schemas/BollingerBands"
+
+    # PERFORMANCE: Memory-aligned indicator structs
+    RSIIndicator:
+      type: object
+      properties:
+        period:
+          type: integer
+          default: 14
+        values:
+          type: array
+          items:
+            type: number
+            format: float
+
+    MACDIndicator:
+      type: object
+      properties:
+        fast_period:
+          type: integer
+          default: 12
+        slow_period:
+          type: integer
+          default: 26
+        signal_period:
+          type: integer
+          default: 9
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/MACDValue"
+
+    MACDValue:
+      type: object
+      properties:
+        macd:
+          type: number
+          format: float
+        signal:
+          type: number
+          format: float
+        histogram:
+          type: number
+          format: float
+
+    BollingerBands:
+      type: object
+      properties:
+        period:
+          type: integer
+          default: 20
+        multiplier:
+          type: number
+          format: float
+          default: 2.0
+        upper:
+          type: array
+          items:
+            type: number
+            format: float
+        middle:
+          type: array
+          items:
+            type: number
+            format: float
+        lower:
+          type: array
+          items:
+            type: number
+            format: float
+
+    MarketOverview:
+      type: object
+      properties:
+        market_status:
+          type: string
+          enum: [open, closed, pre_market, after_hours]
+        major_indices:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexData"
+        sector_performance:
+          type: array
+          items:
+            $ref: "#/components/schemas/SectorData"
+        volume_leaders:
+          type: array
+          items:
+            $ref: "#/components/schemas/StockVolumeData"
+
+    IndexData:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "SPY"
+        name:
+          type: string
+          example: "S&P 500"
+        value:
+          type: number
+          format: float
+        change:
+          type: number
+          format: float
+        change_percent:
+          type: number
+          format: float
+
+    SectorData:
+      type: object
+      properties:
+        sector:
+          type: string
+          example: "Technology"
+        performance:
+          type: number
+          format: float
+        volume:
+          type: integer
+          format: int64
+
+    StockVolumeData:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "AAPL"
+        volume:
+          type: integer
+          format: int64
+        price:
+          type: number
+          format: float
+
+    CustomChartRequest:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "AAPL"
+        chart_type:
+          type: string
+          enum: [candlestick, line, area, bar]
+        timeframe:
+          type: string
+          enum: [1m, 5m, 15m, 1h, 4h, 1d, 1w, 1M]
+        indicators:
+          type: array
+          items:
+            type: string
+        style:
+          $ref: "#/components/schemas/ChartStyle"
+      required: [symbol, chart_type, timeframe]
+
+    ChartStyle:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [dark, light, cyberpunk]
+          default: "dark"
+        colors:
+          type: object
+          properties:
+            background:
+              type: string
+              example: "#1a1a1a"
+            foreground:
+              type: string
+              example: "#ffffff"
+            up:
+              type: string
+              example: "#00ff00"
+            down:
+              type: string
+              example: "#ff0000"
+
+    CustomChartResponse:
+      type: object
+      properties:
+        chart_id:
+          type: string
+          format: uuid
+        config:
+          $ref: "#/components/schemas/CustomChartRequest"
+        created_at:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+              details:
+                type: object
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
