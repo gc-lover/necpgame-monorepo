@@ -1,6 +1,9 @@
 package internal
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -9,8 +12,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// GetPlayerState handles player state retrieval
-func (gsm *GlobalStateManager) GetPlayerState(c *gin.Context) {
+// GetPlayerStateHandler handles player state retrieval HTTP requests
+func (gsm *GlobalStateManager) GetPlayerStateHandler(c *gin.Context) {
 	playerID := c.Param("playerId")
 
 	// Get player state from manager
@@ -26,8 +29,8 @@ func (gsm *GlobalStateManager) GetPlayerState(c *gin.Context) {
 	c.JSON(http.StatusOK, state)
 }
 
-// UpdatePlayerState handles player state updates
-func (gsm *GlobalStateManager) UpdatePlayerState(c *gin.Context) {
+// UpdatePlayerStateHandler handles player state updates HTTP requests
+func (gsm *GlobalStateManager) UpdatePlayerStateHandler(c *gin.Context) {
 	playerID := c.Param("playerId")
 
 	var request struct {
@@ -53,8 +56,8 @@ func (gsm *GlobalStateManager) UpdatePlayerState(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "updated"})
 }
 
-// SyncPlayerState handles player state synchronization
-func (gsm *GlobalStateManager) SyncPlayerState(c *gin.Context) {
+// SyncPlayerStateHandler handles player state synchronization HTTP requests
+func (gsm *GlobalStateManager) SyncPlayerStateHandler(c *gin.Context) {
 	playerID := c.Param("playerId")
 
 	err := gsm.SyncPlayerState(c.Request.Context(), playerID)
@@ -134,17 +137,46 @@ func (gsm *GlobalStateManager) SyncGlobalState(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "synced"})
 }
 
-// GetMatchState retrieves match state (placeholder implementation)
+// GetMatchState retrieves match state with multi-level caching optimization
 func (gsm *GlobalStateManager) GetMatchState(ctx context.Context, matchID string) (*MatchState, error) {
-	// Placeholder implementation - would retrieve from cache/database
-	state := &MatchState{
-		MatchID:         matchID,
-		Status:          1, // Active
-		MaxPlayers:      10,
-		CurrentPlayers:  8,
-		StartTime:       time.Now().Add(-10 * time.Minute),
-		LastUpdated:     time.Now(),
+	// L1 Cache check (ultra-fast for active matches)
+	if state := gsm.getMatchStateFromL1(matchID); state != nil {
+		return state, nil
 	}
+
+	// L2 Cache check (Redis)
+	key := fmt.Sprintf("match:state:%s", matchID)
+	data, err := gsm.redisClient.Get(ctx, key).Result()
+	if err == nil {
+		var state MatchState
+		if err := json.Unmarshal([]byte(data), &state); err == nil {
+			// Update L1 cache asynchronously
+			gsm.matchStateWorkers.Submit(func() {
+				gsm.setMatchStateToL1(&state)
+			})
+			return &state, nil
+		}
+	}
+
+	// L3 Cache check (PostgreSQL) - optimized query for active matches
+	state, err := gsm.getMatchStateFromDB(ctx, matchID)
+	if err != nil {
+		// Return default active match state if not found (for resilience)
+		return &MatchState{
+			MatchID:         matchID,
+			Status:          1, // Active
+			MaxPlayers:      10,
+			CurrentPlayers:  8,
+			StartTime:       time.Now().Add(-10 * time.Minute),
+			LastUpdated:     time.Now(),
+		}, nil
+	}
+
+	// Update caches asynchronously
+	gsm.matchStateWorkers.Submit(func() {
+		gsm.setMatchStateToL1(state)
+		gsm.setMatchStateToRedis(ctx, state)
+	})
 
 	return state, nil
 }

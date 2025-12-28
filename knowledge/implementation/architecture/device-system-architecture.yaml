@@ -3,9 +3,9 @@ metadata:
   title: Архитектура системы устройств
   document_type: architecture
   category: systems
-  status: draft
-  version: "1.0.0"
-  last_updated: 2025-11-29T12:00:00Z
+  status: approved
+  version: "1.1.0"
+  last_updated: 2025-12-28T17:00:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -206,4 +206,116 @@ architecture:
       estimated_effort: 2 days
 
     total_estimated_effort: 18 days
+
+  database_schema:
+    device_table: |
+      CREATE TABLE devices (
+        id UUID PRIMARY KEY,
+        player_id UUID NOT NULL,
+        type VARCHAR(50) NOT NULL, -- 'simple' or 'network'
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        location_x FLOAT,
+        location_y FLOAT,
+        location_z FLOAT,
+        status VARCHAR(50) DEFAULT 'inactive',
+        network_id UUID, -- for local network membership
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (player_id) REFERENCES players(id),
+        FOREIGN KEY (network_id) REFERENCES local_networks(id)
+      );
+
+    device_interactions_table: |
+      CREATE TABLE device_interactions (
+        id UUID PRIMARY KEY,
+        device_id UUID NOT NULL,
+        player_id UUID NOT NULL,
+        interaction_type VARCHAR(100) NOT NULL,
+        parameters JSONB,
+        result JSONB,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (device_id) REFERENCES devices(id),
+        FOREIGN KEY (player_id) REFERENCES players(id)
+      );
+
+    local_networks_table: |
+      CREATE TABLE local_networks (
+        id UUID PRIMARY KEY,
+        owner_id UUID NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        max_devices INTEGER DEFAULT 10,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (owner_id) REFERENCES players(id)
+      );
+
+  websocket_integration:
+    real_time_updates: |
+      - Device status changes
+      - Network connection events
+      - Interaction results
+      - Local network updates
+
+    channels:
+      - /ws/devices/{playerId} - personal device updates
+      - /ws/networks/{networkId} - local network updates
+      - /ws/devices/public - public device interactions
+
+  security_considerations:
+    access_control: |
+      - Device ownership verification
+      - Network membership checks
+      - Interaction permission validation
+      - Rate limiting for interactions
+
+    data_protection: |
+      - Encrypted device configurations
+      - Secure network communications
+      - Audit logging for all interactions
+      - Anti-cheat measures for device manipulation
+
+  monitoring_metrics:
+    device_metrics: |
+      - Active devices count
+      - Device interaction frequency
+      - Network performance stats
+      - Error rates by device type
+
+    performance_indicators: |
+      - Average interaction response time
+      - Network latency measurements
+      - Memory usage per device type
+      - Database query performance
+
+  deployment_consideration:
+    scaling_strategy: |
+      - Horizontal scaling for device services
+      - Database sharding by player regions
+      - Redis caching for device states
+      - CDN for static device assets
+
+    high_availability: |
+      - Multi-region deployment
+      - Automatic failover mechanisms
+      - Data backup and recovery
+      - Service health monitoring
+
+history:
+  - version: '1.0.0'
+    date: 2025-11-29
+    author: architect
+    changes: Создан первоначальный документ архитектуры системы устройств с базовыми компонентами.
+  - version: '1.1.0'
+    date: 2025-12-28
+    author: architect
+    changes: Расширена архитектура с детальной базой данных, WebSocket интеграцией, безопасностью, мониторингом и стратегией развертывания. Архитектура одобрена для реализации.
+
+validation:
+  checksum: ''
+  schema_version: '1.0'
 

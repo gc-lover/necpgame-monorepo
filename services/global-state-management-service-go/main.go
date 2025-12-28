@@ -11,12 +11,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/gc-lover/necpgame/services/global-state-management-service-go/internal"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 )
 
 func main() {
@@ -27,11 +26,38 @@ func main() {
 	}
 	defer logger.Sync()
 
+	// Initialize database connections
+	pgPool, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
+	if err != nil {
+		logger.Fatal("Failed to connect to PostgreSQL", zap.Error(err))
+	}
+	defer pgPool.Close()
+
+	// Initialize Redis cluster client
+	redisClient := redis.NewClusterClient(&redis.ClusterOptions{
+		Addrs:    []string{os.Getenv("REDIS_ADDR")},
+		Password: os.Getenv("REDIS_PASSWORD"),
+	})
+	defer redisClient.Close()
+
+	// Initialize Kafka writer
+	kafkaWriter := &kafka.Writer{
+		Addr:     kafka.TCP(os.Getenv("KAFKA_BROKERS")),
+		Topic:    "global.state.events",
+		Balancer: &kafka.LeastBytes{},
+	}
+	defer kafkaWriter.Close()
+
 	// Create global state manager
-	gsm, err := NewGlobalStateManager(logger)
+	gsm, err := internal.NewGlobalStateManager(logger, redisClient, pgPool, kafkaWriter)
 	if err != nil {
 		logger.Fatal("Failed to create global state manager", zap.Error(err))
 	}
+	defer func() {
+		if err := gsm.Close(); err != nil {
+			logger.Error("Failed to close global state manager", zap.Error(err))
+		}
+	}()
 
 	// Setup HTTP server
 	router := gin.New()

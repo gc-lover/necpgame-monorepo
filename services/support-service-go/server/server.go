@@ -5,8 +5,11 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -59,12 +62,125 @@ func NewServer(db *pgxpool.Pool, logger *zap.Logger, tokenAuth interface{}) *Ser
 	return s
 }
 
-// ServeHTTP implements http.Handler interface
+// ServeHTTP implements http.Handler interface with SLA endpoints
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement proper HTTP routing
-	// For now, this is a placeholder
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Support service not fully implemented")
+	// Simple routing for SLA endpoints
+	path := r.URL.Path
+
+	switch {
+	case path == "/support/tickets/" + extractTicketIDFromPath(path) + "/sla" && r.Method == http.MethodGet:
+		// GET /support/tickets/{ticket_id}/sla
+		s.handleGetTicketSLA(w, r)
+	case path == "/support/sla/violations" && r.Method == http.MethodGet:
+		// GET /support/sla/violations
+		s.handleGetSLAViolations(w, r)
+	default:
+		// TODO: Implement proper HTTP routing for other endpoints
+		w.WriteHeader(http.StatusNotImplemented)
+		fmt.Fprintf(w, "Support service endpoint not implemented: %s %s", r.Method, path)
+	}
+}
+
+// extractTicketIDFromPath extracts ticket ID from path like /support/tickets/{id}/sla
+func extractTicketIDFromPath(path string) string {
+	// Simple extraction for /support/tickets/{id}/sla pattern
+	if len(path) < 24 { // minimum length for /support/tickets/uuid/sla
+		return ""
+	}
+	if !strings.HasPrefix(path, "/support/tickets/") {
+		return ""
+	}
+	remaining := path[17:] // remove "/support/tickets/"
+	if idx := strings.Index(remaining, "/sla"); idx > 0 {
+		return remaining[:idx]
+	}
+	return ""
+}
+
+// handleGetTicketSLA handles SLA status retrieval for a ticket
+func (s *Server) handleGetTicketSLA(w http.ResponseWriter, r *http.Request) {
+	// Extract ticket ID from path
+	ticketIDStr := extractTicketIDFromPath(r.URL.Path)
+	if ticketIDStr == "" {
+		s.writeErrorResponse(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid ticket ID in path")
+		return
+	}
+
+	// Parse UUID
+	ticketID, err := uuid.Parse(ticketIDStr)
+	if err != nil {
+		s.logger.Error("Invalid ticket ID format",
+			zap.String("ticket_id", ticketIDStr),
+			zap.Error(err))
+		s.writeErrorResponse(w, http.StatusBadRequest, "INVALID_TICKET_ID", "Invalid ticket ID format")
+		return
+	}
+
+	// TODO: Implement SLA status retrieval
+	// For now, return mock response
+	mockResponse := map[string]interface{}{
+		"ticketId":               ticketID.String(),
+		"priority":               "NORMAL",
+		"firstResponseTarget":    time.Now().Add(24 * time.Hour),
+		"resolutionTarget":       time.Now().Add(5 * 24 * time.Hour),
+		"timeUntilFirstResponse": 86400, // 24 hours in seconds
+		"timeUntilResolution":    345600, // 4 days in seconds
+		"message":               "SLA endpoint implemented but using mock data",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(mockResponse)
+}
+
+// handleGetSLAViolations handles SLA violations retrieval
+func (s *Server) handleGetSLAViolations(w http.ResponseWriter, r *http.Request) {
+	// Parse query parameters
+	limit := 20
+	offset := 0
+
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 100 {
+			limit = parsedLimit
+		}
+	}
+
+	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
+		if parsedOffset, err := strconv.Atoi(offsetStr); err == nil && parsedOffset >= 0 {
+			offset = parsedOffset
+		}
+	}
+
+	// TODO: Implement SLA violations retrieval
+	// For now, return mock response
+	mockResponse := map[string]interface{}{
+		"items": []map[string]interface{}{},
+		"total": 0,
+		"limit": limit,
+		"offset": offset,
+		"message": "SLA violations endpoint implemented but using mock data",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(mockResponse)
+}
+
+// writeErrorResponse writes error response
+func (s *Server) writeErrorResponse(w http.ResponseWriter, status int, code, message string) {
+	errorResponse := map[string]interface{}{
+		"error": map[string]string{
+			"code":    code,
+			"message": message,
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+
+	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
+		s.logger.Error("Failed to encode error response", zap.Error(err))
+	}
 }
 
 // SUPPORT TICKET OPERATIONS - HOT PATHS
