@@ -141,6 +141,14 @@ class EasterEggsImporter:
         if not self.validate_yaml_file():
             return False
 
+        # Test basic connectivity first
+        try:
+            import requests
+            response = requests.get("http://localhost:8080/health", timeout=5)
+            print(f"INFO: Service health check: {response.status_code}")
+        except Exception as e:
+            print(f"WARNING: Health check failed: {e}")
+
         if not self.make_import_request():
             return False
 

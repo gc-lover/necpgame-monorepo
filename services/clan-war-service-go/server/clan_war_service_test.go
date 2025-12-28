@@ -75,6 +75,82 @@ func (m *MockClanWarRepository) ListTerritories(ctx context.Context, limit, offs
 	return args.Get(0).([]*Territory), args.Error(1)
 }
 
+func (m *MockClanWarRepository) CreateWar(ctx context.Context, war *ClanWar) error {
+	args := m.Called(ctx, war)
+	return args.Error(0)
+}
+
+func (m *MockClanWarRepository) GetWarByID(ctx context.Context, warID uuid.UUID) (*ClanWar, error) {
+	args := m.Called(ctx, warID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ClanWar), args.Error(1)
+}
+
+func (m *MockClanWarRepository) ListWars(ctx context.Context, limit, offset int) ([]*ClanWar, error) {
+	args := m.Called(ctx, limit, offset)
+	return args.Get(0).([]*ClanWar), args.Error(1)
+}
+
+func (m *MockClanWarRepository) UpdateWar(ctx context.Context, war *ClanWar) error {
+	args := m.Called(ctx, war)
+	return args.Error(0)
+}
+
+func (m *MockClanWarRepository) CreateBattle(ctx context.Context, battle *Battle) error {
+	args := m.Called(ctx, battle)
+	return args.Error(0)
+}
+
+func (m *MockClanWarRepository) GetBattleByID(ctx context.Context, battleID uuid.UUID) (*Battle, error) {
+	args := m.Called(ctx, battleID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*Battle), args.Error(1)
+}
+
+func (m *MockClanWarRepository) ListBattles(ctx context.Context, warID uuid.UUID, limit, offset int) ([]*Battle, error) {
+	args := m.Called(ctx, warID, limit, offset)
+	return args.Get(0).([]*Battle), args.Error(1)
+}
+
+func (m *MockClanWarRepository) GetTerritoryByID(ctx context.Context, territoryID uuid.UUID) (*Territory, error) {
+	args := m.Called(ctx, territoryID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*Territory), args.Error(1)
+}
+
+func (m *MockClanWarRepository) ListTerritories(ctx context.Context, limit, offset int) ([]*Territory, error) {
+	args := m.Called(ctx, limit, offset)
+	return args.Get(0).([]*Territory), args.Error(1)
+}
+
+// Additional mock methods for extended testing
+func (m *MockClanWarRepository) GetWarByIDWithBattles(ctx context.Context, warID uuid.UUID) (*ClanWar, []*Battle, error) {
+	args := m.Called(ctx, warID)
+	if args.Get(0) == nil {
+		return nil, nil, args.Error(2)
+	}
+	return args.Get(0).(*ClanWar), args.Get(1).([]*Battle), args.Error(2)
+}
+
+func (m *MockClanWarRepository) GetActiveWarsByClan(ctx context.Context, clanID uuid.UUID) ([]*ClanWar, error) {
+	args := m.Called(ctx, clanID)
+	return args.Get(0).([]*ClanWar), args.Error(1)
+}
+
+func (m *MockClanWarRepository) GetWarStatistics(ctx context.Context, warID uuid.UUID) (*WarStatistics, error) {
+	args := m.Called(ctx, warID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*WarStatistics), args.Error(1)
+}
+
 func TestClanWarServiceInterface_ImplementsInterface(t *testing.T) {
 	// This test ensures our service implements the interface
 	var svc ClanWarServiceInterface = &ClanWarService{}
