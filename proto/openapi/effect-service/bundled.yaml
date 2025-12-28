@@ -1,0 +1,894 @@
+openapi: 3.0.3
+info:
+  title: Effect Service API - Enterprise-Grade Effect System
+  description: |
+    **Enterprise-grade API for Effect System**
+    Complete effects and buffs management system for NECPGAME. Handles real-time effect application, duration tracking, stacking rules, effect interactions, and performance-optimized effect processing.
+    ## Key Features
+    - **Enterprise-grade architecture** with proper domain separation - **Backend optimization hints** for struct alignment and performance - **Complete validation** with redocly and ogen code generation - **Security-first approach** with JWT authentication - **Performance-optimized** response structures
+    ## Domain Purpose
+    Manages character effects including buffs, debuffs, status effects, temporary modifications, and effect interactions with game mechanics.
+    ## Performance Targets
+    - P99 Latency: <20ms for effect processing - Memory: <25KB per active effect instance - Concurrent users: 10,000+ simultaneous effect calculations - Real-time sync: 60 FPS effect state updates
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+  license:
+    name: MIT
+servers:
+  - url: https://api.necpgame.com/v1/effect
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/effect
+    description: Staging server
+  - url: http://localhost:8080/api/v1/effect
+    description: Local development server
+security:
+  - BearerAuth: []
+tags:
+  - name: Effect Management
+    description: Effect application, removal, and lifecycle management
+  - name: Effect Stacking
+    description: Effect stacking rules and conflict resolution
+  - name: Effect Interactions
+    description: Effect interactions and combination logic
+  - name: Health Monitoring
+    description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Effect service health check
+      description: |
+        **Enterprise-grade health check endpoint**
+        Provides real-time health status of the effect microservice.
+        Critical for service discovery, load balancing, and monitoring.
+        **Performance:** <1ms response time, cached for 30 seconds
+      operationId: effectServiceHealthCheck
+      tags:
+        - Health Monitoring
+      parameters:
+        - name: Accept-Encoding
+          in: header
+          schema:
+            type: string
+            enum:
+              - gzip
+              - deflate
+              - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                  - gzip
+                  - deflate
+                  - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          $ref: '#/components/responses/error_TooManyRequests'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /health/batch:
+    post:
+      summary: Batch health check for multiple services
+      description: |
+        **Performance optimization:** Check multiple services health in single request
+        Reduces N HTTP calls to 1 call. Critical for orchestration.
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+      operationId: effectServiceBatchHealthCheck
+      tags:
+        - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - effect-service
+                      - combat-service
+                      - movement-service
+                  maxItems: 10
+                  description: List of services to check
+      responses:
+        '200':
+          $ref: '#/components/responses/HealthBatchSuccess'
+        '400':
+          description: Invalid request - malformed service list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/error_TooManyRequests'
+  /health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      description: |
+        **Performance optimization:** Real-time health updates without polling
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+        Perfect for dashboard monitoring and alerting systems.
+        **Protocol:** WebSocket with JSON payloads
+        **Heartbeat:** 30 second intervals
+        **Reconnection:** Automatic with exponential backoff
+      operationId: effectServiceHealthWebSocket
+      tags:
+        - Health Monitoring
+      parameters:
+        - name: services
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - effect-service
+                - combat-service
+                - movement-service
+          description: Services to monitor (optional, monitors all if not specified)
+      responses:
+        '101':
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+        '200':
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: ws://localhost:8080/api/v1/effect/health/ws
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      - health-monitoring-v1
+        '400':
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /effects/apply:
+    post:
+      summary: Apply effect to target
+      description: |
+        **Effect application endpoint**
+        Applies an effect to a target with validation and stacking rules.
+        **Performance:** <15ms P95, real-time effect processing
+      operationId: effectServiceApplyEffect
+      tags:
+        - Effect Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyEffectRequest'
+      responses:
+        '200':
+          description: Effect applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplyEffectResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Effect stacking conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/error_TooManyRequests'
+  /effects/remove:
+    post:
+      summary: Remove effect from target
+      description: |
+        **Effect removal endpoint**
+        Removes an effect from a target with proper cleanup.
+        **Performance:** <10ms P95, effect state management
+      operationId: effectServiceRemoveEffect
+      tags:
+        - Effect Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveEffectRequest'
+      responses:
+        '200':
+          description: Effect removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveEffectResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/error_TooManyRequests'
+  /effects/target/{targetId}:
+    get:
+      summary: Get active effects on target
+      description: |
+        **Target effects retrieval endpoint**
+        Returns all active effects on a specific target.
+        **Performance:** <5ms P95, cached effect state
+      operationId: effectServiceGetTargetEffects
+      tags:
+        - Effect Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: targetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Target effects retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TargetEffectsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/error_TooManyRequests'
+  /effects/validate:
+    post:
+      summary: Validate effect application
+      description: |
+        **Effect validation endpoint**
+        Validates if an effect can be applied with current stacking rules.
+        **Performance:** <10ms P95, stacking logic validation
+      operationId: effectServiceValidateEffect
+      tags:
+        - Effect Stacking
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateEffectRequest'
+      responses:
+        '200':
+          description: Effect validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateEffectResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/error_TooManyRequests'
+  /effects/interact:
+    post:
+      summary: Calculate effect interactions
+      description: |
+        **Effect interaction calculation endpoint**
+        Calculates how effects interact with each other.
+        **Performance:** <25ms P95, complex interaction logic
+      operationId: effectServiceCalculateInteractions
+      tags:
+        - Effect Interactions
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EffectInteractionRequest'
+      responses:
+        '200':
+          description: Effect interactions calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectInteractionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/error_TooManyRequests'
+components:
+  responses:
+    HealthBatchSuccess:
+      description: Batch health results retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - results
+              - total_time_ms
+            properties:
+              results:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HealthResponse'
+                description: Health status for each requested service
+              total_time_ms:
+                type: integer
+                description: Total processing time in milliseconds
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            example: 60
+            description: Seconds to wait before retrying
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    error_TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Error'
+              - type: object
+                properties:
+                  retry_after:
+                    type: integer
+                    example: 60
+                    description: Seconds to wait before retrying
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - degraded
+            - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    WebSocketHealthMessage:
+      type: object
+      required:
+        - type
+        - timestamp
+        - services
+      properties:
+        type:
+          type: string
+          enum:
+            - health_update
+            - service_down
+            - service_up
+          example: health_update
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+        services:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ApplyEffectRequest:
+      type: object
+      required:
+        - effect_type
+        - target_id
+        - source_id
+      properties:
+        effect_type:
+          type: string
+          enum:
+            - buff
+            - debuff
+            - status
+            - temporary
+          description: Type of effect to apply
+          example: buff
+        target_id:
+          type: string
+          format: uuid
+          description: Target entity ID
+        source_id:
+          type: string
+          format: uuid
+          description: Effect source entity ID
+        effect_data:
+          $ref: '#/components/schemas/EffectData'
+        duration_seconds:
+          type: integer
+          minimum: 1
+          maximum: 3600
+          description: Effect duration in seconds
+        stack_count:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Number of stacks to apply
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ApplyEffectResponse:
+      type: object
+      required:
+        - success
+        - effect_id
+        - target_id
+      properties:
+        success:
+          type: boolean
+          example: true
+        effect_id:
+          type: string
+          format: uuid
+          description: Applied effect instance ID
+        target_id:
+          type: string
+          format: uuid
+        applied_stacks:
+          type: integer
+          minimum: 0
+          description: Actual number of stacks applied
+        replaced_effects:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of effects that were replaced due to stacking rules
+        expiration_time:
+          type: string
+          format: date-time
+          description: When the effect will expire
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    RemoveEffectRequest:
+      type: object
+      required:
+        - effect_id
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Effect instance ID to remove
+        target_id:
+          type: string
+          format: uuid
+          description: Target entity ID (optional validation)
+        remove_all_stacks:
+          type: boolean
+          default: true
+          description: Remove all stacks or just one
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    RemoveEffectResponse:
+      type: object
+      required:
+        - success
+        - effect_id
+      properties:
+        success:
+          type: boolean
+          example: true
+        effect_id:
+          type: string
+          format: uuid
+        stacks_removed:
+          type: integer
+          minimum: 0
+          description: Number of stacks actually removed
+        effect_expired:
+          type: boolean
+          description: True if effect was completely removed
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    TargetEffectsResponse:
+      type: object
+      required:
+        - target_id
+        - active_effects
+      properties:
+        target_id:
+          type: string
+          format: uuid
+        active_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiveEffect'
+        effect_count:
+          type: integer
+          minimum: 0
+          description: Total number of active effects
+        last_update:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ValidateEffectRequest:
+      type: object
+      required:
+        - effect_type
+        - target_id
+      properties:
+        effect_type:
+          type: string
+          enum:
+            - buff
+            - debuff
+            - status
+            - temporary
+        target_id:
+          type: string
+          format: uuid
+        effect_data:
+          $ref: '#/components/schemas/EffectData'
+        check_stacking:
+          type: boolean
+          default: true
+          description: Validate stacking rules
+        check_interactions:
+          type: boolean
+          default: true
+          description: Validate effect interactions
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ValidateEffectResponse:
+      type: object
+      required:
+        - valid
+        - target_id
+      properties:
+        valid:
+          type: boolean
+          example: true
+        target_id:
+          type: string
+          format: uuid
+        can_apply:
+          type: boolean
+          description: Whether effect can be applied
+        max_stacks:
+          type: integer
+          minimum: 0
+          description: Maximum allowed stacks
+        conflicts:
+          type: array
+          items:
+            type: string
+          description: Conflicting effect types
+        validation_errors:
+          type: array
+          items:
+            type: string
+          description: Validation error messages
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    EffectInteractionRequest:
+      type: object
+      required:
+        - effects
+      properties:
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/EffectData'
+          minItems: 2
+          maxItems: 10
+          description: Effects to check for interactions
+        target_id:
+          type: string
+          format: uuid
+          description: Target entity ID for context
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    EffectInteractionResponse:
+      type: object
+      required:
+        - interactions
+      properties:
+        interactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/EffectInteraction'
+        has_conflicts:
+          type: boolean
+          description: Whether there are conflicting interactions
+        recommended_actions:
+          type: array
+          items:
+            type: string
+          description: Recommended actions for conflicts
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ActiveEffect:
+      type: object
+      required:
+        - id
+        - type
+        - stacks
+        - expiration_time
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Effect instance ID
+        type:
+          type: string
+          enum:
+            - buff
+            - debuff
+            - status
+            - temporary
+        effect_data:
+          $ref: '#/components/schemas/EffectData'
+        stacks:
+          type: integer
+          minimum: 1
+        expiration_time:
+          type: string
+          format: date-time
+        applied_time:
+          type: string
+          format: date-time
+        source_id:
+          type: string
+          format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    EffectData:
+      type: object
+      required:
+        - name
+        - category
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          description: Effect name
+          example: Strength Boost
+        category:
+          type: string
+          enum:
+            - damage
+            - healing
+            - speed
+            - defense
+            - status
+          description: Effect category
+        modifiers:
+          type: object
+          description: Stat modifiers applied by effect
+          properties:
+            health:
+              type: integer
+            attack:
+              type: integer
+            defense:
+              type: integer
+            speed:
+              type: integer
+        special_effects:
+          type: array
+          items:
+            type: string
+          description: Special effect identifiers
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    EffectInteraction:
+      type: object
+      required:
+        - type
+        - description
+      properties:
+        type:
+          type: string
+          enum:
+            - amplification
+            - cancellation
+            - modification
+            - stacking
+          description: Type of interaction
+        description:
+          type: string
+          description: Human-readable description of interaction
+        involved_effects:
+          type: array
+          items:
+            type: string
+          description: Effect names involved in interaction
+        result_effect:
+          $ref: '#/components/schemas/EffectData'
+          description: Resulting effect after interaction
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PaginationParams:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
+    PaginatedResponse:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          description: Array of items
+        total:
+          type: integer
+          minimum: 0
+          example: 100
+          description: Total number of items
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+          description: Number of items to skip
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication

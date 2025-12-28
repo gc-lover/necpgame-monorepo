@@ -1,0 +1,571 @@
+openapi: 3.0.3
+info:
+  title: Item Service API - Enterprise-Grade Item Management
+  description: |
+    **Enterprise-Grade Item Management API for NECPGAME**
+
+    This API manages all aspects of in-game items, including inventory management,
+    item properties, crafting materials, equipment stats, and item transactions.
+
+    ## Key Features
+
+    - **Item Management**: Creation, modification, and lifecycle management of game items
+    - **Inventory Operations**: Item storage, retrieval, and organization
+    - **Item Properties**: Dynamic properties, stats, and metadata management
+    - **Crafting Integration**: Material requirements and crafting recipe validation
+    - **Equipment System**: Weapon, armor, and accessory management with stats
+    - **Performance Optimized**: Real-time inventory operations with <30ms P99 latency
+
+    ## Domain Purpose
+
+    The Item domain handles all item-related operations in Night City. Players collect,
+    craft, equip, and trade items through secure and performant APIs that support
+    massive concurrent inventory operations.
+
+    ## Performance Targets
+
+    - P99 Latency: <30ms for item operations
+    - Memory: <40KB per active inventory session
+    - Concurrent users: 75,000+ simultaneous operations
+    - Item throughput: 5,000+ operations/sec
+
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+    url: https://github.com/gc-lover/necpgame-monorepo
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+- url: https://api.necpgame.com/v1/item
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/item
+  description: Staging server
+- url: http://localhost:8080/api/v1/item
+  description: Local development server
+security:
+- BearerAuth: []
+
+tags:
+- name: Item Management
+  description: Core item operations and lifecycle management
+- name: Inventory Operations
+  description: Item storage, retrieval, and organization
+- name: Health Monitoring
+  description: System health and performance monitoring
+
+paths:
+  /health:
+    get:
+      operationId: itemServiceHealthCheck
+      summary: Health check endpoint for Item Service
+      description: Returns the health status of the Item Service with performance metrics
+      tags:
+        - Health Monitoring
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/health.yaml#/HealthResponse
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/error.yaml#/Error
+
+  /items:
+    get:
+      operationId: listItems
+      summary: List items with filtering and pagination
+      description: Retrieve a paginated list of items with optional filtering
+      tags:
+        - Item Management
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of items retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '500':
+          $ref: ../common/responses/error.yaml#/InternalServerError
+
+  /items/{itemId}:
+    get:
+      operationId: getItem
+      summary: Get item by ID
+      description: Retrieve detailed information about a specific item
+      tags:
+        - Item Management
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Item retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '404':
+          $ref: ../common/responses/error.yaml#/NotFound
+        '500':
+          $ref: ../common/responses/error.yaml#/InternalServerError
+
+components:
+  responses:
+    HealthBatchSuccess:
+      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+    ExampleListSuccess:
+      description: Examples retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+        X-Total-Count:
+          schema:
+            type: integer
+            example: 150
+            description: Total number of examples matching criteria
+        X-Page-Count:
+          schema:
+            type: integer
+            example: 8
+            description: Total number of pages
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExampleListResponse"
+    ExampleCreated:
+      description: Example created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
+            description: URL of the created example
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v1"'
+            description: Entity tag for caching and optimistic locking
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExampleResponse"
+    ExampleRetrieved:
+      description: Example retrieved successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v1"'
+            description: Entity tag for caching
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+            description: Cache control directives
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: "2025-12-21T10:00:00Z"
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 5
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExampleResponse"
+    ExampleUpdated:
+      description: Example updated successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v2"'
+            description: New entity tag after update
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: "2025-12-21T10:05:00Z"
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 25
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExampleResponse"
+    ExampleDeleted:
+      description: Example deleted successfully
+      headers:
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
+    InternalServerError:
+      $ref: ../common/responses/error.yaml#/InternalServerError
+    HealthOK:
+      $ref: ../common/responses/success.yaml#/HealthOK
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    WebSocketHealthMessage:
+      type: object
+      required:
+        - type
+        - timestamp
+        - health
+      properties:
+        type:
+          type: string
+          enum:
+            - health_update
+            - health_alert
+            - service_down
+          example: health_update
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+          maxLength: 1000
+        health:
+          $ref: "../common/schemas/health.yaml#/HealthResponse"
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
+    Error:
+      $ref: ../common/schemas/error.yaml#/Error
+    Example:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - status
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Example unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Example display name
+          example: Sample Example
+        description:
+          type: string
+          maxLength: 1000
+          description: Detailed description
+          example: This is a comprehensive example demonstrating best practices.
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2025-12-21T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-12-21T10:00:00Z"
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - pending
+            - archived
+          default: active
+          description: Current status
+          example: active
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Associated tags
+          example:
+            - demo
+            - template
+            - best-practice
+        is_active:
+          type: boolean
+          description: Whether this example is active
+          example: true
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Processing priority
+          example: 7
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Hot path optimization required."
+    CreateExampleRequest:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Desired example name
+          example: My New Example
+        description:
+          type: string
+          maxLength: 1000
+          description: Example description
+          example: A new example following enterprise-grade patterns.
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Initial tags
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Processing priority
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
+    UpdateExampleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: New example name
+          example: Updated Example Name
+        description:
+          type: string
+          maxLength: 1000
+          description: New description
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - pending
+            - archived
+          description: New status
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Replace all tags
+        is_active:
+          type: boolean
+          description: Update active status
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: New priority
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
+    ExampleResponse:
+      type: object
+      required:
+        - example
+      properties:
+        example:
+          $ref: "#/components/schemas/Example"
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
+    ExampleListResponse:
+      type: object
+      required:
+        - examples
+        - total_count
+        - has_more
+      properties:
+        examples:
+          type: array
+          items:
+            $ref: "#/components/schemas/Example"
+          description: List of examples
+        has_more:
+          type: boolean
+          description: Whether there are more results available
+          example: true
+        total_count:
+          type: integer
+          description: Total number of examples matching criteria
+          example: 150
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 20
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Paginated responses optimized for memory
+        efficiency."
+    PaginationParams:
+      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+    Item:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - rarity
+        - is_tradable
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique item identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Item display name
+          example: "Neural Implant v2.1"
+        description:
+          type: string
+          maxLength: 1000
+          description: Detailed item description
+          example: "Advanced neural interface for cyberware integration"
+        category:
+          type: string
+          enum: [weapons, armor, implants, consumables, cosmetics, misc]
+          description: Item category
+          example: "implants"
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary, unique]
+          description: Item rarity level
+          example: "rare"
+        level_requirement:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Required player level
+          example: 15
+        is_tradable:
+          type: boolean
+          description: Whether item can be traded
+          example: true
+        is_stackable:
+          type: boolean
+          description: Whether item can be stacked
+          example: false
+        max_stack_size:
+          type: integer
+          minimum: 1
+          description: Maximum stack size
+          example: 1
+        value:
+          type: number
+          minimum: 0
+          description: Base item value in credits
+          example: 2500.50
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: "Item definition schema. Fields ordered for struct alignment."
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common/security/security.yaml#/BearerAuth
+    ApiKeyAuth:
+      $ref: ../common/security/security.yaml#/ApiKeyAuth
+    ServiceAuth:
+      $ref: ../common/security/security.yaml#/ServiceAuth

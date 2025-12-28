@@ -46,37 +46,71 @@ Real-time performance monitoring, alerting, and analysis for MMOFPS systems.
 - Cache hit rate >90%
 - Session drop rate <2%
 
-### 3. **Data Synchronization** (`data-sync/`)
-Distributed data synchronization with CRDT and conflict resolution.
+### 3. **OpenAPI Tools** (`openapi/`)
+Enterprise-grade OpenAPI specification management, refactoring, and code generation tools.
 
 **Features:**
-- Vector clocks for causal ordering
-- Automatic conflict detection and resolution
-- CRDT-based eventual consistency
-- Node health monitoring and failover
-- Real-time sync events and subscriptions
+- **DRY Compliance Analysis** - Field duplication detection and BASE-ENTITY recommendations
+- **Self-Contained Domains** - Eliminate external dependencies, enable direct code generation
+- **Structure Standardization** - Migrate to enterprise-grade domain architecture
+- **BASE-ENTITY Migration** - Automated conversion to composition-based schemas
+- **Python Bundling** - Node.js-free OpenAPI bundling for ogen compatibility
+- **Advanced Code Generation** - External reference support with automatic bundling
+- **Comprehensive Validation** - Migration results, reference integrity, generation testing
 
-**Usage:**
-```go
-// Initialize sync engine
-engine := sync.NewSyncEngine(config, logger)
+**Available Tools:**
+```bash
+# 🔍 ANALYSIS & PLANNING
+# Analyze field duplication for DRY compliance
+python scripts/openapi/analyze-entity-fields.py proto/openapi/social-domain/
 
-// Sync objects across nodes
-err := engine.SyncObject(&SyncObject{
-    ID:      "player_123",
-    Type:    "player_data",
-    Data:    playerData,
-    Version: 5,
-})
+# 📦 SELF-CONTAINMENT (RECOMMENDED APPROACH)
+# Make domains autonomous - eliminates bundling needs
+python scripts/openapi/domain_self_containment.py companion-domain --embed-base-entity --validate
 
-// Handle conflicts
-conflicts := engine.GetActiveConflicts()
-for _, conflict := range conflicts {
-    engine.ResolveConflict(conflict.ID, resolution, ConflictStrategyLastWriteWins)
-}
+# 🏗️ STRUCTURE MIGRATION
+# Standardize domain architecture
+python scripts/openapi/migrate-domain-structure.py social-domain --execute
+
+# 🔄 BASE-ENTITY MIGRATION
+# Convert to composition-based schemas
+python scripts/openapi/migrate-to-base-entity.py proto/openapi/social-domain/ --all-entities --execute
+
+# ✅ VALIDATION & TESTING
+# Comprehensive migration validation
+python scripts/openapi/validate-migration.py proto/openapi/companion-domain/
+
+# 📋 BUNDLING (ALTERNATIVE APPROACH)
+# Python-based OpenAPI bundling (no Node.js needed)
+python scripts/openapi/openapi_bundler.py spec.yaml --output bundled.yaml
+
+# 🚀 CODE GENERATION
+# Advanced generation with external reference support
+python scripts/openapi/openapi_code_generator.py spec.yaml --target generated/ --validate
+
+# 🛠️ UTILITIES
+# Fix broken references after migration
+python scripts/openapi/fix-refs-after-migration.py proto/openapi/domain/
 ```
 
-### 4. **Load Testing Suite** (`load-testing/`)
+**Recommended Workflow:**
+```bash
+# 1. Analyze current domain state
+python scripts/openapi/analyze-entity-fields.py proto/openapi/companion-domain/
+
+# 2. Make domain self-contained (preferred)
+python scripts/openapi/domain_self_containment.py companion-domain --embed-base-entity --validate
+
+# 3. Generate Go code directly (no bundling needed!)
+ogen --target services/companion-domain-service-go/pkg/api --package api proto/openapi/companion-domain/main.yaml
+
+# 4. Build and validate
+cd services/companion-domain-service-go && go build . && go test ./...
+```
+
+### 4. **Data Synchronization** (`data-sync/`)
+
+### 5. **Load Testing Suite** (`load-testing/`)
 Comprehensive load testing for 10k+ concurrent users.
 
 **Features:**
@@ -92,7 +126,7 @@ Comprehensive load testing for 10k+ concurrent users.
 - Inventory operations (equip, trade, craft)
 - Economy transactions (buy, sell, auctions)
 
-### 5. **Backup & Recovery** (`backup/`)
+### 6. **Backup & Recovery** (`backup/`)
 Enterprise backup and disaster recovery system.
 
 **Features:**
@@ -107,6 +141,15 @@ Enterprise backup and disaster recovery system.
 - Redis caches
 - File systems
 - Custom data sources
+
+### 7. **Reports** (`reports/`)
+Storage for script execution reports and analysis results.
+
+**Contents:**
+- Migration reports (BASE-ENTITY, structure changes)
+- Validation reports (OpenAPI compliance)
+- Analysis reports (field duplication, DRY metrics)
+- Performance reports (load testing results)
 
 ## 🚀 **Quick Start**
 
@@ -277,6 +320,8 @@ make security-scan
 - [Load Testing Suite](load-testing/README.md)
 - [Data Synchronization](data-sync/README.md)
 - [Backup & Recovery](backup/README.md)
+- [OpenAPI Tools](openapi/README.md)
+- [Reports](reports/)
 - [Kubernetes Deployment](k8s/helm/necpgame/README.md)
 
 ## 🤝 **Contributing**

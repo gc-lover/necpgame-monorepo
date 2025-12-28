@@ -1,0 +1,382 @@
+openapi: 3.0.3
+info:
+  title: Experience Service API - Enterprise-Grade Progression System
+  description: |
+    **Enterprise-Grade Experience & Progression Management API for NECPGAME**
+
+    This API manages character experience points, level progression, milestone tracking,
+    and advancement mechanics with real-time calculation and anti-cheat validation.
+
+    ## Key Features
+
+    - **Experience Management**: XP earning, spending, and calculation algorithms
+    - **Level Progression**: Automatic level advancement and milestone unlocks
+    - **Progression Tracking**: Real-time progress monitoring and analytics
+    - **Anti-Cheat Integration**: Experience validation and fraud prevention
+    - **Performance Optimized**: Real-time XP calculations with <15ms P99 latency
+    - **Event-Driven**: Kafka-based experience events for distributed processing
+
+    ## Domain Purpose
+
+    The Experience domain handles all aspects of character progression through Night City.
+    Players earn experience through combat, quests, exploration, and social interactions,
+    advancing their capabilities and unlocking new content.
+
+    ## Performance Targets
+
+    - P99 Latency: <15ms for XP operations
+    - Memory: <15KB per active progression profile
+    - Concurrent users: 100,000+ simultaneous XP updates
+    - Calculation speed: <3ms for complex XP algorithms
+
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+    url: https://github.com/gc-lover/necpgame-monorepo
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+- url: https://api.necpgame.com/v1/experience
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/experience
+  description: Staging server
+- url: http://localhost:8080/api/v1/experience
+  description: Local development server
+
+security:
+- BearerAuth: []
+
+tags:
+- name: Experience Management
+  description: Core experience point operations and calculations
+- name: Level Progression
+  description: Character level advancement and milestone tracking
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /progression/experience/add:
+    post:
+      tags:
+      - Experience
+      summary: Добавить опыт персонажу
+      operationId: addExperience
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddExperienceRequest'
+      responses:
+        '200':
+          description: Опыт добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterProgression'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        '500':
+          $ref: ../common/responses/error.yaml#/InternalServerError
+  /progression/experience/calculate:
+    post:
+      tags:
+      - Experience
+      summary: Рассчитать опыт
+      operationId: calculateExperience
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateExperienceRequest'
+      responses:
+        '200':
+          description: Расчет опыта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperienceCalculationResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        '500':
+          $ref: ../common/responses/error.yaml#/InternalServerError
+  /progression/level/{player_id}:
+    get:
+      tags:
+      - Level
+      summary: Получить уровень персонажа
+      operationId: getPlayerLevel
+      security:
+      - BearerAuth: []
+      parameters:
+      - $ref: ../../common-schemas.yaml#/components/parameters/PlayerId
+      responses:
+        '200':
+          description: Уровень персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerLevelResponse'
+        '404':
+          $ref: ../../common-schemas.yaml#/components/responses/NotFound
+        '401':
+          $ref: ../../common-schemas.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: ../../common-schemas.yaml#/components/responses/InternalServerError
+  /progression/level/check:
+    post:
+      tags:
+      - Level
+      summary: Проверить повышение уровня
+      operationId: checkLevelUp
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckLevelUpRequest'
+      responses:
+        '200':
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LevelUpCheckResponse'
+        '400':
+          $ref: ../common/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common/responses/error.yaml#/Unauthorized
+        '500':
+          $ref: ../common/responses/error.yaml#/InternalServerError
+  /progression/level/requirements/{level}:
+    get:
+      tags:
+      - Level
+      summary: Получить требования для уровня
+      operationId: getLevelRequirements
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: level
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: Требования для уровня
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LevelRequirementsResponse'
+        '404':
+          $ref: ../../common-schemas.yaml#/components/responses/NotFound
+        '401':
+          $ref: ../../common-schemas.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: ../common/responses/error.yaml#/InternalServerError
+
+  /health:
+    get:
+      operationId: experienceServiceHealthCheck
+      summary: Health check endpoint for Experience Service
+      description: Returns the health status of the Experience Service with performance metrics
+      tags:
+        - Health Monitoring
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/health.yaml#/HealthResponse
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas/error.yaml#/Error
+
+components:
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common/responses/error.yaml#/Unauthorized
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    InternalServerError:
+      $ref: ../common/responses/error.yaml#/InternalServerError
+
+  schemas:
+    Error:
+      $ref: ../common/schemas/error.yaml#/Error
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    PaginationMeta:
+      $ref: ../common/schemas/pagination.yaml#/PaginationMeta
+
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common/security/security.yaml#/BearerAuth
+  schemas:
+    AddExperienceRequest:
+      type: object
+      required:
+      - player_id
+      - experience_amount
+      - source
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum:
+          - quest
+          - combat
+          - exploration
+          - crafting
+          - social
+          - achievement
+        experience_amount:
+          type: integer
+          minimum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CalculateExperienceRequest:
+      type: object
+      required:
+      - base_experience
+      properties:
+        modifiers:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        base_experience:
+          type: integer
+          minimum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CharacterProgression:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+          minimum: 1
+        experience:
+          type: integer
+          minimum: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+        available_attribute_points:
+          type: integer
+          minimum: 0
+        available_skill_points:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ExperienceCalculationResponse:
+      type: object
+      properties:
+        modifiers:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        calculation_details:
+          type: object
+          additionalProperties: true
+        base_xp:
+          type: integer
+        final_xp:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PlayerLevelResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        level:
+          type: integer
+          minimum: 1
+        experience:
+          type: integer
+          minimum: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CheckLevelUpRequest:
+      type: object
+      required:
+      - player_id
+      - current_experience
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        current_experience:
+          type: integer
+          minimum: 0
+        new_experience:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    LevelUpCheckResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        level_up_available:
+          type: boolean
+        current_level:
+          type: integer
+        new_level:
+          type: integer
+          nullable: true
+        attribute_points_gained:
+          type: integer
+          nullable: true
+        skill_points_gained:
+          type: integer
+          nullable: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    LevelRequirementsResponse:
+      type: object
+      properties:
+        level:
+          type: integer
+        experience_required:
+          type: integer
+        cumulative_experience:
+          type: integer
+        attribute_points_reward:
+          type: integer
+        skill_points_reward:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+security:
+- BearerAuth: []

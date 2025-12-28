@@ -1,0 +1,821 @@
+openapi: 3.0.3
+info:
+  title: Region Service API - Enterprise-Grade Region Management
+  description: '**Enterprise-Grade Location API for NECPGAME**
+
+    Location Service manages geographical locations, coordinates, zones,
+    and spatial relationships within the game world. Provides location-based
+    services, proximity calculations, and world navigation.
+
+    ## Key Features
+
+    - **Geographical coordinate system** with high precision
+    - **Location-based queries** and proximity searches
+    - **Zone management** and boundary definitions
+    - **Spatial relationships** and distance calculations
+    - **Performance-optimized** for real-time positioning
+    - **Scalable** world coordinate system
+
+    ## Domain Purpose
+
+    Manages all location-related operations including coordinate storage,
+    proximity calculations, zone boundaries, and spatial queries.
+    Essential for world navigation, proximity-based features, and location-aware gameplay.
+
+    ## Performance Targets
+
+    - P99 Latency: <25ms for coordinate queries
+    - Memory: <30KB per active location session
+    - Concurrent users: 50,000+ simultaneous location updates
+    - Spatial queries: <100ms response time
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/region
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/region
+  description: Staging server
+- url: http://localhost:8080/api/v1/region
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Auctions
+  description: Auction creation and management
+- name: Bidding
+  description: Bid placement and validation
+- name: Auction Lifecycle
+  description: Auction start, end, and settlement
+- name: Auction Items
+  description: Item management in auctions
+paths:
+  /health:
+    get:
+      summary: Auction service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the authentication microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: regionServiceHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /health/batch:
+    post:
+      summary: Batch health check for multiple services
+      description: '**Performance optimization:** Check multiple services health in single request
+
+        Reduces N HTTP calls to 1 call. Critical for orchestration.
+
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+
+        '
+      operationId: regionServiceBatchHealthCheck
+      tags:
+      - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - auth-service
+                    - user-service
+                    - session-service
+                  maxItems: 10
+                  description: List of services to check
+      responses:
+        '200':
+          $ref: '#/components/responses/HealthBatchSuccess'
+        '400':
+          description: Invalid request - malformed service list
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      description: '**Performance optimization:** Real-time health updates without polling
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+
+        Perfect for dashboard monitoring and alerting systems.
+
+        **Protocol:** WebSocket with JSON payloads
+
+        **Heartbeat:** 30 second intervals
+
+        **Reconnection:** Automatic with exponential backoff
+
+        '
+      operationId: regionServiceHealthWebSocket
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - auth-service
+            - user-service
+            - session-service
+        description: Services to monitor (optional, monitors all if not specified)
+      responses:
+        '200':
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: ws://localhost:8080/api/v1/auction/health/ws
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - health-monitoring-v1
+        '101':
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+        '400':
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+        '401':
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+        '429':
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+  /region/create:
+    post:
+      summary: User registration
+      description: '**Enterprise-grade user registration endpoint**
+
+        Creates new user account with email/password authentication.
+
+        Includes email verification, password strength validation, and duplicate checking.
+
+        **Performance:** <100ms P95, includes password hashing and email sending
+
+        **Security:** Argon2id password hashing, email verification required
+
+        '
+      operationId: regionRegister
+      tags:
+      - Registration
+      security: []  # No auth required for registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully - email verification required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid request - malformed data or validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+        '409':
+          description: Conflict - user with this email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+        '429':
+          description: Too many requests - registration rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 300
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+  /region/{auctionId}/bid:
+    parameters:
+    - $ref: '#/components/parameters/AuctionId'
+    post:
+      summary: User login with credentials
+      description: '**Enterprise-grade authentication endpoint**
+
+        Authenticates user credentials and returns JWT access token.
+
+        Supports password-based authentication with optional MFA.
+
+        Implements rate limiting and brute-force protection.
+
+        **Performance:** <25ms P95, includes password hashing verification
+
+        **Security:** Argon2id password hashing, JWT tokens with expiration
+
+        '
+      operationId: regionLogin
+      tags:
+      - Authentication
+      security: []  # No auth required for login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful - returns access token
+          headers:
+            X-Rate-Limit-Remaining:
+              schema:
+                type: integer
+                example: 47
+                description: Remaining login attempts in current window
+            X-Rate-Limit-Reset:
+              schema:
+                type: integer
+                example: 3600
+                description: Seconds until rate limit resets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid request - malformed credentials
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+        '429':
+          description: Too many requests - login rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 300
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+  /region/{auctionId}:
+    parameters:
+    - $ref: '#/components/parameters/AuctionId'
+    post:
+      summary: User logout
+      description: '**Secure logout endpoint**
+
+        Invalidates current session and refresh tokens.
+
+        Supports global logout from all devices.
+
+        **Performance:** <10ms P95
+
+        '
+      operationId: regionLogout
+      tags:
+      - Authentication
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Logged out successfully"
+        '401':
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+        '429':
+          description: Too many requests - logout rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 10
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+  /region/{auctionId}/bids:
+    parameters:
+    - $ref: '#/components/parameters/AuctionId'
+    post:
+      summary: Refresh access token
+      description: '**Token refresh endpoint**
+
+        Exchanges refresh token for new access token.
+
+        Maintains user session without re-authentication.
+
+        **Performance:** <15ms P95
+
+        **Security:** Refresh token rotation, short-lived access tokens
+
+        '
+      operationId: regionRefresh
+      tags:
+      - Authentication
+      security: []  # Uses refresh token in body
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  description: Valid refresh token
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+        '401':
+          description: Refresh token expired or revoked
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+        '429':
+          description: Too many requests - token refresh rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+  /region/list:
+    get:
+      summary: Get current user information
+      description: '**Current user profile endpoint**
+
+        Returns authenticated user''s profile information.
+
+        Used for client-side user data display and session validation.
+
+        **Performance:** <5ms P95 with caching
+
+        '
+      operationId: regionGetCurrentUser
+      tags:
+      - User Management
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: User information retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, max-age=300
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+components:
+  parameters:
+    AuctionId:
+      name: auctionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique identifier of the auction
+  responses:
+    HealthBatchSuccess:
+      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            example: 60
+            description: Seconds to wait before retrying
+      content:
+        application/json:
+          schema:
+            $ref: '../common/schemas/error.yaml#/Error'
+  schemas:
+    Error:
+      $ref: '../common/schemas/error.yaml#/Error'
+    HealthResponse:
+      $ref: '../common/schemas/health.yaml#/HealthResponse'
+    LoginRequest:
+      type: object
+      required:
+      - email
+      - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: user@necpgame.com
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          description: User password
+          example: "MySecurePass123!"
+        remember_me:
+          type: boolean
+          description: Extend session duration
+          example: true
+          default: false
+        mfa_code:
+          type: string
+          minLength: 6
+          maxLength: 8
+          description: Multi-factor authentication code (if enabled)
+          example: "123456"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    RegisterRequest:
+      type: object
+      required:
+      - email
+      - password
+      - username
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: newuser@necpgame.com
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          description: User password (must meet complexity requirements)
+          example: "MySecurePass123!"
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9_-]+$'
+          description: Unique username
+          example: cyber_runner_2077
+        accept_terms:
+          type: boolean
+          description: User accepts terms of service
+          example: true
+        marketing_consent:
+          type: boolean
+          description: Consent for marketing communications
+          example: false
+          default: false
+        referral_code:
+          type: string
+          maxLength: 50
+          description: Referral code from another user
+          example: "FRIEND123"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AuthResponse:
+      type: object
+      required:
+      - access_token
+      - token_type
+      - expires_in
+      properties:
+        access_token:
+          type: string
+          description: JWT access token for API authentication
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        token_type:
+          type: string
+          enum: [Bearer]
+          example: Bearer
+        expires_in:
+          type: integer
+          description: Token expiration time in seconds
+          example: 3600
+        refresh_token:
+          type: string
+          description: Refresh token for obtaining new access tokens
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        user:
+          $ref: '#/components/schemas/UserSummary'
+        session_id:
+          type: string
+          format: uuid
+          description: Session identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    RegisterResponse:
+      type: object
+      required:
+      - user_id
+      - email
+      - verification_required
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: Newly created user ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        email:
+          type: string
+          format: email
+          description: Registered email address
+          example: newuser@necpgame.com
+        username:
+          type: string
+          description: Registered username
+          example: cyber_runner_2077
+        verification_required:
+          type: boolean
+          description: Whether email verification is required
+          example: true
+        verification_token_expires:
+          type: string
+          format: date-time
+          description: When verification token expires
+          example: '2025-12-21T12:00:00Z'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UserSummary:
+      type: object
+      required:
+      - id
+      - email
+      - username
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: user@necpgame.com
+        username:
+          type: string
+          description: User display name
+          example: cyber_runner_2077
+        avatar_url:
+          type: string
+          format: uri
+          description: User avatar image URL
+          example: https://cdn.necpgame.com/avatars/550e8400-e29b-41d4-a716-446655440000.jpg
+        level:
+          type: integer
+          minimum: 1
+          description: User level
+          example: 25
+        is_verified:
+          type: boolean
+          description: Email verification status
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UserProfile:
+      type: object
+      required:
+      - id
+      - email
+      - username
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: user@necpgame.com
+        username:
+          type: string
+          description: User display name
+          example: cyber_runner_2077
+        avatar_url:
+          type: string
+          format: uri
+          description: User avatar image URL
+          example: https://cdn.necpgame.com/avatars/550e8400-e29b-41d4-a716-446655440000.jpg
+        level:
+          type: integer
+          minimum: 1
+          description: User level
+          example: 25
+        experience:
+          type: integer
+          minimum: 0
+          description: Total experience points
+          example: 12500
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: '2025-01-15T10:30:00Z'
+        last_login:
+          type: string
+          format: date-time
+          description: Last login timestamp
+          example: '2025-12-21T08:15:00Z'
+        is_verified:
+          type: boolean
+          description: Email verification status
+          example: true
+        preferences:
+          type: object
+          description: User preferences and settings
+          properties:
+            theme:
+              type: string
+              enum: [light, dark, cyberpunk]
+              example: cyberpunk
+            language:
+              type: string
+              example: en
+            notifications:
+              type: object
+              properties:
+                email:
+                  type: boolean
+                  example: true
+                push:
+                  type: boolean
+                  example: false
+        stats:
+          type: object
+          description: User statistics
+          properties:
+            games_played:
+              type: integer
+              minimum: 0
+              example: 150
+            hours_played:
+              type: integer
+              minimum: 0
+              example: 250
+            achievements_unlocked:
+              type: integer
+              minimum: 0
+              example: 25
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PaginationParams:
+      $ref: '../common/schemas/pagination.yaml#/PaginationParams'
+    PaginatedResponse:
+      $ref: '../common/schemas/pagination.yaml#/PaginatedResponse'
+  securitySchemes:
+    BearerAuth:
+      $ref: '../common/security/security.yaml#/BearerAuth'
+    ApiKeyAuth:
+      $ref: '../common/security/security.yaml#/ApiKeyAuth'
+    ServiceAuth:
+      $ref: '../common/security/security.yaml#/ServiceAuth'

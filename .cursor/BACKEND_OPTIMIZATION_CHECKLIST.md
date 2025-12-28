@@ -226,10 +226,19 @@ Issue: #123
 
 ## [TRANSPORT]️ Инструменты для валидации
 
-**Добавь в CI/CD:**
+**Добавь в CI/CD для enterprise-grade доменов:**
 
 ```yaml
-# .github/workflows/backend-quality.yml
+# .github/workflows/enterprise-grade-validation.yml
+- name: Validate Domain OpenAPI Specs
+  run: python scripts/openapi/validate-domains-openapi.py
+
+- name: Optimize Struct Alignment (30-50% memory savings)
+  run: python scripts/batch-optimize-openapi-struct-alignment.py --dry-run
+
+- name: Generate Enterprise-Grade Services
+  run: python scripts/generate-all-domains-go.py --parallel 3 --memory-pool
+
 - name: Check struct alignment
   run: fieldalignment ./...
 
@@ -237,7 +246,7 @@ Issue: #123
   run: |
     go test -bench=. -benchmem > bench.txt
     # Fail если есть allocations в critical path
-    
+
 - name: Check goroutine leaks
   run: go test -v -run TestMain ./...
 ```
@@ -264,6 +273,9 @@ Issue: #123
 # 🟢 IMPROVEMENTS → backlog
 
 # 4. Применяй оптимизации:
+# - Используй enterprise-grade domain архитектуру (SOLID/DRY inheritance)
+# - Обнови OpenAPI specs для domain inheritance (НЕ дублируй общие поля!)
+# - Перегенерируй сервис: python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{service}-service/main.yaml
 # - Используй шаблоны из .cursor/templates/backend-*.md
 # - Следуй Performance Bible
 # - Валидируй после каждого изменения

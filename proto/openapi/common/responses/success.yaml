@@ -1,0 +1,368 @@
+# Common Success Responses
+OK:
+  description: Operation completed successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          success:
+            type: boolean
+            example: true
+          message:
+            type: string
+            example: "Operation completed"
+
+Created:
+  description: Resource created successfully
+  headers:
+    Location:
+      schema:
+        type: string
+        format: uri
+      description: URI of the created resource
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique identifier of created resource
+          created_at:
+            type: string
+            format: date-time
+            description: Creation timestamp
+
+Updated:
+  description: Resource updated successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique identifier of updated resource
+          updated_at:
+            type: string
+            format: date-time
+            description: Last modification timestamp
+
+Deleted:
+  description: Resource deleted successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique identifier of deleted resource
+          deleted_at:
+            type: string
+            format: date-time
+            description: Deletion timestamp
+
+HealthOK:
+  description: Service is healthy
+  content:
+    application/json:
+      schema:
+        $ref: '../schemas/health.yaml#/HealthResponse'
+
+HealthBatchSuccess:
+  description: Batch health results retrieved successfully
+  headers:
+    Cache-Control:
+      schema:
+        type: string
+        example: no-cache
+    X-Processing-Time:
+      schema:
+        type: integer
+        example: 15
+        description: Processing time in milliseconds
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - results
+          - total_time_ms
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '../schemas/health.yaml#/HealthResponse'
+            description: Health status for each requested service
+          total_time_ms:
+            type: integer
+            description: Total processing time in milliseconds
+
+# ============================================================================
+# DOMAIN-SPECIFIC SUCCESS RESPONSES
+# ============================================================================
+
+# Game Domain Responses
+CombatActionSuccess:
+  description: Combat action executed successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - action_id
+          - damage_dealt
+          - effects_applied
+        properties:
+          action_id:
+            $ref: '../schemas/common.yaml#/UUID'
+          damage_dealt:
+            type: integer
+            minimum: 0
+            description: Total damage dealt
+          effects_applied:
+            type: array
+            items:
+              type: string
+            description: Applied effect names
+          target_status:
+            type: string
+            enum: ["alive", "defeated", "stunned"]
+
+QuestProgressSuccess:
+  description: Quest progress updated successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - quest_id
+          - completed_objectives
+          - progress_percentage
+        properties:
+          quest_id:
+            $ref: '../schemas/common.yaml#/UUID'
+          completed_objectives:
+            type: integer
+            minimum: 0
+          progress_percentage:
+            type: number
+            minimum: 0
+            maximum: 100
+          rewards_unlocked:
+            type: array
+            items:
+              type: string
+            description: Unlocked reward types
+
+# Economy Domain Responses
+TransactionSuccess:
+  description: Transaction completed successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - transaction_id
+          - amount
+          - balance_after
+        properties:
+          transaction_id:
+            $ref: '../schemas/common.yaml#/UUID'
+          amount:
+            type: number
+            description: Transaction amount
+          currency_code:
+            type: string
+            pattern: '^[A-Z]{3}$'
+          balance_after:
+            type: number
+            description: Account balance after transaction
+          reference:
+            type: string
+            description: Transaction reference
+
+TradeSuccess:
+  description: Trade completed successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - trade_id
+          - items_exchanged
+        properties:
+          trade_id:
+            $ref: '../schemas/common.yaml#/UUID'
+          items_exchanged:
+            type: object
+            properties:
+              given:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    item_id:
+                      $ref: '../schemas/common.yaml#/UUID'
+                    quantity:
+                      type: integer
+                      minimum: 1
+              received:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    item_id:
+                      $ref: '../schemas/common.yaml#/UUID'
+                    quantity:
+                      type: integer
+                      minimum: 1
+          currency_exchanged:
+            type: object
+            properties:
+              given:
+                type: number
+              received:
+                type: number
+              currency_code:
+                type: string
+                pattern: '^[A-Z]{3}$'
+
+AuctionBidSuccess:
+  description: Auction bid placed successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - auction_id
+          - bid_amount
+          - is_highest_bid
+        properties:
+          auction_id:
+            $ref: '../schemas/common.yaml#/UUID'
+          bid_amount:
+            type: number
+            minimum: 0.01
+          currency_code:
+            type: string
+            pattern: '^[A-Z]{3}$'
+          is_highest_bid:
+            type: boolean
+            description: Whether this bid is currently highest
+          bid_count:
+            type: integer
+            minimum: 1
+            description: Total number of bids on auction
+
+# Social Domain Responses
+FriendRequestSuccess:
+  description: Friend request sent successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - friendship_id
+          - status
+        properties:
+          friendship_id:
+            $ref: '../schemas/common.yaml#/UUID'
+          status:
+            type: string
+            enum: ["pending"]
+          expires_at:
+            $ref: '../schemas/common.yaml#/Timestamp'
+
+GuildInviteSuccess:
+  description: Guild invitation sent successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - invitation_id
+          - guild_id
+          - expires_at
+        properties:
+          invitation_id:
+            $ref: '../schemas/common.yaml#/UUID'
+          guild_id:
+            $ref: '../schemas/common.yaml#/UUID'
+          guild_name:
+            type: string
+          expires_at:
+            $ref: '../schemas/common.yaml#/Timestamp'
+
+MessageSentSuccess:
+  description: Chat message sent successfully
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - message_id
+          - channel_id
+          - sent_at
+        properties:
+          message_id:
+            $ref: '../schemas/common.yaml#/UUID'
+          channel_id:
+            $ref: '../schemas/common.yaml#/UUID'
+          sent_at:
+            $ref: '../schemas/common.yaml#/Timestamp'
+          mentions_notified:
+            type: integer
+            minimum: 0
+            description: Number of users notified via mentions
+
+# ============================================================================
+# PAGINATION RESPONSES
+# ============================================================================
+
+PaginatedGameEntities:
+  description: Paginated list of game entities
+  content:
+    application/json:
+      schema:
+        allOf:
+          - $ref: '../schemas/common.yaml#/PaginatedResponse'
+          - type: object
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '../schemas/game-entities.yaml#/CharacterEntity'
+
+PaginatedEconomyEntities:
+  description: Paginated list of economy entities
+  content:
+    application/json:
+      schema:
+        allOf:
+          - $ref: '../schemas/common.yaml#/PaginatedResponse'
+          - type: object
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '../schemas/economy-entities.yaml#/TransactionEntity'
+
+PaginatedSocialEntities:
+  description: Paginated list of social entities
+  content:
+    application/json:
+      schema:
+        allOf:
+          - $ref: '../schemas/common.yaml#/PaginatedResponse'
+          - type: object
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '../schemas/social-entities.yaml#/UserProfileEntity'

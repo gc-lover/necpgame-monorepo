@@ -1,0 +1,162 @@
+openapi: 3.0.3
+info:
+  title: Auth expansion domain API
+  description: 'Consolidated auth expansion domain Domain API for NECPGAME.
+
+    This domain consolidates all auth functionality.
+
+    '
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+- url: http://localhost:8080/api/v1
+  description: Development server
+- url: https://api.necpgame.com/api/v1
+  description: Production server
+security:
+- BearerAuth: []
+tags:
+- name: Auth expansion domain
+  description: auth expansion domain domain endpoints
+paths:
+  /api/v1/auth-expansion-domain/health:
+    get:
+      summary: auth expansion domain domain health check
+      operationId: auth-expansion-domainHealthCheck
+      tags:
+      - Auth expansion domain
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"-api-v1-auth-expansion-domain-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+  /api/v1/auth-expansion-domain/health/batch:
+    post:
+      summary: Batch health check for multiple domains
+      operationId: batchHealthCheck
+      tags:
+      - System
+      description: 'Performance optimization: Check multiple domain health in single
+        request'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - domains
+              properties:
+                domains:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 10
+      responses:
+        '200':
+          description: Batch health results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthResponse'
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time
+  /api/v1/auth-expansion-domain/health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      operationId: healthWebSocket
+      tags:
+      - System
+      description: Real-time health updates without polling
+      responses:
+        '101':
+          description: WebSocket connection established
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    Error:
+      $ref: ../common/schemas/error.yaml#/Error
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - message_timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    PaginationParams:
+      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
+    InternalServerError:
+      $ref: ../common/responses/error.yaml#/InternalServerError
+    HealthOK:
+      $ref: ../common/responses/success.yaml#/HealthOK
+    HealthBatchSuccess:
+      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common/security/security.yaml#/BearerAuth
+    ApiKeyAuth:
+      $ref: ../common/security/security.yaml#/ApiKeyAuth
+    ServiceAuth:
+      $ref: ../common/security/security.yaml#/ServiceAuth

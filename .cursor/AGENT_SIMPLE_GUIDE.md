@@ -115,16 +115,28 @@ mcp_github_update_project_item({
 - `python scripts/validation/validate_combat_implants.py` - валидация боевых имплантов
 - `python scripts/validation/validate-kafka-schemas.py` - валидация Kafka схем
 
-#### Работа с OpenAPI спецификациями:
-- `python scripts/openapi/validate-domains-openapi.py` - валидация всех OpenAPI доменов
-- `python scripts/openapi/validate_admin_api.py` - валидация admin API
-- `python scripts/openapi/clean-openapi-validation.py` - очистка вывода валидации
+#### Работа с OpenAPI спецификациями (SOLID/DRY Domain Separation):
+- `python scripts/openapi/validate-domains-openapi.py` - валидация всех enterprise-grade доменов
 - `python scripts/openapi/validate-domains-openapi.py --domain {domain}` - валидация конкретного домена
+- `python scripts/openapi/clean-openapi-validation.py` - очистка вывода валидации
 
-#### Генерация кода и сервисов:
-- `python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{domain}/main.yaml` - генерация Go сервиса
-- `python scripts/generation/run-quests-generator.py --config quests-config.yaml` - генерация квестов
-- `python scripts/generation/go_service_generator.py` - генератор Go микросервисов
+#### Создание OpenAPI спецификаций:
+- Все новые сервисы используют domain inheritance из `proto/openapi/common/`
+- Game services → `game-entities.yaml`, Economy → `economy-entities.yaml`
+- Strict typing: enum, patterns, min/max, examples для всех полей
+- Optimistic locking для concurrent operations
+- Struct alignment hints для performance (30-50% memory savings)
+
+#### Генерация enterprise-grade сервисов из OpenAPI:
+- `python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{service}-service/main.yaml` - генерация Go сервиса с domain inheritance
+- `python scripts/generate-all-domains-go.py --parallel 3 --memory-pool` - параллельная генерация всех 15 enterprise-grade доменов
+- `python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{service}-service/main.yaml` - оптимизация struct alignment (30-50% memory savings)
+
+#### OpenAPI domain architecture:
+- `proto/openapi/common/` - SOLID/DRY foundation (game-entities.yaml, economy-entities.yaml, etc.)
+- `proto/openapi/{service}-service/main.yaml` - Service specs with domain inheritance
+- Каждый сервис наследует от domain-specific entities (НЕ дублирует id, timestamps!)
+- Strict typing + optimistic locking + examples для enterprise-grade quality
 
 #### Работа с миграциями БД:
 - `python scripts/migrations/validate-all-migrations.py` - валидация всех миграций

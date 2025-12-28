@@ -42,3 +42,9 @@ COMMENT ON COLUMN notifications.expires_at IS 'When the notification expires (op
 COMMENT ON COLUMN notifications.priority IS 'Notification priority level';
 
 
+
+
+
+
+
+

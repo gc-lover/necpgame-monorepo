@@ -91,8 +91,7 @@ paths:
                 example: max-age=30, s-maxage=60
             ETag:
               schema:
-                type: string
-                example: '"health-v1.0"'
+                $ref: "#/components/schemas/ETagHeader"
             Content-Encoding:
               schema:
                 type: string
@@ -268,12 +267,6 @@ paths:
       responses:
         '201':
           description: User registered successfully - email verification required
-          headers:
-            Location:
-              schema:
-                type: string
-                example: /api/v1/auth/verify-email?token=abc123
-                description: Email verification endpoint
           content:
             application/json:
               schema:
@@ -527,32 +520,6 @@ components:
   responses:
     HealthBatchSuccess:
       $ref: ../common/responses/success.yaml#/HealthBatchSuccess
-    LoginSuccess:
-      description: Login successful
-      headers:
-        X-Rate-Limit-Remaining:
-          schema:
-            type: integer
-            example: 47
-        X-Rate-Limit-Reset:
-          schema:
-            type: integer
-            example: 3600
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AuthResponse'
-    RegisterSuccess:
-      description: User registered successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/auth/verify-email?token=abc123
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/RegisterResponse'
     TooManyRequests:
       description: Too many requests - rate limit exceeded
       headers:
@@ -829,6 +796,10 @@ components:
       $ref: '../common/schemas/pagination.yaml#/PaginationParams'
     PaginatedResponse:
       $ref: '../common/schemas/pagination.yaml#/PaginatedResponse'
+    ETagHeader:
+      type: string
+      description: Entity tag for caching and optimistic locking
+      example: '"auth-123-v1"'
   securitySchemes:
     BearerAuth:
       $ref: '../common/security/security.yaml#/BearerAuth'

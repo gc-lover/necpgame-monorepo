@@ -37,7 +37,27 @@ class ConfigManager:
     """
 
     def __init__(self, config_path: Optional[str] = None):
-        self.config_path = Path(config_path or "project-config.yaml")
+        if config_path:
+            self.config_path = Path(config_path)
+        else:
+            # Try to find project root by looking for project-config.yaml
+            # Start from script location and go up
+            script_dir = Path(__file__).resolve().parent.parent.parent  # scripts/core/config.py -> project root
+            config_file = script_dir / "project-config.yaml"
+            if config_file.exists():
+                self.config_path = config_file
+            else:
+                # Fallback: search up from current directory
+                current = Path.cwd()
+                while current.parent != current:  # Not at filesystem root
+                    config_file = current / "project-config.yaml"
+                    if config_file.exists():
+                        self.config_path = config_file
+                        break
+                    current = current.parent
+                else:
+                    # Final fallback
+                    self.config_path = Path("project-config.yaml")
         self._config: Optional[ProjectConfig] = None
 
     def load_config(self) -> ProjectConfig:
@@ -72,11 +92,16 @@ class ConfigManager:
 
     def get_project_root(self) -> Path:
         """Get project root directory"""
-        return Path(self.get('paths', 'project_root') or ".")
+        # Always return the directory containing the config file
+        return self.config_path.parent
 
     def get_openapi_dir(self) -> Path:
         """Get OpenAPI directory"""
-        return self.get_project_root() / self.get('paths', 'openapi_dir')
+        project_root = self.get_project_root()
+        openapi_subdir = self.get('paths', 'openapi_dir')
+        result = project_root / openapi_subdir
+        print(f"DEBUG: project_root={project_root}, openapi_subdir={openapi_subdir}, result={result}")
+        return result
 
     def get_services_dir(self) -> Path:
         """Get services directory"""

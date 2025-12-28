@@ -81,16 +81,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
         '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/TooManyRequests'
         '503':
           description: Service is unhealthy
           content:
@@ -136,16 +127,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/TooManyRequests'
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
@@ -248,12 +230,6 @@ paths:
       responses:
         '201':
           description: User registered successfully - email verification required
-          headers:
-            Location:
-              schema:
-                type: string
-                example: /api/v1/auth/verify-email?token=abc123
-                description: Email verification endpoint
           content:
             application/json:
               schema:
@@ -514,32 +490,18 @@ components:
               total_time_ms:
                 type: integer
                 description: Total processing time in milliseconds
-    LoginSuccess:
-      description: Login successful
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
       headers:
-        X-Rate-Limit-Remaining:
+        Retry-After:
           schema:
             type: integer
-            example: 47
-        X-Rate-Limit-Reset:
-          schema:
-            type: integer
-            example: 3600
+            example: 60
+            description: Seconds to wait before retrying
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/AuthResponse'
-    RegisterSuccess:
-      description: User registered successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/auth/verify-email?token=abc123
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/RegisterResponse'
+            $ref: '#/components/schemas/Error'
   schemas:
     Error:
       type: object

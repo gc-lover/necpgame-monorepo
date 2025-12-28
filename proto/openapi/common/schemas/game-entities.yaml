@@ -1,0 +1,599 @@
+# Game Domain Common Schemas
+# SOLID/DRY foundation for gaming entities
+
+components:
+  schemas:
+    # ============================================================================
+    # CHARACTER ENTITIES
+    # ============================================================================
+
+    # Base Character Entity
+    CharacterEntity:
+      allOf:
+        - $ref: "./common.yaml#/BaseEntity"
+        - type: object
+          required:
+            - name
+            - level
+          properties:
+            name:
+              type: string
+              description: "Character display name"
+              example: "V, the Mercenary"
+              maxLength: 100
+            level:
+              type: integer
+              minimum: 1
+              maximum: 50
+              description: "Character level"
+              example: 25
+            experience:
+              type: integer
+              minimum: 0
+              description: "Current experience points"
+              example: 125000
+            experience_to_next:
+              type: integer
+              minimum: 0
+              description: "Experience needed for next level"
+              example: 150000
+      description: "BACKEND NOTE: Base character entity. Memory-aligned for performance."
+
+    # Character Stats
+    CharacterStats:
+      type: object
+      required:
+        - health
+        - max_health
+        - stamina
+        - max_stamina
+      properties:
+        health:
+          type: integer
+          minimum: 0
+          description: "Current health points"
+          example: 850
+        max_health:
+          type: integer
+          minimum: 1
+          description: "Maximum health points"
+          example: 1000
+        stamina:
+          type: integer
+          minimum: 0
+          description: "Current stamina points"
+          example: 75
+        max_stamina:
+          type: integer
+          minimum: 1
+          description: "Maximum stamina points"
+          example: 100
+        strength:
+          type: integer
+          minimum: 0
+          maximum: 20
+          description: "Physical strength attribute"
+          example: 15
+        dexterity:
+          type: integer
+          minimum: 0
+          maximum: 20
+          description: "Agility and precision"
+          example: 18
+        intelligence:
+          type: integer
+          minimum: 0
+          maximum: 20
+          description: "Mental acuity and hacking"
+          example: 12
+        cool:
+          type: integer
+          minimum: 0
+          maximum: 20
+          description: "Composure under pressure"
+          example: 16
+        tech:
+          type: integer
+          minimum: 0
+          maximum: 20
+          description: "Technical aptitude"
+          example: 10
+      description: "BACKEND NOTE: Character attributes and vital stats."
+
+    # ============================================================================
+    # ITEM ENTITIES
+    # ============================================================================
+
+    # Base Item Entity
+    ItemEntity:
+      allOf:
+        - $ref: "./common.yaml#/BaseEntity"
+        - type: object
+          required:
+            - name
+            - type
+            - rarity
+          properties:
+            name:
+              type: string
+              description: "Item display name"
+              example: "Malorian Arms 3516"
+              maxLength: 100
+            type:
+              type: string
+              enum:
+                - weapon
+                - armor
+                - implant
+                - consumable
+                - quest_item
+                - cosmetic
+              description: "Item category"
+              example: "weapon"
+            rarity:
+              type: string
+              enum:
+                - common
+                - uncommon
+                - rare
+                - epic
+                - legendary
+                - unique
+              description: "Item rarity tier"
+              example: "epic"
+            description:
+              type: string
+              description: "Item description/flavor text"
+              example: "A powerful pistol with cyberpunk aesthetics"
+              maxLength: 500
+            icon_url:
+              type: string
+              format: uri
+              description: "Item icon image URL"
+              example: "https://cdn.necpgame.com/items/malorian-3516.png"
+            is_stackable:
+              type: boolean
+              description: "Whether item can stack in inventory"
+              example: false
+            max_stack_size:
+              type: integer
+              minimum: 1
+              description: "Maximum stack size if stackable"
+              example: 99
+      description: "BACKEND NOTE: Base item entity with gaming-specific fields."
+
+    # Weapon Item
+    WeaponEntity:
+      allOf:
+        - $ref: "#/ItemEntity"
+        - type: object
+          required:
+            - damage
+            - fire_rate
+            - ammo_type
+          properties:
+            damage:
+              type: integer
+              minimum: 1
+              description: "Base damage per shot"
+              example: 45
+            damage_type:
+              type: string
+              enum:
+                - physical
+                - thermal
+                - electrical
+                - chemical
+                - cyber
+              description: "Type of damage dealt"
+              example: "physical"
+            fire_rate:
+              type: number
+              minimum: 0.1
+              description: "Shots per second"
+              example: 8.5
+            ammo_type:
+              type: string
+              description: "Required ammunition type"
+              example: "9mm"
+              maxLength: 50
+            magazine_size:
+              type: integer
+              minimum: 1
+              description: "Rounds per magazine"
+              example: 12
+            range:
+              type: integer
+              minimum: 1
+              description: "Effective range in meters"
+              example: 25
+      description: "BACKEND NOTE: Weapon-specific item properties."
+
+    # ============================================================================
+    # COMBAT ENTITIES
+    # ============================================================================
+
+    # Combat Session
+    CombatSessionEntity:
+      allOf:
+        - $ref: "./common.yaml#/VersionedEntity"
+        - type: object
+          required:
+            - participants
+            - status
+            - start_time
+          properties:
+            participants:
+              type: array
+              items:
+                $ref: "#/CharacterEntity"
+              minItems: 2
+              maxItems: 10
+              description: "Characters involved in combat"
+            status:
+              type: string
+              enum:
+                - active
+                - paused
+                - completed
+                - aborted
+              description: "Current combat state"
+              example: "active"
+            start_time:
+              $ref: "./common.yaml#/Timestamp"
+            end_time:
+              $ref: "./common.yaml#/Timestamp"
+            current_turn:
+              $ref: "./common.yaml#/UUID"
+            turn_order:
+              type: array
+              items:
+                $ref: "./common.yaml#/UUID"
+              description: "Order of turns by character ID"
+            environment_effects:
+              type: array
+              items:
+                type: string
+              description: "Active environmental effects"
+              example: ["heavy_rain", "urban_cover"]
+      description: "BACKEND NOTE: Combat session with optimistic locking."
+
+    # Combat Effect
+    CombatEffectEntity:
+      allOf:
+        - $ref: "./common.yaml#/BaseEntity"
+        - type: object
+          required:
+            - target_id
+            - effect_type
+            - duration
+          properties:
+            target_id:
+              $ref: "./common.yaml#/UUID"
+            effect_type:
+              type: string
+              enum:
+                - buff
+                - debuff
+                - dot
+                - hot
+                - stun
+                - slow
+              description: "Type of combat effect"
+              example: "buff"
+            name:
+              type: string
+              description: "Effect display name"
+              example: "Adrenaline Rush"
+              maxLength: 50
+            description:
+              type: string
+              description: "Effect description"
+              example: "+50% movement speed for 30 seconds"
+              maxLength: 200
+            duration:
+              type: integer
+              minimum: 1
+              description: "Effect duration in seconds"
+              example: 30
+            remaining_duration:
+              type: integer
+              minimum: 0
+              description: "Time remaining in seconds"
+              example: 15
+            magnitude:
+              type: number
+              description: "Effect strength/intensity"
+              example: 0.5
+            stacks:
+              type: integer
+              minimum: 1
+              maximum: 10
+              description: "Number of effect stacks"
+              example: 1
+            source_id:
+              $ref: "./common.yaml#/UUID"
+      description: "BACKEND NOTE: Combat effects and status conditions."
+
+    # ============================================================================
+    # QUEST ENTITIES
+    # ============================================================================
+
+    # Quest Entity
+    QuestEntity:
+      allOf:
+        - $ref: "./common.yaml#/AuditableEntity"
+        - type: object
+          required:
+            - title
+            - description
+            - type
+            - status
+          properties:
+            title:
+              type: string
+              description: "Quest display title"
+              example: "Phantom Liberty"
+              maxLength: 100
+            description:
+              type: string
+              description: "Quest description"
+              example: "Investigate the mysterious data fragment"
+              maxLength: 1000
+            type:
+              type: string
+              enum:
+                - main_story
+                - side_quest
+                - gig
+                - romance
+                - faction
+                - cyberpsycho
+              description: "Quest category"
+              example: "main_story"
+            status:
+              type: string
+              enum:
+                - available
+                - active
+                - completed
+                - failed
+                - expired
+              description: "Quest availability status"
+              example: "active"
+            level_requirement:
+              type: integer
+              minimum: 1
+              maximum: 50
+              description: "Minimum character level required"
+              example: 20
+            rewards:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: ["experience", "money", "item", "reputation"]
+                  amount:
+                    type: integer
+                    minimum: 1
+                  item_id:
+                    $ref: "./common.yaml#/UUID"
+              description: "Quest completion rewards"
+            objectives:
+              type: array
+              items:
+                type: object
+                required:
+                  - description
+                  - completed
+                properties:
+                  description:
+                    type: string
+                    maxLength: 200
+                  completed:
+                    type: boolean
+                  progress:
+                    type: integer
+                    minimum: 0
+                  target:
+                    type: integer
+                    minimum: 1
+              description: "Quest objectives and progress"
+      description: "BACKEND NOTE: Quest definition with progress tracking."
+
+    # ============================================================================
+    # COMBAT ENTITIES (from combat-service analysis)
+    # ============================================================================
+
+    # Combat Action Entity
+    CombatActionEntity:
+      allOf:
+        - $ref: "./common.yaml#/BaseEntity"
+        - type: object
+          required:
+            - session_id
+            - action_type
+            - source_id
+          properties:
+            session_id:
+              $ref: "./common.yaml#/UUID"
+            action_type:
+              type: string
+              enum:
+                - attack
+                - defend
+                - ability
+                - item
+                - move
+              description: "Type of combat action"
+              example: "attack"
+            source_id:
+              $ref: "./common.yaml#/UUID"
+            target_ids:
+              type: array
+              items:
+                $ref: "./common.yaml#/UUID"
+              description: "Targets of the action"
+            damage_dealt:
+              type: integer
+              minimum: 0
+              description: "Damage dealt by this action"
+              example: 145
+            effects_applied:
+              type: array
+              items:
+                type: string
+                enum: ["stun", "poison", "burn", "bleed", "slow"]
+              description: "Status effects applied"
+            turn_number:
+              type: integer
+              minimum: 1
+              description: "Combat turn when action occurred"
+              example: 3
+      description: "BACKEND NOTE: Combat actions with damage and effects tracking."
+
+    # ============================================================================
+    # ABILITY ENTITIES
+    # ============================================================================
+
+    # Ability Entity
+    AbilityEntity:
+      allOf:
+        - $ref: "./common.yaml#/BaseEntity"
+        - type: object
+          required:
+            - name
+            - type
+            - cooldown
+          properties:
+            name:
+              type: string
+              description: "Ability display name"
+              example: "Sandevistan Overdrive"
+              maxLength: 100
+            description:
+              type: string
+              description: "Ability description"
+              example: "Temporarily increases movement speed by 300%"
+              maxLength: 500
+            type:
+              type: string
+              enum:
+                - offensive
+                - defensive
+                - utility
+                - movement
+                - hacking
+              description: "Ability category"
+              example: "movement"
+            cooldown:
+              type: integer
+              minimum: 0
+              description: "Cooldown in seconds"
+              example: 30
+            mana_cost:
+              type: integer
+              minimum: 0
+              description: "Resource cost to use"
+              example: 25
+            range:
+              type: integer
+              minimum: 0
+              description: "Ability range in meters"
+              example: 10
+            damage:
+              type: integer
+              minimum: 0
+              description: "Base damage if applicable"
+              example: 0
+            healing:
+              type: integer
+              minimum: 0
+              description: "Healing amount if applicable"
+              example: 50
+            effects:
+              type: array
+              items:
+                type: string
+              description: "Effects applied by ability"
+              example: ["speed_boost", "damage_reduction"]
+            level_requirement:
+              type: integer
+              minimum: 1
+              maximum: 50
+              description: "Required character level"
+              example: 15
+            icon_url:
+              type: string
+              format: uri
+              description: "Ability icon URL"
+      description: "BACKEND NOTE: Character abilities and special moves."
+
+    # ============================================================================
+    # LOCATION ENTITIES
+    # ============================================================================
+
+    # Location Entity
+    LocationEntity:
+      allOf:
+        - $ref: "./common.yaml#/BaseEntity"
+        - type: object
+          required:
+            - name
+            - coordinates
+            - type
+          properties:
+            name:
+              type: string
+              description: "Location display name"
+              example: "Container Plaza"
+              maxLength: 100
+            coordinates:
+              type: object
+              required:
+                - x
+                - y
+                - z
+              properties:
+                x:
+                  type: number
+                  description: "X coordinate"
+                  example: 1234.56
+                y:
+                  type: number
+                  description: "Y coordinate"
+                  example: 7890.12
+                z:
+                  type: number
+                  description: "Z coordinate (height)"
+                  example: 15.5
+              description: "3D world coordinates"
+            type:
+              type: string
+              enum:
+                - district
+                - building
+                - landmark
+                - fast_travel
+                - quest_location
+                - vendor
+              description: "Location category"
+              example: "district"
+            faction_control:
+              $ref: "./common.yaml#/UUID"
+            security_level:
+              type: string
+              enum:
+                - safe
+                - moderate
+                - dangerous
+                - deadly
+              description: "Location danger level"
+              example: "moderate"
+            is_discovered:
+              type: boolean
+              description: "Whether player has discovered this location"
+              example: true
+      description: "BACKEND NOTE: Game world locations and points of interest."

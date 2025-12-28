@@ -24,8 +24,8 @@ info:
 
     ## Domain Purpose
 
-    World Regions domain manages geographical regions of the game world,
-    including timeline events, cities, and narrative integration.
+    World Regions domain manages geographical regions of the game world, including
+    timeline events, cities, and narrative integration.
 
     Follows enterprise-grade microservices patterns with clear boundaries.
 
@@ -192,8 +192,6 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/WebSocketHealthMessage'
-
-  # World Regions Operations
   /regions:
     get:
       summary: Get all world regions
@@ -288,7 +286,8 @@ paths:
       description: '**Enterprise-grade world region details**
 
 
-        Returns detailed information about a specific world region including timeline events.
+        Returns detailed information about a specific world region including timeline
+        events.
 
         Used by narrative systems and world building tools.
 
@@ -440,79 +439,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
 components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   schemas:
-    # Error Schema
     Error:
-      type: object
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: string
-          enum:
-            - BAD_REQUEST
-            - UNAUTHORIZED
-            - FORBIDDEN
-            - NOT_FOUND
-            - CONFLICT
-            - INTERNAL_ERROR
-          example: BAD_REQUEST
-        message:
-          type: string
-          maxLength: 256
-          example: Invalid request parameters
-        service:
-          type: string
-          example: world-regions-service
-          maxLength: 50
-        details:
-          type: object
-          description: Additional error context
-          example:
-            field: region_id
-            reason: invalid_uuid_format
-        timestamp:
-          type: string
-          format: date-time
-
-    # Health Schemas
+      $ref: ../common/schemas/error.yaml#/Error
     HealthResponse:
-      type: object
-      required:
-      - status
-      - timestamp
-      - service
-      properties:
-        status:
-          type: string
-          enum:
-          - healthy
-          - degraded
-          - unhealthy
-        timestamp:
-          type: string
-          format: date-time
-        service:
-          type: string
-        version:
-          type: string
-        uptime_seconds:
-          type: integer
-          format: int64
-        memory_mb:
-          type: number
-          format: float
-        cpu_percent:
-          type: number
-          format: float
+      $ref: ../common/schemas/health.yaml#/HealthResponse
     WebSocketHealthMessage:
       type: object
       required:
@@ -537,10 +469,10 @@ components:
           - unhealthy
         details:
           type: object
-    # World Region Schemas
     WorldRegion:
       type: object
-      description: '**PERFORMANCE:** Struct alignment optimized for 64-byte cache lines'
+      description: '**PERFORMANCE:** Struct alignment optimized for 64-byte cache
+        lines'
       required:
       - id
       - name
@@ -679,4 +611,35 @@ components:
         coordinates:
           type: string
           maxLength: 50
-
+    PaginationParams:
+      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
+    InternalServerError:
+      $ref: ../common/responses/error.yaml#/InternalServerError
+    HealthOK:
+      $ref: ../common/responses/success.yaml#/HealthOK
+    HealthBatchSuccess:
+      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common/security/security.yaml#/BearerAuth
+    ApiKeyAuth:
+      $ref: ../common/security/security.yaml#/ApiKeyAuth
+    ServiceAuth:
+      $ref: ../common/security/security.yaml#/ServiceAuth

@@ -1,0 +1,636 @@
+openapi: 3.0.3
+info:
+  title: Session Service API
+  description: '**Enterprise-grade session management API for NECPGAME**
+
+    ## Domain Purpose
+    Complete session lifecycle management including creation, validation, invalidation,
+    and monitoring of user sessions across the platform.
+
+    ## Performance Targets
+    - P99 Latency: <25ms for session operations
+    - Memory: <100KB per instance (session storage)
+    - Concurrent users: 10,000+ active sessions
+    - Session validation: <10ms response time
+
+    ## Key Features
+    - Session creation and validation
+    - Automatic session cleanup
+    - Session metadata tracking
+    - Security monitoring and audit trails
+    - Distributed session storage support
+    '
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+  license:
+    name: MIT
+servers:
+- url: https://api.necpgame.com/v1/session
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/session
+  description: Staging server
+- url: http://localhost:8080/api/v1/session
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Session Management
+  description: Core session operations
+- name: Session Monitoring
+  description: Session health and analytics
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  # Session management endpoints
+  /sessions:
+    post:
+      tags:
+        - Session Management
+      summary: Create new session
+      description: '**Session creation endpoint**
+
+        Creates a new user session with metadata tracking.
+
+        **Performance:** <50ms P95, database insert with validation
+        '
+      operationId: sessionServiceCreateSession
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /api/v1/sessions/550e8400-e29b-41d4-a716-446655440000
+        '400':
+          $ref: '../common/responses/error.yaml#/BadRequest'
+        '401':
+          $ref: '../common/responses/error.yaml#/Unauthorized'
+
+    get:
+      tags:
+        - Session Management
+      summary: List user sessions
+      description: '**Session listing endpoint**
+
+        Returns paginated list of user''s active sessions.
+
+        **Performance:** <30ms P95, database query with pagination
+        '
+      operationId: sessionServiceListSessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, expired, revoked]
+      responses:
+        '200':
+          description: Sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionListResponse'
+        '401':
+          $ref: '../common/responses/error.yaml#/Unauthorized'
+
+  /sessions/{sessionId}:
+    get:
+      tags:
+        - Session Management
+      summary: Get session details
+      description: '**Session retrieval endpoint**
+
+        Returns detailed information about a specific session.
+
+        **Performance:** <20ms P95, database lookup with caching
+        '
+      operationId: sessionServiceGetSession
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '401':
+          $ref: '../common/responses/error.yaml#/Unauthorized'
+        '404':
+          $ref: '../common/responses/error.yaml#/NotFound'
+
+    delete:
+      tags:
+        - Session Management
+      summary: Revoke session
+      description: '**Session revocation endpoint**
+
+        Immediately terminates a user session.
+
+        **Performance:** <25ms P95, database update
+        '
+      operationId: sessionServiceRevokeSession
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Session revoked successfully
+        '401':
+          $ref: '../common/responses/error.yaml#/Unauthorized'
+        '404':
+          $ref: '../common/responses/error.yaml#/NotFound'
+
+  /sessions/{sessionId}/extend:
+    post:
+      tags:
+        - Session Management
+      summary: Extend session lifetime
+      description: '**Session extension endpoint**
+
+        Extends the expiration time of an active session.
+
+        **Performance:** <25ms P95, database update
+        '
+      operationId: sessionServiceExtendSession
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: extension_minutes
+          in: query
+          schema:
+            type: integer
+            minimum: 5
+            maximum: 480
+            default: 60
+      responses:
+        '200':
+          description: Session extended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '400':
+          $ref: '../common/responses/error.yaml#/BadRequest'
+        '401':
+          $ref: '../common/responses/error.yaml#/Unauthorized'
+        '404':
+          $ref: '../common/responses/error.yaml#/NotFound'
+
+  /sessions/validate:
+    post:
+      tags:
+        - Session Management
+      summary: Validate session token
+      description: '**Session validation endpoint**
+
+        Validates session token and returns session information.
+
+        **Performance:** <10ms P95, in-memory validation with caching
+        '
+      operationId: sessionServiceValidateSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateSessionRequest'
+      responses:
+        '200':
+          description: Session is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionValidationResponse'
+        '401':
+          description: Session invalid or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sessions/cleanup:
+    post:
+      tags:
+        - Session Management
+      summary: Cleanup expired sessions
+      description: '**Session cleanup endpoint**
+
+        Removes expired and revoked sessions from storage.
+
+        **Performance:** <200ms P95, batch database operations
+        '
+      operationId: sessionServiceCleanupSessions
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupResponse'
+        '401':
+          $ref: '../common/responses/error.yaml#/Unauthorized'
+
+  # Session monitoring endpoints
+  /sessions/stats:
+    get:
+      tags:
+        - Session Monitoring
+      summary: Get session statistics
+      description: '**Session statistics endpoint**
+
+        Returns aggregated statistics about sessions.
+
+        **Performance:** <50ms P95, analytics database query
+        '
+      operationId: sessionServiceGetSessionStats
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionStatsResponse'
+        '401':
+          $ref: '../common/responses/error.yaml#/Unauthorized'
+
+  # Health monitoring endpoints
+  /health:
+    get:
+      summary: Session service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the session service.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+        '
+      operationId: sessionServiceHealthCheck
+      tags:
+        - Health Monitoring
+      parameters:
+        - name: Accept-Encoding
+          in: header
+          schema:
+            type: string
+            enum:
+              - gzip
+              - deflate
+              - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                $ref: "#/components/schemas/ETagHeader"
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                  - gzip
+                  - deflate
+                  - br
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+
+components:
+  responses:
+    OK:
+      $ref: '../common/responses/success.yaml#/OK'
+    BadRequest:
+      $ref: '../common/responses/error.yaml#/BadRequest'
+    Unauthorized:
+      $ref: '../common/responses/error.yaml#/Unauthorized'
+    NotFound:
+      $ref: '../common/responses/error.yaml#/NotFound'
+    Conflict:
+      $ref: '../common/responses/error.yaml#/Conflict'
+    InternalServerError:
+      $ref: '../common/responses/error.yaml#/InternalServerError'
+
+  schemas:
+    # Session schemas
+    CreateSessionRequest:
+      type: object
+      required:
+        - user_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User ID for session
+          example: 550e8400-e29b-41d4-a716-446655440000
+        device_info:
+          $ref: '#/components/schemas/DeviceInfo'
+        ip_address:
+          type: string
+          format: ipv4
+          description: Client IP address
+          example: "192.168.1.100"
+        user_agent:
+          type: string
+          description: User agent string
+          example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        ttl_minutes:
+          type: integer
+          minimum: 5
+          maximum: 480
+          default: 60
+          description: Session time-to-live in minutes
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    Session:
+      type: object
+      required:
+        - id
+        - user_id
+        - status
+        - created_at
+        - expires_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Session unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        user_id:
+          type: string
+          format: uuid
+          description: Associated user ID
+          example: 550e8400-e29b-41d4-a716-446655440001
+        status:
+          type: string
+          enum: [active, expired, revoked]
+          description: Current session status
+          example: active
+        device_info:
+          $ref: '#/components/schemas/DeviceInfo'
+        ip_address:
+          type: string
+          description: Client IP address
+          example: "192.168.1.100"
+        user_agent:
+          type: string
+          description: User agent string
+        created_at:
+          type: string
+          format: date-time
+          description: Session creation timestamp
+          example: '2025-12-28T10:00:00Z'
+        expires_at:
+          type: string
+          format: date-time
+          description: Session expiration timestamp
+          example: '2025-12-28T11:00:00Z'
+        last_activity_at:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+          example: '2025-12-28T10:30:00Z'
+        revoked_at:
+          type: string
+          format: date-time
+          description: Revocation timestamp (if revoked)
+          nullable: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    DeviceInfo:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [desktop, mobile, tablet, unknown]
+          description: Device type
+          example: desktop
+        os:
+          type: string
+          description: Operating system
+          example: "Windows 10"
+        browser:
+          type: string
+          description: Browser name
+          example: "Chrome"
+        location:
+          type: string
+          description: Geographic location (if available)
+          example: "New York, US"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    SessionResponse:
+      type: object
+      required:
+        - session
+      properties:
+        session:
+          $ref: '#/components/schemas/Session'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    SessionListResponse:
+      type: object
+      required:
+        - sessions
+        - total_count
+        - has_more
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Session'
+          description: List of sessions
+        has_more:
+          type: boolean
+          description: Whether there are more results
+          example: true
+        total_count:
+          type: integer
+          description: Total number of sessions
+          example: 150
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 20
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ValidateSessionRequest:
+      type: object
+      required:
+        - session_token
+      properties:
+        session_token:
+          type: string
+          description: Session token to validate
+          example: abc123def456sessiontoken
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    SessionValidationResponse:
+      type: object
+      required:
+        - valid
+        - session
+      properties:
+        valid:
+          type: boolean
+          description: Whether session is valid
+          example: true
+        session:
+          $ref: '#/components/schemas/Session'
+        remaining_time_seconds:
+          type: integer
+          description: Seconds until session expires
+          example: 1800
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    CleanupResponse:
+      type: object
+      required:
+        - cleaned_sessions
+      properties:
+        cleaned_sessions:
+          type: integer
+          description: Number of sessions cleaned up
+          example: 42
+        processing_time_ms:
+          type: integer
+          description: Processing time in milliseconds
+          example: 150
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    SessionStatsResponse:
+      type: object
+      required:
+        - total_sessions
+        - active_sessions
+        - expired_sessions
+      properties:
+        total_sessions:
+          type: integer
+          description: Total number of sessions ever created
+          example: 10000
+        active_sessions:
+          type: integer
+          description: Currently active sessions
+          example: 1250
+        expired_sessions:
+          type: integer
+          description: Expired sessions (last 24h)
+          example: 156
+        revoked_sessions:
+          type: integer
+          description: Revoked sessions (last 24h)
+          example: 23
+        average_session_duration_minutes:
+          type: integer
+          description: Average session duration in minutes
+          example: 45
+        sessions_by_device_type:
+          type: object
+          properties:
+            desktop:
+              type: integer
+              example: 800
+            mobile:
+              type: integer
+              example: 350
+            tablet:
+              type: integer
+              example: 100
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    SuccessResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Operation success status
+          example: true
+        message:
+          type: string
+          description: Optional success message
+          example: "Operation completed successfully"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    Error:
+      $ref: '../common/schemas/error.yaml#/Error'
+
+    HealthResponse:
+      $ref: '../common/schemas/health.yaml#/HealthResponse'
+
+    ETagHeader:
+      type: string
+      description: Entity tag for caching and optimistic locking
+      example: '"session-123-v1"'
+
+  securitySchemes:
+    BearerAuth:
+      $ref: '../common/security/security.yaml#/BearerAuth'

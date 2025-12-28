@@ -59,3 +59,9 @@ INSERT INTO notifications (id, player_id, type, title, message, data, is_read, c
  '{"achievement_id": "first_kill", "points": 25}', false, NOW() - INTERVAL '3 hours', 'high');
 
 
+
+
+
+
+
+

@@ -1,0 +1,588 @@
+# Economy Domain Common Schemas
+# SOLID/DRY foundation for economic entities
+
+components:
+  schemas:
+
+    # ============================================================================
+    # CURRENCY ENTITIES
+    # ============================================================================
+
+    # Currency Entity
+    CurrencyEntity:
+      allOf:
+        - $ref: './common.yaml#/AuditableEntity'
+        - type: object
+          required:
+            - code
+            - name
+            - symbol
+            - type
+          properties:
+            code:
+              type: string
+              pattern: '^[A-Z]{3}$'
+              description: "Currency code (ISO 4217)"
+              example: "EDY"
+              maxLength: 3
+            name:
+              type: string
+              description: "Currency display name"
+              example: "Eurodollar"
+              maxLength: 50
+            symbol:
+              type: string
+              description: "Currency symbol"
+              example: "€$"
+              maxLength: 10
+            type:
+              type: string
+              enum:
+                - fiat
+                - crypto
+                - game_currency
+                - premium_currency
+              description: "Currency category"
+              example: "game_currency"
+            exchange_rate:
+              type: number
+              minimum: 0
+              description: "Exchange rate to base currency"
+              example: 1.0
+            is_active:
+              type: boolean
+              description: "Whether currency is currently tradable"
+              example: true
+            decimal_places:
+              type: integer
+              minimum: 0
+              maximum: 8
+              description: "Decimal precision"
+              example: 2
+      description: "BACKEND NOTE: Currency definitions with exchange rates."
+
+    # ============================================================================
+    # WALLET & ACCOUNT ENTITIES
+    # ============================================================================
+
+    # Wallet Entity
+    WalletEntity:
+      allOf:
+        - $ref: './common.yaml#/VersionedEntity'
+        - type: object
+          required:
+            - owner_id
+            - currency_code
+          properties:
+            owner_id:
+              $ref: './common.yaml#/UUID'
+            currency_code:
+              type: string
+              pattern: '^[A-Z]{3}$'
+              description: "Currency code"
+              example: "EDY"
+            balance:
+              type: number
+              minimum: 0
+              description: "Current balance"
+              example: 1500.50
+            reserved_balance:
+              type: number
+              minimum: 0
+              description: "Reserved for pending transactions"
+              example: 100.00
+            available_balance:
+              type: number
+              minimum: 0
+              description: "Available for spending (balance - reserved)"
+              example: 1400.50
+            is_frozen:
+              type: boolean
+              description: "Whether wallet is frozen"
+              example: false
+            freeze_reason:
+              type: string
+              description: "Reason for freezing"
+              example: "Suspicious activity"
+              maxLength: 200
+            last_transaction_at:
+              $ref: './common.yaml#/Timestamp'
+      description: "BACKEND NOTE: Player wallets with balance management and optimistic locking."
+
+    # ============================================================================
+    # TRANSACTION ENTITIES
+    # ============================================================================
+
+    # Transaction Entity
+    TransactionEntity:
+      allOf:
+        - $ref: './common.yaml#/AuditableEntity'
+        - type: object
+          required:
+            - type
+            - amount
+            - currency_code
+            - status
+          properties:
+            type:
+              type: string
+              enum:
+                - deposit
+                - withdrawal
+                - transfer
+                - purchase
+                - sale
+                - refund
+                - fee
+                - reward
+              description: "Transaction type"
+              example: "purchase"
+            amount:
+              type: number
+              description: "Transaction amount"
+              example: 99.99
+            currency_code:
+              type: string
+              pattern: '^[A-Z]{3}$'
+              description: "Transaction currency"
+              example: "EDY"
+            status:
+              type: string
+              enum:
+                - pending
+                - processing
+                - completed
+                - failed
+                - cancelled
+                - refunded
+              description: "Transaction status"
+              example: "completed"
+            from_wallet_id:
+              $ref: './common.yaml#/UUID'
+            to_wallet_id:
+              $ref: './common.yaml#/UUID'
+            reference_id:
+              $ref: './common.yaml#/UUID'
+            external_reference:
+              type: string
+              description: "External system reference"
+              example: "stripe_ch_1234567890"
+              maxLength: 100
+            description:
+              type: string
+              description: "Transaction description"
+              example: "Purchase of Legendary Weapon Skin"
+              maxLength: 255
+            metadata:
+              type: object
+              description: "Additional transaction data"
+              properties:
+                item_id:
+                  $ref: './common.yaml#/UUID'
+                quantity:
+                  type: integer
+                  minimum: 1
+                vendor_id:
+                  $ref: './common.yaml#/UUID'
+            processed_at:
+              $ref: './common.yaml#/Timestamp'
+            failure_reason:
+              type: string
+              description: "Failure reason if applicable"
+              example: "Insufficient funds"
+              maxLength: 200
+      description: "BACKEND NOTE: Financial transactions with audit trail and metadata."
+
+    # ============================================================================
+    # MARKETPLACE ENTITIES
+    # ============================================================================
+
+    # Marketplace Listing
+    MarketplaceListingEntity:
+      allOf:
+        - $ref: './common.yaml#/AuditableEntity'
+        - type: object
+          required:
+            - seller_id
+            - item_id
+            - price
+            - currency_code
+            - status
+          properties:
+            seller_id:
+              $ref: './common.yaml#/UUID'
+            item_id:
+              $ref: './common.yaml#/UUID'
+            price:
+              type: number
+              minimum: 0.01
+              description: "Listing price"
+              example: 299.99
+            currency_code:
+              type: string
+              pattern: '^[A-Z]{3}$'
+              description: "Price currency"
+              example: "EDY"
+            quantity:
+              type: integer
+              minimum: 1
+              description: "Items available"
+              example: 1
+            status:
+              type: string
+              enum:
+                - active
+                - sold
+                - cancelled
+                - expired
+              description: "Listing status"
+              example: "active"
+            listed_at:
+              $ref: './common.yaml#/Timestamp'
+            expires_at:
+              $ref: './common.yaml#/Timestamp'
+            sold_at:
+              $ref: './common.yaml#/Timestamp'
+            buyer_id:
+              $ref: './common.yaml#/UUID'
+            transaction_id:
+              $ref: './common.yaml#/UUID'
+      description: "BACKEND NOTE: Marketplace item listings with seller management."
+
+    # Auction Entity
+    AuctionEntity:
+      allOf:
+        - $ref: './common.yaml#/VersionedEntity'
+        - type: object
+          required:
+            - seller_id
+            - item_id
+            - starting_price
+            - currency_code
+            - start_time
+            - end_time
+          properties:
+            seller_id:
+              $ref: './common.yaml#/UUID'
+            item_id:
+              $ref: './common.yaml#/UUID'
+            starting_price:
+              type: number
+              minimum: 0.01
+              description: "Auction starting price"
+              example: 100.00
+            currency_code:
+              type: string
+              pattern: '^[A-Z]{3}$'
+              description: "Auction currency"
+              example: "EDY"
+            current_bid:
+              type: number
+              minimum: 0
+              description: "Current highest bid"
+              example: 250.00
+            current_bidder_id:
+              $ref: './common.yaml#/UUID'
+            bid_count:
+              type: integer
+              minimum: 0
+              description: "Total number of bids"
+              example: 12
+            start_time:
+              $ref: './common.yaml#/Timestamp'
+            end_time:
+              $ref: './common.yaml#/Timestamp'
+            status:
+              type: string
+              enum:
+                - scheduled
+                - active
+                - ended
+                - cancelled
+              description: "Auction status"
+              example: "active"
+            minimum_bid_increment:
+              type: number
+              minimum: 0.01
+              description: "Minimum bid increase"
+              example: 10.00
+            buyout_price:
+              type: number
+              minimum: 0
+              description: "Optional buyout price"
+              example: 500.00
+            winner_id:
+              $ref: './common.yaml#/UUID'
+            final_price:
+              type: number
+              description: "Winning bid amount"
+              example: 375.00
+      description: "BACKEND NOTE: Auction system with bid management and optimistic locking."
+
+    # ============================================================================
+    # TRADING ENTITIES (from trading-service analysis)
+    # ============================================================================
+
+    # Trade Session Entity
+    TradeSessionEntity:
+      allOf:
+        - $ref: './common.yaml#/VersionedEntity'
+        - type: object
+          required:
+            - initiator_id
+            - participants
+            - status
+          properties:
+            initiator_id:
+              $ref: './common.yaml#/UUID'
+            participants:
+              type: array
+              items:
+                $ref: './common.yaml#/UUID'
+              minItems: 2
+              maxItems: 10
+              description: "Users participating in trade"
+            status:
+              type: string
+              enum:
+                - negotiating
+                - pending_confirmation
+                - confirmed
+                - completed
+                - cancelled
+                - disputed
+              description: "Trade session status"
+              example: "negotiating"
+            current_offer:
+              type: object
+              properties:
+                offered_items:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - item_id
+                      - quantity
+                    properties:
+                      item_id:
+                        $ref: './common.yaml#/UUID'
+                      quantity:
+                        type: integer
+                        minimum: 1
+                  description: "Items offered in current trade"
+                requested_items:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - item_id
+                      - quantity
+                    properties:
+                      item_id:
+                        $ref: './common.yaml#/UUID'
+                      quantity:
+                        type: integer
+                        minimum: 1
+                  description: "Items requested in current trade"
+                offered_currency:
+                  type: object
+                  properties:
+                    amount:
+                      type: number
+                      minimum: 0
+                    currency_code:
+                      type: string
+                      pattern: '^[A-Z]{3}$'
+                  description: "Currency offered"
+                requested_currency:
+                  type: object
+                  properties:
+                    amount:
+                      type: number
+                      minimum: 0
+                    currency_code:
+                      type: string
+                      pattern: '^[A-Z]{3}$'
+                  description: "Currency requested"
+              description: "Current trade offer details"
+            expires_at:
+              $ref: './common.yaml#/Timestamp'
+            confirmed_at:
+              $ref: './common.yaml#/Timestamp'
+            completed_at:
+              $ref: './common.yaml#/Timestamp'
+            transaction_ids:
+              type: array
+              items:
+                $ref: './common.yaml#/UUID'
+              description: "Resulting transaction IDs"
+      description: "BACKEND NOTE: P2P trade sessions with escrow and validation."
+
+    # Trade Offer Entity (Legacy - keep for compatibility)
+    TradeOfferEntity:
+      allOf:
+        - $ref: './common.yaml#/VersionedEntity'
+        - type: object
+          required:
+            - initiator_id
+            - recipient_id
+            - offered_items
+            - requested_items
+          properties:
+            initiator_id:
+              $ref: './common.yaml#/UUID'
+            recipient_id:
+              $ref: './common.yaml#/UUID'
+            offered_items:
+              type: array
+              items:
+                type: object
+                required:
+                  - item_id
+                  - quantity
+                properties:
+                  item_id:
+                    $ref: './common.yaml#/UUID'
+                  quantity:
+                    type: integer
+                    minimum: 1
+              description: "Items offered by initiator"
+            requested_items:
+              type: array
+              items:
+                type: object
+                required:
+                  - item_id
+                  - quantity
+                properties:
+                  item_id:
+                    $ref: './common.yaml#/UUID'
+                  quantity:
+                    type: integer
+                    minimum: 1
+              description: "Items requested from recipient"
+            offered_currency:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  minimum: 0
+                currency_code:
+                  type: string
+                  pattern: '^[A-Z]{3}$'
+              description: "Currency offered by initiator"
+            requested_currency:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  minimum: 0
+                currency_code:
+                  type: string
+                  pattern: '^[A-Z]{3}$'
+              description: "Currency requested from recipient"
+            status:
+              type: string
+              enum:
+                - pending
+                - accepted
+                - rejected
+                - cancelled
+                - expired
+              description: "Trade offer status"
+              example: "pending"
+            expires_at:
+              $ref: './common.yaml#/Timestamp'
+            accepted_at:
+              $ref: './common.yaml#/Timestamp'
+            transaction_id:
+              $ref: './common.yaml#/UUID'
+      description: "BACKEND NOTE: Legacy trade offers - prefer TradeSessionEntity for new implementations."
+
+    # ============================================================================
+    # MARKETPLACE ENTITIES (from marketplace analysis)
+    # ============================================================================
+
+    # Marketplace Listing Entity
+    MarketplaceListingEntity:
+      allOf:
+        - $ref: './common.yaml#/AuditableEntity'
+        - type: object
+          required:
+            - seller_id
+            - item_id
+            - price
+            - currency_code
+            - status
+          properties:
+            seller_id:
+              $ref: './common.yaml#/UUID'
+            item_id:
+              $ref: './common.yaml#/UUID'
+            item_details:
+              type: object
+              description: "Cached item details for performance"
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                rarity:
+                  type: string
+                  enum: ["common", "uncommon", "rare", "epic", "legendary", "unique"]
+                category:
+                  type: string
+                  enum: ["weapon", "armor", "consumable", "material", "cosmetic"]
+            price:
+              type: number
+              minimum: 0.01
+              description: "Listing price"
+              example: 299.99
+            currency_code:
+              type: string
+              pattern: '^[A-Z]{3}$'
+              description: "Price currency"
+              example: "EDY"
+            quantity:
+              type: integer
+              minimum: 1
+              description: "Items available"
+              example: 1
+            status:
+              type: string
+              enum:
+                - active
+                - sold
+                - cancelled
+                - expired
+                - suspended
+              description: "Listing status"
+              example: "active"
+            listing_type:
+              type: string
+              enum:
+                - fixed_price
+                - auction
+                - barter
+              description: "Type of marketplace listing"
+              example: "fixed_price"
+            listed_at:
+              $ref: './common.yaml#/Timestamp'
+            expires_at:
+              $ref: './common.yaml#/Timestamp'
+            sold_at:
+              $ref: './common.yaml#/Timestamp'
+            buyer_id:
+              $ref: './common.yaml#/UUID'
+            transaction_id:
+              $ref: './common.yaml#/UUID'
+            views_count:
+              type: integer
+              minimum: 0
+              description: "Number of times listing was viewed"
+              example: 45
+            favorite_count:
+              type: integer
+              minimum: 0
+              description: "Number of users who favorited this listing"
+              example: 12
+      description: "BACKEND NOTE: Marketplace item listings with analytics and seller management."

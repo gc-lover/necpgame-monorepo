@@ -11,33 +11,34 @@ from pathlib import Path
 from typing import List
 
 def generate_service(domain: str, dry_run: bool = False) -> bool:
-    """Generate service for a specific domain"""
+    """Generate service for a specific domain using OPTIMIZED generator"""
     try:
+        # Используем оптимизированную генерацию согласно PERFORMANCE_ENFORCEMENT.md
         cmd = [
             sys.executable,
-            "scripts/generation/go_service_generator.py",
-            "--domain", domain
+            "scripts/generation/go_service_generator_fixed.py",
+            domain  # Передаем domain как позиционный аргумент
         ]
 
         if dry_run:
             cmd.append("--dry-run")
 
-        print(f"Generating service for {domain}...")
+        print(f"Generating OPTIMIZED service for {domain}...")
         result = subprocess.run(cmd, capture_output=True, text=True, cwd=Path.cwd())
 
         if result.returncode == 0:
-            print(f"[OK] Successfully generated {domain}")
+            print(f"[OK] Successfully generated OPTIMIZED {domain}")
             if result.stdout:
                 print(result.stdout)
             return True
         else:
-            print(f"[ERROR] Failed to generate {domain}")
+            print(f"[ERROR] Failed to generate OPTIMIZED {domain}")
             if result.stderr:
                 print("Error:", result.stderr)
             return False
 
     except Exception as e:
-        print(f"[ERROR] Exception generating {domain}: {e}")
+        print(f"[ERROR] Exception generating OPTIMIZED {domain}: {e}")
         return False
 
 def main():

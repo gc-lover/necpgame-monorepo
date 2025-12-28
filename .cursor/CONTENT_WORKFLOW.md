@@ -72,9 +72,9 @@ Issue: #{number}
 
 **Важно:** Content Writer НЕ передаёт в Database или QA напрямую. Backend решает способ импорта.
 
-### 2. Backend: Решение способа импорта (НОВАЯ ДОМЕННАЯ АРХИТЕКТУРА!)
+### 2. Backend: Решение способа импорта (НОВАЯ SOLID/DRY ДОМЕННАЯ АРХИТЕКТУРА!)
 
-**Backend теперь работает с enterprise-grade доменами (see .cursor/DOMAIN_REFERENCE.md)**
+**Backend теперь работает с enterprise-grade domain services (see .cursor/DOMAIN_REFERENCE.md)**
 
 **Backend проверяет:**
 

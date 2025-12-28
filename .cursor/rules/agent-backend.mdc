@@ -19,39 +19,45 @@ Backend Developer реализует Go сервисы по OpenAPI специф
 
 ## Область ответственности
 
-### Code Generation from OpenAPI (НОВАЯ ДОМЕННАЯ АРХИТЕКТУРА!)
+### Code Generation from OpenAPI (НОВАЯ SOLID/DRY ДОМЕННАЯ АРХИТЕКТУРА!)
 
 **КРИТИЧНО:** Все новые сервисы используют enterprise-grade доменную архитектуру!
 
 #### Оптимизированные скрипты генерации (ОБЯЗАТЕЛЬНО использовать!)
 
-**Валидация и оптимизация перед генерацией:**
+**Валидация и оптимизация перед генерацией enterprise-grade сервисов:**
 ```bash
 # 1. Валидировать OpenAPI спецификации для генерации
-python scripts/validate-domains-openapi.py --domain {domain}
+python scripts/openapi/validate-domains-openapi.py --domain {domain}
 
-# 2. Оптимизировать struct alignment для performance
-python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{domain}/main.yaml
+# 2. Оптимизировать struct alignment для performance (30-50% memory savings)
+python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{service}-service/main.yaml
 
-# 3. Генерировать enterprise-grade Go сервисы
-python scripts/generate-all-domains-go.py --domains {domain} --memory-pool
+# 3. Генерировать enterprise-grade Go сервис с domain inheritance
+python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{service}-service/main.yaml
+
+# 4. Валидировать enterprise-grade генерацию
+python scripts/validate-all-migrations.py
 ```
 
-**Параллельная генерация всех доменов:**
+**Параллельная генерация всех enterprise-grade доменов:**
 ```bash
 # Генерация всех 15 enterprise-grade доменов параллельно
 python scripts/generate-all-domains-go.py --parallel 3 --memory-pool
 
 # С валидацией всех доменов перед генерацией
-python scripts/validate-domains-openapi.py && python scripts/generate-all-domains-go.py --parallel 3
+python scripts/openapi/validate-domains-openapi.py && python scripts/generate-all-domains-go.py --parallel 3
 ```
 
 **Скрипты предоставляют:**
-- [OK] **Parallel processing** (3-5x speedup для enterprise-grade доменов)
+- [OK] **Domain inheritance** - SOLID/DRY entity inheritance
+- [OK] **Strict typing** - все поля валидированы с constraints
+- [OK] **Optimistic locking** - для concurrent operations
+- [OK] **Parallel processing** (3-5x speedup для enterprise-grade сервисов)
 - [OK] **Memory pooling** (30-50% memory savings)
 - [OK] **Zero allocations** в hot paths
 - [OK] **SOLID architecture** (single responsibility, dependency injection)
-- [OK] **Enterprise-grade validation** с oapi-codegen
+- [OK] **Enterprise-grade validation** с ogen
 
 #### Ручная генерация (только если скрипты недоступны):
 
@@ -149,10 +155,19 @@ python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{domain}
 python scripts/batch-optimize-openapi-struct-alignment.py --dry-run
 ```
 
-### ПОСЛЕ генерации:
+### ПОСЛЕ генерации enterprise-grade сервисов:
 ```bash
-make check-file-sizes  # Каждый .gen.go <1000 строк
-go build ./... && go test ./...
+# Валидация enterprise-grade генерации
+python scripts/validate-all-migrations.py
+
+# Проверка struct alignment (30-50% memory savings)
+python scripts/batch-optimize-openapi-struct-alignment.py --dry-run
+
+# Компиляция и тестирование enterprise-grade сервисов
+cd services/{service}-go && go mod tidy && go build . && go test ./...
+
+# Performance benchmarks (zero allocations target)
+go test -bench=. -benchmem -run=^$ ./...
 ```
 
 ### ПЕРЕД передачей (КРИТИЧНО!):

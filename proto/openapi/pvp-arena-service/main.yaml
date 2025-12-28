@@ -1,0 +1,135 @@
+openapi: 3.0.3
+info:
+  title: PvP Arena Service API - Enterprise-Grade Domain Service
+  description: "**Enterprise-Grade PvP Arena Combat API for NECPGAME**
+
+    This API manages player versus player combat in dedicated arenas, providing ranked matches,
+    tournament systems, and competitive gameplay mechanics in Night City.
+
+    ## Key Features
+
+    - **Arena Matches**: Structured PvP combat in controlled environments
+    - **Ranking Systems**: Competitive ranking and matchmaking algorithms
+    - **Tournament Management**: Organized competitive events and brackets
+    - **Spectator Mode**: Live viewing and commentary for arena matches
+    - **Prize Distribution**: Automated rewards for tournament winners
+    - **Performance Optimized**: MMOFPS-grade performance with <30ms P99 latency
+
+    ## Domain Purpose
+
+    The PvP Arena domain handles all aspects of competitive player combat in Night City.
+    Players engage in ranked matches, participate in tournaments, and compete for glory and rewards
+    through structured competitive systems and arena-based gameplay.
+
+    ## Performance Targets
+
+    - P99 Latency: <30ms for arena operations
+    - Memory: <40KB per active arena match
+    - Concurrent users: 500,000+ simultaneous arena operations
+    - Match calculations: <15ms response time
+
+    "
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: https://api.necpgame.com/v1/pvp-arena
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/pvp-arena
+    description: Staging server
+  - url: http://localhost:8080/api/v1/pvp-arena
+    description: Local development server
+security:
+  - BearerAuth: []
+tags:
+  - name: PvP Arena Combat
+    description: Core PvP arena matches and tournament operations
+  - name: Health Monitoring
+    description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: PvP arena service health check
+      description: "**Enterprise-grade health check endpoint**
+
+
+        Provides real-time health status of the PvP arena service microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        "
+      operationId: pvpArenaServiceHealthCheck
+      tags:
+        - Health Monitoring
+      parameters:
+        - name: Accept-Encoding
+          in: header
+          schema:
+            type: string
+            enum:
+              - gzip
+              - deflate
+              - br
+      responses:
+        "200":
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                  - gzip
+                  - deflate
+                  - br
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/health.yaml#/HealthResponse'
+        "500":
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common/schemas/error.yaml#/Error'
+components:
+  responses:
+    OK:
+      $ref: '../common/responses/success.yaml#/OK'
+    BadRequest:
+      $ref: '../common/responses/error.yaml#/BadRequest'
+    Unauthorized:
+      $ref: '../common/responses/error.yaml#/Unauthorized'
+    NotFound:
+      $ref: '../common/responses/error.yaml#/NotFound'
+    Conflict:
+      $ref: '../common/responses/error.yaml#/Conflict'
+    TooManyRequests:
+      $ref: '../common/responses/error.yaml#/TooManyRequests'
+    InternalServerError:
+      $ref: '../common/responses/error.yaml#/InternalServerError'
+  schemas:
+    Error:
+      $ref: '../common/schemas/error.yaml#/Error'
+    HealthResponse:
+      $ref: '../common/schemas/health.yaml#/HealthResponse'
+    PaginationMeta:
+      $ref: '../common/schemas/pagination.yaml#/PaginationMeta'
+  securitySchemes:
+    BearerAuth:
+      $ref: '../common/security/security.yaml#/BearerAuth'

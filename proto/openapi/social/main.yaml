@@ -1,0 +1,275 @@
+openapi: 3.0.3
+info:
+  title: Social Domain - Enterprise-Grade API
+  description: '**Enterprise-Grade Social Domain** for NECPGAME MMOFPS RPG.
+
+
+    **Domain Purpose:** Complete social interaction ecosystem
+
+    **Architecture:** Modular microservices with event-driven communication
+
+
+    **Core Modules:**
+
+    - **Chat** - Real-time messaging and channels
+
+    - **Guilds** - Guild management and warfare
+
+    - **Parties** - Temporary player groups
+
+    - **Relationships** - NPC and player relationships
+
+    - **Orders** - Player commission system
+
+    - **Mentorship** - Learning and teaching system
+
+    - **Reputation** - Social standing and benefits
+
+    - **Notifications** - Event notifications
+
+    - **Voice Lobby** - Voice chat integration
+
+
+    **Performance Targets:**
+
+    - Hot paths: 1000+ RPS, P99 <20ms
+
+    - Event throughput: 5000+ events/sec
+
+    - Memory: <50MB per service instance
+
+    - Cache hit rate: >95%
+
+    '
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+servers:
+- url: https://api.necpgame.com/social
+  description: Production server
+- url: https://staging-api.necpgame.com/social
+  description: Staging server
+- url: http://localhost:8080
+  description: Local development server
+paths: {}
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common/schemas/health.yaml#/HealthResponse
+    Error:
+      $ref: ../common/schemas/error.yaml#/Error
+    WebSocketHealthMessage:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - service_status
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          oneOf:
+          - $ref: '#/components/schemas/HealthResponse'
+          - type: object
+            properties:
+              service:
+                type: string
+              status:
+                type: string
+                enum:
+                - up
+                - down
+                - degraded
+              message:
+                type: string
+      responses:
+        '200':
+          description: Batch health results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthResponse'
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time
+    PaginationParams:
+      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+  /api/v1/social-domain/health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      operationId: healthWebSocket
+      tags:
+      - System
+      description: Real-time health updates without polling
+      responses:
+        '101':
+          description: WebSocket connection established
+  /notifications:
+    get:
+      summary: Get user notifications
+      operationId: getNotifications
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationsListResponse'
+  /notifications/{notification_id}:
+    parameters:
+    - name: notification_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    get:
+      summary: Get specific notification
+      operationId: getNotification
+      responses:
+        '200':
+          description: Notification details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+  /notifications/{notification_id}/read:
+    parameters:
+    - name: notification_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    post:
+      summary: Mark notification as read
+      operationId: markNotificationRead
+      responses:
+        '200':
+          description: Notification marked as read
+  /notifications/history:
+    get:
+      summary: Get notification history
+      operationId: getNotificationHistory
+      responses:
+        '200':
+          description: Notification history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationsListResponse'
+  /notifications/settings:
+    get:
+      summary: Get notification settings
+      operationId: getNotificationSettings
+      responses:
+        '200':
+          description: Notification settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationSettings'
+    put:
+      summary: Update notification settings
+      operationId: updateNotificationSettings
+      responses:
+        '200':
+          description: Settings updated
+  /ws/notifications:
+    get:
+      summary: WebSocket for real-time notifications
+      operationId: websocketNotifications
+      responses:
+        '101':
+          description: WebSocket connection established
+  /admin/notifications/stats:
+    get:
+      summary: Get notification statistics
+      operationId: getNotificationStats
+      responses:
+        '200':
+          description: Notification statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationStatsResponse'
+  /content/quests:
+    $ref: ./content-management/quests/main.yaml#/paths/~1
+  /content/quests/{quest_id}:
+    $ref: ./content-management/quests/main.yaml#/paths/~1{quest_id}
+  /content/npcs:
+    $ref: ./content-management/npcs/main.yaml#/paths/~1
+  /content/npcs/{npc_id}:
+    $ref: ./content-management/npcs/main.yaml#/paths/~1{npc_id}
+  /content/dialogues:
+    $ref: ./content-management/dialogues/main.yaml#/paths/~1
+  /content/dialogues/{dialogue_id}:
+    $ref: ./content-management/dialogues/main.yaml#/paths/~1{dialogue_id}
+  /content/lore:
+    $ref: ./content-management/lore/main.yaml#/paths/~1
+  /content/lore/{lore_id}:
+    $ref: ./content-management/lore/main.yaml#/paths/~1{lore_id}
+  /chat/health:
+    $ref: ./chat/main.yaml#/paths/~1api~1v1~1chat~1health
+  /chat/rooms:
+    $ref: ./chat/main.yaml#/paths/~1api~1v1~1chat~1rooms
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - message_timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: '#/components/schemas/HealthResponse'
+  responses:
+    OK:
+      $ref: ../common/responses/success.yaml#/OK
+    Created:
+      $ref: ../common/responses/success.yaml#/Created
+    BadRequest:
+      $ref: ../common/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common/responses/error.yaml#/Conflict
+    InternalServerError:
+      $ref: ../common/responses/error.yaml#/InternalServerError
+    HealthOK:
+      $ref: ../common/responses/success.yaml#/HealthOK
+    HealthBatchSuccess:
+      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common/security/security.yaml#/BearerAuth
+    ApiKeyAuth:
+      $ref: ../common/security/security.yaml#/ApiKeyAuth
+    ServiceAuth:
+      $ref: ../common/security/security.yaml#/ServiceAuth

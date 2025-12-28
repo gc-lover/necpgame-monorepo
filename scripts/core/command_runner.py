@@ -9,7 +9,9 @@ import subprocess
 from pathlib import Path
 from typing import List, Optional, Union
 
-from core.logger import Logger
+import logging
+from pathlib import Path
+from typing import List, Optional, Union
 
 
 class CommandRunner:
@@ -18,7 +20,7 @@ class CommandRunner:
     Single Responsibility: Execute commands and handle results.
     """
 
-    def __init__(self, logger: Logger, cwd: Optional[Path] = None):
+    def __init__(self, logger: logging.Logger, cwd: Optional[Path] = None):
         self.logger = logger
         self.cwd = cwd or Path.cwd()
 
