@@ -3,8 +3,8 @@ module github.com/gc-lover/necpgame-monorepo/services/achievement-service-go
 go 1.24.0
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/go-chi/chi/v5 v5.0.10
-	github.com/go-chi/cors v1.2.2
 	github.com/go-chi/jwtauth/v5 v5.3.0
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.2.0
