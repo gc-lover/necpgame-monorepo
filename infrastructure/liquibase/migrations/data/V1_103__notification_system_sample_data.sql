@@ -57,3 +57,4 @@ INSERT INTO notifications (id, player_id, type, title, message, data, is_read, c
 ('550e8400-e29b-41d4-a716-446655440012', '550e8400-e29b-41d4-a716-446655440010',
  'achievement', 'First Kill', 'You have made your first kill in Night City.',
  '{"achievement_id": "first_kill", "points": 25}', false, NOW() - INTERVAL '3 hours', 'high');
+

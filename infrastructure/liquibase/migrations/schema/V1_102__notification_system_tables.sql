@@ -40,3 +40,4 @@ COMMENT ON COLUMN notifications.created_at IS 'When the notification was created
 COMMENT ON COLUMN notifications.read_at IS 'When the notification was read';
 COMMENT ON COLUMN notifications.expires_at IS 'When the notification expires (optional)';
 COMMENT ON COLUMN notifications.priority IS 'Notification priority level';
+

@@ -300,3 +300,4 @@ func (h *Handler) respondError(w http.ResponseWriter, status int, message string
 	}
 	h.respondJSON(w, status, response)
 }
+

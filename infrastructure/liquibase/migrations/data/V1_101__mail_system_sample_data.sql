@@ -68,3 +68,4 @@ INSERT INTO mail_attachments (id, mail_id, filename, content_type, size_bytes, d
 INSERT INTO mail_reports (id, mail_id, reporter_id, reason, description, severity, status) VALUES
 ('770e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440003',
  '550e8400-e29b-41d4-a716-446655440000', 'spam', 'This looks like spam mail', 'low', 'submitted');
+

@@ -1,0 +1,141 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cyberspace-easter-eggs-service-go
+  namespace: necpgame
+  labels:
+    app: cyberspace-easter-eggs-service-go
+    version: v1
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cyberspace-easter-eggs-service-go
+  template:
+    metadata:
+      labels:
+        app: cyberspace-easter-eggs-service-go
+        version: v1
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9095"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: cyberspace-easter-eggs-service-go
+          image: necpgame-cyberspace-easter-eggs-service-go:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 9095
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8080"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: database_url
+            - name: ACHIEVEMENT_SERVICE_URL
+              value: "http://achievement-system-service-go:8080"
+            - name: GOGC
+              value: "75"
+            - name: GOMAXPROCS
+              value: "4"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cyberspace-easter-eggs-service-go
+  namespace: necpgame
+  labels:
+    app: cyberspace-easter-eggs-service-go
+spec:
+  selector:
+    app: cyberspace-easter-eggs-service-go
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+    - name: metrics
+      port: 9095
+      targetPort: metrics
+      protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cyberspace-easter-eggs-service-go-ingress
+  namespace: necpgame
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.necpgame.com
+      secretName: necpgame-tls
+  rules:
+    - host: api.necpgame.com
+      http:
+        paths:
+          - path: /api/v1/easter-eggs
+            pathType: Prefix
+            backend:
+              service:
+                name: cyberspace-easter-eggs-service-go
+                port:
+                  number: 8080

@@ -35,15 +35,15 @@ func main() {
 		logger.Fatal("Failed to load configuration", zap.Error(err))
 	}
 
-	// Initialize database connection
-	db, err := repository.NewDBConnection(cfg.DatabaseURL)
+	// Initialize database connection with MMOFPS optimizations
+	db, err := repository.NewDBConnection(cfg.DatabaseURL, cfg)
 	if err != nil {
 		logger.Fatal("Failed to connect to database", zap.Error(err))
 	}
 	defer db.Close()
 
-	// Initialize Redis client
-	redisClient, err := repository.NewRedisClient(cfg.RedisURL)
+	// Initialize Redis client with MMOFPS optimizations
+	redisClient, err := repository.NewRedisClient(cfg.RedisURL, cfg)
 	if err != nil {
 		logger.Fatal("Failed to connect to Redis", zap.Error(err))
 	}
@@ -55,11 +55,11 @@ func main() {
 	// Initialize service layer
 	svc := service.NewService(repo, logger)
 
-	// Initialize handlers
-	h := handlers.NewHandler(svc, logger)
+	// Initialize handlers with MMOFPS optimizations
+	h := handlers.NewHandler(svc, logger, cfg)
 
-	// Setup HTTP server
-	r := setupRouter(h)
+	// Setup HTTP server with MMOFPS optimizations
+	r := setupRouter(h, cfg)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Port),
@@ -95,15 +95,15 @@ func main() {
 	logger.Info("Server exited")
 }
 
-func setupRouter(h *handlers.Handler) *chi.Mux {
+func setupRouter(h *handlers.Handler, cfg *config.Config) *chi.Mux {
 	r := chi.NewRouter()
 
-	// Middleware
+	// Middleware with MMOFPS optimizations
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(middleware.Timeout(cfg.RequestTimeout))
 
 	// Health check endpoint
 	r.Get("/health", h.HealthCheck)
@@ -144,3 +144,4 @@ func setupRouter(h *handlers.Handler) *chi.Mux {
 
 	return r
 }
+

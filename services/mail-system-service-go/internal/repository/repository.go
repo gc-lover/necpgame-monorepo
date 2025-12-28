@@ -12,6 +12,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
+	"services/mail-system-service-go/internal/config"
 	"services/mail-system-service-go/pkg/models"
 )
 
@@ -31,12 +32,17 @@ func NewRepository(db *sqlx.DB, redis *redis.Client, logger *zap.Logger) *Reposi
 	}
 }
 
-// NewDBConnection creates a new database connection
-func NewDBConnection(url string) (*sqlx.DB, error) {
+// NewDBConnection creates a new database connection with MMOFPS optimizations
+func NewDBConnection(url string, config *Config) (*sqlx.DB, error) {
 	db, err := sqlx.Connect("postgres", url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
+
+	// Configure connection pool for MMOFPS performance
+	db.SetMaxOpenConns(config.DBMaxOpenConns)
+	db.SetMaxIdleConns(config.DBMaxIdleConns)
+	db.SetConnMaxLifetime(config.DBConnMaxLifetime)
 
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
@@ -45,12 +51,15 @@ func NewDBConnection(url string) (*sqlx.DB, error) {
 	return db, nil
 }
 
-// NewRedisClient creates a new Redis client
-func NewRedisClient(url string) (*redis.Client, error) {
+// NewRedisClient creates a new Redis client with MMOFPS optimizations
+func NewRedisClient(url string, config *Config) (*redis.Client, error) {
 	opts, err := redis.ParseURL(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse Redis URL: %w", err)
 	}
+
+	// Configure Redis pool size for MMOFPS real-time requirements
+	opts.PoolSize = config.RedisPoolSize
 
 	client := redis.NewClient(opts)
 

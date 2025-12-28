@@ -144,8 +144,11 @@ func setupRouter(server *generated.ServerInterfaceWrapper, h *handlers.EasterEgg
 		MaxAge:           300,
 	}))
 
-	// Use generated server for all routes
-	r.Mount("/", server)
+	// Health endpoint without authentication
+	r.Get("/health", h.HealthCheck)
+
+	// Use generated server for authenticated routes
+	r.Mount("/api", server)
 
 	// Admin endpoints (not in generated server)
 	r.Post("/api/v1/admin/import", h.ImportEasterEggs)

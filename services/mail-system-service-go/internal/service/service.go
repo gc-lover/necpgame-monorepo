@@ -300,3 +300,4 @@ func (s *Service) GetMailAnalytics(ctx context.Context, timeframe string) (*mode
 
 	return response, nil
 }
+

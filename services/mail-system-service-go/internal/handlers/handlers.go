@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	"services/mail-system-service-go/internal/config"
 	"services/mail-system-service-go/internal/service"
 	"services/mail-system-service-go/pkg/models"
 )
@@ -21,13 +22,15 @@ import (
 type Handler struct {
 	service *service.Service
 	logger  *zap.Logger
+	config  *Config
 }
 
-// NewHandler creates a new handler instance
-func NewHandler(svc *service.Service, logger *zap.Logger) *Handler {
+// NewHandler creates a new handler instance with MMOFPS optimizations
+func NewHandler(svc *service.Service, logger *zap.Logger, config *Config) *Handler {
 	return &Handler{
 		service: svc,
 		logger:  logger,
+		config:  config,
 	}
 }
 

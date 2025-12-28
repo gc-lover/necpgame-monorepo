@@ -439,3 +439,4 @@ func (s *Server) getMarketOverviewData(ctx context.Context) (*api.MarketOverview
 }
 
 // Issue: #141889233
+

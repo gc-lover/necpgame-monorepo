@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
+	"services/achievement-system-service-go/internal/config"
 	"services/achievement-system-service-go/internal/service"
 	"services/achievement-system-service-go/pkg/models"
 )
@@ -22,6 +23,7 @@ type Handler struct {
 	service   *service.Service
 	logger    *zap.Logger
 	validator *Validator
+	config    *Config
 }
 
 // Validator handles request validation
@@ -32,23 +34,24 @@ func NewValidator() *Validator {
 	return &Validator{}
 }
 
-// NewHandler creates a new handler instance
-func NewHandler(svc *service.Service, logger *zap.Logger) *Handler {
+// NewHandler creates a new handler instance with MMOFPS optimizations
+func NewHandler(svc *service.Service, logger *zap.Logger, config *Config) *Handler {
 	return &Handler{
 		service:   svc,
 		logger:    logger,
 		validator: NewValidator(),
+		config:    config,
 	}
 }
 
 // SetupRoutes configures all routes for the achievement system
 func (h *Handler) SetupRoutes(r *chi.Mux) {
-	// Middleware
+	// Middleware with MMOFPS optimizations
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(30 * time.Second))
+	r.Use(middleware.Timeout(h.config.RequestTimeout))
 
 	// Health check
 	r.Get("/health", h.HealthCheck)

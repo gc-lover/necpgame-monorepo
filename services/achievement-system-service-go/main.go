@@ -32,8 +32,8 @@ func main() {
 		logger.Fatal("Failed to load configuration", zap.Error(err))
 	}
 
-	// Initialize repository layer
-	repo, err := repository.NewRepository(cfg.DatabaseURL, cfg.RedisURL)
+	// Initialize repository layer with MMOFPS optimizations
+	repo, err := repository.NewRepository(cfg.DatabaseURL, cfg.RedisURL, cfg)
 	if err != nil {
 		logger.Fatal("Failed to initialize repository", zap.Error(err))
 	}
@@ -42,8 +42,8 @@ func main() {
 	// Initialize service layer
 	svc := service.NewService(repo, logger)
 
-	// Initialize handlers
-	h := handlers.NewHandler(svc, logger)
+	// Initialize handlers with MMOFPS optimizations
+	h := handlers.NewHandler(svc, logger, cfg)
 
 	// Setup HTTP server
 	r := chi.NewRouter()

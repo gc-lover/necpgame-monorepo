@@ -12,6 +12,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/redis/go-redis/v9"
 
+	"services/achievement-system-service-go/internal/config"
 	"services/achievement-system-service-go/pkg/models"
 )
 
@@ -21,23 +22,26 @@ type Repository struct {
 	redis *redis.Client
 }
 
-// NewRepository creates a new repository instance
-func NewRepository(databaseURL, redisURL string) (*Repository, error) {
+// NewRepository creates a new repository instance with MMOFPS optimizations
+func NewRepository(databaseURL, redisURL string, config *Config) (*Repository, error) {
 	db, err := sqlx.Connect("postgres", databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// Configure connection pool for MMOFPS performance
-	db.SetMaxOpenConns(100)
-	db.SetMaxIdleConns(10)
-	db.SetConnMaxLifetime(time.Hour)
+	// Configure connection pool for MMOFPS performance using config
+	db.SetMaxOpenConns(config.DBMaxOpenConns)
+	db.SetMaxIdleConns(config.DBMaxIdleConns)
+	db.SetConnMaxLifetime(config.DBConnMaxLifetime)
 
-	// Parse Redis URL and create client
+	// Parse Redis URL and create client with MMOFPS optimizations
 	opt, err := redis.ParseURL(redisURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse Redis URL: %w", err)
 	}
+
+	// Configure Redis pool size for MMOFPS real-time requirements
+	opt.PoolSize = config.RedisPoolSize
 
 	rdb := redis.NewClient(opt)
 

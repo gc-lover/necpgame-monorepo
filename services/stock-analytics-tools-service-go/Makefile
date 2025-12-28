@@ -148,3 +148,4 @@ help:
 	@echo "  bench              - Run benchmarks for analytical functions"
 	@echo "  generate-test-data - Generate test data"
 	@echo "  help               - Show this help"
+

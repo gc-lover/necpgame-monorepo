@@ -14,10 +14,10 @@ import (
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 
-	"github.com/necpgame/world-cities-service-go/internal/config"
-	"github.com/necpgame/world-cities-service-go/internal/database"
-	"github.com/necpgame/world-cities-service-go/internal/server"
-	"github.com/necpgame/world-cities-service-go/internal/service"
+	"services/world-cities-service-go/internal/config"
+	"services/world-cities-service-go/internal/database"
+	"services/world-cities-service-go/internal/server"
+	"services/world-cities-service-go/internal/service"
 )
 
 // BACKEND NOTE: World Cities Service - Enterprise-grade microservice for geographical city management
