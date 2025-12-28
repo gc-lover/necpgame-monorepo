@@ -158,14 +158,20 @@ func (s *Service) createRouter() chi.Router {
 		repo := repository.NewRepository(s.db, s.redis, s.logger)
 		svc := service.NewService(repo, s.logger)
 
-		// Initialize OpenAPI handler
-		handler := &AnalyticsHandler{
+	// Initialize OpenAPI handler
+	handler := &AnalyticsHandler{
 			service: svc,
 			logger:  s.logger,
 		}
 
-		// Mount generated OpenAPI routes
-		api.HandlerFromMuxWithBaseURL(handler, r, "/api/v1/analytics")
+		// Create OpenAPI server
+		server, err := api.NewServer(handler, nil) // TODO: Add security handler
+		if err != nil {
+			s.logger.Fatal("Failed to create OpenAPI server", zap.Error(err))
+		}
+
+		// Mount OpenAPI routes
+		r.Mount("/api/v1/analytics", server)
 	})
 
 	return r
@@ -290,14 +296,18 @@ func (h *AnalyticsHandler) AnalyticsServiceHealthCheck(ctx context.Context, para
 	h.logger.Info("Processing analytics service health check request")
 
 	// Create health response
-	health := &api.AnalyticsServiceHealthCheckOK{
-		Service:             "analytics-dashboard-service",
-		Status:              "healthy",
-		Timestamp:           time.Now(),
-		Version:             "1.0.0",
-		UptimeSeconds:       3600, // TODO: Track actual uptime
-		ActiveConnections:   1500, // TODO: Track actual connections
-		DataFreshnessSeconds: 30,
+	health := &api.HealthResponseHeaders{
+		CacheControl:   api.NewOptString("max-age=30"),
+		ETag:           api.NewOptString(fmt.Sprintf(`"%d"`, time.Now().Unix())),
+		Response: api.HealthResponse{
+			Service:             "analytics-dashboard-service",
+			Status:              "healthy",
+			Timestamp:           time.Now(),
+			Version:             "1.0.0",
+			UptimeSeconds:       3600, // TODO: Track actual uptime
+			ActiveConnections:   1500, // TODO: Track actual connections
+			DataFreshnessSeconds: 30,
+		},
 	}
 
 	return health, nil
@@ -307,17 +317,22 @@ func (h *AnalyticsHandler) AnalyticsServiceHealthCheck(ctx context.Context, para
 // PERFORMANCE: All methods include context timeouts and error handling
 
 func (h *AnalyticsHandler) GetGameAnalyticsOverview(ctx context.Context, params api.GetGameAnalyticsOverviewParams) (api.GetGameAnalyticsOverviewRes, error) {
+	periodStr := "24h"
+	if params.Period.IsSet() {
+		periodStr = string(params.Period.Value)
+	}
+
 	h.logger.Info("Processing game analytics overview request",
-		zap.String("period", params.Period))
+		zap.String("period", periodStr))
 
 	// PERFORMANCE: Add timeout for analytics queries
 	queryCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	overview, err := h.service.GetGameAnalyticsOverview(queryCtx, params.Period)
+	overview, err := h.service.GetGameAnalyticsOverview(queryCtx, periodStr)
 	if err != nil {
 		h.logger.Error("Failed to get game analytics overview",
-			zap.String("period", params.Period),
+			zap.String("period", periodStr),
 			zap.Error(err))
 		return nil, err
 	}
@@ -331,12 +346,12 @@ func (h *AnalyticsHandler) GetGameAnalyticsOverview(ctx context.Context, params 
 			Period:    overview.Period,
 			Timestamp: overview.Timestamp,
 			Summary: api.DashboardSummary{
-				ActiveUsers:         overview.Summary.ActiveUsers,
-				NewRegistrations:    overview.Summary.NewRegistrations,
-				TotalRevenue:        overview.Summary.TotalRevenue,
-				AverageSessionTime:  overview.Summary.AverageSessionTime,
-				ServerHealthScore:   overview.Summary.ServerHealthScore,
-				AlertsCount:         overview.Summary.AlertsCount,
+				ActiveUsers:         int64(overview.Summary.ActiveUsers),
+				NewRegistrations:    api.NewOptInt(overview.Summary.NewRegistrations),
+				TotalRevenue:        float32(overview.Summary.TotalRevenue),
+				AverageSessionTime:  float32(overview.Summary.AverageSessionTime),
+				ServerHealthScore:   float32(overview.Summary.ServerHealthScore),
+				AlertsCount:         int64(overview.Summary.AlertsCount),
 			},
 			// TODO: Add other fields as needed
 		},
