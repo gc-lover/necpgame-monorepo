@@ -661,4 +661,5 @@ func generateRandomString(length int) string {
 	for i := range result {
 		result[i] = charset[time.Now().UnixNano()%int64(len(charset))]
 	}
-	return
+	return string(result)
+}

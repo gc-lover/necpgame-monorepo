@@ -8,7 +8,7 @@ BEGIN;
 
 -- Insert easter eggs data
 -- Technology category easter eggs
-INSERT INTO easter_eggs (
+INSERT INTO gameplay.easter_egg_definitions (
     id, name, category, difficulty, description, content,
     location, discovery_method, rewards, lore_connections, status
 ) VALUES
@@ -81,7 +81,7 @@ INSERT INTO easter_eggs (
 (
     'easter-egg-shakespeare-online',
     'Шекспир в сети',
-    'culture',
+    'cultural',
     'easy',
     'Шекспир декламирует сонеты в киберпанк-стиле',
     'Классические сонеты с неоновыми эффектами и современными отсылками',
@@ -94,7 +94,7 @@ INSERT INTO easter_eggs (
 (
     'easter-egg-rockstar-2077',
     'Рок-звезда 2077',
-    'culture',
+    'cultural',
     'medium',
     'Голографический концерт с отсылками к реальным группам',
     'Виртуальный концерт с музыкой 80-90х в киберпанк-обработке',
@@ -144,33 +144,9 @@ ON CONFLICT (id) DO UPDATE SET
     lore_connections = EXCLUDED.lore_connections,
     updated_at = CURRENT_TIMESTAMP;
 
--- Insert discovery hints for easter eggs
-INSERT INTO discovery_hints (easter_egg_id, hint_level, hint_text, hint_type, cost, is_enabled) VALUES
-('easter-egg-turing-ghost', 1, 'Ищи странные математические последовательности в университетских сетях', 'direct', 0, true),
-('easter-egg-schrodinger-cat', 1, 'Ищи квантовые компьютеры в корпоративных лабораториях', 'direct', 0, true),
-('easter-egg-y2k-bug', 1, 'Проверь старые серверы на наличие Y2K артефактов', 'direct', 0, true),
-('easter-egg-matrix-loading', 1, 'Появляется случайно во время загрузки сети', 'direct', 0, true),
-('easter-egg-blockchain-pyramid', 1, 'Ищи в темной сети и на крипто-биржах', 'direct', 0, true),
-('easter-egg-shakespeare-online', 1, 'Ищи Шекспира в цифровых библиотеках', 'direct', 0, true),
-('easter-egg-rockstar-2077', 1, 'Проверь музыкальные стримы на необычные концерты', 'direct', 0, true),
-('easter-egg-roman-legion-network', 1, 'Ищи римские легионы в исторических базах данных', 'indirect', 50, true),
-('easter-egg-roman-legion-network', 2, 'Реконструируй битву при Каррах в сети', 'indirect', 100, true),
-('easter-egg-cat-quantum-box', 1, 'Найди кота в квантовой суперпозиции', 'misleading', 0, true),
-('easter-egg-cat-quantum-box', 2, 'Кот может быть одновременно живым и мертвым', 'misleading', 200, true),
-('easter-egg-cat-quantum-box', 3, 'Проверь все возможные состояния кота', 'direct', 500, true);
+-- Discovery hints are stored in the easter_egg_definitions.hints JSONB field
+-- No separate table needed for hints
 
--- Create a sample challenge
-INSERT INTO easter_egg_challenges (
-    id, title, description, easter_eggs, rewards, start_time, end_time, is_active
-) VALUES (
-    gen_random_uuid(),
-    'Киберпанк Исследователь',
-    'Найди все технологические пасхалки в киберпространстве Night City',
-    '["easter-egg-turing-ghost", "easter-egg-schrodinger-cat", "easter-egg-y2k-bug", "easter-egg-matrix-loading", "easter-egg-blockchain-pyramid"]'::jsonb,
-    '[{"type": "achievement", "value": 0, "item_id": "", "item_name": "Киберпанк Исследователь", "rarity": "legendary"}, {"type": "experience", "value": 2500, "item_id": "", "item_name": "", "rarity": "epic"}]'::jsonb,
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP + INTERVAL '30 days',
-    true
-) ON CONFLICT DO NOTHING;
+-- Challenges table not implemented yet - will be added in future migration
 
 COMMIT;
