@@ -18,7 +18,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.39.0
 	go.opentelemetry.io/otel/trace v1.39.0
 	golang.org/x/crypto v0.46.0
-	golang.org/x/time v0.14.0
 )
 
 require (

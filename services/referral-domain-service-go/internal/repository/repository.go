@@ -74,15 +74,13 @@ func NewRedisClient(url string, config *config.Config) (*redis.Client, error) {
 // CreateReferralCode creates a new referral code
 func (r *Repository) CreateReferralCode(ctx context.Context, code *ReferralCode) error {
 	query := `
-		INSERT INTO referral_codes (id, code, owner_id, is_active, expires_at, max_uses, current_uses, created_at, updated_at)
+		INSERT INTO referral_codes (id, character_id, code, prefix, created_at, expires_at, is_active, usage_count, max_usage)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
-	code.CreatedAt = time.Now()
-	code.UpdatedAt = time.Now()
 
 	_, err := r.db.ExecContext(ctx, query,
-		code.ID, code.Code, code.OwnerID, code.IsActive, code.ExpiresAt,
-		code.MaxUses, code.CurrentUses, code.CreatedAt, code.UpdatedAt)
+		code.ID, code.CharacterID, code.Code, code.Prefix, code.CreatedAt,
+		code.ExpiresAt, code.IsActive, code.UsageCount, code.MaxUsage)
 
 	if err != nil {
 		return fmt.Errorf("failed to create referral code: %w", err)
@@ -122,9 +120,9 @@ func (r *Repository) GetReferralCode(ctx context.Context, id uuid.UUID) (*Referr
 func (r *Repository) ValidateReferralCode(ctx context.Context, code string) (*ReferralCode, error) {
 	query := `
 		UPDATE referral_codes
-		SET current_uses = current_uses + 1, updated_at = $2
+		SET usage_count = usage_count + 1
 		WHERE code = $1 AND is_active = true AND (expires_at IS NULL OR expires_at > $2)
-			AND (max_uses IS NULL OR current_uses < max_uses)
+			AND (max_usage IS NULL OR usage_count < max_usage)
 		RETURNING *
 	`
 
@@ -146,16 +144,14 @@ func (r *Repository) ValidateReferralCode(ctx context.Context, code string) (*Re
 // CreateReferralRegistration creates a new referral registration
 func (r *Repository) CreateReferralRegistration(ctx context.Context, registration *ReferralRegistration) error {
 	query := `
-		INSERT INTO referral_registrations (id, referrer_id, referee_id, referral_code_id, status, registered_at, converted_at, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO referrals (id, referrer_id, referred_id, referral_code, status, registered_at, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
-	registration.CreatedAt = time.Now()
-	registration.UpdatedAt = time.Now()
 
 	_, err := r.db.ExecContext(ctx, query,
-		registration.ID, registration.ReferrerID, registration.RefereeID,
-		registration.ReferralCodeID, registration.Status, registration.RegisteredAt,
-		registration.ConvertedAt, registration.CreatedAt, registration.UpdatedAt)
+		registration.ID, registration.ReferrerID, registration.ReferredID,
+		registration.ReferralCode, registration.Status, registration.RegisteredAt,
+		registration.CreatedAt, registration.UpdatedAt)
 
 	return err
 }
@@ -163,8 +159,8 @@ func (r *Repository) CreateReferralRegistration(ctx context.Context, registratio
 // UpdateReferralStatus updates the status of a referral registration
 func (r *Repository) UpdateReferralStatus(ctx context.Context, registrationID uuid.UUID, status string, convertedAt *time.Time) error {
 	query := `
-		UPDATE referral_registrations
-		SET status = $2, converted_at = $3, updated_at = $4
+		UPDATE referrals
+		SET status = $2, milestone_reached_at = $3, updated_at = $4
 		WHERE id = $1
 	`
 
@@ -188,7 +184,7 @@ func (r *Repository) GetReferralCodeByCode(ctx context.Context, code string) (*R
 
 // GetUserReferralCodes gets all referral codes for a user
 func (r *Repository) GetUserReferralCodes(ctx context.Context, userID uuid.UUID) ([]*ReferralCode, error) {
-	query := `SELECT * FROM referral_codes WHERE owner_id = $1 ORDER BY created_at DESC`
+	query := `SELECT * FROM referral_codes WHERE character_id = $1 ORDER BY created_at DESC`
 	var codes []*ReferralCode
 	err := r.db.SelectContext(ctx, &codes, query, userID)
 	if err != nil {
@@ -201,13 +197,13 @@ func (r *Repository) GetUserReferralCodes(ctx context.Context, userID uuid.UUID)
 func (r *Repository) GetReferralStatistics(ctx context.Context, userID uuid.UUID) (*ReferralStatistics, error) {
 	query := `
 		SELECT
-			COUNT(DISTINCT rr.id) as total_referrals,
-			COUNT(DISTINCT CASE WHEN rr.status = 'converted' THEN rr.id END) as converted_referrals,
-			COUNT(DISTINCT CASE WHEN rr.status = 'pending' THEN rr.id END) as pending_referrals,
-			COALESCE(SUM(rew.amount), 0) as total_earnings
-		FROM referral_registrations rr
-		LEFT JOIN referral_rewards rew ON rr.id = rew.registration_id
-		WHERE rr.referrer_id = $1
+			COUNT(DISTINCT r.id) as total_referrals,
+			COUNT(DISTINCT CASE WHEN r.status IN ('active', 'milestone_reached') THEN r.id END) as converted_referrals,
+			COUNT(DISTINCT CASE WHEN r.status = 'pending' THEN r.id END) as pending_referrals,
+			COALESCE(SUM(rr.reward_amount), 0) as total_earnings
+		FROM referrals r
+		LEFT JOIN referral_rewards rr ON r.id = rr.referral_id
+		WHERE r.referrer_id = $1
 	`
 
 	var stats ReferralStatistics
@@ -237,6 +233,20 @@ func (r *Repository) GetReferralMilestone(ctx context.Context, milestoneID uuid.
 	return &milestone, nil
 }
 
+// GetUserMilestone gets a user's milestone for a specific level
+func (r *Repository) GetUserMilestone(ctx context.Context, userID uuid.UUID, level int) (*ReferralMilestone, error) {
+	query := `SELECT * FROM referral_milestones WHERE character_id = $1 AND milestone_level = $2`
+	var milestone ReferralMilestone
+	err := r.db.GetContext(ctx, &milestone, query, userID, level)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // Milestone not found
+		}
+		return nil, fmt.Errorf("failed to get user milestone: %w", err)
+	}
+	return &milestone, nil
+}
+
 // GetUserMilestoneReward gets a user's reward for a specific milestone
 func (r *Repository) GetUserMilestoneReward(ctx context.Context, userID, milestoneID uuid.UUID) (*ReferralReward, error) {
 	query := `SELECT * FROM referral_rewards WHERE user_id = $1 AND milestone_id = $2`
@@ -254,15 +264,13 @@ func (r *Repository) GetUserMilestoneReward(ctx context.Context, userID, milesto
 // CreateReferralReward creates a new referral reward
 func (r *Repository) CreateReferralReward(ctx context.Context, reward *ReferralReward) error {
 	query := `
-		INSERT INTO referral_rewards (id, user_id, milestone_id, amount, status, claimed_at, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO referral_rewards (id, character_id, referral_id, reward_type, reward_amount, currency_type, item_id, status, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
-	reward.CreatedAt = time.Now()
-	reward.UpdatedAt = time.Now()
 
 	_, err := r.db.ExecContext(ctx, query,
-		reward.ID, reward.UserID, reward.MilestoneID, reward.Amount,
-		reward.Status, reward.ClaimedAt, reward.CreatedAt, reward.UpdatedAt)
+		reward.ID, reward.CharacterID, reward.ReferralID, reward.RewardType,
+		reward.RewardAmount, reward.CurrencyType, reward.ItemID, reward.Status, reward.CreatedAt)
 
 	return err
 }

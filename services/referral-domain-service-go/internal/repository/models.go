@@ -73,4 +73,9 @@ type ReferralReward struct {
 	RewardAmount  int        `db:"reward_amount" json:"reward_amount"`
 	CurrencyType  string     `db:"currency_type" json:"currency_type"`
 	ItemID        *uuid.UUID `db:"item_id" json:"item_id,omitempty"`
-	Status        string     `db:"status" json:"status
+	Status        string     `db:"status" json:"status"` // pending, distributed, claimed, expired
+	DistributedAt *time.Time `db:"distributed_at" json:"distributed_at,omitempty"`
+	ClaimedAt     *time.Time `db:"claimed_at" json:"claimed_at,omitempty"`
+	ExpiresAt     *time.Time `db:"expires_at" json:"expires_at,omitempty"`
+	CreatedAt     time.Time  `db:"created_at" json:"created_at"`
+}
