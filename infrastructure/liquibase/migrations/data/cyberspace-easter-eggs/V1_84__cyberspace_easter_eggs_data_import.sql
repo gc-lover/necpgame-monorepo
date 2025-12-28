@@ -12,7 +12,7 @@ BEGIN;
 
 -- Technology category easter eggs
 INSERT INTO easter_eggs (id, name, category, difficulty, description, content, location, discovery_method, rewards, lore_connections, status) VALUES
-('easter-egg-turing-ghost', 'Призрак Алана Тьюринга', 'technology', 'medium',
+('easter-egg-turing-ghost', 'Призрак Алана Тьюринга', 'technological', 'medium',
  'Голографический призрак легендарного математика объясняет основы кибербезопасности',
  'Демонстрирует эволюцию вычислительных машин от механических до квантовых в интерактивной форме',
  '{"network_type": "educational", "specific_areas": ["university_networks", "academic_databases"], "access_level": "restricted", "time_conditions": ["night_time"]}'::jsonb,
@@ -21,7 +21,7 @@ INSERT INTO easter_eggs (id, name, category, difficulty, description, content, l
  '["computer_science_origins", "cyberpunk_culture_influence"]'::jsonb,
  'active'),
 
-('easter-egg-schrodinger-cat', 'Квантовый кот Шрёдингера', 'technology', 'hard',
+('easter-egg-schrodinger-cat', 'Квантовый кот Шрёдингера', 'technological', 'hard',
  'Кот в квантовой коробке, живой и мертвый одновременно',
  'Интерактивная демонстрация принципов квантовой механики в контексте нетраннинга',
  '{"network_type": "corporate_rnd", "specific_areas": ["arasaka_labs", "militech_research"], "access_level": "secure", "time_conditions": ["system_crash"]}'::jsonb,
@@ -30,7 +30,7 @@ INSERT INTO easter_eggs (id, name, category, difficulty, description, content, l
  '["quantum_tech_cyberpunk", "scientific_experiments"]'::jsonb,
  'active'),
 
-('easter-egg-y2k-bug', 'Y2K Bug', 'technology', 'easy',
+('easter-egg-y2k-bug', 'Y2K Bug', 'technological', 'easy',
  'Классическая ошибка тысячелетия оживает в цифровом пространстве',
  'Интерактивная демонстрация проблемы 2000 года и её влияния на современные системы',
  '{"network_type": "public", "specific_areas": ["old_datacenters", "legacy_systems"], "access_level": "public", "time_conditions": ["new_year"]}'::jsonb,
@@ -39,7 +39,7 @@ INSERT INTO easter_eggs (id, name, category, difficulty, description, content, l
  '["historical_computing_bugs", "legacy_system_vulnerabilities"]'::jsonb,
  'active'),
 
-('easter-egg-matrix-loading-screen', 'Экран загрузки Матрицы', 'technology', 'medium',
+('easter-egg-matrix-loading-screen', 'Экран загрузки Матрицы', 'technological', 'medium',
  'Классический зелёный экран загрузки оживает',
  'Интерактивная демонстрация философии Matrix в контексте Cyberpunk 2077',
  '{"network_type": "entertainment", "specific_areas": ["streaming_services", "game_networks"], "access_level": "public", "time_conditions": ["system_maintenance"]}'::jsonb,
@@ -48,7 +48,7 @@ INSERT INTO easter_eggs (id, name, category, difficulty, description, content, l
  '["matrix_references", "cyberpunk_philosophy"]'::jsonb,
  'active'),
 
-('easter-egg-blockchain-pyramid', 'Блокчейн пирамида', 'technology', 'medium',
+('easter-egg-blockchain-pyramid', 'Блокчейн пирамида', 'technological', 'medium',
  'Визуализация блокчейн технологии в виде древнеегипетской пирамиды',
  'Образовательная демонстрация принципов блокчейн и криптовалют',
  '{"network_type": "corporate", "specific_areas": ["financial_networks", "crypto_exchanges"], "access_level": "restricted", "time_conditions": ["market_crash"]}'::jsonb,
@@ -57,7 +57,7 @@ INSERT INTO easter_eggs (id, name, category, difficulty, description, content, l
  '["cryptocurrency_history", "blockchain_technology"]'::jsonb,
  'active'),
 
-('easter-egg-netscape-dinosaur', 'Динозавр Netscape', 'technology', 'easy',
+('easter-egg-netscape-dinosaur', 'Динозавр Netscape', 'technological', 'easy',
  'Классический браузерный динозавр оживает в киберпространстве',
  'Ностальгическая демонстрация раннего интернета и браузерных войн',
  '{"network_type": "entertainment", "specific_areas": ["social_networks", "web_archives"], "access_level": "public", "time_conditions": ["browser_update"]}'::jsonb,
@@ -66,7 +66,7 @@ INSERT INTO easter_eggs (id, name, category, difficulty, description, content, l
  '["web_browser_history", "internet_culture"]'::jsonb,
  'active'),
 
-('easter-egg-404-lore-not-found', '404 Lore Not Found', 'technology', 'medium',
+('easter-egg-404-lore-not-found', '404 Lore Not Found', 'technological', 'medium',
  'Когда лор не найден - появляется забавная 404 страница',
  'Демонстрация юмора разработчиков и отсылок к веб-культуре',
  '{"network_type": "underground", "specific_areas": ["dark_web", "hackers_forums"], "access_level": "restricted", "time_conditions": ["server_error"]}'::jsonb,
@@ -75,7 +75,7 @@ INSERT INTO easter_eggs (id, name, category, difficulty, description, content, l
  '["developer_humor", "web_error_culture"]'::jsonb,
  'active'),
 
-('easter-egg-quantum-computer-mini-game', 'Квантовый компьютер мини-игра', 'technology', 'hard',
+('easter-egg-quantum-computer-mini-game', 'Квантовый компьютер мини-игра', 'technological', 'hard',
  'Интерактивная головоломка на квантовых вычислениях',
  'Мини-игра с квантовыми битами и суперпозицией',
  '{"network_type": "corporate_rnd", "specific_areas": ["quantum_labs", "research_facilities"], "access_level": "secure", "time_conditions": ["research_peak"]}'::jsonb,
@@ -84,7 +84,7 @@ INSERT INTO easter_eggs (id, name, category, difficulty, description, content, l
  '["quantum_computing", "advanced_algorithms"]'::jsonb,
  'active'),
 
-('easter-egg-killer-virus-animation', 'Анимация Killer Virus', 'technology', 'medium',
+('easter-egg-killer-virus-animation', 'Анимация Killer Virus', 'technological', 'medium',
  'Вирус оживает и рассказывает о кибербезопасности',
  'Образовательная анимация о компьютерных вирусах и защите',
  '{"network_type": "educational", "specific_areas": ["security_training", "antivirus_networks"], "access_level": "restricted", "time_conditions": ["virus_outbreak"]}'::jsonb,
@@ -93,7 +93,7 @@ INSERT INTO easter_eggs (id, name, category, difficulty, description, content, l
  '["cybersecurity_education", "malware_history"]'::jsonb,
  'active'),
 
-('easter-egg-neural-dream-network', 'Нейронная сеть мечты', 'technology', 'hard',
+('easter-egg-neural-dream-network', 'Нейронная сеть мечты', 'technological', 'hard',
  'Путешествие через сны искусственного интеллекта',
  'Визуализация работы нейронных сетей через сюрреалистические сны',
  '{"network_type": "corporate_rnd", "specific_areas": ["ai_labs", "neural_networks"], "access_level": "secure", "time_conditions": ["ai_training"]}'::jsonb,

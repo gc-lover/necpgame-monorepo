@@ -694,6 +694,224 @@ func TestEconomyHandler_ExecuteTrade_InsufficientFunds(t *testing.T) {
 	assert.Nil(t, result)
 }
 
+func TestEconomyHandler_GetEconomyOverview_Success(t *testing.T) {
+	handler, mock := setupTestHandler()
+	defer mock.ExpectClose()
+
+	// Setup mock expectations for economy overview query
+	rows := sqlmock.NewRows([]string{"total_active_trades", "total_market_volume", "average_trade_price", "active_sellers", "active_buyers"}).
+		AddRow(150, 75000.50, 500.33, 45, 62)
+
+	mock.ExpectQuery("SELECT (.+) FROM active_trades WHERE status = 'active' AND created_at >= NOW\\(\\) - INTERVAL '24 hours'").
+		WillReturnRows(rows)
+
+	// Create test request
+	req := httptest.NewRequest("GET", "/economy/overview", nil)
+	w := httptest.NewRecorder()
+
+	// Execute
+	result, err := handler.GetEconomyOverview(w, req, api.GetEconomyOverviewParams{})
+
+	// Verify
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, int32(150), result.TotalActiveTrades)
+	assert.Equal(t, 75000.50, result.TotalMarketVolume)
+	assert.Equal(t, 500.33, result.AverageTradePrice)
+	assert.Equal(t, int32(45), result.ActiveSellers)
+	assert.Equal(t, int32(62), result.ActiveBuyers)
+	assert.True(t, result.LastUpdated.IsSet())
+}
+
+func TestEconomyHandler_GetEconomyOverview_DatabaseError(t *testing.T) {
+	handler, mock := setupTestHandler()
+	defer mock.ExpectClose()
+
+	// Setup mock to return error
+	mock.ExpectQuery("SELECT (.+) FROM active_trades WHERE status = 'active' AND created_at >= NOW\\(\\) - INTERVAL '24 hours'").
+		WillReturnError(sql.ErrNoRows)
+
+	// Create test request
+	req := httptest.NewRequest("GET", "/economy/overview", nil)
+	w := httptest.NewRecorder()
+
+	// Execute
+	result, err := handler.GetEconomyOverview(w, req, api.GetEconomyOverviewParams{})
+
+	// Verify
+	assert.Error(t, err)
+	assert.Nil(t, result)
+}
+
+func TestEconomyHandler_GetCharacterInventory_Success(t *testing.T) {
+	handler, mock := setupTestHandler()
+	defer mock.ExpectClose()
+
+	characterID := uuid.New()
+	itemID1 := uuid.New()
+	itemID2 := uuid.New()
+	createdAt := time.Now()
+	updatedAt := time.Now()
+
+	// Setup mock expectations
+	rows := sqlmock.NewRows([]string{"item_id", "name", "quantity", "item_type", "rarity", "value", "created_at", "updated_at"}).
+		AddRow(itemID1, "Steel Sword", 1, "weapon", "common", 150.0, createdAt, updatedAt).
+		AddRow(itemID2, "Health Potion", 5, "consumable", "common", 25.0, createdAt, updatedAt)
+
+	mock.ExpectQuery("SELECT (.+) FROM character_inventory (.+) WHERE (.+) character_id = \\$1").
+		WithArgs(characterID).
+		WillReturnRows(rows)
+
+	// Create test request
+	req := httptest.NewRequest("GET", "/characters/"+characterID.String()+"/inventory", nil)
+	w := httptest.NewRecorder()
+
+	params := api.GetCharacterInventoryParams{
+		CharacterID: characterID,
+	}
+
+	// Execute
+	result, err := handler.GetCharacterInventory(w, req, params)
+
+	// Verify
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, characterID, result.CharacterID)
+	assert.Len(t, result.Items, 2)
+	assert.Equal(t, 2, result.TotalItems)
+	assert.True(t, result.LastUpdated.IsSet())
+
+	// Check first item
+	assert.Equal(t, itemID1, result.Items[0].ItemID)
+	assert.Equal(t, "Steel Sword", result.Items[0].Name)
+	assert.Equal(t, int32(1), result.Items[0].Quantity)
+	assert.Equal(t, "weapon", result.Items[0].ItemType)
+	assert.Equal(t, "common", result.Items[0].Rarity)
+	assert.Equal(t, 150.0, result.Items[0].Value)
+}
+
+func TestEconomyHandler_GetCharacterInventory_Empty(t *testing.T) {
+	handler, mock := setupTestHandler()
+	defer mock.ExpectClose()
+
+	characterID := uuid.New()
+
+	// Setup mock to return empty result
+	mock.ExpectQuery("SELECT (.+) FROM character_inventory (.+) WHERE (.+) character_id = \\$1").
+		WithArgs(characterID).
+		WillReturnRows(sqlmock.NewRows([]string{}))
+
+	// Create test request
+	req := httptest.NewRequest("GET", "/characters/"+characterID.String()+"/inventory", nil)
+	w := httptest.NewRecorder()
+
+	params := api.GetCharacterInventoryParams{
+		CharacterID: characterID,
+	}
+
+	// Execute
+	result, err := handler.GetCharacterInventory(w, req, params)
+
+	// Verify
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, characterID, result.CharacterID)
+	assert.Empty(t, result.Items)
+	assert.Equal(t, 0, result.TotalItems)
+	assert.True(t, result.LastUpdated.IsSet())
+}
+
+func TestEconomyHandler_CreateTrade_Success(t *testing.T) {
+	handler, mock := setupTestHandler()
+	defer mock.ExpectClose()
+
+	sellerID := uuid.New()
+	itemID := uuid.New()
+
+	// Setup mock expectations
+	mock.ExpectBegin()
+
+	// Check inventory availability
+	mock.ExpectQuery("SELECT quantity FROM character_inventory WHERE character_id = \\$1 AND item_id = \\$2").
+		WithArgs(sellerID, itemID).
+		WillReturnRows(sqlmock.NewRows([]string{"quantity"}).AddRow(10))
+
+	// Insert trade
+	mock.ExpectExec("INSERT INTO active_trades").
+		WithArgs(sqlmock.AnyArg(), sellerID, itemID, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// Update inventory
+	mock.ExpectExec("UPDATE character_inventory SET quantity = quantity - \\$1 WHERE character_id = \\$2 AND item_id = \\$3").
+		WithArgs(3, sellerID, itemID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	mock.ExpectCommit()
+
+	// Create test request
+	req := httptest.NewRequest("POST", "/trades", nil)
+	w := httptest.NewRecorder()
+
+	request := &api.CreateTradeRequest{
+		SellerID:     sellerID,
+		ItemID:       itemID,
+		Quantity:     3,
+		PricePerUnit: 100.0,
+		TradeType:    "direct",
+	}
+
+	// Execute
+	result, err := handler.CreateTrade(w, req, request)
+
+	// Verify
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.NotEqual(t, uuid.Nil, result.TradeID)
+	assert.Equal(t, sellerID, result.SellerID)
+	assert.Equal(t, itemID, result.ItemID)
+	assert.Equal(t, 3, result.Quantity)
+	assert.Equal(t, 100.0, result.PricePerUnit)
+	assert.Equal(t, 300.0, result.TotalPrice)
+	assert.Equal(t, "active", result.Status)
+}
+
+func TestEconomyHandler_CreateTrade_InsufficientInventory(t *testing.T) {
+	handler, mock := setupTestHandler()
+	defer mock.ExpectClose()
+
+	sellerID := uuid.New()
+	itemID := uuid.New()
+
+	// Setup mock expectations
+	mock.ExpectBegin()
+
+	// Check inventory - insufficient quantity
+	mock.ExpectQuery("SELECT quantity FROM character_inventory WHERE character_id = \\$1 AND item_id = \\$2").
+		WithArgs(sellerID, itemID).
+		WillReturnRows(sqlmock.NewRows([]string{"quantity"}).AddRow(2)) // Only 2 items, but want to trade 5
+
+	mock.ExpectRollback()
+
+	// Create test request
+	req := httptest.NewRequest("POST", "/trades", nil)
+	w := httptest.NewRecorder()
+
+	request := &api.CreateTradeRequest{
+		SellerID:     sellerID,
+		ItemID:       itemID,
+		Quantity:     5, // Want 5, but only have 2
+		PricePerUnit: 100.0,
+		TradeType:    "direct",
+	}
+
+	// Execute
+	result, err := handler.CreateTrade(w, req, request)
+
+	// Verify
+	assert.Error(t, err)
+	assert.Nil(t, result)
+}
+
 // Integration test for full trade workflow
 func TestEconomyHandler_Integration_TradeWorkflow(t *testing.T) {
 	handler, mock := setupTestHandler()

@@ -90,9 +90,18 @@ func (s *Service) GetGameAnalyticsOverview(ctx context.Context, period string) (
 
 // GetPlayerBehaviorAnalytics retrieves detailed player behavior analytics
 func (s *Service) GetPlayerBehaviorAnalytics(ctx context.Context, params api.GetPlayerBehaviorAnalyticsParams) (*models.PlayerBehaviorAnalytics, error) {
+	period := "24h"
+	if params.Period.IsSet() {
+		period = string(params.Period.Value)
+	}
+	segment := "all"
+	if params.Segment.IsSet() {
+		segment = string(params.Segment.Value)
+	}
+
 	s.logger.Info("Processing player behavior analytics request",
-		zap.String("period", params.Period),
-		zap.String("segment", params.Segment))
+		zap.String("period", period),
+		zap.String("segment", segment))
 
 	queryCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
