@@ -41,6 +41,14 @@ class ConceptType(Enum):
     LORE = "lore"
     SYSTEM = "system"
     EVENT = "event"
+    FACTION = "faction"
+    ITEM = "item"
+    WEAPON = "weapon"
+    VEHICLE = "vehicle"
+    CYBERWARE = "cyberware"
+    CORPORATION = "corporation"
+    MISSION = "mission"
+    DIALOGUE = "dialogue"
 
 
 class GenerationPriority(Enum):
@@ -92,8 +100,8 @@ class ConceptValidator:
     SOLID: Single Responsibility - валидация концепций
     """
 
-    def __init__(self, logger: Logger):
-        self.logger = logger
+    def __init__(self, logger_manager: Logger):
+        self.logger = logger_manager.create_script_logger("concept_validator")
         self.validation_rules = self._load_validation_rules()
 
     def _load_validation_rules(self) -> Dict[str, Any]:
@@ -226,9 +234,9 @@ class ConceptGenerator:
     SOLID: Single Responsibility - генерация концепций
     """
 
-    def __init__(self, validator: ConceptValidator, logger: Logger):
+    def __init__(self, validator: ConceptValidator, logger_manager: Logger):
         self.validator = validator
-        self.logger = logger
+        self.logger = logger_manager.create_script_logger("concept_generator")
         self.templates = self._load_templates()
         self.generation_cache = {}
         self.executor = ThreadPoolExecutor(max_workers=4)
@@ -252,7 +260,7 @@ class ConceptGenerator:
                     template = ConceptTemplate(**data)
                     templates[template.name] = template
             except Exception as e:
-                self.logger.error(f"Failed to load template {template_file}: {e}")
+                logger.error(f"Failed to load template {template_file}: {e}")
 
         return templates
 
@@ -427,6 +435,55 @@ class ConceptGenerator:
             content["identity"]["name"] = request.theme
             content["identity"]["background"] = f"A character with a background in {request.theme.lower()}"
             content["personality"]["traits"] = ["determined", "mysterious", "resourceful"]
+        elif request.concept_type == ConceptType.FACTION:
+            content["organization"]["name"] = request.theme
+            content["organization"]["type"] = "faction"
+            content["organization"]["description"] = f"A faction focused on {request.theme.lower()}"
+            content["influence"]["territory"] = ["Night City", "Badlands"]
+            content["structure"]["hierarchy"] = ["leader", "lieutenants", "members"]
+        elif request.concept_type == ConceptType.ITEM:
+            content["item"]["name"] = request.theme
+            content["item"]["rarity"] = "uncommon"
+            content["item"]["description"] = f"An item with {request.theme.lower()} properties"
+            content["stats"]["value"] = 500
+            content["usage"]["requirements"] = ["Level 10", "Tech skill"]
+        elif request.concept_type == ConceptType.WEAPON:
+            content["weapon"]["name"] = request.theme
+            content["weapon"]["type"] = "cybernetic"
+            content["weapon"]["description"] = f"A weapon featuring {request.theme.lower()} technology"
+            content["combat"]["damage"] = 85
+            content["combat"]["fire_rate"] = 600
+            content["mods"]["slots"] = 3
+        elif request.concept_type == ConceptType.VEHICLE:
+            content["vehicle"]["name"] = request.theme
+            content["vehicle"]["type"] = "ground"
+            content["vehicle"]["description"] = f"A vehicle designed for {request.theme.lower()}"
+            content["performance"]["speed"] = 180
+            content["performance"]["armor"] = 75
+            content["mods"]["cyberware_slots"] = 4
+        elif request.concept_type == ConceptType.CYBERWARE:
+            content["cyberware"]["name"] = request.theme
+            content["cyberware"]["type"] = "implant"
+            content["cyberware"]["description"] = f"Cyberware that enhances {request.theme.lower()} abilities"
+            content["effects"]["stat_boost"] = "+20% efficiency"
+            content["risks"]["side_effects"] = ["neural feedback", "compatibility issues"]
+        elif request.concept_type == ConceptType.CORPORATION:
+            content["corporation"]["name"] = request.theme
+            content["corporation"]["industry"] = "technology"
+            content["corporation"]["description"] = f"A corporation specializing in {request.theme.lower()}"
+            content["structure"]["divisions"] = ["R&D", "Security", "Operations"]
+            content["influence"]["market_share"] = "15%"
+        elif request.concept_type == ConceptType.MISSION:
+            content["mission"]["title"] = request.theme
+            content["mission"]["type"] = "contract"
+            content["mission"]["description"] = f"A mission involving {request.theme.lower()}"
+            content["objectives"]["primary"] = f"Complete the {request.theme.lower()} objective"
+            content["rewards"]["payment"] = 2500
+        elif request.concept_type == ConceptType.DIALOGUE:
+            content["dialogue"]["speaker"] = request.theme
+            content["dialogue"]["context"] = f"A conversation about {request.theme.lower()}"
+            content["lines"]["opening"] = f"What do you know about {request.theme.lower()}?"
+            content["branches"]["options"] = ["Tell me more", "I'm not interested", "What's in it for me?"]
 
         # Имитация асинхронной генерации
         await asyncio.sleep(0.2)
@@ -479,12 +536,12 @@ class ConceptDirectorAutomation:
     SOLID: Single Responsibility - оркестрация процесса генерации концепций
     """
 
-    def __init__(self, config: ConfigManager, logger: Logger):
+    def __init__(self, config: ConfigManager, logger_manager: Logger):
         self.config = config
-        self.logger = logger
+        self.logger = logger_manager.create_script_logger("concept_director")
 
-        self.validator = ConceptValidator(logger)
-        self.generator = ConceptGenerator(self.validator, logger)
+        self.validator = ConceptValidator(logger_manager)
+        self.generator = ConceptGenerator(self.validator, logger_manager)
 
         self.active_requests = {}
         self.completed_concepts = {}
@@ -634,12 +691,14 @@ async def main():
     """Основная функция для демонстрации работы системы"""
     # Инициализация компонентов
     config = ConfigManager()
-    logger = Logger()
+    logger_manager = Logger(config)
+    logger_manager.configure()
+    logger = logger_manager.create_script_logger("concept_director")
     command_runner = CommandRunner(logger)
     file_manager = FileManager(logger)
 
     # Создание системы автоматизации
-    automation = ConceptDirectorAutomation(config, logger)
+    automation = ConceptDirectorAutomation(config, logger_manager)
 
     # Примеры запросов на генерацию
     sample_requests = [
@@ -660,6 +719,30 @@ async def main():
             theme="Underground Market",
             context={"district": "Watson", "atmosphere": "chaotic"},
             priority=GenerationPriority.LOW
+        ),
+        GenerationRequest(
+            concept_type=ConceptType.FACTION,
+            theme="Maelstrom Gang",
+            context={"territory": "Badlands", "specialization": "combat"},
+            priority=GenerationPriority.HIGH
+        ),
+        GenerationRequest(
+            concept_type=ConceptType.WEAPON,
+            theme="Monowire Whip",
+            context={"damage_type": "slashing", "rarity": "epic"},
+            priority=GenerationPriority.MEDIUM
+        ),
+        GenerationRequest(
+            concept_type=ConceptType.CYBERWARE,
+            theme="Sandevistan",
+            context={"effect": "time_dilation", "risk_level": "high"},
+            priority=GenerationPriority.CRITICAL
+        ),
+        GenerationRequest(
+            concept_type=ConceptType.CORPORATION,
+            theme="Arasaka Corp",
+            context={"industry": "weapons", "headquarters": "Japan"},
+            priority=GenerationPriority.HIGH
         )
     ]
 
