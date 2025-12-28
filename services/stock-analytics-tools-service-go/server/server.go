@@ -5,6 +5,7 @@ package server
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -115,7 +116,7 @@ func (s *Server) GetTechnicalAnalysis(ctx context.Context, req api.GetTechnicalA
 }
 
 // OptimizePortfolio implements portfolio optimization endpoint
-func (s *Server) OptimizePortfolio(ctx context.Context, req *api.PortfolioOptimizationRequest) (*api.PortfolioOptimizationResponse, error) {
+func (s *Server) OptimizePortfolio(ctx context.Context, req *api.PortfolioOptimizationRequest) (api.OptimizePortfolioRes, error) {
 	// Mock implementation
 	allocations := []api.AssetAllocation{}
 	for _, symbol := range req.Symbols {
@@ -154,7 +155,7 @@ func (s *Server) AssessRisk(ctx context.Context, req *api.RiskAssessmentRequest)
 }
 
 // PredictPrice implements price prediction endpoint
-func (s *Server) PredictPrice(ctx context.Context, req api.PredictPriceParams) (*api.PricePrediction, error) {
+func (s *Server) PredictPrice(ctx context.Context, req api.PredictPriceParams) (api.PredictPriceRes, error) {
 	// Mock implementation
 	predictions := []api.PricePredictionPoint{}
 	for i := 1; i <= 30; i++ {
@@ -179,7 +180,7 @@ func (s *Server) PredictPrice(ctx context.Context, req api.PredictPriceParams) (
 }
 
 // BacktestStrategy implements strategy backtesting endpoint
-func (s *Server) BacktestStrategy(ctx context.Context, req *api.BacktestingRequest) (*api.BacktestingResponse, error) {
+func (s *Server) BacktestStrategy(ctx context.Context, req *api.BacktestingRequest) (api.BacktestStrategyRes, error) {
 	// Mock implementation
 	performanceMetrics := &api.PerformanceMetrics{
 		TotalReturn:      api.OptFloat32{Value: 0.25, Set: true},
@@ -191,8 +192,8 @@ func (s *Server) BacktestStrategy(ctx context.Context, req *api.BacktestingReque
 		ProfitFactor:     api.OptFloat32{Value: 1.35, Set: true},
 	}
 
-	startDate, _ := time.Parse("2006-01-02", req.StartDate)
-	endDate, _ := time.Parse("2006-01-02", req.EndDate)
+	startDate := req.StartDate
+	endDate := req.EndDate
 
 	return &api.BacktestingResponse{
 		StrategyName:       req.Strategy.Name,
@@ -207,7 +208,7 @@ func (s *Server) BacktestStrategy(ctx context.Context, req *api.BacktestingReque
 }
 
 // GetCorrelations implements correlations analysis endpoint
-func (s *Server) GetCorrelations(ctx context.Context, req api.GetCorrelationsParams) (*api.CorrelationAnalysis, error) {
+func (s *Server) GetCorrelations(ctx context.Context, req api.GetCorrelationsParams) (api.GetCorrelationsRes, error) {
 	// Mock implementation
 	matrix := [][]float32{}
 	averageCorrelations := make(map[string]float64)
@@ -225,7 +226,7 @@ func (s *Server) GetCorrelations(ctx context.Context, req api.GetCorrelationsPar
 }
 
 // GetVolatilityAnalysis implements volatility analysis endpoint
-func (s *Server) GetVolatilityAnalysis(ctx context.Context, req api.GetVolatilityAnalysisParams) (*api.VolatilityAnalysis, error) {
+func (s *Server) GetVolatilityAnalysis(ctx context.Context, req api.GetVolatilityAnalysisParams) (api.GetVolatilityAnalysisRes, error) {
 	// Mock implementation
 	return &api.VolatilityAnalysis{
 		Symbol:              api.OptString{Value: req.Symbol, Set: true},
@@ -241,6 +242,39 @@ func (s *Server) GetVolatilityAnalysis(ctx context.Context, req api.GetVolatilit
 			ModelFit: api.OptFloat32{Value: 0.89, Set: true},
 		}, Set: true},
 	}, nil
+}
+
+// HealthCheck implements health check endpoint
+func (s *Server) HealthCheck(ctx context.Context) (*api.HealthCheckOK, error) {
+	return &api.HealthCheckOK{
+		Status:    api.OptString{Value: "healthy", Set: true},
+		Service:   api.OptString{Value: "stock-analytics-tools-service", Set: true},
+		Timestamp: api.OptDateTime{Value: time.Now(), Set: true},
+	}, nil
+}
+
+// ReadinessCheck implements readiness check endpoint
+func (s *Server) ReadinessCheck(ctx context.Context) (*api.ReadinessCheckOK, error) {
+	return &api.ReadinessCheckOK{
+		Status: api.OptString{Value: "ready", Set: true},
+	}, nil
+}
+
+// Metrics implements metrics endpoint
+func (s *Server) Metrics(ctx context.Context) (api.MetricsOK, error) {
+	return `# Stock Analytics Tools Service Metrics
+# HELP stock_fundamental_analysis_total Total number of fundamental analysis requests
+# TYPE stock_fundamental_analysis_total counter
+stock_fundamental_analysis_total 0
+
+# HELP stock_technical_analysis_total Total number of technical analysis requests
+# TYPE stock_technical_analysis_total counter
+stock_technical_analysis_total 0
+
+# HELP stock_portfolio_optimizations_total Total number of portfolio optimizations
+# TYPE stock_portfolio_optimizations_total counter
+stock_portfolio_optimizations_total 0
+`, nil
 }
 
 // Issue: #141889238

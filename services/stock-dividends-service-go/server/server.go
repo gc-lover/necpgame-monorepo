@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -35,9 +34,7 @@ type Server struct {
 	config         Config
 
 	// PERFORMANCE: Specialized pools for dividend objects
-	dividendPool      sync.Pool
-	paymentPool       sync.Pool
-	schedulePool      sync.Pool
+	// TODO: Add dividend-specific object pools when API schemas are defined
 
 	// Dividend processing engines
 	dividendCalculator *DividendCalculator
@@ -61,16 +58,7 @@ func NewServer(db *pgxpool.Pool, logger *zap.Logger, tokenAuth interface{}, conf
 		paymentSemaphore: make(chan struct{}, config.MaxConcurrentPayments),
 	}
 
-	// Initialize memory pools for hot path dividend objects
-	s.dividendPool.New = func() any {
-		return &api.DividendInfo{}
-	}
-	s.paymentPool.New = func() any {
-		return &api.PaymentResponse{}
-	}
-	s.schedulePool.New = func() any {
-		return &api.DividendSchedule{}
-	}
+	// TODO: Initialize memory pools when API schemas are defined
 
 	// Initialize dividend processing engines
 	s.dividendCalculator = NewDividendCalculator(db, logger)

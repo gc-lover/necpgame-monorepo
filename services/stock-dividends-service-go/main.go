@@ -70,7 +70,14 @@ func main() {
 	tokenAuth := jwtauth.New("HS256", []byte(cfg.JWTSecret), nil)
 
 	// Initialize server with optimized handlers for dividend calculations
-	srv := server.NewServer(db, logger, tokenAuth, cfg)
+	serverCfg := server.Config{
+		DividendBatchSize:      cfg.DividendBatchSize,
+		PaymentProcessingDelay: cfg.PaymentProcessingDelay,
+		MaxConcurrentPayments:  cfg.MaxConcurrentPayments,
+		CacheTTL:               cfg.CacheTTL,
+		RedisURL:               cfg.RedisURL,
+	}
+	srv := server.NewServer(db, logger, tokenAuth, serverCfg)
 
 	// Create router with ogen handlers wrapped in middleware
 	ogenHandler := srv.CreateRouter()
