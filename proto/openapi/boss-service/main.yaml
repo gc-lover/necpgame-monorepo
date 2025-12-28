@@ -75,17 +75,9 @@ components:
         **Token Expiry:** 15 minutes for access tokens, 7 days for refresh tokens
         '
   schemas:
-    # Common schemas from common.yaml
-    BaseEntity:
-      $ref: '../common/schemas/common.yaml#/components/schemas/BaseEntity'
-    AuditableEntity:
-      $ref: '../common/schemas/common.yaml#/components/schemas/AuditableEntity'
-    VersionedEntity:
-      $ref: '../common/schemas/common.yaml#/components/schemas/VersionedEntity'
-    ErrorResponse:
-      $ref: '../common/responses/error.yaml#/components/schemas/ErrorResponse'
-    SuccessResponse:
-      $ref: '../common/responses/success.yaml#/components/schemas/SuccessResponse'
+    # Common schemas
+    Error:
+      $ref: '../common/schemas/error.yaml#/Error'
 
     # Boss-specific schemas
     WorldBoss:
@@ -433,11 +425,7 @@ paths:
                   - timestamp
                   - version
         "503":
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/InternalServerError'
 
   /bosses/active:
     get:
@@ -486,14 +474,15 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/WorldBoss'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorldBoss'
                       total:
                         type: integer
                       filters:
@@ -506,9 +495,9 @@ paths:
                           zoneId:
                             type: string
         "400":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/NotFound'
         "401":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/NotFound'
 
   /bosses/{boss_id}/encounter:
     post:
@@ -562,22 +551,19 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/BossEncounter'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/BossEncounter'
         "400":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/NotFound'
         "401":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/NotFound'
         "409":
-          description: Boss not available or already in encounter
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/Conflict'
 
   /encounters/{encounter_id}:
     get:
@@ -613,15 +599,16 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        allOf:
-                          - $ref: '#/components/schemas/BossEncounter'
-                          - type: object
-                            properties:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    allOf:
+                      - $ref: '#/components/schemas/BossEncounter'
+                      - type: object
+                        properties:
                               telemetry:
                                 type: object
                                 description: Real-time encounter telemetry (if requested)
@@ -643,7 +630,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '../common/responses/error.yaml#/NotFound'
 
   /encounters/{encounter_id}/join:
     post:
@@ -686,36 +673,37 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
                     properties:
-                      data:
-                        type: object
-                        properties:
-                          encounterId:
-                            type: string
-                            format: uuid
-                          participantId:
-                            type: string
-                            format: uuid
-                          joinTime:
-                            type: string
-                            format: date-time
+                      encounterId:
+                        type: string
+                        format: uuid
+                      participantId:
+                        type: string
+                        format: uuid
+                      joinTime:
+                        type: string
+                        format: date-time
         "400":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/NotFound'
         "404":
           description: Encounter not found or not joinable
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '../common/responses/error.yaml#/NotFound'
         "409":
           description: Character already participating or encounter full
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '../common/responses/error.yaml#/NotFound'
 
   /encounters/{encounter_id}/rewards:
     get:
@@ -753,18 +741,19 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
                     properties:
-                      data:
-                        type: object
-                        properties:
-                          availableRewards:
-                            type: array
-                            items:
-                              $ref: '#/components/schemas/BossReward'
-                          claimedRewards:
+                      availableRewards:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BossReward'
+                      claimedRewards:
                             type: array
                             items:
                               type: object
@@ -774,7 +763,7 @@ paths:
                                 claimedAt:
                                   type: string
                                   format: date-time
-                          participation:
+                      participation:
                             type: object
                             properties:
                               damageDealt:
@@ -792,7 +781,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '../common/responses/error.yaml#/NotFound'
 
   /champions/elite/active:
     get:
@@ -828,25 +817,26 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          allOf:
-                            - $ref: '#/components/schemas/WorldBoss'
-                            - type: object
-                              properties:
-                                eliteModifiers:
-                                  $ref: '#/components/schemas/EliteChampion'
-                      total:
-                        type: integer
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/WorldBoss'
+                        - type: object
+                          properties:
+                            eliteModifiers:
+                              $ref: '#/components/schemas/EliteChampion'
+                  total:
+                    type: integer
         "400":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/NotFound'
         "401":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/NotFound'
 
   /telemetry/encounters/{encounter_id}/stream:
     get:
@@ -887,12 +877,12 @@ paths:
               schema:
                 type: string
         "400":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/NotFound'
         "401":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/NotFound'
         "404":
           description: Encounter not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '../common/responses/error.yaml#/NotFound'

@@ -78,17 +78,9 @@ components:
         **Token Expiry:** 15 minutes for access tokens, 7 days for refresh tokens
         '
   schemas:
-    # Common schemas from common.yaml
-    BaseEntity:
-      $ref: '../common/schemas/common.yaml#/components/schemas/BaseEntity'
-    AuditableEntity:
-      $ref: '../common/schemas/common.yaml#/components/schemas/AuditableEntity'
-    VersionedEntity:
-      $ref: '../common/schemas/common.yaml#/components/schemas/VersionedEntity'
-    ErrorResponse:
-      $ref: '../common/responses/error.yaml#/components/schemas/ErrorResponse'
-    SuccessResponse:
-      $ref: '../common/responses/success.yaml#/components/schemas/SuccessResponse'
+    # Common schemas
+    Error:
+      $ref: '../common/schemas/error.yaml#/Error'
 
     # Component-specific schemas
     CombatWave:
@@ -456,11 +448,7 @@ paths:
                   - timestamp
                   - version
         "503":
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/InternalServerError'
 
   /combat/waves:
     get:
@@ -503,18 +491,19 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/CombatWave'
-                      total:
-                        type: integer
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CombatWave'
+                  total:
+                    type: integer
         "401":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/BadRequest'
 
   /affixes/active:
     get:
@@ -555,19 +544,20 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/GameplayAffix'
-                      context:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GameplayAffix'
+                  context:
                         type: object
                         description: Context information for applied affixes
         "401":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/BadRequest'
 
   /challenges/cooperative/active:
     get:
@@ -603,24 +593,25 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/CooperativeChallenge'
-                      available:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CooperativeChallenge'
+                  available:
                         type: array
                         items:
                           type: string
                           format: uuid
                         description: Challenge IDs the character can join
         "400":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/BadRequest'
         "401":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/BadRequest'
 
   /difficulty/rate:
     post:
@@ -692,16 +683,17 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/DifficultyRating'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DifficultyRating'
         "400":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/BadRequest'
         "401":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/BadRequest'
 
   /world/state:
     get:
@@ -743,14 +735,15 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/WorldState'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/WorldState'
         "401":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/BadRequest'
 
   /modes/challenge:
     get:
@@ -792,13 +785,14 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
                           type: object
                           properties:
                             modeId:
@@ -830,6 +824,6 @@ paths:
                             - type
                             - unlocked
         "400":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/BadRequest'
         "401":
-          $ref: '#/components/schemas/ErrorResponse'
+          $ref: '../common/responses/error.yaml#/BadRequest'
