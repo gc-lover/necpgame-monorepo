@@ -26,6 +26,11 @@ type ClanWarRepositoryInterface interface {
 
 	GetTerritoryByID(ctx context.Context, territoryID uuid.UUID) (*Territory, error)
 	ListTerritories(ctx context.Context, limit, offset int) ([]*Territory, error)
+
+	// Additional methods for extended testing
+	GetWarByIDWithBattles(ctx context.Context, warID uuid.UUID) (*ClanWar, []*Battle, error)
+	GetActiveWarsByClan(ctx context.Context, clanID uuid.UUID) ([]*ClanWar, error)
+	GetWarStatistics(ctx context.Context, warID uuid.UUID) (*WarStatistics, error)
 }
 
 // ClanWarRepository handles database operations for clan wars

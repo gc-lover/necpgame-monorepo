@@ -28,6 +28,11 @@ type ClanWarServiceInterface interface {
 
 	GetTerritory(ctx context.Context, territoryID uuid.UUID) (*Territory, error)
 	ListTerritories(ctx context.Context, limit, offset int) ([]*Territory, error)
+
+	// Additional methods for extended testing
+	GetWarWithDetails(ctx context.Context, warID uuid.UUID) (*ClanWar, []*Battle, error)
+	GetActiveWarsByClan(ctx context.Context, clanID uuid.UUID) ([]*ClanWar, error)
+	GetWarStatistics(ctx context.Context, warID uuid.UUID) (*WarStatistics, error)
 }
 
 // ClanWarService contains business logic for clan wars
@@ -443,4 +448,58 @@ func (s *ClanWarService) ListTerritories(ctx context.Context, limit, offset int)
 	}
 
 	return territories, nil
+}
+
+// GetWarWithDetails retrieves war information along with its battles
+func (s *ClanWarService) GetWarWithDetails(ctx context.Context, warID uuid.UUID) (*ClanWar, []*Battle, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, nil, err
+	}
+	if warID == uuid.Nil {
+		return nil, nil, errors.New("invalid war ID")
+	}
+
+	war, battles, err := s.repo.GetWarByIDWithBattles(ctx, warID)
+	if err != nil {
+		s.logger.Error("Failed to get war with details", zap.Error(err), zap.String("war_id", warID.String()))
+		return nil, nil, fmt.Errorf("failed to get war with details: %w", err)
+	}
+	if war == nil {
+		return nil, nil, errors.New("war not found")
+	}
+	return war, battles, nil
+}
+
+// GetActiveWarsByClan retrieves all active wars for a given clan
+func (s *ClanWarService) GetActiveWarsByClan(ctx context.Context, clanID uuid.UUID) ([]*ClanWar, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if clanID == uuid.Nil {
+		return nil, errors.New("invalid clan ID")
+	}
+
+	wars, err := s.repo.GetActiveWarsByClan(ctx, clanID)
+	if err != nil {
+		s.logger.Error("Failed to get active wars by clan", zap.Error(err), zap.String("clan_id", clanID.String()))
+		return nil, fmt.Errorf("failed to get active wars by clan: %w", err)
+	}
+	return wars, nil
+}
+
+// GetWarStatistics retrieves statistics for a specific war
+func (s *ClanWarService) GetWarStatistics(ctx context.Context, warID uuid.UUID) (*WarStatistics, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if warID == uuid.Nil {
+		return nil, errors.New("invalid war ID")
+	}
+
+	stats, err := s.repo.GetWarStatistics(ctx, warID)
+	if err != nil {
+		s.logger.Error("Failed to get war statistics", zap.Error(err), zap.String("war_id", warID.String()))
+		return nil, fmt.Errorf("failed to get war statistics: %w", err)
+	}
+	return stats, nil
 }
