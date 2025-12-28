@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/pkg/api"
+	"support-service-go/pkg/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
