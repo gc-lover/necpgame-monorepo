@@ -1,0 +1,61 @@
+openapi: 3.0.3
+info:
+  title: Faction Service API
+  description: Enterprise-grade API for Faction Management
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+  license:
+    name: MIT
+
+servers:
+- url: https://api.necpgame.com/v1/faction
+  description: Production server
+- url: http://localhost:8080/api/v1/faction
+  description: Local development server
+
+security:
+- BearerAuth: []
+
+tags:
+- name: Faction Management
+  description: Core faction operations
+
+paths:
+  /health:
+    get:
+      operationId: factionServiceHealthCheck
+      summary: Faction Service Health Check
+      tags:
+        - Health Monitoring
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+      required:
+        - status
+        - timestamp
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

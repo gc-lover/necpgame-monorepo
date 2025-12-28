@@ -1,0 +1,320 @@
+openapi: 3.0.3
+info:
+  title: Corporation Service API
+  description: Enterprise-grade API for Corporation Management
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+  license:
+    name: MIT
+
+servers:
+- url: https://api.necpgame.com/v1/corporation
+  description: Production server
+- url: http://localhost:8080/api/v1/corporation
+  description: Local development server
+
+security:
+- BearerAuth: []
+
+tags:
+- name: Corporation Management
+  description: Core corporation operations
+
+paths:
+  /health:
+    get:
+      operationId: corporationServiceHealthCheck
+      summary: Corporation Service Health Check
+      tags:
+        - Health Monitoring
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/corporations:
+    post:
+      operationId: createCorporation
+      summary: Create a new corporation
+      tags:
+        - Corporation Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCorporationRequest'
+      responses:
+        '201':
+          description: Corporation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Corporation'
+        '400':
+          description: Bad request
+
+    get:
+      operationId: listCorporations
+      summary: List corporations
+      tags:
+        - Corporation Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of corporations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CorporationList'
+
+  /api/v1/corporations/{corporationId}:
+    get:
+      operationId: getCorporation
+      summary: Get corporation details
+      tags:
+        - Corporation Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Corporation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Corporation'
+
+    put:
+      operationId: updateCorporation
+      summary: Update corporation
+      tags:
+        - Corporation Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCorporationRequest'
+      responses:
+        '200':
+          description: Corporation updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Corporation'
+
+    delete:
+      operationId: deleteCorporation
+      summary: Delete corporation
+      tags:
+        - Corporation Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: corporationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Corporation deleted
+
+components:
+  responses:
+    OK:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Operation completed"
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+      required:
+        - status
+        - timestamp
+
+    Corporation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 3
+          maxLength: 255
+        registration_number:
+          type: string
+          pattern: '^[A-Z]{2}\d{8}$'
+        official_activity:
+          type: string
+          maxLength: 100
+        status:
+          $ref: '#/components/schemas/CorporationStatus'
+        capital:
+          type: number
+          format: decimal
+          minimum: 0
+        registered_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - guild_id
+        - name
+        - registration_number
+        - official_activity
+        - status
+        - capital
+        - created_at
+        - updated_at
+
+    CreateCorporationRequest:
+      type: object
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 3
+          maxLength: 255
+          pattern: '^[a-zA-Z0-9\s\-_\.]+$'
+        official_activity:
+          type: string
+          minLength: 10
+          maxLength: 100
+        capital:
+          type: number
+          format: decimal
+          minimum: 0
+      required:
+        - guild_id
+        - name
+        - official_activity
+
+    UpdateCorporationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 255
+          pattern: '^[a-zA-Z0-9\s\-_\.]+$'
+        official_activity:
+          type: string
+          minLength: 10
+          maxLength: 100
+        capital:
+          type: number
+          format: decimal
+          minimum: 0
+        status:
+          $ref: '#/components/schemas/CorporationStatus'
+      example:
+        name: "Updated Corporation Name"
+        official_activity: "Updated business activity"
+        status: "active"
+
+    CorporationList:
+      type: object
+      properties:
+        corporations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Corporation'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              minimum: 1
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            total:
+              type: integer
+              minimum: 0
+            total_pages:
+              type: integer
+              minimum: 0
+
+    CorporationStatus:
+      type: string
+      enum:
+        - pending
+        - active
+        - suspended
+        - disbanded
+        - bankrupt
+        - merged
+      description: Current status of the corporation
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

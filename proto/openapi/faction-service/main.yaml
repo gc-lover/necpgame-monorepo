@@ -1,0 +1,334 @@
+openapi: 3.0.3
+info:
+  title: Faction Service API
+  description: Enterprise-grade API for Faction Management
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+  license:
+    name: MIT
+
+servers:
+- url: https://api.necpgame.com/v1/faction
+  description: Production server
+- url: http://localhost:8080/api/v1/faction
+  description: Local development server
+
+security:
+- BearerAuth: []
+
+tags:
+- name: Faction Management
+  description: Core faction operations
+
+paths:
+  /health:
+    get:
+      operationId: factionServiceHealthCheck
+      summary: Faction Service Health Check
+      tags:
+        - Health Monitoring
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/factions:
+    post:
+      operationId: createFaction
+      summary: Create a new faction
+      tags:
+        - Faction Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFactionRequest'
+      responses:
+        '201':
+          description: Faction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Faction'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+    get:
+      operationId: listFactions
+      summary: List factions
+      tags:
+        - Faction Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of factions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionList'
+
+  /api/v1/factions/{factionId}:
+    get:
+      operationId: getFaction
+      summary: Get faction details
+      tags:
+        - Faction Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Faction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Faction'
+        '404':
+          description: Faction not found
+
+    put:
+      operationId: updateFaction
+      summary: Update faction
+      tags:
+        - Faction Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFactionRequest'
+      responses:
+        '200':
+          description: Faction updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Faction'
+
+    delete:
+      operationId: deleteFaction
+      summary: Delete faction
+      tags:
+        - Faction Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Faction deleted
+
+components:
+  responses:
+    OK:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: "Operation completed"
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+      required:
+        - status
+        - timestamp
+
+    Faction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        type:
+          $ref: '#/components/schemas/FactionType'
+        status:
+          $ref: '#/components/schemas/FactionStatus'
+        leader_clan_id:
+          type: string
+          format: uuid
+        ideology:
+          type: string
+          maxLength: 1000
+        description:
+          type: string
+          maxLength: 2000
+        member_count:
+          type: integer
+          minimum: 0
+        clan_count:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - type
+        - status
+        - leader_clan_id
+        - member_count
+        - clan_count
+        - created_at
+        - updated_at
+
+    CreateFactionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          pattern: '^[a-zA-Z0-9\s\-_\.]+$'
+        type:
+          $ref: '#/components/schemas/FactionType'
+        leader_clan_id:
+          type: string
+          format: uuid
+        ideology:
+          type: string
+          maxLength: 1000
+        description:
+          type: string
+          maxLength: 2000
+      required:
+        - name
+        - type
+        - leader_clan_id
+
+    UpdateFactionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          pattern: '^[a-zA-Z0-9\s\-_\.]+$'
+        ideology:
+          type: string
+          maxLength: 1000
+        description:
+          type: string
+          maxLength: 2000
+        status:
+          $ref: '#/components/schemas/FactionStatus'
+      example:
+        name: "Updated Faction Name"
+        ideology: "New ideology"
+        status: "active"
+
+    FactionList:
+      type: object
+      properties:
+        factions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Faction'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              minimum: 1
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+            total:
+              type: integer
+              minimum: 0
+            total_pages:
+              type: integer
+              minimum: 0
+
+    FactionType:
+      type: string
+      enum:
+        - criminal_gang
+        - professional_guild
+        - political_movement
+        - corporate_alliance
+        - religious_sect
+        - scientific_org
+        - mercenary_company
+        - nomad_tribe
+      description: Type of faction determining its characteristics
+
+    FactionStatus:
+      type: string
+      enum:
+        - forming
+        - active
+        - suspended
+        - disbanded
+        - merged
+      description: Current status of the faction
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
