@@ -21,6 +21,7 @@ import (
 	"go.uber.org/zap"
 
 	"cyberspace-easter-eggs-service-go/internal/config"
+	"cyberspace-easter-eggs-service-go/internal/generated"
 	"cyberspace-easter-eggs-service-go/internal/handlers"
 	"cyberspace-easter-eggs-service-go/internal/metrics"
 	"cyberspace-easter-eggs-service-go/pkg/repository"
@@ -67,8 +68,17 @@ func main() {
 	// Initialize handlers
 	h := handlers.NewEasterEggsHandlers(svc, sugar, metricsCollector)
 
+	// Setup generated server
+	server := &generated.ServerInterfaceWrapper{
+		Handler: h,
+		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+			sugar.Errorf("API error: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		},
+	}
+
 	// Setup router
-	r := setupRouter(h)
+	r := setupRouter(server)
 
 	// Configure HTTP server with optimized settings
 	httpServer := &http.Server{
@@ -113,7 +123,7 @@ func main() {
 	sugar.Info("Server exited cleanly")
 }
 
-func setupRouter(h *handlers.EasterEggsHandlers) *chi.Mux {
+func setupRouter(server *generated.ServerInterfaceWrapper) *chi.Mux {
 	r := chi.NewRouter()
 
 	// PERFORMANCE: Optimized middleware stack
@@ -133,43 +143,11 @@ func setupRouter(h *handlers.EasterEggsHandlers) *chi.Mux {
 		MaxAge:           300,
 	}))
 
-	// Health check
-	r.Get("/health", h.HealthCheck)
+	// Use generated server for all routes
+	r.Mount("/", server)
 
-	// Metrics endpoint
+	// Metrics endpoint (keep separate)
 	r.Handle("/metrics", promhttp.Handler())
-
-	// API routes
-	r.Route("/api/v1", func(r chi.Router) {
-		// Easter egg discovery and interaction
-		r.Get("/easter-eggs", h.GetEasterEggs)
-		r.Get("/easter-eggs/{id}", h.GetEasterEgg)
-		r.Get("/easter-eggs/category/{category}", h.GetEasterEggsByCategory)
-		r.Get("/easter-eggs/difficulty/{difficulty}", h.GetEasterEggsByDifficulty)
-
-		// Player progress and discovery
-		r.Get("/players/{playerId}/progress", h.GetPlayerProgress)
-		r.Post("/players/{playerId}/easter-eggs/{eggId}/discover", h.DiscoverEasterEgg)
-		r.Get("/players/{playerId}/profile", h.GetPlayerProfile)
-
-		// Discovery attempts and hints
-		r.Get("/easter-eggs/{id}/hints", h.GetHintsForEasterEgg)
-		r.Post("/easter-eggs/{id}/attempt", h.RecordDiscoveryAttempt)
-
-		// Statistics and analytics
-		r.Get("/easter-eggs/{id}/stats", h.GetEasterEggStatistics)
-		r.Get("/stats/categories", h.GetCategoryStatistics)
-
-		// Events and challenges
-		r.Get("/challenges/active", h.GetActiveChallenges)
-		r.Get("/players/{playerId}/challenges/{challengeId}/progress", h.GetPlayerChallengeProgress)
-
-		// Administrative endpoints (would require auth in production)
-		r.Post("/admin/easter-eggs", h.CreateEasterEgg)
-		r.Put("/admin/easter-eggs/{id}", h.UpdateEasterEgg)
-		r.Delete("/admin/easter-eggs/{id}", h.DeleteEasterEgg)
-		r.Post("/admin/import", h.ImportEasterEggs)
-	})
 
 	return r
 }

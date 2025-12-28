@@ -4,8 +4,11 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -111,17 +114,26 @@ type ImportResult struct {
 
 // EasterEggsService implements EasterEggsServiceInterface
 type EasterEggsService struct {
-	repo     repository.RepositoryInterface
-	metrics  *metrics.Collector
-	logger   *zap.SugaredLogger
+	repo                   repository.RepositoryInterface
+	metrics                *metrics.Collector
+	logger                 *zap.SugaredLogger
+	httpClient             *http.Client
+	achievementServiceURL  string
 }
 
 // NewEasterEggsService creates a new easter eggs service
 func NewEasterEggsService(repo repository.RepositoryInterface, metrics *metrics.Collector, logger *zap.SugaredLogger) EasterEggsServiceInterface {
+	achievementURL := os.Getenv("ACHIEVEMENT_SERVICE_URL")
+	if achievementURL == "" {
+		achievementURL = "http://achievement-system-service-go:8080" // default
+	}
+
 	return &EasterEggsService{
-		repo:    repo,
-		metrics: metrics,
-		logger:  logger,
+		repo:                  repo,
+		metrics:               metrics,
+		logger:                logger,
+		httpClient:            &http.Client{Timeout: 5 * time.Second},
+		achievementServiceURL: achievementURL,
 	}
 }
 
@@ -263,6 +275,84 @@ func (s *EasterEggsService) GetPlayerProfile(ctx context.Context, playerID strin
 	return profile, nil
 }
 
+// unlockEasterEggAchievement calls achievement service to unlock easter egg achievement
+func (s *EasterEggsService) unlockEasterEggAchievement(ctx context.Context, playerID, easterEggID string) error {
+	achievementID := s.getAchievementIDForEasterEgg(easterEggID)
+	if achievementID == "" {
+		return nil // No achievement for this egg
+	}
+
+	// Convert playerID to UUID format if needed
+	playerUUID := fmt.Sprintf("player-%s", playerID) // Simple conversion for demo
+
+	requestBody := map[string]interface{}{
+		"achievement_id": achievementID,
+	}
+
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		s.logger.Warnf("Failed to marshal achievement request: %v", err)
+		return err
+	}
+
+	url := fmt.Sprintf("%s/api/v1/players/%s/achievements/unlock", s.achievementServiceURL, playerUUID)
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		s.logger.Warnf("Failed to create achievement request: %v", err)
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		s.logger.Warnf("Failed to call achievement service: %v", err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		s.logger.Warnf("Achievement service returned status: %d", resp.StatusCode)
+		return fmt.Errorf("achievement service error: %d", resp.StatusCode)
+	}
+
+	s.logger.Infof("Unlocked achievement %s for player %s", achievementID, playerID)
+	return nil
+}
+
+// getAchievementIDForEasterEgg maps easter egg ID to achievement ID
+func (s *EasterEggsService) getAchievementIDForEasterEgg(easterEggID string) string {
+	achievementMap := map[string]string{
+		"easter-egg-turing-ghost":              "550e8400-e29b-41d4-a716-446655440000",
+		"easter-egg-schrodinger-cat":           "550e8400-e29b-41d4-a716-446655440001",
+		"easter-egg-y2k-bug":                   "550e8400-e29b-41d4-a716-446655440002",
+		"easter-egg-matrix-loading-screen":     "550e8400-e29b-41d4-a716-446655440003",
+		"easter-egg-blockchain-pyramid":        "550e8400-e29b-41d4-a716-446655440004",
+		"easter-egg-netscape-dinosaur":         "550e8400-e29b-41d4-a716-446655440005",
+		"easter-egg-404-lore-not-found":        "550e8400-e29b-41d4-a716-446655440006",
+		"easter-egg-quantum-computer-mini-game":"550e8400-e29b-41d4-a716-446655440007",
+		"easter-egg-killer-virus-animation":    "550e8400-e29b-41d4-a716-446655440008",
+		"easter-egg-neural-dream-network":      "550e8400-e29b-41d4-a716-446655440009",
+		"easter-egg-shakespeare-online":        "550e8400-e29b-41d4-a716-446655440010",
+		"easter-egg-rockstar-2077":             "550e8400-e29b-41d4-a716-446655440011",
+		"easter-egg-forgotten-movies-theater": "550e8400-e29b-41d4-a716-446655440012",
+		"easter-egg-digital-artist-gallery":    "550e8400-e29b-41d4-a716-446655440013",
+		"easter-egg-philosophical-ai-debates":  "550e8400-e29b-41d4-a716-446655440014",
+		"easter-egg-dancing-robot":             "550e8400-e29b-41d4-a716-446655440015",
+		"easter-egg-living-books-library":      "550e8400-e29b-41d4-a716-446655440016",
+		"easter-egg-meme-museum":               "550e8400-e29b-41d4-a716-446655440017",
+		"easter-egg-virtual-poet":              "550e8400-e29b-41d4-a716-446655440018",
+		"easter-egg-historical-holograms":      "550e8400-e29b-41d4-a716-446655440019",
+		"easter-egg-roman-legion-network":      "550e8400-e29b-41d4-a716-446655440020",
+		"easter-egg-vikings-vr-exploration":    "550e8400-e29b-41d4-a716-446655440021",
+		"easter-egg-dinosaurs-online":          "550e8400-e29b-41d4-a716-446655440022",
+		"easter-egg-cat-quantum-box":           "550e8400-e29b-41d4-a716-446655440023",
+		"easter-egg-bug-coffee":                "550e8400-e29b-41d4-a716-446655440024",
+	}
+
+	return achievementMap[easterEggID]
+}
+
 // DiscoverEasterEgg handles the easter egg discovery process
 func (s *EasterEggsService) DiscoverEasterEgg(ctx context.Context, playerID, easterEggID string, attemptData map[string]interface{}) (*models.PlayerEasterEggProgress, error) {
 	s.metrics.IncrementRequests("DiscoverEasterEgg")
@@ -336,6 +426,12 @@ func (s *EasterEggsService) DiscoverEasterEgg(ctx context.Context, playerID, eas
 
 	if err := s.repo.CreateEasterEggEvent(ctx, event); err != nil {
 		s.logger.Warnf("Failed to create discovery event: %v", err)
+	}
+
+	// Unlock achievement for easter egg discovery
+	if err := s.unlockEasterEggAchievement(ctx, playerID, easterEggID); err != nil {
+		s.logger.Warnf("Failed to unlock achievement for easter egg %s: %v", easterEggID, err)
+		// Don't fail the whole operation if achievement unlock fails
 	}
 
 	s.logger.Infof("Player %s discovered easter egg %s", playerID, easterEggID)

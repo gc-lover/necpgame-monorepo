@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
+	"cyberspace-easter-eggs-service-go/internal/generated"
 	"cyberspace-easter-eggs-service-go/internal/metrics"
 	"cyberspace-easter-eggs-service-go/internal/service"
 	"cyberspace-easter-eggs-service-go/pkg/models"
@@ -24,6 +25,9 @@ type EasterEggsHandlers struct {
 	logger   *zap.SugaredLogger
 	metrics  *metrics.Collector
 }
+
+// Ensure EasterEggsHandlers implements generated.ServerInterface
+var _ generated.ServerInterface = (*EasterEggsHandlers)(nil)
 
 // NewEasterEggsHandlers creates new handlers instance
 func NewEasterEggsHandlers(svc service.EasterEggsServiceInterface, logger *zap.SugaredLogger, metrics *metrics.Collector) *EasterEggsHandlers {
@@ -557,4 +561,93 @@ func (h *EasterEggsHandlers) respondWithError(w http.ResponseWriter, status int,
 		"message": message,
 		"timestamp": time.Now().UTC().Format(time.RFC3339),
 	})
+}
+
+// GetEasterEggByID implements ServerInterface
+func (h *EasterEggsHandlers) GetEasterEggByID(w http.ResponseWriter, r *http.Request) {
+	h.GetEasterEgg(w, r)
+}
+
+// GetEasterEggHints implements ServerInterface
+func (h *EasterEggsHandlers) GetEasterEggHints(w http.ResponseWriter, r *http.Request) {
+	h.GetHintsForEasterEgg(w, r)
+}
+
+// PurchaseHint implements ServerInterface
+func (h *EasterEggsHandlers) PurchaseHint(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	start := time.Now()
+
+	easterEggID := r.Context().Value("id").(string)
+	hintLevel := 1
+
+	if hl := r.URL.Query().Get("hint_level"); hl != "" {
+		if parsed, err := strconv.Atoi(hl); err == nil && parsed >= 1 && parsed <= 3 {
+			hintLevel = parsed
+		}
+	}
+
+	// For now, just return the hints - actual purchase logic would be more complex
+	hints, err := h.service.GetEasterEggHints(ctx, easterEggID)
+	if err != nil {
+		h.metrics.ObserveRequestDuration("PurchaseHint", start)
+		h.logger.Errorf("Failed to get hints for easter egg %s: %v", easterEggID, err)
+		h.respondWithError(w, http.StatusInternalServerError, "Failed to retrieve hints")
+		return
+	}
+
+	// Filter hints by level and check if player can afford
+	var availableHints []generated.DiscoveryHint
+	for _, hint := range hints {
+		if hint.HintLevel == hintLevel {
+			availableHints = append(availableHints, generated.DiscoveryHint{
+				ID:           hint.ID,
+				EasterEggID:  hint.EasterEggID,
+				HintLevel:    hint.HintLevel,
+				HintText:     hint.HintText,
+				HintType:     hint.HintType,
+				Cost:         hint.Cost,
+				IsEnabled:    hint.IsEnabled,
+			})
+		}
+	}
+
+	h.metrics.ObserveRequestDuration("PurchaseHint", start)
+	h.respondWithJSON(w, http.StatusOK, generated.GetEasterEggHintsResponse{
+		EasterEggID: easterEggID,
+		Hints:       availableHints,
+	})
+}
+
+// GetEasterEggCategoryStats implements ServerInterface
+func (h *EasterEggsHandlers) GetEasterEggCategoryStats(w http.ResponseWriter, r *http.Request) {
+	h.GetCategoryStatistics(w, r)
+}
+
+// GetChallengeByID implements ServerInterface
+func (h *EasterEggsHandlers) GetChallengeByID(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	start := time.Now()
+
+	challengeID := r.Context().Value("challengeId").(string)
+
+	challenges, err := h.service.GetActiveChallenges(ctx)
+	if err != nil {
+		h.metrics.ObserveRequestDuration("GetChallengeByID", start)
+		h.logger.Errorf("Failed to get challenges: %v", err)
+		h.respondWithError(w, http.StatusInternalServerError, "Failed to retrieve challenges")
+		return
+	}
+
+	// Find the specific challenge
+	for _, challenge := range challenges {
+		if challenge.ID == challengeID {
+			h.metrics.ObserveRequestDuration("GetChallengeByID", start)
+			h.respondWithJSON(w, http.StatusOK, challenge)
+			return
+		}
+	}
+
+	h.metrics.ObserveRequestDuration("GetChallengeByID", start)
+	h.respondWithError(w, http.StatusNotFound, "Challenge not found")
 }
