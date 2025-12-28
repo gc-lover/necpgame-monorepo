@@ -131,16 +131,16 @@ func (g *Gateway) addService(name, serviceURL string) error {
 }
 
 // SetupRoutes configures all HTTP routes
-func (g *Gateway) SetupRoutes(r *chi.Router) {
+func (g *Gateway) SetupRoutes(r *chi.Mux) {
 	// Middleware
-	(*r).Use(middleware.RequestID)
-	(*r).Use(middleware.RealIP)
-	(*r).Use(middleware.Logger)
-	(*r).Use(middleware.Recoverer)
-	(*r).Use(middleware.Timeout(30 * time.Second))
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(30 * time.Second))
 
 	// CORS middleware
-	(*r).Use(cors.Handler(cors.Options{
+	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
@@ -150,14 +150,14 @@ func (g *Gateway) SetupRoutes(r *chi.Router) {
 	}))
 
 	// Gateway health check
-	(*r).Get("/health", g.HealthCheck)
-	(*r).Get("/ready", g.ReadinessCheck)
+	r.Get("/health", g.HealthCheck)
+	r.Get("/ready", g.ReadinessCheck)
 
 	// Metrics endpoint
-	(*r).Handle("/metrics", promhttp.Handler())
+	r.Handle("/metrics", promhttp.Handler())
 
 	// API routes - proxy to backend services
-	(*r).Route("/api/v1", func(r chi.Router) {
+	r.Route("/api/v1", func(r chi.Router) {
 		// Analytics service
 		r.Route("/analytics", func(r chi.Router) {
 			r.Handle("/*", g.proxyHandler("analytics"))
@@ -372,7 +372,7 @@ func main() {
 
 	// Setup router
 	r := chi.NewRouter()
-	gateway.SetupRoutes(&r)
+	gateway.SetupRoutes(r)
 
 	// Get port from environment
 	port := os.Getenv("PORT")

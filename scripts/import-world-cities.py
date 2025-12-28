@@ -21,6 +21,7 @@ import json
 import argparse
 from pathlib import Path
 from typing import Dict, List, Optional, Any
+from dataclasses import dataclass
 import logging
 
 # Add project root to path
@@ -28,6 +29,42 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from scripts.core.config import DatabaseConfig
 import logging
+
+# Convert DatabaseConfig to class for compatibility
+@dataclass
+class DatabaseConfig:
+    host: str = "localhost"
+    port: int = 5432
+    database: str = "necpgame"
+    user: str = "postgres"
+    password: str = "postgres"
+
+    def __init__(self):
+        self.host = os.getenv("DB_HOST", self.host)
+        self.port = int(os.getenv("DB_PORT", self.port))
+        self.database = os.getenv("DB_NAME", self.database)
+        self.user = os.getenv("DB_USER", self.user)
+        self.password = os.getenv("DB_PASSWORD", self.password)
+
+    @property
+    def DB_HOST(self):
+        return self.host
+
+    @property
+    def DB_PORT(self):
+        return self.port
+
+    @property
+    def DB_NAME(self):
+        return self.database
+
+    @property
+    def DB_USER(self):
+        return self.user
+
+    @property
+    def DB_PASSWORD(self):
+        return self.password
 
 # Setup basic logging
 logging.basicConfig(
@@ -102,7 +139,7 @@ class WorldCitiesImporter:
                 'is_megacity': self._extract_is_megacity(content),
                 'available_in_game': True,
                 'game_regions': self._extract_game_regions(content),
-                'source_file': str(yaml_file.relative_to(Path.cwd())),
+                'source_file': str(yaml_file),
                 'version': metadata.get('version', '1.0.0'),
                 'status': 'active'
             }
@@ -326,7 +363,7 @@ class WorldCitiesImporter:
 
     def run_import(self, limit: Optional[int] = None, continent: Optional[str] = None):
         """Run the import process"""
-        cities_dir = Path("knowledge/canon/lore/locations/world-cities")
+        cities_dir = Path("knowledge/data/world-cities")
         if not cities_dir.exists():
             logger.error(f"Cities directory not found: {cities_dir}")
             return

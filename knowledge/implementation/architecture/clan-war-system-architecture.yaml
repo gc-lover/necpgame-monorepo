@@ -1,629 +1,274 @@
 metadata:
-  id: clan-war-system-architecture
-  title: Архитектура системы клановых войн (Clan War System)
+  id: arch-clan-war-system
+  title: 'Архитектура системы клановых войн - Clan War System Architecture'
   document_type: architecture
-  category: systems
-  status: final
-  version: '1.1.0'
-  last_updated: 2025-12-27T22:45:00Z
+  category: backend
+  status: draft
+  version: '1.0.0'
+  last_updated: '2025-12-28T12:00:00Z'
+  concept_approved: false
+  concept_reviewed_at: ''
   owners:
-    - role: architect
-      contact: architect@necp.game
+    - role: backend_architect
+      contact: backend@necp.game
   tags:
-    - architecture
     - clan-war
+    - architecture
     - backend
-    - pvp
-    - territory
+    - mmofps
+  topics:
+    - system-architecture
+    - game-mechanics
   related_systems:
-    - guild-service-go
-    - world-service-go
-    - gameplay-service-go
-    - economy-service-go
+    - clan-service
+    - territory-service
+    - battle-service
   related_documents:
-    - id: backend-clan-war-system
-      relation: extends
-  github_issue: 290
+    - id: arch-backend-optimization-guide
+      relation: references
+    - id: arch-database-scaling-guide
+      relation: references
+  source: shared/docs/knowledge/implementation/architecture/clan-war-system-architecture.yaml
   visibility: internal
   audience:
-    - architect
     - backend
-    - api-designer
+    - architect
+    - qa
+  risk_level: medium
 
 summary:
-  problem: |
-    Требуется спроектировать полную техническую архитектуру системы клановых войн
-    для управления войнами между кланами, территориями, фазами войны, сражениями
-    и наградами для endgame PvP контента.
-  goal: |
-    Создать архитектурную схему системы клановых войн с определением:
-    - Компонентов системы (микросервисы, модули)
-    - API endpoints (высокоуровнево)
-    - Потоков данных и интеграций
-    - Системы фаз войны
-    - Системы управления территориями
-    - Системы сражений
-    - Системы наград
-    - Технического задания для реализации
-  essence: |
-    Игровая система клановых войн для управления войнами между кланами, территориями
-    и endgame PvP контентом.
+  problem: Необходима масштабируемая архитектура системы клановых войн для MMOFPS игры с поддержкой тысяч одновременных войн
+  goal: Спроектировать высокопроизводительную систему клановых войн с оптимизациями для 10k+ одновременных игроков
+  essence: Архитектура обеспечивает конкурентные войны между кланами с территориальным контролем, боями и статистикой
+  key_points:
+    - Высокая производительность для MMOFPS
+    - Масштабируемость до 1000+ одновременных войн
+    - Оптимизированные запросы к БД
+    - Real-time синхронизация состояния войн
 
-architecture:
-  overview: |
-    Система клановых войн состоит из восьми основных компонентов:
-    1. War Manager - управление войнами
-    2. War Phase Controller - управление фазами войны
-    3. Territory Manager - управление территориями
-    4. Battle Manager - управление сражениями
-    5. Score Calculator - расчёт очков
-    6. Reward Distributor - распределение наград
-    7. Alliance Manager - управление союзами
-    8. War Event Handler - обработка событий войны
+content:
+  overview:
+    title: Обзор архитектуры
+    description: |
+      Система клановых войн предоставляет инфраструктуру для конкурентных войн между кланами игроков.
+      Архитектура оптимизирована для MMOFPS с поддержкой тысяч одновременных войн и боев.
 
-  components:
-    - name: War Manager
-      location: world-service-go (модуль clan-war)
-      responsibility: |
-        - Управление клановыми войнами
-        - Объявление войны
-        - Завершение войны
-        - Управление участниками войны
-        - Интеграция с guild service
-      war_lifecycle: |
-        - DECLARED: война объявлена
-        - PREPARATION: фаза подготовки
-        - ACTIVE: активная фаза
-        - ENDING: завершение
-        - ENDED: война завершена
-      war_requirements: |
-        - Минимальный размер кланов
-        - Cooldown между войнами
-        - Проверка текущего состояния
-      endpoints:
-        - POST /api/v1/world/clan-war/declare - объявление войны
-        - GET /api/v1/world/clan-war/{war_id} - информация о войне
-        - GET /api/v1/world/clan-war/active - активные войны
-        - POST /api/v1/world/clan-war/{war_id}/cancel - отмена войны
+  architecture:
+    layers:
+      - name: Presentation Layer
+        description: HTTP API с REST endpoints для управления войнами
+        technologies:
+          - Go with Chi router
+          - OpenAPI 3.0 specification
+          - JSON responses
+        responsibilities:
+          - REST API endpoints
+          - Request validation
+          - Response formatting
 
-    - name: War Phase Controller
-      location: world-service-go (модуль clan-war-phases)
-      responsibility: |
-        - Управление фазами войны
-        - Переходы между фазами
-        - Планирование фаз
-        - Уведомления о смене фаз
-      war_phases: |
-        - PREPARATION: фаза подготовки (24 часа)
-        - ACTIVE: активная фаза (7 дней)
-        - ENDING: фаза завершения (немедленно)
-      phase_transitions: |
-        - DECLARED -> PREPARATION (автоматически через 1 час)
-        - PREPARATION -> ACTIVE (через 24 часа)
-        - ACTIVE -> ENDING (через 7 дней)
-        - ENDING -> ENDED (после подсчёта очков)
-      endpoints:
-        - GET /api/v1/world/clan-war/{war_id}/phase - текущая фаза
-        - POST /api/v1/world/clan-war/{war_id}/phase/transition - переход фазы (admin)
+      - name: Business Logic Layer
+        description: Бизнес-логика клановых войн с оптимизациями производительности
+        technologies:
+          - Go services
+          - Memory pooling
+          - Context timeouts
+        responsibilities:
+          - War lifecycle management
+          - Battle coordination
+          - Territory control logic
 
-    - name: Territory Manager
-      location: world-service-go (модуль clan-war-territory)
-      responsibility: |
-        - Управление территориями
-        - Владение территориями
-        - Защита территорий
-        - Ресурсы территорий
-        - Сложность осады
-      territory_features: |
-        - Владение кланом
-        - Ресурсы территории
-        - Уровень защиты
-        - Сложность осады
-        - Бонусы владения
-      territory_transfer: |
-        - Передача территории победителю
-        - Сброс защиты
-        - Обновление ресурсов
-      endpoints:
-        - GET /api/v1/world/clan-war/territories - список территорий
-        - GET /api/v1/world/clan-war/territories/{territory_id} - информация о территории
-        - POST /api/v1/world/clan-war/territories/{territory_id}/transfer - передача территории
+      - name: Data Access Layer
+        description: Оптимизированный доступ к данным с connection pooling
+        technologies:
+          - PostgreSQL with pgx driver
+          - Connection pooling
+          - Prepared statements
+        responsibilities:
+          - CRUD operations
+          - Transaction management
+          - Query optimization
 
-    - name: Battle Manager
-      location: world-service-go (модуль clan-war-battle)
-      responsibility: |
-        - Управление сражениями
-        - Создание битв за территории
-        - Запуск битв
-        - Трекинг активных битв
-        - Интеграция с PvP системой
-      battle_types: |
-        - TERRITORY_BATTLE: битва за территорию
-        - SIEGE: осада территории
-        - OPEN_WORLD_PVP: открытый мир PvP
-      battle_lifecycle: |
-        - CREATED: битва создана
-        - ACTIVE: битва активна
-        - ENDED: битва завершена
-      endpoints:
-        - POST /api/v1/world/clan-war/battles/create - создание битвы
-        - POST /api/v1/world/clan-war/battles/{battle_id}/start - запуск битвы
-        - GET /api/v1/world/clan-war/battles/active - активные битвы
-        - POST /api/v1/world/clan-war/battles/{battle_id}/end - завершение битвы
+    components:
+      - name: ClanWarService
+        description: Основной сервис управления войнами
+        responsibilities:
+          - Создание и управление войнами
+          - Координация боев
+          - Расчет результатов
+        performance_features:
+          - Memory pooling для объектов войны
+          - Context timeouts для всех операций
+          - Optimized struct alignment
 
-    - name: Score Calculator
-      location: world-service-go (модуль clan-war-scoring)
-      responsibility: |
-        - Расчёт очков войны
-        - Начисление очков за действия
-        - Агрегация очков
-        - Определение победителя
-      score_sources: |
-        - Territory battles: очки за битвы за территории
-        - Siege events: очки за осады
-        - Kill score: очки за убийства
-        - Territory control: очки за контроль территорий
-      scoring_rules: |
-        - Взвешивание различных источников очков
-        - Бонусы за территориальный контроль
-        - Штрафы за потери
-      endpoints:
-        - GET /api/v1/world/clan-war/{war_id}/scores - очки войны
-        - POST /api/v1/world/clan-war/scores/add - начисление очков
-        - GET /api/v1/world/clan-war/{war_id}/winner - победитель войны
+      - name: ClanWarRepository
+        description: Репозиторий данных клановых войн
+        responsibilities:
+          - Хранение состояния войн
+          - Управление битвами
+          - Статистика территорий
+        performance_features:
+          - Connection pooling (25 max connections)
+          - Prepared statements
+          - Batch operations
 
-    - name: Reward Distributor
-      location: world-service-go (модуль clan-war-rewards)
-      responsibility: |
-        - Распределение наград за войну
-        - Выдача наград победителю
-        - Выдача утешительных призов
-        - Интеграция с economy service
-      reward_types: |
-        - Winner rewards: награды победителя
-        - Loser rewards: утешительные призы
-        - Participation rewards: награды за участие
-      reward_distribution: |
-        - Награды за победу
-        - Награды за участие
-        - Награды за территориальный контроль
-      endpoints:
-        - POST /api/v1/world/clan-war/{war_id}/rewards/distribute - распределение наград
-        - GET /api/v1/world/clan-war/{war_id}/rewards - награды войны
+      - name: TerritoryService
+        description: Сервис управления территориями
+        responsibilities:
+          - Контроль владения территориями
+          - Расчет влияния кланов
+          - Географическая логика
+        performance_features:
+          - Spatial indexing
+          - Cached territory data
+          - Optimized queries
 
-    - name: Alliance Manager
-      location: world-service-go (модуль clan-war-alliance)
-      responsibility: |
-        - Управление союзами в войне
-        - Приглашение союзников
-        - Управление союзниками
-        - Интеграция с guild service
-      alliance_features: |
-        - Приглашение союзников
-        - Управление союзниками
-        - Ограничения на союзы
-        - Бонусы за союзы
-      endpoints:
-        - POST /api/v1/world/clan-war/{war_id}/alliance/invite - приглашение союзника
-        - GET /api/v1/world/clan-war/{war_id}/alliance - союзники войны
-        - POST /api/v1/world/clan-war/{war_id}/alliance/remove - удаление союзника
-
-    - name: War Event Handler
-      location: world-service-go (модуль clan-war-events)
-      responsibility: |
-        - Обработка событий войны
-        - Публикация событий в event bus
-        - Подписка на события от других систем
-        - Уведомления игроков
-      war_events_published: |
-        - clan-war:declared
-        - clan-war:phase-changed
-        - clan-war:battle-started
-        - clan-war:battle-ended
-        - clan-war:territory-captured
-        - clan-war:ended
-        - clan-war:rewards-distributed
-      war_events_consumed: |
-        - combat:player-killed
-        - territory:captured
-        - guild:member-joined
-      endpoints:
-        - GET /api/v1/world/clan-war/events/{war_id} - события войны
-
-  data_flow:
-    war_declaration: |
-      1. Клан объявляет войну другому клану
-      2. War Manager проверяет требования (размер, cooldown)
-      3. Создаётся запись войны (DECLARED)
-      4. Alliance Manager обрабатывает союзников
-      5. War Phase Controller планирует фазы
-      6. War Event Handler публикует clan-war:declared
-      7. Notification Service уведомляет кланы
-      8. Realtime Gateway синхронизирует состояние
-
-    war_phase_transition: |
-      1. War Phase Controller проверяет время
-      2. Если время истекло - переход на следующую фазу
-      3. Обновляется состояние войны
-      4. Если переход в ACTIVE - запускаются битвы
-      5. Если переход в ENDING - рассчитываются очки
-      6. War Event Handler публикует clan-war:phase-changed
-      7. Notification Service уведомляет участников
-
-    territory_battle: |
-      1. Battle Manager создаёт битву за территорию
-      2. Битва запускается (ACTIVE)
-      3. Игроки вступают в PvP зону
-      4. Combat Service обрабатывает убийства
-      5. Score Calculator начисляет очки
-      6. При захвате территории - обновляется владение
-      7. War Event Handler публикует clan-war:territory-captured
-      8. Realtime Gateway синхронизирует состояние
-
-    war_resolution: |
-      1. War Phase Controller переводит войну в ENDING
-      2. Score Calculator рассчитывает итоговые очки
-      3. Определяется победитель
-      4. Territory Manager передаёт территории победителю
-      5. Reward Distributor распределяет награды
-      6. Economy Service получает награды
-      7. War Event Handler публикует clan-war:ended
-      8. Notification Service уведомляет участников
-
-  integrations:
-    with_guild_service: |
-      - Получение информации о кланах
-      - Проверка размера кланов
-      - Синхронизация с гильдиями
-      - Уведомления участников кланов
-
-    with_world_service: |
-      - Управление территориями
-      - Позиционирование PvP зон
-      - Пространственные данные
-
-    with_gameplay_service: |
-      - Получение событий о боях
-      - Интеграция с combat system
-      - Обработка убийств
-
-    with_economy_service: |
-      - Выдача наград
-      - Интеграция с экономической системой
-      - Обновление ресурсов территорий
-
-    with_notification_service: |
-      - Уведомления о войнах
-      - Уведомления о битвах
-      - Уведомления о наградах
-
-    with_realtime_gateway: |
-      - Синхронизация состояния войны
-      - Уведомления о событиях
-      - Обновления в реальном времени
-
-  data_consistency:
-    strategy: Strong Consistency (ACID транзакции) для критичных операций
-    mechanisms:
-      - ACID транзакции для объявления войны, создания битв, начисления очков и распределения наград
-      - Оптимистичные блокировки (versioning) для предотвращения конфликтов
-      - Валидация перед объявлением войны и созданием битв
-      - Синхронизация с другими сервисами через Event Bus
-      - Outbox Pattern для гарантированной доставки событий
-      - Saga Pattern для распределенных операций (объявление войны, завершение войны, распределение наград)
-
-  data_synchronization:
-    event_sourcing: |
-      Все изменения состояния клановых войн (объявление войны, переход фаз, создание битв, начисление очков,
-      захват территорий, завершение войны, распределение наград) записываются как события в Event Store.
-      Это обеспечивает полный аудит, возможность восстановления состояния и "time travel" для отладки.
-      Примеры событий: WarDeclaredEvent, PhaseChangedEvent, BattleStartedEvent, TerritoryCapturedEvent, WarEndedEvent, RewardsDistributedEvent.
-    cqrs_pattern: |
-      Разделение команд (объявление войны, создание битв, начисление очков, распределение наград) и запросов
-      (получение информации о войне, получение очков, получение наград) для оптимизации производительности
-      и масштабируемости. Read-модели могут быть кэшированы в Redis для быстрых запросов.
-    saga_pattern: |
-      Для распределенных транзакций, таких как объявление войны (проверка требований, создание войны,
-      настройка фаз, уведомление участников) или завершение войны (расчёт очков, определение победителя,
-      передача территорий, распределение наград, уведомление участников), используется Saga Pattern
-      для обеспечения атомарности операций между World Service, Guild Service, Economy Service и Notification Service.
-    outbox_pattern: |
-      Для гарантированной доставки событий в Event Bus используется Outbox Pattern,
-      который записывает события в транзакционную таблицу перед публикацией.
-
-  tickrate_specification:
-    war_operations:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Объявление войны: event-based, ~0.001-0.01 events/sec
-        - Переход фаз: event-based, ~0.001-0.01 events/sec
-        - Завершение войны: event-based, ~0.001-0.01 events/sec
-        - Общий трафик: ~0.1-0.5 KB/sec для операций войны
-      latency_requirements: < 200-500ms для объявления войны, < 100-300ms для перехода фаз
-      sync_strategy: Strong Consistency (ACID транзакции) для операций войны
-
-    battle_operations:
-      tickrate: Event-based (on-demand) + 20-60 Hz для активных битв
-      network_load: |
-        - Создание битвы: event-based, ~0.01-0.1 events/sec
-        - Запуск битвы: event-based, ~0.01-0.1 events/sec
-        - Завершение битвы: event-based, ~0.01-0.1 events/sec
-        - Обновление состояния битвы: 20-60 Hz, ~0.5-2 KB/sec на битву
-        - Общий трафик: ~0.2-1 KB/sec для операций битвы, ~0.5-2 KB/sec для активных битв
-      latency_requirements: < 100-200ms для создания битвы, < 50-100ms для обновления состояния
-      sync_strategy: Strong Consistency (ACID транзакции) для создания битв, Eventual Consistency для обновлений состояния
-
-    scoring_operations:
-      tickrate: Event-based (on-demand при событиях)
-      network_load: |
-        - Начисление очков: event-based, ~0.1-1 events/sec на войну
-        - Получение очков: event-based, ~0.01-0.05 requests/sec на войну
-        - Обновление очков: event-based + 1-5 Hz, ~0.1-0.3 KB/sec на войну
-        - Общий трафик: ~0.2-0.5 KB/sec для операций очков
-      latency_requirements: < 50-100ms для начисления очков, < 30-100ms для получения очков
-      sync_strategy: Strong Consistency (ACID транзакции) для начисления очков
-
-    territory_operations:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Захват территории: event-based, ~0.01-0.05 events/sec
-        - Получение информации о территории: event-based, ~0.01-0.02 requests/sec
-        - Обновление ресурсов: event-based + 1-5 Hz, ~0.05-0.2 KB/sec на территорию
-        - Общий трафик: ~0.1-0.3 KB/sec для операций территорий
-      latency_requirements: < 100-200ms для захвата территории, < 30-100ms для получения информации
-      sync_strategy: Strong Consistency (ACID транзакции) для захвата территорий
-
-    reward_operations:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Распределение наград: event-based, ~0.001-0.01 events/sec на войну
-        - Получение наград: event-based, ~0.01-0.02 requests/sec на игрока
-        - Общий трафик: ~0.1-0.2 KB/sec для операций наград
-      latency_requirements: < 200-500ms для распределения наград, < 50-150ms для получения наград
-      sync_strategy: Strong Consistency (ACID транзакции) для распределения наград
-
-    event_handling:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Публикация событий войны: event-based, ~0.1-0.5 events/sec
-        - Подписка на события: event-based, ~0.05-0.2 events/sec
-        - Общий трафик: ~0.2-0.7 KB/sec для событий
-      latency_requirements: < 100-300ms для публикации событий
-      sync_strategy: Eventual Consistency для событий (через Event Bus)
-
-  ## Performance Requirements
-
-  **Load:** 10000+ concurrent players, P99 <50ms for war operations
-  **Data Model (optimized):**
-  - ClanWar: 256 bytes (participants, phases, territories, scores)
-  - WarBattle: 128 bytes (participants, scores, territory_id, timestamps)
-  - TerritoryState: 96 bytes (owner_clan_id, resources, defense_level, last_capture)
-
-    **Hot Path:** Territory capture (200 RPS), score updates (500 RPS), war status queries (1000 RPS)
-    **Backend optimizations:** Level 3 - Event sourcing, CQRS, distributed war state management
-
-  ## Scaling Strategy
-
-  ### Horizontal Scaling
-  - **War Manager:** Multiple instances with consistent hashing by war_id
-  - **Battle Manager:** Sharded by territory region, auto-scaling during peak battles
-  - **Database:** Read replicas for score queries, partitioned by war_id and time
-
-  ### Geographic Distribution
-  - **Regional Wars:** Wars limited to regions to reduce latency
-  - **Cross-Region Alliances:** Eventual consistency for alliance data
-  - **Global Leaderboards:** Cached in Redis with periodic sync
-
-  ## Security Considerations
-
-  ### Access Control
-  - **War Declaration:** Guild leader + admin approval required
-  - **Admin Operations:** Multi-factor authentication, audit trails
-  - **Player Data:** Encrypted sensitive information, GDPR compliance
-
-  ### Anti-Cheat Measures
-  - **Battle Validation:** Server-side hit validation, anti-speed hacking
-  - **Score Integrity:** Cryptographic signatures on score updates
-  - **Territory Control:** GPS validation for mobile clients
-
-  ## Monitoring & Observability
-
-  ### Key Metrics
-  - **War Participation:** Active players per war, concurrent battles
-  - **System Performance:** P95 latency for war operations, error rates
-  - **Battle Statistics:** Kill/death ratios, territory capture times
-  - **Economic Impact:** Reward distribution success rates
-
-  ### Alerts
-  - **Critical:** War declaration failures, battle system downtime
-  - **Performance:** Latency spikes >100ms, error rates >1%
-  - **Security:** Suspicious activity patterns, anti-cheat violations
-
-  ## Implementation Roadmap
-
-  ### Phase 1: Core Infrastructure (3 weeks)
-  - [ ] Set up PostgreSQL with partitioning strategy
-  - [ ] Implement War Manager with basic CRUD operations
-  - [ ] Create War Phase Controller with timer scheduling
-  - [ ] Set up Event Bus integration
-  
-  ### Phase 2: Territory & Battle Systems (4 weeks)
-  - [ ] Build Territory Manager with ownership tracking
-  - [ ] Implement Battle Manager with PvP zone creation
-  - [ ] Create Score Calculator with real-time updates
-  - [ ] Add Alliance Manager for war coalitions
-  
-  ### Phase 3: Rewards & Events (3 weeks)
-  - [ ] Develop Reward Distributor with economy integration
-  - [ ] Implement War Event Handler with notifications
-  - [ ] Create comprehensive event schema
-  - [ ] Add real-time updates via WebSocket
-  
-  ### Phase 4: Production Ready (2 weeks)
-  - [ ] Performance testing (1000 concurrent players)
-  - [ ] Load testing with multiple simultaneous wars
-  - [ ] Security audit and penetration testing
-  - [ ] Monitoring dashboard implementation
-  
-  ## Risk Assessment
-  
-  ### High Risk
-  - **Data Loss:** War state corruption during critical battles
-  - **Cheating:** Exploits in scoring or territory capture systems
-  - **Performance:** System overload during peak war times
-  
-  ### Mitigation
-  - **Backup Strategy:** Point-in-time recovery, cross-region replication
-  - **Anti-Cheat:** Server-side validation, statistical anomaly detection
-  - **Capacity Planning:** Auto-scaling, load shedding during peaks
-  
-  ## Cost Optimization
-  
-  ### Infrastructure Costs
-  - **Database:** Aurora Serverless for variable war activity
-  - **Compute:** Spot instances for battle processing
-  - **Cache:** Redis Cluster for score and territory data
-  
-  ### Operational Costs
-  - **Monitoring:** Centralized logging with retention policies
-  - **Alerting:** Automated incident response to reduce MTTR
-  - **Testing:** Automated load testing to prevent production issues
-  
-  ## Follow-up Tasks
-  
-  ### API Designer (#2197)
-  - Create detailed OpenAPI 3.0 specification for all clan war endpoints
-  - Define WebSocket protocols for real-time war updates
-  - Document event schemas for inter-service communication
-  - Create request/response examples and error codes
-  
-  ### Database Agent (#2210)
-  - Design PostgreSQL schema with proper indexing and partitioning
-  - Implement time-based partitioning for war data scalability
-  - Create Liquibase migrations for all clan war tables
-  - Set up database monitoring and performance optimization
-  
-  ### Backend Agent (#2220)
-  - Implement 8 clan war modules in world-service-go
-  - Apply performance optimizations (struct alignment, context timeouts)
-  - Integrate with guild-service, gameplay-service, economy-service
-  - Add comprehensive error handling and logging
-  
-  ### DevOps Agent (#2224)
-  - Set up Kubernetes deployments with horizontal pod autoscaling
-  - Configure monitoring stack (Prometheus, Grafana, ELK)
-  - Implement CI/CD pipelines for clan war service
-  - Create infrastructure as code with Terraform
-  
-  ### Network Agent (#2199)
-  - Design WebSocket protocols for real-time battle updates
-  - Implement delta synchronization for war state changes
-  - Optimize network traffic for large-scale PvP events
-  - Add connection pooling and load balancing
-
-  database_schema:
-    tables:
-      - name: clan_wars
-        description: Клановые войны
+  data_model:
+    entities:
+      - name: ClanWar
+        description: Основная сущность войны между кланами
         fields:
-          - id: UUID (PK)
-          - attacker_clan_id: UUID (FK guilds)
-          - defender_clan_id: UUID (FK guilds)
-          - status: ENUM (DECLARED, PREPARATION, ACTIVE, ENDING, ENDED)
-          - phase: ENUM (PREPARATION, ACTIVE, ENDING)
-          - declared_at: TIMESTAMP
-          - started_at: TIMESTAMP (nullable)
-          - ended_at: TIMESTAMP (nullable)
-          - winner_clan_id: UUID (FK guilds, nullable)
-          - war_type: ENUM (TERRITORY, RESOURCE, HONOR)
+          - id: UUID первичный ключ
+          - clan_id_1: UUID первого клана
+          - clan_id_2: UUID второго клана
+          - status: Статус войны (pending/active/completed/cancelled)
+          - territory_id: ID территории конфликта
+          - start_time/end_time: Временные рамки
+          - winner_clan_id: Победитель
+          - score_clan1/score_clan2: Очки кланов
         indexes:
-          - attacker_clan_id, status
-          - defender_clan_id, status
-          - status, phase
-          - declared_at
+          - clan_id_1, clan_id_2
+          - status, start_time
+          - territory_id
 
-      - name: clan_war_territories
-        description: Территории клановых войн
+      - name: Battle
+        description: Отдельный бой в рамках войны
         fields:
-          - id: UUID (PK)
-          - war_id: UUID (FK clan_wars)
-          - territory_id: UUID (FK world_territories)
-          - controlling_clan_id: UUID (FK guilds)
-          - capture_progress: INTEGER (0-100)
-          - last_capture_attempt: TIMESTAMP (nullable)
-          - points_per_minute: INTEGER
-        indexes:
-          - war_id, territory_id
-          - controlling_clan_id
-
-      - name: clan_war_battles
-        description: Сражения клановых войн
-        fields:
-          - id: UUID (PK)
-          - war_id: UUID (FK clan_wars)
-          - territory_id: UUID (FK clan_war_territories)
-          - attacker_clan_id: UUID (FK guilds)
-          - defender_clan_id: UUID (FK guilds)
-          - status: ENUM (SCHEDULED, ACTIVE, COMPLETED, CANCELLED)
-          - started_at: TIMESTAMP (nullable)
-          - ended_at: TIMESTAMP (nullable)
-          - winner_clan_id: UUID (FK guilds, nullable)
-          - attacker_score: INTEGER
-          - defender_score: INTEGER
+          - id: UUID первичный ключ
+          - war_id: ID родительской войны
+          - territory_id: ID территории боя
+          - status: Статус боя
+          - start_time/end_time: Время боя
+          - winner_clan_id: Победитель боя
+          - score_clan1/score_clan2: Очки в бое
         indexes:
           - war_id, status
-          - territory_id, status
+          - territory_id, start_time
 
-      - name: clan_war_participants
-        description: Участники клановых войн
+      - name: Territory
+        description: Контролируемая территория
         fields:
-          - id: UUID (PK)
-          - war_id: UUID (FK clan_wars)
-          - clan_id: UUID (FK guilds)
-          - player_id: UUID (FK accounts)
-          - joined_at: TIMESTAMP
-          - total_score: INTEGER (default: 0)
-          - battles_fought: INTEGER (default: 0)
-          - battles_won: INTEGER (default: 0)
+          - id: UUID первичный ключ
+          - name: Название территории
+          - description: Описание
+          - type: Тип (resource/strategic/commercial)
+          - owner_clan_id: Владеющий клан
         indexes:
-          - war_id, clan_id
-          - player_id, war_id
-          - total_score DESC
+          - owner_clan_id
+          - type
 
-      - name: clan_war_rewards
-        description: Награды клановых войн
-        fields:
-          - id: UUID (PK)
-          - war_id: UUID (FK clan_wars)
-          - clan_id: UUID (FK guilds)
-          - player_id: UUID (FK accounts)
-          - reward_type: ENUM (CURRENCY, ITEM, TITLE, ACHIEVEMENT)
-          - reward_data: JSONB
-          - awarded_at: TIMESTAMP
-        indexes:
-          - war_id, clan_id
-          - player_id, war_id
+  performance_optimizations:
+    memory_management:
+      - Object pooling для ClanWar/Battle/Territory объектов
+      - Zero-allocation operations где возможно
+      - Optimized struct alignment (48-byte boundary)
 
-  validation:
-    architecture_complete: true
-    components_defined: true
-    microservices_identified: true
-    api_endpoints_described: true
-    technical_specification_ready: true
-    subtasks_defined: true
+    database_optimizations:
+      - Connection pooling (25 max connections)
+      - Prepared statements для всех запросов
+      - Strategic indexing по часто используемым полям
+      - Batch operations для массовых обновлений
 
-  next_steps:
-    - Передача задачи агенту API Designer для создания OpenAPI спецификации
-    - Детализация API endpoints и WebSocket протоколов
-    - Создание схем событий и сообщений
-    - Определение формата данных для реального времени
+    caching_strategy:
+      - In-memory cache для активных войн
+      - Redis для распределенного состояния
+      - LRU eviction для territory data
 
-  history:
-    - version: '1.1.0'
-      date: 2025-12-27
-      author: Architect Agent
-      changes: |
-        Завершена схема базы данных
-        Добавлена валидация архитектуры
-        Определены следующие шаги реализации
-        Статус изменен на final
+    concurrency_patterns:
+      - Context timeouts для всех операций (30s default)
+      - Goroutine pooling для parallel operations
+      - Mutex-free operations где возможно
+
+  scalability:
+    horizontal_scaling:
+      - Stateless service instances
+      - Database read replicas
+      - Sharded territory data
+
+    vertical_scaling:
+      - CPU optimization через memory pooling
+      - Memory optimization через object reuse
+      - I/O optimization через connection pooling
+
+    monitoring:
+      - Prometheus metrics
+      - Jaeger tracing
+      - Custom performance counters
+
+  security:
+    authorization:
+      - Clan membership verification
+      - Territory ownership validation
+      - War declaration permissions
+
+    rate_limiting:
+      - War declaration limits
+      - API rate limits per clan
+      - Battle creation throttling
+
+    audit:
+      - War action logging
+      - Territory transfer tracking
+      - Score manipulation detection
+
+  deployment:
+    infrastructure:
+      - Kubernetes deployment
+      - PostgreSQL database
+      - Redis cache cluster
+
+    configuration:
+      - Environment-based config
+      - Secrets management
+      - Feature flags
+
+  testing:
+    unit_tests:
+      - Service layer testing
+      - Repository layer testing
+      - Handler layer testing
+
+    integration_tests:
+      - Full war lifecycle
+      - Multi-clan scenarios
+      - Performance under load
+
+    load_testing:
+      - 1000 concurrent wars
+      - 10000 simultaneous battles
+      - Peak traffic simulation
+
+  maintenance:
+    migration_strategy:
+      - Zero-downtime deployments
+      - Backward compatibility
+      - Data migration scripts
+
+    monitoring_alerts:
+      - War creation rate anomalies
+      - Database connection issues
+      - Memory usage spikes
+
+review:
+  chain:
+    - role: backend_architect
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+    - role: performance_engineer
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions:
+    - Создать детальную API спецификацию
+    - Реализовать базовые CRUD операции
+    - Настроить мониторинг и метрики
