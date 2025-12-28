@@ -155,3 +155,17 @@ type NotificationPreferences struct {
 	OrderEnabled      bool      `db:"order_enabled" json:"order_enabled"`
 	MentorshipEnabled bool      `db:"mentorship_enabled" json:"mentorship_enabled"`
 }
+
+// Relationships models
+
+// Relationship represents a player relationship (friend, block, etc.)
+type Relationship struct {
+	ID               uuid.UUID `db:"id" json:"id"`
+	RequesterID      uuid.UUID `db:"requester_id" json:"requester_id"`
+	TargetID         uuid.UUID `db:"target_id" json:"target_id"`
+	RelationshipType string    `db:"relationship_type" json:"relationship_type"` // friend, block, follow
+	Message          string    `db:"message" json:"message"`
+	Status           string    `db:"status" json:"status"` // pending, accepted, rejected, blocked
+	CreatedAt        time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt        time.Time `db:"updated_at" json:"updated_at"`
+}

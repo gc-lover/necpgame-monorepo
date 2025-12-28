@@ -340,6 +340,69 @@ func (r *Repository) GetParty(ctx context.Context, partyID uuid.UUID) (*Party, e
 	return &party, nil
 }
 
+// Relationships methods
+
+// GetRelationships gets all relationships for a player
+func (r *Repository) GetRelationships(ctx context.Context, playerID uuid.UUID) ([]*Relationship, error) {
+	query := `
+		SELECT * FROM relationships
+		WHERE (requester_id = $1 OR target_id = $1)
+		AND status = 'accepted'
+		ORDER BY created_at DESC
+	`
+	var relationships []*Relationship
+	err := r.db.SelectContext(ctx, &relationships, query, playerID)
+	return relationships, err
+}
+
+// CreateRelationship creates a new relationship between players
+func (r *Repository) CreateRelationship(ctx context.Context, requesterID, targetID uuid.UUID, relationshipType, message string) (*Relationship, error) {
+	relationship := &Relationship{
+		ID:               uuid.New(),
+		RequesterID:      requesterID,
+		TargetID:         targetID,
+		RelationshipType: relationshipType,
+		Message:          message,
+		Status:           "pending",
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+	}
+
+	query := `
+		INSERT INTO relationships (id, requester_id, target_id, relationship_type, message, status, created_at, updated_at)
+		VALUES (:id, :requester_id, :target_id, :relationship_type, :message, :status, :created_at, :updated_at)
+	`
+
+	_, err := r.db.NamedExecContext(ctx, query, relationship)
+	if err != nil {
+		return nil, err
+	}
+
+	return relationship, nil
+}
+
+// GetRelationship gets a specific relationship by ID
+func (r *Repository) GetRelationship(ctx context.Context, relationshipID uuid.UUID) (*Relationship, error) {
+	query := `SELECT * FROM relationships WHERE id = $1`
+	var relationship Relationship
+	err := r.db.GetContext(ctx, &relationship, query, relationshipID)
+	if err != nil {
+		return nil, err
+	}
+	return &relationship, nil
+}
+
+// UpdateRelationship updates an existing relationship
+func (r *Repository) UpdateRelationship(ctx context.Context, relationshipID uuid.UUID, status, message string) error {
+	query := `
+		UPDATE relationships
+		SET status = $2, message = $3, updated_at = $4
+		WHERE id = $1
+	`
+	_, err := r.db.ExecContext(ctx, query, relationshipID, status, message, time.Now())
+	return err
+}
+
 // GetOrders gets all orders
 func (r *Repository) GetOrders(ctx context.Context) ([]*PlayerOrder, error) {
 	query := `SELECT * FROM player_orders WHERE status = 'open' ORDER BY created_at DESC`

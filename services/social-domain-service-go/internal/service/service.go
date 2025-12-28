@@ -304,6 +304,28 @@ func (s *Service) GetParty(ctx context.Context, partyID uuid.UUID) (*repository.
 	return s.repo.GetParty(ctx, partyID)
 }
 
+// Relationships methods
+
+// GetRelationships gets all relationships for a player
+func (s *Service) GetRelationships(ctx context.Context, playerID uuid.UUID) ([]*repository.Relationship, error) {
+	return s.repo.GetRelationships(ctx, playerID)
+}
+
+// CreateRelationship creates a new relationship between players
+func (s *Service) CreateRelationship(ctx context.Context, requesterID, targetID uuid.UUID, relationshipType, message string) (*repository.Relationship, error) {
+	return s.repo.CreateRelationship(ctx, requesterID, targetID, relationshipType, message)
+}
+
+// GetRelationship gets a specific relationship by ID
+func (s *Service) GetRelationship(ctx context.Context, relationshipID uuid.UUID) (*repository.Relationship, error) {
+	return s.repo.GetRelationship(ctx, relationshipID)
+}
+
+// UpdateRelationship updates an existing relationship
+func (s *Service) UpdateRelationship(ctx context.Context, relationshipID uuid.UUID, status, message string) error {
+	return s.repo.UpdateRelationship(ctx, relationshipID, status, message)
+}
+
 // GetOrders gets all orders
 func (s *Service) GetOrders(ctx context.Context) ([]*repository.PlayerOrder, error) {
 	return s.repo.GetOrders(ctx)
