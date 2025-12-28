@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	_ "github.com/lib/pq" // PostgreSQL driver
 
 	"cyberspace-easter-eggs-service-go/pkg/models"
 )
