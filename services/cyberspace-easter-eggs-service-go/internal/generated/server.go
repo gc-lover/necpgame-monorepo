@@ -64,12 +64,6 @@ func (siw *ServerInterfaceWrapper) ServeHTTP(w http.ResponseWriter, r *http.Requ
 				siw.Handler.GetEasterEggs(w, r)
 				return
 			}
-		case "/api/v1/admin/import":
-			if r.Method == http.MethodPost {
-				// ImportEasterEggs needs to be handled by concrete type, but for now we'll skip
-				http.Error(w, "Import endpoint not implemented", http.StatusNotImplemented)
-				return
-			}
 		default:
 			// Handle path parameters and other routes
 			if len(r.URL.Path) > len("/api/v1/easter-eggs/") && r.URL.Path[:len("/api/v1/easter-eggs/")] == "/api/v1/easter-eggs/" {

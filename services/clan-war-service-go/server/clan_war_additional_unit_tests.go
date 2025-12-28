@@ -39,14 +39,6 @@ func (m *MockClanWarRepository) GetWarStatistics(ctx context.Context, warID uuid
 	return args.Get(0).(*WarStatistics), args.Error(1)
 }
 
-// WarStatistics represents war statistics for testing
-type WarStatistics struct {
-	WarID         uuid.UUID
-	TotalBattles  int
-	ActiveBattles int
-	Clan1Score    int
-	Clan2Score    int
-}
 
 // Test additional service methods
 func TestClanWarService_GetWarWithDetails_Success(t *testing.T) {
