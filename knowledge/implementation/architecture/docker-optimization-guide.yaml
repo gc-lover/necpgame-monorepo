@@ -1,0 +1,219 @@
+title: "Docker Optimization Guide for NECPGAME"
+version: "1.0.0"
+description: "Production-ready Docker configurations optimized for MMOFPS workloads"
+author: "Backend Agent"
+created_at: "2025-12-28"
+issue: "#140890640"
+
+optimization_goals:
+  performance:
+    - "50% faster container startup"
+    - "60% smaller image sizes"
+    - "Optimized memory usage for 1000+ concurrent users"
+    - "Reduced CPU overhead"
+
+  security:
+    - "Non-root container execution"
+    - "Minimal attack surface"
+    - "Secure base images"
+    - "Proper secret management"
+
+  reliability:
+    - "Comprehensive health checks"
+    - "Graceful shutdown handling"
+    - "Resource limits and reservations"
+    - "Proper logging and monitoring"
+
+dockerfile_optimizations:
+  multi_stage_builds:
+    description: "Separate build and runtime stages for smaller images"
+    benefits:
+      - "40% smaller final images"
+      - "No build dependencies in production"
+      - "Better security (no compilers in runtime)"
+    implementation:
+      - "Go build stage with full toolchain"
+      - "Alpine runtime stage with minimal dependencies"
+      - "Static binary compilation"
+
+  layer_caching:
+    description: "Optimized layer ordering for better caching"
+    strategy:
+      - "Copy dependency files first (go.mod, requirements.txt)"
+      - "Install dependencies before copying source code"
+      - "Use build cache mounts for Go modules"
+    benefits:
+      - "Faster rebuilds during development"
+      - "Reduced CI/CD times"
+      - "Better Docker layer reuse"
+
+  security_hardening:
+    description: "Production-ready security configurations"
+    measures:
+      - "Non-root user execution"
+      - "No new privileges"
+      - "Read-only root filesystem"
+      - "Minimal base images (Alpine Linux)"
+      - "Regular security updates"
+    docker_flags:
+      - "USER appuser:appgroup"
+      - "security_opt: no-new-privileges"
+      - "read_only: true"
+      - "tmpfs: /tmp"
+
+  performance_tuning:
+    description: "Runtime performance optimizations"
+    go_specific:
+      - "CGO_ENABLED=0 for static linking"
+      - "Strip debug symbols"
+      - "Optimize build flags (-ldflags)"
+      - "GOMEMLIMIT and GOGC tuning"
+    system_level:
+      - "Resource limits and reservations"
+      - "Health check optimizations"
+      - "Proper networking configuration"
+
+docker_compose_optimizations:
+  service_configuration:
+    database:
+      image: "postgis/postgis:15-3.4-alpine"
+      resources:
+        limits: "1 CPU, 2GB RAM"
+        reservations: "0.5 CPU, 1GB RAM"
+      healthcheck:
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+    redis:
+      image: "redis:7.2-alpine"
+      memory_policy: "allkeys-lru"
+      resources:
+        limits: "0.5 CPU, 512MB RAM"
+        reservations: "0.25 CPU, 256MB RAM"
+
+    go_services:
+      build_context: "Optimized multi-stage Dockerfile"
+      resources:
+        limits: "0.5 CPU, 256MB RAM"
+        reservations: "0.25 CPU, 128MB RAM"
+      healthcheck:
+        interval: 15s
+        timeout: 5s
+        retries: 3
+
+  networking:
+    bridge_network: "172.20.0.0/16"
+    service_discovery: "Docker internal DNS"
+    load_balancing: "Nginx reverse proxy"
+
+  volumes:
+    postgres_data: "Persistent database storage"
+    redis_data: "Session and cache persistence"
+    nginx_logs: "Access and error logs"
+
+  environment_variables:
+    production_ready:
+      - "DATABASE_URL with proper credentials"
+      - "REDIS_URL for caching"
+      - "LOG_LEVEL=info for production"
+      - "GOMEMLIMIT and GOGC for Go services"
+
+monitoring_integration:
+  health_checks:
+    description: "Comprehensive service health monitoring"
+    endpoints: "/health on all services"
+    frequency: "15-30 second intervals"
+    failure_handling: "Automatic service restart"
+
+  metrics_collection:
+    performance_monitor:
+      language: "Python with psutil"
+      metrics:
+        - "Service response times"
+        - "System resource usage"
+        - "Process health status"
+      storage: "PostgreSQL metrics table"
+      alerting: "Threshold-based notifications"
+
+  logging:
+    structured_logs: "JSON format for all services"
+    log_rotation: "10MB max size, 3 file retention"
+    central_collection: "Docker logging drivers"
+
+scaling_considerations:
+  horizontal_scaling:
+    docker_swarm: "Multi-node deployments"
+    kubernetes: "Production orchestration"
+    load_balancing: "Nginx upstream configuration"
+
+  vertical_scaling:
+    resource_limits: "Adjustable CPU/memory limits"
+    replica_count: "Multiple service instances"
+    database_scaling: "Read replicas and connection pooling"
+
+deployment_pipeline:
+  ci_cd_integration:
+    build_stages:
+      - "Lint and test"
+      - "Build optimized images"
+      - "Security scanning"
+      - "Performance testing"
+    deployment:
+      - "Blue-green deployments"
+      - "Rolling updates"
+      - "Zero-downtime migrations"
+
+  environment_management:
+    development: "docker-compose.dev.yml"
+    staging: "docker-compose.staging.yml"
+    production: "docker-compose.prod.yml"
+
+troubleshooting:
+  common_issues:
+    build_failures:
+      - "Check Go version compatibility"
+      - "Verify dependency versions"
+      - "Ensure proper build context"
+
+    runtime_issues:
+      - "Check resource limits"
+      - "Verify network connectivity"
+      - "Review health check logs"
+
+    performance_problems:
+      - "Monitor resource usage"
+      - "Check for memory leaks"
+      - "Optimize database queries"
+
+maintenance:
+  image_updates:
+    base_images: "Monthly security updates"
+    dependencies: "Weekly dependency checks"
+    go_modules: "Automated go mod tidy"
+
+  backup_recovery:
+    database: "Automated PostgreSQL backups"
+    redis: "RDB snapshots"
+    logs: "Compressed log archives"
+
+  cleanup:
+    dangling_images: "docker image prune"
+    unused_volumes: "docker volume prune"
+    build_cache: "docker builder prune"
+
+usage_examples:
+  development:
+    command: "docker-compose -f docker-compose.optimized.yml up -d"
+    services: "postgres, redis, world-cities-service"
+    monitoring: "docker-compose logs -f performance-monitor"
+
+  production:
+    deployment: "docker stack deploy -c docker-compose.prod.yml necpgame"
+    scaling: "docker service scale necpgame_world-cities=3"
+    monitoring: "docker service logs necpgame_performance-monitor"
+
+  maintenance:
+    backup: "docker exec necpgame_postgres pg_dump -U necpgame necpgame > backup.sql"
+    cleanup: "docker system prune -a --volumes"
+    update: "docker-compose pull && docker-compose up -d"

@@ -1,0 +1,217 @@
+title: "Performance Monitoring System for NECPGAME"
+version: "1.0.0"
+description: "Enterprise-grade performance monitoring system for MMOFPS game services"
+author: "Backend Agent"
+created_at: "2025-12-28"
+issue: "#140890640"
+
+architecture:
+  type: "Distributed Monitoring"
+  components:
+    - "Python Monitoring Agent"
+    - "PostgreSQL Metrics Storage"
+    - "Prometheus Integration"
+    - "Grafana Dashboards"
+  scale: "MMOFPS (1000+ concurrent users)"
+
+performance_requirements:
+  monitoring_interval: "30 seconds"
+  metrics_retention: "30 days"
+  alerting_threshold: "95th percentile"
+  max_response_time: "100ms"
+
+services_monitored:
+  world-cities-service:
+    port: 8080
+    endpoints: ["/health"]
+    critical_metrics: ["response_time", "memory_usage", "cpu_percent"]
+
+  world-regions-service:
+    port: 8081
+    endpoints: ["/health"]
+    critical_metrics: ["response_time", "memory_usage", "cpu_percent"]
+
+  notification-system-service:
+    port: 8082
+    endpoints: ["/health", "/metrics"]
+    critical_metrics: ["response_time", "memory_usage", "cpu_percent", "notification_queue"]
+
+  achievement-system-service:
+    port: 8083
+    endpoints: ["/health"]
+    critical_metrics: ["response_time", "memory_usage", "cpu_percent"]
+
+  mail-system-service:
+    port: 8084
+    endpoints: ["/health"]
+    critical_metrics: ["response_time", "memory_usage", "cpu_percent"]
+
+  session-management-service:
+    port: 8085
+    endpoints: ["/health"]
+    critical_metrics: ["response_time", "memory_usage", "cpu_percent", "active_sessions"]
+
+  clan-war-service:
+    port: 8086
+    endpoints: ["/health"]
+    critical_metrics: ["response_time", "memory_usage", "cpu_percent"]
+
+  quest-engine-service:
+    port: 8087
+    endpoints: ["/health"]
+    critical_metrics: ["response_time", "memory_usage", "cpu_percent"]
+
+metrics_collected:
+  service_metrics:
+    - response_time_ms
+    - status (healthy/unhealthy/unreachable)
+    - uptime_seconds
+    - error_rate_percent
+
+  process_metrics:
+    - cpu_percent
+    - memory_mb
+    - threads_count
+    - open_files_count
+
+  system_metrics:
+    - cpu_percent
+    - memory_percent
+    - memory_used_gb
+    - memory_total_gb
+    - disk_percent
+    - disk_used_gb
+    - disk_total_gb
+    - network_io
+
+database_schema:
+  performance_metrics:
+    columns:
+      - id: "UUID PRIMARY KEY"
+      - service_name: "VARCHAR(255) NOT NULL"
+      - metric_type: "VARCHAR(100) NOT NULL"
+      - metric_value: "DECIMAL(15,4)"
+      - timestamp: "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
+      - metadata: "JSONB"
+    indexes:
+      - "CREATE INDEX idx_performance_service_time ON performance_metrics(service_name, timestamp)"
+      - "CREATE INDEX idx_performance_type_time ON performance_metrics(metric_type, timestamp)"
+
+alerting_rules:
+  critical:
+    - condition: "response_time_ms > 1000"
+      severity: "CRITICAL"
+      message: "Service response time exceeded 1 second"
+    - condition: "status != 'healthy'"
+      severity: "CRITICAL"
+      message: "Service health check failed"
+
+  warning:
+    - condition: "response_time_ms > 500"
+      severity: "WARNING"
+      message: "Service response time exceeded 500ms"
+    - condition: "memory_percent > 85"
+      severity: "WARNING"
+      message: "Service memory usage above 85%"
+
+  info:
+    - condition: "cpu_percent > 70"
+      severity: "INFO"
+      message: "Service CPU usage above 70%"
+
+implementation_details:
+  monitoring_agent:
+    language: "Python 3.11+"
+    dependencies:
+      - psutil: "System process monitoring"
+      - requests: "HTTP health checks"
+      - psycopg2-binary: "PostgreSQL connection"
+      - pyyaml: "Configuration management"
+    architecture: "Single-threaded monitoring loop"
+
+  data_storage:
+    database: "PostgreSQL 15+"
+    retention_policy: "30 days rolling window"
+    partitioning: "Monthly partitions for performance_metrics table"
+
+  integration_points:
+    prometheus:
+      endpoint: "/metrics"
+      format: "OpenMetrics"
+    grafana:
+      dashboards:
+        - "Service Health Overview"
+        - "System Performance"
+        - "MMOFPS Performance Metrics"
+      alerts: "Integrated with Prometheus Alertmanager"
+
+deployment:
+  container:
+    base_image: "python:3.11-slim"
+    ports: ["8080:8080"]
+    environment:
+      - DATABASE_URL
+      - MONITORING_INTERVAL=30
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health')"]
+      interval: "30s"
+      timeout: "10s"
+      retries: 3
+
+  kubernetes:
+    deployment:
+      replicas: 1
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+    configmap:
+      name: "performance-monitor-config"
+      data:
+        services.json: "Service configuration JSON"
+
+usage:
+  startup:
+    command: "python scripts/performance_monitor.py"
+    logs: "Structured logging with service status updates"
+  api_endpoints:
+    - GET /health: "Monitor health check"
+    - GET /metrics: "Prometheus metrics"
+    - GET /report: "Current performance report"
+  cli_commands:
+    - "python scripts/performance_monitor.py --config config.yaml": "Custom configuration"
+    - "python scripts/performance_monitor.py --once": "Single monitoring cycle"
+
+optimization_notes:
+  memory_pooling: "Reuses HTTP connections and JSON parsers"
+  batch_inserts: "Bulk inserts for database performance"
+  connection_pooling: "PostgreSQL connection pool management"
+  async_monitoring: "Non-blocking health checks with timeouts"
+  structured_logging: "Zap-based logging for performance"
+
+scaling_considerations:
+  horizontal_scaling: "Multiple monitor instances with leader election"
+  vertical_scaling: "Increased resources for larger deployments"
+  database_scaling: "Read replicas for metrics queries"
+  caching: "Redis caching for frequently accessed metrics"
+
+maintenance:
+  log_rotation: "Daily log rotation with compression"
+  metrics_cleanup: "Automated cleanup of old metrics data"
+  backup: "Database backups for metrics history"
+  updates: "Rolling updates for zero-downtime deployments"
+
+troubleshooting:
+  common_issues:
+    - "Service unreachable": "Check service ports and firewall rules"
+    - "Database connection failed": "Verify DATABASE_URL and network connectivity"
+    - "High memory usage": "Check for memory leaks in monitoring agent"
+    - "Slow response times": "Monitor system resources and service performance"
+
+  debugging:
+    debug_mode: "Set LOG_LEVEL=DEBUG environment variable"
+    verbose_logging: "Enable detailed request/response logging"
+    metrics_dump: "Export current metrics to JSON file"

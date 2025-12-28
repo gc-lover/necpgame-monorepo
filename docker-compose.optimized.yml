@@ -1,0 +1,266 @@
+# Optimized Docker Compose for NECPGAME Services
+# Performance optimized for MMOFPS workloads
+# Issue: Docker optimization for all services
+
+version: '3.8'
+
+services:
+  # Database - Optimized PostgreSQL with PostGIS
+  postgres:
+    image: postgis/postgis:15-3.4-alpine
+    container_name: necpgame-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: necpgame
+      POSTGRES_USER: necpgame
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-necpgame2024}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/liquibase/migrations:/docker-entrypoint-initdb.d/migrations
+    ports:
+      - "5432:5432"
+    networks:
+      - necpgame-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U necpgame -d necpgame"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Redis - Optimized for session storage and caching
+  redis:
+    image: redis:7.2-alpine
+    container_name: necpgame-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --tcp-keepalive 300
+      --timeout 300
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - necpgame-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # World Cities Service
+  world-cities-service:
+    build:
+      context: ./services/world-cities-service-go
+      dockerfile: ../../infrastructure/docker/optimized-go-service.Dockerfile
+    container_name: necpgame-world-cities
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://necpgame:${POSTGRES_PASSWORD:-necpgame2024}@postgres:5432/necpgame?sslmode=disable
+      SERVER_PORT: 8080
+      LOG_LEVEL: info
+      GOMEMLIMIT: 256MiB
+      GOGC: 75
+    ports:
+      - "8080:8080"
+    networks:
+      - necpgame-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  # World Regions Service
+  world-regions-service:
+    build:
+      context: ./services/world-regions-service-go
+      dockerfile: ../../infrastructure/docker/optimized-go-service.Dockerfile
+    container_name: necpgame-world-regions
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://necpgame:${POSTGRES_PASSWORD:-necpgame2024}@postgres:5432/necpgame?sslmode=disable
+      SERVER_PORT: 8081
+      LOG_LEVEL: info
+      GOMEMLIMIT: 256MiB
+      GOGC: 75
+    ports:
+      - "8081:8081"
+    networks:
+      - necpgame-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  # Notification System Service
+  notification-service:
+    build:
+      context: ./services/notification-system-service-go
+      dockerfile: ../../infrastructure/docker/optimized-go-service.Dockerfile
+    container_name: necpgame-notification
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://necpgame:${POSTGRES_PASSWORD:-necpgame2024}@postgres:5432/necpgame?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      SERVER_PORT: 8082
+      LOG_LEVEL: info
+      GOMEMLIMIT: 512MiB
+      GOGC: 75
+    ports:
+      - "8082:8082"
+    networks:
+      - necpgame-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Performance Monitor
+  performance-monitor:
+    build:
+      context: .
+      dockerfile: ./infrastructure/docker/python-monitor.Dockerfile
+    container_name: necpgame-performance-monitor
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://necpgame:${POSTGRES_PASSWORD:-necpgame2024}@postgres:5432/necpgame?sslmode=disable
+      MONITORING_INTERVAL: 30
+      LOG_LEVEL: info
+    networks:
+      - necpgame-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    # Run as a monitoring service
+    command: ["python", "scripts/performance_monitor.py"]
+
+  # API Gateway
+  api-gateway:
+    image: nginx:1.25-alpine
+    container_name: necpgame-api-gateway
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - necpgame-network
+    depends_on:
+      - world-cities-service
+      - world-regions-service
+      - notification-service
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.25'
+          memory: 64M
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  nginx_logs:
+    driver: local
+
+networks:
+  necpgame-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Performance optimized configurations
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+  security_opt:
+    - no-new-privileges:true
+  read_only: true
+  tmpfs:
+    - /tmp:noexec,nosuid,size=100m
