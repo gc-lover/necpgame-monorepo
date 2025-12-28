@@ -29,7 +29,7 @@ def generate_migration(quest_file):
     migration = {
         'databaseChangeLog': [{
             'changeSet': {
-                'id': f'quests-{metadata["id"].replace("canon-quest-", "").replace("-", "-")}',
+                'id': f'quests-{metadata["id"].replace("canon-quest-", "").replace("-", "_")}',
                 'author': 'backend-agent-import',
                 'changes': [{
                     'insert': {
