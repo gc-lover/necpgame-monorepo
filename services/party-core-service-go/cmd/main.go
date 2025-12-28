@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -10,9 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
@@ -74,41 +72,38 @@ func main() {
 	partyHandler := handlers.NewPartyHandler(partyService, logger)
 
 	// Настраиваем роутер
-	r := chi.NewRouter()
+	e := echo.New()
 
 	// Middleware
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(30 * time.Second))
+	e.Use(middleware.RequestID())
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
+		Timeout: 30 * time.Second,
+	}))
 
 	// CORS
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"}, // В продакшене указать конкретные домены
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"*"}, // В продакшене указать конкретные домены
+		AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS},
+		AllowHeaders:     []string{echo.HeaderAccept, echo.HeaderAuthorization, echo.HeaderContentType},
+		ExposeHeaders:    []string{"Link"},
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
 
 	// Health check
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+	e.GET("/health", func(c echo.Context) error {
+		return c.String(http.StatusOK, "OK")
 	})
 
 	// Metrics endpoint (можно добавить Prometheus)
-	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Metrics endpoint"))
+	e.GET("/metrics", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Metrics endpoint")
 	})
 
 	// API routes
-	api.HandlerWithOptions(api.NewStrictHandler(partyHandler, nil), api.ChiServerOptions{
-		BaseRouter: r,
-	})
+	api.RegisterHandlers(e, partyHandler)
 
 	// Получаем порт из переменных окружения
 	port := os.Getenv("PORT")
@@ -116,15 +111,10 @@ func main() {
 		port = "8084"
 	}
 
-	srv := &http.Server{
-		Addr:    ":" + port,
-		Handler: r,
-	}
-
 	// Запускаем сервер в горутине
 	go func() {
 		logger.Info("Starting server", zap.String("port", port))
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := e.Start(":" + port); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Failed to start server", zap.Error(err))
 		}
 	}()
@@ -140,7 +130,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := e.Shutdown(ctx); err != nil {
 		logger.Error("Server forced to shutdown", zap.Error(err))
 	}
 

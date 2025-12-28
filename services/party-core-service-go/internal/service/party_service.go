@@ -202,7 +202,7 @@ func (s *PartyServiceImpl) InviteToParty(ctx context.Context, partyID, inviterID
 		zap.String("invitee_id", inviteeID.String()))
 
 	// Проверяем, что приглашающий является членом группы
-	inviterMember, err := s.repo.GetPartyMember(ctx, partyID, inviterID)
+	_, err := s.repo.GetPartyMember(ctx, partyID, inviterID)
 	if err != nil {
 		return errors.New("inviter must be a party member")
 	}

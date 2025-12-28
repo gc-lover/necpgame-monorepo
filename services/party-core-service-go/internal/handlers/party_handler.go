@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 
+	"github.com/gc-lover/necpgame/services/party-core-service-go/api"
 	"github.com/gc-lover/necpgame/services/party-core-service-go/internal/service"
 	"github.com/gc-lover/necpgame/services/party-core-service-go/pkg/models"
 )

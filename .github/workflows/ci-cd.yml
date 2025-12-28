@@ -1,0 +1,553 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ develop, main ]
+  pull_request:
+    branches: [ develop, main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+env:
+  GO_VERSION: '1.21'
+  NODE_VERSION: '18'
+  DOCKER_BUILDKIT: 1
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Code Quality Checks
+  quality-checks:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Run Go linting
+      run: |
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+        golangci-lint run --timeout=5m --verbose
+
+    - name: Check Go formatting
+      run: |
+        if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+          echo "The following files are not formatted:"
+          gofmt -s -l .
+          exit 1
+        fi
+
+    - name: Run Go vet
+      run: go vet ./...
+
+    - name: Run Go tests (unit)
+      run: go test -v -race -coverprofile=coverage.out ./...
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.out
+        flags: unittests
+        name: codecov-umbrella
+
+    - name: Check for security vulnerabilities
+      run: |
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        govulncheck ./...
+
+    - name: Validate emoji ban
+      run: |
+        python3 scripts/validate-emoji-ban.py --check-all
+
+  # Build and Test Services
+  build-services:
+    name: Build Services
+    runs-on: ubuntu-latest
+    needs: quality-checks
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        service: [
+          'achievement-service-go',
+          'combat-stats-service-go',
+          'guild-service-go',
+          'matchmaking-service-go',
+          'world-events-service-go'
+        ]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Build ${{ matrix.service }}
+      run: |
+        cd services/${{ matrix.service }}
+        go mod download
+        go build -v -o bin/service ./cmd
+
+    - name: Run service tests
+      run: |
+        cd services/${{ matrix.service }}
+        go test -v -race -coverprofile=coverage.out ./...
+        go tool cover -func=coverage.out | tail -n 1
+
+    - name: Build Docker image
+      run: |
+        cd services/${{ matrix.service }}
+        docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:latest .
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.service }}-binary
+        path: services/${{ matrix.service }}/bin/service
+        retention-days: 7
+
+  # Integration Tests
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: build-services
+    timeout-minutes: 20
+    services:
+      postgresql:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:6-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Run integration tests
+      run: |
+        python3 scripts/final-qa-testing.py
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/necpgame?sslmode=disable
+        REDIS_URL: redis://localhost:6379
+
+    - name: Run performance tests
+      run: |
+        python3 scripts/test_synchronization_performance.py --type combat --clients 100 --duration 30
+
+  # Load Testing
+  load-tests:
+    name: Load Testing
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    timeout-minutes: 45
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        pip install aiohttp requests locust
+
+    - name: Run load tests
+      run: |
+        python3 scripts/load-testing/mmofps_load_tester.py \
+          --type combat \
+          --clients 1000 \
+          --duration 120 \
+          --server http://localhost:8080
+
+    - name: Generate load test report
+      run: |
+        python3 scripts/load-testing/generate_report.py
+
+    - name: Upload load test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: load-test-results
+        path: load-test-results/
+        retention-days: 30
+
+  # Security Scanning
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: quality-checks
+    timeout-minutes: 15
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Run secret scanning
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Docker Build and Push
+  docker-build:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [build-services, integration-tests, security-scan]
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        service: [
+          'achievement-service-go',
+          'combat-stats-service-go',
+          'guild-service-go',
+          'matchmaking-service-go',
+          'world-events-service-go'
+        ]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: services/${{ matrix.service }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [docker-build, load-tests]
+    if: github.ref == 'refs/heads/develop'
+    timeout-minutes: 20
+    environment: staging
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}
+
+    - name: Deploy to staging
+      run: |
+        # Update Helm chart versions
+        sed -i 's/appVersion: .*/appVersion: '${GITHUB_SHA::8}'/' k8s/helm/necpgame/Chart.yaml
+
+        # Deploy with Helm
+        helm upgrade --install necpgame-staging ./k8s/helm/necpgame \
+          --namespace necpgame-staging \
+          --create-namespace \
+          --set global.environment=staging \
+          --set global.imageTag=${GITHUB_SHA::8} \
+          --wait \
+          --timeout=600s
+
+    - name: Run post-deployment tests
+      run: |
+        # Wait for services to be ready
+        kubectl wait --for=condition=available --timeout=300s deployment --all -n necpgame-staging
+
+        # Run smoke tests
+        python3 scripts/smoke-tests.py --environment staging
+
+    - name: Notify deployment
+      uses: 8398a7/action-slack@v3
+      if: always()
+      with:
+        status: ${{ job.status }}
+        text: "Staging deployment completed"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [docker-build, load-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    timeout-minutes: 30
+    environment: production
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG_PRODUCTION }}
+
+    - name: Deploy to production (blue-green)
+      run: |
+        # Get current active deployment
+        CURRENT=$(kubectl get svc necpgame-production -n necpgame-production -o jsonpath='{.spec.selector.version}' 2>/dev/null || echo "blue")
+
+        # Determine next deployment color
+        if [ "$CURRENT" = "blue" ]; then
+          NEXT="green"
+        else
+          NEXT="blue"
+        fi
+
+        echo "Deploying to $NEXT environment"
+
+        # Deploy new version
+        helm upgrade --install necpgame-$NEXT ./k8s/helm/necpgame \
+          --namespace necpgame-production \
+          --set global.environment=production \
+          --set global.imageTag=${GITHUB_SHA::8} \
+          --set service.selector.version=$NEXT \
+          --wait \
+          --timeout=900s
+
+        # Run canary tests
+        python3 scripts/canary-tests.py --environment production --color $NEXT
+
+        # Switch traffic if tests pass
+        kubectl patch svc necpgame-production -n necpgame-production \
+          -p "{\"spec\":{\"selector\":{\"version\":\"$NEXT\"}}}"
+
+        # Scale down old deployment
+        kubectl scale deployment necpgame-$CURRENT --replicas=0 -n necpgame-production
+
+    - name: Run production validation
+      run: |
+        # Comprehensive production tests
+        python3 scripts/production-validation.py
+
+        # Performance regression tests
+        python3 scripts/performance-regression.py
+
+    - name: Notify production deployment
+      uses: 8398a7/action-slack@v3
+      if: always()
+      with:
+        status: ${{ job.status }}
+        text: "Production deployment completed - ${{ github.sha }}"
+        fields: repo,message,commit,author,action,eventName,ref,workflow
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_PRODUCTION_WEBHOOK }}
+
+  # Rollback on Failure
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: failure() && (needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure')
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+    - name: Rollback deployment
+      run: |
+        # Rollback Helm release
+        helm rollback necpgame-${{ github.event.inputs.environment || 'staging' }} 0
+
+        # Notify about rollback
+        echo "Deployment rolled back due to failure"
+
+    - name: Notify rollback
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: "Deployment rolled back due to failure"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Performance Monitoring
+  performance-monitoring:
+    name: Performance Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    timeout-minutes: 15
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Monitor performance
+      run: |
+        # Monitor key performance metrics
+        python3 scripts/performance_monitor.py \
+          --environment ${{ github.event.inputs.environment || 'staging' }} \
+          --duration 300 \
+          --alert-threshold 0.05
+
+    - name: Generate performance report
+      run: |
+        python3 scripts/performance_monitor.py --report
+
+    - name: Upload performance report
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-report
+        path: performance-report.json
+        retention-days: 30
+
+  # Documentation
+  update-docs:
+    name: Update Documentation
+    runs-on: ubuntu-latest
+    needs: [quality-checks]
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Update API documentation
+      run: |
+        python3 scripts/generate-api-docs.py
+        python3 scripts/generate-service-docs.py
+
+    - name: Deploy documentation
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: docs/
+        cname: docs.necpgame.com
+
+  # Release Management
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'release')
+    timeout-minutes: 10
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Generate release notes
+      run: |
+        python3 scripts/generate-release-notes.py > release-notes.md
+
+    - name: Create GitHub release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        body_path: release-notes.md
+        draft: false
+        prerelease: false
