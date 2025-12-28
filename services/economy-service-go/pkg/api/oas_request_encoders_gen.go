@@ -10,50 +10,8 @@ import (
 	ht "github.com/ogen-go/ogen/http"
 )
 
-func encodeCreateAuctionRequest(
-	req *CreateAuctionRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
 func encodeCreateTradeListingRequest(
 	req *CreateTradeRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodePlaceBidRequest(
-	req *PlaceBidRequest,
-	r *http.Request,
-) error {
-	const contentType = "application/json"
-	e := new(jx.Encoder)
-	{
-		req.Encode(e)
-	}
-	encoded := e.Bytes()
-	ht.SetBody(r, bytes.NewReader(encoded), contentType)
-	return nil
-}
-
-func encodeUpdatePlayerWalletRequest(
-	req *UpdateWalletRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

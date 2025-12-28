@@ -8,20 +8,6 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
-	// BuyoutAuction implements buyoutAuction operation.
-	//
-	// Instantly purchase auction at buyout price.
-	// **BACKEND NOTE:** Immediate completion with no bidding period.
-	//
-	// POST /auctions/{auction_id}/buyout
-	BuyoutAuction(ctx context.Context, params BuyoutAuctionParams) (BuyoutAuctionRes, error)
-	// CancelAuction implements cancelAuction operation.
-	//
-	// Cancel auction (seller only, if no bids placed).
-	// **BACKEND NOTE:** Only possible before first bid is placed.
-	//
-	// POST /auctions/{auction_id}/cancel
-	CancelAuction(ctx context.Context, params CancelAuctionParams) (CancelAuctionRes, error)
 	// CancelTrade implements cancelTrade operation.
 	//
 	// Cancel an active trade listing (seller only).
@@ -29,13 +15,6 @@ type Handler interface {
 	//
 	// DELETE /trade/{trade_id}
 	CancelTrade(ctx context.Context, params CancelTradeParams) (CancelTradeRes, error)
-	// CreateAuction implements createAuction operation.
-	//
-	// Create a new auction listing.
-	// **BACKEND NOTE:** Validates item ownership and locks item inventory.
-	//
-	// POST /auctions
-	CreateAuction(ctx context.Context, req *CreateAuctionRequest) (CreateAuctionRes, error)
 	// CreateTradeListing implements createTradeListing operation.
 	//
 	// Create a new trade listing with validation and anti-fraud checks.
@@ -51,40 +30,6 @@ type Handler interface {
 	//
 	// GET /trade
 	GetActiveTrades(ctx context.Context, params GetActiveTradesParams) (GetActiveTradesRes, error)
-	// GetAuctionDetails implements getAuctionDetails operation.
-	//
-	// Get detailed information about a specific auction including bid history.
-	//
-	// GET /auctions/{auction_id}
-	GetAuctionDetails(ctx context.Context, params GetAuctionDetailsParams) (GetAuctionDetailsRes, error)
-	// GetAuctions implements getAuctions operation.
-	//
-	// Get paginated list of auctions with filtering and sorting.
-	// **BACKEND NOTE:** Hot path - optimized for 1000+ RPS with Redis caching.
-	//
-	// GET /auctions
-	GetAuctions(ctx context.Context, params GetAuctionsParams) (GetAuctionsRes, error)
-	// GetCharacterInventory implements getCharacterInventory operation.
-	//
-	// Get detailed player inventory with valuation.
-	// **BACKEND NOTE:** Includes item values and capacity information.
-	//
-	// GET /players/{player_id}/inventory
-	GetCharacterInventory(ctx context.Context, params GetCharacterInventoryParams) (GetCharacterInventoryRes, error)
-	// GetCraftingRecipes implements getCraftingRecipes operation.
-	//
-	// Get paginated list of crafting recipes with filtering.
-	// **BACKEND NOTE:** Supports complex filtering for crafting UI.
-	//
-	// GET /crafting/recipes
-	GetCraftingRecipes(ctx context.Context, params GetCraftingRecipesParams) (GetCraftingRecipesRes, error)
-	// GetEconomyOverview implements getEconomyOverview operation.
-	//
-	// Get comprehensive economy statistics and market trends.
-	// **BACKEND NOTE:** Aggregated data for dashboard views.
-	//
-	// GET /economy/overview
-	GetEconomyOverview(ctx context.Context, params GetEconomyOverviewParams) (GetEconomyOverviewRes, error)
 	// GetMarketOverview implements getMarketOverview operation.
 	//
 	// Get aggregated market statistics and active trade counts.
@@ -92,18 +37,6 @@ type Handler interface {
 	//
 	// GET /market/overview
 	GetMarketOverview(ctx context.Context) (GetMarketOverviewRes, error)
-	// GetMyAuctions implements getMyAuctions operation.
-	//
-	// Get auctions created by the authenticated user (seller view).
-	//
-	// GET /auctions/my
-	GetMyAuctions(ctx context.Context, params GetMyAuctionsParams) (GetMyAuctionsRes, error)
-	// GetMyBids implements getMyBids operation.
-	//
-	// Get auctions where the authenticated user has placed bids (bidder view).
-	//
-	// GET /auctions/my-bids
-	GetMyBids(ctx context.Context, params GetMyBidsParams) (GetMyBidsRes, error)
 	// GetPlayerTransactionHistory implements getPlayerTransactionHistory operation.
 	//
 	// Get paginated transaction history for a player.
@@ -111,12 +44,6 @@ type Handler interface {
 	//
 	// GET /players/{player_id}/transactions
 	GetPlayerTransactionHistory(ctx context.Context, params GetPlayerTransactionHistoryParams) (GetPlayerTransactionHistoryRes, error)
-	// GetPlayerWallet implements getPlayerWallet operation.
-	//
-	// Get player wallet information and balances.
-	//
-	// GET /players/{player_id}/wallet
-	GetPlayerWallet(ctx context.Context, params GetPlayerWalletParams) (GetPlayerWalletRes, error)
 	// GetTradeDetails implements getTradeDetails operation.
 	//
 	// Get detailed information about a specific trade listing.
@@ -129,25 +56,12 @@ type Handler interface {
 	//
 	// GET /health
 	HealthCheck(ctx context.Context) (HealthCheckRes, error)
-	// PlaceBid implements placeBid operation.
-	//
-	// Place a bid on an active auction. Minimum bid increment is 5%.
-	// **BACKEND NOTE:** Atomic operation with balance check and bid validation.
-	//
-	// POST /auctions/{auction_id}/bid
-	PlaceBid(ctx context.Context, req *PlaceBidRequest, params PlaceBidParams) (PlaceBidRes, error)
 	// ReadinessCheck implements readinessCheck operation.
 	//
 	// Comprehensive readiness check including database connectivity.
 	//
 	// GET /readiness
 	ReadinessCheck(ctx context.Context) (ReadinessCheckRes, error)
-	// UpdatePlayerWallet implements updatePlayerWallet operation.
-	//
-	// Update player wallet balances (admin only).
-	//
-	// PUT /players/{player_id}/wallet
-	UpdatePlayerWallet(ctx context.Context, req *UpdateWalletRequest, params UpdatePlayerWalletParams) (UpdatePlayerWalletRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

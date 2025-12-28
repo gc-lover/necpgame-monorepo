@@ -13,26 +13,6 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
-// BuyoutAuction implements buyoutAuction operation.
-//
-// Instantly purchase auction at buyout price.
-// **BACKEND NOTE:** Immediate completion with no bidding period.
-//
-// POST /auctions/{auction_id}/buyout
-func (UnimplementedHandler) BuyoutAuction(ctx context.Context, params BuyoutAuctionParams) (r BuyoutAuctionRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// CancelAuction implements cancelAuction operation.
-//
-// Cancel auction (seller only, if no bids placed).
-// **BACKEND NOTE:** Only possible before first bid is placed.
-//
-// POST /auctions/{auction_id}/cancel
-func (UnimplementedHandler) CancelAuction(ctx context.Context, params CancelAuctionParams) (r CancelAuctionRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // CancelTrade implements cancelTrade operation.
 //
 // Cancel an active trade listing (seller only).
@@ -40,16 +20,6 @@ func (UnimplementedHandler) CancelAuction(ctx context.Context, params CancelAuct
 //
 // DELETE /trade/{trade_id}
 func (UnimplementedHandler) CancelTrade(ctx context.Context, params CancelTradeParams) (r CancelTradeRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// CreateAuction implements createAuction operation.
-//
-// Create a new auction listing.
-// **BACKEND NOTE:** Validates item ownership and locks item inventory.
-//
-// POST /auctions
-func (UnimplementedHandler) CreateAuction(ctx context.Context, req *CreateAuctionRequest) (r CreateAuctionRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -74,55 +44,6 @@ func (UnimplementedHandler) GetActiveTrades(ctx context.Context, params GetActiv
 	return r, ht.ErrNotImplemented
 }
 
-// GetAuctionDetails implements getAuctionDetails operation.
-//
-// Get detailed information about a specific auction including bid history.
-//
-// GET /auctions/{auction_id}
-func (UnimplementedHandler) GetAuctionDetails(ctx context.Context, params GetAuctionDetailsParams) (r GetAuctionDetailsRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// GetAuctions implements getAuctions operation.
-//
-// Get paginated list of auctions with filtering and sorting.
-// **BACKEND NOTE:** Hot path - optimized for 1000+ RPS with Redis caching.
-//
-// GET /auctions
-func (UnimplementedHandler) GetAuctions(ctx context.Context, params GetAuctionsParams) (r GetAuctionsRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// GetCharacterInventory implements getCharacterInventory operation.
-//
-// Get detailed player inventory with valuation.
-// **BACKEND NOTE:** Includes item values and capacity information.
-//
-// GET /players/{player_id}/inventory
-func (UnimplementedHandler) GetCharacterInventory(ctx context.Context, params GetCharacterInventoryParams) (r GetCharacterInventoryRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// GetCraftingRecipes implements getCraftingRecipes operation.
-//
-// Get paginated list of crafting recipes with filtering.
-// **BACKEND NOTE:** Supports complex filtering for crafting UI.
-//
-// GET /crafting/recipes
-func (UnimplementedHandler) GetCraftingRecipes(ctx context.Context, params GetCraftingRecipesParams) (r GetCraftingRecipesRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// GetEconomyOverview implements getEconomyOverview operation.
-//
-// Get comprehensive economy statistics and market trends.
-// **BACKEND NOTE:** Aggregated data for dashboard views.
-//
-// GET /economy/overview
-func (UnimplementedHandler) GetEconomyOverview(ctx context.Context, params GetEconomyOverviewParams) (r GetEconomyOverviewRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // GetMarketOverview implements getMarketOverview operation.
 //
 // Get aggregated market statistics and active trade counts.
@@ -133,24 +54,6 @@ func (UnimplementedHandler) GetMarketOverview(ctx context.Context) (r GetMarketO
 	return r, ht.ErrNotImplemented
 }
 
-// GetMyAuctions implements getMyAuctions operation.
-//
-// Get auctions created by the authenticated user (seller view).
-//
-// GET /auctions/my
-func (UnimplementedHandler) GetMyAuctions(ctx context.Context, params GetMyAuctionsParams) (r GetMyAuctionsRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// GetMyBids implements getMyBids operation.
-//
-// Get auctions where the authenticated user has placed bids (bidder view).
-//
-// GET /auctions/my-bids
-func (UnimplementedHandler) GetMyBids(ctx context.Context, params GetMyBidsParams) (r GetMyBidsRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // GetPlayerTransactionHistory implements getPlayerTransactionHistory operation.
 //
 // Get paginated transaction history for a player.
@@ -158,15 +61,6 @@ func (UnimplementedHandler) GetMyBids(ctx context.Context, params GetMyBidsParam
 //
 // GET /players/{player_id}/transactions
 func (UnimplementedHandler) GetPlayerTransactionHistory(ctx context.Context, params GetPlayerTransactionHistoryParams) (r GetPlayerTransactionHistoryRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// GetPlayerWallet implements getPlayerWallet operation.
-//
-// Get player wallet information and balances.
-//
-// GET /players/{player_id}/wallet
-func (UnimplementedHandler) GetPlayerWallet(ctx context.Context, params GetPlayerWalletParams) (r GetPlayerWalletRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -188,30 +82,11 @@ func (UnimplementedHandler) HealthCheck(ctx context.Context) (r HealthCheckRes, 
 	return r, ht.ErrNotImplemented
 }
 
-// PlaceBid implements placeBid operation.
-//
-// Place a bid on an active auction. Minimum bid increment is 5%.
-// **BACKEND NOTE:** Atomic operation with balance check and bid validation.
-//
-// POST /auctions/{auction_id}/bid
-func (UnimplementedHandler) PlaceBid(ctx context.Context, req *PlaceBidRequest, params PlaceBidParams) (r PlaceBidRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
 // ReadinessCheck implements readinessCheck operation.
 //
 // Comprehensive readiness check including database connectivity.
 //
 // GET /readiness
 func (UnimplementedHandler) ReadinessCheck(ctx context.Context) (r ReadinessCheckRes, _ error) {
-	return r, ht.ErrNotImplemented
-}
-
-// UpdatePlayerWallet implements updatePlayerWallet operation.
-//
-// Update player wallet balances (admin only).
-//
-// PUT /players/{player_id}/wallet
-func (UnimplementedHandler) UpdatePlayerWallet(ctx context.Context, req *UpdateWalletRequest, params UpdatePlayerWalletParams) (r UpdatePlayerWalletRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
