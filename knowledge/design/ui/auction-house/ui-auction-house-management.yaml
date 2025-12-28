@@ -1,0 +1,376 @@
+# Issue: #1479
+metadata:
+  id: ui-auction-house-management
+  title: Auction House UI - Управление лотами
+  document_type: design
+  category: ui
+  status: draft
+  version: 1.0.0
+  last_updated: 2025-12-28T12:30:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: ui_designer
+      contact: ui@necp.game
+  tags:
+    - auction-house
+    - ui-design
+    - lot-management
+    - seller-tools
+  topics:
+    - user_interface_design
+    - auction_management
+    - seller_experience
+  related_systems:
+    - economy-service
+    - notification-service
+  related_documents:
+    - id: ui-auction-house-catalog
+      relation: complements
+    - id: ui-auction-house-trading
+      relation: complements
+    - id: auction-house-mechanics
+      relation: implements
+    - id: auction-house-operations
+      relation: references
+  visibility: internal
+  audience:
+    - ui
+    - client
+    - economy
+  risk_level: low
+
+summary:
+  problem: Необходим интерфейс для управления активными и завершенными аукционными лотами продавцов с историей и аналитикой.
+  goal: Спроектировать dashboard для продавцов с инструментами управления лотами, просмотра статистики и получения уведомлений.
+  essence: Документ описывает seller-centric интерфейс для управления аукционной активностью с фокусом на эффективность и insights.
+  key_points:
+    - Dashboard с обзором всех лотов продавца
+    - Инструменты управления активными лотами
+    - История продаж и аналитика доходов
+    - Система уведомлений и alerts
+    - Bulk operations для управления множеством лотов
+
+content:
+  sections:
+    - id: seller_dashboard
+      title: Dashboard продавца
+      body: |
+        **Компонент: AuctionSellerDashboard**
+
+        **Layout:** Full-screen dashboard с tabbed интерфейсом
+
+        **Главный экран (Overview):**
+        ```yaml
+        OverviewTab:
+          stats_cards:
+            - active_lots: "5" (cyan)
+            - total_value: "€$ 12,450" (gold)
+            - today_sales: "€$ 2,100" (green)
+            - pending_payments: "€$ 850" (yellow)
+          quick_actions:
+            create_lot_button: "Create New Lot" (primary)
+            view_all_lots_button: "Manage Lots"
+          recent_activity:
+            list: last 5 transactions with status
+          alerts_section:
+            notifications: new bids, sales, expirations
+        ```
+
+        **Tabs:**
+        - **Overview** - статистика и быстрые действия
+        - **Active Lots** - управление текущими лотами
+        - **Sales History** - история продаж
+        - **Analytics** - статистика и insights
+        - **Settings** - настройки уведомлений
+
+    - id: active_lots_management
+      title: Управление активными лотами
+      body: |
+        **Компонент: ActiveLotsManager**
+
+        **Grid/List View:**
+        - Sortable table с колонками:
+          - Item (icon + name)
+          - Current Bid
+          - Buyout Price
+          - Time Remaining
+          - Bid Count
+          - Actions
+
+        **Actions per Lot:**
+        ```yaml
+        LotActions:
+          view_details: eye icon (открывает detail modal)
+          edit_buyout: pencil icon (редактировать buyout price)
+          cancel_lot: x icon (отменить с подтверждением)
+          extend_time: clock icon (+24h, платно)
+          relist_item: refresh icon (после истечения)
+        ```
+
+        **Bulk Actions:**
+        - Select multiple lots checkbox
+        - Bulk cancel selected
+        - Bulk extend time
+        - Export to CSV
+
+        **Filters:**
+        - By time remaining (<1h, <24h, all)
+        - By bid status (no bids, has bids, high bids)
+        - By item category
+        - Search by item name
+
+    - id: lot_detail_management
+      title: Детальное управление лотом
+      body: |
+        **Компонент: LotManagementModal**
+
+        **Tabs в модальном окне:**
+
+        **1. Overview:**
+        ```yaml
+        LotOverview:
+          item_display: 3D preview + stats
+          auction_stats:
+            current_bid: "€$ 1,250"
+            bid_count: "8 bids"
+            time_remaining: "02:15:30"
+            views_count: "156 views"
+          bid_history: scrollable list всех ставок
+          top_bidders: list топ-3 bidders (анонимизирован)
+        ```
+
+        **2. Edit Settings:**
+        ```yaml
+        LotEditForm:
+          buyout_price: editable field (can increase only)
+          extend_duration: +24h/+48h buttons with cost
+          cancel_auction: button with confirmation
+          note: "Changes are permanent and visible to bidders"
+        ```
+
+        **3. Notifications:**
+        ```yaml
+        LotNotifications:
+          bid_alerts: toggle (new bids on this lot)
+          outbid_alerts: toggle (when someone outbids)
+          expiration_alert: toggle (24h, 1h, 5min warnings)
+          custom_price_alert: set price threshold for alerts
+        ```
+
+    - id: sales_history
+      title: История продаж
+      body: |
+        **Компонент: SalesHistoryTable**
+
+        **Table columns:**
+        - Date sold
+        - Item (icon + name)
+        - Final price
+        - Commission (5%)
+        - Net profit
+        - Buyer (optional anonymity)
+        - Sale type (bid/buyout)
+
+        **Filtering & Search:**
+        - Date range picker
+        - Item category filter
+        - Price range filter
+        - Sale type filter
+        - Export options (CSV, PDF)
+
+        **Summary Stats:**
+        ```yaml
+        SalesSummary:
+          total_sales: "€$ 15,420"
+          total_commission: "€$ 771"
+          net_profit: "€$ 14,649"
+          items_sold: "23 items"
+          avg_sale_price: "€$ 670"
+          best_selling_category: "Weapons"
+        ```
+
+        **Charts:**
+        - Sales over time (line chart)
+        - Revenue by category (pie chart)
+        - Price distribution (histogram)
+
+    - id: analytics_dashboard
+      title: Аналитический dashboard
+      body: |
+        **Компонент: SellerAnalyticsDashboard**
+
+        **Key Metrics:**
+        ```yaml
+        AnalyticsCards:
+          success_rate: "68% lots sold"
+          avg_sale_price: "€$ 850"
+          avg_time_to_sell: "36 hours"
+          total_views: "2,340"
+          conversion_rate: "23% (bids to sales)"
+          return_rate: "15% items relisted"
+        ```
+
+        **Performance Charts:**
+        - Sales velocity (items sold per day)
+        - Price trends by category
+        - Peak selling hours
+        - Bid activity patterns
+
+        **Item Performance:**
+        - Best/worst selling items
+        - Category performance comparison
+        - Price vs. time correlation
+        - View to bid conversion rates
+
+        **Market Insights:**
+        - Popular items trends
+        - Price fluctuations
+        - Competition analysis
+        - Recommended pricing
+
+    - id: notification_center
+      title: Центр уведомлений
+      body: |
+        **Компонент: AuctionNotificationsCenter**
+
+        **Типы уведомлений:**
+        - **Bid Received:** "New bid on 'Katana Ghost': €$ 1,350"
+        - **Lot Sold:** "Your 'Plasma Rifle' sold for €$ 2,100!"
+        - **Lot Expired:** "'Cybernetic Arm' expired with no bids"
+        - **Outbid Alert:** "Someone outbid you on 'Tech Implant'"
+        - **Payment Received:** "€$ 1,995 added to wallet (after 5% commission)"
+
+        **Notification Settings:**
+        ```yaml
+        NotificationPreferences:
+          email_notifications: toggle
+          in_app_notifications: toggle
+          sound_alerts: toggle
+          quiet_hours: time range picker
+          priority_filters: critical, sales, bids, info
+        ```
+
+        **Notification History:**
+        - Filterable by type, date, lot
+        - Mark as read/unread
+        - Bulk actions (mark all read)
+        - Archive old notifications
+
+    - id: bulk_operations
+      title: Массовые операции
+      body: |
+        **Компонент: BulkOperationsPanel**
+
+        **Available Operations:**
+        - **Bulk Create:** Upload CSV with multiple items
+        - **Bulk Edit:** Change buyout prices for selected lots
+        - **Bulk Extend:** Add time to multiple lots
+        - **Bulk Cancel:** Cancel selected lots with reason
+        - **Bulk Relist:** Relist expired items with new prices
+
+        **Bulk Create Interface:**
+        ```yaml
+        BulkCreateWizard:
+          file_upload: CSV drag & drop
+          template_download: "Download template"
+          validation_preview: show parsed data with errors
+          pricing_strategy: "Use market average" / "Custom prices"
+          confirmation_step: final review before creation
+        ```
+
+        **Progress Tracking:**
+        - Progress bar for bulk operations
+        - Individual status for each item
+        - Error reporting and retry options
+        - Success/failure summaries
+
+    - id: mobile_optimization
+      title: Мобильная оптимизация
+      body: |
+        **Mobile Dashboard:**
+        - Simplified card-based layout
+        - Swipe actions для быстрых операций
+        - Bottom navigation tabs
+        - Collapsible sections
+
+        **Mobile Lot Management:**
+        - List view вместо table
+        - Swipe right: view details
+        - Swipe left: quick actions menu
+        - Long press: multi-select mode
+
+        **Touch Optimizations:**
+        - 44px minimum touch targets
+        - Swipe gestures для навигации
+        - Pull-to-refresh для обновления данных
+        - Haptic feedback для действий
+
+    - id: accessibility_management
+      title: Доступность интерфейса управления
+      body: |
+        **Keyboard Navigation:**
+        - Tab navigation через tables и cards
+        - Arrow keys для table navigation
+        - Enter для action activation
+        - Space для selection
+
+        **Screen Reader Support:**
+        - Table headers и cell descriptions
+        - Status announcements для операций
+        - Progress updates для bulk operations
+        - Form field labels и descriptions
+
+        **Visual Accessibility:**
+        - High contrast mode для tables
+        - Larger text options
+        - Color-blind friendly charts
+        - Focus indicators
+
+appendix:
+  glossary:
+    - term: Lot Management
+      definition: Инструменты для контроля и модификации активных аукционных лотов
+    - term: Bulk Operations
+      definition: Массовые действия над несколькими лотами одновременно
+    - term: Seller Analytics
+      definition: Статистика и insights о продажах и эффективности продавца
+    - term: Notification Center
+      definition: Централизованная система уведомлений о событиях аукциона
+
+  references:
+    - source: "eBay Seller Hub"
+      type: reference
+      url: "https://www.ebay.com/seller-hub"
+    - source: "Amazon Seller Central"
+      type: inspiration
+      url: "https://sellercentral.amazon.com"
+    - source: "Game Auction House Analytics"
+      type: research
+      url: "https://gameanalytics.com/auction-house-insights"
+
+  decisions:
+    - date: 2025-12-28
+      decision: "Реализовать comprehensive analytics dashboard"
+      rationale: "Дает продавцам insights для оптимизации продаж"
+    - date: 2025-12-28
+      decision: "Добавить bulk operations для efficiency"
+      rationale: "Упрощает управление большим количеством лотов"
+    - date: 2025-12-28
+      decision: "Интегрировать notification center"
+      rationale: "Критично для timely responses на auction events"
+
+implementation:
+  needs_task: false
+  github_issue: 1479
+  queue_reference: []
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-28
+    author: content_writer
+    changes: Создан детальный дизайн UI для управления аукционными лотами продавца
+
+validation:
+  checksum: ""
+  schema_version: "1.0"

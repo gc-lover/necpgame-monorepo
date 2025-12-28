@@ -1,0 +1,321 @@
+# Issue: #1479
+metadata:
+  id: ui-auction-house-catalog
+  title: Auction House UI - Каталог и просмотр лотов
+  document_type: design
+  category: ui
+  status: draft
+  version: 1.0.0
+  last_updated: 2025-12-28T12:00:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: ui_designer
+      contact: ui@necp.game
+  tags:
+    - auction-house
+    - ui-design
+    - cyberpunk-ui
+    - catalog
+    - bidding
+  topics:
+    - user_interface_design
+    - auction_systems
+    - player_economy
+  related_systems:
+    - economy-service
+    - auction-house-service
+  related_documents:
+    - id: auction-house-mechanics
+      relation: implements
+    - id: auction-house-operations
+      relation: references
+    - id: ui-auction-house-trading
+      relation: complements
+    - id: ui-auction-house-management
+      relation: complements
+  visibility: internal
+  audience:
+    - ui
+    - client
+    - economy
+  risk_level: low
+
+summary:
+  problem: Необходимо спроектировать клиентский интерфейс для просмотра и поиска аукционных лотов с учетом механик аукциона и UX требований.
+  goal: Создать детальный дизайн UI компонентов для каталога лотов, фильтров, поиска и детального просмотра с поддержкой real-time обновлений.
+  essence: Документ описывает визуальный дизайн и интерактивные компоненты аукционного каталога в cyberpunk стиле с неоновой тематикой.
+  key_points:
+    - Каталог лотов с многоуровневыми фильтрами и реальным временем обновлениями
+    - Детальный просмотр лота с таймерами, историей ставок и формой размещения ставок
+    - Адаптивный дизайн под разные разрешения экрана с поддержкой мобильных устройств
+    - Интеграция уведомлений и быстрых действий для улучшения UX
+
+content:
+  sections:
+    - id: overview
+      title: Обзор интерфейса
+      body: |
+        Auction House UI представляет собой полноэкранный интерфейс с тремя основными областями:
+        - **Верхняя панель:** навигация, поиск, фильтры, быстрые действия
+        - **Основная область:** каталог лотов в виде сетки/списка с превью предметов
+        - **Боковая панель:** детальная информация выбранного лота, форма ставок
+
+        **Цветовая схема:**
+        - Основной фон: `#0A0A0A` (темный с легким синим оттенком)
+        - Акценты: `#00FFFF` (неоновый cyan) для активных элементов
+        - Цены: `#FFD700` (золото) для ставок и buyout
+        - Статусы: `#00FF00` (зеленый) для активных лотов, `#FF4444` (красный) для истекающих
+        - Текст: `#FFFFFF` (белый) основной, `#CCCCCC` (серый) вторичный
+
+    - id: main_catalog
+      title: Каталог лотов
+      body: |
+        **Компонент: AuctionCatalogGrid**
+
+        **Layout:**
+        - Адаптивная сетка: 2-6 колонок в зависимости от разрешения экрана
+        - Каждый лот: карточка 280x360px с превью предмета и основной информацией
+
+        **Структура карточки лота:**
+        ```yaml
+        AuctionLotCard:
+          header:
+            item_icon: 120x120px с эффектом glow
+            item_name: bold, 14px, truncated
+            seller_info: small text, "by PlayerName"
+          pricing:
+            current_bid: gold color, large font, "€$ 1,250"
+            buyout_price: smaller gold text, "Buyout: €$ 2,500"
+            time_remaining: countdown timer with color coding
+          stats:
+            bid_count: "12 bids"
+            item_rarity: colored border (common/grey, rare/blue, epic/purple, legendary/gold)
+          actions:
+            quick_bid: "+5%" button
+            watchlist: star icon
+        ```
+
+        **Особенности:**
+        - Real-time обновления ставок (WebSocket)
+        - Анимация таймеров с пульсацией при <5 минут
+        - Hover эффекты с увеличением карточки на 5%
+        - Lazy loading для больших каталогов
+
+    - id: search_filters
+      title: Поиск и фильтры
+      body: |
+        **Компонент: AuctionSearchBar**
+
+        **Расположение:** Верхняя панель, full-width
+
+        **Элементы:**
+        - Search input: placeholder "Поиск предметов..."
+        - Category dropdown: Оружие, Броня, Импланты, Предметы, Ресурсы
+        - Quality filter: Все, Обычное, Редкое, Эпическое, Легендарное
+        - Price range slider: €$ 0 - 100,000
+        - Sort options: Цена ↑↓, Время окончания ↑↓, Популярность
+
+        **Расширенные фильтры (collapsible panel):**
+        - Item level: 1-100 slider
+        - Seller reputation: 0-100 stars
+        - Auction duration: 24h, 48h, 72h
+        - Has buyout: checkbox
+        - Only my bids: checkbox
+
+        **UX особенности:**
+        - Автокомплит для поиска
+        - Сохранение последних фильтров в localStorage
+        - Quick filters: "Мои ставки", "Истекают скоро", "Новые лоты"
+        - Filter presets для разных типов предметов
+
+    - id: lot_detail_view
+      title: Детальный просмотр лота
+      body: |
+        **Компонент: AuctionLotDetailPanel**
+
+        **Layout:** Правая боковая панель, 400px width, full height
+
+        **Секции:**
+
+        **1. Item Preview (верхняя треть):**
+        - 3D модель предмета с вращением (мышью)
+        - Зум при клике (fullscreen overlay)
+        - Item stats: damage, armor, effects в красивом layout
+        - Rarity border с анимацией частиц
+
+        **2. Auction Info (средняя треть):**
+        ```yaml
+        auction_info:
+          current_bid: "€$ 1,250" (gold, large)
+          your_max_bid: "Ваша макс. ставка: €$ 1,100" (grey)
+          bid_increment: "Мин. ставка: €$ 1,313 (+5%)"
+          buyout_price: "€$ 2,500" (gold, button style)
+          time_remaining: "04:23:15" (countdown with progress bar)
+          bid_count: "12 ставок"
+          seller: "PlayerName (⭐⭐⭐⭐☆)"
+        ```
+
+        **3. Bid History (нижняя треть):**
+        - Scrollable list последних 10 ставок
+        - Format: "PlayerX - €$ 1,250 (+2%) - 5 мин назад"
+        - Your bids выделены синим
+        - Auto-scroll к новым ставкам
+
+        **4. Bid Form (overlay/modal):**
+        ```yaml
+        bid_form:
+          custom_amount: input field с валидацией
+          quick_amounts: buttons "+5%", "+10%", "+25%"
+          place_bid_button: primary cyan button
+          buyout_button: gold button (если доступно)
+          validation_errors: red text под полями
+        ```
+
+        **UX особенности:**
+        - Real-time обновления всех данных
+        - Sound effects для новых ставок
+        - Auto-focus на bid input
+        - Keyboard shortcuts (Enter для ставки)
+
+    - id: real_time_updates
+      title: Real-time обновления
+      body: |
+        **WebSocket Events:**
+        - `auction.bid_placed`: обновление current_bid, bid_count, history
+        - `auction.lot_expired`: удаление лота из каталога
+        - `auction.new_lot`: добавление в каталог с анимацией
+        - `auction.your_bid_outbid`: уведомление о перебитии ставки
+
+        **UI Реакции:**
+        - Bid updates: плавная анимация счетчика
+        - New lots: slide-in анимация сверху
+        - Outbid: toast notification + sound
+        - Timer critical: красная пульсация + sound alert
+
+        **Performance:**
+        - Debounced updates (100ms batching)
+        - Virtual scrolling для >1000 лотов
+        - Image lazy loading с blur placeholder
+
+    - id: notifications_system
+      title: Система уведомлений
+      body: |
+        **Типы уведомлений:**
+        - Bid outbid: "Ваша ставка перебита! Текущая: €$ 1,350"
+        - Lot won: "Поздравляем! Вы выиграли [ItemName] за €$ 2,100"
+        - Lot sold: "Ваш лот [ItemName] продан за €$ 1,800"
+        - Lot expired: "Лот [ItemName] истек без ставок"
+
+        **UI Components:**
+        - Toast notifications: bottom-right corner, auto-dismiss 5s
+        - In-app badges: красный кружок с числом на иконке аукциона
+        - Sound alerts: разные звуки для разных типов
+        - Push notifications: browser/desktop при отсутствии фокуса
+
+        **Настройки:**
+        - Enable/disable по типам
+        - Sound volume slider
+        - Desktop notifications toggle
+
+    - id: responsive_design
+      title: Адаптивный дизайн
+      body: |
+        **Desktop (>1280px):** 3-column layout (filters/catalog/detail)
+        **Tablet (768-1280px):** 2-column (catalog/detail), filters в modal
+        **Mobile (<768px):** Single column, stacked layout
+
+        **Mobile оптимизации:**
+        - Swipe gestures для навигации между лотами
+        - Bottom sheet для детальной информации
+        - Collapsible search bar
+        - Touch-friendly buttons (44px minimum)
+
+        **Breakpoint-specific features:**
+        - Mobile: simplified card layout, essential info only
+        - Tablet: medium detail level
+        - Desktop: full feature set
+
+    - id: accessibility
+      title: Доступность
+      body: |
+        **Keyboard Navigation:**
+        - Tab order через все интерактивные элементы
+        - Arrow keys для навигации по сетке
+        - Enter/Space для активации
+        - Escape для закрытия модалов
+
+        **Screen Reader Support:**
+        - ARIA labels для всех элементов
+        - Live regions для real-time обновлений
+        - Semantic HTML структура
+        - Alt text для всех изображений
+
+        **Color Accessibility:**
+        - High contrast mode support
+        - Color-blind friendly color schemes
+        - Text size options
+
+    - id: animations_transitions
+      title: Анимации и переходы
+      body: |
+        **Micro-interactions:**
+        - Button hover: scale 1.05 + glow effect
+        - Bid placement: success animation с частицами
+        - Timer critical: pulsing red border
+        - New lot: slide down with bounce
+
+        **Page Transitions:**
+        - Fade in/out между разделами
+        - Slide transitions для модалов
+        - Loading states с skeleton screens
+
+        **Performance Considerations:**
+        - CSS transforms вместо layout changes
+        - Reduced motion для accessibility
+        - GPU acceleration для smooth animations
+
+appendix:
+  glossary:
+    - term: Buyout
+      definition: Мгновенный выкуп лота по фиксированной цене без ожидания окончания аукциона
+    - term: Bid Increment
+      definition: Минимальный шаг повышения ставки (обычно 5% от текущей цены)
+    - term: Watchlist
+      definition: Список отслеживаемых лотов для получения уведомлений
+    - term: Outbid
+      definition: Ситуация когда чья-то ставка перебита более высокой ставкой другого игрока
+
+  references:
+    - source: "Cyberpunk 2077 Auction House UI"
+      type: inspiration
+      url: "https://cyberpunk2077.wiki.fextralife.com/Auction+House"
+    - source: "World of Warcraft Auction House"
+      type: reference
+      url: "https://wowpedia.fandom.com/wiki/Auction_House"
+
+  decisions:
+    - date: 2025-12-28
+      decision: "Использовать cyberpunk стиль с неоновыми акцентами для соответствия бренду"
+      rationale: "Создает immersive опыт в сеттинге игры"
+    - date: 2025-12-28
+      decision: "Реализовать real-time обновления через WebSocket"
+      rationale: "Критично для auction mechanics где timing важен"
+    - date: 2025-12-28
+      decision: "Поддержка mobile-first responsive design"
+      rationale: "Расширение аудитории на мобильных игроков"
+
+implementation:
+  needs_task: false
+  github_issue: 1479
+  queue_reference: []
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-28
+    author: content_writer
+    changes: Создан детальный дизайн UI для каталога и просмотра аукционных лотов
+
+validation:
+  checksum: ""
+  schema_version: "1.0"

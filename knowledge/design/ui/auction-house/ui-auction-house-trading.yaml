@@ -1,0 +1,436 @@
+# Issue: #1479
+metadata:
+  id: ui-auction-house-trading
+  title: Auction House UI - Ставки и создание лотов
+  document_type: design
+  category: ui
+  status: draft
+  version: 1.0.0
+  last_updated: 2025-12-28T12:15:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: ui_designer
+      contact: ui@necp.game
+  tags:
+    - auction-house
+    - ui-design
+    - bidding-system
+    - lot-creation
+  topics:
+    - user_interface_design
+    - auction_trading
+    - player_interaction
+  related_systems:
+    - economy-service
+    - wallet-service
+  related_documents:
+    - id: ui-auction-house-catalog
+      relation: complements
+    - id: ui-auction-house-management
+      relation: complements
+    - id: auction-house-mechanics
+      relation: implements
+    - id: auction-house-operations
+      relation: references
+  visibility: internal
+  audience:
+    - ui
+    - client
+    - economy
+  risk_level: low
+
+summary:
+  problem: Необходим детальный дизайн интерфейсов для размещения ставок и создания новых аукционных лотов с валидацией и UX оптимизациями.
+  goal: Спроектировать формы и компоненты для bidding system и lot creation с учетом экономических механик и пользовательского опыта.
+  essence: Документ описывает интерактивные компоненты для размещения ставок, создания лотов и обработки транзакций в cyberpunk интерфейсе.
+  key_points:
+    - Интуитивные формы размещения ставок с быстрыми действиями и валидацией
+    - Детальный wizard создания лота с preview и комиссиями
+    - Real-time feedback для всех транзакций
+    - Интеграция с wallet для проверки баланса
+
+content:
+  sections:
+    - id: bidding_interface
+      title: Интерфейс размещения ставок
+      body: |
+        **Компонент: BidPlacementModal**
+
+        **Триггеры открытия:**
+        - Клик на "Place Bid" кнопку в карточке лота
+        - Клик на "Quick Bid" (+5%) в каталоге
+        - Автоматическое открытие при outbid уведомлении
+
+        **Структура модального окна:**
+        ```yaml
+        BidPlacementModal:
+          header:
+            item_name: "Katana 'Ghost' R3"
+            current_bid: "€$ 1,250"
+            time_remaining: "04:23:15"
+          bid_form:
+            current_price_display: "Current: €$ 1,250"
+            minimum_bid_display: "Minimum: €$ 1,313 (+5%)"
+            custom_bid_input:
+              label: "Your bid (€$)"
+              placeholder: "1313"
+              validation: "Must be ≥ €$ 1,313"
+            quick_bid_buttons:
+              - label: "+5%"
+                value: 1313
+              - label: "+10%"
+                value: 1375
+              - label: "+25%"
+                value: 1563
+          wallet_info:
+            available_balance: "Available: €$ 5,420"
+            reserved_amount: "Reserved: €$ 1,100 (your max bid)"
+          actions:
+            place_bid_button: "Place Bid" (primary cyan)
+            cancel_button: "Cancel" (secondary)
+        ```
+
+        **UX особенности:**
+        - Auto-calculation при вводе суммы
+        - Real-time валидация баланса
+        - Предупреждение о резервировании средств
+        - Sound feedback при успешной ставке
+
+    - id: buyout_interface
+      title: Интерфейс мгновенного выкупа
+      body: |
+        **Компонент: BuyoutConfirmationModal**
+
+        **Особенности:**
+        - Immediate transaction без ожидания
+        - Clear pricing display
+        - Instant item transfer
+        - No bidding wars
+
+        **Структура:**
+        ```yaml
+        BuyoutConfirmationModal:
+          warning_icon: ⚠️
+          title: "Instant Buyout"
+          item_preview: small icon + name
+          pricing_breakdown:
+            buyout_price: "€$ 2,500"
+            commission: "€$ 125 (5%)"
+            total: "€$ 2,625"
+          wallet_check:
+            available: "€$ 5,420"
+            after_transaction: "€$ 2,795"
+          confirmation_text: "This will immediately end the auction and transfer the item to you."
+          buttons:
+            confirm: "Buy Now" (gold button)
+            cancel: "Cancel"
+        ```
+
+        **Flow:**
+        1. Click buyout button
+        2. Modal opens with pricing
+        3. Wallet validation
+        4. Confirmation
+        5. Immediate transaction
+        6. Success feedback + sound
+
+    - id: lot_creation_wizard
+      title: Мастер создания лота
+      body: |
+        **Компонент: CreateLotWizard**
+
+        **Шаги wizard:**
+        1. **Item Selection** - Выбор предмета из инвентаря
+        2. **Pricing Setup** - Установка цен и параметров
+        3. **Review & Confirm** - Предпросмотр и подтверждение
+
+        **Шаг 1: Item Selection**
+        ```yaml
+        ItemSelectionStep:
+          inventory_grid: paginated grid предметов
+          search_filter: "Filter inventory..."
+          selected_item_display:
+            icon: 64x64
+            name: "Katana 'Ghost' R3"
+            stats: damage, rarity, level
+            value: "Market value: €$ 1,200-1,800"
+          next_button: enabled when item selected
+        ```
+
+        **Шаг 2: Pricing Setup**
+        ```yaml
+        PricingSetupStep:
+          starting_price:
+            label: "Starting Price (€$)"
+            input: min 100, max 1,000,000
+            validation: "Must be ≥ €$ 100"
+          buyout_price:
+            label: "Buyout Price (optional)"
+            input: must be > starting_price
+            info: "Allows instant purchase"
+          duration_selector:
+            options:
+              - "24 hours"
+              - "48 hours"
+              - "72 hours"
+            default: "48 hours"
+          commission_display:
+            text: "5% commission on final sale price"
+            calculation: "Example: €$ 1,250 sale = €$ 62.50 commission"
+        ```
+
+        **Шаг 3: Review & Confirm**
+        ```yaml
+        ReviewConfirmStep:
+          lot_preview:
+            item_card: full preview
+            pricing_summary:
+              starting: "€$ 1,000"
+              buyout: "€$ 2,000 (optional)"
+              duration: "48 hours"
+              commission: "5% of sale price"
+            total_cost: "Listing fee: €$ 50"
+          wallet_check:
+            available: "€$ 5,420"
+            after_listing: "€$ 5,370"
+          terms_checkbox: "I understand the item will be locked during auction"
+          create_button: "Create Auction Lot"
+        ```
+
+        **Особенности:**
+        - Step-by-step validation
+        - Real-time preview
+        - Wallet balance checks
+        - Undo/Back navigation
+
+    - id: transaction_feedback
+      title: Обратная связь транзакций
+      body: |
+        **Типы feedback:**
+
+        **Bid Success:**
+        ```yaml
+        BidSuccessToast:
+          icon: ✅
+          title: "Bid Placed!"
+          message: "Your bid of €$ 1,313 on 'Katana Ghost' is now the highest."
+          action_button: "View Lot" (optional)
+          auto_dismiss: 5 seconds
+        ```
+
+        **Bid Failed:**
+        ```yaml
+        BidErrorToast:
+          icon: ❌
+          title: "Bid Failed"
+          message: "Insufficient funds or bid too low"
+          action_button: "Add Funds" (links to wallet)
+          persist: until dismissed
+        ```
+
+        **Lot Created:**
+        ```yaml
+        LotCreatedModal:
+          icon: 🎯
+          title: "Auction Lot Created!"
+          details:
+            item: "Katana 'Ghost' R3"
+            lot_id: "#AH-123456"
+            starts: "2025-12-29 14:00:00"
+            duration: "48 hours"
+          actions:
+            view_lot: "View Lot"
+            create_another: "Create Another"
+            done: "Done"
+        ```
+
+        **Buyout Success:**
+        ```yaml
+        BuyoutSuccessModal:
+          icon: 💰
+          title: "Item Purchased!"
+          details:
+            item: "Katana 'Ghost' R3"
+            paid: "€$ 2,625 (incl. 5% commission)"
+            received: "Item added to inventory"
+          actions:
+            equip_item: "Equip Now"
+            view_inventory: "View Inventory"
+            done: "Done"
+        ```
+
+    - id: error_handling
+      title: Обработка ошибок
+      body: |
+        **Типы ошибок и UI реакции:**
+
+        **Insufficient Funds:**
+        ```yaml
+        InsufficientFundsModal:
+          icon: 💳
+          title: "Insufficient Funds"
+          message: "You need €$ 2,625 but only have €$ 1,200 available."
+          actions:
+            add_funds: "Add Funds" (primary)
+            cancel_bid: "Cancel"
+          help_text: "Need more €$? Check the market or complete quests."
+        ```
+
+        **Bid Too Low:**
+        ```yaml
+        BidTooLowError:
+          icon: 📊
+          title: "Bid Too Low"
+          message: "Minimum bid is €$ 1,313 (5% above current €$ 1,250)."
+          suggestion: "Try €$ 1,313 or higher."
+          auto_calculate_button: "Use Minimum Bid"
+        ```
+
+        **Item Locked:**
+        ```yaml
+        ItemLockedError:
+          icon: 🔒
+          title: "Item Unavailable"
+          message: "'Katana Ghost' is currently locked in another auction."
+          help_text: "Wait for the current auction to end or use a different item."
+        ```
+
+        **Network Error:**
+        ```yaml
+        NetworkErrorRetry:
+          icon: 🌐
+          title: "Connection Error"
+          message: "Failed to place bid. Please check your connection."
+          retry_button: "Try Again"
+          cancel_button: "Cancel"
+        ```
+
+    - id: quick_actions
+      title: Быстрые действия
+      body: |
+        **Quick Bid System:**
+        - **+5% button** на карточках лотов
+        - **Auto-bid** настройка для автоматического повышения ставок
+        - **Max bid** установка для автоматических ставок
+
+        **Quick Buyout:**
+        - One-click buyout из каталога
+        - Skip confirmation для малых сумм (<€$ 500)
+
+        **Bulk Actions:**
+        - Select multiple lots для массовых ставок
+        - Quick bid on selected lots
+        - Batch buyout для нескольких лотов
+
+    - id: wallet_integration
+      title: Интеграция с кошельком
+      body: |
+        **Balance Display:**
+        - Real-time balance updates
+        - Reserved funds indication
+        - Transaction history preview
+
+        **Transaction Preview:**
+        ```yaml
+        TransactionPreview:
+          bid_amount: "€$ 1,313"
+          commission: "€$ 0 (on bid placement)"
+          total_charge: "€$ 1,313"
+          new_balance: "€$ 4,107"
+          note: "Funds reserved until outbid or auction ends"
+        ```
+
+        **Low Balance Warnings:**
+        - Yellow warning at <€$ 1,000
+        - Red warning at <€$ 100
+        - Auto-suggest funding options
+
+        **Transaction History:**
+        - Recent auction transactions
+        - Pending bids
+        - Commission fees breakdown
+
+    - id: accessibility_bidding
+      title: Доступность интерфейса ставок
+      body: |
+        **Keyboard Navigation:**
+        - Tab через все form fields
+        - Arrow keys для quick bid buttons
+        - Enter для submit
+        - Escape для cancel
+
+        **Screen Reader:**
+        - Descriptive labels для всех inputs
+        - Live regions для balance updates
+        - Error announcements
+        - Success confirmations
+
+        **High Contrast:**
+        - Enhanced borders для focus states
+        - Larger text для bid amounts
+        - Clear color coding (green/red/yellow)
+
+    - id: performance_considerations
+      title: Производительность
+      body: |
+        **Optimization Strategies:**
+        - Debounced bid validation (300ms)
+        - Cached wallet balance checks
+        - Lazy loading для inventory grids
+        - Virtual scrolling для large lists
+
+        **Loading States:**
+        - Skeleton screens для modals
+        - Spinner для transaction processing
+        - Progress bars для multi-step operations
+
+        **Error Recovery:**
+        - Auto-retry для network failures
+        - Offline queue для bids
+        - State persistence для wizard progress
+
+appendix:
+  glossary:
+    - term: Quick Bid
+      definition: Быстрое размещение ставки с минимальным повышением (обычно +5%)
+    - term: Auto-bid
+      definition: Автоматическое повышение ставки до указанного максимума
+    - term: Reserved Funds
+      definition: Средства заблокированные для активных ставок до окончания аукциона
+    - term: Commission
+      definition: Комиссия аукционного дома (5% от финальной цены продажи)
+
+  references:
+    - source: "EVE Online Auction System"
+      type: reference
+      url: "https://wiki.eveuniversity.org/Auctioning"
+    - source: "Player Auction House Best Practices"
+      type: research
+      url: "https://gameusability.org/research/player-auction-houses"
+
+  decisions:
+    - date: 2025-12-28
+      decision: "Реализовать multi-step wizard для создания лотов"
+      rationale: "Упрощает сложный процесс и предотвращает ошибки"
+    - date: 2025-12-28
+      decision: "Добавить quick bid buttons для улучшения UX"
+      rationale: "Уменьшает friction при размещении ставок"
+    - date: 2025-12-28
+      decision: "Интегрировать real-time wallet balance checks"
+      rationale: "Предотвращает failed transactions и улучшает trust"
+
+implementation:
+  needs_task: false
+  github_issue: 1479
+  queue_reference: []
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-28
+    author: content_writer
+    changes: Создан детальный дизайн UI для системы ставок и создания аукционных лотов
+
+validation:
+  checksum: ""
+  schema_version: "1.0"
