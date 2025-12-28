@@ -1,0 +1,702 @@
+# Default values for NECPGAME Helm chart
+# This file contains configuration for all microservices and infrastructure
+
+# Global configuration
+global:
+  imageRegistry: "necpgame"
+  imagePullSecrets: []
+  storageClass: "fast-ssd"
+
+  # Environment
+  environment: "production"
+  logLevel: "info"
+
+  # Domain and ingress
+  domain: "necpgame.com"
+  ingress:
+    enabled: true
+    className: "nginx"
+    tls:
+      enabled: true
+      secretName: "necpgame-tls"
+
+# Infrastructure dependencies
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "changeme"
+    username: "necpgame"
+    password: "changeme"
+    database: "necpgame"
+  architecture: "replication"
+  primary:
+    persistence:
+      enabled: true
+      size: "100Gi"
+    resources:
+      requests:
+        cpu: "2000m"
+        memory: "4Gi"
+      limits:
+        cpu: "4000m"
+        memory: "8Gi"
+
+redis:
+  enabled: true
+  architecture: "replication"
+  auth:
+    password: "changeme"
+  master:
+    persistence:
+      enabled: true
+      size: "50Gi"
+    resources:
+      requests:
+        cpu: "1000m"
+        memory: "2Gi"
+      limits:
+        cpu: "2000m"
+        memory: "4Gi"
+
+kafka:
+  enabled: true
+  controller:
+    replicaCount: 3
+    persistence:
+      enabled: true
+      size: "100Gi"
+    resources:
+      requests:
+        cpu: "1000m"
+        memory: "2Gi"
+      limits:
+        cpu: "2000m"
+        memory: "4Gi"
+  broker:
+    replicaCount: 3
+    persistence:
+      enabled: true
+      size: "200Gi"
+    resources:
+      requests:
+        cpu: "2000m"
+        memory: "4Gi"
+      limits:
+        cpu: "4000m"
+        memory: "8Gi"
+
+# Monitoring
+monitoring:
+  prometheus:
+    enabled: true
+    server:
+      persistentVolume:
+        enabled: true
+        size: "50Gi"
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+        limits:
+          cpu: "1000m"
+          memory: "2Gi"
+
+  grafana:
+    enabled: true
+    adminPassword: "admin"
+    persistence:
+      enabled: true
+      size: "10Gi"
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+
+# Core Services Configuration
+
+# Authentication & User Management
+authExpansionService:
+  enabled: true
+  replicaCount: 3
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+  service:
+    type: ClusterIP
+    port: 8080
+
+# Social & Community Features
+guildService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "256Mi"
+    limits:
+      cpu: "600m"
+      memory: "512Mi"
+
+socialService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "128Mi"
+    limits:
+      cpu: "400m"
+      memory: "256Mi"
+
+# Real-time Communication
+realtimeGateway:
+  enabled: true
+  replicaCount: 4
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "2Gi"
+  service:
+    udpPort: 18080
+    httpPort: 8080
+
+wsLobby:
+  enabled: true
+  replicaCount: 3
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+voiceChatService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "256Mi"
+    limits:
+      cpu: "600m"
+      memory: "512Mi"
+
+webrtcSignalingService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "128Mi"
+    limits:
+      cpu: "400m"
+      memory: "256Mi"
+
+# Core Gameplay
+combatStatsService:
+  enabled: true
+  replicaCount: 5
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "1500m"
+      memory: "2Gi"
+    limits:
+      cpu: "3000m"
+      memory: "4Gi"
+
+matchmakingService:
+  enabled: true
+  replicaCount: 4
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "2Gi"
+
+gameplayService:
+  enabled: true
+  replicaCount: 6
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "2000m"
+      memory: "3Gi"
+    limits:
+      cpu: "4000m"
+      memory: "6Gi"
+
+dynamicQuestsService:
+  enabled: true
+  replicaCount: 3
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+# Economy & Trading
+economyService:
+  enabled: true
+  replicaCount: 4
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "800m"
+      memory: "1Gi"
+    limits:
+      cpu: "1600m"
+      memory: "2Gi"
+
+tradingCoreService:
+  enabled: true
+  replicaCount: 3
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "600m"
+      memory: "512Mi"
+    limits:
+      cpu: "1200m"
+      memory: "1Gi"
+
+# Inventory & Equipment
+inventoryService:
+  enabled: true
+  replicaCount: 4
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "800m"
+      memory: "1Gi"
+    limits:
+      cpu: "1600m"
+      memory: "2Gi"
+
+craftingService:
+  enabled: true
+  replicaCount: 3
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "400m"
+      memory: "256Mi"
+    limits:
+      cpu: "800m"
+      memory: "512Mi"
+
+# Character & Progression
+characterService:
+  enabled: true
+  replicaCount: 3
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "256Mi"
+    limits:
+      cpu: "600m"
+      memory: "512Mi"
+
+achievementService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "128Mi"
+    limits:
+      cpu: "400m"
+      memory: "256Mi"
+
+cyberwareService:
+  enabled: true
+  replicaCount: 3
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "256Mi"
+    limits:
+      cpu: "600m"
+      memory: "512Mi"
+
+# World & Environment
+worldCitiesService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "128Mi"
+    limits:
+      cpu: "400m"
+      memory: "256Mi"
+
+worldRegionsService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "128Mi"
+    limits:
+      cpu: "400m"
+      memory: "256Mi"
+
+worldEventsService:
+  enabled: true
+  replicaCount: 3
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "400m"
+      memory: "256Mi"
+    limits:
+      cpu: "800m"
+      memory: "512Mi"
+
+housingService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "128Mi"
+    limits:
+      cpu: "400m"
+      memory: "256Mi"
+
+# Specialized Features
+companionService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "128Mi"
+    limits:
+      cpu: "400m"
+      memory: "256Mi"
+
+supportService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"
+
+adminService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "128Mi"
+    limits:
+      cpu: "400m"
+      memory: "256Mi"
+
+# Security & Anti-Cheat
+antiCheatService:
+  enabled: true
+  replicaCount: 4
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "2Gi"
+
+securityService:
+  enabled: true
+  replicaCount: 3
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "256Mi"
+    limits:
+      cpu: "600m"
+      memory: "512Mi"
+
+# Content & Media
+achievementSystemService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "128Mi"
+    limits:
+      cpu: "400m"
+      memory: "256Mi"
+
+mailSystemService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "128Mi"
+    limits:
+      cpu: "400m"
+      memory: "256Mi"
+
+announcementService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"
+
+# Analytics & Monitoring
+gameAnalyticsDashboardService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "400m"
+      memory: "512Mi"
+    limits:
+      cpu: "800m"
+      memory: "1Gi"
+
+analyticsDashboardService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "256Mi"
+    limits:
+      cpu: "600m"
+      memory: "512Mi"
+
+# Event Processing
+eventProcessingService:
+  enabled: true
+  replicaCount: 4
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+kafkaEventDrivenCore:
+  enabled: true
+  replicaCount: 3
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "256Mi"
+    limits:
+      cpu: "600m"
+      memory: "512Mi"
+
+# Specialized Combat Features
+combatHackingService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "256Mi"
+    limits:
+      cpu: "600m"
+      memory: "512Mi"
+
+combatAbilitiesService:
+  enabled: true
+  replicaCount: 3
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "400m"
+      memory: "256Mi"
+    limits:
+      cpu: "800m"
+      memory: "512Mi"
+
+combatDamageService:
+  enabled: true
+  replicaCount: 4
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "600m"
+      memory: "512Mi"
+    limits:
+      cpu: "1200m"
+      memory: "1Gi"
+
+movementService:
+  enabled: true
+  replicaCount: 4
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "400m"
+      memory: "256Mi"
+    limits:
+      cpu: "800m"
+      memory: "512Mi"
+
+# Session Management
+sessionManagementService:
+  enabled: true
+  replicaCount: 3
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "256Mi"
+    limits:
+      cpu: "600m"
+      memory: "512Mi"
+
+# Content Generation
+narrativeService:
+  enabled: true
+  replicaCount: 2
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "128Mi"
+    limits:
+      cpu: "400m"
+      memory: "256Mi"
+
+# API Gateway
+apiGateway:
+  enabled: true
+  replicaCount: 3
+  image:
+    tag: "latest"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+# Horizontal Pod Autoscaling
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budgets
+pdb:
+  enabled: true
+  minAvailable: 1
+
+# Network Policies
+networkPolicy:
+  enabled: true
+  defaultDenyAll: true
+
+# Resource Quotas
+resourceQuota:
+  enabled: true
+  requests:
+    cpu: "20"
+    memory: "40Gi"
+  limits:
+    cpu: "40"
+    memory: "80Gi"
