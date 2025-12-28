@@ -12,7 +12,6 @@ import (
 	"path"
 	"strings"
 
-	externalRef0 "github.com/gc-lover/necpgame/proto/openapi"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 

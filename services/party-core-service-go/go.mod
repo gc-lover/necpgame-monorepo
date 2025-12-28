@@ -3,15 +3,15 @@ module github.com/gc-lover/necpgame/services/party-core-service-go
 go 1.21
 
 require (
-	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-chi/cors v1.2.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/joho/godotenv v1.5.1
+	github.com/labstack/echo/v4 v4.14.0
+	github.com/oapi-codegen/runtime v1.1.2
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.21.0
 )
 
 require (
