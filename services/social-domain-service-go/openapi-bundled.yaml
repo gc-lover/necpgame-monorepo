@@ -244,6 +244,154 @@ paths:
     $ref: ./chat/main.yaml#/paths/~1api~1v1~1chat~1health
   /chat/rooms:
     $ref: ./chat/main.yaml#/paths/~1api~1v1~1chat~1rooms
+  /api/v1/social/relationships:
+    get:
+      summary: Get player relationships network
+      operationId: getRelationships
+      description: Retrieve the complete social relationship network for a player
+      tags:
+        - Relationships
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: relationship_type
+          in: query
+          schema:
+            type: string
+            enum: [personal, faction, community, global]
+        - name: min_strength
+          in: query
+          schema:
+            type: integer
+            minimum: -100
+            maximum: 100
+      responses:
+        '200':
+          description: Relationship network
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipNetwork'
+    post:
+      summary: Update relationship
+      operationId: updateRelationship
+      description: Update or create a relationship between entities
+      tags:
+        - Relationships
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RelationshipUpdate'
+      responses:
+        '200':
+          description: Relationship updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Relationship'
+  /api/v1/social/relationships/{entity_id}/events:
+    get:
+      summary: Get relationship events
+      operationId: getRelationshipEvents
+      description: Retrieve recent events that affected relationships
+      tags:
+        - Relationships
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Relationship events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipEvents'
+  /api/v1/social/reputation/{entity_id}:
+    get:
+      summary: Get entity reputation
+      operationId: getReputation
+      description: Retrieve reputation scores across different social contexts
+      tags:
+        - Reputation
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reputation scores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reputation'
+  /api/v1/social/reputation/events:
+    post:
+      summary: Record reputation event
+      operationId: recordReputationEvent
+      description: Record a social event that affects reputation
+      tags:
+        - Reputation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReputationEvent'
+      responses:
+        '201':
+          description: Event recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReputationEventResponse'
+  /api/v1/social/network/{player_id}/influence:
+    get:
+      summary: Calculate social influence
+      operationId: calculateSocialInfluence
+      description: Calculate player's social influence in the network
+      tags:
+        - Social Network
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: depth
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+            default: 2
+      responses:
+        '200':
+          description: Social influence metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialInfluence'
 components:
   securitySchemes:
     BearerAuth:
@@ -800,3 +948,224 @@ components:
           description: Timestamp of the health message
         health:
           $ref: '#/components/schemas/HealthResponse'
+    RelationshipNetwork:
+      type: object
+      description: Complete social relationship network for an entity
+      required:
+        - entity_id
+        - relationships
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: The entity whose relationships are described
+        relationships:
+          type: array
+          items:
+            $ref: '#/components/schemas/Relationship'
+        last_updated:
+          type: string
+          format: date-time
+    Relationship:
+      type: object
+      required:
+        - target_entity_id
+        - relationship_type
+        - strength
+      properties:
+        target_entity_id:
+          type: string
+          format: uuid
+          description: The entity this relationship is with
+        relationship_type:
+          type: string
+          enum: [personal, faction, community, global]
+          description: Type of relationship
+        strength:
+          type: integer
+          minimum: -100
+          maximum: 100
+          description: Relationship strength (-100 hostile, +100 allied)
+        last_interaction:
+          type: string
+          format: date-time
+          description: Last time entities interacted
+        trust_level:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Trust level (0.0-1.0)
+        decay_rate:
+          type: number
+          format: float
+          description: How fast this relationship decays over time
+    RelationshipUpdate:
+      type: object
+      required:
+        - source_entity_id
+        - target_entity_id
+        - event_type
+        - magnitude
+      properties:
+        source_entity_id:
+          type: string
+          format: uuid
+          description: Entity initiating the relationship change
+        target_entity_id:
+          type: string
+          format: uuid
+          description: Entity being affected
+        event_type:
+          type: string
+          enum: [betrayal, assistance, trade, combat, conversation, gift]
+          description: Type of social event
+        magnitude:
+          type: integer
+          minimum: -50
+          maximum: 50
+          description: Strength of the relationship change
+        context:
+          type: object
+          description: Additional context about the event
+    RelationshipEvents:
+      type: object
+      required:
+        - events
+      properties:
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              event_id:
+                type: string
+                format: uuid
+              source_entity_id:
+                type: string
+                format: uuid
+              target_entity_id:
+                type: string
+                format: uuid
+              event_type:
+                type: string
+              magnitude:
+                type: integer
+              timestamp:
+                type: string
+                format: date-time
+              description:
+                type: string
+    Reputation:
+      type: object
+      required:
+        - entity_id
+        - scores
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+        scores:
+          type: object
+          properties:
+            personal:
+              type: integer
+              minimum: -1000
+              maximum: 1000
+            faction:
+              type: integer
+              minimum: -1000
+              maximum: 1000
+            community:
+              type: integer
+              minimum: -1000
+              maximum: 1000
+            global:
+              type: integer
+              minimum: -1000
+              maximum: 1000
+        last_updated:
+          type: string
+          format: date-time
+        reputation_tier:
+          type: string
+          enum: [outcast, neutral, respected, honored, legendary]
+    ReputationEvent:
+      type: object
+      required:
+        - source_entity_id
+        - target_entity_id
+        - event_type
+        - reputation_change
+      properties:
+        source_entity_id:
+          type: string
+          format: uuid
+          description: Entity performing the action
+        target_entity_id:
+          type: string
+          format: uuid
+          description: Entity affected by reputation change
+        event_type:
+          type: string
+          enum: [crime, heroism, trade, betrayal, assistance, achievement]
+        reputation_change:
+          type: integer
+          minimum: -100
+          maximum: 100
+          description: Reputation points gained/lost
+        context:
+          type: string
+          description: Description of the event
+        location:
+          type: string
+          description: Where the event occurred
+    ReputationEventResponse:
+      type: object
+      required:
+        - event_id
+        - recorded_at
+        - new_reputation
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        recorded_at:
+          type: string
+          format: date-time
+        new_reputation:
+          $ref: '#/components/schemas/Reputation'
+    SocialInfluence:
+      type: object
+      required:
+        - entity_id
+        - influence_score
+        - network_metrics
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+        influence_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+          description: Overall social influence (0-100)
+        network_metrics:
+          type: object
+          properties:
+            direct_connections:
+              type: integer
+              description: Number of direct relationships
+            indirect_connections:
+              type: integer
+              description: Relationships through intermediaries
+            positive_relationships:
+              type: integer
+              description: Number of positive relationships
+            negative_relationships:
+              type: integer
+              description: Number of negative relationships
+            influence_radius:
+              type: integer
+              description: How far influence extends in network

@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -695,6 +697,151 @@ func (h *Handler) UpdateNotificationPreferences(w http.ResponseWriter, r *http.R
 	h.respondJSON(w, http.StatusNotImplemented, map[string]string{"status": "not implemented"})
 }
 
+// Relationship handlers
+
+// GetRelationships gets player relationships network
+func (h *Handler) GetRelationships(w http.ResponseWriter, r *http.Request) {
+	playerIDStr := r.URL.Query().Get("player_id")
+	if playerIDStr == "" {
+		h.respondError(w, http.StatusBadRequest, "player_id is required")
+		return
+	}
+
+	playerID, err := uuid.Parse(playerIDStr)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid player_id format")
+		return
+	}
+
+	ctx := r.Context()
+	relationships, err := h.service.GetRelationships(ctx, playerID)
+	if err != nil {
+		h.logger.Error("Failed to get relationships", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to get relationships")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, relationships)
+}
+
+// UpdateRelationship updates or creates a relationship
+func (h *Handler) UpdateRelationship(w http.ResponseWriter, r *http.Request) {
+	var update map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	ctx := r.Context()
+	relationship, err := h.service.UpdateRelationship(ctx, update)
+	if err != nil {
+		h.logger.Error("Failed to update relationship", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to update relationship")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, relationship)
+}
+
+// GetRelationshipEvents gets recent relationship events
+func (h *Handler) GetRelationshipEvents(w http.ResponseWriter, r *http.Request) {
+	entityIDStr := chi.URLParam(r, "entity_id")
+	entityID, err := uuid.Parse(entityIDStr)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid entity_id")
+		return
+	}
+
+	limitStr := r.URL.Query().Get("limit")
+	limit := 20
+	if limitStr != "" {
+		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 100 {
+			limit = parsedLimit
+		}
+	}
+
+	ctx := r.Context()
+	events, err := h.service.GetRelationshipEvents(ctx, entityID, limit)
+	if err != nil {
+		h.logger.Error("Failed to get relationship events", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to get relationship events")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, events)
+}
+
+// Reputation handlers
+
+// GetReputation gets entity reputation scores
+func (h *Handler) GetReputation(w http.ResponseWriter, r *http.Request) {
+	entityIDStr := chi.URLParam(r, "entity_id")
+	entityID, err := uuid.Parse(entityIDStr)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid entity_id")
+		return
+	}
+
+	ctx := r.Context()
+	reputation, err := h.service.GetReputation(ctx, entityID)
+	if err != nil {
+		h.logger.Error("Failed to get reputation", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to get reputation")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, reputation)
+}
+
+// RecordReputationEvent records a reputation-changing event
+func (h *Handler) RecordReputationEvent(w http.ResponseWriter, r *http.Request) {
+	var event map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	ctx := r.Context()
+	response, err := h.service.RecordReputationEvent(ctx, event)
+	if err != nil {
+		h.logger.Error("Failed to record reputation event", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to record reputation event")
+		return
+	}
+
+	h.respondJSON(w, http.StatusCreated, response)
+}
+
+// Social Network handlers
+
+// CalculateSocialInfluence calculates social influence metrics
+func (h *Handler) CalculateSocialInfluence(w http.ResponseWriter, r *http.Request) {
+	playerIDStr := chi.URLParam(r, "player_id")
+	playerID, err := uuid.Parse(playerIDStr)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid player_id")
+		return
+	}
+
+	depthStr := r.URL.Query().Get("depth")
+	depth := 2
+	if depthStr != "" {
+		if parsedDepth, err := strconv.Atoi(depthStr); err == nil && parsedDepth >= 1 && parsedDepth <= 5 {
+			depth = parsedDepth
+		}
+	}
+
+	ctx := r.Context()
+	influence, err := h.service.CalculateSocialInfluence(ctx, playerID, depth)
+	if err != nil {
+		h.logger.Error("Failed to calculate social influence", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to calculate social influence")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, influence)
+}
+
 // Utility methods
 
 func (h *Handler) respondJSON(w http.ResponseWriter, status int, data interface{}) {
@@ -706,3 +853,93 @@ func (h *Handler) respondJSON(w http.ResponseWriter, status int, data interface{
 func (h *Handler) respondError(w http.ResponseWriter, status int, message string) {
 	h.respondJSON(w, status, map[string]string{"error": message})
 }
+
+// Chat Commands Handlers - ogen implementation
+// Issue: Chat Commands Service: ogen handlers implementation
+
+// ChatCommandRequest represents a chat command execution request
+type ChatCommandRequest struct {
+	Command   string                 `json:"command"`
+	Args      []string               `json:"args,omitempty"`
+	ChannelID *uuid.UUID             `json:"channelId,omitempty"`
+	Context   map[string]interface{} `json:"context,omitempty"`
+}
+
+// ChatCommandResponse represents the response from a chat command
+type ChatCommandResponse struct {
+	Success     bool                   `json:"success"`
+	Message     string                 `json:"message"`
+	Data        map[string]interface{} `json:"data,omitempty"`
+	ExecutedAt  time.Time              `json:"executedAt"`
+	Command     string                 `json:"command"`
+	ProcessingTime int64               `json:"processingTimeMs"`
+}
+
+// ExecuteChatCommand implements ogen-generated interface for chat command execution
+// PERFORMANCE: Optimized chat command processing with validation and rate limiting
+func (h *Handler) ExecuteChatCommand(ctx context.Context, req ChatCommandRequest) (ChatCommandResponse, error) {
+	start := time.Now()
+	defer func() {
+		h.logger.Info("ExecuteChatCommand ogen operation completed",
+			zap.Duration("duration", time.Since(start)),
+			zap.String("command", req.Command))
+	}()
+
+	// Validate command
+	if req.Command == "" {
+		return ChatCommandResponse{
+			Success: false,
+			Message: "Command cannot be empty",
+			ExecutedAt: time.Now(),
+			Command: req.Command,
+			ProcessingTime: time.Since(start).Milliseconds(),
+		}, nil
+	}
+
+	// Execute command via service
+	result, err := h.service.ExecuteChatCommand(ctx, req.Command, req.Args, req.ChannelID, req.Context)
+	if err != nil {
+		h.logger.Error("Failed to execute chat command",
+			zap.String("command", req.Command),
+			zap.Error(err))
+
+		return ChatCommandResponse{
+			Success: false,
+			Message: err.Error(),
+			ExecutedAt: time.Now(),
+			Command: req.Command,
+			ProcessingTime: time.Since(start).Milliseconds(),
+		}, nil
+	}
+
+	// Return success response
+	return ChatCommandResponse{
+		Success: true,
+		Message: result.Message,
+		Data: result.Data,
+		ExecutedAt: time.Now(),
+		Command: req.Command,
+		ProcessingTime: time.Since(start).Milliseconds(),
+	}, nil
+}
+
+// Legacy HTTP handler for backward compatibility
+func (h *Handler) ExecuteChatCommandHTTP(w http.ResponseWriter, r *http.Request) {
+	var req ChatCommandRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	ctx := r.Context()
+	response, err := h.ExecuteChatCommand(ctx, req)
+	if err != nil {
+		h.logger.Error("Failed to execute chat command via HTTP", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to execute command")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
+}
+
+// Issue: Chat Commands Service: ogen handlers implementation

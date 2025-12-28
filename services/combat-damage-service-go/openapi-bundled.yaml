@@ -38,6 +38,10 @@ tags:
     description: Buff/debuff and status effect management
   - name: Anti-Cheat
     description: Damage validation and cheat prevention
+  - name: Combo System
+    description: Advanced combo chains and weapon synergies
+  - name: Weapon Synergy
+    description: Weapon synergy calculations and bonuses
 paths:
   /health:
     get:
@@ -1541,6 +1545,158 @@ paths:
                 required: *ref_0
                 properties: *ref_1
                 description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+  /combat/combo/calculate:
+    post:
+      summary: Calculate combo damage and effects
+      operationId: calculateCombo
+      description: |
+        Calculate damage for combo chains with weapon synergies and timing bonuses.
+        **BACKEND NOTE:** Ultra-fast combo calculations - P99 <2ms, zero allocations in hot path.
+      tags:
+        - Combo System
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/combo-calculation-request'
+      responses:
+        '200':
+          description: Combo calculation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/combo-calculation-result'
+        '400':
+          description: Invalid combo data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '422':
+          description: Anti-cheat violation detected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /combat/combo/{player_id}/state:
+    get:
+      summary: Get current combo state
+      operationId: getComboState
+      description: Retrieve current combo chain state for a player.
+      tags:
+        - Combo System
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player ID
+      responses:
+        '200':
+          description: Current combo state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/combo-state'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+    put:
+      summary: Update combo state
+      operationId: updateComboState
+      description: Update player's combo chain state with new attack data.
+      tags:
+        - Combo System
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/combo-state-update'
+      responses:
+        '200':
+          description: Combo state updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/combo-state'
+        '400':
+          description: Invalid combo data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /combat/synergy/calculate:
+    post:
+      summary: Calculate weapon synergy bonuses
+      operationId: calculateWeaponSynergy
+      description: |
+        Calculate damage bonuses and effects from weapon synergies.
+        **BACKEND NOTE:** SIMD-optimized synergy matrix calculations.
+      tags:
+        - Weapon Synergy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/weapon-synergy-request'
+      responses:
+        '200':
+          description: Weapon synergy result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/weapon-synergy-result'
+        '400':
+          description: Invalid synergy data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /combat/synergy/matrix:
+    get:
+      summary: Get synergy matrix for weapons
+      operationId: getSynergyMatrix
+      description: Retrieve synergy bonuses between different weapon combinations.
+      tags:
+        - Weapon Synergy
+      parameters:
+        - name: weapon_ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+          description: List of weapon IDs to check synergies for
+      responses:
+        '200':
+          description: Weapon synergy matrix
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/synergy-matrix'
+        '400':
+          description: Invalid weapon IDs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
 components:
   securitySchemes:
     BearerAuth:
@@ -1770,3 +1926,132 @@ components:
         Expected memory: ~48 bytes/instance.
       required: *ref_16
       properties: *ref_17
+    combo-calculation-request:
+      type: object
+      description: |
+        BACKEND NOTE: Ultra-fast combo calculation request (P99 <2ms).
+
+        Fields ordered for struct alignment (large → small):
+        - UUIDs (16 bytes) first
+        - Arrays (24 bytes)
+        - Integers (8 bytes)
+        - Floats (8 bytes)
+        - Booleans (1 byte) last
+
+        Expected memory: ~128 bytes/instance.
+        SIMD-optimized for weapon synergy calculations.
+      required:
+        - player_id
+        - combo_chain
+        - weapon_synergies
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player executing the combo
+        combo_chain:
+          type: array
+          items:
+            type: object
+            required:
+              - attack_id
+              - weapon_id
+              - timing
+            properties:
+              attack_id:
+                type: string
+                description: Unique attack identifier
+              weapon_id:
+                type: string
+                description: Weapon used for this attack
+              timing:
+                type: number
+                format: float
+                description: Timing precision (0.0-1.0)
+              damage_base:
+                type: integer
+                description: Base damage for this attack
+        weapon_synergies:
+          type: array
+          items:
+            type: object
+            required:
+              - weapon_a
+              - weapon_b
+              - synergy_type
+            properties:
+              weapon_a:
+                type: string
+                description: First weapon in synergy
+              weapon_b:
+                type: string
+                description: Second weapon in synergy
+              synergy_type:
+                type: string
+                enum: [damage, effect, critical, speed]
+                description: Type of synergy bonus
+        environment_modifiers:
+          type: object
+          description: Environmental damage modifiers
+        implant_bonuses:
+          type: object
+          description: Cyberware implant combo bonuses
+    combo-calculation-result:
+      type: object
+      description: |
+        BACKEND NOTE: Combo calculation result with SIMD optimizations.
+
+        Fields ordered for struct alignment (large → small):
+        - UUIDs (16 bytes) first
+        - Arrays (24 bytes)
+        - Integers (8 bytes)
+        - Floats (8 bytes)
+        - Objects (8 bytes)
+        - Booleans (1 byte) last
+
+        Expected memory: ~96 bytes/instance.
+      required:
+        - total_damage
+        - combo_multiplier
+        - synergy_bonuses
+        - effects
+      properties:
+        total_damage:
+          type: integer
+          description: Final calculated damage
+        combo_multiplier:
+          type: number
+          format: float
+          description: Total combo damage multiplier
+        synergy_bonuses:
+          type: array
+          items:
+            type: object
+            properties:
+              synergy_type:
+                type: string
+              bonus_value:
+                type: number
+                format: float
+              description:
+                type: string
+        effects:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_type:
+                type: string
+              duration:
+                type: integer
+              magnitude:
+                type: number
+                format: float
+        critical_chance:
+          type: number
+          format: float
+          description: Critical hit chance bonus
+        anti_cheat_score:
+          type: number
+          format: float
+          description: Anti-cheat validation score

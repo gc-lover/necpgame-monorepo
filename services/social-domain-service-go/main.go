@@ -177,6 +177,21 @@ func setupRouter(h *handlers.Handler, cfg *config.Config) *chi.Mux {
 			r.Get("/benefits", h.GetReputationBenefits)
 		})
 
+		// Dynamic Relationships routes
+		r.Route("/social", func(r chi.Router) {
+			// Relationships
+			r.Get("/relationships", h.GetRelationships)
+			r.Post("/relationships", h.UpdateRelationship)
+			r.Get("/relationships/{entity_id}/events", h.GetRelationshipEvents)
+
+			// Reputation Network
+			r.Get("/reputation/{entity_id}", h.GetReputation)
+			r.Post("/reputation/events", h.RecordReputationEvent)
+
+			// Social Network
+			r.Get("/network/{player_id}/influence", h.CalculateSocialInfluence)
+		})
+
 		// Notifications routes
 		r.Route("/notifications", func(r chi.Router) {
 			r.Get("/", h.GetNotifications)

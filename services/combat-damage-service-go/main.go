@@ -209,6 +209,15 @@ func setupRouter(handlers *server.Handlers, tokenAuth *jwtauth.JWTAuth, logger *
 		r.Post("/combat/effects/apply", handlers.ApplyEffects)
 		r.Get("/combat/effects/{participant_id}/active", handlers.GetActiveEffects)
 		r.Delete("/combat/effects/{effect_id}", handlers.RemoveEffect)
+
+		// Combo system routes
+		r.Post("/combat/combo/calculate", handlers.CalculateCombo)
+		r.Get("/combat/combo/{player_id}/state", handlers.GetComboState)
+		r.Put("/combat/combo/{player_id}/state", handlers.UpdateComboState)
+
+		// Weapon synergy routes
+		r.Post("/combat/synergy/calculate", handlers.CalculateWeaponSynergy)
+		r.Get("/combat/synergy/matrix", handlers.GetSynergyMatrix)
 	})
 
 	return r

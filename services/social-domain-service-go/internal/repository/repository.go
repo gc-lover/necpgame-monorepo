@@ -467,6 +467,284 @@ func (r *Repository) GetPlayerNotifications(ctx context.Context, playerID uuid.U
 	return notifications, err
 }
 
+// Dynamic Relationships methods
+
+// GetRelationships gets player relationships network
+func (r *Repository) GetRelationships(ctx context.Context, playerID uuid.UUID) ([]map[string]interface{}, error) {
+	query := `
+		SELECT target_entity_id, relationship_type, strength, last_interaction,
+			   trust_level, decay_rate
+		FROM relationships
+		WHERE source_entity_id = $1 AND strength != 0
+		ORDER BY strength DESC, last_interaction DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, playerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var relationships []map[string]interface{}
+	for rows.Next() {
+		var targetID uuid.UUID
+		var relType string
+		var strength int
+		var lastInteraction time.Time
+		var trustLevel, decayRate sql.NullFloat64
+
+		err := rows.Scan(&targetID, &relType, &strength, &lastInteraction,
+			&trustLevel, &decayRate)
+		if err != nil {
+			return nil, err
+		}
+
+		relationship := map[string]interface{}{
+			"target_entity_id":  targetID.String(),
+			"relationship_type": relType,
+			"strength":          strength,
+			"last_interaction":  lastInteraction,
+		}
+
+		if trustLevel.Valid {
+			relationship["trust_level"] = trustLevel.Float64
+		}
+		if decayRate.Valid {
+			relationship["decay_rate"] = decayRate.Float64
+		}
+
+		relationships = append(relationships, relationship)
+	}
+
+	return relationships, rows.Err()
+}
+
+// UpdateRelationship updates or creates a relationship
+func (r *Repository) UpdateRelationship(ctx context.Context, update map[string]interface{}) (map[string]interface{}, error) {
+	sourceID, _ := uuid.Parse(update["source_entity_id"].(string))
+	targetID, _ := uuid.Parse(update["target_entity_id"].(string))
+	eventType := update["event_type"].(string)
+	magnitude := int(update["magnitude"].(float64))
+
+	// Calculate new relationship strength
+	query := `
+		INSERT INTO relationships (source_entity_id, target_entity_id, relationship_type, strength, last_interaction)
+		VALUES ($1, $2, 'personal', $3, NOW())
+		ON CONFLICT (source_entity_id, target_entity_id)
+		DO UPDATE SET
+			strength = LEAST(100, GREATEST(-100, relationships.strength + $3)),
+			last_interaction = NOW()
+		RETURNING relationship_type, strength, last_interaction
+	`
+
+	var relType string
+	var strength int
+	var lastInteraction time.Time
+
+	err := r.db.QueryRowContext(ctx, query, sourceID, targetID, magnitude).Scan(
+		&relType, &strength, &lastInteraction)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"target_entity_id":  targetID.String(),
+		"relationship_type": relType,
+		"strength":          strength,
+		"last_interaction":  lastInteraction,
+	}, nil
+}
+
+// GetRelationshipEvents gets recent relationship events
+func (r *Repository) GetRelationshipEvents(ctx context.Context, entityID uuid.UUID, limit int) ([]map[string]interface{}, error) {
+	query := `
+		SELECT event_id, source_entity_id, target_entity_id, event_type, magnitude, timestamp, description
+		FROM relationship_events
+		WHERE source_entity_id = $1 OR target_entity_id = $1
+		ORDER BY timestamp DESC
+		LIMIT $2
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, entityID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []map[string]interface{}
+	for rows.Next() {
+		var eventID uuid.UUID
+		var sourceID, targetID uuid.UUID
+		var eventType string
+		var magnitude int
+		var timestamp time.Time
+		var description sql.NullString
+
+		err := rows.Scan(&eventID, &sourceID, &targetID, &eventType, &magnitude, &timestamp, &description)
+		if err != nil {
+			return nil, err
+		}
+
+		event := map[string]interface{}{
+			"event_id":         eventID.String(),
+			"source_entity_id": sourceID.String(),
+			"target_entity_id": targetID.String(),
+			"event_type":       eventType,
+			"magnitude":        magnitude,
+			"timestamp":        timestamp,
+		}
+
+		if description.Valid {
+			event["description"] = description.String
+		}
+
+		events = append(events, event)
+	}
+
+	return events, rows.Err()
+}
+
+// Reputation Network methods
+
+// GetReputation gets entity reputation scores
+func (r *Repository) GetReputation(ctx context.Context, entityID uuid.UUID) (map[string]interface{}, error) {
+	query := `
+		SELECT personal_score, faction_score, community_score, global_score,
+			   last_updated, reputation_tier
+		FROM reputation_scores
+		WHERE entity_id = $1
+	`
+
+	var personal, faction, community, global int
+	var lastUpdated time.Time
+	var tier sql.NullString
+
+	err := r.db.QueryRowContext(ctx, query, entityID).Scan(
+		&personal, &faction, &community, &global, &lastUpdated, &tier)
+	if err != nil {
+		return nil, err
+	}
+
+	result := map[string]interface{}{
+		"entity_id":    entityID.String(),
+		"scores": map[string]int{
+			"personal":   personal,
+			"faction":    faction,
+			"community":  community,
+			"global":     global,
+		},
+		"last_updated": lastUpdated,
+	}
+
+	if tier.Valid {
+		result["reputation_tier"] = tier.String
+	}
+
+	return result, nil
+}
+
+// RecordReputationEvent records a reputation-changing event
+func (r *Repository) RecordReputationEvent(ctx context.Context, event map[string]interface{}) error {
+	query := `
+		INSERT INTO reputation_events (event_id, source_entity_id, target_entity_id,
+			event_type, reputation_change, context, location, recorded_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	`
+
+	eventID := event["event_id"].(string)
+	sourceID := event["source_entity_id"].(string)
+	targetID := event["target_entity_id"].(string)
+	eventType := event["event_type"].(string)
+	change := int(event["reputation_change"].(float64))
+	context := event["context"].(string)
+	location := event["location"].(string)
+	recordedAt := event["recorded_at"].(time.Time)
+
+	_, err := r.db.ExecContext(ctx, query, eventID, sourceID, targetID, eventType,
+		change, context, location, recordedAt)
+	return err
+}
+
+// UpdateReputation updates reputation scores based on event
+func (r *Repository) UpdateReputation(ctx context.Context, event map[string]interface{}) (map[string]interface{}, error) {
+	targetID := event["target_entity_id"].(string)
+	change := int(event["reputation_change"].(float64))
+
+	// Update reputation scores
+	query := `
+		INSERT INTO reputation_scores (entity_id, personal_score, last_updated)
+		VALUES ($1, $2, NOW())
+		ON CONFLICT (entity_id)
+		DO UPDATE SET
+			personal_score = LEAST(1000, GREATEST(-1000, reputation_scores.personal_score + $2)),
+			last_updated = NOW()
+		RETURNING personal_score, faction_score, community_score, global_score, last_updated
+	`
+
+	var personal, faction, community, global int
+	var lastUpdated time.Time
+
+	err := r.db.QueryRowContext(ctx, query, targetID, change).Scan(
+		&personal, &faction, &community, &global, &lastUpdated)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"entity_id": targetID,
+		"scores": map[string]int{
+			"personal":   personal,
+			"faction":    faction,
+			"community":  community,
+			"global":     global,
+		},
+		"last_updated": lastUpdated,
+	}, nil
+}
+
+// Social Network methods
+
+// CalculateSocialInfluence calculates social influence metrics
+func (r *Repository) CalculateSocialInfluence(ctx context.Context, playerID uuid.UUID, depth int) (map[string]interface{}, error) {
+	// Calculate basic metrics (simplified version)
+	query := `
+		SELECT
+			COUNT(*) as direct_connections,
+			COUNT(CASE WHEN strength > 0 THEN 1 END) as positive_relationships,
+			COUNT(CASE WHEN strength < 0 THEN 1 END) as negative_relationships
+		FROM relationships
+		WHERE source_entity_id = $1 AND strength != 0
+	`
+
+	var directConnections, positiveRelationships, negativeRelationships int
+	err := r.db.QueryRowContext(ctx, query, playerID).Scan(
+		&directConnections, &positiveRelationships, &negativeRelationships)
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate influence score (simplified algorithm)
+	influenceScore := float64(positiveRelationships*10 - negativeRelationships*5)
+	if influenceScore < 0 {
+		influenceScore = 0
+	}
+	if influenceScore > 100 {
+		influenceScore = 100
+	}
+
+	return map[string]interface{}{
+		"entity_id": playerID.String(),
+		"influence_score": influenceScore,
+		"network_metrics": map[string]int{
+			"direct_connections":    directConnections,
+			"positive_relationships": positiveRelationships,
+			"negative_relationships": negativeRelationships,
+			"indirect_connections":   0, // Would require graph algorithms
+			"influence_radius":       depth,
+		},
+	}, nil
+}
+
 // Health check
 func (r *Repository) HealthCheck(ctx context.Context) error {
 	return r.db.PingContext(ctx)

@@ -98,11 +98,40 @@ func extractTicketIDFromPath(path string) string {
 	return ""
 }
 
-// handleGetTicketSLA handles SLA status retrieval for a ticket
+// handleGetTicketSLA handles SLA status retrieval for a ticket using ogen interface
 func (s *Server) handleGetTicketSLA(w http.ResponseWriter, r *http.Request) {
-	// Use real SLA handlers if available
+	// Extract ticket ID from path
+	ticketIDStr := extractTicketIDFromPath(r.URL.Path)
+	if ticketIDStr == "" {
+		s.writeErrorResponse(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid ticket ID in path")
+		return
+	}
+
+	// Parse UUID
+	ticketID, err := uuid.Parse(ticketIDStr)
+	if err != nil {
+		s.writeErrorResponse(w, http.StatusBadRequest, "INVALID_TICKET_ID", "Invalid ticket ID format")
+		return
+	}
+
+	// Use ogen SLA handlers if available
 	if s.slaHandlers != nil {
-		s.slaHandlers.GetTicketSLA(w, r)
+		ctx := r.Context()
+		slaStatus, err := s.slaHandlers.GetTicketSLA(ctx, ticketID)
+		if err != nil {
+			s.logger.Error("Failed to get SLA status via ogen handler",
+				zap.String("ticket_id", ticketID.String()),
+				zap.Error(err))
+			s.writeErrorResponse(w, http.StatusNotFound, "SLA_STATUS_NOT_FOUND", "SLA status not found for ticket")
+			return
+		}
+
+		// Return response using ogen types
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(slaStatus); err != nil {
+			s.logger.Error("Failed to encode SLA status response", zap.Error(err))
+		}
 		return
 	}
 
@@ -110,11 +139,58 @@ func (s *Server) handleGetTicketSLA(w http.ResponseWriter, r *http.Request) {
 	s.writeErrorResponse(w, http.StatusServiceUnavailable, "SLA_SERVICE_UNAVAILABLE", "SLA service not initialized")
 }
 
-// handleGetSLAViolations handles SLA violations retrieval
+// handleGetSLAViolations handles SLA violations retrieval using ogen interface
 func (s *Server) handleGetSLAViolations(w http.ResponseWriter, r *http.Request) {
-	// Use real SLA handlers if available
+	// Parse query parameters
+	limit := 20 // default
+	offset := 0 // default
+
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 100 {
+			limit = parsedLimit
+		}
+	}
+
+	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
+		if parsedOffset, err := strconv.Atoi(offsetStr); err == nil && parsedOffset >= 0 {
+			offset = parsedOffset
+		}
+	}
+
+	// Optional filters
+	var priority, violationType *string
+
+	if priorityStr := r.URL.Query().Get("priority"); priorityStr != "" {
+		priority = &priorityStr
+	}
+
+	if violationTypeStr := r.URL.Query().Get("violation_type"); violationTypeStr != "" {
+		violationType = &violationTypeStr
+	}
+
+	// Use ogen SLA handlers if available
 	if s.slaHandlers != nil {
-		s.slaHandlers.GetSLAViolations(w, r)
+		ctx := r.Context()
+		violations, total, err := s.slaHandlers.GetSLAViolations(ctx, limit, offset, priority, violationType)
+		if err != nil {
+			s.logger.Error("Failed to get SLA violations via ogen handler", zap.Error(err))
+			s.writeErrorResponse(w, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to retrieve SLA violations")
+			return
+		}
+
+		// Return response using ogen types
+		response := api.SLAViolationsResponse{
+			Items:  violations,
+			Total:  total,
+			Limit:  limit,
+			Offset: offset,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			s.logger.Error("Failed to encode SLA violations response", zap.Error(err))
+		}
 		return
 	}
 

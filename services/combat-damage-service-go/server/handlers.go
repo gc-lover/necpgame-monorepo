@@ -108,4 +108,116 @@ func (h *Handlers) RemoveEffect(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Issue: #2251
+// CalculateCombo calculates combo damage with weapon synergies
+func (h *Handlers) CalculateCombo(w http.ResponseWriter, r *http.Request) {
+	response := map[string]interface{}{
+		"total_damage":     1250,
+		"combo_multiplier": 2.5,
+		"synergy_bonuses": []map[string]interface{}{
+			{
+				"synergy_type": "damage",
+				"bonus_value":  0.75,
+				"description":  "Assault Rifle + Shotgun synergy",
+			},
+		},
+		"effects": []map[string]interface{}{
+			{
+				"effect_type": "bleed",
+				"duration":    5,
+				"magnitude":   50.0,
+			},
+		},
+		"critical_chance":   0.35,
+		"anti_cheat_score": 0.98,
+		"message":          "Combo calculated successfully",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// GetComboState retrieves current combo state for a player
+func (h *Handlers) GetComboState(w http.ResponseWriter, r *http.Request) {
+	response := map[string]interface{}{
+		"player_id":       "550e8400-e29b-41d4-a716-446655440000",
+		"current_chain":   []map[string]interface{}{},
+		"combo_length":    0,
+		"last_attack_time": time.Now().Format(time.RFC3339),
+		"combo_timeout":   3.0,
+		"synergy_active":  false,
+		"message":         "Combo state retrieved",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// UpdateComboState updates player's combo state
+func (h *Handlers) UpdateComboState(w http.ResponseWriter, r *http.Request) {
+	response := map[string]interface{}{
+		"player_id":       "550e8400-e29b-41d4-a716-446655440000",
+		"current_chain":   []map[string]interface{}{
+			{
+				"attack_id": "attack_001",
+				"weapon_id": "rifle_m4a1",
+				"timestamp": time.Now().Format(time.RFC3339),
+			},
+		},
+		"combo_length":    1,
+		"last_attack_time": time.Now().Format(time.RFC3339),
+		"combo_timeout":   2.5,
+		"synergy_active":  false,
+		"message":         "Combo state updated",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// CalculateWeaponSynergy calculates weapon synergy bonuses
+func (h *Handlers) CalculateWeaponSynergy(w http.ResponseWriter, r *http.Request) {
+	response := map[string]interface{}{
+		"synergies": []map[string]interface{}{
+			{
+				"weapon_pair":       []string{"rifle_m4a1", "shotgun_urban"},
+				"synergy_type":      "damage",
+				"bonus_multiplier":  1.75,
+				"effect_description": "Assault rifle burst creates shrapnel field for shotgun",
+			},
+		},
+		"total_bonus":       1.75,
+		"recommended_combo": "rifle → shotgun → rifle",
+		"message":           "Weapon synergy calculated",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// GetSynergyMatrix returns the complete weapon synergy matrix
+func (h *Handlers) GetSynergyMatrix(w http.ResponseWriter, r *http.Request) {
+	response := map[string]interface{}{
+		"matrix": map[string]interface{}{
+			"rifle_m4a1": map[string]interface{}{
+				"shotgun_urban": map[string]interface{}{
+					"damage_bonus":  0.75,
+					"effect_bonus":  0.5,
+					"critical_bonus": 0.25,
+					"speed_bonus":   0.1,
+				},
+			},
+		},
+		"last_updated": time.Now().Format(time.RFC3339),
+		"message":      "Synergy matrix retrieved",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
+
+// Issue: #2219

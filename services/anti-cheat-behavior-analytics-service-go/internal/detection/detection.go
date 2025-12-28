@@ -202,7 +202,7 @@ func (d *DetectionEngine) runDetectionRules(ctx context.Context, playerID, event
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 
-	for ruleID, rule := range d.rules {
+	for _, rule := range d.rules {
 		if !rule.Enabled {
 			continue
 		}

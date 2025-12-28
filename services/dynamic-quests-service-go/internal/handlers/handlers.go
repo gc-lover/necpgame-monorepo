@@ -633,6 +633,121 @@ func (h *Handlers) GetEverythingBiggerQuest(w http.ResponseWriter, r *http.Reque
 	h.respondJSON(w, http.StatusOK, quest)
 }
 
+// Living Storylines handlers
+
+// GetLivingStoryline gets a living storyline for a player
+func (h *Handlers) GetLivingStoryline(w http.ResponseWriter, r *http.Request) {
+	playerIDStr := r.URL.Query().Get("player_id")
+	if playerIDStr == "" {
+		h.respondError(w, http.StatusBadRequest, "player_id is required")
+		return
+	}
+
+	playerID, err := strconv.ParseInt(playerIDStr, 10, 64)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid player_id format")
+		return
+	}
+
+	ctx := r.Context()
+	storyline, err := h.service.GetLivingStoryline(ctx, playerID)
+	if err != nil {
+		h.logger.Errorf("Failed to get living storyline: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to get storyline")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, storyline)
+}
+
+// UpdateStorylineChoice records player choice affecting storyline
+func (h *Handlers) UpdateStorylineChoice(w http.ResponseWriter, r *http.Request) {
+	var choice map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&choice); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	ctx := r.Context()
+	updatedStoryline, err := h.service.UpdateStorylineChoice(ctx, choice)
+	if err != nil {
+		h.logger.Errorf("Failed to update storyline choice: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to update choice")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, updatedStoryline)
+}
+
+// GetDynamicNarrative gets current dynamic narrative state
+func (h *Handlers) GetDynamicNarrative(w http.ResponseWriter, r *http.Request) {
+	playerIDStr := r.URL.Query().Get("player_id")
+	if playerIDStr == "" {
+		h.respondError(w, http.StatusBadRequest, "player_id is required")
+		return
+	}
+
+	playerID, err := strconv.ParseInt(playerIDStr, 10, 64)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid player_id format")
+		return
+	}
+
+	ctx := r.Context()
+	narrative, err := h.service.GetDynamicNarrative(ctx, playerID)
+	if err != nil {
+		h.logger.Errorf("Failed to get dynamic narrative: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to get narrative")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, narrative)
+}
+
+// AdvanceNarrative advances the narrative based on player actions
+func (h *Handlers) AdvanceNarrative(w http.ResponseWriter, r *http.Request) {
+	var advancement map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&advancement); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	ctx := r.Context()
+	newNarrative, err := h.service.AdvanceNarrative(ctx, advancement)
+	if err != nil {
+		h.logger.Errorf("Failed to advance narrative: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to advance narrative")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, newNarrative)
+}
+
+// GetNarrativeBranches gets available narrative branches
+func (h *Handlers) GetNarrativeBranches(w http.ResponseWriter, r *http.Request) {
+	storylineIDStr := r.URL.Query().Get("storyline_id")
+	if storylineIDStr == "" {
+		h.respondError(w, http.StatusBadRequest, "storyline_id is required")
+		return
+	}
+
+	storylineID, err := strconv.ParseInt(storylineIDStr, 10, 64)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid storyline_id format")
+		return
+	}
+
+	ctx := r.Context()
+	branches, err := h.service.GetNarrativeBranches(ctx, storylineID)
+	if err != nil {
+		h.logger.Errorf("Failed to get narrative branches: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to get branches")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, branches)
+}
+
 // respondJSON sends a JSON response
 func (h *Handlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")

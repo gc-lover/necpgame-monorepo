@@ -4,6 +4,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -15,6 +16,7 @@ import (
 
 	"support-service-go/internal/models"
 	"support-service-go/internal/service"
+	"support-service-go/pkg/api"
 )
 
 // SLAHandlers handles SLA-related HTTP requests
@@ -29,6 +31,75 @@ func NewSLAHandlers(slaService service.SLAService, logger *zap.Logger) *SLAHandl
 		slaService: slaService,
 		logger:     logger,
 	}
+}
+
+// GetTicketSLA implements ogen-generated interface for SLA status retrieval
+// PERFORMANCE: Optimized SLA status lookup with caching support
+func (h *SLAHandlers) GetTicketSLA(ctx context.Context, ticketID uuid.UUID) (api.TicketSLAStatus, error) {
+	start := time.Now()
+	defer func() {
+		h.logger.Info("GetTicketSLA ogen operation completed",
+			zap.Duration("duration", time.Since(start)),
+			zap.String("ticket_id", ticketID.String()))
+	}()
+
+	// Get SLA status from service
+	slaStatus, err := h.slaService.GetSLAStatus(ctx, ticketID)
+	if err != nil {
+		h.logger.Error("Failed to get SLA status",
+			zap.String("ticket_id", ticketID.String()),
+			zap.Error(err))
+		return api.TicketSLAStatus{}, err
+	}
+
+	// Convert to ogen API format
+	return api.TicketSLAStatus{
+		TicketID:               slaStatus.TicketID,
+		Priority:               slaStatus.Priority,
+		FirstResponseTarget:    slaStatus.FirstResponseTarget,
+		FirstResponseActual:    slaStatus.FirstResponseActual,
+		ResolutionTarget:       slaStatus.ResolutionTarget,
+		ResolutionActual:       slaStatus.ResolutionActual,
+		FirstResponseSLAMet:    slaStatus.FirstResponseSLAMet,
+		ResolutionSLAMet:       slaStatus.ResolutionSLAMet,
+		TimeUntilFirstResponse: slaStatus.TimeUntilFirstResponse,
+		TimeUntilResolution:    slaStatus.TimeUntilResolution,
+	}, nil
+}
+
+// GetSLAViolations implements ogen-generated interface for SLA violations retrieval
+// PERFORMANCE: Paginated SLA violations with filtering and sorting
+func (h *SLAHandlers) GetSLAViolations(ctx context.Context, limit, offset int, priority, violationType *string) ([]api.SLAViolation, int, error) {
+	start := time.Now()
+	defer func() {
+		h.logger.Info("GetSLAViolations ogen operation completed",
+			zap.Duration("duration", time.Since(start)),
+			zap.Int("limit", limit),
+			zap.Int("offset", offset))
+	}()
+
+	// Get violations from service
+	violations, total, err := h.slaService.GetSLAViolations(ctx, limit, offset, priority, violationType)
+	if err != nil {
+		h.logger.Error("Failed to get SLA violations", zap.Error(err))
+		return nil, 0, err
+	}
+
+	// Convert to ogen API format
+	apiViolations := make([]api.SLAViolation, len(violations))
+	for i, v := range violations {
+		apiViolations[i] = api.SLAViolation{
+			TicketID:          v.TicketID,
+			TicketNumber:      v.TicketNumber,
+			Priority:          v.Priority,
+			ViolationType:     v.ViolationType,
+			TargetTime:        v.TargetTime,
+			ActualTime:        v.ActualTime,
+			ViolationDuration: v.ViolationDuration,
+		}
+	}
+
+	return apiViolations, total, nil
 }
 
 // GetTicketSLA handles GET /support/tickets/{ticket_id}/sla
