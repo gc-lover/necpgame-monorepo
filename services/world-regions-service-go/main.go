@@ -6,14 +6,17 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"go.uber.org/zap"
-	"world-regions-service-go/server"
+
+	"github.com/gc-lover/necpgame-monorepo/services/world-regions-service-go/server"
 )
 
 func main() {
@@ -50,19 +53,83 @@ func main() {
 		zap.Any("repository", repo != nil),
 		zap.Any("service", service != nil))
 
-	// Wait for shutdown signal
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	// Initialize HTTP server
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
-	<-c
-	logger.Info("Shutting down World Regions Service")
+	srv := &http.Server{
+		Addr: ":" + port,
+		Handler: setupRoutes(service, logger),
+	}
+
+	// Start server in goroutine
+	go func() {
+		logger.Info("HTTP server starting", zap.String("port", port))
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal("HTTP server failed", zap.Error(err))
+		}
+	}()
+
+	// Wait for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	logger.Info("Shutting down server...")
 
 	// Graceful shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		logger.Error("Server forced to shutdown", zap.Error(err))
+	}
+
+	logger.Info("Server exited")
 
 	// TODO: Close database connections
 	// TODO: Stop HTTP server
 
 	logger.Info("World Regions Service stopped")
+}
+
+// setupRoutes configures HTTP routes for the service
+func setupRoutes(service *server.WorldRegionsService, logger *zap.Logger) http.Handler {
+	mux := http.NewServeMux()
+
+	// Health check endpoint
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"healthy","service":"world-regions","version":"1.0.0"}`))
+	})
+
+	// API endpoints
+	mux.HandleFunc("/api/v1/world-regions", func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.Background()
+
+		regions, total, err := service.GetWorldRegions(ctx, "", "", 10, 0)
+		if err != nil {
+			logger.Error("Failed to get regions", zap.Error(err))
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		response := map[string]interface{}{
+			"regions": regions,
+			"total":   total,
+			"limit":   10,
+			"offset":  0,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			logger.Error("Failed to encode response", zap.Error(err))
+		}
+	})
+
+	return mux
 }
