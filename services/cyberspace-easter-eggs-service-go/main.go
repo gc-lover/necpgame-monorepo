@@ -14,19 +14,20 @@ import (
 	"syscall"
 	"time"
 
+	_ "net/http/pprof" // PERFORMANCE: Enable pprof profiling
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
-	_ "net/http/pprof" // PERFORMANCE: Enable pprof profiling
 
 	"cyberspace-easter-eggs-service-go/internal/config"
 	"cyberspace-easter-eggs-service-go/internal/generated"
 	"cyberspace-easter-eggs-service-go/internal/handlers"
 	"cyberspace-easter-eggs-service-go/internal/metrics"
-	"cyberspace-easter-eggs-service-go/pkg/repository"
 	"cyberspace-easter-eggs-service-go/internal/service"
+	"cyberspace-easter-eggs-service-go/pkg/repository"
 )
 
 func main() {
