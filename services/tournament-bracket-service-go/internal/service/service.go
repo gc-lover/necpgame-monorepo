@@ -427,3 +427,73 @@ func (s *TournamentService) GetSpectatorStats(ctx context.Context, tournamentID 
 
 	return stats, nil
 }
+
+// Tournament Bracket Schema business logic
+
+// GetBracketSchema gets the bracket schema for a tournament type
+func (s *TournamentService) GetBracketSchema(ctx context.Context, tournamentType string, playerCount int) (map[string]interface{}, error) {
+	schema, err := s.repo.GetBracketSchema(ctx, tournamentType, playerCount)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Infof("Retrieved bracket schema for %s tournament with %d players", tournamentType, playerCount)
+	return schema, nil
+}
+
+// ValidateBracket validates a tournament bracket structure
+func (s *TournamentService) ValidateBracket(ctx context.Context, bracket map[string]interface{}) (bool, []string) {
+	errors := s.repo.ValidateBracketStructure(ctx, bracket)
+
+	isValid := len(errors) == 0
+	if isValid {
+		s.logger.Info("Bracket validation successful")
+	} else {
+		s.logger.Warnf("Bracket validation failed with %d errors", len(errors))
+	}
+
+	return isValid, errors
+}
+
+// GenerateBracket generates a tournament bracket from player list
+func (s *TournamentService) GenerateBracket(ctx context.Context, request map[string]interface{}) (map[string]interface{}, error) {
+	bracket, err := s.repo.GenerateBracketFromPlayers(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Infof("Generated tournament bracket with %d players", len(request["players"].([]interface{})))
+	return bracket, nil
+}
+
+// UpdateBracketMatch updates a match result in the bracket
+func (s *TournamentService) UpdateBracketMatch(ctx context.Context, matchUpdate map[string]interface{}) (map[string]interface{}, error) {
+	updatedBracket, err := s.repo.UpdateBracketMatchResult(ctx, matchUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Infof("Updated bracket match result for match %v", matchUpdate["match_id"])
+	return updatedBracket, nil
+}
+
+// GetBracketProgress gets tournament bracket progress
+func (s *TournamentService) GetBracketProgress(ctx context.Context, tournamentID uuid.UUID) (map[string]interface{}, error) {
+	progress, err := s.repo.GetBracketProgress(ctx, tournamentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return progress, nil
+}
+
+// PredictBracketOutcomes predicts possible bracket outcomes
+func (s *TournamentService) PredictBracketOutcomes(ctx context.Context, tournamentID uuid.UUID, maxDepth int) (map[string]interface{}, error) {
+	predictions, err := s.repo.PredictBracketOutcomes(ctx, tournamentID, maxDepth)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Infof("Generated bracket outcome predictions with max depth %d", maxDepth)
+	return predictions, nil
+}

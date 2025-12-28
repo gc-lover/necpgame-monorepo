@@ -74,6 +74,9 @@ func (s *Server) setupRoutes() {
 	s.router.Get("/npc-hirings/{hiringID}", s.service.GetNPCHiring)
 	s.router.Post("/npc-hirings/{hiringID}/terminate", s.service.TerminateNPCHiring)
 	s.router.Get("/npc-hirings/{hiringID}/performance", s.service.GetNPCPerformance)
+
+	// Chat commands routes
+	s.router.Post("/social/chat/commands/execute", s.service.ExecuteChatCommand)
 }
 
 // Handler returns the HTTP handler

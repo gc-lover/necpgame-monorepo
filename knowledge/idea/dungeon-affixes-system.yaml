@@ -1,0 +1,562 @@
+# Issue: #142072498 - [Idea] Система аффиксов для рейдов и подземелий
+metadata:
+  id: dungeon-affixes-system
+  title: Система аффиксов для рейдов и подземелий
+  document_type: idea
+  category: mechanics
+  status: approved
+  version: '1.1.0'
+  last_updated: 2025-12-28T22:50:00Z
+  concept_approved: true
+  concept_reviewed_at: '2025-12-28T22:50:00Z'
+  owners:
+    - role: game_designer
+      contact: gameplay@necp.game
+  tags:
+    - dungeon-affixes
+    - procedural-generation
+    - difficulty-modifiers
+    - raid-mechanics
+    - replayability
+  topics:
+    - dungeon-design
+    - procedural-content
+    - difficulty-scaling
+    - player-challenge
+  related_systems:
+    - dungeon-service
+    - combat-service
+    - progression-service
+  related_documents:
+    - id: master-modes-challenges
+      relation: complements
+      path: knowledge/idea/master-modes-challenge-system.yaml
+    - id: romance-multiplayer
+      relation: extends
+      path: knowledge/idea/romance-multiplayer-system.yaml
+  source: ''
+  visibility: internal
+  audience:
+    - concept
+    - gameplay
+    - technical
+    - qa
+  risk_level: medium
+
+review:
+  chain:
+    - role: game_designer
+      reviewer: 'Gameplay Design Team'
+      reviewed_at: 2025-12-28T22:50:00Z
+      status: approved
+  next_actions: []
+
+summary:
+  problem: Рейды и подземелья становятся repetitive после нескольких прохождений, нет механизма для создания unique challenges и scaling difficulty для разных составов групп.
+  solution: Создать систему аффиксов - модификаторов, которые dynamically изменяют механики подземелий, добавляя новые вызовы, стратегии и replayability.
+  impact: Каждый заход в подземелье становится уникальным опытом, повышает skill ceiling, создает tactical depth и обеспечивает long-term engagement.
+  benefits:
+    - Infinite replayability через комбинации аффиксов
+    - Strategic depth для опытных игроков
+    - Scalable difficulty для разных размеров групп
+    - Unique experiences на каждом прохождении
+    - Community challenge creation
+
+affix_framework:
+  affix_categories:
+    description: Категории аффиксов по типам воздействия
+    categories:
+      - **Enemy modifiers**: изменения в поведении и характеристиках врагов
+      - **Environmental effects**: модификации окружения и мира
+      - **Player restrictions**: ограничения на действия игроков
+      - **Resource alterations**: изменения в ресурсах и экономике
+      - **Time mechanics**: модификации временных аспектов
+
+    combination_rules:
+      - **Compatibility matrix**: таблица совместимости аффиксов
+      - **Scaling factors**: коэффициенты усиления при комбинациях
+      - **Conflict resolution**: разрешение противоречий между аффиксами
+      - **Synergy bonuses**: бонусы за удачные комбинации
+
+  affix_tiers:
+    description: Уровни силы аффиксов
+    tiers:
+      - **Bronze**: базовые модификаторы для новичков
+      - **Silver**: moderate изменения для опытных игроков
+      - **Gold**: significant challenges для veteran команд
+      - **Platinum**: extreme модификаторы для elite групп
+      - **Mythril**: nigh-impossible аффиксы для legends
+
+    tier_requirements:
+      - **Player skill**: минимальный уровень мастерства
+      - **Group composition**: требования к составу группы
+      - **Completion history**: успешные прохождения предыдущих уровней
+      - **Reputation thresholds**: социальная репутация в сообществе
+
+enemy_modifier_affixes:
+  behavioral_affixes:
+    description: Аффиксы, изменяющие поведение врагов
+    examples:
+      - **Aggressive**: враги более агрессивны, быстрее реагируют
+      - **Tactical**: враги используют более сложные тактики
+      - **Pack Hunter**: враги координируют атаки в стаи
+      - **Ambush Predator**: враги предпочитают засады и stealth
+
+    mechanics:
+      - **AI enhancements**: улучшенный искусственный интеллект
+      - **Coordination systems**: системы координации между врагами
+      - **Adaptive behavior**: адаптация под стиль игры группы
+      - **Dynamic positioning**: динамическое позиционирование
+
+  attribute_affixes:
+    description: Аффиксы, изменяющие характеристики врагов
+    examples:
+      - **Fortified**: повышенное здоровье и защита
+      - **Accelerated**: повышенная скорость и частота атак
+      - **Volatile**: враги могут взрываться при смерти
+      - **Regenerative**: враги восстанавливают здоровье со временем
+
+    scaling_mechanics:
+      - **Linear scaling**: прямое увеличение характеристик
+      - **Exponential growth**: экспоненциальное усиление
+      - **Threshold triggers**: активация дополнительных эффектов
+      - **Stacking bonuses**: накопление бонусов со временем
+
+  special_ability_affixes:
+    description: Аффиксы, добавляющие специальные способности
+    examples:
+      - **Elemental Infusion**: враги получают стихийные атаки
+      - **Cybernetic Enhancement**: кибернетические улучшения
+      - **Psionic Powers**: псионические способности
+      - **Nanite Swarm**: рои нанитов для поддержки
+
+    ability_system:
+      - **Proc mechanics**: вероятность активации способностей
+      - **Cooldown systems**: системы кулдаунов
+      - **Synergy effects**: эффекты взаимодействия способностей
+      - **Evolution mechanics**: развитие способностей со временем
+
+environmental_affixes:
+  hazard_affixes:
+    description: Аффиксы, добавляющие environmental hazards
+    examples:
+      - **Toxic Atmosphere**: токсичная атмосфера наносит урон
+      - **Electrical Storms**: электрические разряды в воздухе
+      - **Gravity Anomalies**: измененная гравитация
+      - **Reality Glitches**: glitches в матрице реальности
+
+    hazard_mechanics:
+      - **Area effects**: эффекты в определенных зонах
+      - **Trigger conditions**: условия активации опасностей
+      - **Avoidance strategies**: способы уклонения
+      - **Dynamic spawning**: динамическое появление опасностей
+
+  terrain_modifier_affixes:
+    description: Аффиксы, изменяющие terrain и navigation
+    examples:
+      - **Unstable Ground**: земля может проваливаться
+      - **Moving Platforms**: подвижные платформы
+      - **Phase Shifting**: фаза реальности меняется
+      - **Spatial Distortion**: искажение пространства
+
+    navigation_changes:
+      - **Path alteration**: изменение доступных путей
+      - **Shortcut creation**: создание новых коротких путей
+      - **Dead end generation**: генерация тупиков
+      - **Hidden area reveal**: раскрытие скрытых зон
+
+  atmospheric_affixes:
+    description: Аффиксы, изменяющие атмосферу и perception
+    examples:
+      - **Fog of War**: густой туман снижает видимость
+      - **Echo Chamber**: звуки искажаются и повторяются
+      - **Sensory Overload**: перегрузка сенсоров
+      - **Hallucination Field**: галлюцинации у игроков
+
+    perception_mechanics:
+      - **Visibility modifiers**: изменения видимости
+      - **Audio alterations**: изменения звукового восприятия
+      - **Interface disruptions**: помехи в интерфейсе
+      - **Mental effects**: психологические эффекты
+
+player_restriction_affixes:
+  ability_limitations:
+    description: Аффиксы, ограничивающие способности игроков
+    examples:
+      - **No Cyberware**: запрет на использование имплантов
+      - **Melee Only**: только ближний бой
+      - **Silence**: невозможность использовать голосовые команды
+      - **EMP Susceptibility**: уязвимость к EMP
+
+    restriction_types:
+      - **Complete bans**: полный запрет способностей
+      - **Cooldown increases**: увеличение кулдаунов
+      - **Resource drains**: повышенный расход ресурсов
+      - **Effectiveness reduction**: снижение эффективности
+
+  equipment_restrictions:
+    description: Аффиксы, ограничивающие экипировку
+    examples:
+      - **No Heavy Weapons**: запрет тяжелого вооружения
+      - **Standard Gear Only**: только стандартная экипировка
+      - **Random Loadouts**: рандомизация снаряжения
+      - **Durability Loss**: быстрое разрушение предметов
+
+    equipment_mechanics:
+      - **Category bans**: запрет категорий предметов
+      - **Quality limits**: ограничения по качеству
+      - **Durability effects**: эффекты прочности
+      - **Modification bans**: запрет модификаций
+
+  social_restrictions:
+    description: Аффиксы, ограничивающие социальное взаимодействие
+    examples:
+      - **Communication Blackout**: потеря связи между игроками
+      - **Solo Operation**: каждый игрок действует независимо
+      - **Faction Division**: разделение по фракциям
+      - **Trust Erosion**: постепенная потеря доверия в группе
+
+    social_mechanics:
+      - **Communication limits**: ограничения общения
+      - **Coordination penalties**: штрафы за координацию
+      - **Betrayal mechanics**: механики предательства
+      - **Alliance systems**: системы альянсов
+
+resource_alteration_affixes:
+  economy_modifiers:
+    description: Аффиксы, изменяющие экономику подземелья
+    examples:
+      - **Inflation**: цены на товары растут со временем
+      - **Scarcity**: дефицит определенных ресурсов
+      - **Black Market**: нелегальная торговля с рисками
+      - **Resource Conversion**: конвертация ресурсов друг в друга
+
+    economic_mechanics:
+      - **Price fluctuations**: колебания цен
+      - **Supply limitations**: ограничения поставок
+      - **Trading restrictions**: ограничения торговли
+      - **Barter systems**: системы бартера
+
+  loot_modifiers:
+    description: Аффиксы, изменяющие loot и награды
+    examples:
+      - **Greed**: повышенное количество loot но с рисками
+      - **Quality Focus**: только высококачественные предметы
+      - **Curse of Riches**: проклятые богатства
+      - **Shared Rewards**: разделение наград между всеми
+
+    loot_mechanics:
+      - **Drop rate changes**: изменения шанса выпадения
+      - **Quality scaling**: масштабирование качества
+      - **Curse effects**: эффекты проклятий
+      - **Distribution rules**: правила распределения
+
+  health_resource_affixes:
+    description: Аффиксы, изменяющие здоровье и ресурсы
+    examples:
+      - **Bleeding Wounds**: раны кровоточат со временем
+      - **Regeneration Decay**: замедленное восстановление
+      - **Shared Health Pool**: общее здоровье группы
+      - **Energy Drain**: постоянная потеря энергии
+
+    resource_mechanics:
+      - **Regeneration rates**: скорости восстановления
+      - **Consumption rates**: скорости потребления
+      - **Sharing mechanics**: механики разделения
+      - **Depletion effects**: эффекты истощения
+
+time_mechanic_affixes:
+  temporal_distortions:
+    description: Аффиксы, искажающие время
+    examples:
+      - **Time Compression**: ускорение времени для врагов
+      - **Slow Motion**: замедление времени для игроков
+      - **Time Loops**: повторяющиеся временные петли
+      - **Chronal Instability**: нестабильность временных потоков
+
+    time_mechanics:
+      - **Speed modifiers**: модификаторы скорости
+      - **Duration changes**: изменения продолжительности
+      - **Loop mechanics**: механики петель
+      - **Stability effects**: эффекты стабильности
+
+  deadline_affixes:
+    description: Аффиксы с временными ограничениями
+    examples:
+      - **Doom Clock**: тиканье часов разрушения
+      - **Phase Transitions**: переходы между фазами
+      - **Eclipse Events**: затмения с особыми эффектами
+      - **Countdown Mechanics**: обратный отсчет до катастрофы
+
+    deadline_mechanics:
+      - **Timer systems**: системы таймеров
+      - **Phase mechanics**: механики фаз
+      - **Event triggers**: триггеры событий
+      - **Consequence systems**: системы последствий
+
+  pacing_modifiers:
+    description: Аффиксы, изменяющие темп игры
+    examples:
+      - **Rush Hour**: ускоренный темп событий
+      - **Leisurely Pace**: замедленный темп
+      - **Bursting Action**: всплески активности
+      - **Stasis Fields**: поля замедляющие время
+
+    pacing_mechanics:
+      - **Event frequency**: частота событий
+      - **Action density**: плотность действий
+      - **Downtime management**: управление паузами
+      - **Intensity curves**: кривые интенсивности
+
+affix_combination_system:
+  compatibility_matrix:
+    description: Матрица совместимости аффиксов
+    rules:
+      - **Compatible**: аффиксы усиливают друг друга
+      - **Neutral**: аффиксы не взаимодействуют
+      - **Conflicting**: аффиксы конфликтуют
+      - **Mutually exclusive**: аффиксы несовместимы
+
+    synergy_effects:
+      - **Amplification**: усиление эффектов
+      - **Cancellation**: нейтрализация эффектов
+      - **Transformation**: трансформация эффектов
+      - **Emergence**: появление новых эффектов
+
+  combination_generation:
+    description: Генерация комбинаций аффиксов
+    algorithms:
+      - **Random selection**: случайный выбор из совместимых
+      - **Thematic grouping**: группировка по темам
+      - **Difficulty balancing**: баланс сложности
+      - **Player preference**: учет предпочтений игроков
+
+    quality_assurance:
+      - **Balance testing**: тестирование баланса
+      - **Fun factor analysis**: анализ удовольствия
+      - **Completion rate monitoring**: мониторинг успешности
+      - **Player feedback integration**: интеграция отзывов
+
+procedural_generation:
+  affix_pool_management:
+    description: Управление пулом доступных аффиксов
+    mechanics:
+      - **Rotation system**: ротация доступных аффиксов
+      - **Seasonal themes**: сезонные тематические аффиксы
+      - **Event-specific**: аффиксы для специальных событий
+      - **Community created**: пользовательские аффиксы
+
+    pool_expansion:
+      - **Content updates**: добавление новых аффиксов
+      - **Player suggestions**: предложения от игроков
+      - **Balance patches**: патчи баланса
+      - **Experimental affixes**: экспериментальные аффиксы
+
+  dungeon_adaptation:
+    description: Адаптация подземелий под аффиксы
+    mechanics:
+      - **Layout modification**: изменение планировки
+      - **Encounter scaling**: масштабирование столкновений
+      - **Resource placement**: размещение ресурсов
+      - **Objective adjustment**: корректировка целей
+
+    adaptation_rules:
+      - **Affix compatibility**: совместимость с аффиксами
+      - **Difficulty calibration**: калибровка сложности
+      - **Flow optimization**: оптимизация потока
+      - **Replayability enhancement**: улучшение повторяемости
+
+reward_scaling:
+  difficulty_based_rewards:
+    description: Награды на основе сложности аффиксов
+    scaling:
+      - **Base rewards**: базовые награды за прохождение
+      - **Affix multipliers**: множители за аффиксы
+      - **Combination bonuses**: бонусы за комбинации
+      - **Speed bonuses**: бонусы за скорость прохождения
+
+    reward_types:
+      - **Experience points**: очки опыта
+      - **Currency rewards**: денежные награды
+      - **Item drops**: выпадение предметов
+      - **Achievement unlocks**: разблокировка достижений
+
+  achievement_system:
+    description: Система достижений для аффиксов
+    categories:
+      - **Completion achievements**: за завершение с аффиксами
+      - **Speed achievements**: за быструю скорость
+      - **Style achievements**: за определенный стиль прохождения
+      - **Combination achievements**: за сложные комбинации
+
+    showcase_features:
+      - **Public leaderboards**: публичные таблицы рекордов
+      - **Highlight reels**: записи лучших прохождений
+      - **Community showcases**: демонстрация достижений
+      - **Seasonal competitions**: сезонные соревнования
+
+technical_implementation:
+  affix_engine:
+    description: Двигатель обработки аффиксов
+    components:
+      - **Affix parser**: парсер аффиксов и их эффектов
+      - **State manager**: менеджер состояния аффиксов
+      - **Effect applicator**: применитель эффектов
+      - **Conflict resolver**: разрешение конфликтов
+
+    performance_optimization:
+      - **Lazy evaluation**: отложенная оценка эффектов
+      - **Caching systems**: системы кеширования
+      - **Batch processing**: пакетная обработка
+      - **Memory pooling**: пулы памяти
+
+  integration_architecture:
+    description: Архитектура интеграции с системами
+    interfaces:
+      - **Combat system**: интеграция с боевой системой
+      - **Environment system**: интеграция с системой окружения
+      - **Inventory system**: интеграция с системой инвентаря
+      - **Progression system**: интеграция с системой прогрессии
+
+    data_synchronization:
+      - **State replication**: репликация состояния
+      - **Event broadcasting**: широковещание событий
+      - **Conflict resolution**: разрешение конфликтов
+      - **Rollback mechanisms**: механизмы отката
+
+community_features:
+  affix_creation_tools:
+    description: Инструменты создания аффиксов сообществом
+    features:
+      - **Affix editor**: редактор аффиксов
+      - **Testing framework**: фреймворк тестирования
+      - **Balance tools**: инструменты баланса
+      - **Sharing platform**: платформа обмена
+
+    moderation_system:
+      - **Quality review**: проверка качества
+      - **Balance verification**: верификация баланса
+      - **Cheat detection**: обнаружение читов
+      - **Content filtering**: фильтрация контента
+
+  challenge_modes:
+    description: Режимы вызовов для сообщества
+    modes:
+      - **Custom affixes**: пользовательские аффиксы
+      - **Community dungeons**: подземелья сообщества
+      - **Speed challenges**: челленджи скорости
+      - **No-death runs**: прохождения без смертей
+
+    competitive_elements:
+      - **Leaderboards**: таблицы рекордов
+      - **Tournaments**: турниры
+      - **Seasonal events**: сезонные события
+      - **Hall of fame**: зал славы
+
+example_affix_combinations:
+  nightmare_realm:
+    description: Комбинация для extreme challenge
+    affixes:
+      - **Aggressive** (Enemy): враги сверхагрессивны
+      - **Toxic Atmosphere** (Environmental): постоянный урон от токсинов
+      - **No Cyberware** (Restriction): запрет имплантов
+      - **Time Compression** (Time): враги в 2x быстрее
+      - **Bleeding Wounds** (Resource): раны кровоточат
+
+    difficulty_rating: Mythril
+    recommended_group: 4+ elite players
+    estimated_completion: 45-60 minutes
+
+  stealth_paradise:
+    description: Комбинация для stealth-focused runs
+    affixes:
+      - **Ambush Predator** (Enemy): враги предпочитают засады
+      - **Fog of War** (Environmental): низкая видимость
+      - **Silence** (Restriction): нет голосовых команд
+      - **EMP Susceptibility** (Restriction): уязвимость к EMP
+      - **Communication Blackout** (Social): потеря связи
+
+    difficulty_rating: Gold
+    recommended_group: 2-3 stealth specialists
+    estimated_completion: 30-45 minutes
+
+  economic_warfare:
+    description: Комбинация для economy-focused challenge
+    affixes:
+      - **Inflation** (Resource): цены растут со временем
+      - **Scarcity** (Resource): дефицит боеприпасов
+      - **Curse of Riches** (Resource): проклятые награды
+      - **Greed** (Resource): больше loot но с рисками
+      - **Shared Rewards** (Resource): разделение всех наград
+
+    difficulty_rating: Silver
+    recommended_group: 3-5 players with economic focus
+    estimated_completion: 25-40 minutes
+
+balancing_considerations:
+  difficulty_calibration:
+    description: Калибровка сложности аффиксов
+    metrics:
+      - **Completion rates**: процент успешных прохождений
+      - **Average time**: среднее время прохождения
+      - **Player satisfaction**: удовлетворенность игроков
+      - **Skill requirements**: необходимые навыки
+
+    adjustment_mechanisms:
+      - **Dynamic scaling**: автоматическая корректировка
+      - **Player feedback**: обратная связь от игроков
+      - **Data analysis**: анализ данных прохождений
+      - **Balance patches**: патчи баланса
+
+  accessibility_features:
+    description: Функции доступности
+    features:
+      - **Difficulty warnings**: предупреждения о сложности
+      - **Recommended groups**: рекомендации по составу
+      - **Strategy guides**: гайды по стратегии
+      - **Practice modes**: режимы тренировки
+
+    inclusive_design:
+      - **Multiple paths**: разные пути прохождения
+      - **Adaptive mechanics**: адаптивные механики
+      - **Assistance systems**: системы помощи
+      - **Customization options**: опции кастомизации
+
+future_expansions:
+  ai_generated_affixes:
+    description: AI-генерируемые аффиксы
+    capabilities:
+      - **Procedural creation**: процедурное создание аффиксов
+      - **Balance optimization**: оптимизация баланса ИИ
+      - **Player modeling**: моделирование предпочтений игроков
+      - **Quality assurance**: автоматическая проверка качества
+
+  cross_realm_affixes:
+    description: Аффиксы между мирами
+    features:
+      - **Persistent effects**: эффекты сохраняются между сессиями
+      - **World influence**: влияние на глобальный мир
+      - **Faction consequences**: последствия для фракций
+      - **Economy impact**: влияние на экономику
+
+  narrative_integration:
+    description: Интеграция с нарративом
+    features:
+      - **Story-driven affixes**: аффиксы с сюжетами
+      - **Character-specific**: персональные аффиксы
+      - **Lore connections**: связи с лором
+      - **Dynamic storytelling**: динамическое повествование
+
+history:
+  - version: '1.0.0'
+    date: 2025-12-28
+    author: game_designer
+    changes: Создан первоначальный документ системы аффиксов для подземелий
+  - version: '1.1.0'
+    date: 2025-12-28
+    author: game_designer
+    changes: Расширена система с технической реализацией, балансом и планами развития.
+
+validation:
+  checksum: ''
+  schema_version: '1.0'

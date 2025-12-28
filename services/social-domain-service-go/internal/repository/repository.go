@@ -745,6 +745,64 @@ func (r *Repository) CalculateSocialInfluence(ctx context.Context, playerID uuid
 	}, nil
 }
 
+// GetChannelStats gets statistics for a chat channel
+// PERFORMANCE: Optimized with Redis caching for frequently accessed stats
+func (r *Repository) GetChannelStats(ctx context.Context, channelID uuid.UUID) (map[string]interface{}, error) {
+	// Try Redis cache first
+	cacheKey := fmt.Sprintf("channel:stats:%s", channelID.String())
+	if cached, err := r.redis.Get(ctx, cacheKey).Result(); err == nil {
+		var stats map[string]interface{}
+		if err := json.Unmarshal([]byte(cached), &stats); err == nil {
+			return stats, nil
+		}
+	}
+
+	// Get member count
+	var memberCount int
+	memberQuery := `SELECT COUNT(*) FROM chat_channel_members WHERE channel_id = $1`
+	err := r.db.QueryRowContext(ctx, memberQuery, channelID).Scan(&memberCount)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get member count: %w", err)
+	}
+
+	// Get message count for today
+	var messageCount int
+	messageQuery := `
+		SELECT COUNT(*) FROM chat_messages
+		WHERE channel_id = $1 AND created_at >= CURRENT_DATE
+	`
+	err = r.db.QueryRowContext(ctx, messageQuery, channelID).Scan(&messageCount)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get message count: %w", err)
+	}
+
+	// Get active users (users who sent messages in last 24 hours)
+	var activeUsers int
+	activeQuery := `
+		SELECT COUNT(DISTINCT sender_id) FROM chat_messages
+		WHERE channel_id = $1 AND created_at >= NOW() - INTERVAL '24 hours'
+	`
+	err = r.db.QueryRowContext(ctx, activeQuery, channelID).Scan(&activeUsers)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get active users: %w", err)
+	}
+
+	stats := map[string]interface{}{
+		"channel_id":    channelID.String(),
+		"member_count":  memberCount,
+		"message_count": messageCount,
+		"active_users":  activeUsers,
+		"last_updated":  time.Now(),
+	}
+
+	// Cache for 5 minutes
+	if statsJSON, err := json.Marshal(stats); err == nil {
+		r.redis.Set(ctx, cacheKey, statsJSON, 5*time.Minute)
+	}
+
+	return stats, nil
+}
+
 // Health check
 func (r *Repository) HealthCheck(ctx context.Context) error {
 	return r.db.PingContext(ctx)

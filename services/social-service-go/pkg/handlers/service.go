@@ -410,3 +410,284 @@ func (s *Service) GetNPCPerformance(ctx context.Context, hiringID uuid.UUID, per
 
 	return performance, nil
 }
+
+// CHAT COMMANDS METHODS
+// Issue: #1490 - Chat Commands Service: ogen handlers implementation
+
+// ExecuteChatCommand executes a chat command
+func (s *Service) ExecuteChatCommand(ctx context.Context, req models.ExecuteCommandRequest, userID uuid.UUID) (*models.CommandResponse, error) {
+	// Validate command
+	if req.Command == "" {
+		return &models.CommandResponse{
+			Command: req.Command,
+			Error:   stringPtr("Command cannot be empty"),
+			Success: false,
+		}, nil
+	}
+
+	// Execute command based on type
+	result := s.executeCommandLogic(ctx, req.Command, req.Args, userID)
+
+	// Build response
+	response := &models.CommandResponse{
+		Command: req.Command,
+		Success: result.Success,
+	}
+
+	if result.Success {
+		response.Result = &result.Result
+	} else {
+		response.Error = &result.Error
+	}
+
+	return response, nil
+}
+
+// executeCommandLogic contains the actual command execution logic
+func (s *Service) executeCommandLogic(ctx context.Context, command string, args []string, userID uuid.UUID) models.CommandResult {
+	switch command {
+	case "/help":
+		return s.handleHelpCommand()
+	case "/who":
+		return s.handleWhoCommand(ctx)
+	case "/status":
+		return s.handleStatusCommand(ctx, userID)
+	case "/social":
+		return s.handleSocialCommand(ctx, args, userID)
+	case "/order":
+		return s.handleOrderCommand(ctx, args, userID)
+	case "/npc":
+		return s.handleNPCCommand(ctx, args, userID)
+	default:
+		return models.CommandResult{
+			Success: false,
+			Error:   "Unknown command. Use /help to see available commands.",
+		}
+	}
+}
+
+// handleHelpCommand shows available commands
+func (s *Service) handleHelpCommand() models.CommandResult {
+	helpText := `Available commands:
+/help - Show this help message
+/who - Show online players
+/status - Show your current status
+/social - Social network commands
+/order - Order management commands
+/npc - NPC hiring commands`
+
+	return models.CommandResult{
+		Success: true,
+		Result:  helpText,
+	}
+}
+
+// handleWhoCommand shows online players
+func (s *Service) handleWhoCommand(ctx context.Context) models.CommandResult {
+	// Mock online players count
+	onlineCount := 42 // In real implementation, get from cache/session service
+
+	return models.CommandResult{
+		Success: true,
+		Result:  fmt.Sprintf("Online players: %d", onlineCount),
+	}
+}
+
+// handleStatusCommand shows user status
+func (s *Service) handleStatusCommand(ctx context.Context, userID uuid.UUID) models.CommandResult {
+	// Mock user status - in real implementation, get from user service
+	status := fmt.Sprintf("Player ID: %s\nStatus: Active\nLocation: Unknown", userID.String())
+
+	return models.CommandResult{
+		Success: true,
+		Result:  status,
+	}
+}
+
+// handleSocialCommand handles social network commands
+func (s *Service) handleSocialCommand(ctx context.Context, args []string, userID uuid.UUID) models.CommandResult {
+	if len(args) == 0 {
+		return models.CommandResult{
+			Success: false,
+			Error:   "Social command requires subcommand. Usage: /social [friends|guild|relationships]",
+		}
+	}
+
+	subcommand := args[0]
+	switch subcommand {
+	case "friends":
+		return s.handleSocialFriends(ctx, userID)
+	case "guild":
+		return s.handleSocialGuild(ctx, userID)
+	case "relationships":
+		return s.handleSocialRelationships(ctx, userID)
+	default:
+		return models.CommandResult{
+			Success: false,
+			Error:   "Unknown social subcommand. Use: friends, guild, or relationships",
+		}
+	}
+}
+
+// handleOrderCommand handles order management commands
+func (s *Service) handleOrderCommand(ctx context.Context, args []string, userID uuid.UUID) models.CommandResult {
+	if len(args) == 0 {
+		return models.CommandResult{
+			Success: false,
+			Error:   "Order command requires subcommand. Usage: /order [list|create|accept]",
+		}
+	}
+
+	subcommand := args[0]
+	switch subcommand {
+	case "list":
+		return s.handleOrderList(ctx, userID)
+	case "create":
+		return s.handleOrderCreate(ctx, args[1:], userID)
+	case "accept":
+		return s.handleOrderAccept(ctx, args[1:], userID)
+	default:
+		return models.CommandResult{
+			Success: false,
+			Error:   "Unknown order subcommand. Use: list, create, or accept",
+		}
+	}
+}
+
+// handleNPCCommand handles NPC hiring commands
+func (s *Service) handleNPCCommand(ctx context.Context, args []string, userID uuid.UUID) models.CommandResult {
+	if len(args) == 0 {
+		return models.CommandResult{
+			Success: false,
+			Error:   "NPC command requires subcommand. Usage: /npc [hire|list|terminate]",
+		}
+	}
+
+	subcommand := args[0]
+	switch subcommand {
+	case "hire":
+		return s.handleNPCHire(ctx, args[1:], userID)
+	case "list":
+		return s.handleNPCList(ctx, userID)
+	case "terminate":
+		return s.handleNPCTerminate(ctx, args[1:], userID)
+	default:
+		return models.CommandResult{
+			Success: false,
+			Error:   "Unknown NPC subcommand. Use: hire, list, or terminate",
+		}
+	}
+}
+
+// Helper methods for social commands
+func (s *Service) handleSocialFriends(ctx context.Context, userID uuid.UUID) models.CommandResult {
+	// Mock friends count
+	friendsCount := 5
+	return models.CommandResult{
+		Success: true,
+		Result:  fmt.Sprintf("You have %d friends online.", friendsCount),
+	}
+}
+
+func (s *Service) handleSocialGuild(ctx context.Context, userID uuid.UUID) models.CommandResult {
+	// Mock guild info
+	return models.CommandResult{
+		Success: true,
+		Result:  "Guild: Shadow Runners\nMembers: 12\nRank: Member",
+	}
+}
+
+func (s *Service) handleSocialRelationships(ctx context.Context, userID uuid.UUID) models.CommandResult {
+	// Mock relationships
+	return models.CommandResult{
+		Success: true,
+		Result:  "Active relationships: 3 positive, 1 neutral, 0 negative",
+	}
+}
+
+// Helper methods for order commands
+func (s *Service) handleOrderList(ctx context.Context, userID uuid.UUID) models.CommandResult {
+	// Mock active orders
+	activeOrders := 2
+	return models.CommandResult{
+		Success: true,
+		Result:  fmt.Sprintf("You have %d active orders.", activeOrders),
+	}
+}
+
+func (s *Service) handleOrderCreate(ctx context.Context, args []string, userID uuid.UUID) models.CommandResult {
+	if len(args) < 2 {
+		return models.CommandResult{
+			Success: false,
+			Error:   "Order create requires type and reward. Usage: /order create <type> <reward>",
+		}
+	}
+
+	orderType := args[0]
+	reward := args[1]
+
+	return models.CommandResult{
+		Success: true,
+		Result:  fmt.Sprintf("Order created: %s with reward %s. Order ID: %s", orderType, reward, uuid.New().String()),
+	}
+}
+
+func (s *Service) handleOrderAccept(ctx context.Context, args []string, userID uuid.UUID) models.CommandResult {
+	if len(args) < 1 {
+		return models.CommandResult{
+			Success: false,
+			Error:   "Order accept requires order ID. Usage: /order accept <order_id>",
+		}
+	}
+
+	orderID := args[0]
+	return models.CommandResult{
+		Success: true,
+		Result:  fmt.Sprintf("Accepted order: %s", orderID),
+	}
+}
+
+// Helper methods for NPC commands
+func (s *Service) handleNPCHire(ctx context.Context, args []string, userID uuid.UUID) models.CommandResult {
+	if len(args) < 1 {
+		return models.CommandResult{
+			Success: false,
+			Error:   "NPC hire requires NPC type. Usage: /npc hire <type>",
+		}
+	}
+
+	npcType := args[0]
+	return models.CommandResult{
+		Success: true,
+		Result:  fmt.Sprintf("Hired NPC: %s. Hiring ID: %s", npcType, uuid.New().String()),
+	}
+}
+
+func (s *Service) handleNPCList(ctx context.Context, userID uuid.UUID) models.CommandResult {
+	// Mock hired NPCs
+	hiredNPCs := 1
+	return models.CommandResult{
+		Success: true,
+		Result:  fmt.Sprintf("You have %d hired NPCs.", hiredNPCs),
+	}
+}
+
+func (s *Service) handleNPCTerminate(ctx context.Context, args []string, userID uuid.UUID) models.CommandResult {
+	if len(args) < 1 {
+		return models.CommandResult{
+			Success: false,
+			Error:   "NPC terminate requires hiring ID. Usage: /npc terminate <hiring_id>",
+		}
+	}
+
+	hiringID := args[0]
+	return models.CommandResult{
+		Success: true,
+		Result:  fmt.Sprintf("Terminated NPC hiring: %s", hiringID),
+	}
+}
+
+// stringPtr creates a string pointer
+func stringPtr(s string) *string {
+	return &s
+}

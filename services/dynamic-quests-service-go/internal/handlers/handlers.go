@@ -748,6 +748,134 @@ func (h *Handlers) GetNarrativeBranches(w http.ResponseWriter, r *http.Request) 
 	h.respondJSON(w, http.StatusOK, branches)
 }
 
+// Player Choice Dynamic Quest handlers
+
+// ProcessPlayerChoice handles player choice that affects dynamic quests
+func (h *Handlers) ProcessPlayerChoice(w http.ResponseWriter, r *http.Request) {
+	var choice map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&choice); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	ctx := r.Context()
+	result, err := h.service.ProcessPlayerChoice(ctx, choice)
+	if err != nil {
+		h.logger.Errorf("Failed to process player choice: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to process choice")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, result)
+}
+
+// GetChoiceConsequences gets consequences of player choices
+func (h *Handlers) GetChoiceConsequences(w http.ResponseWriter, r *http.Request) {
+	playerIDStr := r.URL.Query().Get("player_id")
+	if playerIDStr == "" {
+		h.respondError(w, http.StatusBadRequest, "player_id is required")
+		return
+	}
+
+	playerID, err := strconv.ParseInt(playerIDStr, 10, 64)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid player_id format")
+		return
+	}
+
+	ctx := r.Context()
+	consequences, err := h.service.GetChoiceConsequences(ctx, playerID)
+	if err != nil {
+		h.logger.Errorf("Failed to get choice consequences: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to get consequences")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, consequences)
+}
+
+// GeneratePersonalizedQuest generates quest based on player history
+func (h *Handlers) GeneratePersonalizedQuest(w http.ResponseWriter, r *http.Request) {
+	playerIDStr := r.URL.Query().Get("player_id")
+	if playerIDStr == "" {
+		h.respondError(w, http.StatusBadRequest, "player_id is required")
+		return
+	}
+
+	playerID, err := strconv.ParseInt(playerIDStr, 10, 64)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid player_id format")
+		return
+	}
+
+	questType := r.URL.Query().Get("type")
+	if questType == "" {
+		questType = "personal"
+	}
+
+	ctx := r.Context()
+	quest, err := h.service.GeneratePersonalizedQuest(ctx, playerID, questType)
+	if err != nil {
+		h.logger.Errorf("Failed to generate personalized quest: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to generate quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, quest)
+}
+
+// UpdateQuestBasedOnChoice updates existing quest based on player choice
+func (h *Handlers) UpdateQuestBasedOnChoice(w http.ResponseWriter, r *http.Request) {
+	var update map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	ctx := r.Context()
+	result, err := h.service.UpdateQuestBasedOnChoice(ctx, update)
+	if err != nil {
+		h.logger.Errorf("Failed to update quest based on choice: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to update quest")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, result)
+}
+
+// GetPlayerChoiceHistory gets history of player choices
+func (h *Handlers) GetPlayerChoiceHistory(w http.ResponseWriter, r *http.Request) {
+	playerIDStr := r.URL.Query().Get("player_id")
+	if playerIDStr == "" {
+		h.respondError(w, http.StatusBadRequest, "player_id is required")
+		return
+	}
+
+	playerID, err := strconv.ParseInt(playerIDStr, 10, 64)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid player_id format")
+		return
+	}
+
+	limitStr := r.URL.Query().Get("limit")
+	limit := 10
+	if limitStr != "" {
+		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 100 {
+			limit = parsedLimit
+		}
+	}
+
+	ctx := r.Context()
+	history, err := h.service.GetPlayerChoiceHistory(ctx, playerID, limit)
+	if err != nil {
+		h.logger.Errorf("Failed to get player choice history: %v", err)
+		h.respondError(w, http.StatusInternalServerError, "Failed to get choice history")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, history)
+}
+
 // respondJSON sends a JSON response
 func (h *Handlers) respondJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")

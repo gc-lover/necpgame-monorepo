@@ -1,32 +1,53 @@
 openapi: 3.0.3
 info:
   title: Support Service API - Enterprise-Grade Customer Support and Ticketing
-  description: |
-    **Enterprise-Grade Support Service API for NECPGAME**
+  description: '**Enterprise-Grade Support Service API for NECPGAME**
+
 
     Comprehensive customer support system managing tickets, help requests, player assistance,
+
     knowledge base, and automated support workflows for the NECPGAME ecosystem.
 
+
     ## Key Features
+
     - **Enterprise-grade architecture** with proper domain separation
+
     - **Backend optimization hints** for struct alignment and performance (30-50% memory savings)
+
     - **Complete validation** with redocly and ogen code generation
+
     - **Security-first approach** with JWT authentication and support access control
+
     - **Performance-optimized** response structures with field ordering
+
     - **Comprehensive error handling** with proper HTTP status codes
 
+
     ## Domain Purpose
+
     The Support Service manages all customer support operations in NECPGAME including ticket creation,
+
     priority management, knowledge base access, automated responses, and escalation workflows.
+
     Critical for maintaining player satisfaction and game support quality.
 
+
     ## Performance Targets
+
     - P99 Latency: <25ms for ticket operations (HOT PATH)
+
     - P99 Latency: <100ms for complex support workflows
+
     - Memory: <20KB per active support session
+
     - Concurrent users: 10,000+ simultaneous support operations
+
     - Ticket throughput: 1000+ tickets/hour processing
+
     - Data consistency: Event-sourced with CQRS patterns
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -36,49 +57,54 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necpgame.com/v1/support
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/support
-    description: Staging server
-  - url: http://localhost:8080/api/v1/support
-    description: Local development server
+- url: https://api.necpgame.com/v1/support
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/support
+  description: Staging server
+- url: http://localhost:8080/api/v1/support
+  description: Local development server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: Ticket Management
-    description: Support ticket CRUD operations and lifecycle management
-  - name: Knowledge Base
-    description: Help articles, FAQs, and self-service resources
-  - name: Automated Support
-    description: AI-powered responses and automated ticket routing
-  - name: Escalation Workflows
-    description: Ticket priority management and escalation processes
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: Ticket Management
+  description: Support ticket CRUD operations and lifecycle management
+- name: Knowledge Base
+  description: Help articles, FAQs, and self-service resources
+- name: Automated Support
+  description: AI-powered responses and automated ticket routing
+- name: Escalation Workflows
+  description: Ticket priority management and escalation processes
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
   /health:
     get:
       summary: Support service health check
-      description: |
-        **Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
+
 
         Provides real-time health status of the support service microservice.
+
         Critical for service discovery, load balancing, and monitoring.
+
         Includes ticket system and knowledge base status.
 
+
         **Performance:** <1ms response time, cached for 30 seconds
+
+        '
       operationId: supportServiceHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
         '200':
           description: Service is healthy
@@ -95,9 +121,15 @@ paths:
               schema:
                 type: string
                 enum:
-                  - gzip
-                  - deflate
-                  - br
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
           content:
             application/json:
               schema:
@@ -113,25 +145,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
   /health/batch:
     post:
       summary: Batch health check for multiple domain services
-      description: |
-        **Performance optimization:** Check multiple domain health in single request
+      description: '**Performance optimization:** Check multiple domain health in single request
+
 
         Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+
         Eliminates network overhead in health monitoring scenarios.
 
+
         **Use case:** Service mesh health checks, Kubernetes readiness probes
+
+        '
       operationId: supportServiceBatchHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       requestBody:
         required: true
         content:
@@ -139,16 +169,16 @@ paths:
             schema:
               type: object
               required:
-                - services
+              - services
               properties:
                 services:
                   type: array
                   items:
                     type: string
                     enum:
-                      - example-domain
-                      - system-domain
-                      - specialized-domain
+                    - example-domain
+                    - system-domain
+                    - specialized-domain
                     maxItems: 10
                   description: List of services to check
       responses:
@@ -175,31 +205,53 @@ paths:
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
-      description: |
-        **Performance optimization:** Real-time health updates without polling
+      description: '**Performance optimization:** Real-time health updates without polling
+
 
         Eliminates periodic HTTP requests, reduces server load by ~90%.
+
         Perfect for dashboard monitoring and alerting systems.
 
+
         **Protocol:** WebSocket with JSON payloads
+
         **Heartbeat:** 30 second intervals
+
         **Reconnection:** Automatic with exponential backoff
+
+        '
       operationId: exampleDomainHealthWebSocket
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: services
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - example-domain
-                - system-domain
-                - specialized-domain
-          description: Services to monitor (optional, monitors all if not specified)
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - example-domain
+            - system-domain
+            - specialized-domain
+        description: Services to monitor (optional, monitors all if not specified)
       responses:
+        '200':
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: ws://localhost:8080/api/v1/example-domain/health/ws
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - health-monitoring-v1
         '101':
           description: WebSocket connection established successfully
           headers:
@@ -219,22 +271,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WebSocketHealthMessage'
-        '200':
-          description: WebSocket upgrade information returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  websocket_url:
-                    type: string
-                    example: ws://localhost:8080/api/v1/example-domain/health/ws
-                  supported_protocols:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                      - health-monitoring-v1
         '400':
           description: Invalid request - malformed service parameters
           content:
@@ -261,93 +297,98 @@ paths:
   /tickets:
     get:
       summary: List support tickets with filtering and pagination
-      description: |
-        **Enterprise-grade ticket listing endpoint**
+      description: '**Enterprise-grade ticket listing endpoint**
+
 
         Supports complex filtering by status, priority, category, and assignee.
+
         Optimized for support dashboard and ticket management workflows.
 
+
         **Performance:** <10ms P95, supports 1000+ concurrent requests
+
         **Memory optimization:** 30-50% savings through struct field alignment
+
+        '
       operationId: listSupportTickets
       tags:
-        - Ticket Management
+      - Ticket Management
       parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number for pagination
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of tickets per page
-        - name: sort_by
-          in: query
-          schema:
-            type: string
-            enum:
-              - created_at
-              - updated_at
-              - priority
-              - status
-            default: created_at
-          description: Sort field for tickets
-        - name: sort_order
-          in: query
-          schema:
-            type: string
-            enum:
-              - asc
-              - desc
-            default: desc
-          description: Sort order
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum:
-              - open
-              - in_progress
-              - waiting_for_customer
-              - resolved
-              - closed
-          description: Filter by ticket status
-        - name: priority
-          in: query
-          schema:
-            type: string
-            enum:
-              - low
-              - medium
-              - high
-              - urgent
-              - critical
-          description: Filter by ticket priority
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum:
-              - technical
-              - billing
-              - gameplay
-              - account
-              - bug_report
-              - feature_request
-          description: Filter by ticket category
-        - name: assignee
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by assigned support agent
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of tickets per page
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - created_at
+          - updated_at
+          - priority
+          - status
+          default: created_at
+        description: Sort field for tickets
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+        description: Sort order
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - open
+          - in_progress
+          - waiting_for_customer
+          - resolved
+          - closed
+        description: Filter by ticket status
+      - name: priority
+        in: query
+        schema:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - urgent
+          - critical
+        description: Filter by ticket priority
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - technical
+          - billing
+          - gameplay
+          - account
+          - bug_report
+          - feature_request
+        description: Filter by ticket category
+      - name: assignee
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by assigned support agent
       responses:
         '200':
           $ref: '#/components/responses/ExampleListSuccess'
@@ -365,18 +406,22 @@ paths:
                 $ref: '#/components/schemas/Error'
     post:
       summary: Create new example
-      description: |
-        **Enterprise-grade creation endpoint**
+      description: '**Enterprise-grade creation endpoint**
+
 
         Validates business rules, applies security checks, and ensures data consistency.
+
         Supports optimistic locking for concurrent operations.
 
+
         **Performance:** <50ms P95, includes validation and business logic
+
+        '
       operationId: createExample
       tags:
-        - Example Domain
+      - Example Domain
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -415,44 +460,178 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /support/tickets/{ticket_id}/sla:
+    get:
+      summary: Get SLA status for a support ticket
+      description: '**Enterprise-grade SLA status retrieval endpoint**
+
+        Retrieves current SLA metrics and compliance status for a specific support ticket.
+
+        Includes first response and resolution time tracking with breach detection.
+
+
+        **Performance:** <10ms P95, optimized for support dashboard queries
+
+        '
+      operationId: getTicketSLA
+      tags:
+      - Ticket Management
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Support ticket unique identifier
+      responses:
+        '200':
+          description: SLA status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketSLAStatus'
+        '400':
+          description: Invalid request - malformed ticket ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Ticket not found or SLA data unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /support/sla/violations:
+    get:
+      summary: Get SLA violations with filtering and pagination
+      description: '**Enterprise-grade SLA violations endpoint**
+
+        Retrieves list of tickets that have violated SLA agreements with advanced filtering.
+
+        Supports priority-based filtering and pagination for support management workflows.
+
+
+        **Performance:** <50ms P95, optimized for SLA dashboard and reporting
+
+        '
+      operationId: getSLAViolations
+      tags:
+      - Escalation Workflows
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of violations per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      - name: priority
+        in: query
+        schema:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - urgent
+          - critical
+        description: Filter by ticket priority
+      - name: violation_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - first_response
+          - resolution
+          - both
+        description: Filter by violation type
+      responses:
+        '200':
+          description: SLA violations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAViolationsResponse'
+        '400':
+          description: Invalid request - malformed parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /examples/{example_id}:
     get:
       summary: Get specific example by ID
-      description: |
-        **Enterprise-grade retrieval endpoint**
+      description: '**Enterprise-grade retrieval endpoint**
+
 
         Optimized with proper caching strategies and database indexing.
+
         Supports conditional requests with ETags.
 
+
         **Performance:** <5ms P95 with Redis caching
+
+        '
       operationId: getExample
       tags:
-        - Example Domain
+      - Example Domain
       parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
-        - name: include_related
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include related data in response
-        - name: If-None-Match
-          in: header
-          schema:
-            type: string
-          description: Conditional request - return 304 if ETag matches
-        - name: If-Modified-Since
-          in: header
-          schema:
-            type: string
-            format: date-time
-          description: Conditional request - return 304 if not modified since this time
+      - name: example_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
+      - name: include_related
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include related data in response
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+        description: Conditional request - return 304 if ETag matches
+      - name: If-Modified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional request - return 304 if not modified since this time
       responses:
         '200':
           $ref: '#/components/responses/ExampleRetrieved'
@@ -492,37 +671,41 @@ paths:
                 $ref: '#/components/schemas/Error'
     put:
       summary: Update existing example
-      description: |
-        **Enterprise-grade update endpoint**
+      description: '**Enterprise-grade update endpoint**
+
 
         Supports partial updates, optimistic locking, and audit trails.
+
         Ensures data consistency with event sourcing patterns.
 
+
         **Performance:** <25ms P95, includes validation and conflict resolution
+
+        '
       operationId: updateExample
       tags:
-        - Example Domain
+      - Example Domain
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
-        - name: If-Match
-          in: header
-          schema:
-            type: string
-          description: ETag for optimistic locking - prevents concurrent updates
-        - name: If-Unmodified-Since
-          in: header
-          schema:
-            type: string
-            format: date-time
-          description: Conditional update - proceed only if not modified since this time
+      - name: example_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+        description: ETag for optimistic locking - prevents concurrent updates
+      - name: If-Unmodified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional update - proceed only if not modified since this time
       requestBody:
         required: true
         content:
@@ -575,26 +758,30 @@ paths:
                 $ref: '#/components/schemas/Error'
     delete:
       summary: Delete example
-      description: |
-        **Enterprise-grade deletion endpoint**
+      description: '**Enterprise-grade deletion endpoint**
+
 
         Supports soft deletes with audit trails and cleanup scheduling.
+
         Ensures referential integrity and cascading deletes.
 
+
         **Performance:** <15ms P95, includes cleanup operations
+
+        '
       operationId: deleteExample
       tags:
-        - Example Domain
+      - Example Domain
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
+      - name: example_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
       responses:
         '204':
           $ref: '#/components/responses/ExampleDeleted'
@@ -646,8 +833,8 @@ components:
           schema:
             type: object
             required:
-              - results
-              - total_time_ms
+            - results
+            - total_time_ms
             properties:
               results:
                 type: array
@@ -765,40 +952,64 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: |
-        JWT Bearer token authentication.
+      description: 'JWT Bearer token authentication.
+
 
         **Token Format:** `Bearer {token}`
+
         **Token Claims:**
+
         - `sub`: User/Player ID
+
         - `exp`: Expiration timestamp
+
         - `iat`: Issued at timestamp
+
         - `iss`: Token issuer
+
         - `aud`: Token audience
+
         - `roles`: User roles array
+
         - `permissions`: User permissions array
 
+
         **Security Features:**
+
         - RS256 signature algorithm
+
         - Token rotation required every 24 hours
+
         - Automatic refresh tokens
+
         - Revocation support via Redis
+
+        '
     ApiKeyAuth:
       type: apiKey
       in: header
       name: X-API-Key
-      description: |
-        API Key authentication for service-to-service communication.
+      description: 'API Key authentication for service-to-service communication.
+
 
         **Use Cases:**
+
         - Internal service communication
+
         - Third-party integrations
+
         - Development and testing
 
+
         **Security:**
+
         - HMAC-SHA256 signed
+
         - Rate limited per key
+
         - Scoped permissions
+
+        '
     OAuth2:
       type: oauth2
       flows:
@@ -821,27 +1032,37 @@ components:
       type: apiKey
       in: header
       name: X-Client-Certificate
-      description: |
-        Mutual TLS authentication for high-security operations.
+      description: 'Mutual TLS authentication for high-security operations.
+
 
         **Requirements:**
+
         - Valid client certificate
+
         - Certificate signed by trusted CA
+
         - Certificate not revoked (OCSP/CRL check)
 
+
         **Use Cases:**
+
         - Administrative operations
+
         - Financial transactions
+
         - Critical system operations
 
+
         **Header:** `X-Client-Certificate: {certificate_fingerprint}`
+
+        '
   schemas:
     HealthResponse:
       type: object
       required:
-        - status
-        - timestamp
-        - domain
+      - status
+      - timestamp
+      - domain
       properties:
         domain:
           type: string
@@ -850,9 +1071,9 @@ components:
         status:
           type: string
           enum:
-            - healthy
-            - degraded
-            - unhealthy
+          - healthy
+          - degraded
+          - unhealthy
           example: healthy
           maxLength: 255
         timestamp:
@@ -874,16 +1095,16 @@ components:
     WebSocketHealthMessage:
       type: object
       required:
-        - type
-        - timestamp
-        - health
+      - type
+      - timestamp
+      - health
       properties:
         type:
           type: string
           enum:
-            - health_update
-            - health_alert
-            - service_down
+          - health_update
+          - health_alert
+          - service_down
           example: health_update
           maxLength: 255
         timestamp:
@@ -901,8 +1122,8 @@ components:
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         message:
           type: string
@@ -928,11 +1149,11 @@ components:
     Example:
       type: object
       required:
-        - id
-        - name
-        - created_at
-        - status
-        - is_active
+      - id
+      - name
+      - created_at
+      - status
+      - is_active
       properties:
         id:
           type: string
@@ -963,10 +1184,10 @@ components:
         status:
           type: string
           enum:
-            - active
-            - inactive
-            - pending
-            - archived
+          - active
+          - inactive
+          - pending
+          - archived
           default: active
           description: Current status
           example: active
@@ -978,9 +1199,9 @@ components:
           maxItems: 10
           description: Associated tags
           example:
-            - demo
-            - template
-            - best-practice
+          - demo
+          - template
+          - best-practice
         is_active:
           type: boolean
           description: Whether this example is active
@@ -992,12 +1213,13 @@ components:
           default: 5
           description: Processing priority
           example: 7
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot path optimization required.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot
+        path optimization required.'
     CreateExampleRequest:
       type: object
       required:
-        - name
-        - description
+      - name
+      - description
       properties:
         name:
           type: string
@@ -1040,10 +1262,10 @@ components:
         status:
           type: string
           enum:
-            - active
-            - inactive
-            - pending
-            - archived
+          - active
+          - inactive
+          - pending
+          - archived
           description: New status
         tags:
           type: array
@@ -1064,7 +1286,7 @@ components:
     ExampleResponse:
       type: object
       required:
-        - example
+      - example
       properties:
         example:
           $ref: '#/components/schemas/Example'
@@ -1072,9 +1294,9 @@ components:
     ExampleListResponse:
       type: object
       required:
-        - examples
-        - total_count
-        - has_more
+      - examples
+      - total_count
+      - has_more
       properties:
         examples:
           type: array
@@ -1097,4 +1319,139 @@ components:
           type: integer
           description: Items per page
           example: 20
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Paginated responses optimized for memory efficiency.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Paginated
+        responses optimized for memory efficiency.'
+    TicketSLAStatus:
+      type: object
+      required:
+      - ticket_id
+      - priority
+      properties:
+        ticket_id:
+          type: string
+          format: uuid
+          description: Support ticket unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        priority:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - urgent
+          - critical
+          description: Ticket priority level
+          example: high
+        first_response_target:
+          type: string
+          format: date-time
+          description: Target time for first response
+          example: '2025-12-21T10:30:00Z'
+        first_response_actual:
+          type: string
+          format: date-time
+          description: Actual time of first response
+          example: '2025-12-21T10:25:00Z'
+        resolution_target:
+          type: string
+          format: date-time
+          description: Target time for resolution
+          example: '2025-12-21T12:00:00Z'
+        resolution_actual:
+          type: string
+          format: date-time
+          description: Actual time of resolution
+          example: '2025-12-21T11:45:00Z'
+        first_response_sla_met:
+          type: boolean
+          description: Whether first response SLA was met
+          example: true
+        resolution_sla_met:
+          type: boolean
+          description: Whether resolution SLA was met
+          example: true
+        time_until_first_response:
+          type: integer
+          description: Time until first response in minutes
+          example: 25
+        time_until_resolution:
+          type: integer
+          description: Time until resolution in minutes
+          example: 105
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). SLA status optimized for fast lookups.'
+    SLAViolation:
+      type: object
+      required:
+      - ticket_id
+      - ticket_number
+      - priority
+      - violation_type
+      properties:
+        ticket_id:
+          type: string
+          format: uuid
+          description: Support ticket unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        ticket_number:
+          type: string
+          description: Human-readable ticket number
+          example: "SUP-2025-00123"
+        priority:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - urgent
+          - critical
+          description: Ticket priority level
+          example: high
+        violation_type:
+          type: string
+          enum:
+          - first_response
+          - resolution
+          - both
+          description: Type of SLA violation
+          example: first_response
+        target_time:
+          type: string
+          format: date-time
+          description: SLA target time that was violated
+          example: '2025-12-21T10:30:00Z'
+        actual_time:
+          type: string
+          format: date-time
+          description: Actual time when SLA was violated
+          example: '2025-12-21T10:35:00Z'
+        violation_duration:
+          type: integer
+          description: Duration of violation in minutes
+          example: 5
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). SLA violations optimized for reporting.'
+    SLAViolationsResponse:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SLAViolation'
+          description: List of SLA violations
+        total:
+          type: integer
+          description: Total number of violations matching criteria
+          example: 150
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 20
+        offset:
+          type: integer
+          description: Pagination offset
+          example: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Paginated SLA violations response.'

@@ -749,6 +749,132 @@ func (h *TournamentHandlers) GetSpectatorStats(w http.ResponseWriter, r *http.Re
 	h.respondWithJSON(w, http.StatusOK, stats)
 }
 
+// Tournament Bracket Schema handlers
+
+// GetBracketSchema gets the bracket schema for a tournament type
+func (h *TournamentHandlers) GetBracketSchema(w http.ResponseWriter, r *http.Request) {
+	tournamentType := r.URL.Query().Get("type")
+	if tournamentType == "" {
+		tournamentType = "single_elimination"
+	}
+
+	playerCountStr := r.URL.Query().Get("player_count")
+	playerCount := 16
+	if playerCountStr != "" {
+		if parsedCount, err := strconv.Atoi(playerCountStr); err == nil && parsedCount > 0 {
+			playerCount = parsedCount
+		}
+	}
+
+	schema, err := h.service.GetBracketSchema(r.Context(), tournamentType, playerCount)
+	if err != nil {
+		h.logger.Errorf("Failed to get bracket schema: %v", err)
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, schema)
+}
+
+// ValidateBracket validates a tournament bracket structure
+func (h *TournamentHandlers) ValidateBracket(w http.ResponseWriter, r *http.Request) {
+	var bracket map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&bracket); err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	isValid, errors := h.service.ValidateBracket(r.Context(), bracket)
+	result := map[string]interface{}{
+		"valid": isValid,
+		"errors": errors,
+	}
+
+	h.respondWithJSON(w, http.StatusOK, result)
+}
+
+// GenerateBracket generates a tournament bracket from player list
+func (h *TournamentHandlers) GenerateBracket(w http.ResponseWriter, r *http.Request) {
+	var request map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	bracket, err := h.service.GenerateBracket(r.Context(), request)
+	if err != nil {
+		h.logger.Errorf("Failed to generate bracket: %v", err)
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, bracket)
+}
+
+// UpdateBracketMatch updates a match result in the bracket
+func (h *TournamentHandlers) UpdateBracketMatch(w http.ResponseWriter, r *http.Request) {
+	var matchUpdate map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&matchUpdate); err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	updatedBracket, err := h.service.UpdateBracketMatch(r.Context(), matchUpdate)
+	if err != nil {
+		h.logger.Errorf("Failed to update bracket match: %v", err)
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, updatedBracket)
+}
+
+// GetBracketProgress gets tournament bracket progress
+func (h *TournamentHandlers) GetBracketProgress(w http.ResponseWriter, r *http.Request) {
+	tournamentIDStr := chi.URLParam(r, "tournament_id")
+	tournamentID, err := uuid.Parse(tournamentIDStr)
+	if err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid tournament ID")
+		return
+	}
+
+	progress, err := h.service.GetBracketProgress(r.Context(), tournamentID)
+	if err != nil {
+		h.logger.Errorf("Failed to get bracket progress: %v", err)
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, progress)
+}
+
+// PredictBracketOutcomes predicts possible bracket outcomes
+func (h *TournamentHandlers) PredictBracketOutcomes(w http.ResponseWriter, r *http.Request) {
+	tournamentIDStr := chi.URLParam(r, "tournament_id")
+	tournamentID, err := uuid.Parse(tournamentIDStr)
+	if err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid tournament ID")
+		return
+	}
+
+	maxDepthStr := r.URL.Query().Get("max_depth")
+	maxDepth := 3
+	if maxDepthStr != "" {
+		if parsedDepth, err := strconv.Atoi(maxDepthStr); err == nil && parsedDepth > 0 && parsedDepth <= 10 {
+			maxDepth = parsedDepth
+		}
+	}
+
+	predictions, err := h.service.PredictBracketOutcomes(r.Context(), tournamentID, maxDepth)
+	if err != nil {
+		h.logger.Errorf("Failed to predict bracket outcomes: %v", err)
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, predictions)
+}
+
 // Helper functions
 func (h *TournamentHandlers) respondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
 	response, _ := json.Marshal(payload)

@@ -417,3 +417,48 @@ func (s *Service) writeJSON(w http.ResponseWriter, status int, data interface{})
 func (s *Service) writeError(w http.ResponseWriter, status int, message string) {
 	s.writeJSON(w, status, map[string]string{"error": message})
 }
+
+// CHAT COMMANDS HANDLERS
+// Issue: #1490 - Chat Commands Service: ogen handlers implementation
+// PERFORMANCE: Optimized chat command processing with timeouts
+
+// PERFORMANCE: Chat commands timeout for MMOFPS responsiveness
+const (
+	chatCommandTimeout = 50 * time.Millisecond // <50ms P95 target for chat
+)
+
+// PERFORMANCE: Memory pool for chat command responses
+var (
+	commandResponsePool = make(chan *models.CommandResponse, 100)
+)
+
+func init() {
+	// Initialize command response pool
+	for i := 0; i < 100; i++ {
+		commandResponsePool <- &models.CommandResponse{}
+	}
+}
+
+// ExecuteChatCommand handles POST /social/chat/commands/execute
+func (s *Service) ExecuteChatCommand(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), chatCommandTimeout)
+	defer cancel()
+
+	var req models.ExecuteCommandRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.writeError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// TODO: Extract user ID from JWT token/authentication
+	// For now, use a mock user ID
+	userID := uuid.New()
+
+	response, err := s.ExecuteChatCommand(ctx, req, userID)
+	if err != nil {
+		s.writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	s.writeJSON(w, http.StatusOK, response)
+}

@@ -455,6 +455,148 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /api/v1/cyberware/integration/neural-link:
+    post:
+      summary: Establish neural link with cyberware
+      operationId: establishNeuralLink
+      description: |
+        Establish neural interface connection with cyberware implant.
+        **BACKEND NOTE:** Ultra-fast neural linking - P99 <5ms, zero allocations in hot path.
+      tags:
+        - Neural Integration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/neural-link-request'
+      responses:
+        '200':
+          description: Neural link established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/neural-link-response'
+        '400':
+          description: Invalid neural link request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /api/v1/cyberware/integration/adaptive-learning/{player_id}:
+    get:
+      summary: Get adaptive learning data
+      operationId: getAdaptiveLearning
+      description: Retrieve adaptive learning patterns for cyberware implants.
+      tags:
+        - Neural Integration
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: implant_type
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Adaptive learning data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/adaptive-learning-data'
+    put:
+      summary: Update adaptive learning patterns
+      operationId: updateAdaptiveLearning
+      description: Update cyberware adaptive learning based on usage patterns.
+      tags:
+        - Neural Integration
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/adaptive-learning-update'
+      responses:
+        '200':
+          description: Adaptive learning updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/adaptive-learning-response'
+  /api/v1/cyberware/integration/biomechanical-feedback/{player_id}:
+    get:
+      summary: Get biomechanical feedback data
+      operationId: getBiomechanicalFeedback
+      description: Retrieve real-time biomechanical feedback from cyberware implants.
+      tags:
+        - Biomechanical Integration
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Biomechanical feedback data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/biomechanical-feedback'
+  /api/v1/cyberware/integration/compatibility-check:
+    post:
+      summary: Check cyberware compatibility
+      operationId: checkCompatibility
+      description: |
+        Check compatibility between multiple cyberware implants.
+        **BACKEND NOTE:** SIMD-optimized compatibility matrix calculations.
+      tags:
+        - Cyberware Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/compatibility-check-request'
+      responses:
+        '200':
+          description: Compatibility analysis result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/compatibility-result'
+  /api/v1/cyberware/integration/synergy-effects:
+    post:
+      summary: Calculate cyberware synergy effects
+      operationId: calculateSynergyEffects
+      description: Calculate combined effects from multiple cyberware implants.
+      tags:
+        - Cyberware Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/synergy-effects-request'
+      responses:
+        '200':
+          description: Synergy effects calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/synergy-effects-result'
 components:
   securitySchemes:
     BearerAuth:
@@ -1050,3 +1192,400 @@ components:
           items:
             type: string
           description: Recommended corrective actions
+    neural-link-request:
+      type: object
+      description: |
+        BACKEND NOTE: Neural link establishment request.
+
+        Fields ordered for struct alignment (large → small):
+        - UUIDs (16 bytes) first
+        - Arrays (24 bytes)
+        - Integers (8 bytes)
+        - Objects (8 bytes)
+        - Booleans (1 byte) last
+
+        Expected memory: ~96 bytes/instance.
+        Ultra-fast neural linking with zero allocations.
+      required:
+        - player_id
+        - implant_id
+        - neural_interface
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player establishing neural link
+        implant_id:
+          type: string
+          format: uuid
+          description: Cyberware implant ID
+        neural_interface:
+          type: object
+          required:
+            - interface_type
+            - bandwidth
+          properties:
+            interface_type:
+              type: string
+              enum: [optical, wireless, direct, quantum]
+            bandwidth:
+              type: integer
+              minimum: 100
+              maximum: 10000
+              description: Neural bandwidth in Mbps
+            encryption_level:
+              type: string
+              enum: [basic, advanced, military, quantum]
+        link_parameters:
+          type: object
+          description: Additional neural link parameters
+    neural-link-response:
+      type: object
+      description: |
+        BACKEND NOTE: Neural link establishment result.
+
+        Fields ordered for struct alignment (large → small):
+        - UUIDs (16 bytes) first
+        - Numbers (8 bytes)
+        - Objects (8 bytes)
+        - Booleans (1 byte) last
+
+        Expected memory: ~80 bytes/instance.
+      required:
+        - success
+        - link_quality
+        - neural_feedback
+      properties:
+        success:
+          type: boolean
+          description: Whether neural link was established successfully
+        link_quality:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Neural link quality score (0.0-1.0)
+        neural_feedback:
+          type: string
+          description: Feedback from neural interface
+        bandwidth_achieved:
+          type: integer
+          description: Actual bandwidth achieved in Mbps
+        latency_ms:
+          type: number
+          format: float
+          description: Neural link latency in milliseconds
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Neural link warnings
+    adaptive-learning-data:
+      type: object
+      description: |
+        BACKEND NOTE: Adaptive learning patterns for cyberware.
+
+        Fields ordered for struct alignment (large → small):
+        - Objects (8 bytes) first
+        - Arrays (24 bytes)
+        - Numbers (8 bytes)
+        - Times (24 bytes)
+
+        Expected memory: ~256 bytes/instance.
+        Pre-computed adaptive patterns for fast retrieval.
+      required:
+        - player_id
+        - implant_patterns
+        - learning_metrics
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        implant_patterns:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              usage_patterns:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    scenario:
+                      type: string
+                    frequency:
+                      type: number
+                      format: float
+                    effectiveness:
+                      type: number
+                      format: float
+              adaptation_level:
+                type: number
+                format: float
+                minimum: 0.0
+                maximum: 1.0
+        learning_metrics:
+          type: object
+          properties:
+            total_adaptations:
+              type: integer
+            success_rate:
+              type: number
+              format: float
+            learning_efficiency:
+              type: number
+              format: float
+        last_updated:
+          type: string
+          format: date-time
+    adaptive-learning-update:
+      type: object
+      required:
+        - implant_id
+        - usage_data
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+        usage_data:
+          type: object
+          properties:
+            scenario:
+              type: string
+            outcome:
+              type: string
+              enum: [success, failure, partial]
+            performance_metrics:
+              type: object
+              additionalProperties:
+                type: number
+                format: float
+    adaptive-learning-response:
+      type: object
+      required:
+        - success
+        - adaptations_applied
+      properties:
+        success:
+          type: boolean
+        adaptations_applied:
+          type: integer
+        new_patterns_learned:
+          type: integer
+        efficiency_improvement:
+          type: number
+          format: float
+    biomechanical-feedback:
+      type: object
+      description: |
+        BACKEND NOTE: Real-time biomechanical feedback data.
+
+        Fields ordered for struct alignment (large → small):
+        - Arrays (24 bytes) first
+        - Numbers (8 bytes)
+        - Objects (8 bytes)
+        - Times (24 bytes)
+        - Booleans (1 byte) last
+
+        Expected memory: ~192 bytes/instance.
+        Real-time feedback with SIMD optimizations.
+      required:
+        - player_id
+        - feedback_data
+        - timestamp
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        feedback_data:
+          type: array
+          items:
+            type: object
+            properties:
+              implant_type:
+                type: string
+              sensor_data:
+                type: object
+                properties:
+                  pressure:
+                    type: number
+                    format: float
+                  temperature:
+                    type: number
+                    format: float
+                  neural_activity:
+                    type: number
+                    format: float
+              feedback_level:
+                type: string
+                enum: [optimal, acceptable, concerning, critical]
+        overall_stability:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        recommendations:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+        emergency_shutdown_required:
+          type: boolean
+    compatibility-check-request:
+      type: object
+      description: |
+        BACKEND NOTE: Cyberware compatibility check request.
+
+        Fields ordered for struct alignment (large → small):
+        - Arrays (24 bytes) first
+        - UUIDs (16 bytes)
+        - Objects (8 bytes)
+        - Booleans (1 byte) last
+
+        Expected memory: ~128 bytes/instance.
+        SIMD-optimized compatibility matrix calculations.
+      required:
+        - player_id
+        - implant_ids
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        implant_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        include_synergies:
+          type: boolean
+          default: true
+        check_conflicts:
+          type: boolean
+          default: true
+    compatibility-result:
+      type: object
+      description: |
+        BACKEND NOTE: Compatibility analysis result.
+
+        Fields ordered for struct alignment (large → small):
+        - Booleans (1 byte) first
+        - Arrays (24 bytes)
+        - Objects (8 bytes)
+        - Numbers (8 bytes)
+
+        Expected memory: ~160 bytes/instance.
+      required:
+        - compatible
+        - compatibility_score
+        - conflicts
+        - synergies
+      properties:
+        compatible:
+          type: boolean
+        compatibility_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              implant_a:
+                type: string
+                format: uuid
+              implant_b:
+                type: string
+                format: uuid
+              conflict_type:
+                type: string
+                enum: [resource, neural, physical, software]
+              severity:
+                type: string
+                enum: [low, medium, high, critical]
+              description:
+                type: string
+        synergies:
+          type: array
+          items:
+            type: object
+            properties:
+              implants:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+              synergy_type:
+                type: string
+              bonus_multiplier:
+                type: number
+                format: float
+    synergy-effects-request:
+      type: object
+      required:
+        - player_id
+        - active_implants
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        active_implants:
+          type: array
+          items:
+            type: string
+            format: uuid
+        combat_scenario:
+          type: string
+          description: Current combat scenario for synergy calculation
+        environmental_factors:
+          type: object
+          description: Environmental factors affecting synergy
+    synergy-effects-result:
+      type: object
+      description: |
+        BACKEND NOTE: Synergy effects calculation result.
+
+        Fields ordered for struct alignment (large → small):
+        - Objects (8 bytes) first
+        - Arrays (24 bytes)
+        - Numbers (8 bytes)
+        - Booleans (1 byte) last
+
+        Expected memory: ~144 bytes/instance.
+      required:
+        - total_synergy_bonus
+        - active_synergies
+        - effect_modifiers
+      properties:
+        total_synergy_bonus:
+          type: number
+          format: float
+        active_synergies:
+          type: array
+          items:
+            type: object
+            properties:
+              synergy_id:
+                type: string
+              implants_involved:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+              bonus_type:
+                type: string
+              bonus_value:
+                type: number
+                format: float
+              duration:
+                type: integer
+        effect_modifiers:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        critical_synergy_achieved:
+          type: boolean
