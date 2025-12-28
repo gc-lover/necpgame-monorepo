@@ -114,15 +114,15 @@ class WorldCitiesImporter:
 
             # Build city data structure
             # Debug coordinate extraction
-            lat = self._extract_coordinate(content, 'latitude')
-            lon = self._extract_coordinate(content, 'longitude')
+            lat = self._extract_coordinate(data, 'latitude')
+            lon = self._extract_coordinate(data, 'longitude')
             logger.info(f"City {metadata.get('title', '')}: lat={lat}, lon={lon}")
 
             city_data = {
                 'city_id': metadata.get('id', ''),
                 'name': metadata.get('title', '').split(':')[0].strip(),
-                'continent': self._extract_continent(content),
-                'country': self._extract_country(content),
+                'continent': self._extract_continent(data),
+                'country': self._extract_country(data),
                 'latitude': lat,
                 'longitude': lon,
                 'population_2020': self._extract_population(content, 2020),
