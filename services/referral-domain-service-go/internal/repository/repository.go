@@ -160,6 +160,43 @@ func (r *Repository) CreateReferralRegistration(ctx context.Context, registratio
 	return err
 }
 
+// UpdateReferralStatus updates the status of a referral registration
+func (r *Repository) UpdateReferralStatus(ctx context.Context, registrationID uuid.UUID, status string, convertedAt *time.Time) error {
+	query := `
+		UPDATE referral_registrations
+		SET status = $2, converted_at = $3, updated_at = $4
+		WHERE id = $1
+	`
+
+	_, err := r.db.ExecContext(ctx, query, registrationID, status, convertedAt, time.Now())
+	return err
+}
+
+// GetReferralCodeByCode gets a referral code by its string value
+func (r *Repository) GetReferralCodeByCode(ctx context.Context, code string) (*ReferralCode, error) {
+	query := `SELECT * FROM referral_codes WHERE code = $1`
+	var referralCode ReferralCode
+	err := r.db.GetContext(ctx, &referralCode, query, code)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("referral code not found")
+		}
+		return nil, fmt.Errorf("failed to get referral code: %w", err)
+	}
+	return &referralCode, nil
+}
+
+// GetUserReferralCodes gets all referral codes for a user
+func (r *Repository) GetUserReferralCodes(ctx context.Context, userID uuid.UUID) ([]*ReferralCode, error) {
+	query := `SELECT * FROM referral_codes WHERE owner_id = $1 ORDER BY created_at DESC`
+	var codes []*ReferralCode
+	err := r.db.SelectContext(ctx, &codes, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user referral codes: %w", err)
+	}
+	return codes, nil
+}
+
 // GetReferralStatistics gets referral statistics for a user
 func (r *Repository) GetReferralStatistics(ctx context.Context, userID uuid.UUID) (*ReferralStatistics, error) {
 	query := `
@@ -184,6 +221,87 @@ func (r *Repository) GetReferralStatistics(ctx context.Context, userID uuid.UUID
 	}
 
 	return &stats, nil
+}
+
+// GetReferralMilestone gets a referral milestone by ID
+func (r *Repository) GetReferralMilestone(ctx context.Context, milestoneID uuid.UUID) (*ReferralMilestone, error) {
+	query := `SELECT * FROM referral_milestones WHERE id = $1`
+	var milestone ReferralMilestone
+	err := r.db.GetContext(ctx, &milestone, query, milestoneID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("referral milestone not found")
+		}
+		return nil, fmt.Errorf("failed to get referral milestone: %w", err)
+	}
+	return &milestone, nil
+}
+
+// GetUserMilestoneReward gets a user's reward for a specific milestone
+func (r *Repository) GetUserMilestoneReward(ctx context.Context, userID, milestoneID uuid.UUID) (*ReferralReward, error) {
+	query := `SELECT * FROM referral_rewards WHERE user_id = $1 AND milestone_id = $2`
+	var reward ReferralReward
+	err := r.db.GetContext(ctx, &reward, query, userID, milestoneID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // No reward found
+		}
+		return nil, fmt.Errorf("failed to get user milestone reward: %w", err)
+	}
+	return &reward, nil
+}
+
+// CreateReferralReward creates a new referral reward
+func (r *Repository) CreateReferralReward(ctx context.Context, reward *ReferralReward) error {
+	query := `
+		INSERT INTO referral_rewards (id, user_id, milestone_id, amount, status, claimed_at, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	`
+	reward.CreatedAt = time.Now()
+	reward.UpdatedAt = time.Now()
+
+	_, err := r.db.ExecContext(ctx, query,
+		reward.ID, reward.UserID, reward.MilestoneID, reward.Amount,
+		reward.Status, reward.ClaimedAt, reward.CreatedAt, reward.UpdatedAt)
+
+	return err
+}
+
+// GetReferralLeaderboard gets the top referrers by converted referrals
+func (r *Repository) GetReferralLeaderboard(ctx context.Context, limit int) ([]ReferralStatistics, error) {
+	query := `
+		SELECT
+			rr.referrer_id as user_id,
+			COUNT(DISTINCT rr.id) as total_referrals,
+			COUNT(DISTINCT CASE WHEN rr.status = 'converted' THEN rr.id END) as converted_referrals,
+			COUNT(DISTINCT CASE WHEN rr.status = 'pending' THEN rr.id END) as pending_referrals,
+			COALESCE(SUM(rew.amount), 0) as total_earnings
+		FROM referral_registrations rr
+		LEFT JOIN referral_rewards rew ON rr.id = rew.registration_id
+		GROUP BY rr.referrer_id
+		ORDER BY converted_referrals DESC, total_referrals DESC
+		LIMIT $1
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get referral leaderboard: %w", err)
+	}
+	defer rows.Close()
+
+	var leaderboard []ReferralStatistics
+	for rows.Next() {
+		var stats ReferralStatistics
+		err := rows.Scan(
+			&stats.UserID, &stats.TotalReferrals, &stats.ConvertedReferrals,
+			&stats.PendingReferrals, &stats.TotalEarnings)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan leaderboard row: %w", err)
+		}
+		leaderboard = append(leaderboard, stats)
+	}
+
+	return leaderboard, nil
 }
 
 // Cache helper methods

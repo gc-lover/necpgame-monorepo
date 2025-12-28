@@ -73,6 +73,16 @@ func (s *Service) ValidateReferralCode(ctx context.Context, code string) (*repos
 	return referralCode, nil
 }
 
+// GetReferralCode gets a referral code by ID
+func (s *Service) GetReferralCode(ctx context.Context, id uuid.UUID) (*repository.ReferralCode, error) {
+	return s.repo.GetReferralCode(ctx, id)
+}
+
+// GetUserReferralCodes gets all referral codes for a user
+func (s *Service) GetUserReferralCodes(ctx context.Context, userID uuid.UUID) ([]*repository.ReferralCode, error) {
+	return s.repo.GetUserReferralCodes(ctx, userID)
+}
+
 // RegisterReferral registers a new user through referral
 func (s *Service) RegisterReferral(ctx context.Context, referrerID, refereeID uuid.UUID, referralCodeID uuid.UUID) error {
 	registration := &repository.ReferralRegistration{
