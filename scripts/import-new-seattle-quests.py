@@ -65,11 +65,7 @@ def load_quest_from_yaml(file_path):
         'level_min': level_min,
         'level_max': level_max,
         'status': 'active',
-        'metadata': json.dumps({
-            'id': data['metadata']['id'],
-            'version': data['metadata']['version'],
-            'source_file': str(file_path)
-        }),
+        'quest_id': data['metadata']['id'],
         'rewards': json.dumps(rewards),
         'objectives': json.dumps(db_objectives),
         'created_at': datetime.now(),
@@ -77,15 +73,15 @@ def load_quest_from_yaml(file_path):
     }
 
 def main():
-    print("🚀 Starting import of new Seattle 2020-2029 quests...")
+    print("Starting import of new Seattle 2020-2029 quests...")
 
     # Connect to database
     try:
         conn = psycopg2.connect('postgresql://postgres:postgres@localhost:5432/necpgame')
         cursor = conn.cursor()
-        print("✅ Connected to database")
+        print("Connected to database")
     except Exception as e:
-        print(f"❌ Database connection failed: {e}")
+        print(f"Database connection failed: {e}")
         return
 
     # Check which Seattle quests are new (higher numbers)
@@ -95,7 +91,7 @@ def main():
     # Focus on quests 011 and above (assuming these are the new ones)
     new_quest_files = [f for f in all_quest_files if any(f.name.startswith(f'quest-{i:03d}-') for i in range(11, 41))]
 
-    print(f"📋 Found {len(new_quest_files)} potential new quests to import")
+    print(f"Found {len(new_quest_files)} potential new quests to import")
 
     imported_count = 0
 
@@ -103,40 +99,39 @@ def main():
         try:
             # Load quest data
             quest_data = load_quest_from_yaml(file_path)
-            print(f"📖 Loaded quest: {quest_data['title']}")
+            print(f"Loaded quest: {quest_data['title']}")
 
             # Insert into database
             cursor.execute("""
-                INSERT INTO gameplay.quests (
-                    title, description, level_min, level_max, status,
-                    metadata, rewards, objectives, created_at, updated_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (metadata->>'id') DO UPDATE SET
+                INSERT INTO gameplay.quest_definitions (
+                    quest_id, title, description, category, difficulty, level_requirement,
+                    rewards, objectives, is_active, created_at, updated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (quest_id) DO UPDATE SET
                     title = EXCLUDED.title,
                     description = EXCLUDED.description,
-                    level_min = EXCLUDED.level_min,
-                    level_max = EXCLUDED.level_max,
                     rewards = EXCLUDED.rewards,
                     objectives = EXCLUDED.objectives,
                     updated_at = EXCLUDED.updated_at
             """, (
+                quest_data['quest_id'],
                 quest_data['title'],
                 quest_data['description'],
+                'main',
+                'normal',
                 quest_data['level_min'],
-                quest_data['level_max'],
-                quest_data['status'],
-                quest_data['metadata'],
                 quest_data['rewards'],
                 quest_data['objectives'],
+                True,
                 quest_data['created_at'],
                 quest_data['updated_at']
             ))
 
             imported_count += 1
-            print(f"✅ Imported: {quest_data['title']}")
+            print(f"Imported: {quest_data['title']}")
 
         except Exception as e:
-            print(f"❌ Error importing {file_path}: {e}")
+            print(f"Error importing {file_path}: {e}")
             continue
 
     # Commit changes
@@ -144,15 +139,15 @@ def main():
     cursor.close()
     conn.close()
 
-    print(f"🎉 Import complete! {imported_count} quests imported successfully")
-    print("
-📊 Seattle quests imported from quest-011 to quest-040"    print(f"   - Corporate data leaks and resistance")
-    print(f"   - Coffee culture underground movements")
-    print(f"   - Floating cities and climate adaptation")
-    print(f"   - Neural research and implant technology")
-    print(f"   - Underground economies and hacker collectives")
-    print(f"   - Virtual reality research and addiction")
-    print(f"   - Apocalypse preparation and end-times scenarios")
+    print(f"Import complete! {imported_count} quests imported successfully")
+    print("\nSeattle quests imported from quest-011 to quest-040")
+    print("   - Corporate data leaks and resistance")
+    print("   - Coffee culture underground movements")
+    print("   - Floating cities and climate adaptation")
+    print("   - Neural research and implant technology")
+    print("   - Underground economies and hacker collectives")
+    print("   - Virtual reality research and addiction")
+    print("   - Apocalypse preparation and end-times scenarios")
 
 if __name__ == '__main__':
     main()

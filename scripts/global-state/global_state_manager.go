@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -16,15 +17,16 @@ import (
 
 // GlobalStateManager manages global game state with high-performance optimizations
 type GlobalStateManager struct {
-	// State storage
-	playerStates    sync.Map // map[string]*PlayerState
-	gameStates      sync.Map // map[string]*GameState
-	globalStates    sync.Map // map[string]interface{}
+	// Sharded state storage for better concurrency (MMOFPS optimization)
+	playerStateShards []*sync.Map // 16 shards for player states
+	gameStateShards   []*sync.Map // 8 shards for game states
+	globalStates      sync.Map     // map[string]interface{}
 
-	// Performance tracking
+	// Performance tracking with atomic operations
 	operationsCount int64
 	cacheHits       int64
 	cacheMisses     int64
+	lockContention  int64
 
 	// Configuration
 	config         *GlobalStateConfig
@@ -32,14 +34,25 @@ type GlobalStateManager struct {
 	shutdownChan   chan struct{}
 	wg             sync.WaitGroup
 
-	// Event system
+	// Event system optimized for high throughput
 	eventSubscribers map[string][]StateEventSubscriber
 	eventMutex       sync.RWMutex
 
-	// Optimizations
+	// MMOFPS Optimizations
 	statePool       *sync.Pool
+	playerStatePool *sync.Pool
+	gameStatePool   *sync.Pool
 	updateBuffer    chan *StateUpdate
 	bufferSize      int
+
+	// Worker pools for concurrent processing
+	updateWorkers   int
+	workerPool      chan func()
+	eventWorkers    chan func()
+
+	// Lock-free optimizations
+	playerLocks     []sync.Mutex // Fine-grained locking per shard
+	gameLocks       []sync.Mutex
 }
 
 // GlobalStateConfig holds configuration for global state management
@@ -51,6 +64,14 @@ type GlobalStateConfig struct {
 	StateSyncInterval  time.Duration `json:"state_sync_interval"`
 	EnableCompression  bool          `json:"enable_compression"`
 	MaxConcurrentOps   int           `json:"max_concurrent_ops"`
+
+	// MMOFPS Optimizations
+	PlayerStateShards  int           `json:"player_state_shards"`  // Default: 16
+	GameStateShards    int           `json:"game_state_shards"`    // Default: 8
+	UpdateWorkers      int           `json:"update_workers"`       // Default: runtime.NumCPU()
+	EventWorkers       int           `json:"event_workers"`        // Default: 4
+	EnableSharding     bool          `json:"enable_sharding"`      // Default: true
+	ShardLockTimeout   time.Duration `json:"shard_lock_timeout"`   // Default: 10ms
 }
 
 // PlayerState represents a player's global state
@@ -170,19 +191,68 @@ func NewGlobalStateManager(config *GlobalStateConfig, logger *errorhandling.Logg
 			StateSyncInterval: 1 * time.Minute,
 			EnableCompression: true,
 			MaxConcurrentOps:  100,
+			// MMOFPS defaults
+			PlayerStateShards: 16,
+			GameStateShards:   8,
+			UpdateWorkers:     runtime.NumCPU(),
+			EventWorkers:      4,
+			EnableSharding:    true,
+			ShardLockTimeout:  10 * time.Millisecond,
 		}
 	}
 
+	// Override with provided config
+	if config.PlayerStateShards == 0 {
+		config.PlayerStateShards = 16
+	}
+	if config.GameStateShards == 0 {
+		config.GameStateShards = 8
+	}
+	if config.UpdateWorkers == 0 {
+		config.UpdateWorkers = runtime.NumCPU()
+	}
+	if config.EventWorkers == 0 {
+		config.EventWorkers = 4
+	}
+
+	// Initialize sharded storage
+	playerStateShards := make([]*sync.Map, config.PlayerStateShards)
+	gameStateShards := make([]*sync.Map, config.GameStateShards)
+
+	for i := 0; i < config.PlayerStateShards; i++ {
+		playerStateShards[i] = &sync.Map{}
+	}
+	for i := 0; i < config.GameStateShards; i++ {
+		gameStateShards[i] = &sync.Map{}
+	}
+
 	gsm := &GlobalStateManager{
-		config:          config,
-		logger:          logger,
-		shutdownChan:    make(chan struct{}),
+		playerStateShards: playerStateShards,
+		gameStateShards:   gameStateShards,
+		config:           config,
+		logger:           logger,
+		shutdownChan:     make(chan struct{}),
 		eventSubscribers: make(map[string][]StateEventSubscriber),
-		updateBuffer:   make(chan *StateUpdate, config.UpdateBufferSize),
-		bufferSize:     config.UpdateBufferSize,
+		updateBuffer:    make(chan *StateUpdate, config.UpdateBufferSize),
+		bufferSize:      config.UpdateBufferSize,
+		updateWorkers:   config.UpdateWorkers,
+		workerPool:      make(chan func(), config.UpdateWorkers),
+		eventWorkers:    make(chan func(), config.EventWorkers),
+		playerLocks:     make([]sync.Mutex, config.PlayerStateShards),
+		gameLocks:       make([]sync.Mutex, config.GameStateShards),
 		statePool: &sync.Pool{
 			New: func() interface{} {
+				return &StateUpdate{}
+			},
+		},
+		playerStatePool: &sync.Pool{
+			New: func() interface{} {
 				return &PlayerState{}
+			},
+		},
+		gameStatePool: &sync.Pool{
+			New: func() interface{} {
+				return &GameState{}
 			},
 		},
 	}
@@ -190,17 +260,38 @@ func NewGlobalStateManager(config *GlobalStateConfig, logger *errorhandling.Logg
 	// Start background processes
 	gsm.startBackgroundProcesses()
 
-	logger.Infow("Global state manager initialized",
+	logger.Infow("Global state manager initialized with MMOFPS optimizations",
 		"max_states", config.MaxStates,
 		"buffer_size", config.UpdateBufferSize,
-		"cleanup_interval", config.CleanupInterval)
+		"cleanup_interval", config.CleanupInterval,
+		"player_shards", config.PlayerStateShards,
+		"game_shards", config.GameStateShards,
+		"update_workers", config.UpdateWorkers,
+		"event_workers", config.EventWorkers,
+		"sharding_enabled", config.EnableSharding)
 
 	return gsm, nil
 }
 
-// GetPlayerState retrieves a player's state
+// GetPlayerState retrieves a player's state with sharded storage
 func (gsm *GlobalStateManager) GetPlayerState(playerID string) (*PlayerState, error) {
-	if value, ok := gsm.playerStates.Load(playerID); ok {
+	if !gsm.config.EnableSharding {
+		// Fallback to old method for backward compatibility
+		if value, ok := gsm.playerStates.Load(playerID); ok {
+			atomic.AddInt64(&gsm.cacheHits, 1)
+			if state, ok := value.(*PlayerState); ok {
+				return state, nil
+			}
+		}
+		atomic.AddInt64(&gsm.cacheMisses, 1)
+		return nil, errorhandling.NewNotFoundError("PLAYER_STATE_NOT_FOUND", "Player state not found")
+	}
+
+	// Use sharded storage for better concurrency
+	shardIndex := gsm.getPlayerShardIndex(playerID)
+	shard := gsm.playerStateShards[shardIndex]
+
+	if value, ok := shard.Load(playerID); ok {
 		atomic.AddInt64(&gsm.cacheHits, 1)
 		if state, ok := value.(*PlayerState); ok {
 			return state, nil
@@ -211,10 +302,78 @@ func (gsm *GlobalStateManager) GetPlayerState(playerID string) (*PlayerState, er
 	return nil, errorhandling.NewNotFoundError("PLAYER_STATE_NOT_FOUND", "Player state not found")
 }
 
-// UpdatePlayerState updates a player's state
+// UpdatePlayerState updates a player's state with sharded storage
 func (gsm *GlobalStateManager) UpdatePlayerState(playerID string, updateFunc func(*PlayerState) *PlayerState) error {
 	atomic.AddInt64(&gsm.operationsCount, 1)
 
+	if !gsm.config.EnableSharding {
+		// Fallback to old method for backward compatibility
+		return gsm.updatePlayerStateLegacy(playerID, updateFunc)
+	}
+
+	// Use sharded storage with fine-grained locking
+	shardIndex := gsm.getPlayerShardIndex(playerID)
+	shard := gsm.playerStateShards[shardIndex]
+
+	// Acquire shard lock for atomic operations
+	gsm.playerLocks[shardIndex].Lock()
+	defer gsm.playerLocks[shardIndex].Unlock()
+
+	var newState *PlayerState
+	var existed bool
+
+	// Try to load existing state from shard
+	if value, ok := shard.Load(playerID); ok {
+		currentState := value.(*PlayerState)
+		newState = updateFunc(currentState)
+		existed = true
+	} else {
+		// Create new state if not exists
+		newState = updateFunc(&PlayerState{
+			PlayerID:   playerID,
+			LastUpdate: time.Now(),
+			Version:    1,
+			IsOnline:   true,
+		})
+	}
+
+	if newState == nil {
+		return errorhandling.NewValidationError("INVALID_UPDATE", "Update function returned nil")
+	}
+
+	// Update version and timestamp
+	newState.Version++
+	newState.LastUpdate = time.Now()
+	newState.PlayerID = playerID
+
+	// Store updated state in shard
+	shard.Store(playerID, newState)
+
+	// Send update event asynchronously to avoid blocking
+	if existed {
+		update := &StateUpdate{
+			Type:      UpdateTypeUpdate,
+			EntityID:  playerID,
+			StateType: StateTypePlayer,
+			Data:      newState,
+			Timestamp: newState.LastUpdate,
+			Priority:  UpdatePriorityNormal,
+		}
+
+		// Send to worker pool for async processing
+		select {
+		case gsm.workerPool <- func() { gsm.sendStateUpdate(update) }:
+		default:
+			// If worker pool is full, send synchronously (fallback)
+			gsm.sendStateUpdate(update)
+		}
+	}
+
+	return nil
+}
+
+// updatePlayerStateLegacy maintains backward compatibility
+func (gsm *GlobalStateManager) updatePlayerStateLegacy(playerID string, updateFunc func(*PlayerState) *PlayerState) error {
 	var newState *PlayerState
 	var existed bool
 
@@ -258,9 +417,25 @@ func (gsm *GlobalStateManager) UpdatePlayerState(playerID string, updateFunc fun
 	return nil
 }
 
-// GetGameState retrieves a game's state
+// GetGameState retrieves a game's state with sharded storage
 func (gsm *GlobalStateManager) GetGameState(gameID string) (*GameState, error) {
-	if value, ok := gsm.gameStates.Load(gameID); ok {
+	if !gsm.config.EnableSharding {
+		// Fallback to old method for backward compatibility
+		if value, ok := gsm.gameStates.Load(gameID); ok {
+			atomic.AddInt64(&gsm.cacheHits, 1)
+			if state, ok := value.(*GameState); ok {
+				return state, nil
+			}
+		}
+		atomic.AddInt64(&gsm.cacheMisses, 1)
+		return nil, errorhandling.NewNotFoundError("GAME_STATE_NOT_FOUND", "Game state not found")
+	}
+
+	// Use sharded storage for better concurrency
+	shardIndex := gsm.getGameShardIndex(gameID)
+	shard := gsm.gameStateShards[shardIndex]
+
+	if value, ok := shard.Load(gameID); ok {
 		atomic.AddInt64(&gsm.cacheHits, 1)
 		if state, ok := value.(*GameState); ok {
 			return state, nil
@@ -405,19 +580,37 @@ func (gsm *GlobalStateManager) BatchUpdate(updates []*StateUpdate) error {
 	return nil
 }
 
-// GetStats returns performance statistics
+// GetStats returns performance statistics with MMOFPS optimizations
 func (gsm *GlobalStateManager) GetStats() map[string]interface{} {
 	var playerStatesCount, gameStatesCount, globalStatesCount int
 
-	gsm.playerStates.Range(func(key, value interface{}) bool {
-		playerStatesCount++
-		return true
-	})
+	if gsm.config.EnableSharding {
+		// Count from sharded storage
+		for _, shard := range gsm.playerStateShards {
+			shard.Range(func(key, value interface{}) bool {
+				playerStatesCount++
+				return true
+			})
+		}
 
-	gsm.gameStates.Range(func(key, value interface{}) bool {
-		gameStatesCount++
-		return true
-	})
+		for _, shard := range gsm.gameStateShards {
+			shard.Range(func(key, value interface{}) bool {
+				gameStatesCount++
+				return true
+			})
+		}
+	} else {
+		// Fallback to legacy counting
+		gsm.playerStates.Range(func(key, value interface{}) bool {
+			playerStatesCount++
+			return true
+		})
+
+		gsm.gameStates.Range(func(key, value interface{}) bool {
+			gameStatesCount++
+			return true
+		})
+	}
 
 	gsm.globalStates.Range(func(key, value interface{}) bool {
 		globalStatesCount++
@@ -430,47 +623,91 @@ func (gsm *GlobalStateManager) GetStats() map[string]interface{} {
 		hitRate = float64(gsm.cacheHits) / float64(total) * 100
 	}
 
+	// Calculate average shard sizes for monitoring
+	playerAvgShardSize := float64(playerStatesCount) / float64(gsm.config.PlayerStateShards)
+	gameAvgShardSize := float64(gameStatesCount) / float64(gsm.config.GameStateShards)
+
 	return map[string]interface{}{
-		"player_states_count":    playerStatesCount,
-		"game_states_count":      gameStatesCount,
-		"global_states_count":    globalStatesCount,
-		"total_operations":       atomic.LoadInt64(&gsm.operationsCount),
-		"cache_hits":            atomic.LoadInt64(&gsm.cacheHits),
-		"cache_misses":          atomic.LoadInt64(&gsm.cacheMisses),
-		"cache_hit_rate_percent": hitRate,
-		"buffer_size":           len(gsm.updateBuffer),
-		"buffer_capacity":       gsm.bufferSize,
-		"subscribers_count":     len(gsm.eventSubscribers),
+		"player_states_count":      playerStatesCount,
+		"game_states_count":        gameStatesCount,
+		"global_states_count":      globalStatesCount,
+		"total_operations":         atomic.LoadInt64(&gsm.operationsCount),
+		"cache_hits":              atomic.LoadInt64(&gsm.cacheHits),
+		"cache_misses":            atomic.LoadInt64(&gsm.cacheMisses),
+		"lock_contention":         atomic.LoadInt64(&gsm.lockContention),
+		"cache_hit_rate_percent":   hitRate,
+		"buffer_size":             len(gsm.updateBuffer),
+		"buffer_capacity":         gsm.bufferSize,
+		"subscribers_count":       len(gsm.eventSubscribers),
+		// MMOFPS optimizations stats
+		"sharding_enabled":        gsm.config.EnableSharding,
+		"player_state_shards":     gsm.config.PlayerStateShards,
+		"game_state_shards":       gsm.config.GameStateShards,
+		"update_workers":          gsm.updateWorkers,
+		"event_workers":           gsm.config.EventWorkers,
+		"avg_player_shard_size":   playerAvgShardSize,
+		"avg_game_shard_size":     gameAvgShardSize,
+		"worker_pool_size":        len(gsm.workerPool),
+		"event_pool_size":         len(gsm.eventWorkers),
 	}
 }
 
 // ExportState exports current state for backup or migration
 func (gsm *GlobalStateManager) ExportState() (map[string]interface{}, error) {
 	export := map[string]interface{}{
-		"exported_at": time.Now(),
-		"version":     "1.0",
+		"exported_at":   time.Now(),
+		"version":       "2.0", // Updated for sharded storage
+		"sharding_enabled": gsm.config.EnableSharding,
 		"player_states": map[string]interface{}{},
 		"game_states":   map[string]interface{}{},
 		"global_states": map[string]interface{}{},
 	}
 
-	// Export player states
-	gsm.playerStates.Range(func(key, value interface{}) bool {
-		if state, ok := value.(*PlayerState); ok {
-			export["player_states"].(map[string]interface{})[key.(string)] = state
+	if gsm.config.EnableSharding {
+		// Export from sharded storage
+		for shardIndex, shard := range gsm.playerStateShards {
+			shard.Range(func(key, value interface{}) bool {
+				if state, ok := value.(*PlayerState); ok {
+					playerData := map[string]interface{}{
+						"state":       state,
+						"shard_index": shardIndex,
+					}
+					export["player_states"].(map[string]interface{})[key.(string)] = playerData
+				}
+				return true
+			})
 		}
-		return true
-	})
 
-	// Export game states
-	gsm.gameStates.Range(func(key, value interface{}) bool {
-		if state, ok := value.(*GameState); ok {
-			export["game_states"].(map[string]interface{})[key.(string)] = state
+		for shardIndex, shard := range gsm.gameStateShards {
+			shard.Range(func(key, value interface{}) bool {
+				if state, ok := value.(*GameState); ok {
+					gameData := map[string]interface{}{
+						"state":       state,
+						"shard_index": shardIndex,
+					}
+					export["game_states"].(map[string]interface{})[key.(string)] = gameData
+				}
+				return true
+			})
 		}
-		return true
-	})
+	} else {
+		// Export from legacy storage
+		gsm.playerStates.Range(func(key, value interface{}) bool {
+			if state, ok := value.(*PlayerState); ok {
+				export["player_states"].(map[string]interface{})[key.(string)] = state
+			}
+			return true
+		})
 
-	// Export global states
+		gsm.gameStates.Range(func(key, value interface{}) bool {
+			if state, ok := value.(*GameState); ok {
+				export["game_states"].(map[string]interface{})[key.(string)] = state
+			}
+			return true
+		})
+	}
+
+	// Export global states (unchanged)
 	gsm.globalStates.Range(func(key, value interface{}) bool {
 		export["global_states"].(map[string]interface{})[key.(string)] = value
 		return true
@@ -483,11 +720,29 @@ func (gsm *GlobalStateManager) ExportState() (map[string]interface{}, error) {
 func (gsm *GlobalStateManager) ImportState(importData map[string]interface{}) error {
 	atomic.AddInt64(&gsm.operationsCount, 1)
 
+	shardingEnabled := importData["sharding_enabled"].(bool)
+
 	// Import player states
 	if playerStates, ok := importData["player_states"].(map[string]interface{}); ok {
 		for key, value := range playerStates {
-			if state, ok := value.(*PlayerState); ok {
-				gsm.playerStates.Store(key, state)
+			if shardingEnabled && gsm.config.EnableSharding {
+				// Import with shard information
+				if playerData, ok := value.(map[string]interface{}); ok {
+					if state, ok := playerData["state"].(*PlayerState); ok {
+						shardIndex := gsm.getPlayerShardIndex(key)
+						gsm.playerStateShards[shardIndex].Store(key, state)
+					}
+				}
+			} else {
+				// Legacy import
+				if state, ok := value.(*PlayerState); ok {
+					if gsm.config.EnableSharding {
+						shardIndex := gsm.getPlayerShardIndex(key)
+						gsm.playerStateShards[shardIndex].Store(key, state)
+					} else {
+						gsm.playerStates.Store(key, state)
+					}
+				}
 			}
 		}
 	}
@@ -495,23 +750,44 @@ func (gsm *GlobalStateManager) ImportState(importData map[string]interface{}) er
 	// Import game states
 	if gameStates, ok := importData["game_states"].(map[string]interface{}); ok {
 		for key, value := range gameStates {
-			if state, ok := value.(*GameState); ok {
-				gsm.gameStates.Store(key, state)
+			if shardingEnabled && gsm.config.EnableSharding {
+				// Import with shard information
+				if gameData, ok := value.(map[string]interface{}); ok {
+					if state, ok := gameData["state"].(*GameState); ok {
+						shardIndex := gsm.getGameShardIndex(key)
+						gsm.gameStateShards[shardIndex].Store(key, state)
+					}
+				}
+			} else {
+				// Legacy import
+				if state, ok := value.(*GameState); ok {
+					if gsm.config.EnableSharding {
+						shardIndex := gsm.getGameShardIndex(key)
+						gsm.gameStateShards[shardIndex].Store(key, state)
+					} else {
+						gsm.gameStates.Store(key, state)
+					}
+				}
 			}
 		}
 	}
 
-	// Import global states
+	// Import global states (unchanged)
 	if globalStates, ok := importData["global_states"].(map[string]interface{}); ok {
 		for key, value := range globalStates {
 			gsm.globalStates.Store(key, value)
 		}
 	}
 
+	playerCount := len(importData["player_states"].(map[string]interface{}))
+	gameCount := len(importData["game_states"].(map[string]interface{}))
+	globalCount := len(importData["global_states"].(map[string]interface{}))
+
 	gsm.logger.Infow("State imported successfully",
-		"player_states", len(importData["player_states"].(map[string]interface{})),
-		"game_states", len(importData["game_states"].(map[string]interface{})),
-		"global_states", len(importData["global_states"].(map[string]interface{})))
+		"player_states", playerCount,
+		"game_states", gameCount,
+		"global_states", globalCount,
+		"sharding_enabled", shardingEnabled)
 
 	return nil
 }
@@ -634,32 +910,126 @@ func (gsm *GlobalStateManager) startBackgroundProcesses() {
 			}
 		}
 	}()
+
+	// Worker pool for async operations (MMOFPS optimization)
+	for i := 0; i < gsm.updateWorkers; i++ {
+		gsm.wg.Add(1)
+		go func(workerID int) {
+			defer gsm.wg.Done()
+			gsm.logger.Debugw("Started update worker", "worker_id", workerID)
+
+			for {
+				select {
+				case work := <-gsm.workerPool:
+					work()
+				case <-gsm.shutdownChan:
+					gsm.logger.Debugw("Worker shutting down", "worker_id", workerID)
+					return
+				}
+			}
+		}(i)
+	}
+
+	// Event processing workers
+	for i := 0; i < gsm.config.EventWorkers; i++ {
+		gsm.wg.Add(1)
+		go func(workerID int) {
+			defer gsm.wg.Done()
+			gsm.logger.Debugw("Started event worker", "worker_id", workerID)
+
+			for {
+				select {
+				case work := <-gsm.eventWorkers:
+					work()
+				case <-gsm.shutdownChan:
+					gsm.logger.Debugw("Event worker shutting down", "worker_id", workerID)
+					return
+				}
+			}
+		}(i)
+	}
 }
 
-// performCleanup removes expired or stale state entries
+// performCleanup removes expired or stale state entries with sharding support
 func (gsm *GlobalStateManager) performCleanup() {
 	cutoff := time.Now().Add(-gsm.config.CacheTTL)
 	removed := 0
 
-	// Clean up player states
-	gsm.playerStates.Range(func(key, value interface{}) bool {
-		if state, ok := value.(*PlayerState); ok {
-			if !state.IsOnline && state.LastUpdate.Before(cutoff) {
-				gsm.playerStates.Delete(key)
-				removed++
+	if gsm.config.EnableSharding {
+		// Clean up sharded player states
+		for shardIndex, shard := range gsm.playerStateShards {
+			shard.Range(func(key, value interface{}) bool {
+				if state, ok := value.(*PlayerState); ok {
+					if !state.IsOnline && state.LastUpdate.Before(cutoff) {
+						shard.Delete(key)
+						removed++
+					}
+				}
+				return true
+			})
+
+			// Yield control occasionally to prevent blocking
+			if shardIndex%4 == 0 {
+				runtime.Gosched()
 			}
 		}
-		return true
-	})
+
+		// Clean up sharded game states
+		for _, shard := range gsm.gameStateShards {
+			shard.Range(func(key, value interface{}) bool {
+				if state, ok := value.(*GameState); ok {
+					if state.Status == GameStatusFinished && state.EndTime != nil && state.EndTime.Before(cutoff) {
+						shard.Delete(key)
+						removed++
+					}
+				}
+				return true
+			})
+		}
+	} else {
+		// Legacy cleanup
+		gsm.playerStates.Range(func(key, value interface{}) bool {
+			if state, ok := value.(*PlayerState); ok {
+				if !state.IsOnline && state.LastUpdate.Before(cutoff) {
+					gsm.playerStates.Delete(key)
+					removed++
+				}
+			}
+			return true
+		})
+	}
 
 	if removed > 0 {
 		gsm.logger.Infow("Cleanup completed", "removed_states", removed)
 	}
 }
 
+// getPlayerShardIndex returns the shard index for a player ID using consistent hashing
+func (gsm *GlobalStateManager) getPlayerShardIndex(playerID string) int {
+	hash := int(0)
+	for _, char := range playerID {
+		hash = (hash*31 + int(char)) % gsm.config.PlayerStateShards
+	}
+	return hash
+}
+
+// getGameShardIndex returns the shard index for a game ID using consistent hashing
+func (gsm *GlobalStateManager) getGameShardIndex(gameID string) int {
+	hash := int(0)
+	for _, char := range gameID {
+		hash = (hash*31 + int(char)) % gsm.config.GameStateShards
+	}
+	return hash
+}
+
 // Shutdown gracefully shuts down the global state manager
 func (gsm *GlobalStateManager) Shutdown(ctx context.Context) error {
 	close(gsm.shutdownChan)
+
+	// Close worker pools
+	close(gsm.workerPool)
+	close(gsm.eventWorkers)
+
 	done := make(chan struct{})
 
 	go func() {
