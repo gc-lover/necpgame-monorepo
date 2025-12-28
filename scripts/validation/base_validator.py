@@ -5,6 +5,7 @@ SOLID: Base class for all validators
 """
 
 import sys
+from pathlib import Path
 from typing import List, Dict, Any, Tuple
 
 # Add scripts directory to Python path for imports
