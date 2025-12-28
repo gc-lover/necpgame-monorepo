@@ -5,7 +5,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -154,7 +153,7 @@ func TestUpdateExample(t *testing.T) {
 				require.NoError(t, err)
 				updateResp, ok := resp.(*api.SupportTicket)
 				require.True(t, ok, "Response should be SupportTicket")
-				if tt.request.Title.IsSet() {
+				if tt.request.Title.IsSet {
 					assert.Equal(t, tt.request.Title.Value, updateResp.Title)
 				}
 			} else {
@@ -196,7 +195,7 @@ func TestDeleteExample(t *testing.T) {
 
 			if tt.expectSuccess {
 				require.NoError(t, err)
-				deleteResp, ok := resp.(*api.DeleteExampleNoContent)
+				_, ok := resp.(*api.DeleteExampleNoContent)
 				require.True(t, ok, "Response should be DeleteExampleNoContent")
 			} else {
 				assert.NotNil(t, resp)
