@@ -89,9 +89,15 @@ class EasterEggsImporter:
 
             # Make actual HTTP request to import
             try:
+                # Extract only easter_eggs array for import
+                import_data = {"easter_eggs": data["easter_eggs"]}
+
+                # Convert any non-serializable objects
+                import_data = self.convert_for_json(import_data)
+
                 response = requests.post(
                     self.api_url,
-                    json=data,
+                    json=import_data,
                     headers={'Content-Type': 'application/json'},
                     timeout=30
                 )
@@ -116,6 +122,17 @@ class EasterEggsImporter:
         except Exception as e:
             print(f"ERROR: Unexpected error: {e}")
             return False
+
+    def convert_for_json(self, obj):
+        """Convert non-JSON serializable objects to strings"""
+        if isinstance(obj, dict):
+            return {key: self.convert_for_json(value) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [self.convert_for_json(item) for item in obj]
+        elif hasattr(obj, 'isoformat'):  # datetime objects
+            return obj.isoformat()
+        else:
+            return obj
 
     def run_import(self) -> bool:
         """Run the complete import process"""

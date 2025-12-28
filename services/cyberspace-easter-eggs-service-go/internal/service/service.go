@@ -130,7 +130,6 @@ type EasterEggsService struct {
 	// PERFORMANCE: Worker pool semaphore for real-time operations
 	discoverySemaphore     chan struct{}
 }
-}
 
 // NewEasterEggsService creates a new easter eggs service
 func NewEasterEggsService(repo repository.RepositoryInterface, metrics *metrics.Collector, logger *zap.SugaredLogger) EasterEggsServiceInterface {

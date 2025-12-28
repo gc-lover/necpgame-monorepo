@@ -147,6 +147,9 @@ func setupRouter(server *generated.ServerInterfaceWrapper) *chi.Mux {
 	// Use generated server for all routes
 	r.Mount("/", server)
 
+	// Admin endpoints (not in generated server)
+	r.Post("/api/v1/admin/import", h.ImportEasterEggs)
+
 	// Metrics endpoint (keep separate)
 	r.Handle("/metrics", promhttp.Handler())
 

@@ -1,0 +1,587 @@
+metadata:
+  id: architecture-session-management
+  title: "Архитектура системы управления сессиями"
+  document_type: architecture
+  category: backend
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-12-28T12:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-28T12:00:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+    - role: auth_lead
+      contact: auth@necp.game
+  tags:
+    - sessions
+    - architecture
+    - backend
+    - auth
+  topics:
+    - authentication
+    - session-management
+    - infrastructure
+  related_systems:
+    - auth-service
+    - character-service
+    - world-service
+    - gameplay-service
+    - analytics-service
+    - websocket-gateway
+  related_documents:
+    - id: backend-session-management-overview
+      relation: implements
+    - id: backend-session-management-part1
+      relation: implements
+    - id: backend-session-management-part2
+      relation: implements
+  source: knowledge/implementation/architecture/session-management-architecture.yaml
+  visibility: internal
+  audience:
+    - backend
+    - auth
+    - architect
+  risk_level: high
+
+review:
+  chain:
+    - role: architect
+      reviewer: ''
+      reviewed_at: 2025-12-28T12:00:00Z
+      status: approved
+  next_actions: []
+
+summary:
+  problem: "Отсутствует полная архитектурная документация системы управления сессиями"
+  goal: "Создать исчерпывающую архитектуру, объединяющую все аспекты управления сессиями"
+  essence: "Комплексная архитектура микросервисной системы управления игровыми сессиями с учетом жизненного цикла, heartbeat, переподключений и мониторинга"
+  key_points:
+    - Микросервисная архитектура с auth-service в качестве ядра
+    - Полный жизненный цикл сессий с состояниями и переходами
+    - Распределенное кеширование с Redis и PostgreSQL
+    - Система heartbeat и переподключений
+    - Мониторинг, безопасность и масштабируемость
+
+content:
+  sections:
+    - id: overview
+      title: Обзор архитектуры
+      body: |
+        ## Обзор системы управления сессиями
+
+        Система управления сессиями представляет собой критически важный компонент инфраструктуры NECPGAME,
+        обеспечивающий надежное отслеживание, аутентификацию и управление жизненным циклом игровых сессий игроков.
+
+        ### Основные принципы
+        - **Микросервисная архитектура** с четким разделением ответственности
+        - **Распределенная надежность** с отказоустойчивостью и автоматическим восстановлением
+        - **Производительность и масштабируемость** для поддержки тысяч одновременных сессий
+        - **Безопасность и аудит** всех операций с сессиями
+
+        ### Ключевые компоненты
+        1. **Auth Service** - ядро системы управления сессиями
+        2. **Session Store** - PostgreSQL для персистентного хранения
+        3. **Redis Cache** - высокопроизводительное кеширование
+        4. **WebSocket Gateway** - реал-тайм коммуникации
+        5. **Analytics Service** - мониторинг и аналитика
+        6. **Event Bus** - асинхронная коммуникация между сервисами
+
+    - id: components
+      title: Архитектурные компоненты
+      body: |
+        ## Архитектурные компоненты
+
+        ### 1. Auth Service (Ядро системы)
+        **Ответственность:** Управление жизненным циклом сессий, аутентификация, авторизация
+
+        **Технологии:**
+        - Go 1.21+ с Gin framework
+        - PostgreSQL для хранения данных сессий
+        - Redis для кеширования активных сессий
+        - Kafka для event-driven коммуникации
+
+        **API Endpoints:**
+        ```
+        POST   /api/v1/auth/session/create      - Создание новой сессии
+        PUT    /api/v1/auth/session/{id}/heartbeat - Heartbeat обновление
+        POST   /api/v1/auth/session/reconnect   - Переподключение
+        DELETE /api/v1/auth/session/{id}        - Завершение сессии
+        GET    /api/v1/auth/session/{id}/status - Получение статуса сессии
+        ```
+
+        **Внутренняя структура:**
+        - `handlers/` - HTTP обработчики
+        - `service/` - бизнес-логика
+        - `repository/` - доступ к данным
+        - `cache/` - Redis операции
+        - `events/` - публикация событий
+
+        ### 2. Session Store (PostgreSQL)
+        **Назначение:** Персистентное хранение данных сессий
+
+        **Основные таблицы:**
+        ```sql
+        -- Активные сессии игроков
+        CREATE TABLE player_sessions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            player_id BIGINT NOT NULL,
+            character_id BIGINT,
+            token VARCHAR(255) UNIQUE NOT NULL,
+            server_id VARCHAR(50) NOT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'CREATED',
+            ip_address INET,
+            user_agent TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            expires_at TIMESTAMP WITH TIME ZONE,
+            last_heartbeat TIMESTAMP WITH TIME ZONE,
+            reconnect_window_minutes INTEGER DEFAULT 5
+        );
+
+        -- Аудит логов сессий
+        CREATE TABLE session_audit_log (
+            id BIGSERIAL PRIMARY KEY,
+            session_id UUID NOT NULL REFERENCES player_sessions(id),
+            action VARCHAR(50) NOT NULL,
+            old_status VARCHAR(20),
+            new_status VARCHAR(20),
+            details JSONB,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        );
+
+        -- Индексы для производительности
+        CREATE INDEX idx_sessions_player ON player_sessions(player_id);
+        CREATE INDEX idx_sessions_token ON player_sessions(token);
+        CREATE INDEX idx_sessions_status ON player_sessions(status);
+        CREATE INDEX idx_sessions_server ON player_sessions(server_id);
+        CREATE INDEX idx_audit_session ON session_audit_log(session_id);
+        ```
+
+        ### 3. Redis Cache Layer
+        **Назначение:** Высокопроизводительное кеширование активных сессий
+
+        **Ключевые структуры:**
+        ```
+        # Активная сессия
+        session:{token} -> {
+          "id": "uuid",
+          "player_id": 123,
+          "character_id": 456,
+          "server_id": "game-server-01",
+          "status": "ACTIVE",
+          "last_heartbeat": "2025-12-28T12:00:00Z",
+          "ip_address": "192.168.1.100"
+        }
+
+        # Активные игроки по серверу
+        active_players:{server_id} -> SET [player_id1, player_id2, ...]
+
+        # Статистика сервера
+        server_stats:{server_id} -> {
+          "active_sessions": 1250,
+          "total_players": 1200,
+          "peak_today": 1500,
+          "last_updated": "2025-12-28T12:00:00Z"
+        }
+        ```
+
+        **TTL настройки:**
+        - Активные сессии: 30 минут (с продлением при heartbeat)
+        - Статистика серверов: 5 минут
+        - Кеш разрешений: 15 минут
+
+        ### 4. WebSocket Gateway
+        **Назначение:** Реал-тайм коммуникации и heartbeat
+
+        **Протоколы:**
+        - WebSocket для клиент-сервер коммуникации
+        - STOMP поверх WebSocket для структурированных сообщений
+        - Binary протокол для heartbeat (оптимизация)
+
+        **Сообщения:**
+        ```json
+        // Heartbeat от клиента
+        {
+          "type": "heartbeat",
+          "session_token": "abc123...",
+          "timestamp": 1640995200,
+          "client_state": "active"
+        }
+
+        // Heartbeat ответ сервера
+        {
+          "type": "heartbeat_ack",
+          "server_time": 1640995200,
+          "session_status": "active",
+          "next_heartbeat": 30
+        }
+        ```
+
+        ### 5. Analytics Service
+        **Назначение:** Мониторинг и аналитика сессий
+
+        **Метрики:**
+        - Количество активных сессий
+        - Среднее время сессии
+        - Процент успешных переподключений
+        - Статистика heartbeat
+        - География игроков
+        - Проблемные зоны (высокий churn)
+
+        ### 6. Event Bus (Kafka)
+        **Ключевые события:**
+        ```
+        session.created
+        session.activated
+        session.heartbeat
+        session.afk_detected
+        session.reconnected
+        session.expired
+        session.terminated
+        session.security_alert
+        ```
+
+    - id: lifecycle
+      title: Жизненный цикл сессий
+      body: |
+        ## Жизненный цикл сессий
+
+        ### Состояния сессии
+        ```
+        CREATED     -> Сессия создана, ожидает активации
+        ACTIVE      -> Активная игровая сессия
+        AFK         -> Игрок отсутствует (Away From Keyboard)
+        RECONNECTING-> Процесс переподключения
+        EXPIRED     -> Сессия истекла по таймауту
+        TERMINATED  -> Сессия принудительно завершена
+        CLOSED      -> Сессия корректно закрыта
+        ```
+
+        ### Переходы состояний
+
+        #### Создание сессии
+        ```
+        Клиент → Auth Service: POST /api/v1/auth/session/create
+        ├── Валидация credentials
+        ├── Создание записи в БД (CREATED)
+        ├── Кеширование в Redis
+        ├── Публикация session.created
+        └── Возврат session_token
+        ```
+
+        #### Активация сессии
+        ```
+        Клиент → WebSocket Gateway: CONNECT with session_token
+        ├── Валидация токена в Redis
+        ├── Обновление статуса → ACTIVE
+        ├── Публикация session.activated
+        └── Установка heartbeat таймера
+        ```
+
+        #### Heartbeat цикл
+        ```
+        Клиент → Gateway: heartbeat каждые 30 сек
+        ├── Проверка session_token
+        ├── Обновление last_heartbeat
+        ├── Продление TTL в Redis
+        └── Подтверждение heartbeat_ack
+        ```
+
+        #### Переподключение (Reconnection)
+        ```
+        Клиент → Auth Service: POST /api/v1/auth/session/reconnect
+        ├── Проверка reconnect_window (5 мин)
+        ├── Валидация старого токена
+        ├── Генерация нового токена
+        ├── Обновление статуса → ACTIVE
+        ├── Публикация session.reconnected
+        └── Возврат нового session_token
+        ```
+
+        #### Завершение сессии
+        ```
+        Клиент → Auth Service: DELETE /api/v1/auth/session/{id}
+        ├── Валидация прав доступа
+        ├── Обновление статуса → CLOSED
+        ├── Очистка Redis кеша
+        ├── Освобождение ресурсов (party, combat, etc.)
+        ├── Публикация session.terminated
+        └── Аудит лог
+        ```
+
+    - id: data-flow
+      title: Потоки данных
+      body: |
+        ## Потоки данных
+
+        ### Создание сессии
+        ```mermaid
+        sequenceDiagram
+            participant Client
+            participant AuthService
+            participant PostgreSQL
+            participant Redis
+            participant EventBus
+
+            Client->>AuthService: POST /session/create
+            AuthService->>PostgreSQL: INSERT session (CREATED)
+            PostgreSQL-->>AuthService: session_id
+            AuthService->>Redis: SET session:{token}
+            AuthService->>EventBus: session.created
+            AuthService-->>Client: {session_token, expires_at}
+        ```
+
+        ### Heartbeat обработка
+        ```mermaid
+        sequenceDiagram
+            participant Client
+            participant Gateway
+            participant AuthService
+            participant Redis
+            participant PostgreSQL
+
+            Client->>Gateway: WebSocket heartbeat
+            Gateway->>AuthService: Validate & update
+            AuthService->>Redis: GET session:{token}
+            AuthService->>Redis: UPDATE last_heartbeat
+            AuthService->>PostgreSQL: Batch update (async)
+            AuthService-->>Gateway: heartbeat_ack
+            Gateway-->>Client: pong + server_time
+        ```
+
+        ### Переподключение
+        ```mermaid
+        sequenceDiagram
+            participant Client
+            participant AuthService
+            participant Redis
+            participant PostgreSQL
+            participant EventBus
+
+            Client->>AuthService: POST /session/reconnect
+            AuthService->>Redis: GET old_session
+            AuthService->>AuthService: Validate window (5min)
+            AuthService->>PostgreSQL: UPDATE status=ACTIVE
+            AuthService->>Redis: SET new session:{token}
+            AuthService->>EventBus: session.reconnected
+            AuthService-->>Client: {new_token, player_state}
+        ```
+
+    - id: scaling
+      title: Масштабируемость и производительность
+      body: |
+        ## Масштабируемость и производительность
+
+        ### Горизонтальное масштабирование
+        - **Stateless сервисы** - Auth Service может масштабироваться горизонтально
+        - **Redis Cluster** - распределенное кеширование сессий
+        - **PostgreSQL read replicas** - распределение нагрузки чтения
+        - **Kafka партиционирование** - распределение событий по партициям
+
+        ### Производительность
+        - **Heartbeat оптимизация:** Binary протокол, batch updates
+        - **Кеширование:** 95% запросов обслуживаются из Redis
+        - **Connection pooling:** Переиспользование соединений к БД
+        - **Async operations:** Неблокирующие обновления статистики
+
+        ### Ограничения нагрузки
+        ```go
+        // Rate limiting по IP
+        rateLimiter := tollbooth.NewLimiter(10, nil) // 10 req/sec per IP
+
+        // Rate limiting по player_id
+        playerLimiter := tollbooth.NewLimiter(1, nil) // 1 req/sec per player
+        ```
+
+    - id: security
+      title: Безопасность
+      body: |
+        ## Безопасность системы
+
+        ### Аутентификация токенов
+        - **JWT токены** с RSA подписанием
+        - **Token rotation** при каждом переподключении
+        - **IP binding** для предотвращения session hijacking
+        - **Device fingerprinting** для дополнительной верификации
+
+        ### Защита от атак
+        - **Rate limiting** на всех endpoints
+        - **Brute force protection** с exponential backoff
+        - **Session isolation** - каждая сессия в отдельном контексте
+        - **Audit logging** всех подозрительных операций
+
+        ### Шифрование данных
+        - **TLS 1.3** для всех коммуникаций
+        - **Encrypted tokens** в Redis
+        - **Database encryption** для чувствительных данных
+        - **Secure key management** с автоматической ротацией
+
+        ### Мониторинг безопасности
+        - **Anomaly detection** для необычных паттернов использования
+        - **Real-time alerts** при подозрительной активности
+        - **Automated blocking** compromised sessions
+        - **Compliance logging** для аудиторских проверок
+
+    - id: monitoring
+      title: Мониторинг и observability
+      body: |
+        ## Мониторинг и observability
+
+        ### Метрики производительности
+        ```
+        # Session metrics
+        sessions_active_total{game="necp"} - Активные сессии
+        sessions_created_total{game="necp"} - Созданные сессии
+        sessions_reconnected_total{game="necp"} - Переподключения
+        session_duration_seconds{game="necp"} - Продолжительность сессий
+
+        # Performance metrics
+        session_create_duration_seconds - Время создания сессии
+        heartbeat_processing_duration_seconds - Время обработки heartbeat
+        redis_hit_rate - Процент попаданий в кеш
+        ```
+
+        ### Health checks
+        ```go
+        // Readiness probe
+        func readinessHandler(c *gin.Context) {
+            // Проверка соединения с PostgreSQL
+            if err := db.Ping(); err != nil {
+                c.JSON(503, gin.H{"status": "not ready"})
+                return
+            }
+
+            // Проверка соединения с Redis
+            if err := redisClient.Ping().Err(); err != nil {
+                c.JSON(503, gin.H{"status": "not ready"})
+                return
+            }
+
+            c.JSON(200, gin.H{"status": "ready"})
+        }
+
+        // Liveness probe
+        func livenessHandler(c *gin.Context) {
+            // Проверка внутренних метрик
+            if serviceHealth.Unhealthy() {
+                c.JSON(503, gin.H{"status": "unhealthy"})
+                return
+            }
+
+            c.JSON(200, gin.H{"status": "healthy"})
+        }
+        ```
+
+        ### Логирование
+        ```json
+        {
+          "timestamp": "2025-12-28T12:00:00Z",
+          "level": "INFO",
+          "service": "auth-service",
+          "session_id": "550e8400-e29b-41d4-a716-446655440000",
+          "player_id": 12345,
+          "action": "session_created",
+          "ip_address": "192.168.1.100",
+          "user_agent": "NECPGAME-Client/1.0",
+          "details": {
+            "server_id": "game-server-01",
+            "character_id": 67890
+          }
+        }
+        ```
+
+        ### Alerting правила
+        - Session creation rate > 1000/min per server
+        - Heartbeat failure rate > 5%
+        - Average session duration < 30 seconds (боты)
+        - Redis connection pool utilization > 90%
+        - PostgreSQL connection pool utilization > 85%
+
+    - id: implementation
+      title: План реализации
+      body: |
+        ## План реализации
+
+        ### Фаза 1: Базовая инфраструктура (2 недели)
+        - [ ] Настройка PostgreSQL схем и индексов
+        - [ ] Реализация Redis структур данных
+        - [ ] Базовый Auth Service с CRUD операциями
+        - [ ] Unit тесты для основных функций
+
+        ### Фаза 2: Жизненный цикл сессий (3 недели)
+        - [ ] Реализация состояний и переходов
+        - [ ] Создание/завершение сессий
+        - [ ] Валидация и обработка ошибок
+        - [ ] Интеграционные тесты
+
+        ### Фаза 3: Heartbeat и переподключения (2 недели)
+        - [ ] WebSocket heartbeat механизм
+        - [ ] Fast reconnect логика
+        - [ ] Batch обновления в БД
+        - [ ] Производительность тесты
+
+        ### Фаза 4: Мониторинг и безопасность (2 недели)
+        - [ ] Метрики и health checks
+        - [ ] Security middleware
+        - [ ] Audit logging
+        - [ ] Penetration testing
+
+        ### Фаза 5: Масштабирование и оптимизация (2 недели)
+        - [ ] Connection pooling оптимизация
+        - [ ] Redis кластер конфигурация
+        - [ ] Load balancing настройка
+        - [ ] Production deployment
+
+        ### Фаза 6: Тестирование и документация (1 неделя)
+        - [ ] End-to-end тесты
+        - [ ] Performance тестирование
+        - [ ] Документация API
+        - [ ] Production готовность
+
+appendix:
+  glossary:
+    - term: Session Token
+      definition: Уникальный JWT токен, идентифицирующий активную игровую сессию
+    - term: Heartbeat
+      definition: Периодический сигнал от клиента к серверу для подтверждения активности сессии
+    - term: Fast Reconnect
+      definition: Механизм быстрого восстановления сессии без повторной аутентификации в течение ограниченного времени
+    - term: Session Hijacking
+      definition: Атака, при которой злоумышленник перехватывает контроль над чужой сессией
+
+  references:
+    - title: "OAuth 2.0 Security Best Current Practice"
+      url: "https://tools.ietf.org/html/rfc8725"
+    - title: "JWT Best Current Practices"
+      url: "https://tools.ietf.org/html/rfc8725"
+    - title: "WebSocket Security Considerations"
+      url: "https://tools.ietf.org/html/rfc6455#section-10"
+
+  decisions:
+    - date: 2025-12-28
+      decision: "Выбор PostgreSQL + Redis архитектуры для баланса надежности и производительности"
+      rationale: "PostgreSQL обеспечивает ACID транзакции для критичных данных, Redis - высокую производительность для частых операций"
+    - date: 2025-12-28
+      decision: "JWT токены с 30-минутным TTL для сессий"
+      rationale: "Баланс между безопасностью и пользовательским опытом, с возможностью продления через heartbeat"
+    - date: 2025-12-28
+      decision: "5-минутное окно для fast reconnect"
+      rationale: "Достаточно для восстановления после сетевых проблем, но не слишком много для безопасности"
+
+implementation:
+  github_issue: 194
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/architecture/queued.yaml
+  blockers: []
+
+history:
+  - version: '1.0.0'
+    date: 2025-12-28
+    author: architect
+    changes: Создание полной архитектуры системы управления сессиями
+
+validation:
+  checksum: ''
+  schema_version: '1.0'
