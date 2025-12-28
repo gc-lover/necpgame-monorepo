@@ -247,34 +247,139 @@ architecture:
       - Сезонные лидерборды
       - Достижения за прохождение с аффиксами
 
+  performance_requirements:
+    latency_targets: |
+      - Применение аффиксов к инстансу: <50ms
+      - Обработка эффектов аффиксов: <10ms per tick
+      - API endpoints: <100ms P95
+      - WebSocket events: <50ms delivery
+
+    throughput_requirements: |
+      - 1000 одновременных инстансов с аффиксами
+      - 10000 аффикс эффектов в секунду
+      - 100000 телеметрия событий в минуту
+
+    memory_usage: |
+      - Affix конфигурации: <10MB total
+      - Per-instance аффиксы: <1KB per instance
+      - Telemetry buffer: <100MB rolling window
+
+  security_considerations:
+    validation: |
+      - Валидация аффиксов на сервере (не доверять клиенту)
+      - Проверка совместимости комбинаций
+      - Защита от аффикс манипуляции
+
+    audit_trail: |
+      - Логирование всех изменений аффиксов
+      - Трекинг применения аффиксов к инстансам
+      - Аудит телеметрии данных
+
+  monitoring_and_observability:
+    metrics_collected: |
+      - Популярность аффиксов (количество использований)
+      - Успешность прохождения по аффиксам
+      - Среднее время прохождения с аффиксами
+      - Количество жалоб на конкретные аффиксы
+      - Производительность системы аффиксов
+
+    alerts_configured: |
+      - Высокая нагрузка на Affix Effect Engine
+      - Низкая успешность прохождения определенных аффиксов
+      - Ошибки применения аффиксов
+      - Проблемы с ротацией аффиксов
+
   technical_tasks:
     phases:
       phase_1:
         name: Affix Manager и Rotation Controller
         tasks:
-          - Реализация Affix Manager
-          - Реализация Affix Rotation Controller
-          - Управление каталогом аффиксов
-          - Еженедельная ротация
-          - Интеграция с World Service
+          - Реализация Affix Manager с CRUD операциями
+          - Реализация Affix Rotation Controller с weekly scheduler
+          - Создание каталога аффиксов с JSON конфигурациями
+          - Еженедельная ротация через cron job
+          - Интеграция с World Service для сезонных аффиксов
+          - Unit тесты для manager и controller
         estimated_effort: 4 days
+        deliverables:
+          - AffixManager interface и implementation
+          - AffixRotationController с scheduling
+          - Database migrations для affix tables
+          - API endpoints для управления аффиксами
 
       phase_2:
         name: Affix Applicator и Effect Engine
         tasks:
-          - Реализация Affix Applicator
-          - Реализация Affix Effect Engine
-          - Применение аффиксов к инстансам
-          - Обработка эффектов в бою
-          - Интеграция с Combat Service
+          - Реализация Affix Applicator с selection algorithm
+          - Реализация Affix Effect Engine с trigger system
+          - Интеграция с Combat Service для damage/healing modifiers
+          - WebSocket синхронизация эффектов аффиксов
+          - Система совместимости аффиксов
+          - Performance optimization для hot paths
         estimated_effort: 5 days
+        deliverables:
+          - AffixApplicator с weighted random selection
+          - AffixEffectEngine с event-driven triggers
+          - Integration tests с Combat Service
+          - Performance benchmarks
 
       phase_3:
         name: Telemetry и балансировка
         tasks:
-          - Реализация Affix Telemetry Collector
-          - Сбор метрик использования
-          - Анализ баланса аффиксов
+          - Реализация Affix Telemetry Collector с async processing
+          - Создание dashboard для анализа аффиксов
+          - A/B testing framework для новых аффиксов
+          - Balance adjustment pipeline на основе телеметрии
           - Интеграция с Analytics Service
+          - Documentation и troubleshooting guides
         estimated_effort: 3 days
+        deliverables:
+          - Telemetry collector с Kafka integration
+          - Analytics dashboard для game designers
+          - Automated balance suggestions
+          - Comprehensive testing suite
+
+  migration_strategy:
+    database_migration: |
+      - Создание таблиц affixes, affix_rotations, instance_affixes, affix_telemetry
+      - Миграция существующих инстансов без аффиксов
+      - Backfill исторических данных ротаций
+
+    api_migration: |
+      - Добавление новых endpoints без breaking changes
+      - Feature flags для постепенного rollout
+      - Backward compatibility для клиентов без аффиксов
+
+    content_migration: |
+      - Обновление существующих рейдов и подземелий
+      - Добавление аффиксов к новым инстансам
+      - UI updates для отображения аффиксов
+
+  testing_strategy:
+    unit_tests: |
+      - Affix selection algorithm tests
+      - Effect engine trigger tests
+      - Rotation controller tests
+      - Compatibility matrix tests
+
+    integration_tests: |
+      - End-to-end инстанс creation с аффиксами
+      - Combat integration с аффикс эффектами
+      - Telemetry pipeline validation
+
+    load_tests: |
+      - 1000 concurrent инстансов с аффиксами
+      - Peak load simulation (10k аффикс эффектов/sec)
+      - Memory leak detection
+
+  rollback_plan:
+    immediate_rollback: |
+      - Feature flag отключения аффиксов
+      - Возврат к оригинальной логике инстансов
+      - Очистка аффикс данных из БД
+
+    gradual_degradation: |
+      - Отключение сложных аффиксов
+      - Fallback на базовые аффиксы
+      - Graceful handling аффикс failures
 

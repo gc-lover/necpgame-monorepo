@@ -618,6 +618,137 @@ func (h *TournamentHandlers) GetLiveResults(w http.ResponseWriter, r *http.Reque
 	h.respondWithJSON(w, http.StatusOK, liveResults)
 }
 
+// SPECTATOR MODE HANDLERS
+// Issue: #2213 - Tournament Spectator Mode Implementation
+
+// JoinSpectatorModeRequest represents request to join spectator mode
+type JoinSpectatorModeRequest struct {
+	PlayerName string `json:"player_name"`
+	ViewMode   string `json:"view_mode,omitempty"` // "free", "follow_player", "follow_team", "overview"
+	IsVIP      bool   `json:"is_vip,omitempty"`
+}
+
+// UpdateSpectatorViewRequest represents request to update spectator view
+type UpdateSpectatorViewRequest struct {
+	ViewMode  string                 `json:"view_mode"`
+	FollowID  string                 `json:"follow_id,omitempty"`
+	CameraPos map[string]interface{} `json:"camera_pos,omitempty"`
+}
+
+// JoinSpectatorMode allows a player to join tournament match as spectator
+func (h *TournamentHandlers) JoinSpectatorMode(w http.ResponseWriter, r *http.Request) {
+	matchIDStr := chi.URLParam(r, "match_id")
+	matchID, err := uuid.Parse(matchIDStr)
+	if err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid match ID")
+		return
+	}
+
+	var req JoinSpectatorModeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// Get player ID from context (set by auth middleware)
+	playerIDStr := r.Context().Value("player_id").(string)
+	playerID, err := uuid.Parse(playerIDStr)
+	if err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid player ID")
+		return
+	}
+
+	// Set default view mode
+	if req.ViewMode == "" {
+		req.ViewMode = "free"
+	}
+
+	spectator, err := h.service.JoinSpectatorMode(r.Context(), matchID, playerID, req.PlayerName, req.ViewMode, req.IsVIP)
+	if err != nil {
+		h.logger.Errorf("Failed to join spectator mode: %v", err)
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, spectator)
+}
+
+// LeaveSpectatorMode allows a spectator to leave the match
+func (h *TournamentHandlers) LeaveSpectatorMode(w http.ResponseWriter, r *http.Request) {
+	spectatorID := chi.URLParam(r, "spectator_id")
+
+	err := h.service.LeaveSpectatorMode(r.Context(), spectatorID)
+	if err != nil {
+		h.logger.Errorf("Failed to leave spectator mode: %v", err)
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, map[string]string{"status": "left"})
+}
+
+// UpdateSpectatorView updates spectator camera position and view mode
+func (h *TournamentHandlers) UpdateSpectatorView(w http.ResponseWriter, r *http.Request) {
+	spectatorID := chi.URLParam(r, "spectator_id")
+
+	var req UpdateSpectatorViewRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	err := h.service.UpdateSpectatorView(r.Context(), spectatorID, req.ViewMode, req.FollowID, req.CameraPos)
+	if err != nil {
+		h.logger.Errorf("Failed to update spectator view: %v", err)
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, map[string]string{"status": "updated"})
+}
+
+// GetMatchSpectators gets all active spectators for a match
+func (h *TournamentHandlers) GetMatchSpectators(w http.ResponseWriter, r *http.Request) {
+	matchIDStr := chi.URLParam(r, "match_id")
+	matchID, err := uuid.Parse(matchIDStr)
+	if err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid match ID")
+		return
+	}
+
+	spectators, err := h.service.GetMatchSpectators(r.Context(), matchID)
+	if err != nil {
+		h.logger.Errorf("Failed to get match spectators: %v", err)
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
+		"match_id":   matchIDStr,
+		"spectators": spectators,
+		"count":      len(spectators),
+	})
+}
+
+// GetSpectatorStats gets spectator statistics for a tournament
+func (h *TournamentHandlers) GetSpectatorStats(w http.ResponseWriter, r *http.Request) {
+	tournamentIDStr := chi.URLParam(r, "tournament_id")
+	tournamentID, err := uuid.Parse(tournamentIDStr)
+	if err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid tournament ID")
+		return
+	}
+
+	stats, err := h.service.GetSpectatorStats(r.Context(), tournamentID)
+	if err != nil {
+		h.logger.Errorf("Failed to get spectator stats: %v", err)
+		h.respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, stats)
+}
+
 // Helper functions
 func (h *TournamentHandlers) respondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
 	response, _ := json.Marshal(payload)

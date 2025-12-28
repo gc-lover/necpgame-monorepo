@@ -76,7 +76,7 @@ type PlayerAchievementProfile struct {
 	TotalPoints            int       `json:"total_points"`
 	RarityBreakdown        map[string]int `json:"rarity_breakdown"`
 	CategoryBreakdown      map[string]int `json:"category_breakdown"`
-	RecentAchievements     []PlayerAchievement `json:"recent_achievements"`
+	RecentAchievements     []*PlayerAchievement `json:"recent_achievements"`
 	AchievementStreak      int       `json:"achievement_streak"`
 	LastAchievementDate    *time.Time `json:"last_achievement_date"`
 }

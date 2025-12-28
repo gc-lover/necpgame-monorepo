@@ -1,177 +1,339 @@
 metadata:
   id: time-trials-system-architecture
-  title: Архитектура системы временных испытаний (Time Trials)
+  title: "Архитектура системы временных испытаний (Time Trials)"
   document_type: architecture
   category: systems
-  status: draft
+  status: final
   version: "1.0.0"
-  last_updated: 2025-12-XXT00:00:00Z
+  last_updated: 2025-12-28T13:30:00Z
   owners:
     - role: architect
       contact: architect@necp.game
   tags:
     - architecture
     - gameplay
-    - time-trials
-    - speedrun
     - competitive
-    - hardcore
+    - time-trials
+    - leaderboards
+    - speedrun
   related_systems:
     - gameplay-service
     - leaderboard-service
     - achievement-service
+    - analytics-service
+    - realtime-gateway
   related_documents:
-    - id: time-trials-idea
+    - id: time-trials-system-idea
       relation: implements
-  github_issue: 1498
+    - id: raid-dungeon-affixes-system-architecture
+      relation: extends
+  github_issue: 1508
   visibility: internal
   audience:
     - architect
     - backend
-    - gameplay
-    - api-designer
+    - game-designer
+    - qa
 
 summary:
   problem: |
     Не хватает соревновательных элементов, связанных со скоростью прохождения контента.
-    Игроки не имеют возможности соревноваться в скорости прохождения рейдов и подземелий.
+    Требуется система для соревнования в скорости прохождения рейдов и подземелий.
   goal: |
-    Создать архитектуру временных испытаний, которая:
-    - Предоставляет соревнование на скорость прохождения
-    - Интегрируется с системой лидербордов
-    - Награждает игроков за рекорды
-    - Поддерживает еженедельные испытания
+    Создать архитектуру системы временных испытаний с соревновательными элементами,
+    лидербордами, наградами и еженедельными испытаниями.
   essence: |
-    Система временных испытаний позволяет игрокам соревноваться в скорости прохождения
-    рейдов, подземелий и других контентов. Результаты отслеживаются в лидербордах.
+    Полная архитектура системы временных испытаний для соревнования на скорость
+    с трекингом времени, валидацией результатов, лидербордами и наградами.
 
 architecture:
   overview: |
     Система временных испытаний состоит из следующих компонентов:
-    1. Time Trial Manager - управление временными испытаниями
-    2. Timer Controller - отслеживание времени прохождения
-    3. Validation Engine - валидация результатов
-    4. Leaderboard Updater - обновление лидербордов
-    5. Weekly Challenge Manager - управление еженедельными испытаниями
+    1. Time Trial Manager - управление испытаниями и их конфигурациями
+    2. Timer Engine - точный трекинг времени прохождения
+    3. Validation Engine - валидация результатов и анти-чит защита
+    4. Leaderboard Engine - управление рейтингами и рекордами
+    5. Reward Distributor - распределение наград
+    6. Analytics Collector - сбор телеметрии и статистики
 
   microservices:
     - name: gameplay-service
       port: 8083
       responsibility: |
-        Обработка временных испытаний:
-        - Отслеживание времени прохождения
+        Управление временными испытаниями:
+        - Создание и управление испытаниями
+        - Трекинг времени прохождения
         - Валидация результатов
-        - Применение бонусов
+        - Интеграция с игровым процессом
       components:
         - time-trial-manager: управление испытаниями
-        - timer-controller: отслеживание времени
-        - validation-engine: валидация результатов
-        - weekly-challenge-manager: управление еженедельными испытаниями
+        - timer-engine: точный трекинг времени
+        - validation-engine: проверка результатов
+        - reward-distributor: распределение наград
       endpoints:
-        - POST /api/v1/gameplay/time-trials/start - начало испытания
-        - POST /api/v1/gameplay/time-trials/complete - завершение с временем
-        - GET /api/v1/gameplay/time-trials/weekly/current - текущее испытание
-        - GET /api/v1/gameplay/time-trials/weekly/history - история испытаний
+        # Public endpoints
+        - POST /api/v1/gameplay/time-trials/start - начало временного испытания
+        - POST /api/v1/gameplay/time-trials/complete - завершение испытания с временем
+        - GET /api/v1/gameplay/time-trials/active - список активных испытаний
+        - GET /api/v1/gameplay/time-trials/{id} - информация об испытании
+        - GET /api/v1/gameplay/time-trials/history - история прохождений игрока
+
+        # Admin endpoints
+        - POST /api/v1/gameplay/time-trials - создание нового испытания
+        - PUT /api/v1/gameplay/time-trials/{id} - обновление испытания
+        - DELETE /api/v1/gameplay/time-trials/{id} - удаление испытания
+
       websocket_channels:
-        - wss://api.necp.game/v1/gameplay/time-trials/{trialId} - события испытания
+        - wss://api.necp.game/v1/gameplay/time-trials/live - live обновления рекордов
+        - wss://api.necp.game/v1/gameplay/time-trials/{trialId} - статус конкретного испытания
+
       events_published:
+        - gameplay.time-trials.started: начало испытания
         - gameplay.time-trials.completed: завершение испытания
         - gameplay.time-trials.record.broken: новый рекорд
-        - gameplay.time-trials.telemetry: телеметрия
+        - gameplay.time-trials.reward.earned: получение награды
+        - gameplay.time-trials.validation.failed: провал валидации
+
+    - name: leaderboard-service
+      port: 8084
+      responsibility: |
+        Управление рейтингами и рекордами:
+        - Глобальные и персональные лидерборды
+        - Сезонные рейтинги
+        - Кэширование и оптимизация запросов
+      components:
+        - global-leaderboard-engine: глобальные рейтинги
+        - personal-leaderboard-engine: персональные рекорды
+        - seasonal-leaderboard-engine: сезонные рейтинги
+      endpoints:
+        - GET /api/v1/leaderboard/time-trials/{type} - получение лидерборда
+        - GET /api/v1/leaderboard/time-trials/{type}/player/{playerId} - позиция игрока
+        - GET /api/v1/leaderboard/time-trials/seasonal/{seasonId} - сезонный лидерборд
+        - GET /api/v1/leaderboard/time-trials/personal/{playerId} - персональные рекорды
 
   data_flows:
-    time_trial_start_flow: |
-      1. Игрок начинает временное испытание
+    time_trial_execution_flow: |
+      1. Игрок выбирает испытание и нажимает "Start"
       2. Time Trial Manager создает сессию испытания
-      3. Timer Controller запускает отсчет времени
+      3. Timer Engine начинает отсчет времени (серверное время)
       4. Gameplay Service публикует событие gameplay.time-trials.started
-      5. Realtime Gateway отправляет информацию об испытании клиентам
+      5. Во время прохождения Timer Engine отслеживает прогресс
+      6. При завершении Timer Engine фиксирует финальное время
+      7. Validation Engine проверяет результат на валидность
+      8. Leaderboard Engine обновляет рейтинги
+      9. Reward Distributor начисляет награды
+      10. Analytics Collector сохраняет телеметрию
 
-    time_trial_complete_flow: |
-      1. Игрок завершает контент
-      2. Timer Controller останавливает отсчет времени
-      3. Validation Engine проверяет валидность результата
-      4. Time Trial Manager сохраняет результат
-      5. Leaderboard Updater обновляет лидерборды
-      6. При новом рекорде Achievement Service выдает достижения
-      7. Gameplay Service публикует событие gameplay.time-trials.completed
+    leaderboard_update_flow: |
+      1. После успешной валидации результата
+      2. Leaderboard Engine получает обновление
+      3. Проверяется, побит ли рекорд
+      4. Обновляются глобальные и персональные лидерборды
+      5. Кэши инвалидируются при необходимости
+      6. WebSocket уведомления рассылаются подписчикам
+      7. Achievement Service проверяет достижения
+
+    reward_distribution_flow: |
+      1. Reward Distributor получает событие завершения
+      2. Определяется тип награды (позиция, улучшение, участие)
+      3. Проверяется eligibility игрока
+      4. Начисляются награды в соответствующие системы
+      5. Achievement Service получает уведомление
+      6. Игрок получает WebSocket уведомление
 
   database_structure:
     tables:
-      - name: time_trial_sessions
-        description: Сессии временных испытаний
+      - name: time_trials
+        description: Каталог временных испытаний
         columns:
           - id: UUID PRIMARY KEY
-          - trial_type: VARCHAR(100)
-          - content_id: UUID FOREIGN KEY
-          - player_id: UUID FOREIGN KEY
-          - team_id: UUID FOREIGN KEY (nullable)
+          - name: VARCHAR(255)
+          - description: TEXT
+          - content_type: ENUM (raid, dungeon, challenge)
+          - content_id: UUID
+          - target_time: INTERVAL
+          - bronze_time: INTERVAL
+          - silver_time: INTERVAL
+          - gold_time: INTERVAL
+          - platinum_time: INTERVAL
+          - min_players: INTEGER
+          - max_players: INTEGER
+          - is_active: BOOLEAN
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+
+      - name: time_trial_sessions
+        description: Активные сессии испытаний
+        columns:
+          - id: UUID PRIMARY KEY
+          - trial_id: UUID FOREIGN KEY
+          - player_id: UUID
+          - group_id: UUID (nullable)
           - start_time: TIMESTAMP
           - end_time: TIMESTAMP (nullable)
-          - completion_time: INTEGER (nullable)
-          - status: ENUM (in_progress, completed, failed)
+          - final_time: INTERVAL (nullable)
+          - status: ENUM (active, completed, failed, invalidated)
+          - validation_status: ENUM (pending, valid, invalid)
+          - telemetry_data: JSONB
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
 
       - name: time_trial_records
-        description: Рекорды временных испытаний
+        description: Рекорды прохождения
         columns:
           - id: UUID PRIMARY KEY
-          - trial_type: VARCHAR(100)
-          - content_id: UUID FOREIGN KEY
-          - player_id: UUID FOREIGN KEY
-          - team_id: UUID FOREIGN KEY (nullable)
-          - completion_time: INTEGER
-          - rank: INTEGER
-          - validated: BOOLEAN
-          - created_at: TIMESTAMP
+          - trial_id: UUID FOREIGN KEY
+          - player_id: UUID
+          - group_id: UUID (nullable)
+          - record_time: INTERVAL
+          - rank_global: INTEGER
+          - rank_seasonal: INTEGER
+          - is_season_best: BOOLEAN
+          - validation_hash: VARCHAR(64)
+          - recorded_at: TIMESTAMP
 
-      - name: weekly_time_challenges
-        description: Еженедельные испытания
+      - name: time_trial_leaderboards
+        description: Кэшированные лидерборды
         columns:
           - id: UUID PRIMARY KEY
-          - week_start: TIMESTAMP
-          - week_end: TIMESTAMP
-          - challenge_type: VARCHAR(100)
-          - content_id: UUID FOREIGN KEY
-          - conditions: JSONB
-          - rewards: JSONB
-          - created_at: TIMESTAMP
+          - trial_id: UUID FOREIGN KEY
+          - leaderboard_type: ENUM (global, seasonal, personal)
+          - period_start: TIMESTAMP
+          - period_end: TIMESTAMP
+          - top_records: JSONB
+          - total_participants: INTEGER
+          - last_updated: TIMESTAMP
+
+      - name: time_trial_rewards
+        description: История наград
+        columns:
+          - id: UUID PRIMARY KEY
+          - session_id: UUID FOREIGN KEY
+          - player_id: UUID
+          - reward_type: ENUM (position, improvement, participation)
+          - reward_data: JSONB
+          - claimed_at: TIMESTAMP
 
   integrations:
-    leaderboard_service: |
-      - Обновление лидербордов по времени
-      - Рейтинги игроков
-      - История рекордов
+    realtime_gateway: |
+      - WebSocket синхронизация времени
+      - Live обновления лидербордов
+      - Push уведомления о рекордах
+      - Real-time статус испытаний
 
     achievement_service: |
-      - Отслеживание достижений
-      - Выдача титулов
-      - Уведомления о рекордах
+      - Автоматическое получение достижений
+      - Прогресс по коллекциям
+      - Специальные награды за комбо
+
+    analytics_service: |
+      - Детальная телеметрия прохождений
+      - Анализ паттернов поведения
+      - Метрики вовлеченности
+      - A/B тестирование баланса
+
+  technical_requirements:
+    timing_precision: |
+      - Точность до 10мс на сервере
+      - Синхронизация с NTP серверами
+      - Компенсация сетевых задержек
+      - Предиктивная синхронизация
+
+    performance_targets: |
+      - Создание сессии: <50ms
+      - Валидация результата: <100ms
+      - Обновление лидерборда: <200ms
+      - API responses: <50ms P95
+
+    scalability_requirements: |
+      - 10000 одновременных активных сессий
+      - 100000 результатов в час
+      - 1000000 просмотров лидербордов в час
+
+  security_considerations:
+    anti_cheat_protection: |
+      - Серверная валидация всех таймингов
+      - Детекция speed hacking
+      - Проверка маршрутов прохождения
+      - Защита от replay attacks
+
+    data_integrity: |
+      - Криптографические хэши результатов
+      - Неизменяемость исторических данных
+      - Аудит всех изменений рекордов
+
+  monitoring_and_alerts:
+    key_metrics: |
+      - Количество активных сессий
+      - Среднее время валидации
+      - Количество подозрительных результатов
+      - Производительность лидербордов
+      - Уровень удовлетворенности игроков
+
+    alert_conditions: |
+      - Задержки валидации > 500ms
+      - Количество invalid результатов > 5%
+      - Проблемы с синхронизацией времени
+      - Высокая нагрузка на БД
 
   technical_tasks:
     phases:
       phase_1:
-        name: Time Trial Manager и Timer Controller
+        name: Time Trial Manager и Timer Engine
         tasks:
           - Реализация Time Trial Manager
-          - Реализация Timer Controller
-          - Отслеживание времени прохождения
-          - Интеграция с Gameplay Service
-        estimated_effort: 3 days
+          - Реализация Timer Engine с NTP синхронизацией
+          - Создание API для управления испытаниями
+          - Интеграция с gameplay сессиями
+          - Unit тесты для timing accuracy
+        estimated_effort: 5 days
 
       phase_2:
-        name: Validation Engine и Leaderboard Integration
+        name: Validation Engine и Leaderboard Engine
         tasks:
-          - Реализация Validation Engine
-          - Валидация результатов
-          - Интеграция с Leaderboard Service
-          - Обновление лидербордов
-        estimated_effort: 3 days
+          - Реализация Validation Engine с anti-cheat
+          - Реализация Leaderboard Engine с кэшированием
+          - Создание алгоритмов ранжирования
+          - WebSocket интеграция для live updates
+          - Performance тестирование
+        estimated_effort: 6 days
 
       phase_3:
-        name: Weekly Challenge Manager
+        name: Reward System и Analytics
         tasks:
-          - Реализация Weekly Challenge Manager
-          - Управление еженедельными испытаниями
-          - Интеграция с World Service
-        estimated_effort: 2 days
+          - Реализация Reward Distributor
+          - Интеграция с Achievement Service
+          - Реализация Analytics Collector
+          - Создание dashboard для метрик
+          - End-to-end тестирование
+        estimated_effort: 4 days
 
+  migration_strategy:
+    zero_downtime_deployment: |
+      - Feature flags для постепенного rollout
+      - Backward compatibility с существующими системами
+      - Gradual migration of existing time-based content
+
+    database_migration: |
+      - Создание новых таблиц без foreign key constraints
+      - Backfill исторических данных из gameplay logs
+      - Incremental migration с validation
+
+  testing_strategy:
+    unit_tests: |
+      - Timer precision tests
+      - Validation algorithm tests
+      - Leaderboard ranking tests
+      - Reward calculation tests
+
+    integration_tests: |
+      - End-to-end trial completion flow
+      - Leaderboard update verification
+      - Reward distribution validation
+      - WebSocket event delivery
+
+    load_tests: |
+      - 1000 concurrent trials
+      - 10000 leaderboard requests per minute
+      - Memory usage under sustained load
+      - Database performance with high write load

@@ -169,6 +169,13 @@ func setupRouter(handlers *handlers.TournamentHandlers, metrics *metrics.Collect
 		r.Get("/live/tournaments", handlers.GetLiveTournaments)
 		r.Get("/live/matches", handlers.GetLiveMatches)
 		r.Get("/live/results/{tournamentId}", handlers.GetLiveResults)
+
+		// Spectator mode - NEW
+		r.Post("/matches/{match_id}/spectator/join", handlers.JoinSpectatorMode)
+		r.Post("/spectators/{spectator_id}/leave", handlers.LeaveSpectatorMode)
+		r.Put("/spectators/{spectator_id}/view", handlers.UpdateSpectatorView)
+		r.Get("/matches/{match_id}/spectators", handlers.GetMatchSpectators)
+		r.Get("/tournaments/{tournament_id}/spectator-stats", handlers.GetSpectatorStats)
 	})
 
 	return r
