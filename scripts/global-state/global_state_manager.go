@@ -446,10 +446,77 @@ func (gsm *GlobalStateManager) GetGameState(gameID string) (*GameState, error) {
 	return nil, errorhandling.NewNotFoundError("GAME_STATE_NOT_FOUND", "Game state not found")
 }
 
-// UpdateGameState updates a game's state
+// UpdateGameState updates a game's state with sharded storage
 func (gsm *GlobalStateManager) UpdateGameState(gameID string, updateFunc func(*GameState) *GameState) error {
 	atomic.AddInt64(&gsm.operationsCount, 1)
 
+	if !gsm.config.EnableSharding {
+		// Fallback to old method for backward compatibility
+		return gsm.updateGameStateLegacy(gameID, updateFunc)
+	}
+
+	// Use sharded storage with fine-grained locking
+	shardIndex := gsm.getGameShardIndex(gameID)
+	shard := gsm.gameStateShards[shardIndex]
+
+	// Acquire shard lock for atomic operations
+	gsm.gameLocks[shardIndex].Lock()
+	defer gsm.gameLocks[shardIndex].Unlock()
+
+	var newState *GameState
+
+	// Try to load existing state from shard
+	if value, ok := shard.Load(gameID); ok {
+		currentState := value.(*GameState)
+		newState = updateFunc(currentState)
+	} else {
+		// Create new game state if not exists
+		newState = updateFunc(&GameState{
+			GameID:     gameID,
+			Status:     GameStatusWaiting,
+			Players:    []string{},
+			Score:      make(map[string]int),
+			Settings:   make(map[string]interface{}),
+			LastUpdate: time.Now(),
+			Version:    1,
+		})
+	}
+
+	if newState == nil {
+		return errorhandling.NewValidationError("INVALID_UPDATE", "Update function returned nil")
+	}
+
+	// Update version and timestamp
+	newState.Version++
+	newState.LastUpdate = time.Now()
+	newState.GameID = gameID
+
+	// Store updated state in shard
+	shard.Store(gameID, newState)
+
+	// Send update event asynchronously to avoid blocking
+	update := &StateUpdate{
+		Type:      UpdateTypeUpdate,
+		EntityID:  gameID,
+		StateType: StateTypeGame,
+		Data:      newState,
+		Timestamp: newState.LastUpdate,
+		Priority:  UpdatePriorityHigh,
+	}
+
+	// Send to worker pool for async processing
+	select {
+	case gsm.workerPool <- func() { gsm.sendStateUpdate(update) }:
+	default:
+		// If worker pool is full, send synchronously (fallback)
+		gsm.sendStateUpdate(update)
+	}
+
+	return nil
+}
+
+// updateGameStateLegacy maintains backward compatibility
+func (gsm *GlobalStateManager) updateGameStateLegacy(gameID string, updateFunc func(*GameState) *GameState) error {
 	var newState *GameState
 
 	if value, ok := gsm.gameStates.Load(gameID); ok {
