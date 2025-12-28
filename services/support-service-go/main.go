@@ -13,6 +13,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
+
+	"support-service-go/internal/wiring"
 	"support-service-go/server"
 )
 
@@ -29,8 +33,32 @@ func main() {
 	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// Initialize database connection if DATABASE_URL is provided
+	var db *pgxpool.Pool
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		var err error
+		db, err = pgxpool.New(context.Background(), dbURL)
+		if err != nil {
+			logger.Fatalf("Failed to connect to database: %v", err)
+		}
+		defer db.Close()
+	}
+
+	// Initialize structured logger
+	zapLogger, err := zap.NewProduction()
+	if err != nil {
+		logger.Fatalf("Failed to create logger: %v", err)
+	}
+	defer zapLogger.Sync()
+
+	// Initialize SLA components
+	slaHandlers, err := wiring.WireComponents(db, zapLogger)
+	if err != nil {
+		logger.Fatalf("Failed to initialize SLA components: %v", err)
+	}
+
 	// PERFORMANCE: Initialize service with memory pooling
-	svc := server.NewServer(nil, nil, nil)
+	svc := server.NewServer(db, zapLogger, slaHandlers)
 
 	// PERFORMANCE: Configure HTTP server with optimized settings
 	httpServer := &http.Server{

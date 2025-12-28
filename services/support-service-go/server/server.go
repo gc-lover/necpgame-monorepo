@@ -17,6 +17,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
+	"support-service-go/internal/handlers"
 	"support-service-go/pkg/api"
 )
 
@@ -25,6 +26,7 @@ type Server struct {
 	db             *pgxpool.Pool
 	logger         *zap.Logger
 	tokenAuth      interface{} // JWT auth interface
+	slaHandlers    *handlers.SLAHandlers
 
 	// PERFORMANCE: Memory pools for zero allocations in hot support paths
 	ticketPool     sync.Pool
@@ -33,11 +35,11 @@ type Server struct {
 }
 
 // NewServer creates a new server instance with optimized pools for support operations
-func NewServer(db *pgxpool.Pool, logger *zap.Logger, tokenAuth interface{}) *Server {
+func NewServer(db *pgxpool.Pool, logger *zap.Logger, slaHandlers *handlers.SLAHandlers) *Server {
 	s := &Server{
-		db:        db,
-		logger:    logger,
-		tokenAuth: tokenAuth,
+		db:          db,
+		logger:      logger,
+		slaHandlers: slaHandlers,
 	}
 
 	// Initialize memory pools for performance optimization
@@ -99,71 +101,26 @@ func extractTicketIDFromPath(path string) string {
 
 // handleGetTicketSLA handles SLA status retrieval for a ticket
 func (s *Server) handleGetTicketSLA(w http.ResponseWriter, r *http.Request) {
-	// Extract ticket ID from path
-	ticketIDStr := extractTicketIDFromPath(r.URL.Path)
-	if ticketIDStr == "" {
-		s.writeErrorResponse(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid ticket ID in path")
+	// Use real SLA handlers if available
+	if s.slaHandlers != nil {
+		s.slaHandlers.GetTicketSLA(w, r)
 		return
 	}
 
-	// Parse UUID
-	ticketID, err := uuid.Parse(ticketIDStr)
-	if err != nil {
-		s.logger.Error("Invalid ticket ID format",
-			zap.String("ticket_id", ticketIDStr),
-			zap.Error(err))
-		s.writeErrorResponse(w, http.StatusBadRequest, "INVALID_TICKET_ID", "Invalid ticket ID format")
-		return
-	}
-
-	// TODO: Implement SLA status retrieval
-	// For now, return mock response
-	mockResponse := map[string]interface{}{
-		"ticketId":               ticketID.String(),
-		"priority":               "NORMAL",
-		"firstResponseTarget":    time.Now().Add(24 * time.Hour),
-		"resolutionTarget":       time.Now().Add(5 * 24 * time.Hour),
-		"timeUntilFirstResponse": 86400, // 24 hours in seconds
-		"timeUntilResolution":    345600, // 4 days in seconds
-		"message":               "SLA endpoint implemented but using mock data",
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(mockResponse)
+	// Fallback to mock if SLA handlers not initialized
+	s.writeErrorResponse(w, http.StatusServiceUnavailable, "SLA_SERVICE_UNAVAILABLE", "SLA service not initialized")
 }
 
 // handleGetSLAViolations handles SLA violations retrieval
 func (s *Server) handleGetSLAViolations(w http.ResponseWriter, r *http.Request) {
-	// Parse query parameters
-	limit := 20
-	offset := 0
-
-	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 100 {
-			limit = parsedLimit
-		}
+	// Use real SLA handlers if available
+	if s.slaHandlers != nil {
+		s.slaHandlers.GetSLAViolations(w, r)
+		return
 	}
 
-	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
-		if parsedOffset, err := strconv.Atoi(offsetStr); err == nil && parsedOffset >= 0 {
-			offset = parsedOffset
-		}
-	}
-
-	// TODO: Implement SLA violations retrieval
-	// For now, return mock response
-	mockResponse := map[string]interface{}{
-		"items": []map[string]interface{}{},
-		"total": 0,
-		"limit": limit,
-		"offset": offset,
-		"message": "SLA violations endpoint implemented but using mock data",
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(mockResponse)
+	// Fallback to mock if SLA handlers not initialized
+	s.writeErrorResponse(w, http.StatusServiceUnavailable, "SLA_SERVICE_UNAVAILABLE", "SLA service not initialized")
 }
 
 // writeErrorResponse writes error response
