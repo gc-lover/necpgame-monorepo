@@ -1,0 +1,199 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      golang: 1.21
+      nodejs: 18
+    commands:
+      - echo "Installing dependencies..."
+      - go mod download
+      - npm install -g serverless serverless-domain-manager serverless-offline
+
+  pre_build:
+    commands:
+      - echo "Running pre-build checks..."
+      - go vet ./...
+      - go fmt ./...
+      - go test ./... -v
+
+  build:
+    commands:
+      - echo "Building Lambda functions..."
+      # Build achievement-service
+      - cd services/achievement-service-go && go build -ldflags="-s -w" -o bootstrap main.go
+      - zip -r ../../build/achievement-service.zip bootstrap
+      # Build quest-service
+      - cd ../quest-service-go && go build -ldflags="-s -w" -o bootstrap main.go
+      - zip -r ../../build/quest-service.zip bootstrap
+      # Build inventory-service
+      - cd ../inventory-service-go && go build -ldflags="-s -w" -o bootstrap main.go
+      - zip -r ../../build/inventory-service.zip bootstrap
+      # Build economy-service
+      - cd ../economy-service-go && go build -ldflags="-s -w" -o bootstrap main.go
+      - zip -r ../../build/economy-service.zip bootstrap
+      # Build combat-stats-service
+      - cd ../combat-stats-service-go && go build -ldflags="-s -w" -o bootstrap main.go
+      - zip -r ../../build/combat-stats-service.zip bootstrap
+      # Build analytics-service
+      - cd ../analytics-dashboard-service-go && go build -ldflags="-s -w" -o bootstrap main.go
+      - zip -r ../../build/analytics-service.zip bootstrap
+
+  post_build:
+    commands:
+      - echo "Generating deployment artifacts..."
+      - mkdir -p artifacts
+      # Create CloudFormation template for Lambda deployment
+      - |
+        cat > artifacts/template.yaml << EOF
+        AWSTemplateFormatVersion: '2010-09-09'
+        Transform: AWS::Serverless-2016-10-31
+        Description: NECPGAME Serverless Lambda Functions
+
+        Globals:
+          Function:
+            Timeout: 30
+            MemorySize: 1024
+            Runtime: provided.al2
+            Architectures:
+              - x86_64
+            Environment:
+              Variables:
+                DATABASE_URL: !Ref DatabaseURL
+                REDIS_URL: !Ref RedisURL
+                JWT_SECRET: !Ref JWTSecret
+                KAFKA_BROKERS: !Ref KafkaBrokers
+
+        Parameters:
+          DatabaseURL:
+            Type: String
+            Description: PostgreSQL connection URL
+          RedisURL:
+            Type: String
+            Description: Redis connection URL
+          JWTSecret:
+            Type: String
+            Description: JWT secret key
+          KafkaBrokers:
+            Type: String
+            Description: Kafka brokers URL
+
+        Resources:
+          AchievementServiceFunction:
+            Type: AWS::Serverless::Function
+            Properties:
+              FunctionName: necpgame-achievement-service
+              CodeUri: ../build/achievement-service.zip
+              Handler: bootstrap
+              Events:
+                ApiEvent:
+                  Type: Api
+                  Properties:
+                    Path: /achievement
+                    Method: POST
+                    RestApiId: !Ref ApiGateway
+
+          QuestServiceFunction:
+            Type: AWS::Serverless::Function
+            Properties:
+              FunctionName: necpgame-quest-service
+              CodeUri: ../build/quest-service.zip
+              Handler: bootstrap
+              Events:
+                ApiEvent:
+                  Type: Api
+                  Properties:
+                    Path: /quest
+                    Method: POST
+                    RestApiId: !Ref ApiGateway
+
+          InventoryServiceFunction:
+            Type: AWS::Serverless::Function
+            Properties:
+              FunctionName: necpgame-inventory-service
+              CodeUri: ../build/inventory-service.zip
+              Handler: bootstrap
+              Events:
+                ApiEvent:
+                  Type: Api
+                  Properties:
+                    Path: /inventory
+                    Method: POST
+                    RestApiId: !Ref ApiGateway
+
+          EconomyServiceFunction:
+            Type: AWS::Serverless::Function
+            Properties:
+              FunctionName: necpgame-economy-service
+              CodeUri: ../build/economy-service.zip
+              Handler: bootstrap
+              Events:
+                ApiEvent:
+                  Type: Api
+                  Properties:
+                    Path: /economy
+                    Method: POST
+                    RestApiId: !Ref ApiGateway
+
+          CombatStatsServiceFunction:
+            Type: AWS::Serverless::Function
+            Properties:
+              FunctionName: necpgame-combat-stats-service
+              CodeUri: ../build/combat-stats-service.zip
+              Handler: bootstrap
+              Events:
+                ApiEvent:
+                  Type: Api
+                  Properties:
+                    Path: /combat
+                    Method: POST
+                    RestApiId: !Ref ApiGateway
+
+          AnalyticsServiceFunction:
+            Type: AWS::Serverless::Function
+            Properties:
+              FunctionName: necpgame-analytics-service
+              CodeUri: ../build/analytics-service.zip
+              Handler: bootstrap
+              Events:
+                ApiEvent:
+                  Type: Api
+                  Properties:
+                    Path: /analytics
+                    Method: POST
+                    RestApiId: !Ref ApiGateway
+
+          ApiGateway:
+            Type: AWS::Serverless::Api
+            Properties:
+              Name: necpgame-serverless-api
+              StageName: prod
+              Cors:
+                AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+                AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                AllowOrigin: "'*'"
+
+        Outputs:
+          AchievementServiceArn:
+            Description: Achievement Service Lambda ARN
+            Value: !GetAtt AchievementServiceFunction.Arn
+            Export:
+              Name: AchievementServiceArn
+
+          ApiGatewayUrl:
+            Description: API Gateway URL
+            Value: !Sub "https://\${ApiGateway}.execute-api.\${AWS::Region}.amazonaws.com/prod"
+            Export:
+              Name: ApiGatewayUrl
+        EOF
+
+artifacts:
+  files:
+    - artifacts/template.yaml
+    - build/achievement-service.zip
+    - build/quest-service.zip
+    - build/inventory-service.zip
+    - build/economy-service.zip
+    - build/combat-stats-service.zip
+    - build/analytics-service.zip
+  discard-paths: no

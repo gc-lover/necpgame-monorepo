@@ -1,0 +1,428 @@
+# AWS Serverless Application Model (SAM) template for NECPGAME
+# Enterprise-grade serverless infrastructure for MMOFPS RPG
+
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'NECPGAME Serverless Infrastructure - AWS Lambda + API Gateway'
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: go1.x
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        STAGE: !Ref Stage
+        REGION: !Ref AWS::Region
+        DATABASE_URL: !Ref DatabaseURL
+        REDIS_URL: !Ref RedisURL
+        JWT_SECRET: !Ref JWTSecret
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Deployment stage
+
+  DatabaseURL:
+    Type: String
+    Description: PostgreSQL database connection string
+    Default: postgres://user:password@host:5432/necpgame
+
+  RedisURL:
+    Type: String
+    Description: Redis connection URL
+    Default: redis://host:6379
+
+  JWTSecret:
+    Type: String
+    Description: JWT signing secret
+    NoEcho: true
+
+Resources:
+  # API Gateway
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub necpgame-api-${Stage}
+      StageName: !Ref Stage
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: JWTAuth
+        Authorizers:
+          JWTAuth:
+            FunctionArn: !GetAtt JWTValidatorFunction.Arn
+
+  # Lambda Functions
+
+  # Authentication Service
+  AuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub necpgame-auth-${Stage}
+      CodeUri: services/auth-service-go/
+      Handler: main
+      Events:
+        Login:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /auth/login
+            Method: post
+        Register:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /auth/register
+            Method: post
+        Validate:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /auth/validate
+            Method: post
+
+  # Real-time Combat Service
+  CombatFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub necpgame-combat-${Stage}
+      CodeUri: services/realtime-combat-service-go/
+      Handler: main
+      MemorySize: 1024
+      Events:
+        CombatState:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /combat/{sessionId}/state
+            Method: get
+        DamageReport:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /combat/{sessionId}/damage
+            Method: post
+        AntiCheat:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /combat/anticheat/events
+            Method: post
+
+  # Tournament Spectator Service
+  SpectatorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub necpgame-spectator-${Stage}
+      CodeUri: services/tournament-spectator-service-go/
+      Handler: main
+      Events:
+        Spectate:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /tournaments/{tournamentId}/spectate
+            Method: get
+        JoinSpectator:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /spectator/sessions
+            Method: post
+
+  # Analytics Service
+  AnalyticsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub necpgame-analytics-${Stage}
+      CodeUri: services/game-analytics-dashboard-service-go/
+      Handler: main
+      Events:
+        Dashboard:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /analytics/dashboard
+            Method: get
+        PlayerStats:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /analytics/players/{playerId}
+            Method: get
+
+  # Quest Service
+  QuestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub necpgame-quest-${Stage}
+      CodeUri: services/dynamic-quests-service-go/
+      Handler: main
+      Events:
+        GetQuests:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /quests
+            Method: get
+        QuestProgress:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /quests/{questId}/progress
+            Method: post
+
+  # WebRTC Signaling Service
+  WebRTCFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub necpgame-webrtc-${Stage}
+      CodeUri: services/webrtc-signaling-service-go/
+      Handler: main
+      Events:
+        Signaling:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /webrtc/signaling
+            Method: post
+
+  # JWT Validator Lambda@Edge
+  JWTValidatorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub necpgame-jwt-validator-${Stage}
+      CodeUri: scripts/
+      Handler: validate-jwt.handler
+      Runtime: nodejs18.x
+
+  # DynamoDB Tables for Serverless Data
+
+  # Combat Sessions Table
+  CombatSessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub necpgame-combat-sessions-${Stage}
+      AttributeDefinitions:
+        - AttributeName: session_id
+          AttributeType: S
+        - AttributeName: player_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: session_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: PlayerIndex
+          KeySchema:
+            - AttributeName: player_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          BillingMode: PAY_PER_REQUEST
+      BillingMode: PAY_PER_REQUEST
+
+  # Spectator Sessions Table
+  SpectatorSessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub necpgame-spectator-sessions-${Stage}
+      AttributeDefinitions:
+        - AttributeName: session_id
+          AttributeType: S
+        - AttributeName: tournament_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: session_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: TournamentIndex
+          KeySchema:
+            - AttributeName: tournament_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          BillingMode: PAY_PER_REQUEST
+      BillingMode: PAY_PER_REQUEST
+
+  # Player Analytics Table
+  PlayerAnalyticsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub necpgame-player-analytics-${Stage}
+      AttributeDefinitions:
+        - AttributeName: player_id
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: player_id
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
+  # SQS Queues for Event Processing
+
+  # Combat Events Queue
+  CombatEventsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub necpgame-combat-events-${Stage}
+      VisibilityTimeout: 300
+      MessageRetentionPeriod: 86400
+
+  # Analytics Events Queue
+  AnalyticsEventsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub necpgame-analytics-events-${Stage}
+      VisibilityTimeout: 300
+      MessageRetentionPeriod: 86400
+
+  # Event Processing Lambda
+  EventProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub necpgame-event-processor-${Stage}
+      CodeUri: services/event-processing-service-go/
+      Handler: main
+      Events:
+        CombatEvents:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt CombatEventsQueue.Arn
+            BatchSize: 10
+        AnalyticsEvents:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt AnalyticsEventsQueue.Arn
+            BatchSize: 10
+
+  # WebSocket API for Real-time Features
+  WebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub necpgame-websocket-${Stage}
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: $request.body.type
+
+  WebSocketConnectionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub necpgame-websocket-connections-${Stage}
+      AttributeDefinitions:
+        - AttributeName: connection_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: connection_id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  # WebSocket Handler Lambda
+  WebSocketHandlerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub necpgame-websocket-handler-${Stage}
+      CodeUri: services/ws-lobby-go/
+      Handler: main
+      Events:
+        Connect:
+          Type: Api
+          Properties:
+            ApiId: !Ref WebSocketApi
+            Route: $connect
+        Disconnect:
+          Type: Api
+          Properties:
+            ApiId: !Ref WebSocketApi
+            Route: $disconnect
+        CombatUpdate:
+          Type: Api
+          Properties:
+            ApiId: !Ref WebSocketApi
+            Route: combat.update
+        SpectatorChat:
+          Type: Api
+          Properties:
+            ApiId: !Ref WebSocketApi
+            Route: spectator.chat
+
+  # CloudWatch Alarms for Monitoring
+
+  # High Error Rate Alarm
+  ErrorRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub necpgame-error-rate-${Stage}
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 300
+      Statistic: Sum
+      Threshold: 5
+      AlarmActions:
+        - !Ref ErrorAlarmTopic
+
+  # High Latency Alarm
+  LatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub necpgame-latency-${Stage}
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 2
+      MetricName: Duration
+      Namespace: AWS/Lambda
+      Period: 300
+      Statistic: Average
+      Threshold: 5000
+      ExtendedStatistic: p95
+      AlarmActions:
+        - !Ref LatencyAlarmTopic
+
+  # SNS Topics for Alerts
+  ErrorAlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub necpgame-error-alerts-${Stage}
+
+  LatencyAlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub necpgame-latency-alerts-${Stage}
+
+  # Outputs
+Outputs:
+  ApiGatewayUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+    Export:
+      Name: !Sub necpgame-api-url-${Stage}
+
+  WebSocketApiUrl:
+    Description: WebSocket API endpoint URL
+    Value: !Sub wss://${WebSocketApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+    Export:
+      Name: !Sub necpgame-websocket-url-${Stage}
+
+  CombatSessionsTableName:
+    Description: Combat sessions DynamoDB table name
+    Value: !Ref CombatSessionsTable
+    Export:
+      Name: !Sub necpgame-combat-sessions-table-${Stage}
+
+  SpectatorSessionsTableName:
+    Description: Spectator sessions DynamoDB table name
+    Value: !Ref SpectatorSessionsTable
+    Export:
+      Name: !Sub necpgame-spectator-sessions-table-${Stage}
