@@ -79,7 +79,7 @@ func main() {
 	}
 
 	// Setup router
-	r := setupRouter(server)
+	r := setupRouter(server, h)
 
 	// Configure HTTP server with optimized settings
 	httpServer := &http.Server{
@@ -124,7 +124,7 @@ func main() {
 	sugar.Info("Server exited cleanly")
 }
 
-func setupRouter(server *generated.ServerInterfaceWrapper) *chi.Mux {
+func setupRouter(server *generated.ServerInterfaceWrapper, h *handlers.EasterEggsHandlers) *chi.Mux {
 	r := chi.NewRouter()
 
 	// PERFORMANCE: Optimized middleware stack
