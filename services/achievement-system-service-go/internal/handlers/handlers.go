@@ -68,6 +68,7 @@ func (h *Handler) SetupRoutes(r *chi.Mux) {
 
 		r.Route("/players/{playerID}", func(r chi.Router) {
 			r.Get("/achievements", h.GetPlayerAchievements)
+			r.Get("/achievements/{achievementID}", h.GetPlayerAchievementProgress)
 			r.Get("/profile", h.GetPlayerProfile)
 			r.Post("/achievements/{achievementID}/unlock", h.UnlockAchievement)
 			r.Post("/achievements/{achievementID}/progress", h.UpdateAchievementProgress)
@@ -75,6 +76,11 @@ func (h *Handler) SetupRoutes(r *chi.Mux) {
 
 		r.Route("/events", func(r chi.Router) {
 			r.Post("/", h.ProcessEvent)
+		})
+
+		r.Route("/achievements", func(r chi.Router) {
+			r.Post("/rewards/claim", h.ClaimAchievementRewards)
+			r.Get("/analytics/completion", h.GetAchievementAnalytics)
 		})
 
 		// Admin routes
@@ -345,6 +351,101 @@ func (h *Handler) ProcessEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.respondJSON(w, http.StatusOK, map[string]string{"status": "event processed"})
+}
+
+// ClaimAchievementRewards claims rewards for unlocked achievements
+func (h *Handler) ClaimAchievementRewards(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		PlayerID       string   `json:"player_id"`
+		AchievementIDs []string `json:"achievement_ids"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+
+	playerID, err := uuid.Parse(req.PlayerID)
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid player ID")
+		return
+	}
+
+	if len(req.AchievementIDs) == 0 {
+		h.respondError(w, http.StatusBadRequest, "Achievement IDs are required")
+		return
+	}
+
+	achievementIDs := make([]uuid.UUID, len(req.AchievementIDs))
+	for i, idStr := range req.AchievementIDs {
+		achievementID, err := uuid.Parse(idStr)
+		if err != nil {
+			h.respondError(w, http.StatusBadRequest, "Invalid achievement ID")
+			return
+		}
+		achievementIDs[i] = achievementID
+	}
+
+	response, err := h.service.ClaimAchievementRewards(r.Context(), playerID, achievementIDs)
+	if err != nil {
+		h.logger.Error("Failed to claim achievement rewards", zap.Error(err),
+			zap.String("player_id", playerID.String()), zap.Int("achievement_count", len(achievementIDs)))
+		h.respondError(w, http.StatusInternalServerError, "Failed to claim rewards")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
+}
+
+// GetAchievementAnalytics retrieves achievement completion analytics
+func (h *Handler) GetAchievementAnalytics(w http.ResponseWriter, r *http.Request) {
+	category := r.URL.Query().Get("category")
+	timeframe := r.URL.Query().Get("timeframe")
+	if timeframe == "" {
+		timeframe = "week"
+	}
+
+	limitStr := r.URL.Query().Get("limit")
+	limit := 20 // default
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+
+	analytics, err := h.service.GetAchievementAnalytics(r.Context(), category, timeframe, limit)
+	if err != nil {
+		h.logger.Error("Failed to get achievement analytics", zap.Error(err))
+		h.respondError(w, http.StatusInternalServerError, "Failed to get analytics")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, analytics)
+}
+
+// GetPlayerAchievementProgress retrieves specific player achievement progress
+func (h *Handler) GetPlayerAchievementProgress(w http.ResponseWriter, r *http.Request) {
+	playerID, err := uuid.Parse(chi.URLParam(r, "playerID"))
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid player ID")
+		return
+	}
+
+	achievementID, err := uuid.Parse(chi.URLParam(r, "achievementID"))
+	if err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid achievement ID")
+		return
+	}
+
+	progress, err := h.service.GetPlayerAchievementProgress(r.Context(), playerID, achievementID)
+	if err != nil {
+		h.logger.Error("Failed to get player achievement progress", zap.Error(err),
+			zap.String("player_id", playerID.String()), zap.String("achievement_id", achievementID.String()))
+		h.respondError(w, http.StatusNotFound, "Achievement progress not found")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, progress)
 }
 
     // Admin handlers

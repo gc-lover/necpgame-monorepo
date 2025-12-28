@@ -96,6 +96,151 @@ type AbilityEffect struct {
 	Duration int         `json:"duration"` // Effect duration in seconds
 }
 
+// ADVANCED CYBERWARE INTEGRATION FEATURES
+// Issue: #2225 - Advanced Cyberware Integration System
+
+// NeuralNetwork represents AI neural network integration
+type NeuralNetwork struct {
+	ID                string             `json:"id"`
+	Name              string             `json:"name"`
+	Architecture      string             `json:"architecture"`      // "feedforward", "recurrent", "transformer"
+	Layers            int                `json:"layers"`            // Number of neural layers
+	Parameters        int64              `json:"parameters"`        // Total parameters
+	LearningRate      float64            `json:"learning_rate"`
+	AdaptationRate    float64            `json:"adaptation_rate"`   // How quickly it learns from player behavior
+	MemoryCapacity    int                `json:"memory_capacity"`   // Experience memory size
+	ProcessingPower   int                `json:"processing_power"`  // Neural processing units
+	Specializations   []string           `json:"specializations"`   // "combat", "hacking", "stealth", "social"
+	TrainingData      []NeuralPattern    `json:"training_data"`
+	ActivationFunctions []string         `json:"activation_functions"`
+	OptimizationLevel int                `json:"optimization_level"` // 1-10 performance optimization
+}
+
+// NeuralPattern represents learned behavioral patterns
+type NeuralPattern struct {
+	ID          string                 `json:"id"`
+	Type        string                 `json:"type"`        // "combat_style", "movement_pattern", "decision_making"
+	Pattern     map[string]interface{} `json:"pattern"`     // Learned pattern data
+	Confidence  float64                `json:"confidence"`  // How confident the network is in this pattern
+	Frequency   int                    `json:"frequency"`   // How often this pattern occurs
+	LastUsed    time.Time              `json:"last_used"`
+	Effectiveness float64               `json:"effectiveness"` // How effective this pattern is
+}
+
+// AdaptiveSystem represents self-adapting cyberware systems
+type AdaptiveSystem struct {
+	ID              string                `json:"id"`
+	Name            string                `json:"name"`
+	AdaptationType  string                `json:"adaptation_type"`  // "environmental", "behavioral", "combat", "social"
+	BaseEfficiency  float64               `json:"base_efficiency"`
+	CurrentEfficiency float64             `json:"current_efficiency"`
+	AdaptationRate  float64               `json:"adaptation_rate"`
+	Triggers        []AdaptationTrigger   `json:"triggers"`
+	Modifiers       []StatModifier        `json:"modifiers"`
+	Cooldown        int                   `json:"cooldown"`         // Seconds between adaptations
+	LastAdapted     time.Time             `json:"last_adapted"`
+	AdaptationHistory []AdaptationRecord `json:"adaptation_history"`
+}
+
+// AdaptationTrigger represents what triggers adaptation
+type AdaptationTrigger struct {
+	Type        string      `json:"type"`        // "damage_taken", "enemy_encountered", "time_of_day", "location"
+	Condition   string      `json:"condition"`   // "greater_than", "less_than", "equals", "contains"
+	Value       interface{} `json:"value"`
+	Probability float64     `json:"probability"` // Chance to trigger
+}
+
+// StatModifier represents stat modifications from adaptation
+type StatModifier struct {
+	Stat        string  `json:"stat"`        // "health", "damage", "speed", "stealth"
+	Modifier    float64 `json:"modifier"`    // Multiplier or additive
+	Type        string  `json:"type"`        // "multiplier", "additive", "percentage"
+	Duration    int     `json:"duration"`    // Seconds, 0 = permanent
+	Stackable   bool    `json:"stackable"`   // Can stack multiple times
+	MaxStacks   int     `json:"max_stacks"`
+}
+
+// AdaptationRecord represents a historical adaptation event
+type AdaptationRecord struct {
+	Timestamp   time.Time `json:"timestamp"`
+	Trigger     string    `json:"trigger"`
+	OldValue    float64   `json:"old_value"`
+	NewValue    float64   `json:"new_value"`
+	Reason      string    `json:"reason"`
+	Effectiveness float64 `json:"effectiveness"`
+}
+
+// ImplantSynergy represents cross-implant synergy effects
+type ImplantSynergy struct {
+	ID              string             `json:"id"`
+	Name            string             `json:"name"`
+	Description     string             `json:"description"`
+	RequiredImplants []string         `json:"required_implants"` // Implant IDs required
+	SynergyType     string             `json:"synergy_type"`     // "passive", "active", "conditional"
+	Effects         []SynergyEffect    `json:"effects"`
+	ActivationReq   SynergyRequirement `json:"activation_req"`
+	Cooldown        int                `json:"cooldown"`
+	EnergyCost      int                `json:"energy_cost"`
+	IsActive        bool               `json:"is_active"`
+	ActivationCount int                `json:"activation_count"`
+}
+
+// SynergyEffect represents effects of implant synergy
+type SynergyEffect struct {
+	Type        string      `json:"type"`        // "stat_boost", "ability_unlock", "damage_mod", "resistance"
+	TargetStat  string      `json:"target_stat,omitempty"`
+	Value       interface{} `json:"value"`
+	Duration    int         `json:"duration"`
+	Conditions  []string    `json:"conditions"`  // Required conditions for effect
+}
+
+// SynergyRequirement represents requirements to activate synergy
+type SynergyRequirement struct {
+	MinImplants     int                    `json:"min_implants"`     // Minimum implants needed
+	SpecificImplants []string             `json:"specific_implants"` // Specific implant IDs
+	TotalTier       int                    `json:"total_tier"`       // Minimum total tier of implants
+	NeuralLoad      int                    `json:"neural_load"`      // Maximum neural load allowed
+	BodyParts       []string               `json:"body_parts"`       // Required body parts
+	FactionRep      map[string]int         `json:"faction_rep"`      // Required faction reputation
+}
+
+// NeuralResonance represents neural resonance between implants
+type NeuralResonance struct {
+	ID              string                `json:"id"`
+	Frequency       float64               `json:"frequency"`       // Resonance frequency (Hz)
+	Amplitude       float64               `json:"amplitude"`       // Signal amplitude
+	Phase           float64               `json:"phase"`           // Signal phase
+	Stability       float64               `json:"stability"`       // Resonance stability (0-1)
+	Harmonics       []ResonanceHarmonic   `json:"harmonics"`
+	Effects         []ResonanceEffect     `json:"effects"`
+	LastCalibrated  time.Time             `json:"last_calibrated"`
+	CalibrationHistory []CalibrationRecord `json:"calibration_history"`
+}
+
+// ResonanceHarmonic represents harmonic frequencies
+type ResonanceHarmonic struct {
+	Frequency   float64 `json:"frequency"`
+	Amplitude   float64 `json:"amplitude"`
+	Purity      float64 `json:"purity"`      // Harmonic purity (0-1)
+}
+
+// ResonanceEffect represents effects of neural resonance
+type ResonanceEffect struct {
+	Type        string  `json:"type"`        // "performance_boost", "neural_damage", "ability_enhancement"
+	Target      string  `json:"target"`      // "combat", "hacking", "stealth", "all"
+	Magnitude   float64 `json:"magnitude"`   // Effect strength
+	Duration    int     `json:"duration"`    // Effect duration
+}
+
+// CalibrationRecord represents neural calibration events
+type CalibrationRecord struct {
+	Timestamp     time.Time `json:"timestamp"`
+	Frequency     float64   `json:"frequency"`
+	Stability     float64   `json:"stability"`
+	Reason        string    `json:"reason"`        // "manual", "adaptation", "damage", "upgrade"
+	Success       bool      `json:"success"`
+}
+
 // CyberwareCost represents costs associated with cyberware
 type CyberwareCost struct {
 	InstallationFee int            `json:"installation_fee"` // Eddies

@@ -364,3 +364,201 @@ func (r *Repository) invalidatePlayerCache(ctx context.Context, playerID uuid.UU
 	cacheKey := fmt.Sprintf("player_profile:%s", playerID)
 	r.redis.Del(ctx, cacheKey)
 }
+
+// GetPlayerAchievement retrieves a specific player achievement
+func (r *Repository) GetPlayerAchievement(ctx context.Context, playerID, achievementID uuid.UUID) (*models.PlayerAchievement, error) {
+	query := `SELECT * FROM player_achievements WHERE player_id = $1 AND achievement_id = $2`
+	var achievement models.PlayerAchievement
+	err := r.db.GetContext(ctx, &achievement, query, playerID, achievementID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("player achievement not found")
+		}
+		return nil, fmt.Errorf("failed to get player achievement: %w", err)
+	}
+	return &achievement, nil
+}
+
+// UpdatePlayerAchievement updates a player achievement record
+func (r *Repository) UpdatePlayerAchievement(ctx context.Context, achievement *models.PlayerAchievement) error {
+	query := `
+		UPDATE player_achievements
+		SET points_earned = $1, rewards = $2, rewards_claimed_at = $3
+		WHERE player_id = $4 AND achievement_id = $5
+	`
+
+	rewardsJSON, err := json.Marshal(achievement.Rewards)
+	if err != nil {
+		return fmt.Errorf("failed to marshal rewards: %w", err)
+	}
+
+	_, err = r.db.ExecContext(ctx, query,
+		achievement.PointsEarned, rewardsJSON, achievement.RewardsClaimedAt,
+		achievement.PlayerID, achievement.AchievementID)
+
+	if err != nil {
+		return fmt.Errorf("failed to update player achievement: %w", err)
+	}
+
+	// Invalidate caches
+	r.invalidatePlayerCache(ctx, achievement.PlayerID)
+
+	return nil
+}
+
+// CountAchievements counts achievements with optional category filter
+func (r *Repository) CountAchievements(ctx context.Context, category string) (int, error) {
+	var query string
+	var args []interface{}
+
+	if category != "" {
+		query = `SELECT COUNT(*) FROM achievements WHERE category = $1 AND is_active = true`
+		args = []interface{}{category}
+	} else {
+		query = `SELECT COUNT(*) FROM achievements WHERE is_active = true`
+	}
+
+	var count int
+	err := r.db.GetContext(ctx, &count, query, args...)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count achievements: %w", err)
+	}
+
+	return count, nil
+}
+
+// GetAchievementCompletionStats retrieves completion statistics
+func (r *Repository) GetAchievementCompletionStats(ctx context.Context, category, timeframe string) (*models.CompletionStats, error) {
+	stats := &models.CompletionStats{
+		CategoryBreakdown:   make(map[string]models.CategoryStats),
+		DifficultyBreakdown: make(map[string]models.DifficultyStats),
+	}
+
+	// Calculate overall completion rate
+	overallQuery := `
+		SELECT
+			COUNT(DISTINCT pa.achievement_id) as completed,
+			COUNT(DISTINCT a.id) as total
+		FROM achievements a
+		LEFT JOIN player_achievements pa ON a.id = pa.achievement_id
+		WHERE a.is_active = true
+	`
+
+	if category != "" {
+		overallQuery += " AND a.category = $1"
+	}
+
+	var completed, total int
+	var err error
+	if category != "" {
+		err = r.db.QueryRowContext(ctx, overallQuery, category).Scan(&completed, &total)
+	} else {
+		err = r.db.QueryRowContext(ctx, overallQuery).Scan(&completed, &total)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get overall stats: %w", err)
+	}
+
+	if total > 0 {
+		stats.OverallCompletionRate = float64(completed) / float64(total)
+	}
+
+	// Category breakdown
+	categoryQuery := `
+		SELECT
+			a.category,
+			COUNT(DISTINCT a.id) as total,
+			COUNT(DISTINCT pa.achievement_id) as completed
+		FROM achievements a
+		LEFT JOIN player_achievements pa ON a.id = pa.achievement_id
+		WHERE a.is_active = true
+		GROUP BY a.category
+	`
+
+	rows, err := r.db.QueryContext(ctx, categoryQuery)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get category stats: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var cat string
+		var totalCount, completedCount int
+		if err := rows.Scan(&cat, &totalCount, &completedCount); err != nil {
+			continue
+		}
+
+		completionRate := float64(0)
+		if totalCount > 0 {
+			completionRate = float64(completedCount) / float64(totalCount)
+		}
+
+		stats.CategoryBreakdown[cat] = models.CategoryStats{
+			Total:          totalCount,
+			Completed:      completedCount,
+			CompletionRate: completionRate,
+		}
+	}
+
+	return stats, nil
+}
+
+// GetTrendingAchievements retrieves trending achievements by recent unlocks
+func (r *Repository) GetTrendingAchievements(ctx context.Context, timeframe string, limit int) ([]models.TrendingAchievement, error) {
+	// Calculate date range based on timeframe
+	var days int
+	switch timeframe {
+	case "day":
+		days = 1
+	case "week":
+		days = 7
+	case "month":
+		days = 30
+	default:
+		days = 7 // default to week
+	}
+
+	query := `
+		SELECT
+			a.id,
+			a.name,
+			COUNT(pa.id) as unlocks_count,
+			CASE
+				WHEN COUNT(DISTINCT pa.player_id) > 0
+				THEN COUNT(pa.id)::float / COUNT(DISTINCT pa.player_id)::float
+				ELSE 0
+			END as completion_rate
+		FROM achievements a
+		LEFT JOIN player_achievements pa ON a.id = pa.achievement_id
+			AND pa.unlocked_at >= NOW() - INTERVAL '%d days'
+		WHERE a.is_active = true
+		GROUP BY a.id, a.name
+		ORDER BY unlocks_count DESC
+		LIMIT $1
+	`
+
+	formattedQuery := fmt.Sprintf(query, days)
+	rows, err := r.db.QueryContext(ctx, formattedQuery, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get trending achievements: %w", err)
+	}
+	defer rows.Close()
+
+	var achievements []models.TrendingAchievement
+	for rows.Next() {
+		var achievement models.TrendingAchievement
+		err := rows.Scan(
+			&achievement.AchievementID,
+			&achievement.Name,
+			&achievement.UnlocksLastWeek,
+			&achievement.CompletionRate,
+		)
+		if err != nil {
+			continue
+		}
+		achievements = append(achievements, achievement)
+	}
+
+	return achievements, nil
+}

@@ -384,7 +384,133 @@ func (s *Service) BulkUpdateProgress(ctx context.Context, updates []struct {
 	return nil
 }
 
-    // ImportAchievements imports achievements from YAML data
+    // ClaimAchievementRewards claims rewards for unlocked achievements
+func (s *Service) ClaimAchievementRewards(ctx context.Context, playerID uuid.UUID, achievementIDs []uuid.UUID) (*models.ClaimRewardsResponse, error) {
+	response := &models.ClaimRewardsResponse{
+		Success:          true,
+		ClaimedRewards:   []models.ClaimedReward{},
+		FailedClaims:     []models.FailedClaim{},
+	}
+
+	for _, achievementID := range achievementIDs {
+		// Check if achievement is unlocked and rewards not yet claimed
+		playerAchievement, err := s.repo.GetPlayerAchievement(ctx, playerID, achievementID)
+		if err != nil {
+			response.FailedClaims = append(response.FailedClaims, models.FailedClaim{
+				AchievementID: achievementID.String(),
+				Error:         "Achievement not found or not unlocked",
+			})
+			continue
+		}
+
+		// Check if rewards already claimed
+		if playerAchievement.RewardsClaimedAt != nil {
+			response.FailedClaims = append(response.FailedClaims, models.FailedClaim{
+				AchievementID: achievementID.String(),
+				Error:         "Rewards already claimed",
+			})
+			continue
+		}
+
+		// Get achievement details for rewards
+		achievement, err := s.repo.GetAchievement(ctx, achievementID)
+		if err != nil {
+			response.FailedClaims = append(response.FailedClaims, models.FailedClaim{
+				AchievementID: achievementID.String(),
+				Error:         "Achievement definition not found",
+			})
+			continue
+		}
+
+		// Mark rewards as claimed
+		now := time.Now()
+		playerAchievement.RewardsClaimedAt = &now
+
+		if err := s.repo.UpdatePlayerAchievement(ctx, playerAchievement); err != nil {
+			s.logger.Error("Failed to update achievement claim status", zap.Error(err),
+				zap.String("player_id", playerID.String()), zap.String("achievement_id", achievementID.String()))
+			response.FailedClaims = append(response.FailedClaims, models.FailedClaim{
+				AchievementID: achievementID.String(),
+				Error:         "Failed to update claim status",
+			})
+			continue
+		}
+
+		// Add to claimed rewards
+		response.ClaimedRewards = append(response.ClaimedRewards, models.ClaimedReward{
+			AchievementID: achievementID.String(),
+			Rewards:       s.generateRewards(achievement),
+		})
+	}
+
+	if len(response.FailedClaims) > 0 {
+		response.Success = len(response.FailedClaims) < len(achievementIDs)
+	}
+
+	s.logger.Info("Achievement rewards claimed",
+		zap.String("player_id", playerID.String()),
+		zap.Int("total_requested", len(achievementIDs)),
+		zap.Int("claimed", len(response.ClaimedRewards)),
+		zap.Int("failed", len(response.FailedClaims)))
+
+	return response, nil
+}
+
+// GetAchievementAnalytics retrieves achievement completion analytics
+func (s *Service) GetAchievementAnalytics(ctx context.Context, category, timeframe string, limit int) (*models.AchievementAnalyticsResponse, error) {
+	response := &models.AchievementAnalyticsResponse{
+		TotalAchievements: 0,
+		CompletionStats:   models.CompletionStats{},
+	}
+
+	// Get total achievements count
+	total, err := s.repo.CountAchievements(ctx, category)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count achievements: %w", err)
+	}
+	response.TotalAchievements = total
+
+	// Get completion stats
+	stats, err := s.repo.GetAchievementCompletionStats(ctx, category, timeframe)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get completion stats: %w", err)
+	}
+	response.CompletionStats = *stats
+
+	// Get trending achievements
+	trending, err := s.repo.GetTrendingAchievements(ctx, timeframe, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get trending achievements: %w", err)
+	}
+	response.CompletionStats.TrendingAchievements = trending
+
+	return response, nil
+}
+
+// GetPlayerAchievementProgress retrieves specific player achievement progress
+func (s *Service) GetPlayerAchievementProgress(ctx context.Context, playerID, achievementID uuid.UUID) (*models.PlayerAchievementProgressResponse, error) {
+	// Get achievement details
+	achievement, err := s.repo.GetAchievement(ctx, achievementID)
+	if err != nil {
+		return nil, fmt.Errorf("achievement not found: %w", err)
+	}
+
+	// Get player progress
+	progress, err := s.repo.GetPlayerAchievementProgress(ctx, playerID, achievementID)
+	if err != nil {
+		return nil, fmt.Errorf("progress not found: %w", err)
+	}
+
+	response := &models.PlayerAchievementProgressResponse{
+		Progress:       progress,
+		Achievement:    achievement,
+		NextMilestone:  nil, // TODO: Implement milestone calculation
+	}
+
+	return response, nil
+}
+
+// ImportAchievements imports achievements from YAML data
     func (s *Service) ImportAchievements(ctx context.Context, achievements []*models.Achievement) error {
     	imported := 0
     	failed := 0

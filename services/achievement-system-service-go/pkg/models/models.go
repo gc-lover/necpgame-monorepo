@@ -36,12 +36,13 @@ type AchievementProgress struct {
 
 // PlayerAchievement represents unlocked achievements for players
 type PlayerAchievement struct {
-	ID            uuid.UUID  `json:"id" db:"id"`
-	PlayerID      uuid.UUID  `json:"player_id" db:"player_id"`
-	AchievementID uuid.UUID  `json:"achievement_id" db:"achievement_id"`
-	UnlockedAt    time.Time  `json:"unlocked_at" db:"unlocked_at"`
-	PointsEarned  int        `json:"points_earned" db:"points_earned"`
-	Rewards       []Reward   `json:"rewards" db:"rewards"`
+	ID                uuid.UUID  `json:"id" db:"id"`
+	PlayerID          uuid.UUID  `json:"player_id" db:"player_id"`
+	AchievementID     uuid.UUID  `json:"achievement_id" db:"achievement_id"`
+	UnlockedAt        time.Time  `json:"unlocked_at" db:"unlocked_at"`
+	PointsEarned      int        `json:"points_earned" db:"points_earned"`
+	Rewards           []Reward   `json:"rewards" db:"rewards"`
+	RewardsClaimedAt  *time.Time `json:"rewards_claimed_at" db:"rewards_claimed_at"`
 }
 
 // Reward represents rewards granted for achievements
@@ -97,6 +98,76 @@ type AchievementEvent struct {
     	Threshold   int       `json:"threshold"`   // Number of achievements required
     	Rewards     []Reward  `json:"rewards"`
     	IsActive    bool      `json:"is_active"`
+    }
+
+    // ClaimRewardsResponse represents the response for reward claiming
+    type ClaimRewardsResponse struct {
+    	Success        bool             `json:"success"`
+    	ClaimedRewards []ClaimedReward  `json:"claimed_rewards"`
+    	FailedClaims   []FailedClaim    `json:"failed_claims,omitempty"`
+    }
+
+    // ClaimedReward represents a successfully claimed reward
+    type ClaimedReward struct {
+    	AchievementID string  `json:"achievement_id"`
+    	Rewards       []Reward `json:"rewards"`
+    }
+
+    // FailedClaim represents a failed reward claim
+    type FailedClaim struct {
+    	AchievementID string `json:"achievement_id"`
+    	Error         string `json:"error"`
+    }
+
+    // AchievementAnalyticsResponse represents achievement analytics data
+    type AchievementAnalyticsResponse struct {
+    	TotalAchievements int              `json:"total_achievements"`
+    	CompletionStats   CompletionStats  `json:"completion_stats"`
+    }
+
+    // CompletionStats holds achievement completion statistics
+    type CompletionStats struct {
+    	OverallCompletionRate float64                 `json:"overall_completion_rate"`
+    	CategoryBreakdown     map[string]CategoryStats `json:"category_breakdown"`
+    	DifficultyBreakdown   map[string]DifficultyStats `json:"difficulty_breakdown"`
+    	TrendingAchievements  []TrendingAchievement    `json:"trending_achievements"`
+    }
+
+    // CategoryStats represents statistics for an achievement category
+    type CategoryStats struct {
+    	Total      int     `json:"total"`
+    	Completed  int     `json:"completed"`
+    	CompletionRate float64 `json:"completion_rate"`
+    }
+
+    // DifficultyStats represents statistics for an achievement difficulty
+    type DifficultyStats struct {
+    	Total      int     `json:"total"`
+    	Completed  int     `json:"completed"`
+    	CompletionRate float64 `json:"completion_rate"`
+    }
+
+    // TrendingAchievement represents a trending achievement
+    type TrendingAchievement struct {
+    	AchievementID      string  `json:"achievement_id"`
+    	Name               string  `json:"name"`
+    	UnlocksLastWeek    int     `json:"unlocks_last_week"`
+    	CompletionRate     float64 `json:"completion_rate"`
+    }
+
+    // PlayerAchievementProgressResponse represents detailed player achievement progress
+    type PlayerAchievementProgressResponse struct {
+    	Progress      *AchievementProgress       `json:"progress"`
+    	Achievement   *Achievement               `json:"achievement"`
+    	NextMilestone *MilestoneInfo             `json:"next_milestone,omitempty"`
+    }
+
+    // MilestoneInfo represents information about the next milestone
+    type MilestoneInfo struct {
+    	Description      string  `json:"description"`
+    	CurrentValue     int     `json:"current_value"`
+    	TargetValue      int     `json:"target_value"`
+    	ProgressPercentage float64 `json:"progress_percentage"`
     }
 
     // AchievementImportRequest represents a request to import achievements
