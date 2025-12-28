@@ -242,3 +242,188 @@ func (s *TournamentService) GetLiveMatches(ctx context.Context, limit int) ([]ma
 
 	return liveMatches, nil
 }
+
+// SPECTATOR MODE METHODS
+// Issue: #2213 - Tournament Spectator Mode Implementation
+
+// JoinSpectatorMode allows a player to join tournament match as spectator
+func (s *TournamentService) JoinSpectatorMode(ctx context.Context, matchID uuid.UUID, playerID uuid.UUID, playerName string, viewMode string, isVIP bool) (*repository.Spectator, error) {
+	s.logger.Infof("Player %s joining spectator mode for match %s", playerName, matchID)
+
+	// Verify match exists and is active
+	match, err := s.repo.GetMatch(ctx, matchID)
+	if err != nil {
+		s.metrics.IncrementErrors()
+		return nil, fmt.Errorf("failed to get match: %w", err)
+	}
+
+	if match.Status != "in_progress" {
+		return nil, fmt.Errorf("match is not active for spectating")
+	}
+
+	// Check spectator capacity
+	maxSpectators := 100 // Configurable
+	if match.SpectatorCount >= maxSpectators && !isVIP {
+		return nil, fmt.Errorf("spectator capacity reached")
+	}
+
+	// Create spectator record
+	spectator := &repository.Spectator{
+		ID:         uuid.New().String(),
+		MatchID:    matchID.String(),
+		PlayerID:   playerID.String(),
+		PlayerName: playerName,
+		JoinedAt:   time.Now(),
+		ViewMode:   viewMode,
+		Status:     "active",
+		IsVIP:      isVIP,
+		CameraPos:  map[string]interface{}{"x": 0, "y": 0, "z": 0},
+		Metadata:   map[string]interface{}{"client_version": "1.0.0"},
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
+
+	err = s.repo.CreateSpectator(ctx, spectator)
+	if err != nil {
+		s.metrics.IncrementErrors()
+		return nil, fmt.Errorf("failed to create spectator: %w", err)
+	}
+
+	// Update match spectator count
+	err = s.repo.UpdateMatchSpectatorCount(ctx, matchID, match.SpectatorCount+1)
+	if err != nil {
+		s.logger.Warnf("Failed to update spectator count for match %s: %v", matchID, err)
+		// Don't fail the operation, just log the warning
+	}
+
+	s.logger.Infof("Player %s successfully joined spectator mode for match %s", playerName, matchID)
+	return spectator, nil
+}
+
+// LeaveSpectatorMode allows a spectator to leave the match
+func (s *TournamentService) LeaveSpectatorMode(ctx context.Context, spectatorID string) error {
+	s.logger.Infof("Spectator %s leaving spectator mode", spectatorID)
+
+	spectator, err := s.repo.GetSpectator(ctx, spectatorID)
+	if err != nil {
+		s.metrics.IncrementErrors()
+		return fmt.Errorf("failed to get spectator: %w", err)
+	}
+
+	// Update spectator record
+	now := time.Now()
+	spectator.LeftAt = &now
+	spectator.Status = "inactive"
+	spectator.UpdatedAt = now
+
+	err = s.repo.UpdateSpectator(ctx, spectator)
+	if err != nil {
+		s.metrics.IncrementErrors()
+		return fmt.Errorf("failed to update spectator: %w", err)
+	}
+
+	// Update match spectator count
+	matchID, _ := uuid.Parse(spectator.MatchID)
+	match, err := s.repo.GetMatch(ctx, matchID)
+	if err == nil && match.SpectatorCount > 0 {
+		err = s.repo.UpdateMatchSpectatorCount(ctx, matchID, match.SpectatorCount-1)
+		if err != nil {
+			s.logger.Warnf("Failed to update spectator count for match %s: %v", matchID, err)
+		}
+	}
+
+	s.logger.Infof("Spectator %s successfully left spectator mode", spectatorID)
+	return nil
+}
+
+// UpdateSpectatorView updates spectator camera position and view mode
+func (s *TournamentService) UpdateSpectatorView(ctx context.Context, spectatorID string, viewMode string, followID string, cameraPos map[string]interface{}) error {
+	s.logger.Debugf("Updating spectator %s view mode to %s", spectatorID, viewMode)
+
+	spectator, err := s.repo.GetSpectator(ctx, spectatorID)
+	if err != nil {
+		s.metrics.IncrementErrors()
+		return fmt.Errorf("failed to get spectator: %w", err)
+	}
+
+	if spectator.Status != "active" {
+		return fmt.Errorf("spectator is not active")
+	}
+
+	// Update spectator view settings
+	spectator.ViewMode = viewMode
+	spectator.FollowID = followID
+	spectator.CameraPos = cameraPos
+	spectator.UpdatedAt = time.Now()
+
+	err = s.repo.UpdateSpectator(ctx, spectator)
+	if err != nil {
+		s.metrics.IncrementErrors()
+		return fmt.Errorf("failed to update spectator view: %w", err)
+	}
+
+	return nil
+}
+
+// GetMatchSpectators gets all active spectators for a match
+func (s *TournamentService) GetMatchSpectators(ctx context.Context, matchID uuid.UUID) ([]*repository.Spectator, error) {
+	s.logger.Debugf("Getting spectators for match %s", matchID)
+
+	spectators, err := s.repo.GetMatchSpectators(ctx, matchID)
+	if err != nil {
+		s.metrics.IncrementErrors()
+		return nil, fmt.Errorf("failed to get match spectators: %w", err)
+	}
+
+	return spectators, nil
+}
+
+// GetSpectatorStats gets spectator statistics for a tournament
+func (s *TournamentService) GetSpectatorStats(ctx context.Context, tournamentID uuid.UUID) (map[string]interface{}, error) {
+	s.logger.Debugf("Getting spectator stats for tournament %s", tournamentID)
+
+	// Get all matches for the tournament
+	matches, err := s.repo.GetTournamentMatches(ctx, tournamentID)
+	if err != nil {
+		s.metrics.IncrementErrors()
+		return nil, fmt.Errorf("failed to get tournament matches: %w", err)
+	}
+
+	totalSpectators := 0
+	activeSpectators := 0
+	vipSpectators := 0
+	peakSpectators := 0
+
+	for _, match := range matches {
+		totalSpectators += match.SpectatorCount
+		if match.Status == "in_progress" {
+			activeSpectators += match.SpectatorCount
+		}
+		if match.SpectatorCount > peakSpectators {
+			peakSpectators = match.SpectatorCount
+		}
+	}
+
+	// Get VIP spectator count
+	for _, match := range matches {
+		spectators, err := s.repo.GetMatchSpectators(ctx, uuid.MustParse(match.ID))
+		if err == nil {
+			for _, spectator := range spectators {
+				if spectator.IsVIP {
+					vipSpectators++
+				}
+			}
+		}
+	}
+
+	stats := map[string]interface{}{
+		"tournament_id":     tournamentID.String(),
+		"total_spectators":  totalSpectators,
+		"active_spectators": activeSpectators,
+		"vip_spectators":    vipSpectators,
+		"peak_spectators":   peakSpectators,
+		"match_count":       len(matches),
+	}
+
+	return stats, nil
+}

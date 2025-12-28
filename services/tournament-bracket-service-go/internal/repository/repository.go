@@ -91,6 +91,24 @@ type Match struct {
 	UpdatedAt       time.Time              `json:"updated_at" db:"updated_at"`
 }
 
+// Spectator represents a tournament spectator
+type Spectator struct {
+	ID         string                 `json:"id" db:"id"`
+	MatchID    string                 `json:"match_id" db:"match_id"`
+	PlayerID   string                 `json:"player_id" db:"player_id"`
+	PlayerName string                 `json:"player_name" db:"player_name"`
+	JoinedAt   time.Time              `json:"joined_at" db:"joined_at"`
+	LeftAt     *time.Time             `json:"left_at" db:"left_at"`
+	ViewMode   string                 `json:"view_mode" db:"view_mode"`
+	FollowID   string                 `json:"follow_id" db:"follow_id"`
+	CameraPos  map[string]interface{} `json:"camera_pos" db:"camera_pos"`
+	Status     string                 `json:"status" db:"status"`
+	IsVIP      bool                   `json:"is_vip" db:"is_vip"`
+	Metadata   map[string]interface{} `json:"metadata" db:"metadata"`
+	CreatedAt  time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt  time.Time              `json:"updated_at" db:"updated_at"`
+}
+
 // TournamentRepository handles database operations
 type TournamentRepository struct {
 	db     *sql.DB
@@ -353,6 +371,230 @@ func (r *TournamentRepository) GetMatchesByBracket(ctx context.Context, bracketI
 	if err != nil {
 		r.logger.Errorf("Failed to get matches: %v", err)
 		return nil, fmt.Errorf("failed to get matches: %w", err)
+	}
+	defer rows.Close()
+
+	var matches []*Match
+	for rows.Next() {
+		var m Match
+		var statisticsJSON, eventsJSON, metadataJSON []byte
+
+		err := rows.Scan(
+			&m.ID, &m.TournamentID, &m.BracketID, &m.MatchNumber, &m.Status, &m.ScheduledTime,
+			&m.StartTime, &m.EndTime, &m.WinnerID, &m.WinnerScore, &m.LoserID, &m.LoserScore,
+			&m.MapName, &m.GameMode, &m.ServerID, &m.SpectatorCount, &m.ReplayAvailable,
+			&m.ReplayURL, &statisticsJSON, &eventsJSON, &metadataJSON, &m.CreatedAt, &m.UpdatedAt,
+		)
+		if err != nil {
+			r.logger.Errorf("Failed to scan match: %v", err)
+			continue
+		}
+
+		json.Unmarshal(statisticsJSON, &m.Statistics)
+		json.Unmarshal(eventsJSON, &m.Events)
+		json.Unmarshal(metadataJSON, &m.Metadata)
+
+		matches = append(matches, &m)
+	}
+
+	return matches, nil
+}
+
+// SPECTATOR METHODS
+// Issue: #2213 - Tournament Spectator Mode Implementation
+
+// CreateSpectator creates a new spectator record
+func (r *TournamentRepository) CreateSpectator(ctx context.Context, spectator *Spectator) error {
+	query := `
+		INSERT INTO tournament.spectators (
+			id, match_id, player_id, player_name, joined_at, view_mode,
+			follow_id, camera_pos, status, is_vip, metadata, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+	`
+
+	cameraPosJSON, _ := json.Marshal(spectator.CameraPos)
+	metadataJSON, _ := json.Marshal(spectator.Metadata)
+
+	_, err := r.db.ExecContext(ctx, query,
+		spectator.ID, spectator.MatchID, spectator.PlayerID, spectator.PlayerName,
+		spectator.JoinedAt, spectator.ViewMode, spectator.FollowID, cameraPosJSON,
+		spectator.Status, spectator.IsVIP, metadataJSON, spectator.CreatedAt, spectator.UpdatedAt,
+	)
+
+	if err != nil {
+		r.logger.Errorf("Failed to create spectator: %v", err)
+		return fmt.Errorf("failed to create spectator: %w", err)
+	}
+
+	// Cache spectator info in Redis
+	cacheKey := fmt.Sprintf("spectator:%s", spectator.ID)
+	spectatorJSON, _ := json.Marshal(spectator)
+	r.redis.Set(ctx, cacheKey, spectatorJSON, time.Hour)
+
+	return nil
+}
+
+// GetSpectator retrieves a spectator by ID
+func (r *TournamentRepository) GetSpectator(ctx context.Context, spectatorID string) (*Spectator, error) {
+	// Try cache first
+	cacheKey := fmt.Sprintf("spectator:%s", spectatorID)
+	if spectatorJSON, err := r.redis.Get(ctx, cacheKey).Result(); err == nil {
+		var spectator Spectator
+		if json.Unmarshal([]byte(spectatorJSON), &spectator) == nil {
+			return &spectator, nil
+		}
+	}
+
+	query := `
+		SELECT id, match_id, player_id, player_name, joined_at, left_at, view_mode,
+			   follow_id, camera_pos, status, is_vip, metadata, created_at, updated_at
+		FROM tournament.spectators
+		WHERE id = $1
+	`
+
+	var spectator Spectator
+	var cameraPosJSON, metadataJSON []byte
+	var leftAt sql.NullTime
+
+	err := r.db.QueryRowContext(ctx, query, spectatorID).Scan(
+		&spectator.ID, &spectator.MatchID, &spectator.PlayerID, &spectator.PlayerName,
+		&spectator.JoinedAt, &leftAt, &spectator.ViewMode, &spectator.FollowID,
+		&cameraPosJSON, &spectator.Status, &spectator.IsVIP, &metadataJSON,
+		&spectator.CreatedAt, &spectator.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("spectator not found")
+		}
+		r.logger.Errorf("Failed to get spectator: %v", err)
+		return nil, fmt.Errorf("failed to get spectator: %w", err)
+	}
+
+	if leftAt.Valid {
+		spectator.LeftAt = &leftAt.Time
+	}
+
+	json.Unmarshal(cameraPosJSON, &spectator.CameraPos)
+	json.Unmarshal(metadataJSON, &spectator.Metadata)
+
+	// Cache the result
+	spectatorJSON, _ := json.Marshal(spectator)
+	r.redis.Set(ctx, cacheKey, spectatorJSON, time.Hour)
+
+	return &spectator, nil
+}
+
+// UpdateSpectator updates spectator information
+func (r *TournamentRepository) UpdateSpectator(ctx context.Context, spectator *Spectator) error {
+	query := `
+		UPDATE tournament.spectators SET
+			left_at = $1, view_mode = $2, follow_id = $3, camera_pos = $4,
+			status = $5, metadata = $6, updated_at = $7
+		WHERE id = $8
+	`
+
+	cameraPosJSON, _ := json.Marshal(spectator.CameraPos)
+	metadataJSON, _ := json.Marshal(spectator.Metadata)
+
+	_, err := r.db.ExecContext(ctx, query,
+		spectator.LeftAt, spectator.ViewMode, spectator.FollowID, cameraPosJSON,
+		spectator.Status, metadataJSON, spectator.UpdatedAt, spectator.ID,
+	)
+
+	if err != nil {
+		r.logger.Errorf("Failed to update spectator: %v", err)
+		return fmt.Errorf("failed to update spectator: %w", err)
+	}
+
+	// Update cache
+	cacheKey := fmt.Sprintf("spectator:%s", spectator.ID)
+	spectatorJSON, _ := json.Marshal(spectator)
+	r.redis.Set(ctx, cacheKey, spectatorJSON, time.Hour)
+
+	return nil
+}
+
+// GetMatchSpectators gets all spectators for a specific match
+func (r *TournamentRepository) GetMatchSpectators(ctx context.Context, matchID uuid.UUID) ([]*Spectator, error) {
+	query := `
+		SELECT id, match_id, player_id, player_name, joined_at, left_at, view_mode,
+			   follow_id, camera_pos, status, is_vip, metadata, created_at, updated_at
+		FROM tournament.spectators
+		WHERE match_id = $1 AND status = 'active'
+		ORDER BY joined_at ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, matchID.String())
+	if err != nil {
+		r.logger.Errorf("Failed to get match spectators: %v", err)
+		return nil, fmt.Errorf("failed to get match spectators: %w", err)
+	}
+	defer rows.Close()
+
+	var spectators []*Spectator
+	for rows.Next() {
+		var spectator Spectator
+		var cameraPosJSON, metadataJSON []byte
+		var leftAt sql.NullTime
+
+		err := rows.Scan(
+			&spectator.ID, &spectator.MatchID, &spectator.PlayerID, &spectator.PlayerName,
+			&spectator.JoinedAt, &leftAt, &spectator.ViewMode, &spectator.FollowID,
+			&cameraPosJSON, &spectator.Status, &spectator.IsVIP, &metadataJSON,
+			&spectator.CreatedAt, &spectator.UpdatedAt,
+		)
+		if err != nil {
+			r.logger.Errorf("Failed to scan spectator: %v", err)
+			continue
+		}
+
+		if leftAt.Valid {
+			spectator.LeftAt = &leftAt.Time
+		}
+
+		json.Unmarshal(cameraPosJSON, &spectator.CameraPos)
+		json.Unmarshal(metadataJSON, &spectator.Metadata)
+
+		spectators = append(spectators, &spectator)
+	}
+
+	return spectators, nil
+}
+
+// UpdateMatchSpectatorCount updates the spectator count for a match
+func (r *TournamentRepository) UpdateMatchSpectatorCount(ctx context.Context, matchID uuid.UUID, count int) error {
+	query := `UPDATE tournament.matches SET spectator_count = $1, updated_at = NOW() WHERE id = $2`
+
+	_, err := r.db.ExecContext(ctx, query, count, matchID)
+	if err != nil {
+		r.logger.Errorf("Failed to update match spectator count: %v", err)
+		return fmt.Errorf("failed to update match spectator count: %w", err)
+	}
+
+	// Update cache
+	cacheKey := fmt.Sprintf("match:%s", matchID.String())
+	r.redis.Del(ctx, cacheKey) // Invalidate cache
+
+	return nil
+}
+
+// GetTournamentMatches gets all matches for a tournament (helper for spectator stats)
+func (r *TournamentRepository) GetTournamentMatches(ctx context.Context, tournamentID uuid.UUID) ([]*Match, error) {
+	query := `
+		SELECT id, tournament_id, bracket_id, match_number, status, scheduled_time, start_time,
+			   end_time, winner_id, winner_score, loser_id, loser_score, map_name, game_mode,
+			   server_id, spectator_count, replay_available, replay_url, statistics, events,
+			   metadata, created_at, updated_at
+		FROM tournament.matches
+		WHERE tournament_id = $1
+		ORDER BY match_number ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, tournamentID)
+	if err != nil {
+		r.logger.Errorf("Failed to get tournament matches: %v", err)
+		return nil, fmt.Errorf("failed to get tournament matches: %w", err)
 	}
 	defer rows.Close()
 

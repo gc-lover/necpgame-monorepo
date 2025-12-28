@@ -98,6 +98,24 @@ type MatchParticipant struct {
 	Score         int                    `json:"score" db:"score"`
 	Kills         int                    `json:"kills" db:"kills"`
 	Deaths        int                    `json:"deaths" db:"deaths"`
+
+// Spectator represents a tournament spectator
+type Spectator struct {
+	ID         string                 `json:"id" db:"id"`
+	MatchID    string                 `json:"match_id" db:"match_id"`
+	PlayerID   string                 `json:"player_id" db:"player_id"`
+	PlayerName string                 `json:"player_name" db:"player_name"`
+	JoinedAt   time.Time              `json:"joined_at" db:"joined_at"`
+	LeftAt     *time.Time             `json:"left_at" db:"left_at"`
+	ViewMode   string                 `json:"view_mode" db:"view_mode"`   // "free", "follow_player", "follow_team", "overview"
+	FollowID   string                 `json:"follow_id" db:"follow_id"`   // Player or team ID being followed
+	CameraPos  map[string]interface{} `json:"camera_pos" db:"camera_pos"` // JSON camera position data
+	Status     string                 `json:"status" db:"status"`         // "active", "inactive", "banned"
+	IsVIP      bool                   `json:"is_vip" db:"is_vip"`         // VIP spectator with special features
+	Metadata   map[string]interface{} `json:"metadata" db:"metadata"`     // JSON additional data
+	CreatedAt  time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt  time.Time              `json:"updated_at" db:"updated_at"`
+}
 	Assists       int                    `json:"assists" db:"assists"`
 	Statistics    map[string]interface{} `json:"statistics" db:"statistics"` // JSON
 }

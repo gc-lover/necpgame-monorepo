@@ -3,9 +3,9 @@ metadata:
   title: Архитектура системы аффиксов для рейдов и подземелий
   document_type: architecture
   category: systems
-  status: draft
+  status: final
   version: "1.0.0"
-  last_updated: 2025-12-XXT00:00:00Z
+  last_updated: 2025-12-28T12:00:00Z
   owners:
     - role: architect
       contact: architect@necp.game
@@ -49,7 +49,7 @@ summary:
   essence: |
     Система аффиксов добавляет 2-4 случайных модификатора к каждому инстансу рейда или подземелья.
     Аффиксы меняют механики боя, требуют адаптации тактики и влияют на награды.
-    Ротация аффиксов происходит еженедельно.
+    Ротация аффиксов происходит еженедельно для поддержания свежести контента.
 
 architecture:
   overview: |
@@ -59,6 +59,49 @@ architecture:
     3. Affix Applicator - применение аффиксов к инстансам
     4. Affix Effect Engine - обработка эффектов аффиксов в бою
     5. Affix Telemetry Collector - сбор телеметрии для балансировки
+
+  affix_system_design:
+    affix_catalog: |
+      Каталог содержит 20+ базовых аффиксов, разделенных по категориям:
+
+      Combat Affixes (боевые модификаторы):
+      - Volatile: Враги периодически взрываются, нанося AoE урон
+      - Raging: Враги получают бонус к урону при низком HP
+      - Spiteful: Враги получают бонус к урону при смерти союзников
+      - Thundering: Молнии бьют по игрокам с максимальным уроном
+
+      Environmental Affixes (окружающая среда):
+      - Storming: Периодические молнии бьют по случайным местам
+      - Entangling: Лоза периодически связывает игроков корнями
+      - Incorporeal: Враги становятся неуязвимыми на короткое время
+
+      Debuff Affixes (дебаффы и состояния):
+      - Afflicted: Игроки получают случайные дебаффы со временем
+      - Bolstering: Смерть врага усиливает оставшихся
+      - Sanguine: Враги лечатся от урона по игрокам
+
+      Defensive Affixes (защита и выживание):
+      - Fortified: Враги получают бонус к защите в определенные периоды
+      - Tyrannical: Боссы имеют увеличенное HP и урон
+      - Bursting: Враги взрываются при смерти
+
+    affix_selection_algorithm: |
+      Для каждого инстанса выбирается 2-4 аффикса из активного пула (8-10 аффиксов):
+      1. Проверка совместимости аффиксов (некоторые комбинации запрещены)
+      2. Взвешенный случайный выбор с учетом категории
+      3. Масштабирование эффектов по количеству игроков и уровню
+
+    affix_compatibility_matrix: |
+      Несовместимые комбинации:
+      - Raging + Fortified (противоречивые механики)
+      - Volatile + Incorporeal (избыточная сложность)
+      - Bursting + Sanguine (непредсказуемость)
+
+    affix_scaling_rules: |
+      Эффекты масштабируются по:
+      - Количеству игроков (меньше игроков = слабее эффекты)
+      - Уровню сложности инстанса
+      - Типу контента (рейды сложнее подземелий)
 
   microservices:
     - name: gameplay-service
@@ -76,17 +119,39 @@ architecture:
         - affix-effect-engine: обработка эффектов
         - affix-telemetry-collector: сбор телеметрии
       endpoints:
-        - GET /api/v1/gameplay/affixes/active - список активных аффиксов
-        - GET /api/v1/gameplay/affixes/{id} - информация об аффиксе
-        - GET /api/v1/gameplay/instances/{instanceId}/affixes - аффиксы инстанса
+        # Public endpoints
+        - GET /api/v1/gameplay/affixes/active - список активных аффиксов текущей недели
+        - GET /api/v1/gameplay/affixes/{id} - детальная информация об аффиксе
+        - GET /api/v1/gameplay/instances/{instanceId}/affixes - аффиксы конкретного инстанса
+        - GET /api/v1/gameplay/affixes/rotation/current - текущая ротация
         - GET /api/v1/gameplay/affixes/rotation/history - история ротаций
-        - POST /api/v1/gameplay/affixes/rotation/trigger - триггер ротации (admin)
+
+        # Admin endpoints
+        - POST /api/v1/gameplay/affixes/rotation/trigger - ручной триггер ротации
+        - PUT /api/v1/gameplay/affixes/{id} - обновление конфигурации аффикса
+        - POST /api/v1/gameplay/affixes - создание нового аффикса
+        - DELETE /api/v1/gameplay/affixes/{id} - удаление аффикса
+
+        # Analytics endpoints
+        - GET /api/v1/analytics/affixes/popularity - популярность аффиксов
+        - GET /api/v1/analytics/affixes/difficulty - метрики сложности
+        - GET /api/v1/analytics/affixes/combinations - анализ комбинаций
       websocket_channels:
         - wss://api.necp.game/v1/gameplay/affixes/rotation - события ротации
       events_published:
-        - gameplay.affixes.rotation.changed: смена ротации аффиксов
+        - gameplay.affixes.rotation.changed: смена ротации аффиксов (weekly)
         - gameplay.affixes.applied: применение аффиксов к инстансу
-        - gameplay.affixes.telemetry: телеметрия аффиксов
+        - gameplay.affixes.telemetry: телеметрия использования аффиксов
+        - gameplay.affixes.effect.triggered: срабатывание эффекта аффикса
+        - gameplay.affixes.instance.completed: завершение инстанса с аффиксами
+
+      events_consumed:
+        - world.season.started: начало нового сезона
+        - world.season.ended: окончание сезона
+        - gameplay.instance.created: создание инстанса
+        - gameplay.instance.completed: завершение инстанса
+        - combat.damage.dealt: урон для Sanguine аффикса
+        - combat.enemy.died: смерть врага для различных аффиксов
 
   data_flows:
     affix_application_flow: |
