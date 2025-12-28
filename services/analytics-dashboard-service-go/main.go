@@ -300,13 +300,13 @@ func (h *AnalyticsHandler) AnalyticsServiceHealthCheck(ctx context.Context, para
 		CacheControl:   api.NewOptString("max-age=30"),
 		ETag:           api.NewOptString(fmt.Sprintf(`"%d"`, time.Now().Unix())),
 		Response: api.HealthResponse{
-			Service:             "analytics-dashboard-service",
-			Status:              "healthy",
+			Service:             api.NewOptString("analytics-dashboard-service"),
+			Status:              api.NewOptString("healthy"),
 			Timestamp:           time.Now(),
-			Version:             "1.0.0",
-			UptimeSeconds:       3600, // TODO: Track actual uptime
-			ActiveConnections:   1500, // TODO: Track actual connections
-			DataFreshnessSeconds: 30,
+			Version:             api.NewOptString("1.0.0"),
+			UptimeSeconds:       api.NewOptInt(3600), // TODO: Track actual uptime
+			ActiveConnections:   api.NewOptInt(1500), // TODO: Track actual connections
+			DataFreshnessSeconds: api.NewOptInt(30),
 		},
 	}
 
@@ -343,15 +343,15 @@ func (h *AnalyticsHandler) GetGameAnalyticsOverview(ctx context.Context, params 
 		ETag:           api.NewOptString(fmt.Sprintf(`"%s"`, overview.Timestamp.Format(time.RFC3339))),
 		XDataFreshness: api.NewOptInt(30),
 		Response: api.GameAnalyticsOverview{
-			Period:    overview.Period,
+			Period:    api.NewOptString(overview.Period),
 			Timestamp: overview.Timestamp,
 			Summary: api.DashboardSummary{
-				ActiveUsers:         int64(overview.Summary.ActiveUsers),
+				ActiveUsers:         overview.Summary.ActiveUsers,
 				NewRegistrations:    api.NewOptInt(overview.Summary.NewRegistrations),
 				TotalRevenue:        float32(overview.Summary.TotalRevenue),
 				AverageSessionTime:  float32(overview.Summary.AverageSessionTime),
 				ServerHealthScore:   float32(overview.Summary.ServerHealthScore),
-				AlertsCount:         int64(overview.Summary.AlertsCount),
+				AlertsCount:         api.NewOptInt(overview.Summary.AlertsCount),
 			},
 			// TODO: Add other fields as needed
 		},

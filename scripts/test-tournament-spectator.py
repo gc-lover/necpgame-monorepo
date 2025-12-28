@@ -25,14 +25,14 @@ def test_spectator_service():
         response = requests.get(f"{base_url}/health", timeout=5)
         if response.status_code == 200:
             health = response.json()
-            print("✓ Health check passed")
+            print("[OK] Health check passed")
             print(f"  Service: {health.get('domain', 'unknown')}")
             print(f"  Status: {health.get('status', 'unknown')}")
         else:
-            print(f"✗ Health check failed: HTTP {response.status_code}")
+            print(f"[FAIL] Health check failed: HTTP {response.status_code}")
             return False
     except Exception as e:
-        print(f"✗ Health check error: {e}")
+        print(f"[ERROR] Health check error: {e}")
         return False
 
     # Test 2: Tournament stats endpoint (may not exist yet)
@@ -41,25 +41,25 @@ def test_spectator_service():
         # Try with a dummy tournament ID
         tournament_id = "550e8400-e29b-41d4-a716-446655440000"
         response = requests.get(f"{base_url}/api/v1/tournaments/{tournament_id}/stats", timeout=5)
-        print(f"✓ Tournament stats endpoint responded: HTTP {response.status_code}")
+        print(f"[OK] Tournament stats endpoint responded: HTTP {response.status_code}")
     except requests.exceptions.RequestException:
-        print("⚠ Tournament stats endpoint not available (expected for basic implementation)")
+        print("[INFO] Tournament stats endpoint not available (expected for basic implementation)")
 
     # Test 3: Spectator sessions endpoint
     print("\n3. Testing spectator sessions endpoint...")
     try:
         response = requests.get(f"{base_url}/api/v1/spectator/sessions", timeout=5)
-        print(f"✓ Spectator sessions endpoint responded: HTTP {response.status_code}")
+        print(f"[OK] Spectator sessions endpoint responded: HTTP {response.status_code}")
         if response.status_code == 200:
             data = response.json()
             print(f"  Sessions returned: {len(data.get('sessions', []))}")
     except requests.exceptions.RequestException:
-        print("⚠ Spectator sessions endpoint not available (expected for basic implementation)")
+        print("[INFO] Spectator sessions endpoint not available (expected for basic implementation)")
 
     print("\n=== Test Summary ===")
-    print("✓ Tournament Spectator Service is running")
-    print("✓ Basic health checks passed")
-    print("✓ API endpoints are accessible")
+    print("[OK] Tournament Spectator Service is running")
+    print("[OK] Basic health checks passed")
+    print("[OK] API endpoints are accessible")
     print("\nNote: Full functionality requires database setup and tournament data")
     print("This is a basic connectivity test confirming the service is operational")
 

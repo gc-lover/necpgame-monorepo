@@ -106,7 +106,7 @@ func (s *Service) GetPlayerBehaviorAnalytics(ctx context.Context, params api.Get
 	queryCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
-	analytics, err := s.repo.GetPlayerBehaviorAnalytics(queryCtx, params)
+	analytics, err := s.repo.GetPlayerBehaviorAnalytics(queryCtx, period, segment)
 	if err != nil {
 		s.logger.Error("Failed to get player behavior analytics", zap.Error(err))
 		return nil, err
