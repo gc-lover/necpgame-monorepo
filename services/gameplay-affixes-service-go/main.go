@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
@@ -60,38 +61,56 @@ func main() {
 		logger.Fatal("Failed to wire components", zap.Error(err))
 	}
 
-	// Setup HTTP server
-	mux := http.NewServeMux()
+	// Setup HTTP router
+	router := mux.NewRouter()
 
 	// Health check
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
 
 	// Affixes endpoints
-	mux.HandleFunc("/affixes/active", affixesHandlers.GetActiveAffixes)
-	mux.HandleFunc("/affixes/", func(w http.ResponseWriter, r *http.Request) {
-		if len(r.URL.Path) > len("/affixes/") {
-			affixesHandlers.GetAffix(w, r)
-		} else {
-			http.NotFound(w, r)
-		}
+	router.HandleFunc("/api/v1/gameplay/affixes/active", affixesHandlers.GetActiveAffixes).Methods("GET")
+	router.HandleFunc("/api/v1/gameplay/affixes/{id}", affixesHandlers.GetAffix).Methods("GET")
+	router.HandleFunc("/api/v1/gameplay/affixes", affixesHandlers.ListAffixes).Methods("GET")
+	router.HandleFunc("/api/v1/gameplay/affixes", affixesHandlers.CreateAffix).Methods("POST")
+	router.HandleFunc("/api/v1/gameplay/affixes/{id}", affixesHandlers.UpdateAffix).Methods("PUT")
+	router.HandleFunc("/api/v1/gameplay/affixes/{id}", affixesHandlers.DeleteAffix).Methods("DELETE")
+
+	// Instance affixes endpoints
+	router.HandleFunc("/api/v1/gameplay/instances/{instance_id}/affixes", affixesHandlers.GetInstanceAffixes).Methods("GET")
+	router.HandleFunc("/api/v1/gameplay/instances/{instance_id}/affixes/generate", affixesHandlers.GenerateInstanceAffixes).Methods("POST")
+
+	// Rotation endpoints
+	router.HandleFunc("/api/v1/gameplay/affixes/rotation/history", affixesHandlers.GetAffixRotationHistory).Methods("GET")
+	router.HandleFunc("/api/v1/gameplay/affixes/rotation/trigger", affixesHandlers.TriggerAffixRotation).Methods("POST")
+
+	// Add logging middleware
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+			logger.Info("Request started",
+				zap.String("method", r.Method),
+				zap.String("path", r.URL.Path),
+				zap.String("remote_addr", r.RemoteAddr),
+			)
+
+			// Call the next handler
+			next.ServeHTTP(w, r)
+
+			logger.Info("Request completed",
+				zap.String("method", r.Method),
+				zap.String("path", r.URL.Path),
+				zap.Duration("duration", time.Since(start)),
+			)
+		})
 	})
-	mux.HandleFunc("/instances/", func(w http.ResponseWriter, r *http.Request) {
-		if len(r.URL.Path) > len("/instances/") && r.Method == http.MethodGet {
-			affixesHandlers.GetInstanceAffixes(w, r)
-		} else {
-			http.NotFound(w, r)
-		}
-	})
-	mux.HandleFunc("/affixes/rotation/history", affixesHandlers.GetAffixRotationHistory)
-	mux.HandleFunc("/affixes/rotation/trigger", affixesHandlers.TriggerAffixRotation)
 
 	// Create server
 	server := &http.Server{
 		Addr:         ":8083",
-		Handler:      mux,
+		Handler:      router,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  120 * time.Second,
