@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/jwtauth/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
@@ -67,13 +66,15 @@ func main() {
 	defer db.Close()
 
 	// Initialize JWT auth for analytics security
-	tokenAuth := jwtauth.New("HS256", []byte(cfg.JWTSecret), nil)
 
 	// Initialize server with optimized handlers for complex analytical computations
-	srv := server.NewServer(db, logger, tokenAuth, cfg)
+	srv := server.NewServer(db, logger)
 
 	// Create router with ogen handlers wrapped in middleware
-	ogenHandler := srv.CreateRouter()
+	ogenHandler, err := api.NewServer(srv)
+	if err != nil {
+		logger.Fatal("Failed to create API server", zap.Error(err))
+	}
 	r := setupRouter(ogenHandler, logger)
 
 	// Start HTTP server with graceful shutdown

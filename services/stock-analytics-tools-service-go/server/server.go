@@ -262,7 +262,7 @@ func (s *Server) ReadinessCheck(ctx context.Context) (*api.ReadinessCheckOK, err
 
 // Metrics implements metrics endpoint
 func (s *Server) Metrics(ctx context.Context) (api.MetricsOK, error) {
-	return `# Stock Analytics Tools Service Metrics
+	metrics := `# Stock Analytics Tools Service Metrics
 # HELP stock_fundamental_analysis_total Total number of fundamental analysis requests
 # TYPE stock_fundamental_analysis_total counter
 stock_fundamental_analysis_total 0
@@ -274,7 +274,11 @@ stock_technical_analysis_total 0
 # HELP stock_portfolio_optimizations_total Total number of portfolio optimizations
 # TYPE stock_portfolio_optimizations_total counter
 stock_portfolio_optimizations_total 0
-`, nil
+`
+
+	return api.MetricsOK{
+		Data: strings.NewReader(metrics),
+	}, nil
 }
 
 // Issue: #141889238
