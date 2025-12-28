@@ -424,3 +424,128 @@ func (r *ClanWarRepository) ListTerritories(ctx context.Context, limit, offset i
 
 	return territories, rows.Err()
 }
+
+// GetWarByIDWithBattles retrieves a clan war along with its battles
+func (r *ClanWarRepository) GetWarByIDWithBattles(ctx context.Context, warID uuid.UUID) (*ClanWar, []*Battle, error) {
+	// PERFORMANCE: Context timeout check
+	if err := ctx.Err(); err != nil {
+		return nil, nil, err
+	}
+
+	// Get the war first
+	war, err := r.GetWarByID(ctx, warID)
+	if err != nil {
+		return nil, nil, err
+	}
+	if war == nil {
+		return nil, nil, nil // War not found
+	}
+
+	// Get battles for this war
+	battles, err := r.ListBattles(ctx, warID, 1000, 0) // Large limit to get all battles
+	if err != nil {
+		r.logger.Error("Failed to get battles for war", zap.Error(err), zap.String("war_id", warID.String()))
+		return nil, nil, err
+	}
+
+	return war, battles, nil
+}
+
+// GetActiveWarsByClan retrieves all active wars for a specific clan
+func (r *ClanWarRepository) GetActiveWarsByClan(ctx context.Context, clanID uuid.UUID) ([]*ClanWar, error) {
+	// PERFORMANCE: Context timeout check
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	query := `
+		SELECT id, clan_id_1, clan_id_2, status, territory_id, start_time, end_time, winner_clan_id, score_clan_1, score_clan_2, created_at, updated_at
+		FROM clan_wars
+		WHERE (clan_id_1 = $1 OR clan_id_2 = $1) AND status = 'active'
+		ORDER BY created_at DESC
+	`
+
+	rows, err := r.db.Query(ctx, query, clanID)
+	if err != nil {
+		r.logger.Error("Failed to get active wars by clan", zap.Error(err), zap.String("clan_id", clanID.String()))
+		return nil, err
+	}
+	defer rows.Close()
+
+	var wars []*ClanWar
+	for rows.Next() {
+		var war ClanWar
+		err := rows.Scan(
+			&war.ID, &war.ClanID1, &war.ClanID2, &war.Status, &war.TerritoryID,
+			&war.StartTime, &war.EndTime, &war.WinnerClanID, &war.ScoreClan1, &war.ScoreClan2,
+			&war.CreatedAt, &war.UpdatedAt,
+		)
+		if err != nil {
+			r.logger.Error("Failed to scan clan war", zap.Error(err))
+			return nil, err
+		}
+		wars = append(wars, &war)
+	}
+
+	return wars, rows.Err()
+}
+
+// WarStatistics represents aggregated statistics for a war
+type WarStatistics struct {
+	WarID         uuid.UUID `json:"war_id"`
+	TotalBattles  int       `json:"total_battles"`
+	ActiveBattles int       `json:"active_battles"`
+	Clan1Score    int       `json:"clan_1_score"`
+	Clan2Score    int       `json:"clan_2_score"`
+}
+
+// GetWarStatistics retrieves statistics for a specific war
+func (r *ClanWarRepository) GetWarStatistics(ctx context.Context, warID uuid.UUID) (*WarStatistics, error) {
+	// PERFORMANCE: Context timeout check
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	// Get basic war info first
+	war, err := r.GetWarByID(ctx, warID)
+	if err != nil {
+		return nil, err
+	}
+	if war == nil {
+		return nil, nil // War not found
+	}
+
+	// Aggregate battle statistics
+	query := `
+		SELECT
+			COUNT(*) as total_battles,
+			COUNT(CASE WHEN status = 'active' THEN 1 END) as active_battles,
+			COALESCE(SUM(score_clan_1), 0) as clan_1_total_score,
+			COALESCE(SUM(score_clan_2), 0) as clan_2_total_score
+		FROM clan_war_battles
+		WHERE war_id = $1
+	`
+
+	var stats WarStatistics
+	stats.WarID = warID
+
+	err = r.db.QueryRow(ctx, query, warID).Scan(
+		&stats.TotalBattles,
+		&stats.ActiveBattles,
+		&stats.Clan1Score,
+		&stats.Clan2Score,
+	)
+
+	if err != nil {
+		r.logger.Error("Failed to get war statistics", zap.Error(err), zap.String("war_id", warID.String()))
+		return nil, err
+	}
+
+	// Add war-level scores
+	stats.Clan1Score += int(war.ScoreClan1)
+	stats.Clan2Score += int(war.ScoreClan2)
+
+	return &stats, nil
+}
+
+// Issue: #427

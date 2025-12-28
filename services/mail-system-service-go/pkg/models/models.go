@@ -185,6 +185,28 @@ type HealthResponse struct {
 	Uptime    int64     `json:"uptime"`
 }
 
+// MarkReadResponse represents response for mark as read operation
+type MarkReadResponse struct {
+	MailID       uuid.UUID `json:"mail_id"`
+	ReadAt       time.Time `json:"read_at"`
+	PreviousStatus string  `json:"previous_status"`
+}
+
+// ArchiveResponse represents response for archive operation
+type ArchiveResponse struct {
+	MailID     uuid.UUID `json:"mail_id"`
+	ArchivedAt time.Time `json:"archived_at"`
+	Folder     string    `json:"folder"`
+}
+
+// ReportResponse represents response for mail reporting
+type ReportResponse struct {
+	ReportID    uuid.UUID `json:"report_id"`
+	MailID      uuid.UUID `json:"mail_id"`
+	SubmittedAt time.Time `json:"submitted_at"`
+	Status      string    `json:"status"`
+}
+
 // Error represents an error response
 type Error struct {
 	MailID    *uuid.UUID `json:"mail_id,omitempty"`

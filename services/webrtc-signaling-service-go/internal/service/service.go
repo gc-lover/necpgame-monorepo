@@ -15,29 +15,42 @@ import (
 
 // Service handles business logic for WebRTC signaling
 type Service struct {
-	repo     *repository.Repository
-	logger   *zap.Logger
+	repo       *repository.Repository
+	guildClient *GuildClient
+	logger     *zap.Logger
 	connections sync.Map // WebSocket connections map
 }
 
 // NewService creates a new service instance
-func NewService(repo *repository.Repository, logger *zap.Logger) *Service {
+func NewService(repo *repository.Repository, guildClient *GuildClient, logger *zap.Logger) *Service {
 	return &Service{
-		repo:   repo,
-		logger: logger,
+		repo:        repo,
+		guildClient: guildClient,
+		logger:      logger,
 	}
 }
 
 // Guild Voice Channel methods
 func (s *Service) CreateGuildVoiceChannel(ctx context.Context, req *models.GuildVoiceChannelRequest, ownerID uuid.UUID) (*models.GuildVoiceChannelResponse, error) {
-	// Validate guild membership (placeholder - should integrate with guild service)
+	// Validate guild membership and permissions
 	guildID, err := uuid.Parse(req.GuildID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid guild ID: %w", err)
 	}
 
-	// Check if user has permission to create channels in this guild (placeholder)
-	// TODO: Integrate with guild service to validate permissions
+	// Check if user is a member of the guild and has permission to create voice channels
+	hasPermission, err := s.guildClient.HasVoiceChannelPermission(ctx, guildID, ownerID)
+	if err != nil {
+		s.logger.Error("Failed to check guild permissions",
+			zap.String("guild_id", guildID.String()),
+			zap.String("user_id", ownerID.String()),
+			zap.Error(err))
+		return nil, fmt.Errorf("failed to validate guild permissions: %w", err)
+	}
+
+	if !hasPermission {
+		return nil, fmt.Errorf("insufficient permissions to create voice channels in this guild")
+	}
 
 	channel := &models.VoiceChannel{
 		ID:                     uuid.New(),
@@ -133,8 +146,21 @@ func (s *Service) UpdateGuildVoiceChannel(ctx context.Context, channelID uuid.UU
 		return nil, err
 	}
 
-	// Verify user has permission to update (placeholder - should integrate with guild service)
-	if channel.OwnerID != userID {
+	// Verify user has permission to update
+	if channel.GuildID != nil {
+		hasPermission, err := s.guildClient.HasVoiceChannelPermission(ctx, *channel.GuildID, userID)
+		if err != nil {
+			s.logger.Error("Failed to check guild permissions for update",
+				zap.String("guild_id", channel.GuildID.String()),
+				zap.String("user_id", userID.String()),
+				zap.Error(err))
+			return nil, fmt.Errorf("failed to validate guild permissions: %w", err)
+		}
+
+		if !hasPermission && channel.OwnerID != userID {
+			return nil, fmt.Errorf("insufficient permissions to update channel")
+		}
+	} else if channel.OwnerID != userID {
 		return nil, fmt.Errorf("insufficient permissions to update channel")
 	}
 
@@ -221,7 +247,7 @@ func (s *Service) JoinGuildVoiceChannel(ctx context.Context, channelID, userID u
 		return nil, fmt.Errorf("guild voice channel is full")
 	}
 
-	// Check guild permissions (placeholder - should integrate with guild service)
+	// Check guild permissions
 	if channel.GuildPermissions != nil {
 		// Check if user is blocked
 		for _, blockedUser := range channel.GuildPermissions.BlockedUsers {
@@ -230,9 +256,33 @@ func (s *Service) JoinGuildVoiceChannel(ctx context.Context, channelID, userID u
 			}
 		}
 
-		// Check if channel requires approval (placeholder)
+		// Check if channel requires approval
 		if channel.GuildPermissions.RequireApproval {
 			return nil, fmt.Errorf("channel requires approval to join")
+		}
+
+		// Check if user has required role
+		if len(channel.GuildPermissions.AllowedRoles) > 0 {
+			userRole, err := s.guildClient.GetUserGuildRole(ctx, *channel.GuildID, userID)
+			if err != nil {
+				s.logger.Error("Failed to get user guild role",
+					zap.String("guild_id", channel.GuildID.String()),
+					zap.String("user_id", userID.String()),
+					zap.Error(err))
+				return nil, fmt.Errorf("failed to validate guild role: %w", err)
+			}
+
+			roleAllowed := false
+			for _, allowedRole := range channel.GuildPermissions.AllowedRoles {
+				if allowedRole == userRole {
+					roleAllowed = true
+					break
+				}
+			}
+
+			if !roleAllowed {
+				return nil, fmt.Errorf("user role '%s' is not allowed in this channel", userRole)
+			}
 		}
 	}
 

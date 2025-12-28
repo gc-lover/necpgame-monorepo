@@ -18,6 +18,9 @@ type Config struct {
 	// Redis configuration
 	RedisURL string
 
+	// Guild service configuration
+	GuildServiceURL string
+
 	// WebRTC configuration
 	WebRTC struct {
 		ICEServers []string
@@ -68,6 +71,9 @@ func Load() (*Config, error) {
 
 	// Redis configuration
 	cfg.RedisURL = getEnv("REDIS_URL", "redis://localhost:6379")
+
+	// Guild service configuration
+	cfg.GuildServiceURL = getEnv("GUILD_SERVICE_URL", "http://localhost:8081/api/v1/social-domain/guild")
 
 	// WebRTC configuration
 	cfg.WebRTC.ICEServers = []string{
