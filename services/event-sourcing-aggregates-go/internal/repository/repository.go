@@ -53,9 +53,10 @@ type ReadModel struct {
 
 // EventSourcingRepository handles event store operations
 type EventSourcingRepository struct {
-	db     *sql.DB
-	redis  *redis.Client
-	logger *zap.SugaredLogger
+	db             *sql.DB
+	redis          *redis.Client
+	kafkaConsumer  interface{} // Kafka consumer interface
+	logger         *zap.SugaredLogger
 }
 
 // NewConnection creates a new database connection
@@ -97,11 +98,12 @@ func NewRedisClient(redisURL string) (*redis.Client, error) {
 }
 
 // NewEventSourcingRepository creates a new event sourcing repository
-func NewEventSourcingRepository(db *sql.DB, redis *redis.Client, logger *zap.SugaredLogger) *EventSourcingRepository {
+func NewEventSourcingRepository(db *sql.DB, redis *redis.Client, kafkaConsumer interface{}, logger *zap.SugaredLogger) *EventSourcingRepository {
 	return &EventSourcingRepository{
-		db:     db,
-		redis:  redis,
-		logger: logger,
+		db:            db,
+		redis:         redis,
+		kafkaConsumer: kafkaConsumer,
+		logger:        logger,
 	}
 }
 
@@ -453,7 +455,29 @@ func (r *EventSourcingRepository) SaveSnapshot(ctx context.Context, snapshot *Ag
 	return err
 }
 
+// NewKafkaProducer creates a new Kafka producer
+func NewKafkaProducer(brokers []string) (interface{}, error) {
+	// Placeholder - actual implementation would use sarama or similar
+	return nil, nil
+}
+
+// NewKafkaConsumer creates a new Kafka consumer
+func NewKafkaConsumer(brokers []string, groupID string) (interface{}, error) {
+	// Placeholder - actual implementation would use sarama or similar
+	return nil, nil
+}
+
 // HealthCheck performs a health check
 func (r *EventSourcingRepository) HealthCheck(ctx context.Context) error {
 	return r.db.PingContext(ctx)
+}
+
+// GetKafkaConsumer returns the Kafka consumer
+func (r *EventSourcingRepository) GetKafkaConsumer() interface{} {
+	return r.kafkaConsumer
+}
+
+// GetDB returns the database connection
+func (r *EventSourcingRepository) GetDB() interface{} {
+	return r.db
 }

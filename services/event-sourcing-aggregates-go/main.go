@@ -65,19 +65,27 @@ func main() {
 	if err != nil {
 		sugar.Fatalf("Failed to create Kafka producer: %v", err)
 	}
-	defer kafkaProducer.Close()
+	defer func() {
+		if closer, ok := kafkaProducer.(interface{ Close() error }); ok {
+			closer.Close()
+		}
+	}()
 
 	kafkaConsumer, err := repository.NewKafkaConsumer(cfg.KafkaBrokers, cfg.ConsumerGroup)
 	if err != nil {
 		sugar.Fatalf("Failed to create Kafka consumer: %v", err)
 	}
-	defer kafkaConsumer.Close()
+	defer func() {
+		if closer, ok := kafkaConsumer.(interface{ Close() error }); ok {
+			closer.Close()
+		}
+	}()
 
 	// Initialize metrics
 	metricsCollector := metrics.NewCollector()
 
 	// Initialize repository layer
-	repo := repository.NewEventSourcingRepository(db, redisClient, kafkaProducer, kafkaConsumer, sugar)
+	repo := repository.NewEventSourcingRepository(db, redisClient, kafkaConsumer, sugar)
 
 	// Initialize service layer
 	eventService := service.NewEventSourcingService(repo, metricsCollector, sugar)

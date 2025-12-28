@@ -383,6 +383,14 @@ func (s *EasterEggsService) DiscoverEasterEgg(ctx context.Context, playerID, eas
 	s.metrics.IncrementRequests("DiscoverEasterEgg")
 	defer s.metrics.ObserveRequestDuration("DiscoverEasterEgg", time.Now())
 
+	// PERFORMANCE: Acquire semaphore to limit concurrent discovery operations
+	select {
+	case s.discoverySemaphore <- struct{}{}:
+		defer func() { <-s.discoverySemaphore }()
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+
 	// Record the discovery attempt
 	attempt := &models.EasterEggDiscoveryAttempt{
 		ID:          fmt.Sprintf("%s-%s-%d", playerID, easterEggID, time.Now().Unix()),

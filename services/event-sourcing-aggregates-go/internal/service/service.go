@@ -34,8 +34,15 @@ type EventProcessor interface {
 type RepositoryInterface interface {
 	AppendEvent(ctx context.Context, event *repository.DomainEvent) error
 	GetEvents(ctx context.Context, aggregateID uuid.UUID, fromVersion int) ([]*repository.DomainEvent, error)
+	GetEventStream(ctx context.Context, aggregateID uuid.UUID, fromVersion int64) ([]*repository.DomainEvent, error)
 	GetSnapshot(ctx context.Context, aggregateID uuid.UUID) (*repository.AggregateSnapshot, error)
 	SaveSnapshot(ctx context.Context, snapshot *repository.AggregateSnapshot) error
+	GetAggregateSnapshot(ctx context.Context, aggregateID uuid.UUID) (*repository.AggregateSnapshot, error)
+	CreateAggregateSnapshot(ctx context.Context, snapshot *repository.AggregateSnapshot) error
+	GetReadModel(ctx context.Context, modelName, id string) (*repository.ReadModel, error)
+	UpdateReadModel(ctx context.Context, model *repository.ReadModel) error
+	GetKafkaConsumer() interface{} // Kafka consumer interface
+	GetDB() interface{} // Database interface
 	HealthCheck(ctx context.Context) error
 }
 
@@ -199,8 +206,13 @@ func (s *EventSourcingService) UpdateReadModel(ctx context.Context, model *repos
 func (s *EventSourcingService) StartEventProcessing(ctx context.Context) {
 	// Subscribe to all event topics
 	topics := []string{"events.player", "events.quest", "events.combat", "events.tournament"}
-	if err := s.repo.(*repository.EventSourcingRepository).GetKafkaConsumer().SubscribeTopics(topics, nil); err != nil {
-		s.logger.Fatalf("Failed to subscribe to Kafka topics: %v", err)
+	consumer := s.repo.GetKafkaConsumer()
+	if kafkaConsumer, ok := consumer.(interface{ SubscribeTopics([]string, map[string]*string) error }); ok {
+		if err := kafkaConsumer.SubscribeTopics(topics, nil); err != nil {
+			s.logger.Fatalf("Failed to subscribe to Kafka topics: %v", err)
+		}
+	} else {
+		s.logger.Fatalf("Kafka consumer does not implement SubscribeTopics method")
 	}
 
 	// Start processing workers
@@ -224,16 +236,28 @@ func (s *EventSourcingService) eventProcessingWorker(ctx context.Context, worker
 			s.logger.Infof("Worker %d shutting down", workerID)
 			return
 		default:
-			msg, err := consumer.ReadMessage(100 * time.Millisecond)
-			if err != nil {
-				s.logger.Errorf("Worker %d: Error reading message: %v", workerID, err)
+			var msg interface{}
+			var err error
+			if kafkaConsumer, ok := consumer.(interface{ ReadMessage(time.Duration) (interface{}, error) }); ok {
+				msg, err = kafkaConsumer.ReadMessage(100 * time.Millisecond)
+				if err != nil {
+					s.logger.Errorf("Worker %d: Error reading message: %v", workerID, err)
+					continue
+				}
+			} else {
+				s.logger.Errorf("Worker %d: Kafka consumer does not implement ReadMessage method", workerID)
 				continue
 			}
 
 			// Process the event
 			var event repository.DomainEvent
-			if err := json.Unmarshal(msg.Value, &event); err != nil {
-				s.logger.Errorf("Worker %d: Failed to unmarshal event: %v", workerID, err)
+			if kafkaMsg, ok := msg.(interface{ GetValue() []byte }); ok {
+				if err := json.Unmarshal(kafkaMsg.GetValue(), &event); err != nil {
+					s.logger.Errorf("Worker %d: Failed to unmarshal event: %v", workerID, err)
+					continue
+				}
+			} else {
+				s.logger.Errorf("Worker %d: Message does not implement GetValue method", workerID)
 				continue
 			}
 
@@ -257,8 +281,12 @@ func (s *EventSourcingService) eventProcessingWorker(ctx context.Context, worker
 			s.logger.Infof("Worker %d: Processed event %s in %v", workerID, event.EventID.String(), processingTime)
 
 			// Commit offset
-			if _, err := consumer.CommitMessage(msg); err != nil {
-				s.logger.Errorf("Worker %d: Failed to commit offset: %v", workerID, err)
+			if kafkaConsumer, ok := consumer.(interface{ CommitMessage(interface{}) (interface{}, error) }); ok {
+				if _, err := kafkaConsumer.CommitMessage(msg); err != nil {
+					s.logger.Errorf("Worker %d: Failed to commit offset: %v", workerID, err)
+				}
+			} else {
+				s.logger.Errorf("Worker %d: Kafka consumer does not implement CommitMessage method", workerID)
 			}
 		}
 	}
@@ -291,9 +319,14 @@ func (s *EventSourcingService) updateEventProcessingStatus(ctx context.Context, 
 		WHERE event_id = $3
 	`
 
-	_, err := s.repo.(*repository.EventSourcingRepository).GetDB().ExecContext(ctx, query, status, errorMsg, eventID)
-	if err != nil {
-		s.logger.Errorf("Failed to update event processing status: %v", err)
+	db := s.repo.GetDB()
+	if dbConn, ok := db.(interface{ ExecContext(context.Context, string, ...interface{}) (interface{}, error) }); ok {
+		_, err := dbConn.ExecContext(ctx, query, status, errorMsg, eventID)
+		if err != nil {
+			s.logger.Errorf("Failed to update event processing status: %v", err)
+		}
+	} else {
+		s.logger.Errorf("Database does not implement ExecContext method")
 	}
 }
 
@@ -306,11 +339,15 @@ func (s *EventSourcingService) getCurrentAggregateVersion(ctx context.Context, a
 	`
 
 	var version int64
-	err := s.repo.(*repository.EventSourcingRepository).GetDB().QueryRowContext(ctx, query, aggregateID).Scan(&version)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get current aggregate version: %w", err)
+	db := s.repo.GetDB()
+	if dbConn, ok := db.(interface{ QueryRowContext(context.Context, string, ...interface{}) interface{ Scan(...interface{}) error } }); ok {
+		err := dbConn.QueryRowContext(ctx, query, aggregateID).Scan(&version)
+		if err != nil {
+			return 0, fmt.Errorf("failed to get current aggregate version: %w", err)
+		}
+	} else {
+		return 0, fmt.Errorf("database does not implement QueryRowContext method")
 	}
-
 	return version, nil
 }
 
@@ -329,12 +366,18 @@ func (s *EventSourcingService) GetEventsAnalytics(ctx context.Context, days int)
 	var totalEvents, uniqueAggregates, aggregateTypes int64
 	var avgProcessingTime *float64
 
-	err := s.repo.(*repository.EventSourcingRepository).GetDB().QueryRowContext(ctx, fmt.Sprintf(query, days)).Scan(
-		&totalEvents, &uniqueAggregates, &aggregateTypes, &avgProcessingTime,
-	)
-	if err != nil {
+	db := s.repo.GetDB()
+	if dbConn, ok := db.(interface{ QueryRowContext(context.Context, string, ...interface{}) interface{ Scan(...interface{}) error } }); ok {
+		err := dbConn.QueryRowContext(ctx, fmt.Sprintf(query, days)).Scan(
+			&totalEvents, &uniqueAggregates, &aggregateTypes, &avgProcessingTime,
+		)
+		if err != nil {
+			s.metrics.IncrementErrors()
+			return nil, fmt.Errorf("failed to get events analytics: %w", err)
+		}
+	} else {
 		s.metrics.IncrementErrors()
-		return nil, fmt.Errorf("failed to get events analytics: %w", err)
+		return nil, fmt.Errorf("database does not implement QueryRowContext method")
 	}
 
 	analytics := map[string]interface{}{
@@ -363,12 +406,18 @@ func (s *EventSourcingService) GetProcessingStatus(ctx context.Context) (map[str
 
 	var pending, processing, processed, failed int64
 
-	err := s.repo.(*repository.EventSourcingRepository).GetDB().QueryRowContext(ctx, query).Scan(
-		&pending, &processing, &processed, &failed,
-	)
-	if err != nil {
+	db := s.repo.GetDB()
+	if dbConn, ok := db.(interface{ QueryRowContext(context.Context, string, ...interface{}) interface{ Scan(...interface{}) error } }); ok {
+		err := dbConn.QueryRowContext(ctx, query).Scan(
+			&pending, &processing, &processed, &failed,
+		)
+		if err != nil {
+			s.metrics.IncrementErrors()
+			return nil, fmt.Errorf("failed to get processing status: %w", err)
+		}
+	} else {
 		s.metrics.IncrementErrors()
-		return nil, fmt.Errorf("failed to get processing status: %w", err)
+		return nil, fmt.Errorf("database does not implement QueryRowContext method")
 	}
 
 	status := map[string]interface{}{
