@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -92,6 +93,7 @@ type EasterEggsServiceInterface interface {
 
 	// Hint operations
 	GetHintsForEasterEgg(ctx context.Context, easterEggID string, maxLevel int) ([]*models.DiscoveryHint, error)
+	GetEasterEggHints(ctx context.Context, easterEggID string) ([]models.DiscoveryHint, error)
 
 	// Challenge operations
 	GetActiveChallenges(ctx context.Context) ([]*models.EasterEggChallenge, error)
@@ -119,6 +121,15 @@ type EasterEggsService struct {
 	logger                 *zap.SugaredLogger
 	httpClient             *http.Client
 	achievementServiceURL  string
+
+	// PERFORMANCE: Memory pools for hot path operations
+	easterEggPool          *sync.Pool
+	playerProgressPool     *sync.Pool
+	discoveryAttemptPool   *sync.Pool
+
+	// PERFORMANCE: Worker pool semaphore for real-time operations
+	discoverySemaphore     chan struct{}
+}
 }
 
 // NewEasterEggsService creates a new easter eggs service
@@ -134,6 +145,20 @@ func NewEasterEggsService(repo repository.RepositoryInterface, metrics *metrics.
 		logger:                logger,
 		httpClient:            &http.Client{Timeout: 5 * time.Second},
 		achievementServiceURL: achievementURL,
+
+		// PERFORMANCE: Initialize memory pools for hot path operations
+		easterEggPool: &sync.Pool{
+			New: func() interface{} { return &models.EasterEgg{} },
+		},
+		playerProgressPool: &sync.Pool{
+			New: func() interface{} { return &models.PlayerEasterEggProgress{} },
+		},
+		discoveryAttemptPool: &sync.Pool{
+			New: func() interface{} { return &models.EasterEggDiscoveryAttempt{} },
+		},
+
+		// PERFORMANCE: Worker pool for discovery operations (limit to 100 concurrent)
+		discoverySemaphore: make(chan struct{}, 100),
 	}
 }
 
@@ -428,6 +453,18 @@ func (s *EasterEggsService) DiscoverEasterEgg(ctx context.Context, playerID, eas
 		s.logger.Warnf("Failed to create discovery event: %v", err)
 	}
 
+	// Get easter egg to process rewards
+	easterEgg, err := s.repo.GetEasterEgg(ctx, easterEggID)
+	if err != nil {
+		s.logger.Warnf("Failed to get easter egg for rewards processing: %v", err)
+	} else {
+		// Process rewards for the player
+		if err := s.processEasterEggRewards(ctx, playerID, easterEgg); err != nil {
+			s.logger.Warnf("Failed to process rewards for easter egg %s: %v", easterEggID, err)
+			// Don't fail the whole operation if rewards processing fails
+		}
+	}
+
 	// Unlock achievement for easter egg discovery
 	if err := s.unlockEasterEggAchievement(ctx, playerID, easterEggID); err != nil {
 		s.logger.Warnf("Failed to unlock achievement for easter egg %s: %v", easterEggID, err)
@@ -481,6 +518,125 @@ func (s *EasterEggsService) GetHintsForEasterEgg(ctx context.Context, easterEggI
 	}
 
 	return hints, nil
+}
+
+// GetEasterEggHints gets all hints for easter egg (for generated API)
+func (s *EasterEggsService) GetEasterEggHints(ctx context.Context, easterEggID string) ([]models.DiscoveryHint, error) {
+	s.metrics.IncrementRequests("GetEasterEggHints")
+	defer s.metrics.ObserveRequestDuration("GetEasterEggHints", time.Now())
+
+	hints, err := s.repo.GetHintsForEasterEgg(ctx, easterEggID, 3) // Get all hint levels
+	if err != nil {
+		s.metrics.IncrementErrors()
+		s.logger.Errorf("Failed to get hints for easter egg %s: %v", easterEggID, err)
+		return nil, fmt.Errorf("failed to get hints: %w", err)
+	}
+
+	// Convert []*models.DiscoveryHint to []models.DiscoveryHint
+	var result []models.DiscoveryHint
+	for _, hint := range hints {
+		result = append(result, *hint)
+	}
+
+	return result, nil
+}
+
+// processEasterEggRewards handles reward distribution for easter egg discovery
+func (s *EasterEggsService) processEasterEggRewards(ctx context.Context, playerID string, easterEgg *models.EasterEgg) error {
+	s.metrics.IncrementRequests("ProcessEasterEggRewards")
+	defer s.metrics.ObserveRequestDuration("ProcessEasterEggRewards", time.Now())
+
+	if len(easterEgg.Rewards) == 0 {
+		s.logger.Debugf("No rewards defined for easter egg %s", easterEgg.ID)
+		return nil
+	}
+
+	var grantedRewards []string
+	for _, reward := range easterEgg.Rewards {
+		if err := s.grantRewardToPlayer(ctx, playerID, easterEgg.ID, reward); err != nil {
+			s.logger.Warnf("Failed to grant reward %v to player %s: %v", reward, playerID, err)
+			continue // Continue with other rewards even if one fails
+		}
+		grantedRewards = append(grantedRewards, fmt.Sprintf("%s:%v", reward.Type, reward.Value))
+	}
+
+	// Record granted rewards in player progress
+	if len(grantedRewards) > 0 {
+		if err := s.repo.RecordGrantedRewards(ctx, playerID, easterEgg.ID, grantedRewards); err != nil {
+			s.logger.Warnf("Failed to record granted rewards: %v", err)
+		}
+	}
+
+	s.logger.Infof("Granted %d rewards to player %s for easter egg %s: %v",
+		len(grantedRewards), playerID, easterEgg.ID, grantedRewards)
+	return nil
+}
+
+// grantRewardToPlayer grants a specific reward to a player
+func (s *EasterEggsService) grantRewardToPlayer(ctx context.Context, playerID, easterEggID string, reward models.EasterEggReward) error {
+	switch reward.Type {
+	case "experience":
+		return s.grantExperienceReward(ctx, playerID, reward.Value)
+	case "currency":
+		return s.grantCurrencyReward(ctx, playerID, reward.Value)
+	case "item":
+		return s.grantItemReward(ctx, playerID, reward.ItemID, reward.Value)
+	case "cosmetic":
+		return s.grantCosmeticReward(ctx, playerID, reward.ItemID)
+	case "implant_buff":
+		return s.grantImplantBuffReward(ctx, playerID, reward.ItemID, reward.Value)
+	case "achievement":
+		// Achievements are handled separately via unlockEasterEggAchievement
+		return nil
+	default:
+		s.logger.Warnf("Unknown reward type: %s", reward.Type)
+		return fmt.Errorf("unknown reward type: %s", reward.Type)
+	}
+}
+
+// grantExperienceReward grants experience points to player
+func (s *EasterEggsService) grantExperienceReward(ctx context.Context, playerID string, amount int) error {
+	// For now, just log the reward - actual implementation would integrate with player service
+	s.logger.Infof("Granted %d experience points to player %s", amount, playerID)
+
+	// TODO: Integrate with player progression service to actually grant XP
+	return nil
+}
+
+// grantCurrencyReward grants currency to player
+func (s *EasterEggsService) grantCurrencyReward(ctx context.Context, playerID string, amount int) error {
+	// For now, just log the reward - actual implementation would integrate with economy service
+	s.logger.Infof("Granted %d currency to player %s", amount, playerID)
+
+	// TODO: Integrate with economy service to actually grant currency
+	return nil
+}
+
+// grantItemReward grants an item to player's inventory
+func (s *EasterEggsService) grantItemReward(ctx context.Context, playerID, itemID string, quantity int) error {
+	// For now, just log the reward - actual implementation would integrate with inventory service
+	s.logger.Infof("Granted item %s (x%d) to player %s", itemID, quantity, playerID)
+
+	// TODO: Integrate with inventory service to actually grant item
+	return nil
+}
+
+// grantCosmeticReward grants cosmetic item to player
+func (s *EasterEggsService) grantCosmeticReward(ctx context.Context, playerID, cosmeticID string) error {
+	// For now, just log the reward - actual implementation would integrate with player customization service
+	s.logger.Infof("Granted cosmetic %s to player %s", cosmeticID, playerID)
+
+	// TODO: Integrate with player customization service
+	return nil
+}
+
+// grantImplantBuffReward grants implant buff to player
+func (s *EasterEggsService) grantImplantBuffReward(ctx context.Context, playerID, buffID string, duration int) error {
+	// For now, just log the reward - actual implementation would integrate with implant system
+	s.logger.Infof("Granted implant buff %s (%d minutes) to player %s", buffID, duration, playerID)
+
+	// TODO: Integrate with implant/buff system
+	return nil
 }
 
 // GetActiveChallenges gets currently active challenges

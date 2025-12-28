@@ -21,9 +21,9 @@ import (
 
 // EasterEggsHandlers handles HTTP requests
 type EasterEggsHandlers struct {
-	service  service.EasterEggsServiceInterface
-	logger   *zap.SugaredLogger
-	metrics  *metrics.Collector
+	service service.EasterEggsServiceInterface
+	logger  *zap.SugaredLogger
+	metrics *metrics.Collector
 }
 
 // Ensure EasterEggsHandlers implements generated.ServerInterface
@@ -139,8 +139,8 @@ func (h *EasterEggsHandlers) GetEasterEggsByCategory(w http.ResponseWriter, r *h
 
 	h.metrics.ObserveRequestDuration("GetEasterEggsByCategory", start)
 	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
-		"category":     category,
-		"easter_eggs":  eggs,
+		"category":    category,
+		"easter_eggs": eggs,
 		"pagination": map[string]interface{}{
 			"limit":  limit,
 			"offset": offset,
@@ -167,8 +167,8 @@ func (h *EasterEggsHandlers) GetEasterEggsByDifficulty(w http.ResponseWriter, r 
 
 	h.metrics.ObserveRequestDuration("GetEasterEggsByDifficulty", start)
 	h.respondWithJSON(w, http.StatusOK, map[string]interface{}{
-		"difficulty":   difficulty,
-		"easter_eggs":  eggs,
+		"difficulty":  difficulty,
+		"easter_eggs": eggs,
 		"pagination": map[string]interface{}{
 			"limit":  limit,
 			"offset": offset,
@@ -423,8 +423,8 @@ func (h *EasterEggsHandlers) CreateEasterEgg(w http.ResponseWriter, r *http.Requ
 
 	h.metrics.ObserveRequestDuration("CreateEasterEgg", start)
 	h.respondWithJSON(w, http.StatusCreated, map[string]interface{}{
-		"message":     "Easter egg created successfully",
-		"easter_egg":  egg,
+		"message":    "Easter egg created successfully",
+		"easter_egg": egg,
 	})
 }
 
@@ -524,7 +524,7 @@ func (h *EasterEggsHandlers) ImportEasterEggs(w http.ResponseWriter, r *http.Req
 // Helper methods
 
 func (h *EasterEggsHandlers) parsePaginationParams(r *http.Request) (limit, offset int) {
-	limit = 50  // default
+	limit = 50 // default
 	offset = 0
 
 	if l := r.URL.Query().Get("limit"); l != "" {
@@ -557,8 +557,8 @@ func (h *EasterEggsHandlers) respondWithJSON(w http.ResponseWriter, status int, 
 
 func (h *EasterEggsHandlers) respondWithError(w http.ResponseWriter, status int, message string) {
 	h.respondWithJSON(w, status, map[string]interface{}{
-		"error":   true,
-		"message": message,
+		"error":     true,
+		"message":   message,
 		"timestamp": time.Now().UTC().Format(time.RFC3339),
 	})
 }
@@ -601,13 +601,13 @@ func (h *EasterEggsHandlers) PurchaseHint(w http.ResponseWriter, r *http.Request
 	for _, hint := range hints {
 		if hint.HintLevel == hintLevel {
 			availableHints = append(availableHints, generated.DiscoveryHint{
-				ID:           hint.ID,
-				EasterEggID:  hint.EasterEggID,
-				HintLevel:    hint.HintLevel,
-				HintText:     hint.HintText,
-				HintType:     hint.HintType,
-				Cost:         hint.Cost,
-				IsEnabled:    hint.IsEnabled,
+				ID:          hint.ID,
+				EasterEggID: hint.EasterEggID,
+				HintLevel:   hint.HintLevel,
+				HintText:    hint.HintText,
+				HintType:    hint.HintType,
+				Cost:        hint.Cost,
+				IsEnabled:   hint.IsEnabled,
 			})
 		}
 	}

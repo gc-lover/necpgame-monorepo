@@ -52,7 +52,7 @@ type ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 // ServeHTTP implements http.Handler.
 func (siw *ServerInterfaceWrapper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Apply middlewares
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/health":
 			if r.Method == http.MethodGet {

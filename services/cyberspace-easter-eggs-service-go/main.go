@@ -19,6 +19,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
+	_ "net/http/pprof" // PERFORMANCE: Enable pprof profiling
 
 	"cyberspace-easter-eggs-service-go/internal/config"
 	"cyberspace-easter-eggs-service-go/internal/generated"
@@ -148,6 +149,9 @@ func setupRouter(server *generated.ServerInterfaceWrapper) *chi.Mux {
 
 	// Metrics endpoint (keep separate)
 	r.Handle("/metrics", promhttp.Handler())
+
+	// PERFORMANCE: Profiling endpoints for performance monitoring
+	r.Mount("/debug", http.DefaultServeMux)
 
 	return r
 }

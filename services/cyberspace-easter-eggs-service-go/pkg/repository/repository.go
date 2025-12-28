@@ -30,6 +30,7 @@ type RepositoryInterface interface {
 	UpdatePlayerProgress(ctx context.Context, progress *models.PlayerEasterEggProgress) error
 	GetPlayerProfile(ctx context.Context, playerID string) (*models.PlayerEasterEggProfile, error)
 	GetPlayerDiscoveredEggs(ctx context.Context, playerID string) ([]string, error)
+	RecordGrantedRewards(ctx context.Context, playerID, easterEggID string, rewards []string) error
 
 	// Discovery operations
 	CreateDiscoveryAttempt(ctx context.Context, attempt *models.EasterEggDiscoveryAttempt) error
@@ -369,6 +370,20 @@ func (r *Repository) UpdatePlayerProgress(ctx context.Context, progress *models.
 		progress.HintLevel, progress.VisitCount, progress.LastVisited,
 	)
 
+	return err
+}
+
+// RecordGrantedRewards records rewards granted to player for easter egg discovery
+func (r *Repository) RecordGrantedRewards(ctx context.Context, playerID, easterEggID string, rewards []string) error {
+	rewardsData, _ := json.Marshal(rewards)
+
+	query := `
+		UPDATE player_easter_egg_progress
+		SET rewards_claimed = rewards_claimed || $1::jsonb
+		WHERE player_id = $2 AND easter_egg_id = $3
+	`
+
+	_, err := r.db.ExecContext(ctx, query, rewardsData, playerID, easterEggID)
 	return err
 }
 

@@ -6,7 +6,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,12 +24,12 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
+	"necpgame/services/anti-cheat-behavior-analytics-service-go/internal/analytics"
 	"necpgame/services/anti-cheat-behavior-analytics-service-go/internal/config"
+	"necpgame/services/anti-cheat-behavior-analytics-service-go/internal/detection"
 	"necpgame/services/anti-cheat-behavior-analytics-service-go/internal/handlers"
 	"necpgame/services/anti-cheat-behavior-analytics-service-go/internal/repository"
 	"necpgame/services/anti-cheat-behavior-analytics-service-go/internal/service"
-	"necpgame/services/anti-cheat-behavior-analytics-service-go/internal/analytics"
-	"necpgame/services/anti-cheat-behavior-analytics-service-go/internal/detection"
 )
 
 func main() {
@@ -168,8 +170,12 @@ func loadConfig(path string) (*config.Config, error) {
 }
 
 func initDatabase(cfg config.DatabaseConfig, logger *zap.SugaredLogger) (*sql.DB, error) {
+	// Build PostgreSQL connection string
+	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Database, cfg.SSLMode)
+
 	// Initialize PostgreSQL connection with connection pooling
-	db, err := sql.Open("pgx", cfg.ConnectionString)
+	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
 	}
