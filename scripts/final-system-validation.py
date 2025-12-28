@@ -299,9 +299,9 @@ def main():
     overall_success = all([services_ok, api_ok, content_ok, integrations_ok, performance_ok])
 
     if overall_success:
-        print("\n🎉 **NECPGAME System Validation: COMPLETE SUCCESS**")
-        print("✅ All systems operational and validated")
-        print("🚀 Ready for production deployment")
+        print("\n[SUCCESS] NECPGAME System Validation: COMPLETE SUCCESS")
+        print("[OK] All systems operational and validated")
+        print("[READY] Ready for production deployment")
         return 0
     else:
         print("\n[WARNING] NECPGAME System Validation: ISSUES FOUND")
