@@ -120,6 +120,7 @@ const (
 	EventTypeCombatEvent          = "combat.event"
 	EventTypeSocialInteraction    = "social.interaction"
 	EventTypeSystemNotification   = "system.notification"
+	EventTypeAffixEffectTriggered = "gameplay.affixes.effect.triggered"
 )
 
 // NewEventBus creates a new event bus instance
