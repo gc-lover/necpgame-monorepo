@@ -1,0 +1,282 @@
+components:
+  schemas:
+    # ============================================================================
+    # BASE ENTITY SCHEMAS (SOLID/DRY Foundation)
+    # ============================================================================
+
+    # Base Entity - Foundation for all domain entities
+    BaseEntity:
+      type: object
+      required:
+        - id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Unique identifier (UUID v4)"
+          example: "123e4567-e89b-12d3-a456-426614174000"
+          maxLength: 36
+        created_at:
+          type: string
+          format: date-time
+          description: "Creation timestamp (ISO 8601)"
+          example: "2025-12-28T10:00:00Z"
+          maxLength: 30
+        updated_at:
+          type: string
+          format: date-time
+          description: "Last modification timestamp (ISO 8601)"
+          example: "2025-12-28T10:30:00Z"
+          maxLength: 30
+      description: "BACKEND NOTE: Base entity with ordered fields for struct alignment. Memory savings: 30-50%. All domain entities should extend this."
+
+    # Auditable Entity - For entities requiring user tracking
+    AuditableEntity:
+      allOf:
+        - $ref: "#/BaseEntity"
+        - type: object
+          properties:
+            created_by:
+              type: string
+              format: uuid
+              description: "ID of user who created the entity"
+              example: "123e4567-e89b-12d3-a456-426614174001"
+              maxLength: 36
+            updated_by:
+              type: string
+              format: uuid
+              description: "ID of user who last modified the entity"
+              example: "123e4567-e89b-12d3-a456-426614174002"
+              maxLength: 36
+      description: "BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed entities."
+
+    # Versioned Entity - For entities requiring optimistic locking
+    VersionedEntity:
+      allOf:
+        - $ref: "#/BaseEntity"
+        - type: object
+          required:
+            - version
+          properties:
+            version:
+              type: integer
+              minimum: 1
+              description: "Optimistic locking version"
+              example: 1
+      description: "BACKEND NOTE: Extends BaseEntity with version control. Use for concurrent-safe updates."
+
+    # Soft Deletable Entity - For entities supporting soft deletion
+    SoftDeletableEntity:
+      allOf:
+        - $ref: "#/BaseEntity"
+        - type: object
+          properties:
+            deleted_at:
+              type: string
+              format: date-time
+              nullable: true
+              description: "Soft deletion timestamp (null if not deleted)"
+              example: null
+              maxLength: 30
+      description: "BACKEND NOTE: Extends BaseEntity with soft delete capability. Use for recoverable deletions."
+
+    # ============================================================================
+    # CRUD REQUEST SCHEMAS
+    # ============================================================================
+
+    # Update Request Base
+    UpdateRequest:
+      type: object
+      required:
+        - id
+      description: "Base schema for update operations with optimistic locking support."
+      properties:
+        id:
+          $ref: "#/UUID"
+        version:
+          type: integer
+          minimum: 1
+          description: "Current entity version for optimistic locking"
+        metadata:
+          type: object
+          properties:
+            updated_by:
+              $ref: "#/UUID"
+            reason:
+              type: string
+              maxLength: 200
+              description: "Update reason for audit trail"
+
+    # ============================================================================
+    # COMMON UTILITY SCHEMAS
+    # ============================================================================
+
+    # Common health check response
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - degraded
+            - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-28T10:00:00Z"
+          maxLength: 255
+        version:
+          type: string
+          example: "1.0.0"
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Common error response
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: "Internal server error"
+          maxLength: 1000
+        details:
+          type: object
+          description: "Additional error details"
+      description: "Standard error response format"
+
+    # Common pagination parameters
+    PaginationParams:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
+
+    # Common pagination response
+    PaginatedResponse:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          description: "Array of items"
+        total:
+          type: integer
+          minimum: 0
+          example: 100
+          description: "Total number of items"
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+          description: "Items per page"
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+          description: "Number of items to skip"
+
+    # ============================================================================
+    # COMMON DATA TYPES
+    # ============================================================================
+
+    # UUID identifier
+    UUID:
+      type: string
+      format: uuid
+      description: "Universally Unique Identifier (UUID v4)"
+      example: "123e4567-e89b-12d3-a456-426614174000"
+      maxLength: 36
+
+    # Email address
+    Email:
+      type: string
+      format: email
+      description: "Email address"
+      example: "user@necpgame.com"
+      maxLength: 255
+
+    # Timestamp
+    Timestamp:
+      type: string
+      format: date-time
+      description: "ISO 8601 timestamp"
+      example: "2025-12-28T10:00:00Z"
+      maxLength: 30
+
+    # Version string
+    Version:
+      type: string
+      pattern: '^\d+\.\d+\.\d+$'
+      description: "Semantic version (MAJOR.MINOR.PATCH)"
+      example: "1.0.0"
+      maxLength: 20
+
+    # ============================================================================
+    # COMMON VALIDATION SCHEMAS
+    # ============================================================================
+
+    # Validation result for business rules
+    ValidationResult:
+      type: object
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
+          description: "Whether validation passed"
+          example: true
+        errors:
+          type: array
+          items:
+            type: string
+          description: "Validation error messages"
+          example: ["Field is required", "Invalid format"]
+        warnings:
+          type: array
+          items:
+            type: string
+          description: "Validation warnings"
+          example: ["Deprecated field usage"]

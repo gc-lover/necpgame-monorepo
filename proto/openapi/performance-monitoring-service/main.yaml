@@ -1,34 +1,32 @@
 openapi: 3.0.3
 info:
   title: Performance Monitoring Service API - Enterprise-Grade Domain Service
-  description: "**Enterprise-Grade System Performance Monitoring API for NECPGAME**
+  description: '**Enterprise-Grade Performance Monitoring API for NECPGAME**
 
-    This API manages comprehensive performance monitoring, metrics collection, alerting,
-    and optimization recommendations for all game services and infrastructure.
+    This API manages comprehensive performance monitoring, metrics collection, and
+    observability systems for all NECPGAME microservices and game systems.
 
     ## Key Features
 
-    - **Real-time Monitoring**: Live performance metrics and health checks
-    - **Metrics Collection**: Comprehensive data aggregation and analysis
-    - **Intelligent Alerting**: Smart anomaly detection and automated responses
-    - **Performance Optimization**: AI-driven recommendations and capacity planning
-    - **Distributed Tracing**: End-to-end request tracing and bottleneck identification
-    - **Performance Optimized**: Sub-millisecond monitoring with <1ms P99 latency
+    - **Health Monitoring**: Real-time health checks for all services - **Metrics
+    Collection**: Performance metrics and KPIs tracking - **Alert Management**: Automated
+    alerting and incident response - **Observability**: Distributed tracing and logging
+    aggregation - **Performance Analytics**: Trend analysis and bottleneck detection
+    - **Resource Monitoring**: CPU, memory, network, and storage metrics
 
     ## Domain Purpose
 
-    The Performance Monitoring domain ensures optimal system performance and reliability in Night City.
-    It provides comprehensive observability, proactive issue detection, and data-driven
-    optimization for all game services and infrastructure components.
+    The Performance Monitoring domain provides comprehensive observability and monitoring
+    capabilities for the entire NECPGAME ecosystem, ensuring high availability and
+    performance.
 
     ## Performance Targets
 
-    - P99 Latency: <1ms for monitoring operations
-    - Memory: <50KB per monitoring agent
-    - Concurrent services: 200+ simultaneous monitoring
-    - Alert response: <5ms detection time
+    - P99 Latency: <50ms for metrics queries - Memory: <100KB per monitoring instance
+    - Concurrent users: 100,000+ simultaneous monitoring operations - Alert delivery:
+    <5s from detection to notification
 
-    "
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -38,48 +36,52 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necpgame.com/v1/performance-monitoring
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/performance-monitoring
-    description: Staging server
-  - url: http://localhost:8080/api/v1/performance-monitoring
-    description: Local development server
+- url: https://api.necpgame.com/v1/performance-monitoring
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/performance-monitoring
+  description: Staging server
+- url: http://localhost:8080/api/v1/performance-monitoring
+  description: Local development server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: Performance Monitoring
-    description: Core performance monitoring and metrics operations
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: Health Monitoring
+  description: Service health checks and status monitoring
+- name: Metrics Collection
+  description: Performance metrics and KPIs tracking
+- name: Alert Management
+  description: Automated alerting and incident management
+- name: Observability
+  description: Distributed tracing and logging
+- name: Resource Monitoring
+  description: System resource monitoring
+- name: Analytics
+  description: Performance analytics and reporting
 paths:
   /health:
     get:
-      summary: Example domain health check
-      description: "**Enterprise-grade health check endpoint**
+      summary: Performance monitoring service health check
+      description: '**Enterprise-grade health check endpoint**
 
-
-        Provides real-time health status of the example domain microservice.
+        Provides real-time health status of the performance monitoring service microservice.
 
         Critical for service discovery, load balancing, and monitoring.
 
-
-        **Performance:** <1ms response time, cached for 30 seconds
-
-        "
+        **Performance:** <1ms response time, cached for 30 seconds '
       operationId: performanceMonitoringServiceHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -89,25 +91,25 @@ paths:
             ETag:
               schema:
                 type: string
-                example: '"health-v1.0"'
+                example: '"performance-monitoring-health-v1.0"'
             Content-Encoding:
               schema:
                 type: string
                 enum:
-                  - gzip
-                  - deflate
-                  - br
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "503":
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "429":
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -117,883 +119,716 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-  /health/batch:
-    post:
-      summary: Batch health check for multiple domain services
-      description:
-        "**Performance optimization:** Check multiple domain health in
-        single request
-
-
-        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-
-        Eliminates network overhead in health monitoring scenarios.
-
-
-        **Use case:** Service mesh health checks, Kubernetes readiness probes
-
-        "
-      operationId: exampleDomainBatchHealthCheck
-      tags:
-        - Health Monitoring
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - services
-              properties:
-                services:
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                      - example-domain
-                      - system-domain
-                      - specialized-domain
-                    maxItems: 10
-                  description: List of services to check
-      responses:
-        "200":
-          $ref: "../common/responses/success.yaml#/HealthBatchSuccess"
-        "400":
-          description: Invalid request - malformed service list
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-                description: Seconds to wait before retrying
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-  /health/ws:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /services/health:
     get:
-      summary: Real-time health monitoring WebSocket
-      description:
-        "**Performance optimization:** Real-time health updates without
-        polling
-
-
-        Eliminates periodic HTTP requests, reduces server load by ~90%.
-
-        Perfect for dashboard monitoring and alerting systems.
-
-
-        **Protocol:** WebSocket with JSON payloads
-
-        **Heartbeat:** 30 second intervals
-
-        **Reconnection:** Automatic with exponential backoff
-
-        "
-      operationId: exampleDomainHealthWebSocket
+      summary: Get health status of all services
+      operationId: getAllServicesHealth
       tags:
-        - Health Monitoring
-      parameters:
-        - name: services
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - example-domain
-                - system-domain
-                - specialized-domain
-          description: Services to monitor (optional, monitors all if not specified)
-      responses:
-        "200":
-          description: WebSocket upgrade information returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  websocket_url:
-                    type: string
-                    example: ws://localhost:8080/api/v1/example-domain/health/ws
-                  supported_protocols:
-                    type: array
-                    items:
-                      type: string
-                    example:
-                      - health-monitoring-v1
-        "101":
-          description: WebSocket connection established successfully
-          headers:
-            Upgrade:
-              schema:
-                type: string
-                example: websocket
-            Connection:
-              schema:
-                type: string
-                example: Upgrade
-            Sec-WebSocket-Accept:
-              schema:
-                type: string
-                description: WebSocket handshake acceptance key
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WebSocketHealthMessage"
-        "400":
-          description: Invalid request - malformed service parameters
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "401":
-          description: Unauthorized - authentication required for WebSocket
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - WebSocket connection limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-  /examples:
-    get:
-      summary: List examples with filtering and pagination
-      description: "**Enterprise-grade listing endpoint**
-
-
-        Supports complex filtering, sorting, and pagination patterns.
-
-        Optimized for high-throughput scenarios with proper indexing.
-
-
-        **Performance:** <10ms P95, supports 1000+ concurrent requests
-
-        "
-      operationId: listExamples
-      tags:
-        - Example Domain
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number for pagination
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of items per page
-        - name: sort_by
-          in: query
-          schema:
-            type: string
-            enum:
-              - created_at
-              - name
-              - priority
-            default: created_at
-          description: Sort field
-        - name: sort_order
-          in: query
-          schema:
-            type: string
-            enum:
-              - asc
-              - desc
-            default: desc
-          description: Sort order
-        - name: filter_status
-          in: query
-          schema:
-            type: string
-            enum:
-              - active
-              - inactive
-              - pending
-          description: Filter by status
-      responses:
-        "200":
-          $ref: "#/components/responses/ExampleListSuccess"
-        "400":
-          description: Invalid request - malformed query parameters
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "422":
-          description: Unprocessable entity - validation failed
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-    post:
-      summary: Create new example
-      description: "**Enterprise-grade creation endpoint**
-
-
-        Validates business rules, applies security checks, and ensures data consistency.
-
-        Supports optimistic locking for concurrent operations.
-
-
-        **Performance:** <50ms P95, includes validation and business logic
-
-        "
-      operationId: createExample
-      tags:
-        - Example Domain
+      - Health Monitoring
       security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateExampleRequest"
-      responses:
-        "201":
-          $ref: "#/components/responses/ExampleCreated"
-        "400":
-          description: Invalid request - malformed or missing data
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
-          description: Conflict - example with this identifier already exists
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "422":
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - creation rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-  /examples/{example_id}:
-    get:
-      summary: Get specific example by ID
-      description: "**Enterprise-grade retrieval endpoint**
-
-
-        Optimized with proper caching strategies and database indexing.
-
-        Supports conditional requests with ETags.
-
-
-        **Performance:** <5ms P95 with Redis caching
-
-        "
-      operationId: getExample
-      tags:
-        - Example Domain
+      - BearerAuth: []
       parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
-        - name: include_related
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include related data in response
-        - name: If-None-Match
-          in: header
-          schema:
-            type: string
-          description: Conditional request - return 304 if ETag matches
-        - name: If-Modified-Since
-          in: header
-          schema:
-            type: string
-            format: date-time
-          description: Conditional request - return 304 if not modified since this time
-      responses:
-        "200":
-          $ref: "#/components/responses/ExampleRetrieved"
-        "304":
-          description: Not modified - resource has not changed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=300, private
-        "400":
-          description: Invalid request - malformed example ID
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-    put:
-      summary: Update existing example
-      description: "**Enterprise-grade update endpoint**
-
-
-        Supports partial updates, optimistic locking, and audit trails.
-
-        Ensures data consistency with event sourcing patterns.
-
-
-        **Performance:** <25ms P95, includes validation and conflict resolution
-
-        "
-      operationId: updateExample
-      tags:
-        - Example Domain
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
-        - name: If-Match
-          in: header
-          schema:
-            type: string
-          description: ETag for optimistic locking - prevents concurrent updates
-        - name: If-Unmodified-Since
-          in: header
-          schema:
-            type: string
-            format: date-time
-          description:
-            Conditional update - proceed only if not modified since this
-            time
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateExampleRequest"
-      responses:
-        "200":
-          $ref: "#/components/responses/ExampleUpdated"
-        "400":
-          description: Invalid request - malformed data or example ID
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
-          description:
-            Conflict - version conflict (optimistic locking) or precondition
-            failed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "412":
-          description:
-            Precondition failed - If-Match or If-Unmodified-Since condition
-            not met
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "422":
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - update rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-    delete:
-      summary: Delete example
-      description: "**Enterprise-grade deletion endpoint**
-
-
-        Supports soft deletes with audit trails and cleanup scheduling.
-
-        Ensures referential integrity and cascading deletes.
-
-
-        **Performance:** <15ms P95, includes cleanup operations
-
-        "
-      operationId: deleteExample
-      tags:
-        - Example Domain
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
-      responses:
-        "204":
-          $ref: "#/components/responses/ExampleDeleted"
-        "400":
-          description: Invalid request - malformed example ID
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
-          description: Conflict - example cannot be deleted (referential integrity)
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - deletion rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-components:
-  responses:
-    HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
-    ExampleListSuccess:
-      description: Examples retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 150
-            description: Total number of examples matching criteria
-        X-Page-Count:
-          schema:
-            type: integer
-            example: 8
-            description: Total number of pages
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ExampleListResponse"
-    ExampleCreated:
-      description: Example created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
-            description: URL of the created example
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ExampleResponse"
-    ExampleRetrieved:
-      description: Example retrieved successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-            description: Cache control directives
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: "2025-12-21T10:00:00Z"
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 5
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ExampleResponse"
-    ExampleUpdated:
-      description: Example updated successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v2"'
-            description: New entity tag after update
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: "2025-12-21T10:05:00Z"
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 25
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ExampleResponse"
-    ExampleDeleted:
-      description: Example deleted successfully
-      headers:
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 15
-            description: Processing time in milliseconds
-    OK:
-      $ref: ../common/responses/success.yaml#/OK
-    Created:
-      $ref: ../common/responses/success.yaml#/Created
-    BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
-    Unauthorized:
-      $ref: ../common/responses/error.yaml#/Unauthorized
-    Forbidden:
-      $ref: ../common/responses/error.yaml#/Forbidden
-    NotFound:
-      $ref: ../common/responses/error.yaml#/NotFound
-    Conflict:
-      $ref: ../common/responses/error.yaml#/Conflict
-    InternalServerError:
-      $ref: ../common/responses/error.yaml#/InternalServerError
-    HealthOK:
-      $ref: ../common/responses/success.yaml#/HealthOK
-  schemas:
-    HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
-    WebSocketHealthMessage:
-      type: object
-      required:
-        - type
-        - timestamp
-        - health
-      properties:
-        type:
+      - name: service_filter
+        in: query
+        schema:
           type: string
           enum:
-            - health_update
-            - health_alert
-            - service_down
-          example: health_update
-          maxLength: 255
+          - all
+          - critical
+          - game-services
+          - infrastructure
+          default: all
+        description: Filter services by category
+      responses:
+        '200':
+          description: Services health status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicesHealthResponse'
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        '500':
+          $ref: ../common-service/responses/error.yaml#/InternalServerError
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /metrics/{service_name}:
+    get:
+      summary: Get performance metrics for a specific service
+      operationId: getServiceMetrics
+      tags:
+      - Metrics Collection
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: service_name
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Name of the service to get metrics for
+      - name: time_range
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          default: 1h
+        description: Time range for metrics
+      - name: metric_types
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - response_time
+            - throughput
+            - error_rate
+            - cpu_usage
+            - memory_usage
+            - disk_usage
+        description: Types of metrics to retrieve
+      responses:
+        '200':
+          description: Service metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceMetricsResponse'
+        '404':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /alerts:
+    get:
+      summary: Get active alerts and incidents
+      operationId: getActiveAlerts
+      tags:
+      - Alert Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: severity
+        in: query
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - medium
+          - low
+          - all
+          default: all
+        description: Filter alerts by severity
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - acknowledged
+          - resolved
+          - all
+          default: active
+        description: Filter alerts by status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of alerts to return
+      responses:
+        '200':
+          description: Active alerts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertsResponse'
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    post:
+      summary: Create a new alert
+      operationId: createAlert
+      tags:
+      - Alert Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAlertRequest'
+      responses:
+        '201':
+          description: Alert created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertResponse'
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /alerts/{alert_id}/acknowledge:
+    post:
+      summary: Acknowledge an alert
+      operationId: acknowledgeAlert
+      tags:
+      - Alert Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: alert_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alert unique identifier
+      responses:
+        '200':
+          description: Alert acknowledged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertResponse'
+        '404':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /traces/{trace_id}:
+    get:
+      summary: Get distributed trace information
+      operationId: getDistributedTrace
+      tags:
+      - Observability
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: trace_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Trace unique identifier
+      - name: include_spans
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include span details in response
+      responses:
+        '200':
+          description: Trace information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TraceResponse'
+        '404':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /analytics/performance:
+    get:
+      summary: Get performance analytics and trends
+      operationId: getPerformanceAnalytics
+      tags:
+      - Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: service_name
+        in: query
+        schema:
+          type: string
+        description: Filter by specific service
+      - name: time_range
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+          - 90d
+          default: 7d
+        description: Time range for analytics
+      - name: metric_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - latency
+          - throughput
+          - error_rate
+          - resource_usage
+          - availability
+        description: Type of performance metric to analyze
+      responses:
+        '200':
+          description: Performance analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceAnalyticsResponse'
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+components:
+  schemas:
+    HealthResponse:
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
+    Error:
+      $ref: ../common-service/schemas/error.yaml#/Error
+    ServicesHealthResponse:
+      type: object
+      required:
+      - services
+      - summary
+      - timestamp
+      properties:
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceHealthStatus'
+        summary:
+          $ref: '#/components/schemas/HealthSummary'
         timestamp:
           type: string
           format: date-time
-          maxLength: 255
-        message_timestamp:
-          type: string
-          format: date-time
-          description: Timestamp of the health message
-          maxLength: 1000
-        health:
-          $ref: "../common/schemas/health.yaml#/HealthResponse"
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-    Error:
-      $ref: ../common/schemas/error.yaml#/Error
-    Example:
+      description: 'BACKEND NOTE: Fields ordered for optimal memory alignment.'
+    ServiceHealthStatus:
       type: object
       required:
-        - id
-        - name
-        - created_at
-        - status
-        - is_active
+      - service_name
+      - status
+      - last_checked
+      properties:
+        service_name:
+          type: string
+          maxLength: 100
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          - unknown
+        response_time_ms:
+          type: number
+          format: float
+          minimum: 0
+        last_checked:
+          type: string
+          format: date-time
+        error_message:
+          type: string
+          maxLength: 500
+    HealthSummary:
+      type: object
+      required:
+      - total_services
+      - healthy_count
+      - degraded_count
+      - unhealthy_count
+      properties:
+        total_services:
+          type: integer
+          minimum: 0
+        healthy_count:
+          type: integer
+          minimum: 0
+        degraded_count:
+          type: integer
+          minimum: 0
+        unhealthy_count:
+          type: integer
+          minimum: 0
+        overall_status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+    ServiceMetricsResponse:
+      type: object
+      required:
+      - service_name
+      - time_range
+      - metrics
+      properties:
+        service_name:
+          type: string
+        time_range:
+          type: string
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricData'
+    MetricData:
+      type: object
+      required:
+      - metric_type
+      - timestamp
+      - value
+      properties:
+        metric_type:
+          type: string
+          enum:
+          - response_time
+          - throughput
+          - error_rate
+          - cpu_usage
+          - memory_usage
+          - disk_usage
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+          format: float
+        unit:
+          type: string
+          enum:
+          - ms
+          - rps
+          - percentage
+          - bytes
+          - count
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+    AlertsResponse:
+      type: object
+      required:
+      - alerts
+      - total_count
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+        total_count:
+          type: integer
+          minimum: 0
+        has_more:
+          type: boolean
+          default: false
+    Alert:
+      type: object
+      required:
+      - id
+      - title
+      - severity
+      - status
+      - created_at
       properties:
         id:
           type: string
           format: uuid
-          description: Example unique identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
-        name:
+        title:
           type: string
-          minLength: 1
-          maxLength: 100
-          description: Example display name
-          example: Sample Example
+          maxLength: 200
         description:
           type: string
           maxLength: 1000
-          description: Detailed description
-          example: This is a comprehensive example demonstrating best practices.
+        severity:
+          type: string
+          enum:
+          - critical
+          - high
+          - medium
+          - low
+        status:
+          type: string
+          enum:
+          - active
+          - acknowledged
+          - resolved
+        service_name:
+          type: string
+          maxLength: 100
         created_at:
           type: string
           format: date-time
-          description: Creation timestamp
-          example: "2025-12-21T10:00:00Z"
-        updated_at:
+        acknowledged_at:
           type: string
           format: date-time
-          description: Last update timestamp
-          example: "2025-12-21T10:00:00Z"
-        status:
+          nullable: true
+        resolved_at:
           type: string
-          enum:
-            - active
-            - inactive
-            - pending
-            - archived
-          default: active
-          description: Current status
-          example: active
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Associated tags
-          example:
-            - demo
-            - template
-            - best-practice
-        is_active:
-          type: boolean
-          description: Whether this example is active
-          example: true
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-          example: 7
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Hot path optimization required."
-    CreateExampleRequest:
+          format: date-time
+          nullable: true
+        acknowledged_by:
+          type: string
+          format: uuid
+          nullable: true
+    CreateAlertRequest:
       type: object
       required:
-        - name
-        - description
+      - title
+      - severity
+      - service_name
       properties:
-        name:
+        title:
           type: string
           minLength: 1
-          maxLength: 100
-          description: Desired example name
-          example: My New Example
+          maxLength: 200
         description:
           type: string
           maxLength: 1000
-          description: Example description
-          example: A new example following enterprise-grade patterns.
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Initial tags
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-    UpdateExampleRequest:
-      type: object
-      properties:
-        name:
+        severity:
+          type: string
+          enum:
+          - critical
+          - high
+          - medium
+          - low
+        service_name:
           type: string
           minLength: 1
           maxLength: 100
-          description: New example name
-          example: Updated Example Name
-        description:
+    AlertResponse:
+      type: object
+      required:
+      - alert
+      properties:
+        alert:
+          $ref: '#/components/schemas/Alert'
+    TraceResponse:
+      type: object
+      required:
+      - trace_id
+      - service_name
+      - start_time
+      - duration_ms
+      properties:
+        trace_id:
           type: string
-          maxLength: 1000
-          description: New description
+          format: uuid
+        service_name:
+          type: string
+        operation_name:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        duration_ms:
+          type: number
+          format: float
+          minimum: 0
         status:
           type: string
           enum:
-            - active
-            - inactive
-            - pending
-            - archived
-          description: New status
+          - success
+          - error
+          - unknown
+        spans:
+          type: array
+          items:
+            $ref: '#/components/schemas/Span'
+    Span:
+      type: object
+      required:
+      - span_id
+      - operation_name
+      - start_time
+      - duration_ms
+      properties:
+        span_id:
+          type: string
+          format: uuid
+        operation_name:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        duration_ms:
+          type: number
+          format: float
+          minimum: 0
         tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Replace all tags
-        is_active:
-          type: boolean
-          description: Update active status
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: New priority
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-    ExampleResponse:
+          type: object
+          additionalProperties: true
+    PerformanceAnalyticsResponse:
       type: object
       required:
-        - example
+      - time_range
+      - analytics
       properties:
-        example:
-          $ref: "#/components/schemas/Example"
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-    ExampleListResponse:
+        service_name:
+          type: string
+        time_range:
+          type: string
+        analytics:
+          type: object
+          properties:
+            latency_trends:
+              $ref: '#/components/schemas/TrendAnalysis'
+            throughput_trends:
+              $ref: '#/components/schemas/TrendAnalysis'
+            error_rate_trends:
+              $ref: '#/components/schemas/TrendAnalysis'
+            resource_usage:
+              $ref: '#/components/schemas/ResourceUsageAnalysis'
+            bottlenecks:
+              type: array
+              items:
+                $ref: '#/components/schemas/Bottleneck'
+    TrendAnalysis:
       type: object
-      required:
-        - examples
-        - total_count
-        - has_more
       properties:
-        examples:
+        current_value:
+          type: number
+          format: float
+        previous_value:
+          type: number
+          format: float
+        change_percentage:
+          type: number
+          format: float
+        trend:
+          type: string
+          enum:
+          - improving
+          - degrading
+          - stable
+        data_points:
           type: array
           items:
-            $ref: "#/components/schemas/Example"
-          description: List of examples
-        has_more:
-          type: boolean
-          description: Whether there are more results available
-          example: true
-        total_count:
-          type: integer
-          description: Total number of examples matching criteria
-          example: 150
-        page:
-          type: integer
-          description: Current page number
-          example: 1
-        limit:
-          type: integer
-          description: Items per page
-          example: 20
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Paginated responses optimized for memory
-        efficiency."
-    PaginationParams:
-      $ref: ../common/schemas/pagination.yaml#/PaginationParams
-    PaginatedResponse:
-      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+            $ref: '#/components/schemas/DataPoint'
+    DataPoint:
+      type: object
+      required:
+      - timestamp
+      - value
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+          format: float
+    ResourceUsageAnalysis:
+      type: object
+      properties:
+        cpu_average:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        memory_average_mb:
+          type: number
+          format: float
+          minimum: 0
+        disk_usage_gb:
+          type: number
+          format: float
+          minimum: 0
+        network_in_mb:
+          type: number
+          format: float
+          minimum: 0
+        network_out_mb:
+          type: number
+          format: float
+          minimum: 0
+    Bottleneck:
+      type: object
+      required:
+      - type
+      - severity
+      - description
+      properties:
+        type:
+          type: string
+          enum:
+          - cpu
+          - memory
+          - disk_io
+          - network
+          - database
+          - external_service
+        severity:
+          type: string
+          enum:
+          - high
+          - medium
+          - low
+        description:
+          type: string
+          maxLength: 500
+        affected_service:
+          type: string
+        recommendation:
+          type: string
+          maxLength: 500
+  responses:
+    HealthBatchSuccess:
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
+      $ref: ../common-service/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      $ref: ../common/security/security.yaml#/ApiKeyAuth
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      $ref: ../common/security/security.yaml#/ServiceAuth
+      $ref: ../common-service/security/security.yaml#/ServiceAuth

@@ -1,76 +1,96 @@
 openapi: 3.0.3
 info:
   title: OAuth Service API
-  description: |
-    **Enterprise-grade OAuth integration API for NECPGAME**
+  description: '**Enterprise-grade OAuth integration API for NECPGAME**
+
 
     ## Key Features
 
+
     - **Enterprise-grade architecture** with proper domain separation
+
     - **Backend optimization hints** for struct alignment and performance
+
     - **Complete validation** with redocly and ogen code generation
+
     - **Security-first approach** with secure OAuth state management
+
     - **Performance-optimized** OAuth flow handling
+
     - **Comprehensive error handling** with proper HTTP status codes
+
 
     ## Domain Purpose
 
-    Provides comprehensive OAuth integration with external providers (Google, Facebook, Discord, Steam).
+
+    Provides comprehensive OAuth integration with external providers (Google, Facebook,
+    Discord, Steam).
+
     Handles OAuth redirects, callbacks, and secure token exchange for social authentication.
+
 
     ## Performance Targets
 
+
     - P99 Latency: <100ms for OAuth operations
+
     - Memory: <75KB per instance
+
     - Concurrent users: 5,000+ simultaneous OAuth authorizations
+
     - Provider API optimization: Cached responses and connection pooling
 
-  version: "1.0.0"
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necpgame.com
   license:
     name: MIT
 servers:
-  - url: https://api.necpgame.com/v1/oauth
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/oauth
-    description: Staging server
-  - url: http://localhost:8080/api/v1/oauth
-    description: Local development server
+- url: https://api.necpgame.com/v1/oauth
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/oauth
+  description: Staging server
+- url: http://localhost:8080/api/v1/oauth
+  description: Local development server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: OAuth
-    description: OAuth provider integrations
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: OAuth
+  description: OAuth provider integrations
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
   /health:
     get:
       summary: OAuth service health check
-      description: |
-        **Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
+
 
         Provides real-time health status of the OAuth microservice.
 
+
         Critical for service discovery, load balancing, and monitoring.
 
+
         **Performance:** <1ms response time, cached for 30 seconds
+
+        '
       operationId: oauthServiceHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -85,27 +105,40 @@ paths:
               schema:
                 type: string
                 enum:
-                  - gzip
+                - gzip
           content:
             application/json:
               schema:
-                $ref: ../common/schemas/health.yaml#/HealthResponse
-        "503":
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        '503':
           description: Service is unhealthy
-          $ref: ../common/responses/error.yaml#/InternalServerError
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/batch:
     post:
       summary: Batch health check for multiple OAuth providers
-      description: |
-        **Batch health monitoring for OAuth ecosystem**
+      description: '**Batch health monitoring for OAuth ecosystem**
+
 
         Checks connectivity and responsiveness of multiple OAuth providers simultaneously.
+
         Essential for proactive monitoring and automated failover decisions.
 
+
         **Performance:** <100ms for all providers, parallel execution
+
+        '
       operationId: oauthServiceBatchHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       requestBody:
         required: true
         content:
@@ -117,7 +150,11 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: [google, facebook, discord, steam]
+                    enum:
+                    - google
+                    - facebook
+                    - discord
+                    - steam
                   description: List of providers to check
                 timeout:
                   type: integer
@@ -126,7 +163,7 @@ paths:
                   default: 5000
                   description: Timeout in milliseconds per provider
       responses:
-        "200":
+        '200':
           description: Batch health check completed
           content:
             application/json:
@@ -136,7 +173,7 @@ paths:
                   results:
                     type: object
                     additionalProperties:
-                      $ref: "#/components/schemas/HealthResponse"
+                      $ref: '#/components/schemas/HealthResponse'
                     description: Health status per provider
                   summary:
                     type: object
@@ -150,33 +187,39 @@ paths:
                       average_response_time:
                         type: integer
                         description: Average response time in milliseconds
-        "400":
-          $ref: ../common/responses/error.yaml#/BadRequest
-        "503":
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: ../common/schemas/error.yaml#/Error
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /auth/oauth/{provider}/redirect:
     get:
       tags:
-        - OAuth
+      - OAuth
       summary: Получить URL для редиректа OAuth
       operationId: getOAuthRedirect
       parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            type: string
-            enum:
-              - google
-              - facebook
-              - discord
-              - steam
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - facebook
+          - discord
+          - steam
       responses:
-        "200":
+        '200':
           description: URL для редиректа
           content:
             application/json:
@@ -185,67 +228,78 @@ paths:
                 properties:
                   redirect_url:
                     type: string
-        "400":
-          $ref: ../common/responses/error.yaml#/BadRequest
-        "500":
-          $ref: ../common/responses/error.yaml#/InternalServerError
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '500':
+          $ref: ../common-service/responses/error.yaml#/InternalServerError
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /auth/oauth/{provider}/callback:
     get:
       tags:
-        - OAuth
+      - OAuth
       summary: Обработка callback от OAuth провайдера
       operationId: handleOAuthCallback
       parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            type: string
-            enum:
-              - google
-              - facebook
-              - discord
-              - steam
-        - name: code
-          in: query
-          required: true
-          schema:
-            type: string
-        - name: state
-          in: query
-          schema:
-            type: string
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - facebook
+          - discord
+          - steam
+      - name: code
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: state
+        in: query
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: OAuth авторизация успешна
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LoginResponse"
-        "400":
-          $ref: ../common/responses/error.yaml#/BadRequest
-        "401":
-          $ref: ../common/responses/error.yaml#/Unauthorized
-        "500":
-          $ref: ../common/responses/error.yaml#/InternalServerError
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        '500':
+          $ref: ../common-service/responses/error.yaml#/InternalServerError
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
   responses:
     OK:
-      $ref: ../common/responses/success.yaml#/OK
+      $ref: ../common-service/responses/success.yaml#/OK
     BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
+      $ref: ../common-service/responses/error.yaml#/BadRequest
     Unauthorized:
-      $ref: ../common/responses/error.yaml#/Unauthorized
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
     NotFound:
-      $ref: ../common/responses/error.yaml#/NotFound
+      $ref: ../common-service/responses/error.yaml#/NotFound
     InternalServerError:
-      $ref: ../common/responses/error.yaml#/InternalServerError
-
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
   schemas:
     Error:
-      $ref: ../common/schemas/error.yaml#/Error
+      $ref: ../common-service/schemas/error.yaml#/Error
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
     LoginResponse:
       type: object
       properties:
@@ -254,19 +308,21 @@ components:
         refresh_token:
           type: string
         account:
-          $ref: "#/components/schemas/Account"
+          $ref: '#/components/schemas/Account'
         expires_in:
           type: integer
           description: Token expiration time in seconds
         token_type:
           type: string
-          enum: [Bearer]
+          enum:
+          - Bearer
           example: Bearer
         scope:
           type: string
           description: Granted OAuth scopes
-          example: "read write"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+          example: read write
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     Account:
       type: object
       properties:
@@ -283,7 +339,11 @@ components:
           description: Username
         provider:
           type: string
-          enum: [google, github, discord, steam]
+          enum:
+          - google
+          - github
+          - discord
+          - steam
           description: OAuth provider
         provider_id:
           type: string
@@ -299,8 +359,8 @@ components:
           type: boolean
         two_factor_enabled:
           type: boolean
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
+      $ref: ../common-service/security/security.yaml#/BearerAuth

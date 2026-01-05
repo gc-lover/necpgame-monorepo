@@ -1,18 +1,17 @@
 openapi: 3.0.3
 info:
   title: Combat Service API - Enterprise-Grade Combat System
-  description: '**Enterprise-grade API for Combat System**
+  description: "**Enterprise-grade API for Combat System**
 
-    Complete combat mechanics and battle system management for NECPGAME.
-    Handles real-time combat calculations, damage processing, battle states,
-    and combat-related game mechanics.
+    Complete combat mechanics and battle system management for NECPGAME. Handles real-time
+    combat calculations, damage processing, battle states, and combat-related game
+    mechanics.
 
     ## Key Features
 
-    - **Enterprise-grade architecture** with proper domain separation
-    - **Backend optimization hints** for struct alignment and performance
-    - **Complete validation** with redocly and ogen code generation
-    - **Security-first approach** with JWT authentication
+    - **Enterprise-grade architecture** with proper domain separation - **Backend
+    optimization hints** for struct alignment and performance - **Complete validation**
+    with redocly and ogen code generation - **Security-first approach** with JWT authentication
     - **Performance-optimized** response structures
 
     ## Domain Purpose
@@ -22,39 +21,38 @@ info:
 
     ## Performance Targets
 
-    - P99 Latency: <25ms for combat actions
-    - Memory: <100KB per active battle
-    - Concurrent users: 10,000+ simultaneous battles
-    - Data consistency: ACID compliance for combat operations
+    - P99 Latency: <25ms for combat actions - Memory: <100KB per active battle - Concurrent
+    users: 10,000+ simultaneous battles - Data consistency: ACID compliance for combat
+    operations
 
-    '
-  version: "1.0.0"
+    "
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necpgame.com
   license:
     name: MIT
 servers:
-- url: https://api.necpgame.com/v1/combat
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/combat
-  description: Staging server
-- url: http://localhost:8080/api/v1/combat
-  description: Local development server
+  - url: https://api.necpgame.com/v1/combat
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/combat
+    description: Staging server
+  - url: http://localhost:8080/api/v1/combat
+    description: Local development server
 security:
-- BearerAuth: []
+  - BearerAuth: []
 tags:
-- name: Combat Sessions
-  description: Combat session lifecycle management
-- name: Combat Actions
-  description: Player combat actions and validation
-- name: Health Monitoring
-  description: System health and performance monitoring
+  - name: Combat Sessions
+    description: Combat session lifecycle management
+  - name: Combat Actions
+    description: Player combat actions and validation
+  - name: Health Monitoring
+    description: System health and performance monitoring
 paths:
   /health:
     get:
       summary: Combat service health check
-      description: '**Enterprise-grade health check endpoint**
+      description: "**Enterprise-grade health check endpoint**
 
         Provides real-time health status of the combat microservice.
 
@@ -62,21 +60,21 @@ paths:
 
         **Performance:** <1ms response time, cached for 30 seconds
 
-        '
+        "
       operationId: combatServiceHealthCheck
       tags:
-      - Health Monitoring
+        - Health Monitoring
       parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
+        - name: Accept-Encoding
+          in: header
+          schema:
+            type: string
+            enum:
+              - gzip
+              - deflate
+              - br
       responses:
-        '200':
+        "200":
           description: Service is healthy
           headers:
             Cache-Control:
@@ -91,34 +89,42 @@ paths:
               schema:
                 type: string
                 enum:
-                - gzip
-                - deflate
-                - br
+                  - gzip
+                  - deflate
+                  - br
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
-        '503':
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        "503":
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
-        '429':
-          $ref: '../common/responses/error.yaml#/TooManyRequests'
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        "429":
+          $ref: ../common-service/responses/error.yaml#/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/batch:
     post:
       summary: Batch health check for multiple services
-      description: '**Performance optimization:** Check multiple services health in single request
+      description:
+        "**Performance optimization:** Check multiple services health in
+        single request
 
         Reduces N HTTP calls to 1 call. Critical for orchestration.
 
         **Use case:** Service mesh health checks, Kubernetes readiness probes
 
-        '
+        "
       operationId: combatServiceBatchHealthCheck
       tags:
-      - Health Monitoring
+        - Health Monitoring
       requestBody:
         required: true
         content:
@@ -126,33 +132,41 @@ paths:
             schema:
               type: object
               required:
-              - services
+                - services
               properties:
                 services:
                   type: array
                   items:
                     type: string
                     enum:
-                    - combat-service
-                    - user-service
-                    - session-service
+                      - combat-service
+                      - user-service
+                      - session-service
                   maxItems: 10
                   description: List of services to check
       responses:
-        '200':
-          $ref: '#/components/responses/HealthBatchSuccess'
-        '400':
+        "200":
+          $ref: "#/components/responses/HealthBatchSuccess"
+        "400":
           description: Invalid request - malformed service list
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        '429':
-          $ref: '../common/responses/error.yaml#/TooManyRequests'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        "429":
+          $ref: ../common-service/responses/error.yaml#/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
-      description: '**Performance optimization:** Real-time health updates without polling
+      description:
+        "**Performance optimization:** Real-time health updates without
+        polling
 
         Eliminates periodic HTTP requests, reduces server load by ~90%.
 
@@ -164,24 +178,24 @@ paths:
 
         **Reconnection:** Automatic with exponential backoff
 
-        '
+        "
       operationId: combatServiceHealthWebSocket
       tags:
-      - Health Monitoring
+        - Health Monitoring
       parameters:
-      - name: services
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - combat-service
-            - user-service
-            - session-service
-        description: Services to monitor (optional, monitors all if not specified)
+        - name: services
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - combat-service
+                - user-service
+                - session-service
+          description: Services to monitor (optional, monitors all if not specified)
       responses:
-        '200':
+        "200":
           description: WebSocket upgrade information returned
           content:
             application/json:
@@ -196,8 +210,8 @@ paths:
                     items:
                       type: string
                     example:
-                    - health-monitoring-v1
-        '101':
+                      - health-monitoring-v1
+        "101":
           description: WebSocket connection established successfully
           headers:
             Upgrade:
@@ -212,19 +226,19 @@ paths:
               schema:
                 type: string
                 description: WebSocket handshake acceptance key
-        '400':
+        "400":
           description: Invalid request - malformed service parameters
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        '401':
+                $ref: ../common-service/schemas/error.yaml#/Error
+        "401":
           description: Unauthorized - authentication required for WebSocket
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        '429':
+                $ref: ../common-service/schemas/error.yaml#/Error
+        "429":
           description: Too many requests - WebSocket connection limit exceeded
           headers:
             Retry-After:
@@ -234,156 +248,186 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /combat/sessions:
     post:
       summary: Create new combat session
-      description: '**Combat session creation endpoint**
+      description: "**Combat session creation endpoint**
 
         Initializes a new combat session with participants, rules, and environment.
 
         **Performance:** <50ms P95, includes validation and setup
 
-        '
+        "
       operationId: combatServiceCreateSession
       tags:
-      - Combat Sessions
+        - Combat Sessions
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCombatSessionRequest'
+              $ref: "#/components/schemas/CreateCombatSessionRequest"
       responses:
-        '201':
+        "201":
           description: Combat session created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CombatSessionResponse'
-        '400':
-          $ref: '../common/responses/error.yaml#/BadRequest'
-        '401':
-          $ref: '../common/responses/error.yaml#/Unauthorized'
-        '429':
-          $ref: '../common/responses/error.yaml#/TooManyRequests'
+                $ref: "#/components/schemas/CombatSessionResponse"
+        "400":
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        "401":
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        "429":
+          $ref: ../common-service/responses/error.yaml#/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /combat/sessions/{sessionId}:
     get:
       summary: Get combat session details
-      description: '**Combat session retrieval endpoint**
+      description: "**Combat session retrieval endpoint**
 
         Returns current state and details of a combat session.
 
         **Performance:** <25ms P95, cached for active sessions
 
-        '
+        "
       operationId: combatServiceGetSession
       tags:
-      - Combat Sessions
+        - Combat Sessions
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       parameters:
-      - name: sessionId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
-        '200':
+        "200":
           description: Combat session details retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CombatSessionResponse'
-        '404':
-          $ref: '../common/responses/error.yaml#/NotFound'
-        '401':
-          $ref: '../common/responses/error.yaml#/Unauthorized'
+                $ref: "#/components/schemas/CombatSessionResponse"
+        "404":
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        "401":
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /combat/sessions/{sessionId}/actions:
     post:
       summary: Execute combat action
-      description: '**Combat action execution endpoint**
+      description: "**Combat action execution endpoint**
 
         Processes player combat actions like attacks, abilities, movement.
 
         **Performance:** <15ms P95, real-time processing required
 
-        '
+        "
       operationId: combatServiceExecuteAction
       tags:
-      - Combat Actions
+        - Combat Actions
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       parameters:
-      - name: sessionId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CombatActionRequest'
+              $ref: "#/components/schemas/CombatActionRequest"
       responses:
-        '200':
+        "200":
           description: Action executed successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CombatActionResponse'
-        '400':
-          $ref: '../common/responses/error.yaml#/BadRequest'
-        '401':
-          $ref: '../common/responses/error.yaml#/Unauthorized'
-        '429':
-          $ref: '../common/responses/error.yaml#/TooManyRequests'
+                $ref: "#/components/schemas/CombatActionResponse"
+        "400":
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        "401":
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        "429":
+          $ref: ../common-service/responses/error.yaml#/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /combat/sessions/{sessionId}/state:
     get:
       summary: Get combat session state
-      description: '**Combat session state endpoint**
+      description: "**Combat session state endpoint**
 
-        Returns real-time state of combat session including participant status,
-        effects, and current turn information.
+        Returns real-time state of combat session including participant status, effects,
+        and current turn information.
 
         **Performance:** <10ms P95, real-time updates required
 
-        '
+        "
       operationId: combatServiceGetSessionState
       tags:
-      - Combat Sessions
+        - Combat Sessions
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       parameters:
-      - name: sessionId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
-        '200':
+        "200":
           description: Combat session state retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CombatSessionState'
-        '404':
-          $ref: '../common/responses/error.yaml#/NotFound'
-        '401':
-          $ref: '../common/responses/error.yaml#/Unauthorized'
+                $ref: "#/components/schemas/CombatSessionState"
+        "404":
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        "401":
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /combat/damage/calculate:
     post:
       summary: Calculate combat damage
-      description: '**Enterprise-grade damage calculation endpoint**
+      description: "**Enterprise-grade damage calculation endpoint**
 
-        Calculates final damage based on attacker stats, weapon properties,
-        target defenses, and active modifiers/effects.
+        Calculates final damage based on attacker stats, weapon properties, target
+        defenses, and active modifiers/effects.
 
         Essential for fair combat mechanics and anti-cheat validation.
 
@@ -391,7 +435,7 @@ paths:
 
         **Security:** Server-side only, validates all input parameters
 
-        '
+        "
       operationId: combatServiceCalculateDamage
       tags:
         - Damage Calculation
@@ -402,35 +446,47 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DamageCalculationRequest'
+              $ref: "#/components/schemas/DamageCalculationRequest"
       responses:
-        '200':
+        "200":
           description: Damage calculated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DamageCalculationResult'
-        '400':
+                $ref: "#/components/schemas/DamageCalculationResult"
+        "400":
           description: Invalid calculation request - validation failed
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        '401':
-          $ref: '../common/responses/error.yaml#/Unauthorized'
-        '500':
+                $ref: ../common-service/schemas/error.yaml#/Error
+        "401":
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        "500":
           description: Internal calculation error
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+      default:
+        description: Unexpected error
+        content:
+          application/json:
+            schema:
+              $ref: ../common-service/schemas/error.yaml#/Error
   /combat/weapons/{weaponId}/analytics:
     get:
       summary: Get weapon performance analytics
-      description: '**Enterprise-grade weapon analytics endpoint**
+      description: "**Enterprise-grade weapon analytics endpoint**
 
-        Provides comprehensive statistics on weapon usage patterns,
-        effectiveness metrics, balance analysis, and player behavior insights.
+        Provides comprehensive statistics on weapon usage patterns, effectiveness
+        metrics, balance analysis, and player behavior insights.
 
         Essential for game balancing, content updates, and player experience optimization.
 
@@ -438,7 +494,7 @@ paths:
 
         **Data Sources:** Combat logs, player statistics, matchmaking data
 
-        '
+        "
       operationId: combatServiceGetWeaponAnalytics
       tags:
         - Weapon Analytics
@@ -471,30 +527,36 @@ paths:
             default: false
             description: Include per-player usage statistics
       responses:
-        '200':
+        "200":
           description: Weapon analytics retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WeaponAnalyticsResponse'
-        '400':
+                $ref: "#/components/schemas/WeaponAnalyticsResponse"
+        "400":
           description: Invalid request parameters
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        '404':
+                $ref: ../common-service/schemas/error.yaml#/Error
+        "404":
           description: Weapon not found or no usage data available
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        '401':
-          $ref: '../common/responses/error.yaml#/Unauthorized'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        "401":
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
   responses:
     HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
     TooManyRequests:
       description: Too many requests - rate limit exceeded
       headers:
@@ -506,46 +568,51 @@ components:
       content:
         application/json:
           schema:
-            $ref: '../common/schemas/error.yaml#/Error'
+            $ref: ../common-service/schemas/error.yaml#/Error
   schemas:
     Error:
-      $ref: '../common/schemas/error.yaml#/Error'
+      $ref: ../common-service/schemas/error.yaml#/Error
     HealthResponse:
-      $ref: '../common/schemas/health.yaml#/HealthResponse'
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
     WebSocketHealthMessage:
       type: object
       required:
-      - type
-      - timestamp
-      - services
+        - type
+        - timestamp
+        - services
       properties:
         type:
           type: string
-          enum: [health_update, service_down, service_up]
+          enum:
+            - health_update
+            - service_down
+            - service_up
           example: health_update
         timestamp:
           type: string
           format: date-time
-          example: '2025-12-28T10:00:00Z'
+          example: "2025-12-28T10:00:00Z"
         services:
           type: object
           additionalProperties:
-            $ref: '../common/schemas/health.yaml#/HealthResponse'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+            $ref: ../common-service/schemas/health.yaml#/HealthResponse
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
     CreateCombatSessionRequest:
       type: object
       required:
-      - participants
-      - rules
+        - participants
+        - rules
       properties:
         participants:
           type: array
           items:
-            $ref: '#/components/schemas/CombatParticipant'
+            $ref: "#/components/schemas/CombatParticipant"
           minItems: 2
           maxItems: 8
         rules:
-          $ref: '#/components/schemas/CombatRules'
+          $ref: "#/components/schemas/CombatRules"
         environment:
           type: string
           description: Combat environment/map
@@ -555,14 +622,16 @@ components:
           minimum: 5
           maximum: 60
           default: 15
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
     CombatSessionResponse:
       allOf:
-        - $ref: '../common/schemas/game-entities.yaml#/CombatSessionEntity'
+        - $ref: ../common-service/schemas/game-entities.yaml#/CombatSessionEntity
         - type: object
           properties:
             rules:
-              $ref: '#/components/schemas/CombatRules'
+              $ref: "#/components/schemas/CombatRules"
             current_turn:
               type: integer
               minimum: 0
@@ -570,7 +639,11 @@ components:
               example: 3
             game_mode:
               type: string
-              enum: [deathmatch, team_deathmatch, capture_the_flag, domination]
+              enum:
+                - deathmatch
+                - team_deathmatch
+                - capture_the_flag
+                - domination
               description: Combat game mode
               example: deathmatch
             max_participants:
@@ -579,16 +652,23 @@ components:
               maximum: 100
               description: Maximum number of participants
               example: 10
-      description: 'BACKEND NOTE: SOLID inheritance from CombatSessionEntity. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description:
+        "BACKEND NOTE: SOLID inheritance from CombatSessionEntity. Fields
+        ordered for struct alignment (large → small). Expected memory savings: 30-50%."
     CombatActionRequest:
       type: object
       required:
-      - action_type
-      - target_id
+        - action_type
+        - target_id
       properties:
         action_type:
           type: string
-          enum: [attack, ability, move, defend, item]
+          enum:
+            - attack
+            - ability
+            - move
+            - defend
+            - item
           example: attack
         target_id:
           type: string
@@ -599,17 +679,19 @@ components:
           format: uuid
           description: Ability ID if action_type is ability
         position:
-          $ref: '#/components/schemas/Position'
+          $ref: "#/components/schemas/Position"
         parameters:
           type: object
           description: Additional action parameters
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
     CombatActionResponse:
       type: object
       required:
-      - success
-      - action_id
-      - effects
+        - success
+        - action_id
+        - effects
       properties:
         success:
           type: boolean
@@ -621,84 +703,103 @@ components:
         effects:
           type: array
           items:
-            $ref: '#/components/schemas/CombatEffect'
+            $ref: "#/components/schemas/CombatEffect"
         new_state:
-          $ref: '#/components/schemas/CombatSessionState'
+          $ref: "#/components/schemas/CombatSessionState"
         next_turn:
           type: integer
           description: Next turn number
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
     CombatSessionState:
       type: object
       required:
-      - session_id
-      - status
-      - participants
-      - current_turn
+        - session_id
+        - status
+        - participants
+        - current_turn
       properties:
         session_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [waiting, active, paused, finished, cancelled]
+          enum:
+            - waiting
+            - active
+            - paused
+            - finished
+            - cancelled
         participants:
           type: array
           items:
-            $ref: '#/components/schemas/CombatParticipantState'
+            $ref: "#/components/schemas/CombatParticipantState"
         current_turn:
           type: integer
           minimum: 0
         active_effects:
           type: array
           items:
-            $ref: '#/components/schemas/CombatEffect'
+            $ref: "#/components/schemas/CombatEffect"
         environment_state:
           type: object
           description: Current environment state
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
     CombatParticipant:
       allOf:
-        - $ref: '../common/schemas/game-entities.yaml#/CharacterEntity'
+        - $ref: ../common-service/schemas/game-entities.yaml#/CharacterEntity
         - type: object
           required:
             - participant_type
           properties:
             participant_type:
               type: string
-              enum: [player, npc, enemy]
+              enum:
+                - player
+                - npc
+                - enemy
               description: Type of combat participant
               example: player
             combat_stats:
-              $ref: '#/components/schemas/CombatStats'
+              $ref: "#/components/schemas/CombatStats"
             team:
               type: string
-              enum: [red, blue, neutral]
+              enum:
+                - red
+                - blue
+                - neutral
               description: Combat team assignment
               example: red
-      description: 'BACKEND NOTE: SOLID inheritance from CharacterEntity. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description:
+        "BACKEND NOTE: SOLID inheritance from CharacterEntity. Fields ordered
+        for struct alignment (large → small). Expected memory savings: 30-50%."
     CombatParticipantState:
       type: object
       required:
-      - participant_id
-      - health
-      - position
+        - participant_id
+        - health
+        - position
       properties:
         participant_id:
           type: string
           format: uuid
         health:
-          $ref: '#/components/schemas/HealthStatus'
+          $ref: "#/components/schemas/HealthStatus"
         position:
-          $ref: '#/components/schemas/Position'
+          $ref: "#/components/schemas/Position"
         status_effects:
           type: array
           items:
-            $ref: '#/components/schemas/StatusEffect'
+            $ref: "#/components/schemas/StatusEffect"
         action_points:
           type: integer
           minimum: 0
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
     CombatRules:
       type: object
       properties:
@@ -722,14 +823,19 @@ components:
           type: array
           items:
             type: string
-            enum: [eliminate_all, survive_time, collect_items]
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+            enum:
+              - eliminate_all
+              - survive_time
+              - collect_items
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
     CombatStats:
       type: object
       required:
-      - health
-      - attack
-      - defense
+        - health
+        - attack
+        - defense
       properties:
         health:
           type: integer
@@ -747,12 +853,14 @@ components:
           type: number
           minimum: 0
           maximum: 1
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
     HealthStatus:
       type: object
       required:
-      - current
-      - maximum
+        - current
+        - maximum
       properties:
         current:
           type: integer
@@ -764,12 +872,14 @@ components:
           type: integer
           minimum: 0
           default: 0
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
     Position:
       type: object
       required:
-      - x
-      - y
+        - x
+        - y
       properties:
         x:
           type: number
@@ -781,17 +891,24 @@ components:
           type: number
           format: float
           default: 0
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
     CombatEffect:
       type: object
       required:
-      - type
-      - target_id
-      - value
+        - type
+        - target_id
+        - value
       properties:
         type:
           type: string
-          enum: [damage, heal, buff, debuff, status]
+          enum:
+            - damage
+            - heal
+            - buff
+            - debuff
+            - status
         target_id:
           type: string
           format: uuid
@@ -803,16 +920,23 @@ components:
         effect_id:
           type: string
           format: uuid
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
     StatusEffect:
       type: object
       required:
-      - type
-      - duration
+        - type
+        - duration
       properties:
         type:
           type: string
-          enum: [poison, burn, stun, slow, haste]
+          enum:
+            - poison
+            - burn
+            - stun
+            - slow
+            - haste
         duration:
           type: integer
           minimum: 1
@@ -820,11 +944,13 @@ components:
           type: integer
           minimum: 1
           default: 1
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
     PaginationParams:
-      $ref: '../common/schemas/pagination.yaml#/PaginationParams'
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
     PaginatedResponse:
-      $ref: '../common/schemas/pagination.yaml#/PaginatedResponse'
+      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
     DamageCalculationRequest:
       type: object
       required:
@@ -918,9 +1044,13 @@ components:
               format: float
               minimum: 0
           description: Target's defensive capabilities
-      description: |
-        "BACKEND NOTE: Request structure optimized for damage calculation pipeline.
+      description:
+        '"BACKEND NOTE: Request structure optimized for damage calculation
+        pipeline.
+
         All fields validated against game state before calculation."
+
+        '
     DamageCalculationResult:
       type: object
       required:
@@ -1014,9 +1144,13 @@ components:
           type: string
           format: date-time
           description: Calculation timestamp
-      description: |
-        "BACKEND NOTE: Result structure designed for combat logging and replay.
+      description:
+        '"BACKEND NOTE: Result structure designed for combat logging and
+        replay.
+
         All calculations logged for anti-cheat auditing."
+
+        '
     WeaponAnalyticsResponse:
       type: object
       required:
@@ -1171,9 +1305,11 @@ components:
               type: object
               description: Comparison with similar weapons
               additionalProperties: true
-      description: |
-        "BACKEND NOTE: Analytics data aggregated from combat logs.
+      description: '"BACKEND NOTE: Analytics data aggregated from combat logs.
+
         Cached for performance with configurable TTL based on period."
+
+        '
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
+      $ref: ../common-service/security/security.yaml#/BearerAuth

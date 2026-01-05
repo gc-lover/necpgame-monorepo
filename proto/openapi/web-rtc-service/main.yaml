@@ -1,0 +1,2082 @@
+openapi: 3.0.3
+info:
+  title: WebRTC Signaling Service API - Enterprise-Grade Voice Chat Signaling
+  description: "**Enterprise-Grade WebRTC Signaling Service API for NECPGAME**
+
+    Comprehensive voice chat signaling service enabling real-time peer-to-peer voice
+    communication for MMOFPS gaming with enterprise-grade reliability, security, and
+    performance optimizations.
+
+    ## Key Features
+
+    - **WebRTC Signaling Protocol** - Complete offer/answer/ICE candidate exchange
+    - **Real-time Voice Channels** - Guild parties, global chat, private rooms - **NAT
+    Traversal Support** - STUN/TURN server integration for connectivity - **Voice
+    Quality Monitoring** - Adaptive bitrate and quality optimization - **Anti-cheat
+    Integration** - Voice validation and spam detection - **Scalable Architecture**
+    - 1000+ concurrent voice connections
+
+    ## Domain Purpose
+
+    This WebRTC domain provides signaling infrastructure for peer-to-peer voice communication
+    in NECPGAME, enabling immersive multiplayer voice chat with enterprise-grade reliability
+    and anti-cheat protection.
+
+    ## Performance Targets
+
+    - P99 Latency: <25ms for signaling operations - Memory: <50KB per active voice
+    connection - Concurrent users: 5000+ simultaneous voice sessions - Signaling throughput:
+    10000+ messages/sec - Connection establishment: <100ms average
+
+    "
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: https://api.necpgame.com/v1/webrtc-signaling
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/webrtc-signaling
+    description: Staging server
+  - url: http://localhost:8080/api/v1/webrtc-signaling
+    description: Local development server
+security:
+  - BearerAuth: []
+tags:
+  - name: Voice Signaling
+    description: WebRTC signaling protocol operations
+  - name: Voice Channels
+    description: Voice channel and room management
+  - name: Voice Quality
+    description: Voice quality monitoring and optimization
+  - name: Health Monitoring
+    description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: WebRTC signaling service health check
+      description: "**Enterprise-grade health check endpoint**
+
+
+        Provides real-time health status of the example domain microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        "
+      operationId: webrtcSignalingHealthCheck
+      tags:
+        - Health Monitoring
+      parameters:
+        - name: Accept-Encoding
+          in: header
+          schema:
+            type: string
+            enum:
+              - gzip
+              - deflate
+              - br
+      responses:
+        "200":
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                  - gzip
+                  - deflate
+                  - br
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "429":
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /health/batch:
+    post:
+      summary: Batch health check for multiple signaling services
+      description:
+        "**Performance optimization:** Check multiple domain health in
+        single request
+
+
+        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+
+        Eliminates network overhead in health monitoring scenarios.
+
+
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+
+        "
+      operationId: webrtcSignalingBatchHealthCheck
+      tags:
+        - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - example-domain
+                      - system-domain
+                      - specialized-domain
+                    maxItems: 10
+                  description: List of services to check
+      responses:
+        "200":
+          $ref: "#/components/responses/HealthBatchSuccess"
+        "400":
+          description: Invalid request - malformed service list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /health/ws:
+    get:
+      summary: Real-time signaling health monitoring WebSocket
+      description:
+        "**Performance optimization:** Real-time health updates without
+        polling
+
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+
+        Perfect for dashboard monitoring and alerting systems.
+
+
+        **Protocol:** WebSocket with JSON payloads
+
+        **Heartbeat:** 30 second intervals
+
+        **Reconnection:** Automatic with exponential backoff
+
+        "
+      operationId: webrtcSignalingHealthWebSocket
+      tags:
+        - Health Monitoring
+      parameters:
+        - name: services
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - example-domain
+                - system-domain
+                - specialized-domain
+          description: Services to monitor (optional, monitors all if not specified)
+      responses:
+        "200":
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: ws://localhost:8080/api/v1/example-domain/health/ws
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      - health-monitoring-v1
+        "101":
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebSocketHealthMessage"
+        "400":
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /voice-channels:
+    get:
+      summary: List voice channels with filtering and pagination
+      description: "**Enterprise-grade voice channel listing endpoint**
+
+
+        Supports filtering by type (guild/party/global), status, and participant count.
+
+        Optimized for real-time voice channel discovery and management.
+
+
+        **Performance:** <25ms P95, supports 5000+ concurrent voice sessions
+
+        "
+      operationId: listVoiceChannels
+      tags:
+        - Voice Channels
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - created_at
+              - name
+              - priority
+            default: created_at
+          description: Sort field
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+          description: Sort order
+        - name: filter_status
+          in: query
+          schema:
+            type: string
+            enum:
+              - active
+              - inactive
+              - pending
+          description: Filter by status
+      responses:
+        "200":
+          $ref: "#/components/responses/ExampleListSuccess"
+        "400":
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Unprocessable entity - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    post:
+      summary: Create new voice channel
+      description: "**Enterprise-grade voice channel creation endpoint**
+
+
+        Creates guild parties, private rooms, or global voice channels with permission
+        validation.
+
+        Supports automatic STUN/TURN server allocation and quality monitoring setup.
+
+
+        **Performance:** <50ms P95, includes validation and business logic
+
+        "
+      operationId: createVoiceChannel
+      tags:
+        - Example Domain
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Voice channel creation request
+      responses:
+        "201":
+          $ref: "#/components/responses/ExampleCreated"
+        "400":
+          description: Invalid request - malformed or missing data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict - example with this identifier already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests - creation rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /voice-channels/{channel_id}:
+    get:
+      summary: Get specific voice channel by ID
+      description: "**Enterprise-grade voice channel retrieval endpoint**
+
+
+        Returns channel details, active participants, and connection quality metrics.
+
+        Supports real-time updates via WebSocket for participant changes.
+
+
+        **Performance:** <15ms P95 with participant count caching
+
+        "
+      operationId: getVoiceChannel
+      tags:
+        - Voice Channels
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Example unique identifier
+        - name: include_related
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include related data in response
+        - name: If-None-Match
+          in: header
+          schema:
+            type: string
+          description: Conditional request - return 304 if ETag matches
+        - name: If-Modified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          description: Conditional request - return 304 if not modified since this time
+      responses:
+        "200":
+          $ref: "#/components/responses/ExampleRetrieved"
+        "304":
+          description: Not modified - resource has not changed
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"example-123-v1"'
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, private
+        "400":
+          description: Invalid request - malformed example ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    put:
+      summary: Update existing example
+      description: "**Enterprise-grade update endpoint**
+
+
+        Supports partial updates, optimistic locking, and audit trails.
+
+        Ensures data consistency with event sourcing patterns.
+
+
+        **Performance:** <25ms P95, includes validation and conflict resolution
+
+        "
+      operationId: updateVoiceChannel
+      tags:
+        - Voice Channels
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
+        - name: If-Match
+          in: header
+          schema:
+            type: string
+          description: ETag for optimistic locking - prevents concurrent updates
+        - name: If-Unmodified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          description:
+            Conditional update - proceed only if not modified since this
+            time
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateExampleRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ExampleUpdated"
+        "400":
+          description: Invalid request - malformed data or example ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description:
+            Conflict - version conflict (optimistic locking) or precondition
+            failed
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"example-123-v1"'
+                description: Current entity tag
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          description:
+            Precondition failed - If-Match or If-Unmodified-Since condition
+            not met
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"example-123-v1"'
+                description: Current entity tag
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests - update rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    delete:
+      summary: Delete example
+      description: "**Enterprise-grade deletion endpoint**
+
+
+        Supports soft deletes with audit trails and cleanup scheduling.
+
+        Ensures referential integrity and cascading deletes.
+
+
+        **Performance:** <15ms P95, includes cleanup operations
+
+        "
+      operationId: deleteVoiceChannel
+      tags:
+        - Voice Channels
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
+      responses:
+        "204":
+          $ref: "#/components/responses/ExampleDeleted"
+        "400":
+          description: Invalid request - malformed example ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict - example cannot be deleted (referential integrity)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests - deletion rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /voice-channels/{channel_id}/join:
+    post:
+      summary: Join voice channel with WebRTC signaling
+      description: "**Real-time voice channel join with WebRTC handshake**
+
+
+        Initiates WebRTC peer connection establishment with signaling protocol.
+
+        Returns STUN/TURN server credentials and channel participant list.
+
+
+        **Performance:** <100ms average connection establishment
+
+        "
+      operationId: joinVoiceChannel
+      tags:
+        - Voice Signaling
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinChannelRequest"
+      responses:
+        "200":
+          description: Successfully joined voice channel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinChannelResponse"
+        "400":
+          description: Invalid join request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Access denied to voice channel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /voice-channels/{channel_id}/signal:
+    post:
+      summary: WebRTC signaling message exchange
+      description:
+        "**Core WebRTC signaling endpoint for offer/answer/ICE exchange**
+
+
+        Handles SDP offers, answers, and ICE candidates between peers.
+
+        Validates signaling messages and enforces anti-cheat measures.
+
+
+        **Performance:** <10ms P99 signaling message processing
+
+        "
+      operationId: exchangeSignalingMessage
+      tags:
+        - Voice Signaling
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignalingMessage"
+      responses:
+        "200":
+          description: Signaling message processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignalingResponse"
+        "400":
+          description: Invalid signaling message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /voice-channels/{channel_id}/leave:
+    post:
+      summary: Leave voice channel
+      description: "**Clean voice channel disconnection**
+
+
+        Removes participant from voice channel and cleans up signaling state.
+
+        Updates channel participant count and notifies remaining peers.
+
+
+        **Performance:** <25ms disconnection processing
+
+        "
+      operationId: leaveVoiceChannel
+      tags:
+        - Voice Channels
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
+      responses:
+        "200":
+          description: Successfully left voice channel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveChannelResponse"
+        "404":
+          description: Channel not found or already left
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /voice-quality/{channel_id}/report:
+    post:
+      summary: Report voice quality metrics
+      description: "**Real-time voice quality monitoring and optimization**
+
+
+        Collects latency, packet loss, and audio quality metrics from clients.
+
+        Enables adaptive bitrate adjustment and quality optimization.
+
+
+        **Performance:** <5ms metrics processing with batch aggregation
+
+        "
+      operationId: reportVoiceQuality
+      tags:
+        - Voice Quality
+      parameters:
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoiceQualityReport"
+      responses:
+        "200":
+          description: Quality metrics recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceQualityResponse"
+        "400":
+          description: Invalid quality report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /guilds/{guild_id}/voice-channels:
+    post:
+      summary: Create guild voice channel
+      description: "**Guild System Integration: Create voice channel for guild**
+
+        Creates a new voice channel specifically for guild communication. Integrates
+        with guild permission system and member management.
+
+        **Guild Integration:** - Validates guild membership and permissions - Applies
+        guild-specific voice channel settings - Supports role-based access control
+
+        **Performance:** <50ms channel creation with permission validation "
+      operationId: createGuildVoiceChannel
+      tags:
+        - Guild Voice Channels
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuildVoiceChannelRequest"
+      responses:
+        "201":
+          description: Guild voice channel created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildVoiceChannelResponse"
+        "400":
+          description: Invalid request or guild not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Insufficient permissions to create guild channel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    get:
+      summary: List guild voice channels
+      description:
+        "**Guild System Integration: List all voice channels for guild**
+
+        Retrieves all active voice channels belonging to a specific guild. Includes
+        channel status, participant counts, and permissions.
+
+        **Performance:** <20ms query with Redis caching for active channels "
+      operationId: listGuildVoiceChannels
+      tags:
+        - Guild Voice Channels
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+      responses:
+        "200":
+          description: Guild voice channels retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildVoiceChannelListResponse"
+        "404":
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /guilds/{guild_id}/voice-channels/{channel_id}:
+    put:
+      summary: Update guild voice channel
+      description:
+        "**Guild System Integration: Update guild voice channel settings**
+
+        Modifies voice channel configuration including permissions, user limits, and
+        moderation settings. Requires appropriate guild permissions.
+
+        **Permission Checks:** - Channel owner or guild leader/officer - Validates
+        permission hierarchy
+
+        **Performance:** <30ms update with permission validation "
+      operationId: updateGuildVoiceChannel
+      tags:
+        - Guild Voice Channels
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuildVoiceChannelUpdateRequest"
+      responses:
+        "200":
+          description: Guild voice channel updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildVoiceChannelResponse"
+        "400":
+          description: Invalid update request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Insufficient permissions to update channel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Guild or channel not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /guilds/{guild_id}/voice-channels/{channel_id}/join:
+    post:
+      summary: Join guild voice channel
+      description: "**Guild System Integration: Join guild voice channel**
+
+        Connects user to guild voice channel with permission validation. Handles channel
+        capacity limits and access control.
+
+        **Integration Features:** - Guild membership verification - Role-based access
+        control - Channel capacity management - Anti-cheat validation
+
+        **Performance:** <25ms join with permission checks "
+      operationId: joinGuildVoiceChannel
+      tags:
+        - Guild Voice Channels
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild unique identifier
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Voice channel unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinVoiceChannelRequest"
+      responses:
+        "200":
+          description: Successfully joined guild voice channel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinVoiceChannelResponse"
+        "400":
+          description: Invalid join request or channel full
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Access denied to guild channel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Guild or channel not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+components:
+  responses:
+    HealthBatchSuccess:
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
+    ExampleListSuccess:
+      description: Examples retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+        X-Total-Count:
+          schema:
+            type: integer
+            example: 150
+            description: Total number of examples matching criteria
+        X-Page-Count:
+          schema:
+            type: integer
+            example: 8
+            description: Total number of pages
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExampleListResponse"
+    ExampleCreated:
+      description: Example created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
+            description: URL of the created example
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v1"'
+            description: Entity tag for caching and optimistic locking
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExampleResponse"
+    ExampleRetrieved:
+      description: Example retrieved successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v1"'
+            description: Entity tag for caching
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+            description: Cache control directives
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: "2025-12-21T10:00:00Z"
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 5
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExampleResponse"
+    ExampleUpdated:
+      description: Example updated successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v2"'
+            description: New entity tag after update
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: "2025-12-21T10:05:00Z"
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 25
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ExampleResponse"
+    ExampleDeleted:
+      description: Example deleted successfully
+      headers:
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+    OK:
+      $ref: ../common-service/responses/success.yaml#/OK
+    Created:
+      $ref: ../common-service/responses/success.yaml#/Created
+    BadRequest:
+      $ref: ../common-service/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common-service/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common-service/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common-service/responses/error.yaml#/Conflict
+    InternalServerError:
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
+    HealthOK:
+      $ref: ../common-service/responses/success.yaml#/HealthOK
+  schemas:
+    HealthResponse:
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
+    JoinVoiceChannelRequest:
+      type: object
+      required:
+        - user_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User unique identifier
+        channel_id:
+          type: string
+          format: uuid
+          description: Voice channel unique identifier
+        mute:
+          type: boolean
+          default: false
+          description: Whether user joins muted
+        deaf:
+          type: boolean
+          default: false
+          description: Whether user joins deafened
+      description: Request to join a voice channel
+    JoinVoiceChannelResponse:
+      type: object
+      required:
+        - channel_id
+        - user_id
+        - status
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+          description: Voice channel unique identifier
+        user_id:
+          type: string
+          format: uuid
+          description: User unique identifier
+        status:
+          type: string
+          enum:
+            - joined
+            - failed
+          description: Join status
+        session_token:
+          type: string
+          description: WebRTC session token for voice connection
+        ice_servers:
+          type: array
+          items:
+            type: object
+            properties:
+              urls:
+                type: string
+              username:
+                type: string
+              credential:
+                type: string
+          description: ICE servers for WebRTC connection
+      description: Response after joining a voice channel
+    WebSocketHealthMessage:
+      type: object
+      required:
+        - type
+        - timestamp
+        - health
+      properties:
+        type:
+          type: string
+          enum:
+            - health_update
+            - health_alert
+            - service_down
+          example: health_update
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+          maxLength: 1000
+        health:
+          $ref: "#/components/schemas/HealthResponse"
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
+    Error:
+      $ref: ../common-service/schemas/error.yaml#/Error
+    VoiceChannel:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - max_participants
+        - created_at
+        - status
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Voice channel unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Voice channel display name
+          example: Guild Party Chat
+        type:
+          type: string
+          enum:
+            - guild
+            - party
+            - global
+            - private
+          description: Voice channel type
+          example: guild
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+          description: Maximum number of participants
+          example: 10
+        current_participants:
+          type: integer
+          minimum: 0
+          description: Current number of active participants
+          example: 3
+        description:
+          type: string
+          maxLength: 500
+          description: Voice channel description
+          example: Main voice channel for guild coordination
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2025-12-27T16:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-12-27T16:30:00Z"
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - full
+            - closed
+          default: active
+          description: Voice channel status
+          example: active
+        is_active:
+          type: boolean
+          default: true
+          description: Whether channel is currently active
+          example: true
+        quality_settings:
+          $ref: "#/components/schemas/VoiceQualitySettings"
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50% for voice channel operations."
+    VoiceQualitySettings:
+      type: object
+      properties:
+        bitrate:
+          type: integer
+          minimum: 8000
+          maximum: 128000
+          default: 64000
+          description: Audio bitrate in bps
+          example: 64000
+        sample_rate:
+          type: integer
+          enum:
+            - 8000
+            - 16000
+            - 24000
+            - 48000
+          default: 48000
+          description: Audio sample rate in Hz
+          example: 48000
+        channels:
+          type: integer
+          enum:
+            - 1
+            - 2
+          default: 1
+          description: Number of audio channels
+          example: 1
+        echo_cancellation:
+          type: boolean
+          default: true
+          description: Enable echo cancellation
+          example: true
+        noise_suppression:
+          type: boolean
+          default: true
+          description: Enable noise suppression
+          example: true
+      description: "BACKEND NOTE: Voice quality settings for adaptive bitrate control."
+    JoinChannelRequest:
+      type: object
+      required:
+        - user_id
+        - client_capabilities
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User joining the channel
+          example: 550e8400-e29b-41d4-a716-446655440001
+        client_capabilities:
+          $ref: "#/components/schemas/WebRTCCapabilities"
+        preferred_region:
+          type: string
+          maxLength: 50
+          description: Preferred server region
+          example: us-east-1
+      description: "BACKEND NOTE: Request to join voice channel with client capabilities."
+    WebRTCCapabilities:
+      type: object
+      properties:
+        webrtc_support:
+          type: boolean
+          default: true
+          example: true
+        dtls_support:
+          type: boolean
+          default: true
+          example: true
+        ice_candidates:
+          type: boolean
+          default: true
+          example: true
+        max_bitrate:
+          type: integer
+          minimum: 8000
+          maximum: 256000
+          example: 128000
+      description: "BACKEND NOTE: Client WebRTC capabilities for compatibility checking."
+    JoinChannelResponse:
+      type: object
+      required:
+        - channel
+        - ice_servers
+        - session_token
+      properties:
+        channel:
+          $ref: "#/components/schemas/VoiceChannel"
+        ice_servers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ICEServer"
+          description: STUN/TURN servers for NAT traversal
+        session_token:
+          type: string
+          description: Session authentication token
+          example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/VoiceParticipant"
+          description: Current channel participants
+      description: "BACKEND NOTE: Response with channel info and connection details."
+    ICEServer:
+      type: object
+      required:
+        - urls
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+          example:
+            - stun:stun.necpgame.com:19302
+        username:
+          type: string
+          description: TURN server username
+        credential:
+          type: string
+          description: TURN server credential
+      description: "BACKEND NOTE: STUN/TURN server configuration for WebRTC."
+    VoiceParticipant:
+      type: object
+      required:
+        - user_id
+        - joined_at
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        display_name:
+          type: string
+          maxLength: 100
+          example: NightRunner2077
+        joined_at:
+          type: string
+          format: date-time
+          example: "2025-12-27T16:15:00Z"
+        is_muted:
+          type: boolean
+          default: false
+          example: false
+        connection_quality:
+          type: string
+          enum:
+            - excellent
+            - good
+            - poor
+            - disconnected
+          example: excellent
+      description: "BACKEND NOTE: Voice channel participant information."
+    SignalingMessage:
+      type: object
+      required:
+        - type
+        - sender_id
+        - target_id
+      properties:
+        type:
+          type: string
+          enum:
+            - offer
+            - answer
+            - ice_candidate
+            - hangup
+          example: offer
+        sender_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        target_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        sdp:
+          type: string
+          description: SDP offer/answer data
+          example: "v=0\r\no=- 12345 67890 IN IP4 192.168.1.1\r\n..."
+        ice_candidate:
+          $ref: "#/components/schemas/ICECandidate"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-27T16:16:00Z"
+      description: "BACKEND NOTE: WebRTC signaling message structure."
+    ICECandidate:
+      type: object
+      required:
+        - candidate
+        - sdp_mid
+        - sdp_mline_index
+      properties:
+        candidate:
+          type: string
+          description: ICE candidate string
+          example: candidate:1 1 UDP 2122260223 192.168.1.1 12345 typ host
+        sdp_mid:
+          type: string
+          example: "0"
+        sdp_mline_index:
+          type: integer
+          example: 0
+      description: "BACKEND NOTE: WebRTC ICE candidate for peer connection."
+    SignalingResponse:
+      type: object
+      required:
+        - success
+        - message_id
+      properties:
+        success:
+          type: boolean
+          example: true
+        message_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440003
+        delivered_at:
+          type: string
+          format: date-time
+          example: "2025-12-27T16:16:05Z"
+      description: "BACKEND NOTE: Signaling message delivery confirmation."
+    LeaveChannelResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          example: true
+        session_duration:
+          type: integer
+          description: Session duration in seconds
+          example: 1250
+        quality_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall voice quality score
+          example: 0.92
+      description: "BACKEND NOTE: Voice channel leave confirmation with session stats."
+    VoiceQualityReport:
+      type: object
+      required:
+        - user_id
+        - metrics
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        metrics:
+          $ref: "#/components/schemas/VoiceQualityMetrics"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-27T16:17:00Z"
+      description: "BACKEND NOTE: Voice quality metrics from client."
+    VoiceQualityMetrics:
+      type: object
+      properties:
+        latency_ms:
+          type: number
+          minimum: 0
+          description: Round-trip latency in milliseconds
+          example: 45.2
+        packet_loss_percent:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Packet loss percentage
+          example: 0.5
+        jitter_ms:
+          type: number
+          minimum: 0
+          description: Jitter in milliseconds
+          example: 2.1
+        bitrate_bps:
+          type: integer
+          minimum: 0
+          description: Current bitrate in bps
+          example: 64000
+        volume_level:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Audio volume level (0-1)
+          example: 0.75
+      description: "BACKEND NOTE: Real-time voice quality measurements."
+    VoiceQualityResponse:
+      type: object
+      required:
+        - acknowledged
+      properties:
+        acknowledged:
+          type: boolean
+          example: true
+        recommended_settings:
+          $ref: "#/components/schemas/VoiceQualitySettings"
+        next_report_interval:
+          type: integer
+          minimum: 5
+          maximum: 300
+          description: Recommended reporting interval in seconds
+          example: 30
+      description: "BACKEND NOTE: Quality report acknowledgment with recommendations."
+    CreateVoiceChannelRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Voice channel display name
+          example: Guild Party Chat
+        type:
+          type: string
+          enum:
+            - guild
+            - party
+            - global
+            - private
+          description: Voice channel type
+          example: guild
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+          default: 10
+          description: Maximum number of participants
+          example: 10
+        description:
+          type: string
+          maxLength: 500
+          description: Voice channel description
+          example: Main voice channel for guild coordination
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Initial tags
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Processing priority
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
+    UpdateExampleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: New example name
+          example: Updated Example Name
+        description:
+          type: string
+          maxLength: 1000
+          description: New description
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - pending
+            - archived
+          description: New status
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Replace all tags
+        is_active:
+          type: boolean
+          description: Update active status
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: New priority
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
+    GuildVoiceChannelRequest:
+      type: object
+      required:
+        - name
+        - guild_id
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Voice channel name
+          example: General Voice
+        type:
+          type: string
+          enum:
+            - guild
+          default: guild
+          description: Channel type (must be 'guild')
+        guild_id:
+          type: string
+          format: uuid
+          description: Guild unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        max_users:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Maximum number of users
+          example: 25
+        is_default_channel:
+          type: boolean
+          default: false
+          description: Whether this is the guild's default voice channel
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum:
+              - leader
+              - officer
+              - member
+              - recruit
+          maxItems: 10
+          description: Guild roles allowed to join this channel
+          example:
+            - leader
+            - officer
+            - member
+        is_moderated:
+          type: boolean
+          default: false
+          description: Whether channel has moderation enabled
+        require_approval:
+          type: boolean
+          default: false
+          description: Whether users need approval to join
+      description:
+        "BACKEND NOTE: Guild voice channel creation request with permission
+        validation."
+    GuildVoiceChannelResponse:
+      type: object
+      required:
+        - id
+        - name
+        - guild_id
+        - owner_id
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          example: General Voice
+        type:
+          type: string
+          enum:
+            - guild
+          example: guild
+        guild_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        owner_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        max_users:
+          type: integer
+          example: 25
+        current_users:
+          type: integer
+          example: 3
+        is_active:
+          type: boolean
+          example: true
+        is_default_channel:
+          type: boolean
+          example: true
+        guild_permissions:
+          $ref: "#/components/schemas/GuildPermissions"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-12-27T16:16:05Z"
+      description: "BACKEND NOTE: Guild voice channel response with permission details."
+    GuildVoiceChannelUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Update channel name
+        max_users:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Update maximum users
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum:
+              - leader
+              - officer
+              - member
+              - recruit
+          maxItems: 10
+          description: Update allowed roles
+        is_moderated:
+          type: boolean
+          description: Update moderation status
+        require_approval:
+          type: boolean
+          description: Update approval requirement
+        blocked_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 50
+          description: Users blocked from this channel
+      description: "BACKEND NOTE: Partial update request for guild voice channels."
+    GuildVoiceChannelListResponse:
+      type: object
+      required:
+        - channels
+        - total_count
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/GuildVoiceChannelResponse"
+          description: List of guild voice channels
+        total_count:
+          type: integer
+          description: Total number of channels
+          example: 5
+        has_more:
+          type: boolean
+          description: Whether there are more results
+          example: false
+      description: "BACKEND NOTE: Paginated guild voice channels list."
+    GuildPermissions:
+      type: object
+      properties:
+        allowed_roles:
+          type: array
+          items:
+            type: string
+            enum:
+              - leader
+              - officer
+              - member
+              - recruit
+          description: Roles allowed to join
+          example:
+            - leader
+            - officer
+            - member
+        blocked_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Users blocked from channel
+        muted_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Users muted in channel
+        deafened_users:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Users deafened in channel
+        is_moderated:
+          type: boolean
+          description: Moderation enabled
+          example: true
+        require_approval:
+          type: boolean
+          description: Approval required to join
+          example: false
+      description:
+        "BACKEND NOTE: Guild-specific voice channel permissions and access
+        control."
+    ExampleResponse:
+      type: object
+      required:
+        - example
+      properties:
+        example:
+          $ref: "#/components/schemas/VoiceChannel"
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%."
+    ExampleListResponse:
+      type: object
+      required:
+        - examples
+        - total_count
+        - has_more
+      properties:
+        examples:
+          type: array
+          items:
+            $ref: "#/components/schemas/VoiceChannel"
+          description: List of examples
+        has_more:
+          type: boolean
+          description: Whether there are more results available
+          example: true
+        total_count:
+          type: integer
+          description: Total number of examples matching criteria
+          example: 150
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 20
+      description:
+        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Paginated responses optimized for memory
+        efficiency."
+    PaginationParams:
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common-service/security/security.yaml#/BearerAuth
+    ApiKeyAuth:
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
+    ServiceAuth:
+      $ref: ../common-service/security/security.yaml#/ServiceAuth

@@ -8,25 +8,24 @@ info:
 
     ## Key Features
 
-    - **Trade Sessions**: Secure trade session management with escrow protection
-    - **Item Validation**: Real-time validation of item ownership and tradability
-    - **Transaction Security**: Anti-fraud measures and transaction rollback capabilities
-    - **Trade History**: Comprehensive trade history and analytics
-    - **Real-time Updates**: WebSocket notifications for trade status changes
-    - **Performance Optimized**: MMOFPS-grade performance with <50ms P99 latency
+    - **Trade Sessions**: Secure trade session management with escrow protection -
+    **Item Validation**: Real-time validation of item ownership and tradability -
+    **Transaction Security**: Anti-fraud measures and transaction rollback capabilities
+    - **Trade History**: Comprehensive trade history and analytics - **Real-time Updates**:
+    WebSocket notifications for trade status changes - **Performance Optimized**:
+    MMOFPS-grade performance with <50ms P99 latency
 
     ## Domain Purpose
 
-    The Trading domain enables secure player-to-player commerce in Night City.
-    Players can safely exchange items, currency, and resources with fraud protection
-    and dispute resolution mechanisms.
+    The Trading domain enables secure player-to-player commerce in Night City. Players
+    can safely exchange items, currency, and resources with fraud protection and dispute
+    resolution mechanisms.
 
     ## Performance Targets
 
-    - P99 Latency: <50ms for trade operations
-    - Memory: <30KB per active trade session
-    - Concurrent users: 25,000+ simultaneous trades
-    - Transaction throughput: 5,000+ TPS
+    - P99 Latency: <50ms for trade operations - Memory: <30KB per active trade session
+    - Concurrent users: 25,000+ simultaneous trades - Transaction throughput: 5,000+
+    TPS
 
     "
   version: 1.0.0
@@ -52,10 +51,6 @@ tags:
   - name: Health Monitoring
     description: System health and performance monitoring
 paths:
-  # ============================================================================
-  # HEALTH ENDPOINTS
-  # ============================================================================
-
   /health:
     get:
       summary: Trading service health check
@@ -93,28 +88,29 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
         "503":
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-
-  # ============================================================================
-  # TRADE SESSION ENDPOINTS
-  # ============================================================================
-
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /trade-sessions:
     post:
       summary: Create new trade session
       description: "**Create secure P2P trade session with escrow protection**
 
-        Initiates a new trade session between multiple players with automatic
-        escrow handling and fraud prevention.
+        Initiates a new trade session between multiple players with automatic escrow
+        handling and fraud prevention.
 
-        **Security:** All trades are escrowed until both parties confirm
-        **Performance:** <50ms P99 latency for trade creation"
+        **Security:** All trades are escrowed until both parties confirm **Performance:**
+        <50ms P99 latency for trade creation"
       operationId: createTradeSession
       tags:
         - Trading Operations
@@ -136,27 +132,48 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "409":
           description: Trade session conflict (duplicate or invalid participants)
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     get:
       summary: List trade sessions
       description: "**Get paginated list of trade sessions**
 
-        Returns active trade sessions for the authenticated user with
-        pagination and filtering support.
+        Returns active trade sessions for the authenticated user with pagination and
+        filtering support.
 
         **Performance:** Optimized with database indexes on status and timestamps"
       operationId: listTradeSessions
       tags:
         - Trading Operations
       parameters:
-        - $ref: "#/components/schemas/PaginationParams"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+          description: Number of items to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+            example: 0
+          description: Number of items to skip
         - name: status
           in: query
           schema:
@@ -189,14 +206,19 @@ paths:
                         type: array
                         items:
                           $ref: "#/components/schemas/TradeSessionResponse"
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /trade-sessions/{sessionId}:
     get:
       summary: Get trade session details
       description: "**Retrieve detailed trade session information**
 
-        Returns complete trade session data including current offers,
-        participants, and transaction history.
+        Returns complete trade session data including current offers, participants,
+        and transaction history.
 
         **Security:** Only participants can view session details"
       operationId: getTradeSession
@@ -222,20 +244,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "403":
           description: Access denied - not a participant
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     put:
       summary: Update trade session
       description: "**Update trade session offer or status**
 
-        Allows participants to modify trade offers, accept/reject terms,
-        or update session status.
+        Allows participants to modify trade offers, accept/reject terms, or update
+        session status.
 
         **Concurrency:** Optimistic locking prevents race conditions"
       operationId: updateTradeSession
@@ -277,7 +304,7 @@ paths:
                           - quantity
                         properties:
                           item_id:
-                            $ref: '../common/schemas/common.yaml#/UUID'
+                            $ref: ../common-service/schemas/common.yaml#/UUID
                           quantity:
                             type: integer
                             minimum: 1
@@ -290,7 +317,7 @@ paths:
                           - quantity
                         properties:
                           item_id:
-                            $ref: '../common/schemas/common.yaml#/UUID'
+                            $ref: ../common-service/schemas/common.yaml#/UUID
                           quantity:
                             type: integer
                             minimum: 1
@@ -302,7 +329,7 @@ paths:
                           minimum: 0
                         currency_code:
                           type: string
-                          pattern: '^[A-Z]{3}$'
+                          pattern: ^[A-Z]{3}$
                     requested_currency:
                       type: object
                       properties:
@@ -311,7 +338,7 @@ paths:
                           minimum: 0
                         currency_code:
                           type: string
-                          pattern: '^[A-Z]{3}$'
+                          pattern: ^[A-Z]{3}$
       responses:
         "200":
           description: Trade session updated successfully
@@ -324,21 +351,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "409":
           description: Optimistic locking conflict - session was modified
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /trade-sessions/{sessionId}/confirm:
     post:
       summary: Confirm trade session
       description: "**Confirm and execute trade session**
 
-        Finalizes the trade session, executes item transfers and currency
-        transactions through escrow system.
+        Finalizes the trade session, executes item transfers and currency transactions
+        through escrow system.
 
         **Atomicity:** All operations are executed in single transaction"
       operationId: confirmTradeSession
@@ -374,19 +406,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-
-  # ============================================================================
-  # WALLET ENDPOINTS
-  # ============================================================================
-
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /wallets/{walletId}:
     get:
       summary: Get wallet details
       description: "**Retrieve wallet information and balance**
 
-        Returns wallet details including current balance, transaction history,
-        and frozen status.
+        Returns wallet details including current balance, transaction history, and
+        frozen status.
 
         **Security:** Only wallet owner can access details"
       operationId: getWallet
@@ -412,8 +445,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /wallets/{walletId}/transactions:
     get:
       summary: Get wallet transaction history
@@ -433,7 +471,23 @@ paths:
             type: string
             format: uuid
           description: Wallet UUID
-        - $ref: "#/components/schemas/PaginationParams"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+          description: Number of items to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+            example: 0
+          description: Number of items to skip
         - name: type
           in: query
           schema:
@@ -452,7 +506,7 @@ paths:
           in: query
           schema:
             type: string
-            pattern: '^[A-Z]{3}$'
+            pattern: ^[A-Z]{3}$
           description: Filter by currency code
       responses:
         "200":
@@ -473,7 +527,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "429":
           description: Too many requests - WebSocket connection limit exceeded
           headers:
@@ -484,7 +538,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /examples:
     get:
       summary: List examples with filtering and pagination
@@ -554,13 +614,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "422":
           description: Unprocessable entity - validation failed
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     post:
       summary: Create new example
       description: "**Enterprise-grade creation endpoint**
@@ -593,19 +659,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "409":
           description: Conflict - example with this identifier already exists
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "422":
           description: Unprocessable entity - business rule validation failed
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "429":
           description: Too many requests - creation rate limit exceeded
           headers:
@@ -616,7 +682,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /examples/{example_id}:
     get:
       summary: Get specific example by ID
@@ -678,13 +750,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "404":
           description: Example not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "429":
           description: Too many requests - rate limit exceeded
           headers:
@@ -695,7 +767,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     put:
       summary: Update existing example
       description: "**Enterprise-grade update endpoint**
@@ -749,13 +827,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "404":
           description: Example not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "409":
           description:
             Conflict - version conflict (optimistic locking) or precondition
@@ -769,7 +847,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "412":
           description:
             Precondition failed - If-Match or If-Unmodified-Since condition
@@ -783,13 +861,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "422":
           description: Unprocessable entity - business rule validation failed
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "429":
           description: Too many requests - update rate limit exceeded
           headers:
@@ -800,7 +878,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     delete:
       summary: Delete example
       description: "**Enterprise-grade deletion endpoint**
@@ -835,19 +919,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "404":
           description: Example not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "409":
           description: Conflict - example cannot be deleted (referential integrity)
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
         "429":
           description: Too many requests - deletion rate limit exceeded
           headers:
@@ -858,11 +942,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
   responses:
     HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
     ExampleListSuccess:
       description: Examples retrieved successfully
       headers:
@@ -965,64 +1055,68 @@ components:
             example: 15
             description: Processing time in milliseconds
     OK:
-      $ref: ../common/responses/success.yaml#/OK
+      $ref: ../common-service/responses/success.yaml#/OK
     Created:
-      $ref: ../common/responses/success.yaml#/Created
+      $ref: ../common-service/responses/success.yaml#/Created
     BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
+      $ref: ../common-service/responses/error.yaml#/BadRequest
     Unauthorized:
-      $ref: ../common/responses/error.yaml#/Unauthorized
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
     Forbidden:
-      $ref: ../common/responses/error.yaml#/Forbidden
+      $ref: ../common-service/responses/error.yaml#/Forbidden
     NotFound:
-      $ref: ../common/responses/error.yaml#/NotFound
+      $ref: ../common-service/responses/error.yaml#/NotFound
     Conflict:
-      $ref: ../common/responses/error.yaml#/Conflict
+      $ref: ../common-service/responses/error.yaml#/Conflict
     InternalServerError:
-      $ref: ../common/responses/error.yaml#/InternalServerError
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
     HealthOK:
-      $ref: ../common/responses/success.yaml#/HealthOK
+      $ref: ../common-service/responses/success.yaml#/HealthOK
   schemas:
-    # ============================================================================
-    # ECONOMY DOMAIN ENTITIES - SOLID/DRY INHERITANCE
-    # ============================================================================
-
-    # Trade Session Entity - inherits from economy-entities.yaml
+    BaseEntity:
+      type: object
+      required:
+        - id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID v4)
+          example: 123e4567-e89b-12d3-a456-426614174000
+          maxLength: 36
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (ISO 8601)
+          example: "2025-12-28T10:00:00Z"
+          maxLength: 30
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp (ISO 8601)
+          example: "2025-12-28T10:00:00Z"
+          maxLength: 30
     TradeSessionEntity:
       allOf:
-        - $ref: '../common/schemas/economy-entities.yaml#/TradeSessionEntity'
+        - $ref: ../common-service/schemas/economy-entities.yaml#/TradeSessionEntity
         - type: object
-          # Domain-specific extensions can be added here if needed
-
-    # Trade Offer Entity - inherits from economy-entities.yaml
     TradeOfferEntity:
       allOf:
-        - $ref: '../common/schemas/economy-entities.yaml#/TradeOfferEntity'
+        - $ref: ../common-service/schemas/economy-entities.yaml#/TradeOfferEntity
         - type: object
-          # Domain-specific extensions can be added here if needed
-
-    # Transaction Entity - inherits from economy-entities.yaml
     TransactionEntity:
       allOf:
-        - $ref: '../common/schemas/economy-entities.yaml#/TransactionEntity'
+        - $ref: ../common-service/schemas/economy-entities.yaml#/TransactionEntity
         - type: object
-          # Domain-specific extensions can be added here if needed
-
-    # Wallet Entity - inherits from economy-entities.yaml
     WalletEntity:
       allOf:
-        - $ref: '../common/schemas/economy-entities.yaml#/WalletEntity'
+        - $ref: ../common-service/schemas/economy-entities.yaml#/WalletEntity
         - type: object
-          # Domain-specific extensions can be added here if needed
-
-    # ============================================================================
-    # TRADING DOMAIN SPECIFIC SCHEMAS
-    # ============================================================================
-
-    # Trade Request Schemas
     CreateTradeSessionRequest:
       allOf:
-        - $ref: '../common/schemas/common.yaml#/AuditableEntity'
+        - $ref: ../common-service/schemas/common.yaml#/AuditableEntity
         - type: object
           required:
             - participants
@@ -1031,10 +1125,10 @@ components:
             participants:
               type: array
               items:
-                $ref: '../common/schemas/common.yaml#/UUID'
+                $ref: ../common-service/schemas/common.yaml#/UUID
               minItems: 2
               maxItems: 10
-              description: "Users participating in trade"
+              description: Users participating in trade
             offer:
               type: object
               required:
@@ -1050,11 +1144,11 @@ components:
                       - quantity
                     properties:
                       item_id:
-                        $ref: '../common/schemas/common.yaml#/UUID'
+                        $ref: ../common-service/schemas/common.yaml#/UUID
                       quantity:
                         type: integer
                         minimum: 1
-                  description: "Items offered in trade"
+                  description: Items offered in trade
                 requested_items:
                   type: array
                   items:
@@ -1064,11 +1158,11 @@ components:
                       - quantity
                     properties:
                       item_id:
-                        $ref: '../common/schemas/common.yaml#/UUID'
+                        $ref: ../common-service/schemas/common.yaml#/UUID
                       quantity:
                         type: integer
                         minimum: 1
-                  description: "Items requested in trade"
+                  description: Items requested in trade
                 offered_currency:
                   type: object
                   properties:
@@ -1077,8 +1171,8 @@ components:
                       minimum: 0
                     currency_code:
                       type: string
-                      pattern: '^[A-Z]{3}$'
-                  description: "Currency offered"
+                      pattern: ^[A-Z]{3}$
+                  description: Currency offered
                 requested_currency:
                   type: object
                   properties:
@@ -1087,35 +1181,25 @@ components:
                       minimum: 0
                     currency_code:
                       type: string
-                      pattern: '^[A-Z]{3}$'
-                  description: "Currency requested"
+                      pattern: ^[A-Z]{3}$
+                  description: Currency requested
             expires_at:
-              $ref: '../common/schemas/common.yaml#/Timestamp'
+              $ref: ../common-service/schemas/common.yaml#/Timestamp
       description:
         "BACKEND NOTE: Fields ordered for struct alignment (large → small).
         Expected memory savings: 30-50%. Optimistic locking for concurrent trades."
-
-    # Trade Response Schemas
     TradeSessionResponse:
       allOf:
-        - $ref: '#/components/schemas/TradeSessionEntity'
+        - $ref: "#/components/schemas/TradeSessionEntity"
         - type: object
-          # Response-specific fields can be added here if needed
-
     TradeOfferResponse:
       allOf:
-        - $ref: '#/components/schemas/TradeOfferEntity'
+        - $ref: "#/components/schemas/TradeOfferEntity"
         - type: object
-          # Response-specific fields can be added here if needed
-
-    # ============================================================================
-    # COMMON SCHEMAS (from common architecture)
-    # ============================================================================
-
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
     Error:
-      $ref: ../common/schemas/error.yaml#/Error
+      $ref: ../common-service/schemas/error.yaml#/Error
     CreateExampleRequest:
       type: object
       required:
@@ -1188,6 +1272,37 @@ components:
       description:
         "BACKEND NOTE: Fields ordered for struct alignment (large → small).
         Expected memory savings: 30-50%."
+    Example:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Example unique identifier
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Example name
+        description:
+          type: string
+          maxLength: 500
+          description: Example description
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: Example entity
     ExampleResponse:
       type: object
       required:
@@ -1231,13 +1346,13 @@ components:
         Expected memory savings: 30-50%. Paginated responses optimized for memory
         efficiency."
     PaginationParams:
-      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
     PaginatedResponse:
-      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
+      $ref: ../common-service/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      $ref: ../common/security/security.yaml#/ApiKeyAuth
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      $ref: ../common/security/security.yaml#/ServiceAuth
+      $ref: ../common-service/security/security.yaml#/ServiceAuth

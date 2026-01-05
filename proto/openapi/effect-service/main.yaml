@@ -1,41 +1,32 @@
 openapi: 3.0.3
 info:
-  title: Effect Service API - Enterprise-Grade Effect Management
-  description: '**Enterprise-Grade Domain API Template for NECPGAME**
+  title: Effect Service API - Enterprise-Grade Elemental Effects Management
+  description: '**Enterprise-Grade Elemental Effects API for NECPGAME Combat System**
 
-
-    Effect service handling status effects, buffs, debuffs, and temporary modifications
-    applied to characters, NPCs, and game objects. Manages effect stacking, duration,
-    and real-time effect processing.
-
+    Manages elemental weapon effects, damage interactions, and status calculations
+    in Night City. Handles fire, ice, poison, acid, electric, and void effects with
+    complex interaction rules and real-time damage calculations.
 
     ## Key Features
 
-    - **Enterprise-grade architecture** with proper domain separation
-
-    - **Backend optimization hints** for struct alignment and performance
-
-    - **Complete validation** with redocly and ogen code generation
-
-    - **Security-first approach** with JWT authentication
-
-    - **Performance-optimized** response structures
-
-    - **Comprehensive error handling** with proper HTTP status codes
-
+    - **Elemental Effects**: Complete CRUD for fire, ice, poison, acid, electric,
+    void effects - **Interaction Engine**: Dynamic damage multipliers based on elemental
+    combinations - **Real-time Preview**: Live calculation of effect interactions
+    before application - **Performance Optimized**: MMOFPS-grade performance with
+    <10ms P99 latency - **Enterprise-grade**: Domain inheritance, struct alignment,
+    optimistic locking
 
     ## Domain Purpose
 
-    Manages status effects, buffs, and debuffs applied to characters, NPCs, and game objects.
-    Handles effect stacking, duration management, and real-time effect processing for optimal gameplay.
-
+    The Effect domain manages all elemental weapon effects and their interactions
+    in Night City. Calculates damage multipliers, applies status effects, and handles
+    complex elemental combinations for immersive cyberpunk combat mechanics.
 
     ## Performance Targets
 
-    - P99 Latency: <25ms for effect application
-    - Memory: <150KB per instance (active effects cache)
-    - Concurrent users: 5,000+ simultaneous effect processing
-    - Effect stacking: <10ms for complex effect combinations
+    - P99 Latency: <10ms for effect calculations, <25ms for interactions - Memory:
+    <50KB per active effect session - Concurrent users: 15,000+ simultaneous effect
+    processing - Effect combinations: <5ms for complex multi-element calculations
 
     '
   version: 1.0.0
@@ -56,8 +47,12 @@ servers:
 security:
 - BearerAuth: []
 tags:
-- name: Effects
-  description: Effect management operations
+- name: Elemental Effects
+  description: CRUD operations for elemental weapon effects
+- name: Effect Interactions
+  description: Rules and calculations for effect combinations
+- name: Effect Preview
+  description: Real-time preview of effect interactions
 - name: Health Monitoring
   description: System health and performance monitoring
 paths:
@@ -127,6 +122,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/batch:
     post:
       summary: Batch health check for multiple domain services
@@ -185,6 +186,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
@@ -278,31 +285,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /effects:
     get:
-      summary: List examples with filtering and pagination
-      description: '**Enterprise-grade listing endpoint**
+      summary: List elemental effects
+      description: '**Enterprise-grade listing endpoint for elemental effects**
 
+        Returns paginated list of all elemental weapon effects (fire, ice, poison,
+        acid, electric, void). Supports filtering by effect type and advanced search
+        capabilities.
 
-        Supports complex filtering, sorting, and pagination patterns.
-
-        Optimized for high-throughput scenarios with proper indexing.
-
-
-        **Performance:** <10ms P95, supports 1000+ concurrent requests
+        **Performance:** <10ms P95, supports 1000+ concurrent requests with caching
 
         '
-      operationId: listExamples
+      operationId: listEffects
       tags:
-      - Example Domain
+      - Elemental Effects
       parameters:
-      - name: page
+      - name: type
         in: query
         schema:
-          type: integer
-          minimum: 1
-          default: 1
-        description: Page number for pagination
+          type: string
+          enum:
+          - fire
+          - ice
+          - poison
+          - acid
+          - electric
+          - void
+        description: Filter by elemental effect type
       - name: limit
         in: query
         schema:
@@ -311,65 +327,49 @@ paths:
           maximum: 100
           default: 20
         description: Number of items per page
-      - name: sort_by
+      - name: offset
         in: query
         schema:
-          type: string
-          enum:
-          - created_at
-          - name
-          - priority
-          default: created_at
-        description: Sort field
-      - name: sort_order
-        in: query
-        schema:
-          type: string
-          enum:
-          - asc
-          - desc
-          default: desc
-        description: Sort order
-      - name: filter_status
-        in: query
-        schema:
-          type: string
-          enum:
-          - active
-          - inactive
-          - pending
-        description: Filter by status
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of items to skip
       responses:
         '200':
-          $ref: '#/components/responses/ExampleListSuccess'
+          description: Effects retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectListResponse'
         '400':
           description: Invalid request - malformed query parameters
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '422':
-          description: Unprocessable entity - validation failed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
     post:
-      summary: Create new example
-      description: '**Enterprise-grade creation endpoint**
+      summary: Create elemental effect
+      description: '**Enterprise-grade creation endpoint for elemental effects**
 
+        Creates new elemental weapon effect with validation of all parameters. Ensures
+        effect uniqueness and proper damage calculations.
 
-        Validates business rules, applies security checks, and ensures data consistency.
-
-        Supports optimistic locking for concurrent operations.
-
-
-        **Performance:** <50ms P95, includes validation and business logic
+        **Performance:** <25ms P95, includes validation and business logic
 
         '
-      operationId: createExample
+      operationId: createEffect
       tags:
-      - Example Domain
+      - Elemental Effects
       security:
       - BearerAuth: []
       requestBody:
@@ -377,18 +377,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateExampleRequest'
+              $ref: '#/components/schemas/EffectUpsertRequest'
       responses:
         '201':
-          $ref: '#/components/responses/ExampleCreated'
+          description: Effect created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
         '400':
           description: Invalid request - malformed or missing data
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '409':
-          description: Conflict - example with this identifier already exists
+          description: Conflict - effect with this name already exists
           content:
             application/json:
               schema:
@@ -410,13 +416,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /effects/apply:
     post:
       summary: Apply combat effects to target
       description: '**Enterprise-grade effect application endpoint**
 
-        Applies buffs, debuffs, and status effects to combat participants.
-        Validates effect compatibility, stacking rules, and duration calculations.
+        Applies buffs, debuffs, and status effects to combat participants. Validates
+        effect compatibility, stacking rules, and duration calculations.
 
         Essential for combat mechanics, abilities, and environmental effects.
 
@@ -427,9 +439,9 @@ paths:
         '
       operationId: effectServiceApplyEffects
       tags:
-        - Effect Management
+      - Effect Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -440,24 +452,24 @@ paths:
               buff_example:
                 summary: Strength buff application
                 value:
-                  target_id: "123e4567-e89b-12d3-a456-426614174000"
+                  target_id: 123e4567-e89b-12d3-a456-426614174000
                   effects:
-                    - effect_type: buff
-                      effect_name: strength_boost
-                      duration_seconds: 180
-                      value: 20
-                      source_id: "123e4567-e89b-12d3-a456-426614174001"
+                  - effect_type: buff
+                    effect_name: strength_boost
+                    duration_seconds: 180
+                    value: 20
+                    source_id: 123e4567-e89b-12d3-a456-426614174001
               debuff_example:
                 summary: Movement debuff application
                 value:
-                  target_id: "123e4567-e89b-12d3-a456-426614174000"
+                  target_id: 123e4567-e89b-12d3-a456-426614174000
                   effects:
-                    - effect_type: debuff
-                      effect_name: movement_slow
-                      duration_seconds: 60
-                      value: 0.3
-                      stacks: 1
-                      source_id: "123e4567-e89b-12d3-a456-426614174001"
+                  - effect_type: debuff
+                    effect_name: movement_slow
+                    duration_seconds: 60
+                    value: 0.3
+                    stacks: 1
+                    source_id: 123e4567-e89b-12d3-a456-426614174001
       responses:
         '200':
           description: Effects applied successfully
@@ -495,13 +507,237 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /effects/{effect_id}:
+    parameters:
+    - name: effect_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    get:
+      summary: Get elemental effect
+      operationId: getEffect
+      tags:
+      - Elemental Effects
+      responses:
+        '200':
+          description: Effect retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    patch:
+      summary: Update elemental effect
+      operationId: updateEffect
+      tags:
+      - Elemental Effects
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EffectUpsertRequest'
+      responses:
+        '200':
+          description: Effect updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '400':
+          description: Invalid request - malformed data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    delete:
+      summary: Delete elemental effect
+      operationId: deleteEffect
+      tags:
+      - Elemental Effects
+      security:
+      - BearerAuth: []
+      responses:
+        '204':
+          description: Effect deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /effects/interactions:
+    get:
+      summary: List effect interaction rules
+      operationId: listInteractions
+      tags:
+      - Effect Interactions
+      responses:
+        '200':
+          description: Interaction rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    post:
+      summary: Create effect interaction rule
+      operationId: createInteraction
+      tags:
+      - Effect Interactions
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractionUpsertRequest'
+      responses:
+        '201':
+          description: Interaction rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionResponse'
+        '400':
+          description: Invalid request - malformed data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Conflict - interaction rule already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /effects/interactions/preview:
+    post:
+      summary: Preview effect interaction
+      operationId: previewInteraction
+      tags:
+      - Effect Preview
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractionPreviewRequest'
+      responses:
+        '200':
+          description: Interaction preview calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionPreviewResponse'
+        '400':
+          description: Invalid request - malformed data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /effects/active:
     get:
       summary: Get active effects for target
       description: '**Enterprise-grade active effects retrieval endpoint**
 
-        Retrieves all currently active effects on a target entity.
-        Includes buffs, debuffs, status effects with remaining duration.
+        Retrieves all currently active effects on a target entity. Includes buffs,
+        debuffs, status effects with remaining duration.
 
         Critical for UI display, effect tracking, and gameplay awareness.
 
@@ -512,34 +748,34 @@ paths:
         '
       operationId: effectServiceGetActiveEffects
       tags:
-        - Effect Management
+      - Effect Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: target_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Target entity identifier
-        - name: effect_type
-          in: query
-          schema:
-            type: string
-            enum:
-              - buff
-              - debuff
-              - status
-              - all
-            default: all
-          description: Filter by effect type
-        - name: include_expired
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include recently expired effects
+      - name: target_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Target entity identifier
+      - name: effect_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - buff
+          - debuff
+          - status
+          - all
+          default: all
+        description: Filter by effect type
+      - name: include_expired
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include recently expired effects
       responses:
         '200':
           description: Active effects retrieved successfully
@@ -553,13 +789,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /effects/{effectId}/extend:
     put:
       summary: Extend effect duration
       description: '**Enterprise-grade effect extension endpoint**
 
-        Extends the duration of an existing active effect.
-        Validates extension limits and stacking rules.
+        Extends the duration of an existing active effect. Validates extension limits
+        and stacking rules.
 
         Used for effect refresh mechanics and duration bonuses.
 
@@ -568,17 +810,17 @@ paths:
         '
       operationId: effectServiceExtendEffect
       tags:
-        - Effect Management
+      - Effect Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: effectId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Effect instance identifier
+      - name: effectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Effect instance identifier
       requestBody:
         required: true
         content:
@@ -610,10 +852,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
   responses:
     HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
     ExampleListSuccess:
       description: Examples retrieved successfully
       headers:
@@ -716,26 +964,61 @@ components:
             example: 15
             description: Processing time in milliseconds
     OK:
-      $ref: ../common/responses/success.yaml#/OK
+      $ref: ../common-service/responses/success.yaml#/OK
     Created:
-      $ref: ../common/responses/success.yaml#/Created
+      $ref: ../common-service/responses/success.yaml#/Created
     BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
+      $ref: ../common-service/responses/error.yaml#/BadRequest
     Unauthorized:
-      $ref: ../common/responses/error.yaml#/Unauthorized
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
     Forbidden:
-      $ref: ../common/responses/error.yaml#/Forbidden
+      $ref: ../common-service/responses/error.yaml#/Forbidden
     NotFound:
-      $ref: ../common/responses/error.yaml#/NotFound
+      $ref: ../common-service/responses/error.yaml#/NotFound
     Conflict:
-      $ref: ../common/responses/error.yaml#/Conflict
+      $ref: ../common-service/responses/error.yaml#/Conflict
     InternalServerError:
-      $ref: ../common/responses/error.yaml#/InternalServerError
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
     HealthOK:
-      $ref: ../common/responses/success.yaml#/HealthOK
+      $ref: ../common-service/responses/success.yaml#/HealthOK
   schemas:
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     WebSocketHealthMessage:
       type: object
       required:
@@ -765,7 +1048,24 @@ components:
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
         Expected memory savings: 30-50%.'
     Error:
-      $ref: ../common/schemas/error.yaml#/Error
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
     Example:
       type: object
       required:
@@ -946,14 +1246,14 @@ components:
         Expected memory savings: 30-50%. Paginated responses optimized for memory
         efficiency.'
     PaginationParams:
-      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
     PaginatedResponse:
-      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
     ApplyEffectsRequest:
       type: object
       required:
-        - target_id
-        - effects
+      - target_id
+      - effects
       properties:
         target_id:
           type: string
@@ -974,43 +1274,45 @@ components:
           type: string
           format: uuid
           description: Associated combat session
-      description: |
-        "BACKEND NOTE: Request validated for effect stacking limits.
+      description: '"BACKEND NOTE: Request validated for effect stacking limits.
+
         Source authorization checked before application."
+
+        '
     EffectApplication:
       type: object
       required:
-        - effect_type
-        - effect_name
-        - duration_seconds
-        - value
+      - effect_type
+      - effect_name
+      - duration_seconds
+      - value
       properties:
         effect_type:
           type: string
           enum:
-            - buff
-            - debuff
-            - status
+          - buff
+          - debuff
+          - status
           description: Category of effect
         effect_name:
           type: string
           enum:
-            - strength_boost
-            - agility_boost
-            - intelligence_boost
-            - speed_boost
-            - regeneration
-            - shield
-            - critical_chance
-            - damage_reduction
-            - movement_slow
-            - weakness
-            - poison
-            - bleed
-            - burn
-            - stun
-            - blind
-            - paralyze
+          - strength_boost
+          - agility_boost
+          - intelligence_boost
+          - speed_boost
+          - regeneration
+          - shield
+          - critical_chance
+          - damage_reduction
+          - movement_slow
+          - weakness
+          - poison
+          - bleed
+          - burn
+          - stun
+          - blind
+          - paralyze
           description: Specific effect identifier
         duration_seconds:
           type: integer
@@ -1031,15 +1333,18 @@ components:
           type: string
           format: uuid
           description: Effect source override
-      description: |
-        "BACKEND NOTE: Effect parameters validated against game balance rules.
+      description: '"BACKEND NOTE: Effect parameters validated against game balance
+        rules.
+
         Duration capped to prevent permanent effects."
+
+        '
     ApplyEffectsResponse:
       type: object
       required:
-        - target_id
-        - applied_effects
-        - timestamp
+      - target_id
+      - applied_effects
+      - timestamp
       properties:
         target_id:
           type: string
@@ -1055,18 +1360,18 @@ components:
           items:
             type: object
             required:
-              - effect_name
-              - reason
+            - effect_name
+            - reason
             properties:
               effect_name:
                 type: string
               reason:
                 type: string
                 enum:
-                  - stacking_limit_exceeded
-                  - immunity
-                  - invalid_parameters
-                  - target_not_found
+                - stacking_limit_exceeded
+                - immunity
+                - invalid_parameters
+                - target_not_found
               details:
                 type: string
           description: Effects that could not be applied
@@ -1074,17 +1379,19 @@ components:
           type: string
           format: date-time
           description: Application timestamp
-      description: |
-        "BACKEND NOTE: Response includes rejection reasons for debugging.
+      description: '"BACKEND NOTE: Response includes rejection reasons for debugging.
+
         Applied effects logged for audit trail."
+
+        '
     AppliedEffect:
       type: object
       required:
-        - effect_id
-        - effect_type
-        - effect_name
-        - remaining_seconds
-        - value
+      - effect_id
+      - effect_type
+      - effect_name
+      - remaining_seconds
+      - value
       properties:
         effect_id:
           type: string
@@ -1093,9 +1400,9 @@ components:
         effect_type:
           type: string
           enum:
-            - buff
-            - debuff
-            - status
+          - buff
+          - debuff
+          - status
         effect_name:
           type: string
         remaining_seconds:
@@ -1114,15 +1421,17 @@ components:
         applied_at:
           type: string
           format: date-time
-      description: |
-        "BACKEND NOTE: Effect instances tracked for cleanup and stacking.
+      description: '"BACKEND NOTE: Effect instances tracked for cleanup and stacking.
+
         IDs used for effect removal and modification."
+
+        '
     ActiveEffectsResponse:
       type: object
       required:
-        - target_id
-        - effects
-        - timestamp
+      - target_id
+      - effects
+      - timestamp
       properties:
         target_id:
           type: string
@@ -1153,18 +1462,20 @@ components:
           type: string
           format: date-time
           description: Response timestamp
-      description: |
-        "BACKEND NOTE: Response optimized for real-time UI updates.
+      description: '"BACKEND NOTE: Response optimized for real-time UI updates.
+
         Effects sorted by remaining duration for priority display."
+
+        '
     ActiveEffect:
       type: object
       required:
-        - effect_id
-        - effect_type
-        - effect_name
-        - remaining_seconds
-        - value
-        - source_id
+      - effect_id
+      - effect_type
+      - effect_name
+      - remaining_seconds
+      - value
+      - source_id
       properties:
         effect_id:
           type: string
@@ -1173,9 +1484,9 @@ components:
         effect_type:
           type: string
           enum:
-            - buff
-            - debuff
-            - status
+          - buff
+          - debuff
+          - status
         effect_name:
           type: string
         remaining_seconds:
@@ -1206,13 +1517,15 @@ components:
           type: boolean
           default: false
           description: Whether effect has expired
-      description: |
-        "BACKEND NOTE: Active effects cached for performance.
+      description: '"BACKEND NOTE: Active effects cached for performance.
+
         Expiration tracked for automatic cleanup."
+
+        '
     ExtendEffectRequest:
       type: object
       required:
-        - additional_seconds
+      - additional_seconds
       properties:
         additional_seconds:
           type: integer
@@ -1227,15 +1540,17 @@ components:
           type: string
           format: uuid
           description: Extension source
-      description: |
-        "BACKEND NOTE: Extension validated against duration caps.
+      description: '"BACKEND NOTE: Extension validated against duration caps.
+
         Source authorization checked for effect modification."
+
+        '
     EffectResponse:
       type: object
       required:
-        - effect_id
-        - status
-        - remaining_seconds
+      - effect_id
+      - status
+      - remaining_seconds
       properties:
         effect_id:
           type: string
@@ -1243,9 +1558,9 @@ components:
         status:
           type: string
           enum:
-            - extended
-            - unchanged
-            - expired
+          - extended
+          - unchanged
+          - expired
         remaining_seconds:
           type: integer
           minimum: 0
@@ -1255,13 +1570,302 @@ components:
         updated_at:
           type: string
           format: date-time
-      description: |
-        "BACKEND NOTE: Response indicates effect modification result.
+      description: '"BACKEND NOTE: Response indicates effect modification result.
+
         Used for effect refresh mechanics and duration tracking."
+
+        '
+    ElementType:
+      type: string
+      enum:
+      - fire
+      - ice
+      - poison
+      - acid
+      - electric
+      - void
+      description: 'BACKEND NOTE: Elemental types for weapon effects'
+    EffectBase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 3
+          maxLength: 64
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        type:
+          $ref: '#/components/schemas/ElementType'
+        dot_dps:
+          type: number
+          format: float
+          minimum: 0
+        proc_chance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        slow_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        armor_shred_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        explosion_radius_m:
+          type: number
+          format: float
+          minimum: 0
+        spread_enabled:
+          type: boolean
+        duration_ms:
+          type: integer
+          format: int32
+          minimum: 0
+        stack_limit:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
+      required:
+      - id
+      - name
+      - type
+      - duration_ms
+      - stack_limit
+      - proc_chance
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    EffectUpsertRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 64
+        type:
+          $ref: '#/components/schemas/ElementType'
+        dot_dps:
+          type: number
+          format: float
+          minimum: 0
+        proc_chance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        slow_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        armor_shred_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        explosion_radius_m:
+          type: number
+          format: float
+          minimum: 0
+        spread_enabled:
+          type: boolean
+        duration_ms:
+          type: integer
+          format: int32
+          minimum: 0
+        stack_limit:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
+      required:
+      - name
+      - type
+      - duration_ms
+      - stack_limit
+      - proc_chance
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    EffectListResponse:
+      type: object
+      properties:
+        pagination:
+          type: object
+          required:
+          - items
+          - total
+          - limit
+          - offset
+          properties:
+            items:
+              type: array
+              description: Array of items
+            total:
+              type: integer
+              minimum: 0
+              example: 100
+              description: Total number of items
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+              example: 20
+              description: Items per page
+            offset:
+              type: integer
+              minimum: 0
+              example: 0
+              description: Number of items to skip
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EffectBase'
+      required:
+      - items
+      - pagination
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    InteractionRule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status_applied:
+          type: string
+          maxLength: 64
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        attacker_type:
+          $ref: '#/components/schemas/ElementType'
+        defender_type:
+          $ref: '#/components/schemas/ElementType'
+        result_type:
+          $ref: '#/components/schemas/ElementType'
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0
+          default: 1
+      required:
+      - id
+      - attacker_type
+      - defender_type
+      - damage_multiplier
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    InteractionUpsertRequest:
+      type: object
+      properties:
+        status_applied:
+          type: string
+          maxLength: 64
+        attacker_type:
+          $ref: '#/components/schemas/ElementType'
+        defender_type:
+          $ref: '#/components/schemas/ElementType'
+        result_type:
+          $ref: '#/components/schemas/ElementType'
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0
+          default: 1
+      required:
+      - attacker_type
+      - defender_type
+      - damage_multiplier
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    InteractionResponse:
+      allOf:
+      - $ref: '#/components/schemas/InteractionRule'
+    InteractionListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionRule'
+      required:
+      - items
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    InteractionPreviewRequest:
+      type: object
+      properties:
+        attacker_type:
+          $ref: '#/components/schemas/ElementType'
+        defender_type:
+          $ref: '#/components/schemas/ElementType'
+        base_damage:
+          type: number
+          format: float
+          minimum: 0
+        defender_is_wet:
+          type: boolean
+        defender_is_armor_broken:
+          type: boolean
+        stacks_applied:
+          type: integer
+          format: int32
+          minimum: 0
+      required:
+      - attacker_type
+      - defender_type
+      - base_damage
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    InteractionPreviewResponse:
+      type: object
+      properties:
+        applied_status:
+          type: string
+          maxLength: 64
+        notes:
+          type: array
+          items:
+            type: string
+            maxLength: 256
+        total_damage:
+          type: number
+          format: float
+          minimum: 0
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0
+      required:
+      - total_damage
+      - damage_multiplier
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
+      $ref: ../common-service/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      $ref: ../common/security/security.yaml#/ApiKeyAuth
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      $ref: ../common/security/security.yaml#/ServiceAuth
+      $ref: ../common-service/security/security.yaml#/ServiceAuth

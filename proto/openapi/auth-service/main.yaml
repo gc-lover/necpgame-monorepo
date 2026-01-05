@@ -4,30 +4,28 @@ info:
   description: '**Enterprise-Grade Authentication API for NECPGAME**
 
     Core authentication service handling user login, registration, session management,
-    password operations, email verification, and OAuth integration. Acts as the primary entry point
-    for user authentication in the NECPGAME ecosystem.
+    password operations, email verification, and OAuth integration. Acts as the primary
+    entry point for user authentication in the NECPGAME ecosystem.
 
     ## Key Features
 
-    - **Enterprise-grade architecture** with proper domain separation
-    - **Backend optimization hints** for struct alignment and performance
-    - **Complete validation** with redocly and ogen code generation
-    - **Security-first approach** with JWT authentication
-    - **Performance-optimized** response structures
-    - **Comprehensive error handling** with proper HTTP status codes
+    - **Enterprise-grade architecture** with proper domain separation - **Backend
+    optimization hints** for struct alignment and performance - **Complete validation**
+    with redocly and ogen code generation - **Security-first approach** with JWT authentication
+    - **Performance-optimized** response structures - **Comprehensive error handling**
+    with proper HTTP status codes
 
     ## Domain Purpose
 
-    Handles core authentication operations including user registration, login,
-    password management, session lifecycle, email verification, and OAuth integration.
-    Acts as the primary entry point for user authentication in the NECPGAME ecosystem.
+    Handles core authentication operations including user registration, login, password
+    management, session lifecycle, email verification, and OAuth integration. Acts
+    as the primary entry point for user authentication in the NECPGAME ecosystem.
 
     ## Performance Targets
 
-    - P99 Latency: <50ms for login/authentication
-    - Memory: <50KB per active session
-    - Concurrent users: 10,000+ simultaneous authentications
-    - Data consistency: ACID compliance for security operations
+    - P99 Latency: <50ms for login/authentication - Memory: <50KB per active session
+    - Concurrent users: 10,000+ simultaneous authentications - Data consistency: ACID
+    compliance for security operations
 
     '
   version: 1.0.0
@@ -56,6 +54,8 @@ tags:
   description: Password management operations
 - name: OAuth
   description: OAuth provider integrations
+- name: Session Management
+  description: Advanced session lifecycle and security management
 paths:
   /health:
     get:
@@ -91,7 +91,7 @@ paths:
                 example: max-age=30, s-maxage=60
             ETag:
               schema:
-                $ref: "#/components/schemas/ETagHeader"
+                $ref: '#/components/schemas/ETagHeader'
             Content-Encoding:
               schema:
                 type: string
@@ -102,19 +102,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
+                $ref: '#/components/schemas/HealthResponse'
         '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
+                $ref: '#/components/schemas/HealthResponse'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/batch:
     post:
       summary: Batch health check for multiple services
-      description: '**Performance optimization:** Check multiple services health in single request
+      description: '**Performance optimization:** Check multiple services health in
+        single request
 
         Reduces N HTTP calls to 1 call. Critical for orchestration.
 
@@ -151,13 +158,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
-      description: '**Performance optimization:** Real-time health updates without polling
+      description: '**Performance optimization:** Real-time health updates without
+        polling
 
         Eliminates periodic HTTP requests, reduces server load by ~90%.
 
@@ -222,13 +236,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
         '401':
           description: Unauthorized - authentication required for WebSocket
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
         '429':
           description: Too many requests - WebSocket connection limit exceeded
           headers:
@@ -239,7 +253,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /auth/register:
     post:
       summary: User registration
@@ -257,7 +277,7 @@ paths:
       operationId: authRegister
       tags:
       - Registration
-      security: []  # No auth required for registration
+      security: []
       requestBody:
         required: true
         content:
@@ -276,13 +296,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
         '409':
           description: Conflict - user with this email already exists
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
         '429':
           description: Too many requests - registration rate limit exceeded
           headers:
@@ -293,7 +313,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /auth/login:
     post:
       summary: User login with credentials
@@ -313,7 +339,7 @@ paths:
       operationId: authLogin
       tags:
       - Authentication
-      security: []  # No auth required for login
+      security: []
       requestBody:
         required: true
         content:
@@ -343,13 +369,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
         '401':
           description: Invalid credentials
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
         '429':
           description: Too many requests - login rate limit exceeded
           headers:
@@ -360,7 +386,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /auth/logout:
     post:
       summary: User logout
@@ -391,13 +423,13 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: "Logged out successfully"
+                    example: Logged out successfully
         '401':
           description: Unauthorized - invalid or expired token
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
         '429':
           description: Too many requests - logout rate limit exceeded
           headers:
@@ -408,7 +440,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /auth/refresh:
     post:
       summary: Refresh access token
@@ -426,7 +464,7 @@ paths:
       operationId: authRefresh
       tags:
       - Authentication
-      security: []  # Uses refresh token in body
+      security: []
       requestBody:
         required: true
         content:
@@ -439,7 +477,7 @@ paths:
                 refresh_token:
                   type: string
                   description: Valid refresh token
-                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
       responses:
         '200':
           description: Token refreshed successfully
@@ -452,13 +490,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
         '401':
           description: Refresh token expired or revoked
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
         '429':
           description: Too many requests - token refresh rate limit exceeded
           headers:
@@ -469,7 +507,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /auth/me:
     get:
       summary: Get current user information
@@ -504,7 +548,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
         '429':
           description: Too many requests - rate limit exceeded
           headers:
@@ -515,11 +559,460 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /auth/oauth/{provider}/redirect:
+    get:
+      summary: Get OAuth redirect URL
+      description: '**Get OAuth provider redirect URL for authentication**
+
+        Returns the authorization URL for the specified OAuth provider. Client should
+        redirect user to this URL to initiate OAuth flow.
+
+        **Security:** Provider validation and CSRF protection via state parameter
+        **Performance:** <10ms response time, cached provider configs'
+      operationId: getOAuthRedirect
+      tags:
+      - OAuth
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - github
+          - discord
+          - steam
+          - epic_games
+          - microsoft
+        description: OAuth provider name
+      - name: redirect_uri
+        in: query
+        schema:
+          type: string
+          format: uri
+        description: Custom redirect URI (optional, must be pre-registered)
+      responses:
+        '200':
+          description: OAuth redirect URL generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - redirect_url
+                - state
+                properties:
+                  redirect_url:
+                    type: string
+                    format: uri
+                    description: Full OAuth authorization URL
+                    example: https://accounts.google.com/oauth/authorize?client_id=...
+                  state:
+                    type: string
+                    description: CSRF protection state parameter
+                    example: abc123def456
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                  → small).'
+        '400':
+          description: Invalid provider or redirect URI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: OAuth provider temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /auth/oauth/{provider}/callback:
+    get:
+      summary: Handle OAuth provider callback
+      description: '**Process OAuth provider callback and complete authentication**
+
+        Handles the OAuth callback from provider, exchanges authorization code for
+        access token, creates/updates user account, and returns JWT tokens.
+
+        **Security:** State parameter validation, token encryption, secure session
+        creation **Performance:** <100ms for complete OAuth flow including user lookup/creation'
+      operationId: handleOAuthCallback
+      tags:
+      - OAuth
+      parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - github
+          - discord
+          - steam
+          - epic_games
+          - microsoft
+        description: OAuth provider name
+      - name: code
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Authorization code from OAuth provider
+      - name: state
+        in: query
+        required: true
+        schema:
+          type: string
+        description: CSRF protection state parameter
+      - name: error
+        in: query
+        schema:
+          type: string
+        description: OAuth error code (if authorization failed)
+      - name: error_description
+        in: query
+        schema:
+          type: string
+        description: Human-readable error description
+      responses:
+        '200':
+          description: OAuth authentication completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthLoginResponse'
+        '400':
+          description: Invalid OAuth callback parameters or state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: OAuth authorization failed or denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many OAuth attempts - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 300
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /auth/sessions/cleanup:
+    post:
+      summary: Clean up inactive sessions
+      description: '**Clean up expired or inactive user sessions**
+
+        Performs automated cleanup of sessions that have exceeded their lifetime or
+        are in invalid states. Helps maintain database performance and security by
+        removing stale session data.
+
+        **Performance:** Batch processing with configurable cleanup policies'
+      operationId: cleanupSessions
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupSessionsRequest'
+      responses:
+        '200':
+          description: Sessions cleaned up successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupSessionsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /auth/sessions/cleanup/stats:
+    get:
+      summary: Get session cleanup statistics
+      description: '**Retrieve session cleanup statistics and metrics**
+
+        Returns information about recent cleanup operations, success rates, and performance
+        metrics for session management.
+
+        **Performance:** Cached statistics with configurable refresh intervals'
+      operationId: getCleanupStats
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Cleanup statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupStatsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /auth/sessions/security/validate:
+    post:
+      summary: Validate session security
+      description: '**Perform security validation on active sessions**
+
+        Analyzes session security parameters, detects anomalies, and provides recommendations
+        for improving session security posture.
+
+        **Security:** Comprehensive validation including IP changes, device fingerprints'
+      operationId: validateSessionSecurity
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateSessionSecurityRequest'
+      responses:
+        '200':
+          description: Security validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionSecurityValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /auth/sessions/security/rotate-token:
+    post:
+      summary: Rotate session token
+      description: '**Generate new token for existing session**
+
+        Creates a new JWT token pair while maintaining session continuity. Useful
+        for token refresh without full re-authentication.
+
+        **Security:** Maintains session integrity during token rotation'
+      operationId: rotateSessionToken
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RotateSessionTokenRequest'
+      responses:
+        '200':
+          description: Token rotated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RotateSessionTokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /auth/sessions/monitoring/stats:
+    get:
+      summary: Get session monitoring statistics
+      description: '**Retrieve comprehensive session statistics**
+
+        Provides detailed metrics about session lifecycle, concurrent users, geographic
+        distribution, and performance indicators.
+
+        **Performance:** Aggregated statistics with efficient caching'
+      operationId: getSessionStats
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Session statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionStatsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /auth/sessions/monitoring/active:
+    get:
+      summary: Get active sessions list
+      description: '**Retrieve paginated list of active sessions**
+
+        Returns currently active sessions with filtering and pagination support. Useful
+        for administrative monitoring and troubleshooting.
+
+        **Performance:** Indexed queries with pagination optimization'
+      operationId: getActiveSessions
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of items to skip
+      responses:
+        '200':
+          description: Active sessions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveSessionsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /auth/sessions/admin/terminate:
+    post:
+      summary: Terminate session (admin only)
+      description: '**Forcefully terminate a user session**
+
+        Administrative function to forcibly end a session. Requires elevated permissions.
+        Should be used sparingly and with proper audit logging.
+
+        **Security:** Restricted to administrators, full audit trail maintained'
+      operationId: terminateSession
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminateSessionRequest'
+      responses:
+        '200':
+          description: Session terminated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - terminated
+                    example: terminated
+                description: 'BACKEND NOTE: Simple status response for admin operations.'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
   responses:
     HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
     TooManyRequests:
       description: Too many requests - rate limit exceeded
       headers:
@@ -531,12 +1024,91 @@ components:
       content:
         application/json:
           schema:
-            $ref: '../common/schemas/error.yaml#/Error'
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      $ref: ../common-service/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common-service/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common-service/responses/error.yaml#/NotFound
+    InternalServerError:
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
   schemas:
-    Error:
-      $ref: '../common/schemas/error.yaml#/Error'
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID v4)
+          example: 123e4567-e89b-12d3-a456-426614174000
+          maxLength: 36
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
     HealthResponse:
-      $ref: '../common/schemas/health.yaml#/HealthResponse'
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+        version:
+          type: string
+          example: 1.0.0
+        uptime:
+          type: integer
+          description: System uptime in seconds
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
     LoginRequest:
       type: object
       required:
@@ -553,7 +1125,7 @@ components:
           minLength: 8
           maxLength: 128
           description: User password
-          example: "MySecurePass123!"
+          example: MySecurePass123!
         remember_me:
           type: boolean
           description: Extend session duration
@@ -564,8 +1136,9 @@ components:
           minLength: 6
           maxLength: 8
           description: Multi-factor authentication code (if enabled)
-          example: "123456"
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+          example: '123456'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     RegisterRequest:
       type: object
       required:
@@ -583,12 +1156,12 @@ components:
           minLength: 8
           maxLength: 128
           description: User password (must meet complexity requirements)
-          example: "MySecurePass123!"
+          example: MySecurePass123!
         username:
           type: string
           minLength: 3
           maxLength: 50
-          pattern: '^[a-zA-Z0-9_-]+$'
+          pattern: ^[a-zA-Z0-9_-]+$
           description: Unique username
           example: cyber_runner_2077
         accept_terms:
@@ -604,8 +1177,9 @@ components:
           type: string
           maxLength: 50
           description: Referral code from another user
-          example: "FRIEND123"
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+          example: FRIEND123
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     AuthResponse:
       type: object
       required:
@@ -619,7 +1193,8 @@ components:
           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         token_type:
           type: string
-          enum: [Bearer]
+          enum:
+          - Bearer
           example: Bearer
         expires_in:
           type: integer
@@ -636,7 +1211,8 @@ components:
           format: uuid
           description: Session identifier
           example: 550e8400-e29b-41d4-a716-446655440000
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     RegisterResponse:
       type: object
       required:
@@ -667,7 +1243,8 @@ components:
           format: date-time
           description: When verification token expires
           example: '2025-12-21T12:00:00Z'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     UserSummary:
       type: object
       required:
@@ -703,7 +1280,8 @@ components:
           type: boolean
           description: Email verification status
           example: true
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     UserProfile:
       type: object
       required:
@@ -761,7 +1339,10 @@ components:
           properties:
             theme:
               type: string
-              enum: [light, dark, cyberpunk]
+              enum:
+              - light
+              - dark
+              - cyberpunk
               example: cyberpunk
             language:
               type: string
@@ -791,19 +1372,275 @@ components:
               type: integer
               minimum: 0
               example: 25
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     PaginationParams:
-      $ref: '../common/schemas/pagination.yaml#/PaginationParams'
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
     PaginatedResponse:
-      $ref: '../common/schemas/pagination.yaml#/PaginatedResponse'
+      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
     ETagHeader:
       type: string
       description: Entity tag for caching and optimistic locking
       example: '"auth-123-v1"'
+    OAuthLoginResponse:
+      allOf:
+      - $ref: '#/components/schemas/AuthResponse'
+      - type: object
+        properties:
+          oauth_provider:
+            type: string
+            enum:
+            - google
+            - github
+            - discord
+            - steam
+            - epic_games
+            - microsoft
+            description: OAuth provider used for authentication
+            example: google
+          oauth_id:
+            type: string
+            description: Unique identifier from OAuth provider
+            example: '123456789012345678901'
+          is_new_user:
+            type: boolean
+            description: Whether a new user account was created during OAuth flow
+            example: false
+        description: 'BACKEND NOTE: Extends LoginResponse with OAuth-specific fields.
+          Fields ordered for struct alignment.'
+    OAuthProviderEntity:
+      allOf:
+      - $ref: ../common-service/schemas/infrastructure-entities.yaml#/OAuthProviderEntity
+      - type: object
+        description: 'BACKEND NOTE: Uses common OAuth provider entity with domain-specific
+          extensions if needed.'
+    CleanupSessionsRequest:
+      type: object
+      properties:
+        status_filter:
+          type: array
+          items:
+            type: string
+            enum:
+            - inactive
+            - disconnected
+            - terminated
+          description: Filter sessions by status
+        max_age_seconds:
+          type: integer
+          minimum: 0
+          default: 3600
+          description: Maximum session age in seconds
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    CleanupSessionsResponse:
+      type: object
+      properties:
+        cleaned_at:
+          type: string
+          format: date-time
+          description: Cleanup operation timestamp
+          example: '2025-12-28T10:00:00Z'
+        cleaned_sessions:
+          type: integer
+          minimum: 0
+          description: Number of sessions cleaned
+          example: 150
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    CleanupStatsResponse:
+      type: object
+      properties:
+        cleanup_frequency:
+          type: string
+          description: How often cleanup runs
+          example: hourly
+        last_cleanup:
+          type: string
+          format: date-time
+          description: Last cleanup execution time
+          example: '2025-12-28T10:00:00Z'
+        average_cleanup_time:
+          type: number
+          minimum: 0
+          description: Average cleanup duration in seconds
+          example: 2.5
+        total_cleaned:
+          type: integer
+          minimum: 0
+          description: Total sessions cleaned historically
+          example: 15420
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    ValidateSessionSecurityRequest:
+      type: object
+      required:
+      - session_id
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Session to validate
+          example: 550e8400-e29b-41d4-a716-446655440000
+        ip_address:
+          type: string
+          description: Current client IP
+          example: 192.168.1.100
+        user_agent:
+          type: string
+          description: Current user agent
+          example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    SessionSecurityValidationResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Validated session ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Security warnings found
+          example:
+          - IP address changed
+          - Unusual login time
+        recommendations:
+          type: array
+          items:
+            type: string
+          description: Security improvement recommendations
+          example:
+          - Consider enabling 2FA
+          - Review recent login history
+        is_valid:
+          type: boolean
+          description: Overall security validation result
+          example: true
+        security_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Security score (0-100)
+          example: 85
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    RotateSessionTokenRequest:
+      type: object
+      required:
+      - session_id
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Session to rotate token for
+          example: 550e8400-e29b-41d4-a716-446655440000
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    RotateSessionTokenResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Session ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        new_token:
+          type: string
+          description: New JWT access token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        expires_at:
+          type: string
+          format: date-time
+          description: New token expiration time
+          example: '2025-12-28T11:00:00Z'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    SessionStatsResponse:
+      type: object
+      properties:
+        last_updated:
+          type: string
+          format: date-time
+          description: Statistics last update time
+          example: '2025-12-28T10:00:00Z'
+        average_session_duration:
+          type: number
+          minimum: 0
+          description: Average session duration in minutes
+          example: 45.7
+        total_sessions:
+          type: integer
+          minimum: 0
+          description: Total sessions created
+          example: 15420
+        active_sessions:
+          type: integer
+          minimum: 0
+          description: Currently active sessions
+          example: 1250
+        inactive_sessions:
+          type: integer
+          minimum: 0
+          description: Inactive but not cleaned sessions
+          example: 89
+        disconnected_sessions:
+          type: integer
+          minimum: 0
+          description: Sessions with connection issues
+          example: 23
+        peak_concurrent_sessions:
+          type: integer
+          minimum: 0
+          description: Peak concurrent sessions (24h)
+          example: 2100
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    ActiveSessionsResponse:
+      allOf:
+      - $ref: '#/components/schemas/PaginatedResponse'
+      - type: object
+        properties:
+          items:
+            type: array
+            items:
+              $ref: '#/components/schemas/SessionInfo'
+            description: List of active sessions
+      description: 'BACKEND NOTE: Extends paginated response with session-specific
+        data.'
+    SessionInfo:
+      allOf:
+      - $ref: ../common-service/schemas/infrastructure-entities.yaml#/SessionEntity
+      - type: object
+        description: 'BACKEND NOTE: Uses common session entity with auth-service specific
+          extensions.'
+    TerminateSessionRequest:
+      type: object
+      required:
+      - session_id
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Session to terminate
+          example: 550e8400-e29b-41d4-a716-446655440000
+        reason:
+          type: string
+          description: Termination reason
+          example: Security violation detected
+        force:
+          type: boolean
+          default: false
+          description: Force immediate termination
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
+      $ref: ../common-service/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      $ref: '../common/security/security.yaml#/ApiKeyAuth'
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      $ref: '../common/security/security.yaml#/ServiceAuth'
+      $ref: ../common-service/security/security.yaml#/ServiceAuth

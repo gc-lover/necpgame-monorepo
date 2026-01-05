@@ -1,366 +1,411 @@
 # Communication Service - OpenAPI Specification
 
-## Назначение
+## 📋 **Назначение**
 
-Communication Service управляет всеми аспектами коммуникации между игроками в Night City, включая текстовый чат, голосовую связь, групповые каналы и модерацию контента.
+Communication Service предоставляет комплексную систему коммуникации для NECPGAME - enterprise-grade API для чата,
+уведомлений, голосовых каналов и модерации контента. Сервис обеспечивает масштабируемую, безопасную и
+высокопроизводительную коммуникацию между игроками в киберпанк MMOFPS RPG.
 
-## Ключевые Особенности
+## 🎯 **Функциональность**
 
-### Enterprise-Grade Архитектура
+### **💬 Chat System (Чат)**
 
-- Полная совместимость с enterprise-grade доменами
-- Правильная структура для всех AI агентов
-- Оптимизация для генерации Go кода с ogen
+- **Многоуровневые каналы**: Глобальный, гильдейский, партийный и приватный чат
+- **Rich Text Messages**: Поддержка форматирования, вложений и упоминаний
+- **Real-time Delivery**: Мгновенная доставка сообщений через WebSocket
+- **Message History**: Пагинированная история с поиском
+- **Reactions**: Система реакций на сообщения
 
-### Backend Optimization Hints
+### **🔔 Notification System (Уведомления)**
 
-- Struct alignment hints для оптимизации памяти
-- Performance targets и требования
-- Порядок полей: large -> small для экономии памяти
+- **Многоуровневые уведомления**: Система, социальные, достижения, торговля, бой, гильдии
+- **Гибкие настройки**: Персонализация по типам и каналам доставки
+- **Priority System**: Уровни приоритета от low до critical
+- **Bulk Operations**: Массовые операции для UI оптимизации
+- **Scheduled Delivery**: Отложенная доставка уведомлений
 
-### Complete Validation
+### **🎤 Voice Channels (Голосовые каналы)**
 
-- Redocly lint: проходит валидацию
-- ogen: успешно генерирует Go код
-- Go compilation: код компилируется без ошибок
+- **Spatial Audio**: Пространственное аудио для иммерсивного опыта
+- **WebRTC Integration**: Современные стандарты для низкой латентности
+- **Capacity Management**: Управление вместимостью каналов
+- **Quality Settings**: Настраиваемый битрейт и качество звука
+- **Real-time Status**: Статус участников в реальном времени
 
-### Security-First Approach
+### **🛡️ Moderation System (Модерация)**
 
-- JWT Bearer authentication
-- Правильные HTTP статус коды
-- Error handling с дополнительным контекстом
+- **Content Reports**: Система жалоб на контент и пользователей
+- **Automated Actions**: Автоматизированные действия по модерации
+- **Audit Trail**: Полный аудит действий модераторов
+- **Escalation System**: Эскалация серьезных нарушений
+- **Evidence Management**: Управление доказательствами нарушений
 
-## Структура Шаблона
+## 📁 **Структура**
 
 ```
-proto/openapi/example-domain/
+communication-service/
 ├── main.yaml           # Основная спецификация (этот файл)
-└── README.md          # Это руководство
-
-proto/openapi/common/                   # Общие компоненты (используются по умолчанию)
-├── responses/
-│   ├── error.yaml      # Общие ответы ошибок (400, 401, 403, 404, 409, 500, 429)
-│   └── success.yaml    # Общие успешные ответы (200, 201, health checks)
-├── schemas/
-│   ├── common.yaml     # Основные схемы (HealthResponse, Error, Pagination)
-│   ├── error.yaml      # Схема ошибки
-│   ├── health.yaml     # Схема здоровья сервиса
-│   └── pagination.yaml # Схемы пагинации
-└── security/
-    └── security.yaml   # Схемы аутентификации (BearerAuth, ApiKeyAuth)
+├── README.md          # Эта документация
+├── chat/              # Чат-специфичные расширения
+├── notifications/     # Уведомления-специфичные расширения
+├── voice/             # Голосовые-специфичные расширения
+└── moderation/        # Модерация-специфичные расширения
 ```
 
-## Обязательные Элементы
+## 🔗 **Зависимости**
 
-### 1. **OpenAPI Header**
+### **Common Architecture (SOLID/DRY)**
 
-```yaml
-openapi: 3.0.3
-info:
-  title: [Domain Name] API
-  description: Enterprise-grade API for [domain purpose]
-  version: "1.0.0"
-  contact:
-    name: NECPGAME API Support
-    email: api@necpgame.com
-  license:
-    name: MIT
+- **common/schemas/social-entities.yaml**: `UserProfileEntity`, `ChatChannelEntity`, `ChatMessageEntity`
+- **common/schemas/common.yaml**: `BaseEntity`, `UUID`, `Timestamp`
+- **common/responses/**: Стандартизированные ответы успеха/ошибки
+- **common/security/**: JWT Bearer authentication
+
+### **External Services**
+
+- **user-profile-service**: Для профилей пользователей в чате
+- **guild-service**: Для гильдейских каналов и разрешений
+- **party-service**: Для партийных коммуникаций
+
+## 📊 **Performance**
+
+### **Response Times (P99)**
+
+- **Health Check**: <1ms
+- **Send Chat Message**: <20ms
+- **Get Notifications**: <50ms (с пагинацией)
+- **Join Voice Channel**: <25ms
+- **Moderation Action**: <45ms
+
+### **Throughput**
+
+- **Chat Messages**: 10,000+ msg/sec peak
+- **Notifications**: 5,000+ notifications/sec peak
+- **Voice Channels**: 50,000+ concurrent connections
+- **WebSocket Connections**: 100,000+ simultaneous
+
+### **Scalability**
+
+- **Horizontal Scaling**: Stateless design для легкого масштабирования
+- **Database Sharding**: По user_id для оптимального распределения
+- **Redis Caching**: 95% кэширование для снижения нагрузки на БД
+- **CDN Integration**: Для статических ассетов (аватары, эмодзи)
+
+### **Memory Usage**
+
+- **Per User Session**: <50KB
+- **Chat Message Cache**: <256 bytes per message
+- **Notification Queue**: <512 bytes per notification
+- **WebSocket Connection**: <1KB per connection
+
+## 🚀 **Использование**
+
+### **Валидация**
+
+```bash
+# Redocly linting
+npx @redocly/cli lint main.yaml
+
+# Bundle для проверки $ref
+npx @redocly/cli bundle main.yaml -o bundled.yaml
 ```
 
-### 2. **Servers Configuration**
+### **Генерация Go кода**
 
-```yaml
-servers:
-  - url: https://api.necpgame.com/v1/[domain]
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/[domain]
-    description: Staging server
-  - url: http://localhost:8080/api/v1/[domain]
-    description: Local development server
+```bash
+# Генерация из bundled спецификации
+ogen --target ../../services/communication-service-go/pkg/api \
+     --package api --clean bundled.yaml
 ```
 
-### 3. **Security Schemes**
+### **Документация**
 
-```yaml
-security:
-  - BearerAuth: []
+```bash
+# HTML документация
+npx @redocly/cli build-docs main.yaml -o docs/index.html
 
-components:
-  securitySchemes:
-    BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
-    ApiKeyAuth:
-      $ref: '../common/security/security.yaml#/ApiKeyAuth'
-    ServiceAuth:
-      $ref: '../common/security/security.yaml#/ServiceAuth'
+# Swagger UI playground
+npx @redocly/cli build-docs main.yaml --template swagger-ui -o docs/playground.html
 ```
 
-**Использует по умолчанию:**
-- `../common/security/security.yaml` - Bearer JWT, API Key и Service аутентификация
+## 🔧 **Backend Implementation Notes**
 
-### 4. **Обязательные Health Endpoints**
+### **Database Design**
 
-#### Health Check
+```sql
+-- Chat messages (partitioned by channel_id)
+CREATE TABLE chat_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    channel_id UUID NOT NULL,
+    sender_id UUID NOT NULL,
+    content TEXT NOT NULL,
+    sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    edited_at TIMESTAMPTZ,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE
+) PARTITION BY HASH (channel_id);
+
+-- Notifications (partitioned by user_id)
+CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    type VARCHAR(20) NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    content TEXT NOT NULL,
+    read BOOLEAN NOT NULL DEFAULT FALSE,
+    priority VARCHAR(10) NOT NULL DEFAULT 'normal',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+) PARTITION BY HASH (user_id);
+
+-- Voice channels (with spatial indexing)
+CREATE TABLE voice_channels (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(50) NOT NULL,
+    type VARCHAR(20) NOT NULL,
+    max_participants INTEGER NOT NULL DEFAULT 10,
+    current_participants INTEGER NOT NULL DEFAULT 0,
+    region VARCHAR(20) NOT NULL
+);
+
+-- Moderation reports
+CREATE TABLE moderation_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    reporter_id UUID NOT NULL,
+    reported_content_type VARCHAR(20) NOT NULL,
+    reported_content_id UUID NOT NULL,
+    reason VARCHAR(30) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    priority VARCHAR(10) NOT NULL DEFAULT 'medium',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+### **WebSocket Implementation**
+
+```go
+// Real-time chat and voice status
+type WebSocketHub struct {
+    clients    map[*WebSocketClient]bool
+    broadcast  chan []byte
+    register   chan *WebSocketClient
+    unregister chan *WebSocketClient
+    rooms      map[string]map[*WebSocketClient]bool
+}
+
+func (h *WebSocketHub) run() {
+    for {
+        select {
+        case client := <-h.register:
+            h.clients[client] = true
+            if room, exists := h.rooms[client.roomID]; exists {
+                room[client] = true
+            } else {
+                h.rooms[client.roomID] = make(map[*WebSocketClient]bool)
+                h.rooms[client.roomID][client] = true
+            }
+
+        case client := <-h.unregister:
+            if _, ok := h.clients[client]; ok {
+                delete(h.clients, client)
+                if room, exists := h.rooms[client.roomID]; exists {
+                    delete(room, client)
+                    if len(room) == 0 {
+                        delete(h.rooms, client.roomID)
+                    }
+                }
+            }
+
+        case message := <-h.broadcast:
+            // Broadcast to all clients in the same room
+            for client := range h.clients {
+                select {
+                case client.send <- message:
+                default:
+                    close(client.send)
+                    delete(h.clients, client)
+                }
+            }
+        }
+    }
+}
+```
+
+### **Redis Caching Strategy**
+
+```go
+// User notification settings cache
+userNotifSettingsKey := fmt.Sprintf("user:%s:notif_settings", userID)
+
+// Channel participant counts
+channelParticipantsKey := fmt.Sprintf("channel:%s:participants", channelID)
+
+// Recent chat messages (LRU cache)
+chatHistoryKey := fmt.Sprintf("chat:%s:history", channelID)
+
+// Voice channel metadata
+voiceChannelKey := fmt.Sprintf("voice:%s:metadata", channelID)
+```
+
+### **Rate Limiting**
+
+```go
+// Chat message rate limiting
+chatLimiter := tollbooster.NewLimiter(10, time.Minute) // 10 messages per minute
+
+// Notification sending limits
+notifLimiter := tollbooster.NewLimiter(100, time.Hour) // 100 notifications per hour
+
+// Moderation action limits
+moderationLimiter := tollbooster.NewLimiter(50, time.Hour) // 50 actions per hour
+```
+
+## 🔐 **Security Considerations**
+
+### **Authentication**
+
+- JWT Bearer tokens с expiration
+- Service-to-service authentication для внутренних вызовов
+- API key fallback для legacy integrations
+
+### **Authorization**
+
+- Role-based access control (RBAC)
+- Channel-specific permissions
+- Guild membership validation
+- Content moderation permissions
+
+### **Data Protection**
+
+- End-to-end encryption для приватных сообщений
+- Message content encryption at rest
+- PII data minimization
+- GDPR compliance для user data
+
+### **Spam Prevention**
+
+- Message rate limiting per user/channel
+- Content filtering и moderation
+- CAPTCHA integration для suspicious activity
+- Automated bot detection
+
+## 📈 **Monitoring & Observability**
+
+### **Key Metrics**
+
+```prometheus
+# Chat system metrics
+chat_messages_total{channel_type="guild"} 1250000
+chat_active_connections 8500
+chat_message_latency_p95 45
+
+# Notification system metrics
+notifications_sent_total{type="achievement"} 50000
+notifications_delivery_rate 0.98
+notifications_queue_size 150
+
+# Voice system metrics
+voice_channels_active 1200
+voice_connections_total 45000
+voice_audio_latency_p95 25
+
+# Moderation metrics
+moderation_reports_pending 45
+moderation_actions_total{type="ban"} 1200
+moderation_response_time_p95 30
+```
+
+### **Logging Strategy**
+
+```json
+{
+  "timestamp": "2025-12-28T10:30:00Z",
+  "level": "INFO",
+  "service": "communication-service",
+  "operation": "send_chat_message",
+  "user_id": "123e4567-e89b-12d3-a456-426614174000",
+  "channel_id": "987fcdeb-51a2-43d7-8f9e-123456789abc",
+  "message_length": 150,
+  "processing_time_ms": 12,
+  "ip_address": "192.168.1.100",
+  "user_agent": "NECPGAME-Client/1.0.0"
+}
+```
+
+### **Health Checks**
 
 ```yaml
+# Comprehensive health check endpoints
 /health:
-  get:
-    operationId: [domain]HealthCheck
-    responses:
-      '200': # Обязательно
-        $ref: '../common/responses/success.yaml#/HealthOK'
-      '503': # Обязательно
-        $ref: '../common/responses/error.yaml#/InternalServerError'
-```
+  status: "healthy"
+  uptime: "15d 4h 23m"
+  version: "1.2.3"
+  dependencies:
+    database: "healthy"
+    redis: "healthy"
+    websocket: "healthy"
 
-**Использует по умолчанию:**
-- `../common/responses/success.yaml#/HealthOK` - Ответ здоровья
-- `../common/schemas/health.yaml#/HealthResponse` - Схема здоровья
-- `../common/responses/error.yaml#/InternalServerError` - Ошибка сервера
-
-#### Batch Health Check
-
-```yaml
 /health/batch:
-  post:
-    operationId: [domain]BatchHealthCheck
-    # Проверяет несколько доменов в одном запросе
-```
+  overall_status: "healthy"
+  services:
+    chat: "healthy"
+    notifications: "healthy"
+    voice: "healthy"
+    moderation: "healthy"
 
-#### WebSocket Health Monitoring
-
-```yaml
 /health/ws:
-  get:
-    operationId: [domain]HealthWebSocket
-    # Real-time monitoring без polling
+  websocket_status: "healthy"
+  active_connections: 8547
+  message_rate: 1250
+  latency_ms: 15
 ```
 
-### 5. **Общие Схемы (Используются по умолчанию)**
+## 🎯 **API Design Principles**
 
-#### Error Responses
-```yaml
-components:
-  responses:
-    BadRequest:
-      $ref: '../common/responses/error.yaml#/BadRequest'
-    Unauthorized:
-      $ref: '../common/responses/error.yaml#/Unauthorized'
-    Forbidden:
-      $ref: '../common/responses/error.yaml#/Forbidden'
-    NotFound:
-      $ref: '../common/responses/error.yaml#/NotFound'
-    Conflict:
-      $ref: '../common/responses/error.yaml#/Conflict'
-    InternalServerError:
-      $ref: '../common/responses/error.yaml#/InternalServerError'
-```
+### **SOLID/DRY Compliance**
 
-#### Common Schemas
-```yaml
-components:
-  schemas:
-    Error:
-      $ref: '../common/schemas/error.yaml#/Error'
-    HealthResponse:
-      $ref: '../common/schemas/health.yaml#/HealthResponse'
-```
+- **Single Responsibility**: Каждый endpoint отвечает за одну операцию
+- **Open/Closed**: Легкое расширение через common inheritance
+- **DRY**: Переиспользование common schemas и responses
+- **SOLID Inheritance**: Domain-specific entity extension
 
-**Файлы по умолчанию:**
-- `../common/schemas/error.yaml` - Стандартная схема ошибки
-- `../common/schemas/health.yaml` - Схема здоровья сервиса
-- `../common/responses/error.yaml` - Стандартные HTTP ошибки
-- `../common/responses/success.yaml` - Успешные ответы
+### **RESTful Design**
 
-### 6. **Backend Optimization Hints**
+- **Resource-Based URLs**: `/chat/channels/{id}/messages`
+- **HTTP Methods**: GET, POST, PUT, DELETE appropriately
+- **Status Codes**: Корректное использование 200, 201, 204, 400, 403, 404
+- **Content Negotiation**: JSON responses с правильными headers
 
-#### Struct Alignment
+### **Real-time Communication**
 
-```yaml
-description: 'BACKEND NOTE: Fields ordered for struct alignment (large -> small). Expected memory savings: 30-50%.'
-```
+- **WebSocket Protocol**: Для real-time messaging и voice
+- **Event-Driven**: Server-sent events для notifications
+- **Connection Management**: Graceful handling of disconnects
+- **Backpressure**: Prevention of message flooding
 
-#### Performance Targets
+### **Error Handling**
 
-```yaml
-description: |
-  **Performance:** <50ms P95, supports 1000+ concurrent requests
-  **Memory:** <50KB per instance
-  **Concurrent users:** 10,000+
-```
-
-## Как Использовать Шаблон
-
-### 1. **Копирование Шаблона**
-
-```bash
-# Создайте новый домен
-mkdir proto/openapi/your-new-domain
-cp proto/openapi/example-domain/main.yaml proto/openapi/your-new-domain/main.yaml
-```
-
-### 2. **Замена Placeholder'ов**
-
-- `[Domain Name]` -> Название вашего домена
-- `[domain purpose]` -> Описание назначения домена
-- `[domain]` -> Кодовое имя домена (kebab-case)
-- Замените example operations на реальные
-
-### 3. **Добавление Реальных Операций**
-
-Замените примеры CRUD операций на реальные endpoints вашего домена:
-
-```yaml
-# Заменить /examples на ваши реальные ресурсы
-/examples:
-  get: # List
-  post: # Create
-/examples/{id}:
-  get: # Get by ID
-  put: # Update
-  delete: # Delete
-```
-
-### 4. **Оптимизация Схем**
-
-Для каждой схемы:
-
-- Упорядочite поля: large -> small
-- Добавьте `BACKEND NOTE` с оптимизациями
-- Добавьте примеры и валидацию
-
-## Валидация Шаблона
-
-### Redocly Lint
-
-```bash
-npx @redocly/cli lint proto/openapi/example-domain/main.yaml
-# Valid. 4 warnings (нормально)
-```
-
-### Go Code Generation
-
-```bash
-# Bundle
-npx @redocly/cli bundle proto/openapi/example-domain/main.yaml -o bundled.yaml
-
-# Generate Go code
-ogen --target temp --package api --clean bundled.yaml
-
-# Compile
-cd temp && go mod init test && go mod tidy && go build .
-# Success
-```
-
-## Performance Benchmarks
-
-Шаблон оптимизирован для:
-
-- **P99 Latency:** <50ms
-- **Memory per Instance:** <50KB
-- **Concurrent Users:** 10,000+
-
-## Связанные Документы
-
-- `.cursor/rules/agent-api-designer.mdc` - Правила API Designer агента
-- `.cursor/DOMAIN_REFERENCE.md` - Справочник enterprise-grade доменов
-- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - Чек-лист оптимизаций
-- `.cursor/PERFORMANCE_ENFORCEMENT.md` - Требования к производительности
-
-## Следующие Шаги
-
-1. Скопируйте этот шаблон для нового домена
-2. Замените placeholders на реальные значения
-3. Добавьте domain-specific операции
-4. Оптимизируйте схемы для struct alignment
-5. Проверьте валидацию и генерацию кода
-6. Зарегистрируйте домен в DOMAIN_REFERENCE.md
-
-## Важные Замечания
-
-- **НЕ** удаляйте обязательные health endpoints
-- **ВСЕГДА** добавляйте operationId для генерации Go кода
-- **ОПТИМИЗИРУЙТЕ** порядок полей в схемах
-- **ВАЛИДИРУЙТЕ** перед коммитом
-- **ДОКУМЕНТИРУЙТЕ** performance targets
+- **Consistent Error Format**: Стандартизированные error responses
+- **Detailed Error Messages**: Для debugging без sensitive data exposure
+- **Graceful Degradation**: Fallback behavior при failures
+- **Retry Logic**: Exponential backoff для transient failures
 
 ---
 
-## Использование Общих Схем Между Домеами
+## 📞 **Контакты**
 
-Шаблон поддерживает использование общих схем между разными доменами:
+**Команда разработки Communication Service:**
 
-### Общая Директория Схем
+- **Tech Lead**: @communication-tech-lead
+- **Backend**: @communication-backend
+- **Frontend**: @communication-frontend
+- **DevOps**: @communication-devops
 
-```bash
-proto/openapi/common-schemas.yaml  # Универсальные схемы для всех доменов
-```
+**Мониторинг и поддержка:**
 
-### Примеры Общих Схем
-
-- `Error` - Универсальная схема ошибок
-- `HealthResponse` - Схема здоровья сервисов
-- `PaginationMeta` - Метаданные пагинации
-- `UUID`, `PlayerId`, `GuildId` - Общие типы ID
-- `Timestamp`, `CreatedAt`, `UpdatedAt` - Временные метки
-- `Status`, `Priority` - Перечисления
-
-### Как Использовать Общие Схемы
-
-```yaml
-# В любом домене
-components:
-  schemas:
-    MyEntity:
-      type: object
-      properties:
-        id:
-          $ref: '../../common-schemas.yaml#/components/schemas/UUID'
-        error:
-          $ref: '../../common-schemas.yaml#/components/schemas/Error'
-        created_at:
-          $ref: '../../common-schemas.yaml#/components/schemas/CreatedAt'
-```
-
-### Преимущества
-
-- **Консистентность** - одинаковые схемы во всех доменах
-- **Удобство сопровождения** - изменения в одном месте
-- **Генерация Go кода** - работает без проблем
-- **Enterprise-grade** - профессиональный подход
-
-### Тестирование
-
-Общие схемы протестированы и работают с:
-
-- Redocly bundling
-- ogen code generation
-- Go compilation
-- Cross-domain references
+- **SRE Team**: @platform-sre
+- **Security**: @platform-security
+- **Documentation**: docs@necpgame.com
 
 ---
 
-## Файлы Common, Используемые по умолчанию
-
-Шаблон автоматически использует следующие общие файлы из `../common/`:
-
-### Security
-- `../common/security/security.yaml` - JWT Bearer, API Key, Service аутентификация
-
-### Schemas
-- `../common/schemas/error.yaml` - Стандартная схема ошибки
-- `../common/schemas/health.yaml` - Детальная схема здоровья сервиса
-
-### Responses
-- `../common/responses/error.yaml` - HTTP ошибки (400, 401, 403, 404, 409, 500, 429)
-- `../common/responses/success.yaml` - Успешные ответы (200, 201) и health responses
-
-### Готовность к использованию
-Все эти файлы:
-- Оптимизированы для struct alignment
-- Проходят Redocly валидацию
-- Генерируют корректный Go код с ogen
-- Совместимы с enterprise-grade архитектурой
-
-**Этот шаблон гарантирует, что все новые OpenAPI спецификации будут enterprise-grade и совместимы со всей экосистемой
-NECPGAME AI агентов.**
+*Этот сервис является частью enterprise-grade микросервисной архитектуры NECPGAME с фокусом на масштабируемость,
+безопасность и производительность.*

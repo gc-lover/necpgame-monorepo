@@ -39,7 +39,7 @@ servers:
   - url: http://localhost:8080/api/v1/oauth
     description: Local development server
 security:
-  - BearerAuth: []
+  - BearerAuth: [ ]
 tags:
   - name: OAuth
     description: OAuth provider integrations
@@ -89,13 +89,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common/schemas/health.yaml#/HealthResponse
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
         '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: ../common/responses/error.yaml#/ServiceUnavailable
+                $ref: ../common-service/responses/error.yaml#/ServiceUnavailable
   /health/batch:
     post:
       summary: Batch health check for multiple OAuth providers
@@ -120,7 +120,7 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: [google, facebook, discord, steam]
+                    enum: [ google, facebook, discord, steam ]
                   description: List of providers to check
                 timeout:
                   type: integer
@@ -139,7 +139,7 @@ paths:
                   results:
                     type: object
                     additionalProperties:
-                      $ref: ../common/schemas/health.yaml#/ProviderHealthStatus
+                      $ref: ../common-service/schemas/health.yaml#/ProviderHealthStatus
                     description: Health status per provider
                   summary:
                     type: object
@@ -154,9 +154,9 @@ paths:
                         type: integer
                         description: Average response time in milliseconds
         '400':
-          $ref: ../common/responses/error.yaml#/BadRequest
+          $ref: ../common-service/responses/error.yaml#/BadRequest
         '503':
-          $ref: ../common/responses/error.yaml#/ServiceUnavailable
+          $ref: ../common-service/responses/error.yaml#/ServiceUnavailable
   /auth/oauth/{provider}/redirect:
     get:
       tags:
@@ -185,9 +185,9 @@ paths:
                   redirect_url:
                     type: string
         '400':
-          $ref: ../common/responses/error.yaml#/BadRequest
+          $ref: ../common-service/responses/error.yaml#/BadRequest
         '500':
-          $ref: ../common/responses/error.yaml#/InternalServerError
+          $ref: ../common-service/responses/error.yaml#/InternalServerError
   /auth/oauth/{provider}/callback:
     get:
       tags:
@@ -230,27 +230,27 @@ paths:
 components:
   responses:
     OK:
-      $ref: ../common/responses/success.yaml#/OK
+      $ref: ../common-service/responses/success.yaml#/OK
     BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
+      $ref: ../common-service/responses/error.yaml#/BadRequest
     Unauthorized:
-      $ref: ../common/responses/error.yaml#/Unauthorized
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
     NotFound:
-      $ref: ../common/responses/error.yaml#/NotFound
+      $ref: ../common-service/responses/error.yaml#/NotFound
     InternalServerError:
-      $ref: ../common/responses/error.yaml#/InternalServerError
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
 
   schemas:
     Error:
-      $ref: ../common/schemas/error.yaml#/Error
+      $ref: ../common-service/schemas/error.yaml#/Error
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
     ProviderHealthStatus:
       type: object
       properties:
         status:
           type: string
-          enum: [healthy, unhealthy, unknown]
+          enum: [ healthy, unhealthy, unknown ]
         response_time:
           type: integer
           description: Response time in milliseconds
@@ -261,48 +261,46 @@ components:
           type: string
           description: Error message if unhealthy
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    LoginResponse:
+      type: object
+        properties:
+          access_token:
+            type: string
+          refresh_token:
+            type: string
+          account:
+            $ref: '#/components/schemas/Account'
+          expires_in:
+            type: integer
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Account:
+      type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+          email:
+            type: string
+          username:
+            type: string
+          role:
+            type: string
+            enum:
+              - PLAYER
+              - MODERATOR
+              - ADMIN
+              - SUPER_ADMIN
+          created_at:
+            type: string
+            format: date-time
+          email_verified:
+            type: boolean
+          two_factor_enabled:
+            type: boolean
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
-  schemas:
-    LoginResponse:
-      type: object
-      properties:
-        access_token:
-          type: string
-        refresh_token:
-          type: string
-        account:
-          $ref: '#/components/schemas/Account'
-        expires_in:
-          type: integer
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    Account:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        email:
-          type: string
-        username:
-          type: string
-        role:
-          type: string
-          enum:
-            - PLAYER
-            - MODERATOR
-            - ADMIN
-            - SUPER_ADMIN
-        created_at:
-          type: string
-          format: date-time
-        email_verified:
-          type: boolean
-        two_factor_enabled:
-          type: boolean
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-security:
-  - BearerAuth: [ ]
+      $ref: ../common-service/security/security.yaml#/BearerAuth
+
 

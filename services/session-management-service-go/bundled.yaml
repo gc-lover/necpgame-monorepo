@@ -1,0 +1,1934 @@
+openapi: 3.0.3
+info:
+  title: Session Management Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Session Management API for NECPGAME**
+
+    This API manages all types of game sessions, including combat sessions, player
+    sessions, authentication sessions, and session state management across the entire
+    platform.
+
+    ## Key Features
+
+    - **Session Lifecycle Management**: Creation, updates, termination of game sessions
+    - **Session State Tracking**: Real-time session state and statistics - **Multi-type
+    Sessions**: Combat, player, auth, and custom session types - **Session Analytics**:
+    Performance metrics and session behavior analysis - **Concurrent Session Handling**:
+    Support for thousands of simultaneous sessions - **Session Persistence**: Durable
+    session storage with recovery capabilities
+
+    ## Domain Purpose
+
+    The Session Management Service handles all session-related operations across NECPGAME,
+    providing a unified interface for session creation, management, and analytics.
+    It ensures proper session isolation, state consistency, and performance optimization.
+
+    ## Performance Targets
+
+    - Session Creation: <50ms average response time - Concurrent Sessions: 100,000+
+    active sessions supported - Session Queries: <10ms P95 response time - State Updates:
+    <5ms average latency - Memory Usage: <8KB per active session
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/session
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/session
+  description: Staging server
+- url: http://localhost:8080/api/v1/session
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Session Management
+  description: Core session lifecycle operations
+- name: Combat Sessions
+  description: Combat-specific session management
+- name: Session Analytics
+  description: Session performance and analytics
+- name: Health Monitoring
+  description: Service health and monitoring endpoints
+paths:
+  /health:
+    get:
+      summary: Session service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the session management service.
+
+        Critical for service discovery, load balancing, and monitoring.'
+      operationId: getHealth
+      tags:
+      - Health Monitoring
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                    maxLength: 255
+                  domain:
+                    type: string
+                    example: service-name
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-12-28T10:00:00Z'
+                    maxLength: 255
+                  version:
+                    type: string
+                    example: 1.0.0
+                    maxLength: 50
+                  uptime_seconds:
+                    type: integer
+                    example: 3600
+                    minimum: 0
+                  active_connections:
+                    type: integer
+                    example: 1500
+                    minimum: 0
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                  → small). Expected memory savings: 30-50%.'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                    maxLength: 255
+                  domain:
+                    type: string
+                    example: service-name
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-12-28T10:00:00Z'
+                    maxLength: 255
+                  version:
+                    type: string
+                    example: 1.0.0
+                    maxLength: 50
+                  uptime_seconds:
+                    type: integer
+                    example: 3600
+                    minimum: 0
+                  active_connections:
+                    type: integer
+                    example: 1500
+                    minimum: 0
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                  → small). Expected memory savings: 30-50%.'
+        '429':
+          description: Too many requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /sessions:
+    post:
+      summary: Create a new session
+      description: Create a new game session of specified type
+      operationId: createSession
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Resource conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    get:
+      summary: List sessions
+      description: Retrieve list of sessions with filtering
+      operationId: listSessions
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - player
+          - auth
+          - custom
+        description: Filter by session type
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - paused
+          - completed
+          - terminated
+        description: Filter by session status
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by player ID
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of sessions to return
+      responses:
+        '200':
+          description: Sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionListResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /sessions/{session_id}:
+    get:
+      summary: Get session details
+      description: Retrieve detailed information about a specific session
+      operationId: getSession
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Session unique identifier
+      - name: include_logs
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include session activity logs
+      - name: include_stats
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include session statistics
+      responses:
+        '200':
+          description: Session details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionDetails'
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    put:
+      summary: Update session
+      description: Update session properties and state
+      operationId: updateSession
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSessionRequest'
+      responses:
+        '200':
+          description: Session updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Resource conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    delete:
+      summary: Terminate session
+      description: Terminate an active session
+      operationId: terminateSession
+      tags:
+      - Session Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Session unique identifier
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Reason for termination
+                force:
+                  type: boolean
+                  default: false
+                  description: Force termination without cleanup
+      responses:
+        '200':
+          description: Session terminated successfully
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /combat/sessions:
+    post:
+      summary: Create combat session
+      description: Create a new combat session for PvP or PvE encounters
+      operationId: createCombatSession
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCombatSessionRequest'
+      responses:
+        '201':
+          description: Combat session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSession'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Resource conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    get:
+      summary: List combat sessions
+      description: Retrieve active combat sessions
+      operationId: listCombatSessions
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - paused
+          - completed
+          - terminated
+          default: active
+        description: Filter by session status
+      - name: mode
+        in: query
+        schema:
+          type: string
+          enum:
+          - pvp
+          - pve
+          - arena
+          - custom
+        description: Filter by combat mode
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        description: Number of sessions to return
+      responses:
+        '200':
+          description: Combat sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSessionListResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /combat/sessions/{session_id}/actions:
+    post:
+      summary: Execute combat action
+      description: Execute a combat action within a session
+      operationId: executeCombatAction
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CombatActionRequest'
+      responses:
+        '200':
+          description: Action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResult'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Resource conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /combat/sessions/{session_id}/state:
+    get:
+      summary: Get combat session state
+      description: Retrieve current state of a combat session
+      operationId: getCombatSessionState
+      tags:
+      - Combat Sessions
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session identifier
+      responses:
+        '200':
+          description: Session state retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSessionState'
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /analytics/sessions:
+    get:
+      summary: Get session analytics
+      description: Retrieve analytics and metrics for sessions
+      operationId: getSessionAnalytics
+      tags:
+      - Session Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          default: 24h
+        description: Analytics timeframe
+      - name: session_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - player
+          - auth
+          - all
+          default: all
+        description: Type of sessions to analyze
+      - name: metric
+        in: query
+        schema:
+          type: string
+          enum:
+          - count
+          - duration
+          - performance
+          - errors
+          - all
+          default: all
+        description: Specific metric to analyze
+      responses:
+        '200':
+          description: Session analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionAnalytics'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+  schemas:
+    CreateSessionRequest:
+      type: object
+      required:
+      - type
+      - player_id
+      properties:
+        type:
+          type: string
+          enum:
+          - combat
+          - player
+          - auth
+          - custom
+          description: Type of session to create
+        player_id:
+          type: string
+          format: uuid
+          description: Player initiating the session
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Session-specific metadata
+        settings:
+          type: object
+          additionalProperties: true
+          description: Session configuration settings
+    Session:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+          - combat
+          - player
+          - auth
+          - custom
+        player_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - active
+          - paused
+          - completed
+          - terminated
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+      required:
+      - session_id
+      - type
+      - player_id
+      - status
+      - created_at
+    SessionListResponse:
+      type: object
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Session'
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - sessions
+      - total_count
+    SessionDetails:
+      allOf:
+      - $ref: '#/components/schemas/Session'
+      - type: object
+        properties:
+          logs:
+            type: array
+            items:
+              $ref: '#/components/schemas/SessionLogEntry'
+          stats:
+            $ref: '#/components/schemas/SessionStats'
+    UpdateSessionRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - active
+          - paused
+          - completed
+          - terminated
+        metadata:
+          type: object
+          additionalProperties: true
+        settings:
+          type: object
+          additionalProperties: true
+    SessionLogEntry:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        event_type:
+          type: string
+        message:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+      required:
+      - timestamp
+      - event_type
+    SessionStats:
+      type: object
+      properties:
+        duration_seconds:
+          type: integer
+        events_count:
+          type: integer
+        errors_count:
+          type: integer
+        performance_metrics:
+          type: object
+          additionalProperties: true
+    CreateCombatSessionRequest:
+      type: object
+      required:
+      - mode
+      - participants
+      properties:
+        mode:
+          type: string
+          enum:
+          - pvp
+          - pve
+          - arena
+          - tournament
+          description: Combat session mode
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: Player IDs participating in combat
+        settings:
+          type: object
+          properties:
+            max_duration:
+              type: integer
+              minimum: 60
+              maximum: 3600
+              description: Maximum session duration in seconds
+            difficulty:
+              type: string
+              enum:
+              - easy
+              - normal
+              - hard
+              - expert
+            rules:
+              type: object
+              additionalProperties: true
+          description: Combat session configuration
+    CombatSession:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum:
+          - pvp
+          - pve
+          - arena
+          - tournament
+        status:
+          type: string
+          enum:
+          - initializing
+          - active
+          - paused
+          - completed
+          - terminated
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatParticipant'
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        settings:
+          type: object
+          additionalProperties: true
+        stats:
+          $ref: '#/components/schemas/CombatSessionStats'
+      required:
+      - session_id
+      - mode
+      - status
+      - participants
+      - created_at
+    CombatParticipant:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        joined_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - active
+          - eliminated
+          - disconnected
+        score:
+          type: integer
+          minimum: 0
+      required:
+      - player_id
+      - joined_at
+      - status
+    CombatSessionListResponse:
+      type: object
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatSession'
+        total_count:
+          type: integer
+      required:
+      - sessions
+      - total_count
+    CombatActionRequest:
+      type: object
+      required:
+      - action_type
+      - player_id
+      properties:
+        action_type:
+          type: string
+          enum:
+          - attack
+          - defend
+          - ability
+          - move
+          - item_use
+        player_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        parameters:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+    CombatActionResult:
+      type: object
+      properties:
+        action_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        damage_dealt:
+          type: integer
+          minimum: 0
+        effects:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              value:
+                type: number
+              duration:
+                type: integer
+        new_state:
+          $ref: '#/components/schemas/CombatSessionState'
+        timestamp:
+          type: string
+          format: date-time
+      required:
+      - action_id
+      - success
+      - timestamp
+    CombatSessionState:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        phase:
+          type: string
+          enum:
+          - preparation
+          - active
+          - cooldown
+          - finished
+        time_remaining:
+          type: integer
+          minimum: 0
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatParticipant'
+        environment:
+          type: object
+          additionalProperties: true
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+              data:
+                type: object
+                additionalProperties: true
+      required:
+      - session_id
+      - phase
+    CombatSessionStats:
+      type: object
+      properties:
+        duration_seconds:
+          type: integer
+        total_actions:
+          type: integer
+        total_damage:
+          type: integer
+        eliminations:
+          type: integer
+        winner:
+          type: string
+          format: uuid
+        performance_metrics:
+          type: object
+          additionalProperties: true
+    SessionAnalytics:
+      type: object
+      properties:
+        timeframe:
+          type: string
+        total_sessions:
+          type: integer
+        active_sessions:
+          type: integer
+        average_duration_seconds:
+          type: number
+        sessions_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        sessions_by_status:
+          type: object
+          additionalProperties:
+            type: integer
+        error_rate:
+          type: number
+        performance_metrics:
+          type: object
+          properties:
+            average_response_time_ms:
+              type: number
+            p95_response_time_ms:
+              type: number
+            throughput_per_second:
+              type: number
+        trends:
+          type: array
+          items:
+            type: object
+            properties:
+              period:
+                type: string
+              sessions_created:
+                type: integer
+              sessions_completed:
+                type: integer
+              average_duration:
+                type: number
+      required:
+      - timeframe
+      - total_sessions

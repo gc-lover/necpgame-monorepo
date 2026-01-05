@@ -1,11 +1,13 @@
-# 🚀 **NECPGAME OpenAPI Migration Guide**
+# NECPGAME OpenAPI Migration Guide
+
 ## From Legacy to SOLID/DRY Enterprise Architecture
 
 ---
 
-## 📊 **Текущая Ситуация**
+## Текущая Ситуация
 
-### **Legacy Директории (471+ файлов)**
+### Legacy Директории (471+ файлов)
+
 ```
 proto/openapi/
 ├── system/           # 471 файлов - AI, monitoring, messaging, infrastructure
@@ -21,6 +23,7 @@ proto/openapi/
 ```
 
 ### **Новая Common Архитектура**
+
 ```
 proto/openapi/
 ├── common/                    # ✅ SOLID/DRY Foundation
@@ -43,6 +46,7 @@ proto/openapi/
 ### **Фаза 1: Анализ и Планирование (1-2 недели)**
 
 #### **1.1 Классификация Legacy Файлов**
+
 ```
 🟢 BUSINESS LOGIC (СОХРАНИТЬ)
 ├── API endpoints с реальной функциональностью
@@ -66,17 +70,20 @@ proto/openapi/
 #### **1.2 Оценка Бизнес-Ценности**
 
 **Высокая ценность (приоритет 1):**
+
 - `economy/trading/trade.yaml` - P2P торговля
 - `specialized/combat/combat_damage.yaml` - Расчет урона
 - `social/guilds/guild_core.yaml` - Гильдии
 - `system/ai/ai_adaptive.yaml` - AI адаптация
 
 **Средняя ценность (приоритет 2):**
+
 - `world/locations/` - Геолокации
 - `progression/achievements/` - Достижения
 - `cosmetic/skins/` - Кастомизация
 
 **Низкая ценность (приоритет 3):**
+
 - Базовые CRUD без бизнес-логики
 - Дублированные схемы
 - Тестовые endpoints
@@ -84,6 +91,7 @@ proto/openapi/
 ### **Фаза 2: Миграция по Приоритетам (4-6 недель)**
 
 #### **2.1 Приоритет 1: Core Business Logic (2 недели)**
+
 ```
 2.1.1 Economy Domain
 ├── trading-service/      # Из economy/trading/
@@ -105,6 +113,7 @@ proto/openapi/
 ```
 
 #### **2.2 Приоритет 2: Extended Features (2 недели)**
+
 ```
 2.2.1 World & Progression
 ├── location-service/     # Из world/locations/
@@ -120,6 +129,7 @@ proto/openapi/
 ```
 
 #### **2.3 Приоритет 3: Infrastructure & AI (2 недели)**
+
 ```
 2.3.1 AI & Analytics
 ├── ai-behavior-service/     # Из system/ai/
@@ -136,6 +146,7 @@ proto/openapi/
 ### **Фаза 3: Очистка и Оптимизация (1-2 недели)**
 
 #### **3.1 Удаление Legacy Директорий**
+
 ```bash
 # После успешной миграции и тестирования
 rm -rf proto/openapi/system/
@@ -147,6 +158,7 @@ rm -rf proto/openapi/economy/
 ```
 
 #### **3.2 Финальная Валидация**
+
 ```bash
 # Проверить все новые сервисы
 ./scripts/validate-all-services.sh
@@ -165,13 +177,14 @@ rm -rf proto/openapi/economy/
 ### **1. Entity Inheritance (SOLID Principle)**
 
 #### **✅ ПРАВИЛЬНО: Использовать BaseEntity**
+
 ```yaml
 # В {service}-service/main.yaml
 components:
   schemas:
     MyEntity:
       allOf:
-        - $ref: '../common/schemas/common.yaml#/AuditableEntity'  # id, timestamps, created_by, updated_by
+        - $ref: '../common-service/schemas/common.yaml#/AuditableEntity'  # id, timestamps, created_by, updated_by
         - type: object
           required:
             - domain_field
@@ -184,6 +197,7 @@ components:
 ```
 
 #### **❌ НЕПРАВИЛЬНО: Дублировать общие поля**
+
 ```yaml
 MyEntity:
   type: object
@@ -197,24 +211,26 @@ MyEntity:
 ### **2. Domain-Specific Entity Extension**
 
 #### **Game Entities**
+
 ```yaml
 PlayerCharacter:
   allOf:
-    - $ref: '../common/schemas/game-entities.yaml#/CharacterEntity'  # Наследует health, stats, level
+    - $ref: '../common-service/schemas/game-entities.yaml#/CharacterEntity'  # Наследует health, stats, level
     - type: object
       properties:
-        player_id: {$ref: '../common/schemas/common.yaml#/UUID'}
+        player_id: {$ref: '../common-service/schemas/common.yaml#/UUID'}
         cyberware_implants: {type: array, items: {type: string}}
 ```
 
 #### **Economy Entities**
+
 ```yaml
 PurchaseTransaction:
   allOf:
-    - $ref: '../common/schemas/economy-entities.yaml#/TransactionEntity'  # Наследует amount, currency, wallet_ids
+    - $ref: '../common-service/schemas/economy-entities.yaml#/TransactionEntity'  # Наследует amount, currency, wallet_ids
     - type: object
       properties:
-        item_id: {$ref: '../common/schemas/common.yaml#/UUID'}
+        item_id: {$ref: '../common-service/schemas/common.yaml#/UUID'}
         quantity: {type: integer, minimum: 1}
         discount_applied: {type: number, minimum: 0, maximum: 1}
 ```
@@ -222,18 +238,21 @@ PurchaseTransaction:
 ### **3. Строгие Типы Данных**
 
 #### **UUID для всех ID**
+
 ```yaml
 id:
-  $ref: '../common/schemas/common.yaml#/UUID'  # type: string, format: uuid, maxLength: 36
+  $ref: '../common-service/schemas/common.yaml#/UUID'  # type: string, format: uuid, maxLength: 36
 ```
 
 #### **Timestamp для всех дат**
+
 ```yaml
 created_at:
-  $ref: '../common/schemas/common.yaml#/Timestamp'  # ISO 8601 с валидацией
+  $ref: '../common-service/schemas/common.yaml#/Timestamp'  # ISO 8601 с валидацией
 ```
 
 #### **Enum для ограниченных значений**
+
 ```yaml
 status:
   type: string
@@ -248,6 +267,7 @@ rarity:
 ```
 
 #### **Числовые ограничения**
+
 ```yaml
 level:
   type: integer
@@ -265,6 +285,7 @@ health_percentage:
 ### **4. Validation Rules**
 
 #### **String Validation**
+
 ```yaml
 username:
   type: string
@@ -281,6 +302,7 @@ email:
 ```
 
 #### **Array Validation**
+
 ```yaml
 tags:
   type: array
@@ -294,6 +316,7 @@ tags:
 ```
 
 #### **Object Validation**
+
 ```yaml
 metadata:
   type: object
@@ -312,10 +335,11 @@ metadata:
 ### **5. Request/Response Схемы**
 
 #### **Create Request**
+
 ```yaml
 CreateEntityRequest:
   allOf:
-    - $ref: '../common/operations/crud.yaml#/CreateRequest'
+    - $ref: '../common-service/operations/crud.yaml#/CreateRequest'
     - type: object
       required:
         - name
@@ -327,23 +351,25 @@ CreateEntityRequest:
 ```
 
 #### **Update Request (Optimistic Locking)**
+
 ```yaml
 UpdateEntityRequest:
   allOf:
-    - $ref: '../common/operations/crud.yaml#/UpdateRequest'  # Содержит version для optimistic locking
+    - $ref: '../common-service/operations/crud.yaml#/UpdateRequest'  # Содержит version для optimistic locking
     - type: object
       properties:
         name: {type: string, minLength: 1, maxLength: 100}
         status: {$ref: '#/components/schemas/EntityStatus'}
         metadata:
-          $ref: '../common/operations/crud.yaml#/UpdateRequest/properties/metadata'
+          $ref: '../common-service/operations/crud.yaml#/UpdateRequest/properties/metadata'
 ```
 
 #### **Paginated Response**
+
 ```yaml
 EntityListResponse:
   allOf:
-    - $ref: '../common/schemas/common.yaml#/PaginatedResponse'
+    - $ref: '../common-service/schemas/common.yaml#/PaginatedResponse'
     - type: object
       properties:
         items:
@@ -355,6 +381,7 @@ EntityListResponse:
 ### **6. Examples для всех схем**
 
 #### **✅ ПРАВИЛЬНО: Полные examples**
+
 ```yaml
 components:
   schemas:
@@ -375,6 +402,7 @@ components:
 ```
 
 #### **❌ НЕПРАВИЛЬНО: Без examples**
+
 ```yaml
 CharacterEntity:
   type: object
@@ -385,25 +413,27 @@ CharacterEntity:
 ### **7. Operation Responses**
 
 #### **Success Responses**
+
 ```yaml
 responses:
-  OK: {$ref: '../common/responses/success.yaml#/OK'}
-  Created: {$ref: '../common/responses/success.yaml#/Created'}
-  Updated: {$ref: '../common/responses/success.yaml#/Updated'}
-  Deleted: {$ref: '../common/responses/success.yaml#/Deleted'}
+  OK: {$ref: '../common-service/responses/success.yaml#/OK'}
+  Created: {$ref: '../common-service/responses/success.yaml#/Created'}
+  Updated: {$ref: '../common-service/responses/success.yaml#/Updated'}
+  Deleted: {$ref: '../common-service/responses/success.yaml#/Deleted'}
 
   # Domain-specific
-  CombatActionSuccess: {$ref: '../common/responses/success.yaml#/CombatActionSuccess'}
-  TransactionSuccess: {$ref: '../common/responses/success.yaml#/TransactionSuccess'}
+  CombatActionSuccess: {$ref: '../common-service/responses/success.yaml#/CombatActionSuccess'}
+  TransactionSuccess: {$ref: '../common-service/responses/success.yaml#/TransactionSuccess'}
 ```
 
 #### **Error Responses**
+
 ```yaml
 responses:
-  BadRequest: {$ref: '../common/responses/error.yaml#/BadRequest'}
-  Unauthorized: {$ref: '../common/responses/error.yaml#/Unauthorized'}
-  NotFound: {$ref: '../common/responses/error.yaml#/NotFound'}
-  TooManyRequests: {$ref: '../common/responses/error.yaml#/TooManyRequests'}
+  BadRequest: {$ref: '../common-service/responses/error.yaml#/BadRequest'}
+  Unauthorized: {$ref: '../common-service/responses/error.yaml#/Unauthorized'}
+  NotFound: {$ref: '../common-service/responses/error.yaml#/NotFound'}
+  TooManyRequests: {$ref: '../common-service/responses/error.yaml#/TooManyRequests'}
 ```
 
 ---
@@ -411,6 +441,7 @@ responses:
 ## 🛠️ **Инструменты Миграции**
 
 ### **Анализ Legacy Кода**
+
 ```bash
 # Найти файлы с бизнес-логикой
 find proto/openapi/system/ -name "*.yaml" -exec grep -l "operationId" {} \;
@@ -423,6 +454,7 @@ grep -r "created_at\|updated_at\|id.*uuid" proto/openapi/system/ | wc -l
 ```
 
 ### **Генерация Новых Сервисов**
+
 ```bash
 # Создать сервис из шаблона
 ./scripts/create-service.sh trading-service economy
@@ -435,6 +467,7 @@ grep -r "created_at\|updated_at\|id.*uuid" proto/openapi/system/ | wc -l
 ```
 
 ### **Валидация Миграции**
+
 ```bash
 # Проверить типизацию
 ./scripts/validate-strict-typing.sh trading-service
@@ -451,12 +484,14 @@ ogen --target temp --package api --clean trading-service/main.yaml
 ## 📈 **Метрики Успеха**
 
 ### **Количественные**
+
 - **100% сервисов** используют common архитектуру
 - **0 дублированных схем** в новых сервисах
 - **100% валидация** Redocly + Ogen
 - **70% сокращение кода** благодаря inheritance
 
 ### **Качественные**
+
 - **Строгая типизация** всех полей и параметров
 - **Полные examples** для всех схем
 - **Optimistic locking** для конкурентных операций
@@ -486,18 +521,21 @@ proto/openapi/
 ## 🚨 **Критические Правила**
 
 ### **СОХРАНИТЬ при миграции:**
+
 - ✅ Всю бизнес-логику (trade rules, combat formulas, guild mechanics)
 - ✅ API contracts (endpoints, parameters, responses)
 - ✅ Business validation rules
 - ✅ Domain-specific enums и constraints
 
 ### **МОДЕРНИЗИРОВАТЬ:**
+
 - 🔄 Entity schemas → common inheritance
 - 🔄 CRUD operations → common patterns
 - 🔄 Responses → common responses
 - 🔄 Validation → strict typing
 
 ### **УДАЛИТЬ:**
+
 - ❌ Дублированные поля (id, timestamps)
 - ❌ Legacy infrastructure code
 - ❌ Inconsistent patterns

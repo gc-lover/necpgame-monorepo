@@ -1,0 +1,585 @@
+openapi: 3.0.3
+info:
+  title: Currency Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Currency Management API for NECPGAME**
+
+    This API manages digital currencies, wallet operations, and financial transactions
+    in the Night City universe, providing atomic transaction processing, balance validation,
+    and secure fund transfers.
+
+    ## Key Features
+
+    - **Wallet Management**: Secure wallet creation and balance tracking - **Transaction
+    Processing**: Atomic currency transfers with rollback support - **Balance Validation**:
+    Real-time balance checking and overdraft prevention - **Currency Conversion**:
+    Multi-currency support with exchange rates - **Performance Optimized**: MMOFPS-grade
+    performance with <10ms P99 latency - **Struct Alignment**: 30-50% memory savings
+    for transaction structs
+
+    ## Domain Purpose
+
+    The Currency domain handles all financial operations in Night City. Players manage
+    digital currencies, execute secure transfers, and track financial transactions
+    in the dynamic economy.
+
+    ## Performance Targets
+
+    - P99 Latency: <10ms for transaction operations - Memory: <8KB per active transaction
+    session - Concurrent users: 50,000+ simultaneous transactions - Transfer time:
+    <3ms response time
+
+    '
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@currency.necpgame.com
+servers:
+- url: https://api.necpgame.com/v1/currency
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/currency
+  description: Staging server
+- url: http://localhost:8080/api/v1/currency
+  description: Local development server
+tags:
+- name: Wallet Management
+  description: Digital wallet lifecycle operations
+- name: Transaction Management
+  description: Currency transaction processing
+- name: Currency Operations
+  description: Currency conversion and validation
+security:
+- BearerAuth: []
+paths:
+  /wallets:
+    get:
+      summary: List user wallets
+      description: '**Get paginated wallet list**
+
+        Returns user''s digital wallets with balance information and currency details.
+
+        **Performance:** Indexed queries with efficient pagination'
+      operationId: listWallets
+      tags:
+      - Wallet Management
+      parameters:
+      - name: limit
+        in: query
+        description: Maximum number of wallets to return
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        description: Number of wallets to skip
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: currency_id
+        in: query
+        description: Filter by currency type
+        required: false
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Wallets retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - wallets
+                - pagination
+                properties:
+                  wallets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WalletResponse'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /wallets/{wallet_id}:
+    get:
+      summary: Get wallet details
+      description: '**Get detailed wallet information**
+
+        Returns comprehensive wallet information including balance, transaction history,
+        and security settings.
+
+        **Performance:** Single wallet lookup with <1ms response time'
+      operationId: getWallet
+      tags:
+      - Wallet Management
+      parameters:
+      - name: wallet_id
+        in: path
+        required: true
+        description: Unique wallet identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Wallet details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '404':
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /transactions:
+    get:
+      summary: List transactions
+      description: '**Get paginated transaction history**
+
+        Returns user''s transaction history with filtering options.
+
+        **Performance:** Indexed queries with efficient pagination'
+      operationId: listTransactions
+      tags:
+      - Transaction Management
+      parameters:
+      - name: wallet_id
+        in: query
+        description: Filter by wallet ID
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        in: query
+        description: Maximum number of transactions to return
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        description: Number of transactions to skip
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Transactions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - transactions
+                - pagination
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransactionEntity'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /transactions/transfer:
+    post:
+      summary: Transfer currency between wallets
+      description: '**Transfer currency between user wallets**
+
+        Executes atomic transfer between wallets with balance validation.
+
+        **Atomicity:** All operations in single transaction **Performance:** <50ms
+        P99 latency for transfers'
+      operationId: transferCurrency
+      tags:
+      - Transaction Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '200':
+          description: Transfer completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - transaction
+                - from_wallet
+                - to_wallet
+                properties:
+                  transaction:
+                    $ref: '#/components/schemas/TransactionEntity'
+                  from_wallet:
+                    $ref: '#/components/schemas/WalletResponse'
+                  to_wallet:
+                    $ref: '#/components/schemas/WalletResponse'
+        '400':
+          description: Invalid transfer data or insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Optimistic locking conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Created:
+      description: Resource created successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              created_at:
+                type: string
+                format: date-time
+    Deleted:
+      description: Resource deleted successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              deleted:
+                type: boolean
+                example: true
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    OK:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Updated:
+      description: Resource updated successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              updated:
+                type: boolean
+                example: true
+  schemas:
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Invalid request parameters
+        details:
+          type: object
+          additionalProperties: true
+    PaginationMeta:
+      type: object
+      required:
+      - total
+      - limit
+      - offset
+      properties:
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of items
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          description: Number of items skipped
+    TransferRequest:
+      type: object
+      required:
+      - from_wallet_id
+      - to_wallet_id
+      - amount
+      - currency_id
+      properties:
+        from_wallet_id:
+          type: string
+          format: uuid
+          description: Source wallet ID
+        to_wallet_id:
+          type: string
+          format: uuid
+          description: Destination wallet ID
+        amount:
+          type: number
+          minimum: 0.01
+          description: Transfer amount
+        currency_id:
+          type: string
+          format: uuid
+          description: Currency type
+        description:
+          type: string
+          maxLength: 500
+          description: Optional transfer description
+    TransactionEntity:
+      type: object
+      required:
+      - id
+      - from_wallet_id
+      - to_wallet_id
+      - amount
+      - currency_id
+      - status
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+        from_wallet_id:
+          type: string
+          format: uuid
+          description: Source wallet ID
+        to_wallet_id:
+          type: string
+          format: uuid
+          description: Destination wallet ID
+        amount:
+          type: number
+          minimum: 0
+          description: Transaction amount
+        currency_id:
+          type: string
+          format: uuid
+          description: Currency identifier
+        status:
+          type: string
+          enum:
+          - pending
+          - completed
+          - failed
+          - cancelled
+          description: Transaction status
+        description:
+          type: string
+          maxLength: 500
+          description: Transaction description
+        created_at:
+          type: string
+          format: date-time
+          description: Transaction creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Transaction last update timestamp
+    WalletResponse:
+      type: object
+      required:
+      - id
+      - user_id
+      - currency_id
+      - balance
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique wallet identifier
+        user_id:
+          type: string
+          format: uuid
+          description: Owner user ID
+        currency_id:
+          type: string
+          format: uuid
+          description: Currency type
+        balance:
+          type: number
+          minimum: 0
+          description: Current wallet balance
+        name:
+          type: string
+          maxLength: 100
+          description: Wallet display name
+        description:
+          type: string
+          maxLength: 500
+          description: Wallet description
+        is_active:
+          type: boolean
+          default: true
+          description: Wallet active status
+        created_at:
+          type: string
+          format: date-time
+          description: Wallet creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Wallet last update timestamp

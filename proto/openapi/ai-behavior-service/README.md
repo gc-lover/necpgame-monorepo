@@ -2,33 +2,41 @@
 
 ## 📋 **Назначение**
 
-AI Behavior Service предоставляет **enterprise-grade API для управления поведением ИИ** в NECPGAME.
-Сервис отвечает за системы принятия решений NPC, адаптивное обучение ИИ и динамические взаимодействия в игровом мире.
+AI Behavior Service предоставляет **enterprise-grade API для управления поведением ИИ** в NECPGAME MMOFPS RPG.
+Сервис отвечает за адаптивное обучение ИИ, системы принятия решений NPC, процедурную генерацию контента и обнаружение
+подозрительного поведения игроков.
 
 ## 🎯 **Функциональность**
 
-- **Behavior Trees**: Сложные системы принятия решений для NPC ИИ
-- **Adaptive Learning**: Системы ИИ, которые обучаются и адаптируются к паттернам игроков
-- **Dynamic Responses**: Корректировки поведения в реальном времени на основе состояния игры
-- **Personality Systems**: Уникальные личности ИИ и поведенческие черты
-- **Group Coordination**: Координация мультиагентов и роевые поведения
-- **Performance Optimized**: Высокопроизводительная обработка ИИ с <30ms P99 latency
+- **Adaptive Difficulty Scaling**: Динамическая настройка сложности на основе производительности игроков
+- **NPC Behavior Management**: Управление поведением NPC с использованием деревьев решений
+- **Procedural Generation**: Генерация квестов и NPC с использованием AI алгоритмов
+- **Combat AI Optimization**: Прогнозирование стратегий боя и анализ поведения игроков
+- **Behavior Analytics**: Анализ паттернов поведения игроков для AI обучения
+- **Anti-Cheat Detection**: AI-powered обнаружение подозрительного поведения
+- **Model Training**: Управление обучением AI моделей для различных игровых систем
 
 ## 📁 **Структура**
 
 ```
 ai-behavior-service/
-├── main.yaml           # Основная спецификация
+├── main.yaml           # Основная спецификация OpenAPI 3.0.3
 ├── README.md          # Эта документация
+├── ai/                # Исходные файлы из system/ai/
+│   ├── ai_adaptive*.yaml
+│   ├── ai_enemy*.yaml
+│   ├── ai_combat*.yaml
+│   └── ...
 └── docs/
     └── index.html     # Сгенерированная документация
 ```
 
 ## 🔗 **Зависимости**
 
-- **common**: Общие схемы и ответы
-- **game-metrics-service**: Метрики производительности игры
-- **procedural-generation-service**: Процедурная генерация контента
+- **common**: Общие схемы и ответы (health, error, security)
+- **game-metrics-service**: Метрики производительности игры для analytics
+- **player-service**: Данные игроков для behavior analytics
+- **combat-service**: Данные боя для AI обучения
 
 ## 📊 **Performance**
 
@@ -36,21 +44,26 @@ ai-behavior-service/
 - **Memory per Instance**: <35KB на активную сущность ИИ
 - **Concurrent Users**: 300,000+ одновременных операций ИИ
 - **Decision Calculations**: <20ms время отклика
+- **Model Training**: <200ms для анализа подозрительного поведения
+- **Procedural Generation**: <75ms для генерации квестов
 
 ## 🚀 **Использование**
 
 ### Валидация
+
 ```bash
 npx @redocly/cli lint main.yaml
 ```
 
 ### Генерация Go кода
+
 ```bash
 ogen --target ../../services/ai-behavior-service-go/pkg/api \
      --package api --clean main.yaml
 ```
 
 ### Документация
+
 ```bash
 npx @redocly/cli build-docs main.yaml -o docs/index.html
 ```
@@ -93,15 +106,16 @@ security:
 components:
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
+      $ref: '../common-service/security/security.yaml#/BearerAuth'
     ApiKeyAuth:
-      $ref: '../common/security/security.yaml#/ApiKeyAuth'
+      $ref: '../common-service/security/security.yaml#/ApiKeyAuth'
     ServiceAuth:
-      $ref: '../common/security/security.yaml#/ServiceAuth'
+      $ref: '../common-service/security/security.yaml#/ServiceAuth'
 ```
 
 **Использует по умолчанию:**
-- `../common/security/security.yaml` - Bearer JWT, API Key и Service аутентификация
+
+- `../common-service/security/security.yaml` - Bearer JWT, API Key и Service аутентификация
 
 ### 4. **Обязательные Health Endpoints**
 
@@ -113,15 +127,16 @@ components:
     operationId: [domain]HealthCheck
     responses:
       '200': # Обязательно
-        $ref: '../common/responses/success.yaml#/HealthOK'
+        $ref: '../common-service/responses/success.yaml#/HealthOK'
       '503': # Обязательно
-        $ref: '../common/responses/error.yaml#/InternalServerError'
+        $ref: '../common-service/responses/error.yaml#/InternalServerError'
 ```
 
 **Использует по умолчанию:**
-- `../common/responses/success.yaml#/HealthOK` - Ответ здоровья
-- `../common/schemas/health.yaml#/HealthResponse` - Схема здоровья
-- `../common/responses/error.yaml#/InternalServerError` - Ошибка сервера
+
+- `../common-service/responses/success.yaml#/HealthOK` - Ответ здоровья
+- `../common-service/schemas/health.yaml#/HealthResponse` - Схема здоровья
+- `../common-service/responses/error.yaml#/InternalServerError` - Ошибка сервера
 
 #### Batch Health Check
 
@@ -144,38 +159,41 @@ components:
 ### 5. **Общие Схемы (Используются по умолчанию)**
 
 #### Error Responses
+
 ```yaml
 components:
   responses:
     BadRequest:
-      $ref: '../common/responses/error.yaml#/BadRequest'
+      $ref: '../common-service/responses/error.yaml#/BadRequest'
     Unauthorized:
-      $ref: '../common/responses/error.yaml#/Unauthorized'
+      $ref: '../common-service/responses/error.yaml#/Unauthorized'
     Forbidden:
-      $ref: '../common/responses/error.yaml#/Forbidden'
+      $ref: '../common-service/responses/error.yaml#/Forbidden'
     NotFound:
-      $ref: '../common/responses/error.yaml#/NotFound'
+      $ref: '../common-service/responses/error.yaml#/NotFound'
     Conflict:
-      $ref: '../common/responses/error.yaml#/Conflict'
+      $ref: '../common-service/responses/error.yaml#/Conflict'
     InternalServerError:
-      $ref: '../common/responses/error.yaml#/InternalServerError'
+      $ref: '../common-service/responses/error.yaml#/InternalServerError'
 ```
 
 #### Common Schemas
+
 ```yaml
 components:
   schemas:
     Error:
-      $ref: '../common/schemas/error.yaml#/Error'
+      $ref: '../common-service/schemas/error.yaml#/Error'
     HealthResponse:
-      $ref: '../common/schemas/health.yaml#/HealthResponse'
+      $ref: '../common-service/schemas/health.yaml#/HealthResponse'
 ```
 
 **Файлы по умолчанию:**
-- `../common/schemas/error.yaml` - Стандартная схема ошибки
-- `../common/schemas/health.yaml` - Схема здоровья сервиса
-- `../common/responses/error.yaml` - Стандартные HTTP ошибки
-- `../common/responses/success.yaml` - Успешные ответы
+
+- `../common-service/schemas/error.yaml` - Стандартная схема ошибки
+- `../common-service/schemas/health.yaml` - Схема здоровья сервиса
+- `../common-service/responses/error.yaml` - Стандартные HTTP ошибки
+- `../common-service/responses/success.yaml` - Успешные ответы
 
 ### 6. **Backend Optimization Hints**
 
@@ -347,21 +365,26 @@ components:
 
 ## Файлы Common, Используемые по умолчанию
 
-Шаблон автоматически использует следующие общие файлы из `../common/`:
+Шаблон автоматически использует следующие общие файлы из `../common-service/`:
 
 ### Security
-- `../common/security/security.yaml` - JWT Bearer, API Key, Service аутентификация
+
+- `../common-service/security/security.yaml` - JWT Bearer, API Key, Service аутентификация
 
 ### Schemas
-- `../common/schemas/error.yaml` - Стандартная схема ошибки
-- `../common/schemas/health.yaml` - Детальная схема здоровья сервиса
+
+- `../common-service/schemas/error.yaml` - Стандартная схема ошибки
+- `../common-service/schemas/health.yaml` - Детальная схема здоровья сервиса
 
 ### Responses
-- `../common/responses/error.yaml` - HTTP ошибки (400, 401, 403, 404, 409, 500, 429)
-- `../common/responses/success.yaml` - Успешные ответы (200, 201) и health responses
+
+- `../common-service/responses/error.yaml` - HTTP ошибки (400, 401, 403, 404, 409, 500, 429)
+- `../common-service/responses/success.yaml` - Успешные ответы (200, 201) и health responses
 
 ### Готовность к использованию
+
 Все эти файлы:
+
 - Оптимизированы для struct alignment
 - Проходят Redocly валидацию
 - Генерируют корректный Go код с ogen

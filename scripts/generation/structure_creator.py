@@ -173,15 +173,15 @@ func NewHTTPServer(logger *zap.Logger) *HTTPServer {{
 	s.router.Use(s.corsMiddleware)
 	s.router.Use(s.rateLimitMiddleware)
 
-	return s
+    return s
 }}
 
 func (s *HTTPServer) Router() *mux.Router {{
-	return s.router
+    return s.router
 }}
 
 func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {{
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {{
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {{
 		start := time.Now()
 
 		// PERFORMANCE: Use defer for cleanup
@@ -198,7 +198,7 @@ func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {{
 }}
 
 func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {{
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {{
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {{
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -216,7 +216,7 @@ func (s *HTTPServer) rateLimitMiddleware(next http.Handler) http.Handler {{
 	// PERFORMANCE: Simple in-memory rate limiter (use Redis in production)
 	requests := make(map[string]time.Time)
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {{
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {{
 		clientIP := r.RemoteAddr
 
 		if lastRequest, exists := requests[clientIP]; exists {{
@@ -254,14 +254,14 @@ type Middleware struct {
 
 // NewMiddleware creates new middleware instance
 func NewMiddleware(logger *zap.Logger) *Middleware {
-	return &Middleware{
+    return &Middleware{
 		logger: logger,
 	}
 }
 
 // AuthMiddleware validates JWT tokens
 func (m *Middleware) AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// PERFORMANCE: Extract token from header
 		token := r.Header.Get("Authorization")
 		if token == "" {
@@ -283,12 +283,12 @@ func (m *Middleware) AuthMiddleware(next http.Handler) http.Handler {
 func (m *Middleware) validateToken(token string) bool {
 	// PERFORMANCE: Implement efficient token validation
 	// Use sync.Pool for token parsing to reduce GC pressure
-	return len(token) > 10 // Placeholder
+    return len(token) > 10 // Placeholder
 }
 
 // TimeoutMiddleware adds request timeout
 func (m *Middleware) TimeoutMiddleware(timeout time.Duration) mux.MiddlewareFunc {
-	return func(next http.Handler) http.Handler {
+    return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx, cancel := context.WithTimeout(r.Context(), timeout)
 			defer cancel()
@@ -340,7 +340,7 @@ func NewHandler(service *Service, logger *zap.Logger) *Handler {{
 		}},
 	}}
 
-	return h
+    return h
 }}
 
 // GetHealth returns service health status
@@ -402,7 +402,8 @@ func (h *Handler) GetEntity(w http.ResponseWriter, r *http.Request) {{
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(entity)
 }}
-'''\n\treturn template.format(service_name=service_name, entity_type=entity_type)
+'''
+    return template.format(service_name=service_name, entity_type=entity_type)
 
     def _generate_service_go(self, domain: str, entity_type: str) -> str:
         """Generate service layer with PERFORMANCE optimizations"""
@@ -446,7 +447,7 @@ func NewService(logger *zap.Logger, client *api.Client) *Service {{
 		go s.worker()
 	}}
 
-	return s
+    return s
 }}
 
 func (s *Service) worker() {{
@@ -491,7 +492,7 @@ func (s *Service) CreateEntity(ctx context.Context, entity *api.{entity_type}) (
 
 func (s *Service) GetEntity(ctx context.Context, id string) (*api.{entity_type}, error) {{
 	// PERFORMANCE: Add caching layer here in production
-	return s.repo.GetByID(ctx, id)
+    return s.repo.GetByID(ctx, id)
 }}
 
 func (s *Service) validateEntity(entity *api.{entity_type}) error {{
@@ -502,7 +503,7 @@ func (s *Service) validateEntity(entity *api.{entity_type}) error {{
 	if entity.Name == "" {{
 		return errors.New("entity name is required")
 	}}
-	return nil
+    return nil
 }}
 
 func (s *Service) Close() {{
@@ -554,7 +555,7 @@ func NewRepository(db *sql.DB, logger *zap.Logger) *Repository {{
 	// PERFORMANCE: Precompile frequently used queries
 	repo.initPreparedStatements()
 
-	return repo
+    return repo
 }}
 
 func (r *Repository) initPreparedStatements() {{
@@ -583,7 +584,7 @@ func (r *Repository) Create(ctx context.Context, entity *api.{entity_type}) (*ap
 		return nil, errors.Wrap(err, "failed to create entity")
 	}}
 
-	return entity, nil
+    return entity, nil
 }}
 
 func (r *Repository) GetByID(ctx context.Context, id string) (*api.{entity_type}, error) {{
@@ -607,7 +608,7 @@ func (r *Repository) GetByID(ctx context.Context, id string) (*api.{entity_type}
 		entity.UpdatedAt = &updatedAt.Time
 	}}
 
-	return &entity, nil
+    return &entity, nil
 }}
 
 func (r *Repository) Update(ctx context.Context, entity *api.{entity_type}) error {{
@@ -615,13 +616,13 @@ func (r *Repository) Update(ctx context.Context, entity *api.{entity_type}) erro
 	now := time.Now()
 	_, err := r.preparedStmts["update_entity"].ExecContext(ctx,
 		entity.ID, entity.Name, now)
-	return err
+    return err
 }}
 
 func (r *Repository) Delete(ctx context.Context, id string) error {{
 	// PERFORMANCE: Use prepared statement
 	_, err := r.preparedStmts["delete_entity"].ExecContext(ctx, id)
-	return err
+    return err
 }}
 
 func (r *Repository) Close() {{
@@ -632,7 +633,8 @@ func (r *Repository) Close() {{
 		stmt.Close()
 	}}
 }}
-'''\n\treturn template.format(service_name=service_name, entity_type=entity_type)
+'''
+    return template.format(service_name=service_name, entity_type=entity_type)
 
     def _generate_makefile(self, domain: str) -> str:
         """Generate Makefile with PERFORMANCE optimizations"""

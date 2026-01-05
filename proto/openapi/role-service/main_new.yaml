@@ -40,7 +40,7 @@ servers:
   - url: http://localhost:8080/api/v1/role
     description: Local development server
 security:
-  - BearerAuth: []
+  - BearerAuth: [ ]
 tags:
   - name: Roles
     description: Role management operations
@@ -92,13 +92,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common/schemas/health.yaml#/HealthResponse
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
         '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: ../common/responses/error.yaml#/ServiceUnavailable
+                $ref: ../common-service/responses/error.yaml#/ServiceUnavailable
   /auth/roles:
     get:
       tags:
@@ -120,9 +120,9 @@ paths:
                     items:
                       $ref: '#/components/schemas/Role'
         '401':
-          $ref: ../common/responses/error.yaml#/Unauthorized
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
         '500':
-          $ref: ../common/responses/error.yaml#/InternalServerError
+          $ref: ../common-service/responses/error.yaml#/InternalServerError
   /auth/roles/{role_id}/permissions:
     get:
       tags:
@@ -154,11 +154,11 @@ paths:
                     items:
                       type: string
         '404':
-          $ref: ../common/responses/error.yaml#/NotFound
+          $ref: ../common-service/responses/error.yaml#/NotFound
         '401':
-          $ref: ../common/responses/error.yaml#/Unauthorized
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
         '500':
-          $ref: ../common/responses/error.yaml#/InternalServerError
+          $ref: ../common-service/responses/error.yaml#/InternalServerError
     post:
       tags:
         - Permissions
@@ -190,63 +190,61 @@ paths:
                   success:
                     type: boolean
         '400':
-          $ref: ../common/responses/error.yaml#/BadRequest
+          $ref: ../common-service/responses/error.yaml#/BadRequest
         '404':
-          $ref: ../common/responses/error.yaml#/NotFound
+          $ref: ../common-service/responses/error.yaml#/NotFound
         '401':
-          $ref: ../common/responses/error.yaml#/Unauthorized
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
         '403':
-          $ref: ../common/responses/error.yaml#/Forbidden
+          $ref: ../common-service/responses/error.yaml#/Forbidden
         '500':
-          $ref: ../common/responses/error.yaml#/InternalServerError
+          $ref: ../common-service/responses/error.yaml#/InternalServerError
 components:
   responses:
     OK:
-      $ref: ../common/responses/success.yaml#/OK
+      $ref: ../common-service/responses/success.yaml#/OK
     BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
+      $ref: ../common-service/responses/error.yaml#/BadRequest
     Unauthorized:
-      $ref: ../common/responses/error.yaml#/Unauthorized
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
     Forbidden:
-      $ref: ../common/responses/error.yaml#/Forbidden
+      $ref: ../common-service/responses/error.yaml#/Forbidden
     NotFound:
-      $ref: ../common/responses/error.yaml#/NotFound
+      $ref: ../common-service/responses/error.yaml#/NotFound
     InternalServerError:
-      $ref: ../common/responses/error.yaml#/InternalServerError
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
 
   schemas:
     Error:
-      $ref: ../common/schemas/error.yaml#/Error
+      $ref: ../common-service/schemas/error.yaml#/Error
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
+    Role:
+      type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+          name:
+            type: string
+          description:
+            type: string
+          created_at:
+            type: string
+            format: date-time
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdatePermissionsRequest:
+      type: object
+        required:
+          - permissions
+        properties:
+          permissions:
+            type: array
+            items:
+              type: string
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
-  schemas:
-    Role:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        description:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    UpdatePermissionsRequest:
-      type: object
-      required:
-        - permissions
-      properties:
-        permissions:
-          type: array
-          items:
-            type: string
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-security:
-  - BearerAuth: [ ]
+      $ref: ../common-service/security/security.yaml#/BearerAuth
+

@@ -1,0 +1,1740 @@
+openapi: 3.0.3
+info:
+  title: World Cities API - Enterprise-Grade Template
+  description: '**Enterprise-Grade World Cities API for NECPGAME**
+
+    This domain provides comprehensive world cities management with geographical data,
+    cyberpunk characteristics, timeline events, and integration with narrative systems.
+
+    ## Key Features
+
+    - **Enterprise-grade architecture** with proper domain separation
+
+    - **Backend optimization hints** for struct alignment and performance
+
+    - **Complete validation** with redocly and ogen code generation
+
+    - **Security-first approach** with JWT authentication
+
+    - **Performance-optimized** response structures
+
+    - **Comprehensive error handling** with proper HTTP status codes
+
+
+    ## Domain Purpose
+
+    World Cities domain manages detailed information about cities in the game world,
+    including their geographical location, cyberpunk characteristics, economic data,
+    faction influence, and timeline evolution.
+
+    Follows enterprise-grade microservices patterns with clear boundaries.
+
+
+    ## Performance Targets
+
+    - P99 Latency: <50ms for hot paths
+
+    - Memory: <100KB per city instance
+
+    - Concurrent users: 10,000+ simultaneous connections
+
+    - Data consistency: Event-sourced with CQRS patterns
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/world-cities
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/world-cities
+  description: Staging server
+- url: http://localhost:8080/api/v1/world-cities
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: World Cities
+  description: Core world cities operations
+- name: City Search
+  description: Advanced city search and filtering
+- name: City Analytics
+  description: City statistics and analytics
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: World cities health check
+      description: '**Enterprise-grade health check endpoint**
+
+
+        Provides real-time health status of the world cities microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: worldCitiesHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                version: 1.0.0
+                timestamp: '2025-12-27T12:30:00Z'
+                uptime: 3600
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /cities:
+    get:
+      summary: List cities with pagination
+      description: '**Enterprise-grade city listing with advanced filtering**
+
+
+        Retrieves paginated list of world cities with optional filtering by various
+        criteria.
+
+        Supports spatial queries, cyberpunk characteristics, and economic filters.
+
+
+        **Performance:** <100ms for filtered queries, <50ms for simple lists
+
+        **Memory:** <50KB per page response
+
+        '
+      operationId: listCities
+      tags:
+      - World Cities
+      parameters:
+      - name: page
+        in: query
+        description: Page number (1-based)
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        description: Items per page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: continent
+        in: query
+        description: Filter by continent
+        schema:
+          type: string
+          enum:
+          - Africa
+          - Asia
+          - Europe
+          - North America
+          - South America
+          - Oceania
+      - name: country
+        in: query
+        description: Filter by country
+        schema:
+          type: string
+      - name: cyberpunk_level_min
+        in: query
+        description: Minimum cyberpunk level (1-10)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 10
+      - name: cyberpunk_level_max
+        in: query
+        description: Maximum cyberpunk level (1-10)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 10
+      - name: is_megacity
+        in: query
+        description: Filter by megacity status
+        schema:
+          type: boolean
+      - name: latitude
+        in: query
+        description: Latitude for spatial search
+        schema:
+          type: number
+          minimum: -90
+          maximum: 90
+      - name: longitude
+        in: query
+        description: Longitude for spatial search
+        schema:
+          type: number
+          minimum: -180
+          maximum: 180
+      - name: radius_km
+        in: query
+        description: Search radius in kilometers
+        schema:
+          type: number
+          minimum: 0
+          maximum: 10000
+      responses:
+        '200':
+          description: Cities list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - cities
+                - pagination
+                properties:
+                  cities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CitySummary'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    post:
+      summary: Create new city
+      description: '**Enterprise-grade city creation**
+
+
+        Creates a new city definition in the world cities database.
+
+        Requires admin privileges and complete city data validation.
+
+
+        **Performance:** <200ms for creation with validation
+
+        '
+      operationId: createCity
+      tags:
+      - World Cities
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CityCreate'
+      responses:
+        '201':
+          description: City created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/City'
+        '400':
+          description: Invalid city data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /cities/{city_id}:
+    get:
+      summary: Get city details
+      description: '**Enterprise-grade city details retrieval**
+
+
+        Retrieves complete information about a specific city including all characteristics,
+        timeline data, and cyberpunk attributes.
+
+
+        **Performance:** <50ms for cached cities, <100ms for complex queries
+
+        **Memory:** <200KB per detailed city response
+
+        '
+      operationId: getCity
+      tags:
+      - World Cities
+      parameters:
+      - name: city_id
+        in: path
+        required: true
+        description: Unique city identifier
+        schema:
+          type: string
+          pattern: ^[a-z0-9-]+(?<!-)$
+          minLength: 1
+          maxLength: 100
+      responses:
+        '200':
+          description: City details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/City'
+        '404':
+          description: City not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    put:
+      summary: Update city
+      description: '**Enterprise-grade city update**
+
+
+        Updates an existing city definition with new data.
+
+        Supports partial updates and maintains data integrity.
+
+
+        **Performance:** <150ms for updates with validation
+
+        '
+      operationId: updateCity
+      tags:
+      - World Cities
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: city_id
+        in: path
+        required: true
+        description: Unique city identifier
+        schema:
+          type: string
+          pattern: ^[a-z0-9-]+(?<!-)$
+          minLength: 1
+          maxLength: 100
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CityUpdate'
+      responses:
+        '200':
+          description: City updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/City'
+        '400':
+          description: Invalid city data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: City not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    delete:
+      summary: Delete city
+      description: '**Enterprise-grade city deletion**
+
+
+        Removes a city definition from the system.
+
+        Requires admin privileges and cascade handling.
+
+
+        **Performance:** <100ms for deletion
+
+        '
+      operationId: deleteCity
+      tags:
+      - World Cities
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: city_id
+        in: path
+        required: true
+        description: Unique city identifier
+        schema:
+          type: string
+          pattern: ^[a-z0-9-]+(?<!-)$
+          minLength: 1
+          maxLength: 100
+      responses:
+        '204':
+          description: City deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: City not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /cities/search:
+    get:
+      summary: Advanced city search
+      description: '**Enterprise-grade advanced city search**
+
+
+        Performs complex searches across multiple city attributes including spatial
+        queries, text search, and multi-criteria filtering.
+
+
+        **Performance:** <200ms for complex queries, optimized with indexes
+
+        '
+      operationId: searchCities
+      tags:
+      - City Search
+      parameters:
+      - name: q
+        in: query
+        description: Free text search across city names and descriptions
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: corporation
+        in: query
+        description: Filter by corporation presence
+        schema:
+          type: string
+      - name: faction
+        in: query
+        description: Filter by faction influence
+        schema:
+          type: string
+      - name: min_population
+        in: query
+        description: Minimum population filter
+        schema:
+          type: integer
+          minimum: 0
+      - name: max_population
+        in: query
+        description: Maximum population filter
+        schema:
+          type: integer
+          minimum: 0
+      responses:
+        '200':
+          description: Search results retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - results
+                - pagination
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CitySummary'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          description: Invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /cities/analytics:
+    get:
+      summary: City analytics and statistics
+      description: '**Enterprise-grade city analytics**
+
+
+        Provides aggregated statistics and analytics about world cities including
+        population trends, cyberpunk levels, and economic data.
+
+
+        **Performance:** <500ms for analytics queries
+
+        '
+      operationId: getCityAnalytics
+      tags:
+      - City Analytics
+      parameters:
+      - name: metric
+        in: query
+        description: Analytics metric to retrieve
+        schema:
+          type: string
+          enum:
+          - population_trends
+          - cyberpunk_distribution
+          - economic_indicators
+          - faction_influence
+          - corporation_presence
+      - name: continent
+        in: query
+        description: Filter analytics by continent
+        schema:
+          type: string
+      - name: year
+        in: query
+        description: Year for time-based analytics
+        schema:
+          type: integer
+          minimum: 2020
+          maximum: 2093
+      responses:
+        '200':
+          description: Analytics data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CityAnalytics'
+        '400':
+          description: Invalid analytics parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    CitySummary:
+      type: object
+      required:
+      - id
+      - city_id
+      - name
+      - country
+      - continent
+      - latitude
+      - longitude
+      - cyberpunk_level
+      - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        city_id:
+          type: string
+          example: night-city
+        name:
+          type: string
+          example: Night City
+        name_local:
+          type: string
+          nullable: true
+          example: Night City
+        country:
+          type: string
+          example: United States
+        continent:
+          type: string
+          example: North America
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          example: 33.7175
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          example: -117.8311
+        cyberpunk_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          example: 10
+        population_2020:
+          type: integer
+          nullable: true
+          example: 8000000
+        is_megacity:
+          type: boolean
+          example: true
+        is_capital:
+          type: boolean
+          example: false
+        status:
+          type: string
+          enum:
+          - active
+          - destroyed
+          - abandoned
+          - virtual
+          example: active
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T12:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T12:30:00Z'
+    City:
+      allOf:
+      - $ref: '#/components/schemas/CitySummary'
+      - type: object
+        properties:
+          population_2050:
+            type: integer
+            nullable: true
+            example: 12000000
+          population_2093:
+            type: integer
+            nullable: true
+            example: 18000000
+          area_km2:
+            type: number
+            format: double
+            nullable: true
+            example: 2200.0
+          elevation_m:
+            type: integer
+            nullable: true
+            example: 50
+          corruption_index:
+            type: number
+            format: double
+            minimum: 0
+            maximum: 1
+            nullable: true
+            example: 0.95
+          technology_index:
+            type: number
+            format: double
+            minimum: 0
+            maximum: 1
+            nullable: true
+            example: 0.98
+          zones:
+            type: array
+            nullable: true
+            items:
+              type: object
+              required:
+              - name
+              - type
+              properties:
+                name:
+                  type: string
+                  example: Corporate Plaza
+                type:
+                  type: string
+                  enum:
+                  - commercial
+                  - residential
+                  - industrial
+                  - corporate
+                  - entertainment
+                  - government
+                  - military
+                  - slums
+                  example: corporate
+                coordinates:
+                  type: object
+                  properties:
+                    center:
+                      type: array
+                      items:
+                        type: number
+                        format: double
+                      minItems: 2
+                      maxItems: 2
+                      example:
+                      - 33.7175
+                      - -117.8311
+                    bounds:
+                      type: array
+                      items:
+                        type: array
+                        items:
+                          type: number
+                          format: double
+                        minItems: 2
+                        maxItems: 2
+                      minItems: 4
+                      maxItems: 4
+          districts:
+            type: object
+            nullable: true
+            additionalProperties: true
+          landmarks:
+            type: array
+            nullable: true
+            items:
+              type: object
+              required:
+              - name
+              - type
+              properties:
+                name:
+                  type: string
+                  example: Arasaka Tower
+                type:
+                  type: string
+                  enum:
+                  - skyscraper
+                  - landmark
+                  - monument
+                  - district
+                  - bar
+                  - hotel
+                  - station
+                  example: skyscraper
+                coordinates:
+                  type: array
+                  items:
+                    type: number
+                    format: double
+                  minItems: 2
+                  maxItems: 2
+                  example:
+                  - 33.7175
+                  - -117.8311
+          economy_data:
+            type: object
+            nullable: true
+            properties:
+              gdp_2020:
+                type: number
+                format: double
+                example: 1200000000000
+              currency:
+                type: string
+                example: USD
+              industries:
+                type: array
+                items:
+                  type: string
+                example:
+                - corporations
+                - tech
+                - entertainment
+          corporation_presence:
+            type: object
+            nullable: true
+            additionalProperties:
+              type: number
+              format: double
+              minimum: 0
+              maximum: 1
+            example:
+              arasaka: 0.9
+              militech: 0.7
+              biotechnica: 0.6
+          faction_influence:
+            type: object
+            nullable: true
+            additionalProperties:
+              type: number
+              format: double
+              minimum: 0
+              maximum: 1
+            example:
+              corporations: 0.8
+              nomads: 0.1
+              street_kids: 0.3
+          timeline_events:
+            type: object
+            nullable: true
+            additionalProperties:
+              type: array
+              items:
+                type: string
+            example:
+              '2023':
+              - Fourth Corporate War begins
+              '2045':
+              - DataKrash
+              '2077':
+              - Nuclear attack
+          future_evolution:
+            type: object
+            nullable: true
+            additionalProperties: true
+          available_in_game:
+            type: boolean
+            example: true
+          game_regions:
+            type: array
+            nullable: true
+            items:
+              type: string
+            example:
+            - night-city-region
+            - california-region
+          source_file:
+            type: string
+            nullable: true
+            example: knowledge/canon/lore/locations/world-cities/night-city-detailed-2020-2093.yaml
+          version:
+            type: string
+            example: 1.0.0
+    CityCreate:
+      type: object
+      required:
+      - city_id
+      - name
+      - country
+      - continent
+      - latitude
+      - longitude
+      properties:
+        city_id:
+          type: string
+          pattern: ^[a-z0-9-]+(?<!-)$
+          minLength: 1
+          maxLength: 100
+          example: night-city
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Night City
+        name_local:
+          type: string
+          maxLength: 200
+          example: Night City
+        country:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: United States
+        continent:
+          type: string
+          enum:
+          - Africa
+          - Asia
+          - Europe
+          - North America
+          - South America
+          - Oceania
+          example: North America
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          example: 33.7175
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          example: -117.8311
+        population_2020:
+          type: integer
+          minimum: 0
+          example: 8000000
+        population_2050:
+          type: integer
+          minimum: 0
+          example: 12000000
+        population_2093:
+          type: integer
+          minimum: 0
+          example: 18000000
+        area_km2:
+          type: number
+          format: double
+          minimum: 0
+          example: 2200.0
+        elevation_m:
+          type: integer
+          example: 50
+        cyberpunk_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          example: 10
+        corruption_index:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          example: 0.95
+        technology_index:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          example: 0.98
+        zones:
+          type: array
+          items:
+            type: object
+            required:
+            - name
+            - type
+            properties:
+              name:
+                type: string
+              type:
+                type: string
+                enum:
+                - commercial
+                - residential
+                - industrial
+                - corporate
+                - entertainment
+                - government
+                - military
+                - slums
+              coordinates:
+                type: object
+        districts:
+          type: object
+        landmarks:
+          type: array
+          items:
+            type: object
+            required:
+            - name
+            - type
+        economy_data:
+          type: object
+        corporation_presence:
+          type: object
+        faction_influence:
+          type: object
+        timeline_events:
+          type: object
+        future_evolution:
+          type: object
+        is_capital:
+          type: boolean
+          default: false
+        is_megacity:
+          type: boolean
+          default: false
+        available_in_game:
+          type: boolean
+          default: true
+        game_regions:
+          type: array
+          items:
+            type: string
+        source_file:
+          type: string
+        version:
+          type: string
+          default: 1.0.0
+    CityUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        name_local:
+          type: string
+          maxLength: 200
+        population_2020:
+          type: integer
+          minimum: 0
+        population_2050:
+          type: integer
+          minimum: 0
+        population_2093:
+          type: integer
+          minimum: 0
+        area_km2:
+          type: number
+          format: double
+          minimum: 0
+        elevation_m:
+          type: integer
+        cyberpunk_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+        corruption_index:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+        technology_index:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+        zones:
+          type: array
+          items:
+            type: object
+        districts:
+          type: object
+        landmarks:
+          type: array
+          items:
+            type: object
+        economy_data:
+          type: object
+        corporation_presence:
+          type: object
+        faction_influence:
+          type: object
+        timeline_events:
+          type: object
+        future_evolution:
+          type: object
+        status:
+          type: string
+          enum:
+          - active
+          - destroyed
+          - abandoned
+          - virtual
+        is_capital:
+          type: boolean
+        is_megacity:
+          type: boolean
+        available_in_game:
+          type: boolean
+        game_regions:
+          type: array
+          items:
+            type: string
+        version:
+          type: string
+    CityAnalytics:
+      type: object
+      required:
+      - metric
+      - data
+      properties:
+        metric:
+          type: string
+          enum:
+          - population_trends
+          - cyberpunk_distribution
+          - economic_indicators
+          - faction_influence
+          - corporation_presence
+        data:
+          type: object
+          additionalProperties: true
+        filters:
+          type: object
+          properties:
+            continent:
+              type: string
+            year:
+              type: integer
+        generated_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T12:30:00Z'
+    PaginationMeta:
+      type: object
+      required:
+      - page
+      - limit
+      - total
+      - total_pages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+        total:
+          type: integer
+          minimum: 0
+          example: 140
+        total_pages:
+          type: integer
+          minimum: 0
+          example: 7
+        has_next:
+          type: boolean
+          example: true
+        has_prev:
+          type: boolean
+          example: false
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
+    PaginationParams:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
+    PaginatedResponse:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          description: Array of items
+        total:
+          type: integer
+          minimum: 0
+          example: 100
+          description: Total number of items
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+          description: Number of items to skip
+  responses:
+    OK:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Operation completed
+    Created:
+      description: Resource created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            format: uri
+          description: URI of the created resource
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of created resource
+              created_at:
+                type: string
+                format: date-time
+                description: Creation timestamp
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    HealthOK:
+      description: Service is healthy
+      content:
+        application/json:
+          schema:
+            HealthResponse:
+              type: object
+              required:
+              - status
+              - timestamp
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - healthy
+                  - degraded
+                  - unhealthy
+                  example: healthy
+                  maxLength: 255
+                domain:
+                  type: string
+                  example: service-name
+                  maxLength: 255
+                timestamp:
+                  type: string
+                  format: date-time
+                  example: '2025-12-28T10:00:00Z'
+                  maxLength: 255
+                version:
+                  type: string
+                  example: 1.0.0
+                  maxLength: 50
+                uptime_seconds:
+                  type: integer
+                  example: 3600
+                  minimum: 0
+                active_connections:
+                  type: integer
+                  example: 1500
+                  minimum: 0
+              description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                → small). Expected memory savings: 30-50%.'
+    HealthBatchSuccess:
+      description: Batch health results retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - results
+            - total_time_ms
+            properties:
+              results:
+                type: array
+                items:
+                  HealthResponse:
+                    type: object
+                    required:
+                    - status
+                    - timestamp
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                        - healthy
+                        - degraded
+                        - unhealthy
+                        example: healthy
+                        maxLength: 255
+                      domain:
+                        type: string
+                        example: service-name
+                        maxLength: 255
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: '2025-12-28T10:00:00Z'
+                        maxLength: 255
+                      version:
+                        type: string
+                        example: 1.0.0
+                        maxLength: 50
+                      uptime_seconds:
+                        type: integer
+                        example: 3600
+                        minimum: 0
+                      active_connections:
+                        type: integer
+                        example: 1500
+                        minimum: 0
+                    description: 'BACKEND NOTE: Fields ordered for struct alignment
+                      (large → small). Expected memory savings: 30-50%.'
+                description: Health status for each requested service
+              total_time_ms:
+                type: integer
+                description: Total processing time in milliseconds
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API Key authentication
+    ServiceAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Service-to-service authentication token

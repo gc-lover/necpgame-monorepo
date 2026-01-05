@@ -1,35 +1,34 @@
 openapi: 3.0.3
 info:
   title: Alliance Service API - Enterprise-Grade Domain Service
-  description: "**Enterprise-Grade Alliance Management API for NECPGAME**
+  description: '**Enterprise-Grade Alliance Management API for NECPGAME**
 
     This API manages alliances between guilds and factions, providing diplomatic relations,
     treaty management, and cooperative gameplay mechanics in Night City.
 
     ## Key Features
 
-    - **Alliance Formation**: Strategic alliance creation and management
-    - **Diplomatic Relations**: Complex relationship systems between groups
-    - **Treaty Management**: Binding agreements and contract enforcement
-    - **Cooperative Gameplay**: Joint operations and shared objectives
-    - **Political Dynamics**: Dynamic alliance shifts and betrayals
-    - **Performance Optimized**: MMOFPS-grade performance with <50ms P99 latency
+    - **Alliance Formation**: Strategic alliance creation and management - **Diplomatic
+    Relations**: Complex relationship systems between groups - **Treaty Management**:
+    Binding agreements and contract enforcement - **Cooperative Gameplay**: Joint
+    operations and shared objectives - **Political Dynamics**: Dynamic alliance shifts
+    and betrayals - **Performance Optimized**: MMOFPS-grade performance with <50ms
+    P99 latency
 
     ## Domain Purpose
 
-    The Alliance domain handles all aspects of inter-group cooperation and diplomacy in Night City.
-    Players form alliances, negotiate treaties, and engage in cooperative activities through
-    structured diplomatic systems and political gameplay mechanics.
+    The Alliance domain handles all aspects of inter-group cooperation and diplomacy
+    in Night City. Players form alliances, negotiate treaties, and engage in cooperative
+    activities through structured diplomatic systems and political gameplay mechanics.
 
     ## Performance Targets
 
-    - P99 Latency: <50ms for alliance operations
-    - Memory: <30KB per active alliance session
-    - Concurrent users: 100,000+ simultaneous diplomatic operations
-    - Treaty calculations: <15ms response time
+    - P99 Latency: <50ms for alliance operations - Memory: <30KB per active alliance
+    session - Concurrent users: 100,000+ simultaneous diplomatic operations - Treaty
+    calculations: <15ms response time
 
-    "
-  version: "1.0.0"
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
@@ -38,28 +37,28 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necpgame.com/v1/alliance
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/alliance
-    description: Staging server
-  - url: http://localhost:8080/api/v1/alliance
-    description: Local development server
+- url: https://api.necpgame.com/v1/alliance
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/alliance
+  description: Staging server
+- url: http://localhost:8080/api/v1/alliance
+  description: Local development server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: Alliance Management
-    description: Core alliance formation and management operations
-  - name: Treaty Management
-    description: Alliance treaties and agreements
-  - name: Diplomatic Relations
-    description: Inter-alliance diplomacy and politics
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: Alliance Management
+  description: Core alliance formation and management operations
+- name: Treaty Management
+  description: Alliance treaties and agreements
+- name: Diplomatic Relations
+  description: Inter-alliance diplomacy and politics
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
   /health:
     get:
       summary: Alliance service health check
-      description: "**Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
 
 
         Provides real-time health status of the alliance service microservice.
@@ -69,21 +68,21 @@ paths:
 
         **Performance:** <1ms response time, cached for 30 seconds
 
-        "
+        '
       operationId: allianceServiceHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -98,94 +97,100 @@ paths:
               schema:
                 type: string
                 enum:
-                  - gzip
-                  - deflate
-                  - br
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
-        "500":
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        '500':
           description: Service is unhealthy
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /alliances:
     get:
       summary: List alliances with filtering and pagination
-      description: "**Enterprise-grade alliance listing endpoint**
+      description: '**Enterprise-grade alliance listing endpoint**
 
         Supports complex filtering by type, member count, influence, and relationships.
         Optimized for high-throughput scenarios with proper indexing.
 
         **Performance:** <15ms P95, supports 1000+ concurrent requests
 
-        "
+        '
       operationId: listAlliances
       tags:
-        - Alliance Management
+      - Alliance Management
       parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number for pagination
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of items per page
-        - name: alliance_type
-          in: query
-          schema:
-            type: string
-            enum:
-              - military
-              - trade
-              - political
-              - research
-              - criminal
-              - all
-            default: all
-          description: Filter by alliance type
-        - name: influence_level
-          in: query
-          schema:
-            type: string
-            enum:
-              - dominant
-              - major
-              - minor
-              - emerging
-              - all
-            default: all
-          description: Filter by influence level
-        - name: member_count_min
-          in: query
-          schema:
-            type: integer
-            minimum: 2
-          description: Minimum member count filter
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: alliance_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - military
+          - trade
+          - political
+          - research
+          - criminal
+          - all
+          default: all
+        description: Filter by alliance type
+      - name: influence_level
+        in: query
+        schema:
+          type: string
+          enum:
+          - dominant
+          - major
+          - minor
+          - emerging
+          - all
+          default: all
+        description: Filter by influence level
+      - name: member_count_min
+        in: query
+        schema:
+          type: integer
+          minimum: 2
+        description: Minimum member count filter
       responses:
-        "200":
+        '200':
           description: Alliances retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AllianceListResponse"
-        "400":
+                $ref: '#/components/schemas/AllianceListResponse'
+        '400':
           description: Invalid request - malformed query parameters
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        "429":
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -196,281 +201,317 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     post:
       summary: Create new alliance
-      description: "**Enterprise-grade alliance creation endpoint**
+      description: '**Enterprise-grade alliance creation endpoint**
 
         Validates alliance uniqueness, political landscape impact, and business rules.
         Supports alliance-specific initialization and member invitations.
 
         **Performance:** <75ms P95, includes validation and political impact calculation
 
-        "
+        '
       operationId: createAlliance
       tags:
-        - Alliance Management
+      - Alliance Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateAllianceRequest"
+              $ref: '#/components/schemas/CreateAllianceRequest'
       responses:
-        "201":
+        '201':
           description: Alliance created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AllianceResponse"
-        "400":
+                $ref: '#/components/schemas/AllianceResponse'
+        '400':
           description: Invalid request - validation failed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        "409":
+        '409':
           description: Conflict - alliance name already exists
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        "422":
+        '422':
           description: Unprocessable entity - political landscape constraints
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /alliances/{allianceId}:
     get:
       summary: Get alliance details
-      description: "**Enterprise-grade alliance retrieval endpoint**
+      description: '**Enterprise-grade alliance retrieval endpoint**
 
-        Retrieves complete alliance information including members, treaties,
-        diplomatic relations, and political standing.
+        Retrieves complete alliance information including members, treaties, diplomatic
+        relations, and political standing.
 
         Optimized with caching and conditional requests.
 
         **Performance:** <10ms P95 with Redis caching
 
-        "
+        '
       operationId: getAlliance
       tags:
-        - Alliance Management
+      - Alliance Management
       parameters:
-        - name: allianceId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Alliance unique identifier
-        - name: include_members
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include alliance member details
-        - name: include_treaties
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Include active treaties
-        - name: include_relations
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Include diplomatic relationships
+      - name: allianceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alliance unique identifier
+      - name: include_members
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include alliance member details
+      - name: include_treaties
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include active treaties
+      - name: include_relations
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include diplomatic relationships
       responses:
-        "200":
+        '200':
           description: Alliance retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AllianceResponse"
-        "404":
+                $ref: '#/components/schemas/AllianceResponse'
+        '404':
           description: Alliance not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     put:
       summary: Update alliance
-      description: "**Enterprise-grade alliance update endpoint**
+      description: '**Enterprise-grade alliance update endpoint**
 
         Supports partial updates with political impact assessment and validation.
         Ensures alliance integrity and political balance maintenance.
 
         **Performance:** <40ms P95, includes political impact calculation
 
-        "
+        '
       operationId: updateAlliance
       tags:
-        - Alliance Management
+      - Alliance Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: allianceId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Alliance unique identifier
+      - name: allianceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alliance unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateAllianceRequest"
+              $ref: '#/components/schemas/UpdateAllianceRequest'
       responses:
-        "200":
+        '200':
           description: Alliance updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AllianceResponse"
-        "400":
+                $ref: '#/components/schemas/AllianceResponse'
+        '400':
           description: Invalid request - validation failed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        "404":
+        '404':
           description: Alliance not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        "409":
+        '409':
           description: Conflict - political constraints violation
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /alliances/{allianceId}/join:
     post:
       summary: Join alliance
-      description: "**Enterprise-grade alliance membership endpoint**
+      description: '**Enterprise-grade alliance membership endpoint**
 
         Handles faction/guild alliance joining with treaty acceptance and integration.
         Validates membership criteria and updates alliance statistics.
 
         **Performance:** <50ms P95, includes treaty validation
 
-        "
+        '
       operationId: joinAlliance
       tags:
-        - Alliance Management
+      - Alliance Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: allianceId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Alliance unique identifier
+      - name: allianceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alliance unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/JoinAllianceRequest"
+              $ref: '#/components/schemas/JoinAllianceRequest'
       responses:
-        "200":
+        '200':
           description: Successfully joined alliance
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MembershipResponse"
-        "400":
+                $ref: '#/components/schemas/MembershipResponse'
+        '400':
           description: Invalid request - membership criteria not met
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        "403":
+        '403':
           description: Forbidden - insufficient diplomatic authority
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        "404":
+        '404':
           description: Alliance not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        "409":
+        '409':
           description: Conflict - already member of rival alliance
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /alliances/{allianceId}/leave:
     post:
       summary: Leave alliance
-      description: "**Enterprise-grade alliance departure endpoint**
+      description: '**Enterprise-grade alliance departure endpoint**
 
         Handles clean alliance departure with treaty termination and impact assessment.
         Updates alliance statistics and applies departure penalties.
 
         **Performance:** <30ms P95, includes treaty recalculation
 
-        "
+        '
       operationId: leaveAlliance
       tags:
-        - Alliance Management
+      - Alliance Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: allianceId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Alliance unique identifier
+      - name: allianceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alliance unique identifier
       requestBody:
         required: false
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LeaveAllianceRequest"
+              $ref: '#/components/schemas/LeaveAllianceRequest'
       responses:
-        "200":
+        '200':
           description: Successfully left alliance
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LeaveAllianceResponse"
-        "400":
+                $ref: '#/components/schemas/LeaveAllianceResponse'
+        '400':
           description: Invalid request - cannot leave during critical period
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        "403":
+        '403':
           description: Forbidden - leadership position or treaty obligations
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        "404":
+        '404':
           description: Alliance not found or not a member
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /alliances/{allianceId}/treaties:
     get:
       summary: Get alliance treaties
-      description: "**Enterprise-grade treaty management endpoint**
+      description: '**Enterprise-grade treaty management endpoint**
 
         Retrieves all active treaties for the alliance including trade agreements,
         military pacts, and diplomatic arrangements.
@@ -479,113 +520,125 @@ paths:
 
         **Performance:** <20ms P95, cached with 5-minute TTL
 
-        "
+        '
       operationId: getAllianceTreaties
       tags:
-        - Treaty Management
+      - Treaty Management
       parameters:
-        - name: allianceId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Alliance unique identifier
-        - name: treaty_type
-          in: query
-          schema:
-            type: string
-            enum:
-              - trade
-              - military
-              - research
-              - territorial
-              - all
-            default: all
-          description: Filter by treaty type
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum:
-              - active
-              - pending
-              - expired
-              - breached
-              - all
-            default: active
-          description: Filter by treaty status
+      - name: allianceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alliance unique identifier
+      - name: treaty_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - trade
+          - military
+          - research
+          - territorial
+          - all
+          default: all
+        description: Filter by treaty type
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - pending
+          - expired
+          - breached
+          - all
+          default: active
+        description: Filter by treaty status
       responses:
-        "200":
+        '200':
           description: Treaties retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TreatyResponse"
-        "404":
+                $ref: '#/components/schemas/TreatyResponse'
+        '404':
           description: Alliance not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     post:
       summary: Propose new treaty
-      description: "**Enterprise-grade treaty proposal endpoint**
+      description: '**Enterprise-grade treaty proposal endpoint**
 
-        Initiates treaty negotiations with other alliances or factions.
-        Validates proposal legitimacy and diplomatic standing.
+        Initiates treaty negotiations with other alliances or factions. Validates
+        proposal legitimacy and diplomatic standing.
 
         **Performance:** <60ms P95, includes diplomatic validation
 
-        "
+        '
       operationId: proposeTreaty
       tags:
-        - Treaty Management
+      - Treaty Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: allianceId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Alliance unique identifier
+      - name: allianceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alliance unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TreatyProposalRequest"
+              $ref: '#/components/schemas/TreatyProposalRequest'
       responses:
-        "201":
+        '201':
           description: Treaty proposal submitted successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TreatyProposalResponse"
-        "400":
+                $ref: '#/components/schemas/TreatyProposalResponse'
+        '400':
           description: Invalid proposal - validation failed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        "403":
+        '403':
           description: Forbidden - insufficient diplomatic authority
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        "409":
+        '409':
           description: Conflict - existing treaty negotiation in progress
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /alliances/{allianceId}/diplomacy:
     get:
       summary: Get diplomatic relations
-      description: "**Enterprise-grade diplomatic relations endpoint**
+      description: '**Enterprise-grade diplomatic relations endpoint**
 
         Retrieves complete diplomatic matrix for alliance including relationships
         with other alliances, factions, and political entities.
@@ -594,60 +647,66 @@ paths:
 
         **Performance:** <25ms P95, cached with 5-minute TTL
 
-        "
+        '
       operationId: getAllianceDiplomacy
       tags:
-        - Diplomatic Relations
+      - Diplomatic Relations
       parameters:
-        - name: allianceId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Alliance unique identifier
-        - name: relation_type
-          in: query
-          schema:
-            type: string
-            enum:
-              - allied
-              - neutral
-              - hostile
-              - at_war
-              - all
-            default: all
-          description: Filter by relationship type
+      - name: allianceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Alliance unique identifier
+      - name: relation_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - allied
+          - neutral
+          - hostile
+          - at_war
+          - all
+          default: all
+        description: Filter by relationship type
       responses:
-        "200":
+        '200':
           description: Diplomatic relations retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DiplomacyResponse"
-        "404":
+                $ref: '#/components/schemas/DiplomacyResponse'
+        '404':
           description: Alliance not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
   schemas:
     Error:
-      $ref: '../common/schemas/error.yaml#/Error'
+      $ref: ../common-service/schemas/error.yaml#/Error
     HealthResponse:
-      $ref: '../common/schemas/health.yaml#/HealthResponse'
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
     PaginationMeta:
-      $ref: '../common/schemas/pagination.yaml#/PaginationMeta'
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationMeta
     Alliance:
       type: object
       required:
-        - id
-        - name
-        - alliance_type
-        - member_count
-        - founded_date
-        - is_active
+      - id
+      - name
+      - alliance_type
+      - member_count
+      - founded_date
+      - is_active
       properties:
         id:
           type: string
@@ -658,7 +717,7 @@ components:
           minLength: 3
           maxLength: 100
           description: Alliance display name
-          example: "Pacific Rim Alliance"
+          example: Pacific Rim Alliance
         description:
           type: string
           maxLength: 2000
@@ -666,20 +725,20 @@ components:
         alliance_type:
           type: string
           enum:
-            - military
-            - trade
-            - political
-            - research
-            - criminal
+          - military
+          - trade
+          - political
+          - research
+          - criminal
           description: Type of alliance
           example: military
         influence_level:
           type: string
           enum:
-            - dominant
-            - major
-            - minor
-            - emerging
+          - dominant
+          - major
+          - minor
+          - emerging
           description: Current influence level
           example: major
         member_count:
@@ -716,22 +775,25 @@ components:
           minimum: 0
           description: Combined influence of all members
           example: 25000
-      description: |
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Alliance data optimized for frequent diplomatic operations."
+      description: '"BACKEND NOTE: Fields ordered for struct alignment (large → small).
+
+        Expected memory savings: 30-50%. Alliance data optimized for frequent diplomatic
+        operations."
+
+        '
     CreateAllianceRequest:
       type: object
       required:
-        - name
-        - alliance_type
-        - description
+      - name
+      - alliance_type
+      - description
       properties:
         name:
           type: string
           minLength: 3
           maxLength: 100
           description: Desired alliance name
-          example: "United Corporate Front"
+          example: United Corporate Front
         description:
           type: string
           minLength: 10
@@ -740,11 +802,11 @@ components:
         alliance_type:
           type: string
           enum:
-            - military
-            - trade
-            - political
-            - research
-            - criminal
+          - military
+          - trade
+          - political
+          - research
+          - criminal
           description: Type of alliance to create
         founding_members:
           type: array
@@ -758,9 +820,12 @@ components:
           type: object
           description: Initial treaty terms for the alliance
           additionalProperties: true
-      description: |
-        "BACKEND NOTE: Validation includes name uniqueness and political constraints.
+      description: '"BACKEND NOTE: Validation includes name uniqueness and political
+        constraints.
+
         Founding members must have compatible diplomatic relations."
+
+        '
     UpdateAllianceRequest:
       type: object
       properties:
@@ -781,30 +846,35 @@ components:
         is_active:
           type: boolean
           description: Activate/deactivate alliance
-      description: |
-        "BACKEND NOTE: Partial updates supported. Leadership changes require diplomatic consensus.
+      description: '"BACKEND NOTE: Partial updates supported. Leadership changes require
+        diplomatic consensus.
+
         Deactivation may affect ongoing treaties and relations."
+
+        '
     AllianceResponse:
       type: object
       required:
-        - alliance
+      - alliance
       properties:
         alliance:
-          $ref: "#/components/schemas/Alliance"
-      description: |
-        "BACKEND NOTE: Single alliance response wrapper.
+          $ref: '#/components/schemas/Alliance'
+      description: '"BACKEND NOTE: Single alliance response wrapper.
+
         Includes full alliance data with optional related information."
+
+        '
     AllianceListResponse:
       type: object
       required:
-        - alliances
-        - total_count
-        - has_more
+      - alliances
+      - total_count
+      - has_more
       properties:
         alliances:
           type: array
           items:
-            $ref: "#/components/schemas/Alliance"
+            $ref: '#/components/schemas/Alliance'
           description: List of alliances
         total_count:
           type: integer
@@ -826,9 +896,11 @@ components:
           maximum: 100
           description: Items per page
           example: 20
-      description: |
-        "BACKEND NOTE: Paginated alliance list with metadata.
+      description: '"BACKEND NOTE: Paginated alliance list with metadata.
+
         Optimized for large alliance directories."
+
+        '
     JoinAllianceRequest:
       type: object
       properties:
@@ -844,16 +916,18 @@ components:
           type: object
           description: Specific membership terms and conditions
           additionalProperties: true
-      description: |
-        "BACKEND NOTE: Optional sponsor required for some alliance types.
+      description: '"BACKEND NOTE: Optional sponsor required for some alliance types.
+
         Terms validation ensures diplomatic compatibility."
+
+        '
     MembershipResponse:
       type: object
       required:
-        - alliance_id
-        - member_id
-        - membership_status
-        - joined_at
+      - alliance_id
+      - member_id
+      - membership_status
+      - joined_at
       properties:
         alliance_id:
           type: string
@@ -866,9 +940,9 @@ components:
         membership_status:
           type: string
           enum:
-            - active
-            - probation
-            - pending_approval
+          - active
+          - probation
+          - pending_approval
           description: Initial membership status
           example: probation
         joined_at:
@@ -879,35 +953,41 @@ components:
           type: object
           description: Agreed membership terms and obligations
           additionalProperties: true
-      description: |
-        "BACKEND NOTE: Membership status affects diplomatic relations and treaty obligations.
+      description: '"BACKEND NOTE: Membership status affects diplomatic relations
+        and treaty obligations.
+
         Probation period may apply for new members."
+
+        '
     LeaveAllianceRequest:
       type: object
       properties:
         reason:
           type: string
           enum:
-            - strategic_realignment
-            - internal_conflict
-            - treaty_violation
-            - voluntary_withdrawal
+          - strategic_realignment
+          - internal_conflict
+          - treaty_violation
+          - voluntary_withdrawal
           description: Reason for leaving
           example: strategic_realignment
         exit_statement:
           type: string
           maxLength: 500
           description: Optional formal statement about departure
-      description: |
-        "BACKEND NOTE: Some reasons may incur diplomatic penalties or treaty breaches.
+      description: '"BACKEND NOTE: Some reasons may incur diplomatic penalties or
+        treaty breaches.
+
         Leadership positions require special withdrawal procedures."
+
+        '
     LeaveAllianceResponse:
       type: object
       required:
-        - alliance_id
-        - member_id
-        - left_at
-        - diplomatic_impact
+      - alliance_id
+      - member_id
+      - left_at
+      - diplomatic_impact
       properties:
         alliance_id:
           type: string
@@ -934,18 +1014,21 @@ components:
           type: string
           format: duration
           description: Cooldown before rejoining alliances
-      description: |
-        "BACKEND NOTE: Diplomatic impact varies by reason and alliance type.
+      description: '"BACKEND NOTE: Diplomatic impact varies by reason and alliance
+        type.
+
         Some departures trigger automatic treaty reviews."
+
+        '
     Treaty:
       type: object
       required:
-        - id
-        - type
-        - parties
-        - terms
-        - status
-        - created_at
+      - id
+      - type
+      - parties
+      - terms
+      - status
+      - created_at
       properties:
         id:
           type: string
@@ -954,11 +1037,11 @@ components:
         type:
           type: string
           enum:
-            - trade
-            - military
-            - research
-            - territorial
-            - non_aggression
+          - trade
+          - military
+          - research
+          - territorial
+          - non_aggression
           description: Type of treaty
           example: trade
         parties:
@@ -975,11 +1058,11 @@ components:
         status:
           type: string
           enum:
-            - active
-            - pending
-            - expired
-            - breached
-            - terminated
+          - active
+          - pending
+          - expired
+          - breached
+          - terminated
           description: Current treaty status
           example: active
         created_at:
@@ -994,19 +1077,22 @@ components:
           type: string
           format: date-time
           description: Last treaty modification
-      description: |
-        "BACKEND NOTE: Treaty data affects diplomatic relations and gameplay mechanics.
+      description: '"BACKEND NOTE: Treaty data affects diplomatic relations and gameplay
+        mechanics.
+
         Status changes trigger diplomatic event notifications."
+
+        '
     TreatyResponse:
       type: object
       required:
-        - treaties
-        - total_count
+      - treaties
+      - total_count
       properties:
         treaties:
           type: array
           items:
-            $ref: "#/components/schemas/Treaty"
+            $ref: '#/components/schemas/Treaty'
           description: List of treaties
         total_count:
           type: integer
@@ -1018,24 +1104,26 @@ components:
           minimum: 0
           description: Number of active treaties
           example: 8
-      description: |
-        "BACKEND NOTE: Treaty summary for alliance diplomatic overview.
+      description: '"BACKEND NOTE: Treaty summary for alliance diplomatic overview.
+
         Active count affects alliance diplomatic strength."
+
+        '
     TreatyProposalRequest:
       type: object
       required:
-        - treaty_type
-        - target_party_id
-        - proposed_terms
+      - treaty_type
+      - target_party_id
+      - proposed_terms
       properties:
         treaty_type:
           type: string
           enum:
-            - trade
-            - military
-            - research
-            - territorial
-            - non_aggression
+          - trade
+          - military
+          - research
+          - territorial
+          - non_aggression
           description: Type of treaty to propose
           example: trade
         target_party_id:
@@ -1055,16 +1143,19 @@ components:
           minimum: 1
           maximum: 3650
           description: Proposed treaty duration in days
-      description: |
-        "BACKEND NOTE: Terms validation includes diplomatic compatibility checks.
+      description: '"BACKEND NOTE: Terms validation includes diplomatic compatibility
+        checks.
+
         Duration affects treaty negotiation complexity."
+
+        '
     TreatyProposalResponse:
       type: object
       required:
-        - proposal_id
-        - treaty_type
-        - status
-        - submitted_at
+      - proposal_id
+      - treaty_type
+      - status
+      - submitted_at
       properties:
         proposal_id:
           type: string
@@ -1076,11 +1167,11 @@ components:
         status:
           type: string
           enum:
-            - submitted
-            - under_review
-            - accepted
-            - rejected
-            - counter_proposed
+          - submitted
+          - under_review
+          - accepted
+          - rejected
+          - counter_proposed
           description: Current proposal status
           example: submitted
         submitted_at:
@@ -1095,16 +1186,18 @@ components:
           type: object
           description: Expected diplomatic consequences
           additionalProperties: true
-      description: |
-        "BACKEND NOTE: Proposal status tracks treaty negotiation lifecycle.
+      description: '"BACKEND NOTE: Proposal status tracks treaty negotiation lifecycle.
+
         Response deadlines vary by treaty type and diplomatic relations."
+
+        '
     DiplomaticRelation:
       type: object
       required:
-        - target_party_id
-        - relation_type
-        - relation_strength
-        - established_date
+      - target_party_id
+      - relation_type
+      - relation_strength
+      - established_date
       properties:
         target_party_id:
           type: string
@@ -1113,12 +1206,12 @@ components:
         relation_type:
           type: string
           enum:
-            - allied
-            - friendly
-            - neutral
-            - strained
-            - hostile
-            - at_war
+          - allied
+          - friendly
+          - neutral
+          - strained
+          - hostile
+          - at_war
           description: Type of diplomatic relationship
           example: allied
         relation_strength:
@@ -1146,15 +1239,18 @@ components:
             type: string
             format: uuid
           description: Treaties shared between parties
-      description: |
-        "BACKEND NOTE: Relation strength affects gameplay mechanics and NPC interactions.
+      description: '"BACKEND NOTE: Relation strength affects gameplay mechanics and
+        NPC interactions.
+
         Dynamic relationships change based on alliance actions and treaty compliance."
+
+        '
     DiplomacyResponse:
       type: object
       required:
-        - alliance_id
-        - diplomatic_relations
-        - overall_standing
+      - alliance_id
+      - diplomatic_relations
+      - overall_standing
       properties:
         alliance_id:
           type: string
@@ -1163,16 +1259,16 @@ components:
         diplomatic_relations:
           type: array
           items:
-            $ref: "#/components/schemas/DiplomaticRelation"
+            $ref: '#/components/schemas/DiplomaticRelation'
           description: All diplomatic relationships
         overall_standing:
           type: string
           enum:
-            - dominant
-            - influential
-            - balanced
-            - struggling
-            - isolated
+          - dominant
+          - influential
+          - balanced
+          - struggling
+          - isolated
           description: Overall diplomatic position
           example: influential
         ally_count:
@@ -1190,9 +1286,12 @@ components:
           minimum: 0
           description: Number of active wars
           example: 1
-      description: |
-        "BACKEND NOTE: Complete diplomatic overview for strategic decision making.
+      description: '"BACKEND NOTE: Complete diplomatic overview for strategic decision
+        making.
+
         Relationship counts help assess alliance political position."
+
+        '
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
+      $ref: ../common-service/security/security.yaml#/BearerAuth

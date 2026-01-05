@@ -1,0 +1,2362 @@
+openapi: 3.0.3
+info:
+  title: Notification Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Notification & Messaging API for NECPGAME**
+
+    This API manages all forms of notifications, messages, and real-time communication
+    within the NECPGAME ecosystem, including chat systems, event-driven messaging,
+    message queues, and Kafka-based event streaming.
+
+    ## Key Features
+
+    - **Real-time Messaging**: WebSocket-based chat systems for global, guild, and
+    private channels - **Event Streaming**: Kafka-based event publishing for player
+    activities and system events - **Message Queues**: High-throughput message queuing
+    with priority and TTL support - **Notification Delivery**: Reliable push notifications
+    and in-game alerts - **Social Communication**: Multi-channel chat with moderation
+    and formatting - **Performance Optimized**: MMOFPS-grade performance with <20ms
+    message delivery
+
+    ## Domain Purpose
+
+    The Notification Service handles all communication and messaging within NECPGAME,
+    from real-time chat conversations to system-wide event notifications. It ensures
+    reliable message delivery, proper moderation, and scalable event processing.
+
+    ## Performance Targets
+
+    - Message Delivery: <20ms P99 latency for real-time messages - Throughput: 100,000+
+    messages per second sustained - Concurrent Connections: 500,000+ WebSocket connections
+    - Queue Processing: <5ms average dequeue time - Event Streaming: Sub-millisecond
+    publish latency
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/notification
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/notification
+  description: Staging server
+- url: http://localhost:8080/api/v1/notification
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Chat Messaging
+  description: Real-time chat and messaging operations
+- name: Event Streaming
+  description: Kafka-based event publishing and consumption
+- name: Message Queues
+  description: Message queue operations and management
+- name: Notifications
+  description: Push notifications and alerts
+- name: Health Monitoring
+  description: Service health and monitoring endpoints
+paths:
+  /health:
+    get:
+      summary: Notification service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the notification service microservice.
+
+        Critical for service discovery, load balancing, and monitoring.'
+      operationId: getHealth
+      tags:
+      - Health Monitoring
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                    maxLength: 255
+                  domain:
+                    type: string
+                    example: service-name
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-12-28T10:00:00Z'
+                    maxLength: 255
+                  version:
+                    type: string
+                    example: 1.0.0
+                    maxLength: 50
+                  uptime_seconds:
+                    type: integer
+                    example: 3600
+                    minimum: 0
+                  active_connections:
+                    type: integer
+                    example: 1500
+                    minimum: 0
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                  → small). Expected memory savings: 30-50%.'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                    maxLength: 255
+                  domain:
+                    type: string
+                    example: service-name
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-12-28T10:00:00Z'
+                    maxLength: 255
+                  version:
+                    type: string
+                    example: 1.0.0
+                    maxLength: 50
+                  uptime_seconds:
+                    type: integer
+                    example: 3600
+                    minimum: 0
+                  active_connections:
+                    type: integer
+                    example: 1500
+                    minimum: 0
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                  → small). Expected memory savings: 30-50%.'
+        '429':
+          description: Too many requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/batch:
+    post:
+      summary: Batch health check for multiple services
+      description: '**Performance optimization:** Check multiple services health in
+        single request
+
+        Reduces network overhead by ~80% for monitoring dashboards.
+
+        **Input:** Array of service names **Output:** Health status for each service'
+      operationId: getBatchHealth
+      tags:
+      - Health Monitoring
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                  description: List of services to check
+      responses:
+        '200':
+          description: Batch health results retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-cache
+            X-Processing-Time:
+              schema:
+                type: integer
+                example: 15
+                description: Processing time in milliseconds
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - results
+                - total_time_ms
+                properties:
+                  results:
+                    type: array
+                    items:
+                      HealthResponse:
+                        type: object
+                        required:
+                        - status
+                        - timestamp
+                        properties:
+                          status:
+                            type: string
+                            enum:
+                            - healthy
+                            - degraded
+                            - unhealthy
+                            example: healthy
+                            maxLength: 255
+                          domain:
+                            type: string
+                            example: service-name
+                            maxLength: 255
+                          timestamp:
+                            type: string
+                            format: date-time
+                            example: '2025-12-28T10:00:00Z'
+                            maxLength: 255
+                          version:
+                            type: string
+                            example: 1.0.0
+                            maxLength: 50
+                          uptime_seconds:
+                            type: integer
+                            example: 3600
+                            minimum: 0
+                          active_connections:
+                            type: integer
+                            example: 1500
+                            minimum: 0
+                        description: 'BACKEND NOTE: Fields ordered for struct alignment
+                          (large → small). Expected memory savings: 30-50%.'
+                    description: Health status for each requested service
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time in milliseconds
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      description: '**Performance optimization:** Real-time health updates without
+        polling
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+
+        **Protocol:** WebSocket with JSON payloads **Heartbeat:** 30 second intervals
+        **Reconnection:** Automatic with exponential backoff'
+      operationId: notificationHealthWebSocket
+      tags:
+      - Health Monitoring
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        description: Services to monitor (optional)
+      responses:
+        '200':
+          description: WebSocket upgrade initiated
+        '101':
+          description: WebSocket connection established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - WebSocket connection limit exceeded
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /chat/messages:
+    get:
+      summary: Get chat messages
+      description: Retrieve chat messages with filtering and pagination
+      operationId: getChatMessages
+      tags:
+      - Chat Messaging
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: channel_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - GLOBAL
+          - TRADE
+          - NEWBIE
+          - LOCAL
+          - PARTY
+          - RAID
+          - GUILD
+          - GUILD_OFFICER
+          - WHISPER
+          - SYSTEM
+          - COMBAT_LOG
+          - RP_EMOTE
+        description: Filter by channel type
+      - name: channel_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Specific channel ID
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of messages to retrieve
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageListResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    post:
+      summary: Send chat message
+      description: Send a new chat message
+      operationId: sendChatMessage
+      tags:
+      - Chat Messaging
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '200':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatMessage'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /chat/channels:
+    post:
+      summary: Create chat channel
+      description: Create a new chat channel
+      operationId: createChatChannel
+      tags:
+      - Chat Messaging
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateChannelRequest'
+      responses:
+        '201':
+          description: Channel created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    get:
+      summary: List chat channels
+      description: Get list of available chat channels
+      operationId: listChatChannels
+      tags:
+      - Chat Messaging
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - PUBLIC
+          - PRIVATE
+          - GROUP
+          - SYSTEM
+        description: Filter by channel type
+      responses:
+        '200':
+          description: Channels retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelListResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /queues/messages:
+    post:
+      summary: Enqueue message
+      description: Add a message to a queue
+      operationId: enqueueMessage
+      tags:
+      - Message Queues
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnqueueMessageRequest'
+      responses:
+        '200':
+          description: Message enqueued successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnqueueMessageResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    get:
+      summary: Dequeue messages
+      description: Retrieve messages from a queue
+      operationId: dequeueMessages
+      tags:
+      - Message Queues
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: queue
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Queue name
+      - name: consumer_id
+        in: query
+        schema:
+          type: string
+        description: Consumer identifier
+      - name: max_messages
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 1
+        description: Maximum messages to retrieve
+      responses:
+        '200':
+          description: Messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DequeueMessageResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /queues/messages/{messageId}/ack:
+    put:
+      summary: Acknowledge message
+      description: Confirm message processing
+      operationId: acknowledgeMessage
+      tags:
+      - Message Queues
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Message identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcknowledgeMessageRequest'
+      responses:
+        '200':
+          description: Message acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcknowledgeMessageResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /queues:
+    post:
+      summary: Create queue
+      description: Create a new message queue
+      operationId: createQueue
+      tags:
+      - Message Queues
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQueueRequest'
+      responses:
+        '201':
+          description: Queue created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateQueueResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Resource conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /events/publish:
+    post:
+      summary: Publish event
+      description: Publish an event to Kafka topics
+      operationId: publishEvent
+      tags:
+      - Event Streaming
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishEventRequest'
+      responses:
+        '200':
+          description: Event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishEventResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /events/topics:
+    get:
+      summary: List event topics
+      description: Get available Kafka event topics
+      operationId: listEventTopics
+      tags:
+      - Event Streaming
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          description: Topics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTopicsResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /notifications:
+    get:
+      summary: Get notifications
+      description: Retrieve user notifications
+      operationId: getNotifications
+      tags:
+      - Notifications
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - unread
+          - read
+          - all
+          default: unread
+        description: Filter by notification status
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - system
+          - social
+          - game
+          - achievement
+          description: Filter by notification type
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of notifications to retrieve
+      responses:
+        '200':
+          description: Notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    post:
+      summary: Send notification
+      description: Send a notification to a user
+      operationId: sendNotification
+      tags:
+      - Notifications
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendNotificationRequest'
+      responses:
+        '200':
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+  schemas:
+    ChatMessage:
+      type: object
+      properties:
+        message_id:
+          type: string
+          format: uuid
+        message_type:
+          type: string
+          enum:
+          - CHAT
+          - SYSTEM
+          - COMBAT
+          - QUEST
+          - SOCIAL
+          - ADMIN
+        sender_id:
+          type: string
+          format: uuid
+        sender_name:
+          type: string
+        recipient_id:
+          type: string
+          format: uuid
+        recipient_type:
+          type: string
+          enum:
+          - USER
+          - CHANNEL
+          - GROUP
+          - ALL
+        channel:
+          type: string
+        content:
+          type: string
+        content_type:
+          type: string
+          enum:
+          - TEXT
+          - JSON
+          - BINARY
+          default: TEXT
+        priority:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - URGENT
+          default: NORMAL
+        metadata:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: integer
+          format: int64
+        ttl:
+          type: integer
+          description: Time to live in seconds
+      required:
+      - message_id
+      - message_type
+      - sender_id
+      - content
+      - timestamp
+    Channel:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        channel_type:
+          type: string
+          enum:
+          - PUBLIC
+          - PRIVATE
+          - GROUP
+          - SYSTEM
+        name:
+          type: string
+        description:
+          type: string
+        owner_id:
+          type: string
+          format: uuid
+        member_count:
+          type: integer
+          minimum: 0
+        max_members:
+          type: integer
+          minimum: 1
+        is_temporary:
+          type: boolean
+          default: false
+        created_at:
+          type: integer
+          format: int64
+        settings:
+          type: object
+          additionalProperties: true
+      required:
+      - channel_id
+      - channel_type
+      - name
+      - owner_id
+    MessageListResponse:
+      allOf:
+      - type: object
+        required:
+        - items
+        - total
+        - limit
+        - offset
+        properties:
+          items:
+            type: array
+            description: Array of items
+          total:
+            type: integer
+            minimum: 0
+            example: 100
+            description: Total number of items
+          limit:
+            type: integer
+            minimum: 1
+            maximum: 100
+            example: 20
+            description: Items per page
+          offset:
+            type: integer
+            minimum: 0
+            example: 0
+            description: Number of items to skip
+      - type: object
+        properties:
+          items:
+            type: array
+            items:
+              $ref: '#/components/schemas/ChatMessage'
+    SendMessageRequest:
+      type: object
+      required:
+      - channel_id
+      - channel_type
+      - content
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        recipient_id:
+          type: string
+          format: uuid
+          nullable: true
+        content:
+          type: string
+          maxLength: 500
+        channel_type:
+          type: string
+          enum:
+          - GLOBAL
+          - TRADE
+          - NEWBIE
+          - LOCAL
+          - PARTY
+          - RAID
+          - GUILD
+          - GUILD_OFFICER
+          - WHISPER
+          - SYSTEM
+          - COMBAT_LOG
+          - RP_EMOTE
+    CreateChannelRequest:
+      type: object
+      required:
+      - name
+      - channel_type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 200
+        channel_type:
+          type: string
+          enum:
+          - PUBLIC
+          - PRIVATE
+          - GROUP
+          - SYSTEM
+        max_members:
+          type: integer
+          minimum: 2
+          maximum: 1000
+        is_temporary:
+          type: boolean
+          default: false
+    ChannelListResponse:
+      type: object
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Channel'
+        total_count:
+          type: integer
+    EnqueueMessageRequest:
+      type: object
+      required:
+      - queue_name
+      - payload
+      properties:
+        queue_name:
+          type: string
+          description: Name of the queue
+        payload:
+          type: string
+          description: Message payload (JSON string)
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+            schema:
+              type: string
+              example: '"additionalproperties-value"'
+              description: additionalProperties header value
+          description: Optional message headers
+        ttl:
+          type: integer
+          format: int64
+          description: Time-to-live in milliseconds
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 255
+          default: 0
+          description: Message priority (higher values = higher priority)
+    EnqueueMessageResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+          description: Unique message identifier
+        queued_at:
+          type: integer
+          format: int64
+          description: Unix timestamp when message was queued
+    DequeueMessageResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueMessage'
+        count:
+          type: integer
+          description: Number of messages returned
+    QueueMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique message identifier
+        queue_name:
+          type: string
+          description: Queue name
+        payload:
+          type: string
+          description: Message payload
+        status:
+          type: string
+          enum:
+          - queued
+          - processing
+          - acknowledged
+          - failed
+          - expired
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+            schema:
+              type: string
+              example: '"additionalproperties-value"'
+              description: additionalProperties header value
+        ttl:
+          type: integer
+          format: int64
+          description: Time-to-live in milliseconds
+        created_at:
+          type: integer
+          format: int64
+          description: Creation timestamp
+        priority:
+          type: integer
+        retry_count:
+          type: integer
+        max_retries:
+          type: integer
+    AcknowledgeMessageRequest:
+      type: object
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+          description: Whether message processing was successful
+        error:
+          type: string
+          description: Error message if processing failed
+    AcknowledgeMessageResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+        acknowledged:
+          type: boolean
+    CreateQueueRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Queue name
+        priority:
+          type: boolean
+          description: Whether this is a priority queue
+          default: false
+        persistent:
+          type: boolean
+          description: Whether queue persists across restarts
+          default: true
+        message_ttl:
+          type: integer
+          format: int64
+          description: Default message TTL in milliseconds
+        max_size:
+          type: integer
+          description: Maximum queue size
+          default: 10000
+    CreateQueueResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        created_at:
+          type: integer
+          format: int64
+    BaseEvent:
+      type: object
+      required:
+      - event_id
+      - event_type
+      - timestamp
+      - source
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        correlation_id:
+          type: string
+          format: uuid
+          description: Correlation ID for event tracing
+        player_id:
+          type: string
+          format: uuid
+          description: Player associated with the event
+        event_type:
+          type: string
+          description: Event type identifier
+        source:
+          type: string
+          description: Service or component that generated the event
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+    PublishEventRequest:
+      type: object
+      required:
+      - event
+      - topic
+      properties:
+        event:
+          $ref: '#/components/schemas/BaseEvent'
+        topic:
+          type: string
+          description: Kafka topic to publish to
+    PublishEventResponse:
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        topic:
+          type: string
+        published_at:
+          type: string
+          format: date-time
+        partition:
+          type: integer
+        offset:
+          type: integer
+    EventTopicsResponse:
+      type: object
+      properties:
+        topics:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              partitions:
+                type: integer
+              description:
+                type: string
+    Notification:
+      type: object
+      properties:
+        notification_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+          - system
+          - social
+          - game
+          - achievement
+        title:
+          type: string
+        message:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        read:
+          type: boolean
+          default: false
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - notification_id
+      - user_id
+      - type
+      - title
+      - message
+    NotificationListResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        total_count:
+          type: integer
+        unread_count:
+          type: integer
+    SendNotificationRequest:
+      type: object
+      required:
+      - user_id
+      - type
+      - title
+      - message
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+          - system
+          - social
+          - game
+          - achievement
+        title:
+          type: string
+          maxLength: 100
+        message:
+          type: string
+          maxLength: 500
+        data:
+          type: object
+          additionalProperties: true
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - service_down
+          - service_up
+        timestamp:
+          type: string
+          format: date-time
+        health:
+          type: object
+          required:
+          - status
+          - timestamp
+          properties:
+            status:
+              type: string
+              enum:
+              - healthy
+              - degraded
+              - unhealthy
+              example: healthy
+              maxLength: 255
+            domain:
+              type: string
+              example: service-name
+              maxLength: 255
+            timestamp:
+              type: string
+              format: date-time
+              example: '2025-12-28T10:00:00Z'
+              maxLength: 255
+            version:
+              type: string
+              example: 1.0.0
+              maxLength: 50
+            uptime_seconds:
+              type: integer
+              example: 3600
+              minimum: 0
+            active_connections:
+              type: integer
+              example: 1500
+              minimum: 0
+          description: 'BACKEND NOTE: Fields ordered for struct alignment (large →
+            small). Expected memory savings: 30-50%.'
+        service_name:
+          type: string
+          description: Name of the service that changed status

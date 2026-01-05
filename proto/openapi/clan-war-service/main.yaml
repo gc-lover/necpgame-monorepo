@@ -1,35 +1,35 @@
 openapi: 3.0.3
 info:
   title: Clan War Service API - Enterprise-Grade Domain Service
-  description: "**Enterprise-Grade Clan Warfare API for NECPGAME**
+  description: '**Enterprise-Grade Clan Warfare API for NECPGAME**
 
     This API manages clan wars and military conflicts between groups, providing battle
     coordination, war declarations, and territorial conquest mechanics in Night City.
 
     ## Key Features
 
-    - **War Declarations**: Formal declaration and management of clan conflicts
-    - **Battle Coordination**: Strategic battle planning and troop deployment
-    - **Territorial Conquest**: Capture and control of contested territories
-    - **War Statistics**: Comprehensive tracking of war performance and casualties
-    - **Alliance Support**: Integration with alliance systems during conflicts
-    - **Performance Optimized**: MMOFPS-grade performance with <50ms P99 latency
+    - **War Declarations**: Formal declaration and management of clan conflicts -
+    **Battle Coordination**: Strategic battle planning and troop deployment - **Territorial
+    Conquest**: Capture and control of contested territories - **War Statistics**:
+    Comprehensive tracking of war performance and casualties - **Alliance Support**:
+    Integration with alliance systems during conflicts - **Performance Optimized**:
+    MMOFPS-grade performance with <50ms P99 latency
 
     ## Domain Purpose
 
-    The Clan War domain handles all aspects of organized warfare between clans and groups in Night City.
-    Players engage in strategic conflicts, coordinate attacks, and compete for territorial dominance
-    through structured warfare systems and military tactics.
+    The Clan War domain handles all aspects of organized warfare between clans and
+    groups in Night City. Players engage in strategic conflicts, coordinate attacks,
+    and compete for territorial dominance through structured warfare systems and military
+    tactics.
 
     ## Performance Targets
 
-    - P99 Latency: <50ms for war operations
-    - Memory: <35KB per active war session
-    - Concurrent users: 200,000+ simultaneous war operations
-    - Battle calculations: <20ms response time
+    - P99 Latency: <50ms for war operations - Memory: <35KB per active war session
+    - Concurrent users: 200,000+ simultaneous war operations - Battle calculations:
+    <20ms response time
 
-    "
-  version: "1.0.0"
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
@@ -38,28 +38,28 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necpgame.com/v1/clan-war
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/clan-war
-    description: Staging server
-  - url: http://localhost:8080/api/v1/clan-war
-    description: Local development server
+- url: https://api.necpgame.com/v1/clan-war
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/clan-war
+  description: Staging server
+- url: http://localhost:8080/api/v1/clan-war
+  description: Local development server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: Clan Warfare
-    description: Core clan war declaration and management operations
-  - name: War Management
-    description: Active war coordination and battle management
-  - name: War Statistics
-    description: Combat statistics and performance analytics
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: Clan Warfare
+  description: Core clan war declaration and management operations
+- name: War Management
+  description: Active war coordination and battle management
+- name: War Statistics
+  description: Combat statistics and performance analytics
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
   /health:
     get:
       summary: Clan war service health check
-      description: "**Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
 
 
         Provides real-time health status of the clan war service microservice.
@@ -69,21 +69,21 @@ paths:
 
         **Performance:** <1ms response time, cached for 30 seconds
 
-        "
+        '
       operationId: clanWarServiceHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -98,251 +98,281 @@ paths:
               schema:
                 type: string
                 enum:
-                  - gzip
-                  - deflate
-                  - br
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
-        "500":
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        '500':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /clan-wars:
     get:
       summary: List clan wars with filtering and pagination
-      description: "**Enterprise-grade clan war listing endpoint**
+      description: '**Enterprise-grade clan war listing endpoint**
 
         Supports complex filtering by status, participants, duration, and outcomes.
         Optimized for high-throughput scenarios with proper indexing.
 
         **Performance:** <15ms P95, supports 1000+ concurrent requests
 
-        "
+        '
       operationId: listClanWars
       tags:
-        - Clan Warfare
+      - Clan Warfare
       parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number for pagination
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of items per page
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum:
-              - active
-              - preparing
-              - ended
-              - cancelled
-              - all
-            default: all
-          description: Filter by war status
-        - name: clan_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter wars involving specific clan
-        - name: war_type
-          in: query
-          schema:
-            type: string
-            enum:
-              - territorial
-              - resource
-              - reputation
-              - alliance
-              - all
-            default: all
-          description: Filter by war type
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - preparing
+          - ended
+          - cancelled
+          - all
+          default: all
+        description: Filter by war status
+      - name: clan_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter wars involving specific clan
+      - name: war_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - territorial
+          - resource
+          - reputation
+          - alliance
+          - all
+          default: all
+        description: Filter by war type
       responses:
-        "200":
+        '200':
           description: Clan wars retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ClanWarListResponse"
-        "400":
+                $ref: '#/components/schemas/ClanWarListResponse'
+        '400':
           description: Invalid request - malformed query parameters
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     post:
       summary: Declare clan war
-      description: "**Enterprise-grade war declaration endpoint**
+      description: '**Enterprise-grade war declaration endpoint**
 
-        Validates war legitimacy, clan relations, and political constraints.
-        Initiates formal war declaration with treaty requirements.
+        Validates war legitimacy, clan relations, and political constraints. Initiates
+        formal war declaration with treaty requirements.
 
         **Performance:** <75ms P95, includes diplomatic validation
 
-        "
+        '
       operationId: declareClanWar
       tags:
-        - Clan Warfare
+      - Clan Warfare
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/WarDeclarationRequest"
+              $ref: '#/components/schemas/WarDeclarationRequest'
       responses:
-        "201":
+        '201':
           description: Clan war declared successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ClanWarResponse"
-        "400":
+                $ref: '#/components/schemas/ClanWarResponse'
+        '400':
           description: Invalid declaration - validation failed
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        "403":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '403':
           description: Forbidden - insufficient authority or alliances
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        "409":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
           description: Conflict - existing war or treaty violations
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /clan-wars/{warId}:
     get:
       summary: Get clan war details
-      description: "**Enterprise-grade clan war retrieval endpoint**
+      description: '**Enterprise-grade clan war retrieval endpoint**
 
-        Retrieves complete war information including participants, battles,
-        casualties, and current status with real-time updates.
+        Retrieves complete war information including participants, battles, casualties,
+        and current status with real-time updates.
 
         Optimized with caching and conditional requests.
 
         **Performance:** <10ms P95 with Redis caching
 
-        "
+        '
       operationId: getClanWar
       tags:
-        - Clan Warfare
+      - Clan Warfare
       parameters:
-        - name: warId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Clan war unique identifier
-        - name: include_battles
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include battle history and details
-        - name: include_participants
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Include participant clan details
+      - name: warId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Clan war unique identifier
+      - name: include_battles
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include battle history and details
+      - name: include_participants
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include participant clan details
       responses:
-        "200":
+        '200':
           description: Clan war retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ClanWarResponse"
-        "404":
+                $ref: '#/components/schemas/ClanWarResponse'
+        '404':
           description: Clan war not found
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     put:
       summary: Update clan war
-      description: "**Enterprise-grade clan war update endpoint**
+      description: '**Enterprise-grade clan war update endpoint**
 
-        Supports status updates, treaty negotiations, and ceasefire agreements.
-        Ensures war integrity and participant consent for major changes.
+        Supports status updates, treaty negotiations, and ceasefire agreements. Ensures
+        war integrity and participant consent for major changes.
 
         **Performance:** <40ms P95, includes diplomatic impact calculation
 
-        "
+        '
       operationId: updateClanWar
       tags:
-        - Clan Warfare
+      - Clan Warfare
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: warId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Clan war unique identifier
+      - name: warId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Clan war unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/WarUpdateRequest"
+              $ref: '#/components/schemas/WarUpdateRequest'
       responses:
-        "200":
+        '200':
           description: Clan war updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ClanWarResponse"
-        "400":
+                $ref: '#/components/schemas/ClanWarResponse'
+        '400':
           description: Invalid request - validation failed
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        "403":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '403':
           description: Forbidden - insufficient authority
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        "404":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
           description: Clan war not found
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        "409":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
           description: Conflict - treaty or ceasefire violations
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /clan-wars/{warId}/battles:
     get:
       summary: Get war battle history
-      description: "**Enterprise-grade battle history endpoint**
+      description: '**Enterprise-grade battle history endpoint**
 
         Retrieves complete battle log for the war including outcomes, casualties,
         strategic movements, and performance statistics.
@@ -351,114 +381,126 @@ paths:
 
         **Performance:** <20ms P95, cached with 5-minute TTL
 
-        "
+        '
       operationId: getWarBattles
       tags:
-        - War Management
+      - War Management
       parameters:
-        - name: warId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Clan war unique identifier
-        - name: battle_type
-          in: query
-          schema:
-            type: string
-            enum:
-              - skirmish
-              - major_battle
-              - siege
-              - naval
-              - aerial
-              - all
-            default: all
-          description: Filter by battle type
-        - name: outcome
-          in: query
-          schema:
-            type: string
-            enum:
-              - victory
-              - defeat
-              - draw
-              - ongoing
-              - all
-            default: all
-          description: Filter by battle outcome
+      - name: warId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Clan war unique identifier
+      - name: battle_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - skirmish
+          - major_battle
+          - siege
+          - naval
+          - aerial
+          - all
+          default: all
+        description: Filter by battle type
+      - name: outcome
+        in: query
+        schema:
+          type: string
+          enum:
+          - victory
+          - defeat
+          - draw
+          - ongoing
+          - all
+          default: all
+        description: Filter by battle outcome
       responses:
-        "200":
+        '200':
           description: Battle history retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BattleHistoryResponse"
-        "404":
+                $ref: '#/components/schemas/BattleHistoryResponse'
+        '404':
           description: Clan war not found
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     post:
       summary: Report battle results
-      description: "**Enterprise-grade battle reporting endpoint**
+      description: '**Enterprise-grade battle reporting endpoint**
 
         Submits verified battle results with casualty reports, strategic analysis,
         and performance metrics for official war record.
 
         **Performance:** <50ms P95, includes validation and statistics update
 
-        "
+        '
       operationId: reportBattle
       tags:
-        - War Management
+      - War Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: warId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Clan war unique identifier
+      - name: warId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Clan war unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BattleReportRequest"
+              $ref: '#/components/schemas/BattleReportRequest'
       responses:
-        "201":
+        '201':
           description: Battle report submitted successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BattleReportResponse"
-        "400":
+                $ref: '#/components/schemas/BattleReportResponse'
+        '400':
           description: Invalid report - validation failed
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        "403":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '403':
           description: Forbidden - insufficient reporting authority
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        "409":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
           description: Conflict - duplicate or conflicting report
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /clan-wars/{warId}/statistics:
     get:
       summary: Get war statistics
-      description: "**Enterprise-grade war statistics endpoint**
+      description: '**Enterprise-grade war statistics endpoint**
 
         Provides comprehensive war analytics including casualty rates, territory gains,
         resource expenditures, and performance metrics for all participants.
@@ -467,137 +509,149 @@ paths:
 
         **Performance:** <25ms P95, cached with real-time updates
 
-        "
+        '
       operationId: getWarStatistics
       tags:
-        - War Statistics
+      - War Statistics
       parameters:
-        - name: warId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Clan war unique identifier
-        - name: timeframe
-          in: query
-          schema:
-            type: string
-            enum:
-              - daily
-              - weekly
-              - monthly
-              - total
-            default: total
-          description: Statistics timeframe
-        - name: clan_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Focus statistics on specific clan
+      - name: warId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Clan war unique identifier
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - total
+          default: total
+        description: Statistics timeframe
+      - name: clan_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Focus statistics on specific clan
       responses:
-        "200":
+        '200':
           description: War statistics retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WarStatisticsResponse"
-        "404":
+                $ref: '#/components/schemas/WarStatisticsResponse'
+        '404':
           description: Clan war not found
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /clan-wars/{warId}/negotiate:
     post:
       summary: Propose war negotiation
-      description: "**Enterprise-grade war negotiation endpoint**
+      description: '**Enterprise-grade war negotiation endpoint**
 
-        Initiates diplomatic negotiations including ceasefire proposals,
-        peace treaties, and surrender terms during active warfare.
+        Initiates diplomatic negotiations including ceasefire proposals, peace treaties,
+        and surrender terms during active warfare.
 
         **Performance:** <60ms P95, includes diplomatic validation
 
-        "
+        '
       operationId: proposeWarNegotiation
       tags:
-        - Clan Warfare
+      - Clan Warfare
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: warId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Clan war unique identifier
+      - name: warId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Clan war unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/WarNegotiationRequest"
+              $ref: '#/components/schemas/WarNegotiationRequest'
       responses:
-        "201":
+        '201':
           description: Negotiation proposal submitted successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NegotiationResponse"
-        "400":
+                $ref: '#/components/schemas/NegotiationResponse'
+        '400':
           description: Invalid proposal - validation failed
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        "403":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '403':
           description: Forbidden - insufficient diplomatic authority
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        "409":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
           description: Conflict - existing negotiation in progress
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
   responses:
     OK:
-      $ref: '../common/responses/success.yaml#/OK'
+      $ref: ../common-service/responses/success.yaml#/OK
     BadRequest:
-      $ref: '../common/responses/error.yaml#/BadRequest'
+      $ref: ../common-service/responses/error.yaml#/BadRequest
     Unauthorized:
-      $ref: '../common/responses/error.yaml#/Unauthorized'
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
     NotFound:
-      $ref: '../common/responses/error.yaml#/NotFound'
+      $ref: ../common-service/responses/error.yaml#/NotFound
     Conflict:
-      $ref: '../common/responses/error.yaml#/Conflict'
+      $ref: ../common-service/responses/error.yaml#/Conflict
     TooManyRequests:
-      $ref: '../common/responses/error.yaml#/TooManyRequests'
+      $ref: ../common-service/responses/error.yaml#/TooManyRequests
     InternalServerError:
-      $ref: '../common/responses/error.yaml#/InternalServerError'
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
   schemas:
     Error:
-      $ref: '../common/schemas/error.yaml#/Error'
+      $ref: ../common-service/schemas/error.yaml#/Error
     HealthResponse:
-      $ref: '../common/schemas/health.yaml#/HealthResponse'
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
     PaginationMeta:
-      $ref: '../common/schemas/pagination.yaml#/PaginationMeta'
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationMeta
     ClanWar:
       type: object
       required:
-        - id
-        - name
-        - attacking_clan_id
-        - defending_clan_id
-        - war_type
-        - status
-        - declared_at
-        - is_active
+      - id
+      - name
+      - attacking_clan_id
+      - defending_clan_id
+      - war_type
+      - status
+      - declared_at
+      - is_active
       properties:
         id:
           type: string
@@ -608,7 +662,7 @@ components:
           minLength: 3
           maxLength: 100
           description: War designation and title
-          example: "The Great Corporate Schism War"
+          example: The Great Corporate Schism War
         description:
           type: string
           maxLength: 2000
@@ -636,22 +690,22 @@ components:
         war_type:
           type: string
           enum:
-            - territorial
-            - resource
-            - reputation
-            - alliance
-            - ideological
+          - territorial
+          - resource
+          - reputation
+          - alliance
+          - ideological
           description: Primary motivation for the war
           example: territorial
         status:
           type: string
           enum:
-            - preparing
-            - active
-            - ceasefire
-            - negotiating
-            - ended
-            - cancelled
+          - preparing
+          - active
+          - ceasefire
+          - negotiating
+          - ended
+          - cancelled
           description: Current war status
           example: active
         declared_at:
@@ -693,24 +747,26 @@ components:
           type: boolean
           description: Whether ceasefire is currently in effect
           example: false
-      description: |
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+      description: '"BACKEND NOTE: Fields ordered for struct alignment (large → small).
+
         Expected memory savings: 30-50%. War data optimized for frequent status updates."
+
+        '
     WarDeclarationRequest:
       type: object
       required:
-        - name
-        - defending_clan_id
-        - war_type
-        - justification
-        - victory_conditions
+      - name
+      - defending_clan_id
+      - war_type
+      - justification
+      - victory_conditions
       properties:
         name:
           type: string
           minLength: 3
           maxLength: 100
           description: Proposed war designation
-          example: "Resource War Alpha"
+          example: Resource War Alpha
         defending_clan_id:
           type: string
           format: uuid
@@ -725,11 +781,11 @@ components:
         war_type:
           type: string
           enum:
-            - territorial
-            - resource
-            - reputation
-            - alliance
-            - ideological
+          - territorial
+          - resource
+          - reputation
+          - alliance
+          - ideological
           description: Primary war motivation
         justification:
           type: string
@@ -746,19 +802,22 @@ components:
           maximum: 168
           default: 72
           description: Hours before war becomes active
-      description: |
-        "BACKEND NOTE: Declaration validation includes diplomatic relations and clan authority.
+      description: '"BACKEND NOTE: Declaration validation includes diplomatic relations
+        and clan authority.
+
         Preparation period allows for defensive preparations."
+
+        '
     WarUpdateRequest:
       type: object
       properties:
         status:
           type: string
           enum:
-            - ceasefire
-            - negotiating
-            - ended
-            - cancelled
+          - ceasefire
+          - negotiating
+          - ended
+          - cancelled
           description: New war status
         ceasefire_terms:
           type: object
@@ -776,16 +835,19 @@ components:
           type: integer
           minimum: 0
           description: Final confirmed casualty count
-      description: |
-        "BACKEND NOTE: Status changes require participant consent for major modifications.
+      description: '"BACKEND NOTE: Status changes require participant consent for
+        major modifications.
+
         Automatic validation prevents invalid state transitions."
+
+        '
     ClanWarResponse:
       type: object
       required:
-        - clan_war
+      - clan_war
       properties:
         clan_war:
-          $ref: "#/components/schemas/ClanWar"
+          $ref: '#/components/schemas/ClanWar'
         current_battles:
           type: integer
           minimum: 0
@@ -793,25 +855,27 @@ components:
         negotiation_status:
           type: string
           enum:
-            - none
-            - proposed
-            - accepted
-            - rejected
+          - none
+          - proposed
+          - accepted
+          - rejected
           description: Current negotiation status
-      description: |
-        "BACKEND NOTE: Extended response includes real-time war status.
+      description: '"BACKEND NOTE: Extended response includes real-time war status.
+
         Optimizes for dashboard and strategic planning displays."
+
+        '
     ClanWarListResponse:
       type: object
       required:
-        - clan_wars
-        - total_count
-        - has_more
+      - clan_wars
+      - total_count
+      - has_more
       properties:
         clan_wars:
           type: array
           items:
-            $ref: "#/components/schemas/ClanWar"
+            $ref: '#/components/schemas/ClanWar'
           description: List of clan wars
         total_count:
           type: integer
@@ -838,17 +902,19 @@ components:
           maximum: 100
           description: Items per page
           example: 20
-      description: |
-        "BACKEND NOTE: Paginated war list with summary statistics.
+      description: '"BACKEND NOTE: Paginated war list with summary statistics.
+
         Optimized for war monitoring dashboards."
+
+        '
     BattleReportRequest:
       type: object
       required:
-        - battle_location
-        - attacking_forces
-        - defending_forces
-        - outcome
-        - casualties
+      - battle_location
+      - attacking_forces
+      - defending_forces
+      - outcome
+      - casualties
       properties:
         battle_location:
           type: string
@@ -857,12 +923,12 @@ components:
         battle_type:
           type: string
           enum:
-            - skirmish
-            - major_battle
-            - siege
-            - naval
-            - aerial
-            - ambush
+          - skirmish
+          - major_battle
+          - siege
+          - naval
+          - aerial
+          - ambush
           description: Type of battle engagement
           example: major_battle
         attacking_forces:
@@ -886,17 +952,17 @@ components:
         outcome:
           type: string
           enum:
-            - attacker_victory
-            - defender_victory
-            - draw
-            - retreat
+          - attacker_victory
+          - defender_victory
+          - draw
+          - retreat
           description: Battle outcome
           example: attacker_victory
         casualties:
           type: object
           required:
-            - attackers
-            - defenders
+          - attackers
+          - defenders
           properties:
             attackers:
               type: integer
@@ -918,15 +984,17 @@ components:
           type: string
           maxLength: 2000
           description: Detailed battle report and analysis
-      description: |
-        "BACKEND NOTE: Battle reports require verification from both sides.
+      description: '"BACKEND NOTE: Battle reports require verification from both sides.
+
         Strategic importance affects war score calculations."
+
+        '
     BattleReportResponse:
       type: object
       required:
-        - battle_id
-        - verification_status
-        - submitted_at
+      - battle_id
+      - verification_status
+      - submitted_at
       properties:
         battle_id:
           type: string
@@ -935,10 +1003,10 @@ components:
         verification_status:
           type: string
           enum:
-            - submitted
-            - verified
-            - disputed
-            - rejected
+          - submitted
+          - verified
+          - disputed
+          - rejected
           description: Report verification status
           example: submitted
         submitted_at:
@@ -953,19 +1021,22 @@ components:
           type: object
           description: Calculated impact on war statistics
           additionalProperties: true
-      description: |
-        "BACKEND NOTE: Reports enter verification workflow before affecting war statistics.
+      description: '"BACKEND NOTE: Reports enter verification workflow before affecting
+        war statistics.
+
         Disputed reports require mediation."
+
+        '
     BattleHistoryResponse:
       type: object
       required:
-        - battles
-        - total_count
+      - battles
+      - total_count
       properties:
         battles:
           type: array
           items:
-            $ref: "#/components/schemas/BattleReportRequest"
+            $ref: '#/components/schemas/BattleReportRequest'
           description: List of battles in the war
         total_count:
           type: integer
@@ -987,15 +1058,17 @@ components:
           minimum: 0
           description: Battles won by defenders
           example: 7
-      description: |
-        "BACKEND NOTE: Battle history provides comprehensive war analysis.
+      description: '"BACKEND NOTE: Battle history provides comprehensive war analysis.
+
         Victory ratios help assess war momentum."
+
+        '
     WarStatisticsResponse:
       type: object
       required:
-        - war_id
-        - overall_statistics
-        - clan_statistics
+      - war_id
+      - overall_statistics
+      - clan_statistics
       properties:
         war_id:
           type: string
@@ -1004,10 +1077,10 @@ components:
         overall_statistics:
           type: object
           required:
-            - total_battles
-            - total_casualties
-            - territory_changes
-            - duration_days
+          - total_battles
+          - total_casualties
+          - territory_changes
+          - duration_days
           properties:
             total_battles:
               type: integer
@@ -1039,10 +1112,10 @@ components:
           items:
             type: object
             required:
-              - clan_id
-              - battles_won
-              - casualties_suffered
-              - territory_controlled
+            - clan_id
+            - battles_won
+            - casualties_suffered
+            - territory_controlled
             properties:
               clan_id:
                 type: string
@@ -1069,23 +1142,25 @@ components:
                 description: Resources spent by clan
                 example: 750000
           description: Per-clan statistics
-      description: |
-        "BACKEND NOTE: Comprehensive war analytics for strategic assessment.
+      description: '"BACKEND NOTE: Comprehensive war analytics for strategic assessment.
+
         Statistics update in real-time during active conflicts."
+
+        '
     WarNegotiationRequest:
       type: object
       required:
-        - negotiation_type
-        - proposed_terms
+      - negotiation_type
+      - proposed_terms
       properties:
         negotiation_type:
           type: string
           enum:
-            - ceasefire
-            - peace_treaty
-            - surrender_terms
-            - alliance_offer
-            - territory_trade
+          - ceasefire
+          - peace_treaty
+          - surrender_terms
+          - alliance_offer
+          - territory_trade
           description: Type of negotiation
           example: ceasefire
         proposed_terms:
@@ -1103,22 +1178,24 @@ components:
         urgency_level:
           type: string
           enum:
-            - low
-            - medium
-            - high
-            - critical
+          - low
+          - medium
+          - high
+          - critical
           description: Negotiation urgency
           example: high
-      description: |
-        "BACKEND NOTE: Negotiation proposals enter formal diplomatic process.
+      description: '"BACKEND NOTE: Negotiation proposals enter formal diplomatic process.
+
         Urgency affects response time requirements."
+
+        '
     NegotiationResponse:
       type: object
       required:
-        - negotiation_id
-        - negotiation_type
-        - status
-        - submitted_at
+      - negotiation_id
+      - negotiation_type
+      - status
+      - submitted_at
       properties:
         negotiation_id:
           type: string
@@ -1130,11 +1207,11 @@ components:
         status:
           type: string
           enum:
-            - submitted
-            - under_review
-            - accepted
-            - rejected
-            - counter_proposed
+          - submitted
+          - under_review
+          - accepted
+          - rejected
+          - counter_proposed
           description: Current negotiation status
           example: submitted
         submitted_at:
@@ -1149,9 +1226,11 @@ components:
           type: object
           description: Expected political consequences
           additionalProperties: true
-      description: |
-        "BACKEND NOTE: Negotiations track formal diplomatic process lifecycle.
+      description: '"BACKEND NOTE: Negotiations track formal diplomatic process lifecycle.
+
         Status updates trigger war state modifications."
+
+        '
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
+      $ref: ../common-service/security/security.yaml#/BearerAuth

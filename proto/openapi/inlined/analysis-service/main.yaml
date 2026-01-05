@@ -1,0 +1,1607 @@
+components:
+  responses:
+    BadRequest:
+      $ref: ../common-service/responses/error.yaml#/BadRequest
+    Conflict:
+      $ref: ../common-service/responses/error.yaml#/Conflict
+    Created:
+      $ref: ../common-service/responses/success.yaml#/Created
+    Forbidden:
+      $ref: ../common-service/responses/error.yaml#/Forbidden
+    HealthBatchSuccess:
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
+    HealthOK:
+      $ref: ../common-service/responses/success.yaml#/HealthOK
+    InternalServerError:
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
+    NotFound:
+      $ref: ../common-service/responses/error.yaml#/NotFound
+    OK:
+      $ref: ../common-service/responses/success.yaml#/OK
+    Unauthorized:
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
+  schemas:
+    AnalyticsAlert:
+      description: Individual analytics alert details.
+      properties:
+        acknowledged:
+          example: false
+          type: boolean
+        acknowledged_at:
+          format: date-time
+          nullable: true
+          type: string
+        acknowledged_by:
+          example: admin@necpgame.com
+          nullable: true
+          type: string
+        category:
+          enum:
+          - player_engagement
+          - economic_health
+          - combat_balance
+          - system_performance
+          - security
+          - revenue
+          example: player_engagement
+          type: string
+        change_percentage:
+          example: -15.2
+          format: float
+          type: number
+        current_value:
+          example: 42.3
+          format: float
+          type: number
+        id:
+          example: alert_20240115_001
+          type: string
+        message:
+          example: 7-day retention rate dropped by 15% in the last 24 hours
+          type: string
+        metric:
+          example: retention_rate_7d
+          type: string
+        severity:
+          enum:
+          - critical
+          - high
+          - medium
+          - low
+          example: high
+          type: string
+        threshold_value:
+          example: 45.0
+          format: float
+          type: number
+        timestamp:
+          format: date-time
+          type: string
+        title:
+          example: Player Retention Drop
+          type: string
+      required:
+      - id
+      - severity
+      - title
+      - message
+      - category
+      - timestamp
+      type: object
+    AnalyticsAlerts:
+      description: Analytics alerts and notifications data.
+      properties:
+        alerts:
+          items:
+            $ref: '#/components/schemas/AnalyticsAlert'
+          type: array
+        summary:
+          properties:
+            critical_count:
+              example: 1
+              type: integer
+            high_count:
+              example: 3
+              type: integer
+            low_count:
+              example: 15
+              type: integer
+            medium_count:
+              example: 8
+              type: integer
+          type: object
+        timestamp:
+          format: date-time
+          type: string
+      required:
+      - alerts
+      - summary
+      - timestamp
+      type: object
+    AnalyticsReport:
+      description: Generated analytics report data.
+      properties:
+        data:
+          description: Report-specific data payload
+          type: object
+        format:
+          enum:
+          - json
+          - csv
+          - pdf
+          example: json
+          type: string
+        generated_at:
+          format: date-time
+          type: string
+        generated_by:
+          example: analytics-service
+          type: string
+        metadata:
+          properties:
+            data_freshness:
+              example: '2024-01-15T14:30:00Z'
+              type: string
+            generation_time_seconds:
+              example: 45.2
+              format: float
+              type: number
+            total_records:
+              example: 50000
+              type: integer
+          type: object
+        period:
+          properties:
+            end_date:
+              example: '2024-01-31'
+              format: date
+              type: string
+            start_date:
+              example: '2024-01-01'
+              format: date
+              type: string
+          type: object
+        report_type:
+          enum:
+          - player-retention
+          - economic-health
+          - combat-balance
+          - revenue-analysis
+          - social-network
+          - performance-summary
+          example: player-retention
+          type: string
+      required:
+      - report_type
+      - period
+      - data
+      - generated_at
+      type: object
+    CombatAnalytics:
+      description: Detailed combat performance analytics.
+      properties:
+        class_balance:
+          items:
+            properties:
+              average_score:
+                example: 2450
+                format: float
+                type: number
+              class_name:
+                example: netrunner
+                type: string
+              pick_rate:
+                example: 22.5
+                format: float
+                type: number
+              win_rate:
+                example: 51.8
+                format: float
+                type: number
+            type: object
+          type: array
+        overall_stats:
+          properties:
+            average_duration:
+              example: 12.5
+              format: float
+              type: number
+            overall_win_rate:
+              example: 52.3
+              format: float
+              type: number
+            total_matches:
+              example: 50000
+              type: integer
+          type: object
+        period:
+          example: 24h
+          type: string
+        regional_stats:
+          properties:
+            asia:
+              $ref: '#/components/schemas/RegionalCombatStats'
+            europe:
+              $ref: '#/components/schemas/RegionalCombatStats'
+            north_america:
+              $ref: '#/components/schemas/RegionalCombatStats'
+          type: object
+        timestamp:
+          format: date-time
+          type: string
+        weapon_performance:
+          items:
+            properties:
+              average_kills:
+                example: 12.3
+                format: float
+                type: number
+              usage_rate:
+                example: 15.5
+                format: float
+                type: number
+              weapon_id:
+                example: malorian_arms_350d
+                type: string
+              win_rate:
+                example: 58.2
+                format: float
+                type: number
+            type: object
+          type: array
+      required:
+      - period
+      - overall_stats
+      - weapon_performance
+      - class_balance
+      - timestamp
+      type: object
+    CombatStatsSummary:
+      description: Combat performance summary statistics.
+      properties:
+        average_match_duration:
+          description: Average match duration in minutes
+          example: 12.5
+          format: float
+          type: number
+        popular_game_modes:
+          items:
+            properties:
+              average_players:
+                example: 8
+                type: integer
+              matches:
+                example: 15000
+                type: integer
+              mode:
+                example: ranked_deathmatch
+                type: string
+            type: object
+          maxItems: 5
+          type: array
+        regional_performance:
+          properties:
+            asia:
+              example: 49.5
+              format: float
+              type: number
+            europe:
+              example: 51.8
+              format: float
+              type: number
+            north_america:
+              example: 55.2
+              format: float
+              type: number
+          type: object
+        total_matches:
+          example: 50000
+          type: integer
+        win_rate:
+          example: 52.3
+          format: float
+          type: number
+      required:
+      - total_matches
+      - average_match_duration
+      - win_rate
+      type: object
+    DashboardSummary:
+      description: Key performance indicators summary.
+      properties:
+        active_users:
+          example: 125000
+          minimum: 0
+          type: integer
+        alerts_count:
+          example: 3
+          minimum: 0
+          type: integer
+        average_session_time:
+          description: Average session time in minutes
+          example: 45.5
+          format: float
+          minimum: 0
+          type: number
+        new_registrations:
+          example: 2500
+          minimum: 0
+          type: integer
+        server_health_score:
+          example: 98.5
+          format: float
+          maximum: 100
+          minimum: 0
+          type: number
+        total_revenue:
+          example: 45678.9
+          format: float
+          minimum: 0
+          type: number
+      required:
+      - active_users
+      - total_revenue
+      - average_session_time
+      - server_health_score
+      type: object
+    EconomicAnalytics:
+      description: Comprehensive economic analytics data.
+      properties:
+        currency_flow:
+          properties:
+            daily_volume:
+              example: 250000.0
+              format: float
+              type: number
+            inflation_rate:
+              example: 2.3
+              format: float
+              type: number
+            total_circulation:
+              example: 5000000.0
+              format: float
+              type: number
+          type: object
+        market_trends:
+          items:
+            properties:
+              item_category:
+                example: cyberware
+                type: string
+              price_trend:
+                enum:
+                - increasing
+                - decreasing
+                - stable
+                example: increasing
+                type: string
+              volume_change:
+                example: 15.5
+                format: float
+                type: number
+            type: object
+          type: array
+        period:
+          example: 24h
+          type: string
+        player_wealth:
+          properties:
+            average_balance:
+              example: 1250.0
+              format: float
+              type: number
+            wealth_distribution:
+              properties:
+                high_rollers:
+                  example: 19.0
+                  format: float
+                  type: number
+                low_income:
+                  example: 45.2
+                  format: float
+                  type: number
+                middle_class:
+                  example: 35.8
+                  format: float
+                  type: number
+              type: object
+          type: object
+        timestamp:
+          format: date-time
+          type: string
+        trading_activity:
+          properties:
+            active_traders:
+              example: 15000
+              type: integer
+            average_trade_value:
+              example: 850.0
+              format: float
+              type: number
+            successful_trades:
+              example: 45000
+              type: integer
+          type: object
+      required:
+      - period
+      - currency_flow
+      - market_trends
+      - player_wealth
+      - timestamp
+      type: object
+    EconomicIndicators:
+      description: In-game economy health indicators.
+      properties:
+        inflation_rate:
+          description: Monthly inflation rate percentage
+          example: 2.3
+          format: float
+          type: number
+        market_stability_index:
+          example: 87.5
+          format: float
+          maximum: 100
+          minimum: 0
+          type: number
+        top_traded_items:
+          items:
+            properties:
+              average_price:
+                example: 2500.0
+                format: float
+                type: number
+              item_id:
+                example: cyberware_mk3
+                type: string
+              volume:
+                example: 1500
+                type: integer
+            type: object
+          maxItems: 10
+          type: array
+        total_currency_circulation:
+          example: 5000000.0
+          format: float
+          type: number
+        trading_volume:
+          example: 125000.0
+          format: float
+          type: number
+      required:
+      - total_currency_circulation
+      - inflation_rate
+      - trading_volume
+      type: object
+    Error:
+      $ref: ../common-service/schemas/error.yaml#/Error
+    GameAnalyticsOverview:
+      description: Comprehensive game analytics overview dashboard data.
+      properties:
+        combat_stats:
+          $ref: '#/components/schemas/CombatStatsSummary'
+        economic_indicators:
+          $ref: '#/components/schemas/EconomicIndicators'
+        period:
+          example: 24h
+          type: string
+        player_metrics:
+          $ref: '#/components/schemas/PlayerMetricsSummary'
+        social_metrics:
+          $ref: '#/components/schemas/SocialMetricsSummary'
+        summary:
+          $ref: '#/components/schemas/DashboardSummary'
+        system_health:
+          $ref: '#/components/schemas/SystemHealthSummary'
+        timestamp:
+          example: '2025-12-21T10:00:00Z'
+          format: date-time
+          type: string
+      required:
+      - summary
+      - player_metrics
+      - economic_indicators
+      - combat_stats
+      - system_health
+      - timestamp
+      type: object
+    GuildAnalytics:
+      description: Individual guild performance metrics.
+      properties:
+        achievements:
+          items:
+            example: tournament_winner_q4_2024
+            type: string
+          maxItems: 5
+          type: array
+        activity_score:
+          example: 95.2
+          format: float
+          maximum: 100
+          minimum: 0
+          type: number
+        average_member_level:
+          example: 42.5
+          format: float
+          type: number
+        guild_id:
+          example: shadow_runners
+          type: string
+        member_count:
+          example: 50
+          type: integer
+        name:
+          example: Shadow Runners
+          type: string
+        weekly_active_members:
+          example: 35
+          type: integer
+      required:
+      - guild_id
+      - name
+      - member_count
+      - activity_score
+      type: object
+    HealthResponse:
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
+    PaginatedResponse:
+      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
+    PaginationParams:
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
+    PlayerBehaviorAnalytics:
+      description: Detailed player behavior analytics data.
+      properties:
+        engagement_patterns:
+          properties:
+            peak_hours:
+              items:
+                example: '20:00'
+                type: string
+              type: array
+            preferred_game_modes:
+              items:
+                example: ranked_deathmatch
+                type: string
+              type: array
+          type: object
+        metrics:
+          $ref: '#/components/schemas/PlayerMetricsSummary'
+        period:
+          example: 7d
+          type: string
+        retention_curves:
+          description: Retention curves by cohort
+          type: object
+        segments:
+          items:
+            $ref: '#/components/schemas/PlayerSegment'
+          type: array
+        timestamp:
+          format: date-time
+          type: string
+      required:
+      - period
+      - metrics
+      - segments
+      - timestamp
+      type: object
+    PlayerMetricsSummary:
+      description: Player engagement and behavior metrics.
+      properties:
+        active_users:
+          example: 125000
+          type: integer
+        average_session_duration:
+          description: Average session duration in minutes
+          example: 45.5
+          format: float
+          type: number
+        churn_rate:
+          example: 12.3
+          format: float
+          type: number
+        new_users:
+          example: 2500
+          type: integer
+        player_segments:
+          properties:
+            casual:
+              example: 75000
+              type: integer
+            competitive:
+              example: 15000
+              type: integer
+            hardcore:
+              example: 35000
+              type: integer
+          type: object
+        retention_rate:
+          properties:
+            day1:
+              example: 85.5
+              format: float
+              type: number
+            day30:
+              example: 25.8
+              format: float
+              type: number
+            day7:
+              example: 45.2
+              format: float
+              type: number
+          type: object
+      required:
+      - active_users
+      - new_users
+      - retention_rate
+      - average_session_duration
+      type: object
+    PlayerSegment:
+      description: Player segment analysis data.
+      properties:
+        characteristics:
+          properties:
+            average_level:
+              example: 45.2
+              format: float
+              type: number
+            average_session_time:
+              example: 120.5
+              format: float
+              type: number
+            preferred_content:
+              items:
+                example: cyberpunk_quests
+                type: string
+              type: array
+          type: object
+        lifetime_value:
+          example: 125.5
+          format: float
+          type: number
+        player_count:
+          example: 35000
+          type: integer
+        retention_rate:
+          example: 78.5
+          format: float
+          type: number
+        segment_name:
+          example: hardcore_gamers
+          type: string
+      required:
+      - segment_name
+      - player_count
+      - characteristics
+      type: object
+    RegionalCombatStats:
+      description: Combat statistics for specific geographic region.
+      properties:
+        average_ping:
+          example: 45.2
+          format: float
+          type: number
+        popular_weapons:
+          items:
+            example: militech_m2077
+            type: string
+          maxItems: 5
+          type: array
+        total_matches:
+          example: 12500
+          type: integer
+        win_rate:
+          example: 55.2
+          format: float
+          type: number
+      required:
+      - total_matches
+      - average_ping
+      - win_rate
+      type: object
+    RevenueAnalytics:
+      description: Revenue and monetization analytics data.
+      properties:
+        monetization_efficiency:
+          properties:
+            churn_impact:
+              description: Revenue impact of churned users
+              example: -15.2
+              format: float
+              type: number
+            conversion_rate:
+              description: Free to paying user conversion rate
+              example: 8.5
+              format: float
+              type: number
+            retention_ltv:
+              description: Lifetime value of retained players
+              example: 125.5
+              format: float
+              type: number
+          type: object
+        period:
+          example: 30d
+          type: string
+        player_spending:
+          properties:
+            average_purchase_value:
+              example: 45.8
+              format: float
+              type: number
+            paying_users_percentage:
+              example: 12.5
+              format: float
+              type: number
+            purchase_frequency:
+              description: Average purchases per paying user per month
+              example: 2.3
+              format: float
+              type: number
+          type: object
+        revenue_metrics:
+          properties:
+            arppu:
+              description: Average Revenue Per Paying User
+              example: 85.5
+              format: float
+              type: number
+            arpu:
+              description: Average Revenue Per User
+              example: 15.25
+              format: float
+              type: number
+            daily_average:
+              example: 15226.32
+              format: float
+              type: number
+            monthly_recurring:
+              example: 125000.0
+              format: float
+              type: number
+            total_revenue:
+              example: 456789.5
+              format: float
+              type: number
+          type: object
+        timestamp:
+          format: date-time
+          type: string
+        top_revenue_sources:
+          items:
+            properties:
+              percentage:
+                example: 35.2
+                format: float
+                type: number
+              revenue:
+                example: 125000.0
+                format: float
+                type: number
+              source:
+                example: cosmetic_packs
+                type: string
+            type: object
+          maxItems: 5
+          type: array
+      required:
+      - period
+      - revenue_metrics
+      - player_spending
+      - monetization_efficiency
+      - timestamp
+      type: object
+    SocialAnalytics:
+      description: Social network and community analytics.
+      properties:
+        community_health:
+          properties:
+            engagement_score:
+              example: 78.5
+              format: float
+              maximum: 100
+              minimum: 0
+              type: number
+            positive_interactions:
+              example: 85.3
+              format: float
+              type: number
+            toxicity_level:
+              example: 15.2
+              format: float
+              maximum: 100
+              minimum: 0
+              type: number
+          type: object
+        guild_metrics:
+          properties:
+            active_guilds:
+              example: 1800
+              type: integer
+            average_guild_size:
+              example: 15.3
+              format: float
+              type: number
+            guild_retention_rate:
+              example: 82.5
+              format: float
+              type: number
+            total_guilds:
+              example: 2500
+              type: integer
+          type: object
+        period:
+          example: 7d
+          type: string
+        social_connections:
+          properties:
+            average_connections_per_player:
+              example: 8.5
+              format: float
+              type: number
+            connection_growth_rate:
+              example: 12.3
+              format: float
+              type: number
+            total_connections:
+              example: 75000
+              type: integer
+          type: object
+        timestamp:
+          format: date-time
+          type: string
+        top_guilds:
+          items:
+            $ref: '#/components/schemas/GuildAnalytics'
+          maxItems: 10
+          type: array
+      required:
+      - period
+      - guild_metrics
+      - social_connections
+      - community_health
+      - timestamp
+      type: object
+    SocialMetricsSummary:
+      description: Social interaction and community metrics.
+      properties:
+        active_guilds:
+          example: 2500
+          type: integer
+        average_guild_size:
+          example: 15.3
+          format: float
+          type: number
+        guild_activity_score:
+          example: 78.5
+          format: float
+          maximum: 100
+          minimum: 0
+          type: number
+        social_connections:
+          example: 75000
+          type: integer
+        top_guilds:
+          items:
+            properties:
+              activity_score:
+                example: 95.2
+                format: float
+                type: number
+              guild_id:
+                example: shadow_runners
+                type: string
+              member_count:
+                example: 50
+                type: integer
+            type: object
+          maxItems: 10
+          type: array
+      required:
+      - active_guilds
+      - average_guild_size
+      - social_connections
+      type: object
+    SystemAlert:
+      description: System performance alert information.
+      properties:
+        component:
+          example: database
+          type: string
+        message:
+          example: Database connection pool utilization above 90%
+          type: string
+        severity:
+          enum:
+          - critical
+          - high
+          - medium
+          - low
+          example: high
+          type: string
+        threshold:
+          example: 90.0
+          format: float
+          type: number
+        timestamp:
+          format: date-time
+          type: string
+        value:
+          example: 92.5
+          format: float
+          type: number
+      required:
+      - severity
+      - message
+      - timestamp
+      type: object
+    SystemHealthSummary:
+      description: System performance and health indicators.
+      properties:
+        active_services:
+          example: 25
+          type: integer
+        critical_alerts:
+          example: 1
+          type: integer
+        error_rate:
+          description: Error rate as percentage
+          example: 0.05
+          format: float
+          type: number
+        infrastructure_status:
+          properties:
+            cache:
+              enum:
+              - healthy
+              - degraded
+              - critical
+              example: healthy
+              type: string
+            database:
+              enum:
+              - healthy
+              - degraded
+              - critical
+              example: healthy
+              type: string
+            messaging:
+              enum:
+              - healthy
+              - degraded
+              - critical
+              example: healthy
+              type: string
+          type: object
+        overall_health_score:
+          example: 98.5
+          format: float
+          maximum: 100
+          minimum: 0
+          type: number
+        response_time_avg:
+          description: Average response time in milliseconds
+          example: 45.2
+          format: float
+          type: number
+      required:
+      - overall_health_score
+      - response_time_avg
+      - error_rate
+      type: object
+    SystemPerformanceAnalytics:
+      description: System performance and infrastructure health analytics.
+      properties:
+        active_alerts:
+          items:
+            $ref: '#/components/schemas/SystemAlert'
+          maxItems: 20
+          type: array
+        api_performance:
+          properties:
+            average_response_time:
+              description: Average response time in milliseconds
+              example: 45.2
+              format: float
+              type: number
+            error_rate:
+              example: 0.05
+              format: float
+              type: number
+            p95_response_time:
+              example: 125.5
+              format: float
+              type: number
+            p99_response_time:
+              example: 250.8
+              format: float
+              type: number
+            throughput:
+              description: Requests per second
+              example: 1500
+              type: integer
+          type: object
+        database_performance:
+          properties:
+            average_query_time:
+              example: 12.3
+              format: float
+              type: number
+            cache_hit_rate:
+              example: 94.2
+              format: float
+              type: number
+            connection_pool_utilization:
+              example: 75.5
+              format: float
+              type: number
+            slow_queries_count:
+              example: 5
+              type: integer
+          type: object
+        infrastructure_health:
+          properties:
+            cpu_utilization:
+              example: 68.5
+              format: float
+              type: number
+            disk_utilization:
+              example: 45.8
+              format: float
+              type: number
+            memory_utilization:
+              example: 72.3
+              format: float
+              type: number
+            network_bandwidth:
+              description: Network bandwidth usage in Mbps
+              example: 850.5
+              format: float
+              type: number
+          type: object
+        period:
+          example: 1h
+          type: string
+        timestamp:
+          format: date-time
+          type: string
+      required:
+      - period
+      - api_performance
+      - database_performance
+      - infrastructure_health
+      - timestamp
+      type: object
+  securitySchemes:
+    ApiKeyAuth:
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
+    BearerAuth:
+      $ref: ../common-service/security/security.yaml#/BearerAuth
+    ServiceAuth:
+      $ref: ../common-service/security/security.yaml#/ServiceAuth
+info:
+  contact:
+    email: analytics@necp.game
+    name: NECPGAME Analytics API Support
+  description: '**Enterprise-Grade Game Analytics Dashboard Service API for NECPGAME
+    MMORPG**
+
+    Comprehensive analytics platform providing real-time insights into game performance,
+    player behavior, economic metrics, and strategic decision support for Cyberpunk
+    2077-style competitive shooter.
+
+    ## Key Features
+
+    - **Real-time Game Analytics Dashboard** - Live performance metrics and KPIs -
+    **Player Behavior Analytics** - Advanced player segmentation and retention analysis
+    - **Economic Analytics** - Currency flow, market trends, and trading patterns
+    - **Combat Statistics** - Detailed combat performance and win/loss analytics -
+    **Social Network Analysis** - Guild dynamics and player relationships - **Revenue
+    Analytics** - Monetization metrics and player spending patterns - **Technical
+    Performance** - System health, latency, and bottleneck analysis
+
+    ## Domain Purpose
+
+    This service provides comprehensive analytics capabilities for MMORPG operations,
+    including real-time dashboards, player metrics, economic analysis, and strategic
+    research tools.
+
+    ## Performance Targets
+
+    - P99 Latency: <100ms for analytics queries - Memory: <300MB per dashboard instance
+    - Concurrent analysts: 1000+ simultaneous sessions - Data processing: Real-time
+    stream analytics with <5s latency - Storage: Time-series optimized database with
+    1+ year retention
+
+    ## Security Features
+
+    - Role-based access control (Admin, Analyst, Developer) - Encrypted data transmission
+    and storage - Audit trails for all analytics queries - Rate limiting and abuse
+    prevention '
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Game Analytics Dashboard Service API - Enterprise-Grade Analytics for NECPGAME
+  version: 1.0.0
+openapi: 3.0.3
+paths:
+  /api/v1/analytics/alerts:
+    get:
+      description: '**Analytics alerts and anomaly detection**
+
+        Real-time alerts for critical metrics deviations, performance issues, and
+        strategic insights requiring attention.
+
+        **Includes:** Performance alerts, business metric alerts, security alerts '
+      operationId: getAnalyticsAlerts
+      parameters:
+      - in: query
+        name: severity
+        schema:
+          default: all
+          enum:
+          - all
+          - critical
+          - high
+          - medium
+          - low
+          type: string
+      - description: Include acknowledged alerts
+        in: query
+        name: acknowledged
+        schema:
+          default: false
+          type: boolean
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsAlerts'
+          description: Analytics alerts retrieved successfully
+      security:
+      - BearerAuth: []
+      summary: Get analytics alerts and notifications
+      tags:
+      - Game Analytics Dashboard
+  /api/v1/analytics/combat/performance:
+    get:
+      description: '**Detailed combat performance analytics**
+
+        Comprehensive analysis of combat statistics including win rates, kill/death
+        ratios, weapon effectiveness, and combat balance metrics.
+
+        **Includes:** PvP/PvE statistics, weapon analytics, class balance, regional
+        performance '
+      operationId: getCombatAnalytics
+      parameters:
+      - in: query
+        name: period
+        schema:
+          default: 24h
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          type: string
+      - in: query
+        name: game_mode
+        schema:
+          default: all
+          enum:
+          - all
+          - ranked
+          - casual
+          - tournament
+          type: string
+      - description: Geographic region filter
+        in: query
+        name: region
+        schema:
+          example: north_america
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatAnalytics'
+          description: Combat analytics retrieved successfully
+      security:
+      - BearerAuth: []
+      summary: Get combat performance analytics
+      tags:
+      - Combat Analytics
+  /api/v1/analytics/dashboard/overview:
+    get:
+      description: '**Real-time game analytics overview dashboard**
+
+        Provides comprehensive overview of all critical game metrics including player
+        activity, economic health, combat statistics, and system performance.
+
+        **Performance:** <50ms P95, optimized for dashboard rendering **Refresh Rate:**
+        Real-time updates every 30 seconds '
+      operationId: getGameAnalyticsOverview
+      parameters:
+      - description: Time period for analytics data
+        in: query
+        name: period
+        schema:
+          default: 24h
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          type: string
+      - description: Conditional request - return 304 if dashboard hasn't changed
+        in: header
+        name: If-None-Match
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameAnalyticsOverview'
+          description: Analytics overview dashboard data retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                example: max-age=30, private
+                type: string
+            ETag:
+              schema:
+                example: '"dashboard-overview-2024-01-15-14-30"'
+                type: string
+            X-Data-Freshness:
+              schema:
+                description: Data freshness in seconds
+                example: 5
+                type: integer
+        '304':
+          description: Dashboard data has not changed
+        '401':
+          description: Unauthorized - authentication required
+        '403':
+          description: Forbidden - insufficient permissions
+        '429':
+          description: Too many requests - rate limit exceeded
+      security:
+      - BearerAuth: []
+      summary: Get comprehensive game analytics overview dashboard
+      tags:
+      - Game Analytics Dashboard
+  /api/v1/analytics/economy/overview:
+    get:
+      description: '**Economic health and market analytics**
+
+        Real-time analysis of in-game economy including currency circulation, market
+        prices, trading volumes, and economic stability metrics.
+
+        **Includes:** Currency flow, market trends, inflation rates, player wealth
+        distribution '
+      operationId: getEconomicAnalytics
+      parameters:
+      - in: query
+        name: period
+        schema:
+          default: 24h
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EconomicAnalytics'
+          description: Economic analytics retrieved successfully
+      security:
+      - BearerAuth: []
+      summary: Get economic analytics overview
+      tags:
+      - Economic Analytics
+  /api/v1/analytics/performance/system:
+    get:
+      description: '**System performance and health monitoring**
+
+        Real-time monitoring of system performance including latency, throughput,
+        error rates, and infrastructure health.
+
+        **Includes:** API response times, database performance, infrastructure metrics '
+      operationId: getSystemPerformanceAnalytics
+      parameters:
+      - in: query
+        name: period
+        schema:
+          default: 1h
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemPerformanceAnalytics'
+          description: System performance analytics retrieved successfully
+      security:
+      - BearerAuth: []
+      summary: Get system performance analytics
+      tags:
+      - Technical Performance
+  /api/v1/analytics/players/behavior:
+    get:
+      description: '**Advanced player behavior analytics**
+
+        Comprehensive analysis of player engagement patterns, session durations, progression
+        rates, and behavioral segmentation.
+
+        **Includes:** Session analytics, progression tracking, behavioral clusters
+        **Performance:** <100ms P95 with cached aggregations '
+      operationId: getPlayerBehaviorAnalytics
+      parameters:
+      - in: query
+        name: period
+        schema:
+          default: 7d
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          - 90d
+          type: string
+      - in: query
+        name: segment
+        schema:
+          default: all
+          enum:
+          - all
+          - new_players
+          - returning
+          - high_value
+          - at_risk
+          type: string
+      - description: Specific cohort date for analysis
+        in: query
+        name: cohort
+        schema:
+          example: '2024-01-01'
+          format: date
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBehaviorAnalytics'
+          description: Player behavior analytics retrieved successfully
+      security:
+      - BearerAuth: []
+      summary: Get detailed player behavior analytics
+      tags:
+      - Player Analytics
+  /api/v1/analytics/reports/{report_type}:
+    get:
+      description: '**Custom analytics report generation**
+
+        Generate detailed reports for specific analytics categories with customizable
+        parameters and export options.
+
+        **Supported Reports:** player-retention, economic-health, combat-balance,
+        revenue-analysis '
+      operationId: generateAnalyticsReport
+      parameters:
+      - in: path
+        name: report_type
+        required: true
+        schema:
+          enum:
+          - player-retention
+          - economic-health
+          - combat-balance
+          - revenue-analysis
+          - social-network
+          - performance-summary
+          type: string
+      - in: query
+        name: start_date
+        schema:
+          example: '2024-01-01'
+          format: date
+          type: string
+      - in: query
+        name: end_date
+        schema:
+          example: '2024-01-31'
+          format: date
+          type: string
+      - in: query
+        name: format
+        schema:
+          default: json
+          enum:
+          - json
+          - csv
+          - pdf
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsReport'
+            application/pdf:
+              schema:
+                format: binary
+                type: string
+            text/csv:
+              schema:
+                type: string
+          description: Analytics report generated successfully
+      security:
+      - BearerAuth: []
+      summary: Generate custom analytics report
+      tags:
+      - Game Analytics Dashboard
+  /api/v1/analytics/revenue/monetization:
+    get:
+      description: '**Revenue analytics and monetization metrics**
+
+        Comprehensive analysis of player spending patterns, revenue streams, conversion
+        rates, and monetization effectiveness.
+
+        **Includes:** ARPU, conversion funnels, purchase patterns, LTV analysis '
+      operationId: getRevenueAnalytics
+      parameters:
+      - in: query
+        name: period
+        schema:
+          default: 30d
+          enum:
+          - 24h
+          - 7d
+          - 30d
+          - 90d
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueAnalytics'
+          description: Revenue analytics retrieved successfully
+      security:
+      - BearerAuth: []
+      summary: Get revenue and monetization analytics
+      tags:
+      - Revenue Analytics
+  /api/v1/analytics/social/network:
+    get:
+      description: '**Social network and guild analytics**
+
+        Analysis of social interactions, guild dynamics, friendship networks, and
+        community engagement metrics.
+
+        **Includes:** Guild performance, social connectivity, community health metrics '
+      operationId: getSocialAnalytics
+      parameters:
+      - in: query
+        name: period
+        schema:
+          default: 7d
+          enum:
+          - 24h
+          - 7d
+          - 30d
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialAnalytics'
+          description: Social analytics retrieved successfully
+      security:
+      - BearerAuth: []
+      summary: Get social network analytics
+      tags:
+      - Social Analytics
+  /health:
+    get:
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the analytics dashboard service.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds '
+      operationId: analyticsServiceHealthCheck
+      parameters:
+      - in: header
+        name: Accept-Encoding
+        schema:
+          enum:
+          - gzip
+          - deflate
+          - br
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                example: max-age=30, s-maxage=60
+                type: string
+            Content-Encoding:
+              schema:
+                enum:
+                - gzip
+                - deflate
+                - br
+                type: string
+            ETag:
+              schema:
+                example: '"analytics-health-v1.0"'
+                type: string
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                example: 60
+                type: integer
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          description: Service is unhealthy
+      summary: Analytics service health check
+      tags:
+      - Technical Performance
+security:
+- BearerAuth: []
+servers:
+- description: Production server
+  url: https://api.necpgame.com/v1/analytics
+- description: Staging server
+  url: https://staging-api.necpgame.com/v1/analytics
+- description: Local development server
+  url: http://localhost:8091/api/v1/analytics
+tags:
+- description: Real-time game analytics and dashboard operations
+  name: Game Analytics Dashboard
+- description: Player behavior, retention, and segmentation analytics
+  name: Player Analytics
+- description: Currency flow, trading, and monetization analytics
+  name: Economic Analytics
+- description: Combat performance and statistics
+  name: Combat Analytics
+- description: Guild and social network analysis
+  name: Social Analytics
+- description: Monetization and revenue metrics
+  name: Revenue Analytics
+- description: System performance and health monitoring
+  name: Technical Performance

@@ -1,12 +1,12 @@
 openapi: 3.0.3
 info:
   title: Cyberware Service API - Enterprise-Grade Cybernetic Enhancement Management
-  description: "**Enterprise-Grade Cyberware Management API for NECPGAME**
+  description: '**Enterprise-Grade Cyberware Management API for NECPGAME**
 
     This API manages cybernetic prosthetics, body modifications, and enhancement systems
     in the cyberpunk world, providing installation, calibration, maintenance, and
-    performance optimization for all cyberware components with enterprise-grade
-    safety protocols and neural integration.
+    performance optimization for all cyberware components with enterprise-grade safety
+    protocols and neural integration.
 
     ## Key Features
 
@@ -14,9 +14,9 @@ info:
     - **Neural Calibration**: Advanced neural interface calibration and optimization
     - **System Diagnostics**: Real-time cyberware health and performance monitoring
     - **Compatibility Validation**: Comprehensive cyberware compatibility checking
-    - **Performance Tuning**: Dynamic performance optimization and enhancement
-    - **Safety Protocols**: Multi-layer safety systems and emergency overrides
-    - **Performance Optimized**: MMOFPS-grade performance with <50ms P99 latency
+    - **Performance Tuning**: Dynamic performance optimization and enhancement - **Safety
+    Protocols**: Multi-layer safety systems and emergency overrides - **Performance
+    Optimized**: MMOFPS-grade performance with <50ms P99 latency
 
     ## Domain Purpose
 
@@ -26,13 +26,12 @@ info:
 
     ## Performance Targets
 
-    - P99 Latency: <50ms for cyberware operations
-    - Memory: <25KB per active cyberware session
-    - Concurrent users: 50,000+ simultaneous augmentations
-    - Calibration time: <15ms response time
+    - P99 Latency: <50ms for cyberware operations - Memory: <25KB per active cyberware
+    session - Concurrent users: 50,000+ simultaneous augmentations - Calibration time:
+    <15ms response time
 
-    "
-  version: "1.0.0"
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
@@ -41,28 +40,28 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necpgame.com/v1/cyberware
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/cyberware
-    description: Staging server
-  - url: http://localhost:8080/api/v1/cyberware
-    description: Local development server
+- url: https://api.necpgame.com/v1/cyberware
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/cyberware
+  description: Staging server
+- url: http://localhost:8080/api/v1/cyberware
+  description: Local development server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: Cyberware Management
-    description: Core cyberware lifecycle operations
-  - name: Neural Calibration
-    description: Neural interface optimization
-  - name: System Diagnostics
-    description: Health monitoring and maintenance
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: Cyberware Management
+  description: Core cyberware lifecycle operations
+- name: Neural Calibration
+  description: Neural interface optimization
+- name: System Diagnostics
+  description: Health monitoring and maintenance
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
   /health:
     get:
       summary: Cyberware domain health check
-      description: "**Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
 
         Provides real-time health status of the cyberware domain microservice.
 
@@ -70,21 +69,21 @@ paths:
 
         **Performance:** <1ms response time, cached for 30 seconds
 
-        "
+        '
       operationId: cyberwareDomainHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -99,20 +98,20 @@ paths:
               schema:
                 type: string
                 enum:
-                  - gzip
-                  - deflate
-                  - br
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "503":
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "429":
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -122,12 +121,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/batch:
     post:
       summary: Batch health check for multiple domain services
-      description:
-        "**Performance optimization:** Check multiple domain health in
+      description: '**Performance optimization:** Check multiple domain health in
         single request
 
         Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
@@ -136,10 +140,10 @@ paths:
 
         **Use case:** Service mesh health checks, Kubernetes readiness probes
 
-        "
+        '
       operationId: cyberwareDomainBatchHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       requestBody:
         required: true
         content:
@@ -147,30 +151,30 @@ paths:
             schema:
               type: object
               required:
-                - services
+              - services
               properties:
                 services:
                   type: array
                   items:
                     type: string
                     enum:
-                      - cyberware
-                      - implant
-                      - neural-link
-                      - hacking
-                      - medical
+                    - cyberware
+                    - implant
+                    - neural-link
+                    - hacking
+                    - medical
                     maxItems: 10
                   description: List of services to check
       responses:
-        "200":
-          $ref: "../common/responses/success.yaml#/HealthBatchSuccess"
-        "400":
+        '200':
+          $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
+        '400':
           description: Invalid request - malformed service list
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -181,12 +185,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
-      description:
-        "**Performance optimization:** Real-time health updates without
+      description: '**Performance optimization:** Real-time health updates without
         polling
 
         Eliminates periodic HTTP requests, reduces server load by ~90%.
@@ -199,27 +208,27 @@ paths:
 
         **Reconnection:** Automatic with exponential backoff
 
-        "
+        '
       operationId: cyberwareDomainHealthWebSocket
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: services
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - cyberware
-                - neural
-                - implant
-              example:
-                - cyberware
-                - neural
-          description: Services to monitor (optional, monitors all if not specified)
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - cyberware
+            - neural
+            - implant
+            example:
+            - cyberware
+            - neural
+        description: Services to monitor (optional, monitors all if not specified)
       responses:
-        "200":
+        '200':
           description: WebSocket upgrade information returned
           content:
             application/json:
@@ -234,8 +243,8 @@ paths:
                     items:
                       type: string
                     example:
-                      - health-monitoring-v1
-        "101":
+                    - health-monitoring-v1
+        '101':
           description: WebSocket connection established successfully
           headers:
             Upgrade:
@@ -253,20 +262,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketHealthMessage"
-        "400":
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
           description: Invalid request - malformed service parameters
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "401":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '401':
           description: Unauthorized - authentication required for WebSocket
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - WebSocket connection limit exceeded
           headers:
             Retry-After:
@@ -276,51 +285,57 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /cyberware/installations:
     post:
       summary: Install cyberware component
-      description: "**Enterprise-grade cyberware installation**
+      description: '**Enterprise-grade cyberware installation**
 
-        Performs complete cyberware installation with neural integration,
-        compatibility validation, and safety protocols.
+        Performs complete cyberware installation with neural integration, compatibility
+        validation, and safety protocols.
 
         **Critical Operation:** Requires neural synchronization
 
-        "
+        '
       operationId: installCyberware
       tags:
-        - Cyberware Management
+      - Cyberware Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/InstallCyberwareRequest"
+              $ref: '#/components/schemas/InstallCyberwareRequest'
       responses:
-        "201":
-          $ref: "#/components/responses/CyberwareInstalled"
-        "400":
+        '201':
+          $ref: '#/components/responses/CyberwareInstalled'
+        '400':
           description: Invalid installation parameters or compatibility issues
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
           description: Conflict - cyberware slot occupied or neural incompatibility
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "422":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '422':
           description: Unprocessable entity - business rule validation failed
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - installation rate limit exceeded
           headers:
             Retry-After:
@@ -330,80 +345,97 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     get:
       summary: List cyberware installations with filtering
-      description: "**Enterprise-grade installation listing**
+      description: '**Enterprise-grade installation listing**
 
-        Lists all cyberware installations with comprehensive filtering
-        by type, status, performance metrics, and health indicators.
+        Lists all cyberware installations with comprehensive filtering by type, status,
+        performance metrics, and health indicators.
 
         **Performance:** <10ms P95, supports complex queries
 
-        "
+        '
       operationId: listCyberwareInstallations
       tags:
-        - Cyberware Management
+      - Cyberware Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by player
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [NEURAL, MUSCULAR, SENSORY, WEAPON, DEFENSIVE, UTILITY]
-          description: Filter by cyberware category
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ACTIVE, INACTIVE, MALFUNCTIONING, MAINTENANCE, CALIBRATING]
-          description: Filter by installation status
-        - name: health_min
-          in: query
-          schema:
-            type: number
-            minimum: 0
-            maximum: 100
-          description: Minimum health percentage
-        - name: performance_min
-          in: query
-          schema:
-            type: number
-            minimum: 0
-            maximum: 100
-          description: Minimum performance percentage
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number for pagination
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of items per page
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by player
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - NEURAL
+          - MUSCULAR
+          - SENSORY
+          - WEAPON
+          - DEFENSIVE
+          - UTILITY
+        description: Filter by cyberware category
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - MALFUNCTIONING
+          - MAINTENANCE
+          - CALIBRATING
+        description: Filter by installation status
+      - name: health_min
+        in: query
+        schema:
+          type: number
+          minimum: 0
+          maximum: 100
+        description: Minimum health percentage
+      - name: performance_min
+        in: query
+        schema:
+          type: number
+          minimum: 0
+          maximum: 100
+        description: Minimum performance percentage
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
       responses:
-        "200":
-          $ref: "#/components/responses/CyberwareListSuccess"
-        "400":
+        '200':
+          $ref: '#/components/responses/CyberwareListSuccess'
+        '400':
           description: Invalid request - malformed query parameters
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -413,53 +445,58 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /cyberware/installations/{installation_id}:
     get:
       summary: Get cyberware installation details
-      description: "**Enterprise-grade installation retrieval**
+      description: '**Enterprise-grade installation retrieval**
 
-        Returns comprehensive cyberware installation information including
-        real-time performance metrics, neural integration status, and
-        maintenance requirements.
+        Returns comprehensive cyberware installation information including real-time
+        performance metrics, neural integration status, and maintenance requirements.
 
         **Performance:** <5ms P95 with Redis caching
 
-        "
+        '
       operationId: getCyberwareInstallation
       tags:
-        - Cyberware Management
+      - Cyberware Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: installation_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Cyberware installation unique identifier
-        - name: include_diagnostics
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include detailed diagnostic data
-        - name: include_effects
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include active effects data
-        - name: If-None-Match
-          in: header
-          schema:
-            type: string
-          description: Conditional request - return 304 if ETag matches
+      - name: installation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Cyberware installation unique identifier
+      - name: include_diagnostics
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include detailed diagnostic data
+      - name: include_effects
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include active effects data
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+        description: Conditional request - return 304 if ETag matches
       responses:
-        "200":
-          $ref: "#/components/responses/CyberwareRetrieved"
-        "304":
+        '200':
+          $ref: '#/components/responses/CyberwareRetrieved'
+        '304':
           description: Not modified - installation has not changed
           headers:
             ETag:
@@ -470,13 +507,13 @@ paths:
               schema:
                 type: string
                 example: max-age=30, private
-        "404":
+        '404':
           description: Cyberware installation not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -486,57 +523,63 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     put:
       summary: Update cyberware installation
-      description: "**Enterprise-grade installation update**
+      description: '**Enterprise-grade installation update**
 
-        Updates installation parameters, recalibrates settings, or
-        applies maintenance fixes with optimistic locking.
+        Updates installation parameters, recalibrates settings, or applies maintenance
+        fixes with optimistic locking.
 
         **Performance:** <25ms P95, includes validation and conflict resolution
 
-        "
+        '
       operationId: updateCyberwareInstallation
       tags:
-        - Cyberware Management
+      - Cyberware Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: installation_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Cyberware installation unique identifier
-        - name: If-Match
-          in: header
-          schema:
-            type: string
-          description: ETag for optimistic locking
+      - name: installation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Cyberware installation unique identifier
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+        description: ETag for optimistic locking
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateCyberwareInstallationRequest"
+              $ref: '#/components/schemas/UpdateCyberwareInstallationRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/CyberwareUpdated"
-        "400":
+        '200':
+          $ref: '#/components/responses/CyberwareUpdated'
+        '400':
           description: Invalid request - malformed data or installation ID
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
           description: Cyberware installation not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
           description: Conflict - version conflict or concurrent modification
           headers:
             ETag:
@@ -546,8 +589,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -557,105 +600,117 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     delete:
       summary: Remove cyberware installation
-      description: "**Surgical cyberware removal**
+      description: '**Surgical cyberware removal**
 
-        Performs controlled removal with neural disconnection and
-        system stabilization protocols.
+        Performs controlled removal with neural disconnection and system stabilization
+        protocols.
 
         **High-Risk Operation:** May cause neural trauma
 
-        "
+        '
       operationId: removeCyberwareInstallation
       tags:
-        - Cyberware Management
+      - Cyberware Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: installation_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Cyberware installation to remove
-        - name: emergency_removal
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Emergency removal (bypasses safety protocols)
+      - name: installation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Cyberware installation to remove
+      - name: emergency_removal
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Emergency removal (bypasses safety protocols)
       responses:
-        "200":
+        '200':
           description: Cyberware removed successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CyberwareRemovalResult"
-        "404":
+                $ref: '#/components/schemas/CyberwareRemovalResult'
+        '404':
           description: Cyberware installation not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
           description: Cannot remove - critical system dependency
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /cyberware/installations/{installation_id}/calibrate:
     post:
       summary: Calibrate cyberware installation
-      description: "**Neural calibration procedure**
+      description: '**Neural calibration procedure**
 
-        Performs comprehensive neural recalibration, performance optimization,
-        and system synchronization for optimal cyberware functionality.
+        Performs comprehensive neural recalibration, performance optimization, and
+        system synchronization for optimal cyberware functionality.
 
         **Time-Intensive Operation:** Requires neural focus
 
-        "
+        '
       operationId: calibrateCyberwareInstallation
       tags:
-        - Neural Calibration
+      - Neural Calibration
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: installation_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Cyberware installation to calibrate
+      - name: installation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Cyberware installation to calibrate
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CalibrateCyberwareRequest"
+              $ref: '#/components/schemas/CalibrateCyberwareRequest'
       responses:
-        "200":
+        '200':
           description: Calibration completed successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CyberwareCalibrationResult"
-        "400":
+                $ref: '#/components/schemas/CyberwareCalibrationResult'
+        '400':
           description: Invalid calibration parameters
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
           description: Calibration blocked - system in use or unstable
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many calibrations - neural recovery required
           headers:
             Retry-After:
@@ -665,176 +720,193 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /cyberware/installations/{installation_id}/diagnostics:
     get:
       summary: Get cyberware diagnostics
-      description: "**Comprehensive system diagnostics**
+      description: '**Comprehensive system diagnostics**
 
-        Provides detailed health assessment, performance metrics,
-        neural integration status, and maintenance recommendations.
+        Provides detailed health assessment, performance metrics, neural integration
+        status, and maintenance recommendations.
 
         **Diagnostic Operation:** Non-invasive analysis
 
-        "
+        '
       operationId: getCyberwareDiagnostics
       tags:
-        - System Diagnostics
+      - System Diagnostics
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: installation_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Cyberware installation to diagnose
-        - name: diagnostic_level
-          in: query
-          schema:
-            type: string
-            enum: [BASIC, DETAILED, COMPREHENSIVE]
-            default: BASIC
-          description: Depth of diagnostic analysis
-        - name: include_historical
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include historical performance data
+      - name: installation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Cyberware installation to diagnose
+      - name: diagnostic_level
+        in: query
+        schema:
+          type: string
+          enum:
+          - BASIC
+          - DETAILED
+          - COMPREHENSIVE
+          default: BASIC
+        description: Depth of diagnostic analysis
+      - name: include_historical
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include historical performance data
       responses:
-        "200":
+        '200':
           description: Diagnostics completed successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CyberwareDiagnostics"
-        "404":
+                $ref: '#/components/schemas/CyberwareDiagnostics'
+        '404':
           description: Cyberware installation not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
           description: Diagnostics blocked - system offline or in maintenance
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /cyberware/compatibility:
     post:
       summary: Check cyberware compatibility
-      description: "**Compatibility validation engine**
+      description: '**Compatibility validation engine**
 
-        Performs comprehensive compatibility analysis between cyberware
-        components, existing installations, and neural capacity.
+        Performs comprehensive compatibility analysis between cyberware components,
+        existing installations, and neural capacity.
 
         **Validation Operation:** Prevents system conflicts
 
-        "
+        '
       operationId: checkCyberwareCompatibility
       tags:
-        - Cyberware Management
+      - Cyberware Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CyberwareCompatibilityRequest"
+              $ref: '#/components/schemas/CyberwareCompatibilityRequest'
       responses:
-        "200":
+        '200':
           description: Compatibility analysis completed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CyberwareCompatibilityResult"
-        "400":
+                $ref: '#/components/schemas/CyberwareCompatibilityResult'
+        '400':
           description: Invalid compatibility check parameters
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /cyberware/performance/optimize:
     post:
       summary: Optimize cyberware performance
-      description: "**Performance optimization engine**
+      description: '**Performance optimization engine**
 
-        Analyzes and optimizes cyberware performance across all installations,
-        balancing power consumption, neural load, and operational efficiency.
+        Analyzes and optimizes cyberware performance across all installations, balancing
+        power consumption, neural load, and operational efficiency.
 
         **Optimization Operation:** System-wide tuning
 
-        "
+        '
       operationId: optimizeCyberwarePerformance
       tags:
-        - Neural Calibration
+      - Neural Calibration
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Player whose cyberware to optimize
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Player whose cyberware to optimize
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/OptimizePerformanceRequest"
+              $ref: '#/components/schemas/OptimizePerformanceRequest'
       responses:
-        "200":
+        '200':
           description: Performance optimization completed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PerformanceOptimizationResult"
-        "400":
+                $ref: '#/components/schemas/PerformanceOptimizationResult'
+        '400':
           description: Invalid optimization parameters
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
           description: Optimization blocked - system instability detected
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
-  # ============================================================================
-  # COMMON REFERENCES (DRY Principle)
-  # ============================================================================
-
   responses:
-    # Use common success responses
     OK:
-      $ref: '../common/responses/success.yaml#/OK'
+      $ref: ../common-service/responses/success.yaml#/OK
     Created:
-      $ref: '../common/responses/success.yaml#/Created'
+      $ref: ../common-service/responses/success.yaml#/Created
     Updated:
-      $ref: '../common/responses/success.yaml#/Updated'
+      $ref: ../common-service/responses/success.yaml#/Updated
     Deleted:
-      $ref: '../common/responses/success.yaml#/Deleted'
+      $ref: ../common-service/responses/success.yaml#/Deleted
     BadRequest:
-      $ref: '../common/responses/error.yaml#/BadRequest'
+      $ref: ../common-service/responses/error.yaml#/BadRequest
     Unauthorized:
-      $ref: '../common/responses/error.yaml#/Unauthorized'
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
     NotFound:
-      $ref: '../common/responses/error.yaml#/NotFound'
+      $ref: ../common-service/responses/error.yaml#/NotFound
     TooManyRequests:
-      $ref: '../common/responses/error.yaml#/TooManyRequests'
-
-    # Health responses
+      $ref: ../common-service/responses/error.yaml#/TooManyRequests
     HealthBatchSuccess:
-      $ref: '../common/responses/success.yaml#/HealthBatchSuccess'
-
-    # Domain-specific responses
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
     CyberwareInstalled:
       description: Cyberware installed successfully
       headers:
@@ -855,7 +927,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CyberwareInstallationResponse"
+            $ref: '#/components/schemas/CyberwareInstallationResponse'
     CyberwareRetrieved:
       description: Cyberware installation retrieved successfully
       headers:
@@ -872,7 +944,7 @@ components:
           schema:
             type: string
             format: date-time
-            example: "2025-12-21T10:00:00Z"
+            example: '2025-12-21T10:00:00Z'
             description: Last modification timestamp
         X-Processing-Time:
           schema:
@@ -882,7 +954,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CyberwareInstallationResponse"
+            $ref: '#/components/schemas/CyberwareInstallationResponse'
     CyberwareUpdated:
       description: Cyberware installation updated successfully
       headers:
@@ -895,7 +967,7 @@ components:
           schema:
             type: string
             format: date-time
-            example: "2025-12-21T10:05:00Z"
+            example: '2025-12-21T10:05:00Z'
             description: Last modification timestamp
         X-Processing-Time:
           schema:
@@ -905,7 +977,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CyberwareInstallationResponse"
+            $ref: '#/components/schemas/CyberwareInstallationResponse'
     CyberwareListSuccess:
       description: Cyberware installations retrieved successfully
       headers:
@@ -926,24 +998,23 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CyberwareInstallationListResponse"
-
+            $ref: '#/components/schemas/CyberwareInstallationListResponse'
   schemas:
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
     WebSocketHealthMessage:
       type: object
       required:
-        - type
-        - timestamp
-        - health
+      - type
+      - timestamp
+      - health
       properties:
         type:
           type: string
           enum:
-            - health_update
-            - health_alert
-            - service_down
+          - health_update
+          - health_alert
+          - service_down
           example: health_update
           maxLength: 255
         timestamp:
@@ -956,130 +1027,157 @@ components:
           description: Timestamp of the health message
           maxLength: 1000
         health:
-          $ref: "../common/schemas/health.yaml#/HealthResponse"
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
+          $ref: ../common-service/schemas/health.yaml#/HealthResponse
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     Error:
-      $ref: ../common/schemas/error.yaml#/Error
-
-    # ============================================================================
-    # CYBERWARE ENTITIES (Game Domain Inheritance)
-    # ============================================================================
-
-    # Cyberware Installation Entity - Core installation management
+      $ref: ../common-service/schemas/error.yaml#/Error
     CyberwareInstallationEntity:
       allOf:
-        - $ref: '../common/schemas/common.yaml#/AuditableEntity'  # id, timestamps, created_by, updated_by
-        - type: object
-          required:
-            - player_id
-            - cyberware_id
-            - installation_slot
-            - status
-          properties:
-            player_id:
+      - $ref: ../common-service/schemas/common.yaml#/AuditableEntity
+      - type: object
+        required:
+        - player_id
+        - cyberware_id
+        - installation_slot
+        - status
+        properties:
+          player_id:
+            type: string
+            format: uuid
+            description: Player who owns this installation
+          cyberware_id:
+            type: string
+            format: uuid
+            description: Cyberware component identifier
+          installation_slot:
+            type: string
+            enum:
+            - BRAIN_STEM
+            - SPINAL_CORD
+            - LIMB_LEFT_ARM
+            - LIMB_RIGHT_ARM
+            - LIMB_LEFT_LEG
+            - LIMB_RIGHT_LEG
+            - TORSO
+            - HEAD
+            - EYES
+            - EARS
+            description: Body location of installation
+            example: LIMB_RIGHT_ARM
+          status:
+            type: string
+            enum:
+            - ACTIVE
+            - INACTIVE
+            - MALFUNCTIONING
+            - MAINTENANCE
+            - CALIBRATING
+            description: Current installation status
+            example: ACTIVE
+          cyberware_type:
+            type: string
+            enum:
+            - NEURAL
+            - MUSCULAR
+            - SENSORY
+            - WEAPON
+            - DEFENSIVE
+            - UTILITY
+            description: Type of cyberware installed
+            example: MUSCULAR
+          performance_rating:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 100
+            description: Current performance percentage
+            example: 94.7
+          health_rating:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 100
+            description: Installation health percentage
+            example: 87.2
+          neural_integration:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 100
+            description: Neural integration quality
+            example: 91.5
+          power_consumption:
+            type: number
+            format: float
+            minimum: 0
+            description: Power consumption per second
+            example: 3.2
+          stability_index:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 100
+            description: System stability rating
+            example: 88.9
+          last_calibration:
+            type: string
+            format: date-time
+            description: Last calibration timestamp
+          last_maintenance:
+            type: string
+            format: date-time
+            description: Last maintenance timestamp
+          active_effects:
+            type: array
+            items:
+              $ref: '#/components/schemas/CyberwareEffect'
+            description: Currently active effects
+            maxItems: 20
+          compatibility_warnings:
+            type: array
+            items:
               type: string
-              format: uuid
-              description: Player who owns this installation
-            cyberware_id:
-              type: string
-              format: uuid
-              description: Cyberware component identifier
-            installation_slot:
-              type: string
-              enum: [BRAIN_STEM, SPINAL_CORD, LIMB_LEFT_ARM, LIMB_RIGHT_ARM, LIMB_LEFT_LEG, LIMB_RIGHT_LEG, TORSO, HEAD, EYES, EARS]
-              description: Body location of installation
-              example: LIMB_RIGHT_ARM
-            status:
-              type: string
-              enum: [ACTIVE, INACTIVE, MALFUNCTIONING, MAINTENANCE, CALIBRATING]
-              description: Current installation status
-              example: ACTIVE
-            cyberware_type:
-              type: string
-              enum: [NEURAL, MUSCULAR, SENSORY, WEAPON, DEFENSIVE, UTILITY]
-              description: Type of cyberware installed
-              example: MUSCULAR
-            performance_rating:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-              description: Current performance percentage
-              example: 94.7
-            health_rating:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-              description: Installation health percentage
-              example: 87.2
-            neural_integration:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-              description: Neural integration quality
-              example: 91.5
-            power_consumption:
-              type: number
-              format: float
-              minimum: 0
-              description: Power consumption per second
-              example: 3.2
-            stability_index:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-              description: System stability rating
-              example: 88.9
-            last_calibration:
-              type: string
-              format: date-time
-              description: Last calibration timestamp
-            last_maintenance:
-              type: string
-              format: date-time
-              description: Last maintenance timestamp
-            active_effects:
-              type: array
-              items:
-                $ref: '#/components/schemas/CyberwareEffect'
-              description: Currently active effects
-              maxItems: 20
-            compatibility_warnings:
-              type: array
-              items:
-                type: string
-                maxLength: 200
-              description: Compatibility warnings and issues
-              maxItems: 10
-            cyberpsychosis_risk:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-              description: Cyberpsychosis risk percentage
-              example: 23.1
-            firmware_version:
-              type: string
-              pattern: '^\\d+\\.\\d+\\.\\d+$'
-              description: Installed firmware version
-              example: "2.1.4"
-      description: "BACKEND NOTE: Inherits from AuditableEntity. Complex installation management with health monitoring. Memory savings: 30-50% via struct alignment."
-
-    # Cyberware Effect - Effect system integration
+              maxLength: 200
+            description: Compatibility warnings and issues
+            maxItems: 10
+          cyberpsychosis_risk:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 100
+            description: Cyberpsychosis risk percentage
+            example: 23.1
+          firmware_version:
+            type: string
+            pattern: ^\\d+\\.\\d+\\.\\d+$
+            description: Installed firmware version
+            example: 2.1.4
+      description: 'BACKEND NOTE: Inherits from AuditableEntity. Complex installation
+        management with health monitoring. Memory savings: 30-50% via struct alignment.'
     CyberwareEffect:
       type: object
       required:
-        - effect_type
-        - base_value
+      - effect_type
+      - base_value
       properties:
         effect_type:
           type: string
-          enum: [STRENGTH, AGILITY, INTELLIGENCE, REFLEXES, HEALTH, ARMOR, DAMAGE, ACCURACY, STEALTH, HACKING, HEALING, ENDURANCE, PERCEPTION, LUCK]
+          enum:
+          - STRENGTH
+          - AGILITY
+          - INTELLIGENCE
+          - REFLEXES
+          - HEALTH
+          - ARMOR
+          - DAMAGE
+          - ACCURACY
+          - STEALTH
+          - HACKING
+          - HEALING
+          - ENDURANCE
+          - PERCEPTION
+          - LUCK
           description: Type of cyberware effect
           example: STRENGTH
         base_value:
@@ -1111,7 +1209,9 @@ components:
             maxLength: 100
           description: Conditions required for effect activation
           maxItems: 5
-          example: ["combat_active", "health_above_50"]
+          example:
+          - combat_active
+          - health_above_50
         side_effects:
           type: array
           items:
@@ -1119,18 +1219,15 @@ components:
             maxLength: 100
           description: Potential side effects
           maxItems: 5
-          example: ["neural_feedback", "power_drain"]
-      description: "BACKEND NOTE: Enhanced effect system with degradation and conditional activation."
-
-    # ============================================================================
-    # REQUEST/RESPONSE SCHEMAS
-    # ============================================================================
-
-    # Response wrapper for single entity
+          example:
+          - neural_feedback
+          - power_drain
+      description: 'BACKEND NOTE: Enhanced effect system with degradation and conditional
+        activation.'
     CyberwareInstallationResponse:
       type: object
       required:
-        - data
+      - data
       properties:
         data:
           $ref: '#/components/schemas/CyberwareInstallationEntity'
@@ -1139,18 +1236,16 @@ components:
           properties:
             version:
               type: string
-              example: "1.0"
+              example: '1.0'
             processing_time_ms:
               type: integer
               example: 15
-      description: "Standard response wrapper for single cyberware installation"
-
-    # Response wrapper for entity list with pagination
+      description: Standard response wrapper for single cyberware installation
     CyberwareInstallationListResponse:
       type: object
       required:
-        - data
-        - meta
+      - data
+      - meta
       properties:
         data:
           type: array
@@ -1158,25 +1253,19 @@ components:
             $ref: '#/components/schemas/CyberwareInstallationEntity'
         meta:
           allOf:
-            - $ref: '../common/schemas/pagination.yaml#/PaginatedResponse'
-            - type: object
-              properties:
-                processing_time_ms:
-                  type: integer
-                  example: 45
-      description: "Standard paginated response wrapper"
-
-    # ============================================================================
-    # REQUEST SCHEMAS
-    # ============================================================================
-
-    # Install Cyberware Request
+          - $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
+          - type: object
+            properties:
+              processing_time_ms:
+                type: integer
+                example: 45
+      description: Standard paginated response wrapper
     InstallCyberwareRequest:
       type: object
       required:
-        - player_id
-        - cyberware_id
-        - installation_slot
+      - player_id
+      - cyberware_id
+      - installation_slot
       properties:
         player_id:
           type: string
@@ -1188,7 +1277,17 @@ components:
           description: Cyberware component to install
         installation_slot:
           type: string
-          enum: [BRAIN_STEM, SPINAL_CORD, LIMB_LEFT_ARM, LIMB_RIGHT_ARM, LIMB_LEFT_LEG, LIMB_RIGHT_LEG, TORSO, HEAD, EYES, EARS]
+          enum:
+          - BRAIN_STEM
+          - SPINAL_CORD
+          - LIMB_LEFT_ARM
+          - LIMB_RIGHT_ARM
+          - LIMB_LEFT_LEG
+          - LIMB_RIGHT_LEG
+          - TORSO
+          - HEAD
+          - EYES
+          - EARS
           description: Body location for installation
         neural_link_id:
           type: string
@@ -1206,42 +1305,51 @@ components:
           type: boolean
           default: false
           description: Prioritize this installation (costs more)
-      description: "Cyberware installation request with neural integration and risk assessment"
-
-    # Update Cyberware Installation Request
+      description: Cyberware installation request with neural integration and risk
+        assessment
     UpdateCyberwareInstallationRequest:
       allOf:
-        - $ref: '../common/operations/crud.yaml#/UpdateRequest'
-        - type: object
-          properties:
-            status:
+      - $ref: ../common-service/operations/crud.yaml#/UpdateRequest
+      - type: object
+        properties:
+          status:
+            type: string
+            enum:
+            - ACTIVE
+            - INACTIVE
+            - MAINTENANCE
+            description: New installation status
+          calibration_settings:
+            type: object
+            description: Updated calibration parameters
+            additionalProperties: true
+          firmware_update:
+            type: string
+            pattern: ^\\d+\\.\\d+\\.\\d+$
+            description: Firmware version to update to
+          maintenance_actions:
+            type: array
+            items:
               type: string
-              enum: [ACTIVE, INACTIVE, MAINTENANCE]
-              description: New installation status
-            calibration_settings:
-              type: object
-              description: Updated calibration parameters
-              additionalProperties: true
-            firmware_update:
-              type: string
-              pattern: '^\\d+\\.\\d+\\.\\d+$'
-              description: Firmware version to update to
-            maintenance_actions:
-              type: array
-              items:
-                type: string
-                enum: [CLEAN_INTERFACES, RECALIBRATE_NEURAL, REPLACE_COMPONENTS, OPTIMIZE_POWER]
-              description: Maintenance actions to perform
-              maxItems: 5
-      description: "Installation update with optimistic locking (version field from UpdateRequest)"
-
-    # Calibrate Cyberware Request
+              enum:
+              - CLEAN_INTERFACES
+              - RECALIBRATE_NEURAL
+              - REPLACE_COMPONENTS
+              - OPTIMIZE_POWER
+            description: Maintenance actions to perform
+            maxItems: 5
+      description: Installation update with optimistic locking (version field from
+        UpdateRequest)
     CalibrateCyberwareRequest:
       type: object
       properties:
         calibration_type:
           type: string
-          enum: [QUICK, STANDARD, DEEP, CUSTOM]
+          enum:
+          - QUICK
+          - STANDARD
+          - DEEP
+          - CUSTOM
           default: STANDARD
           description: Type of calibration to perform
         target_performance:
@@ -1262,14 +1370,12 @@ components:
           type: object
           description: Custom calibration parameters
           additionalProperties: true
-      description: "Cyberware calibration with multiple optimization strategies"
-
-    # Cyberware Compatibility Request
+      description: Cyberware calibration with multiple optimization strategies
     CyberwareCompatibilityRequest:
       type: object
       required:
-        - player_id
-        - cyberware_id
+      - player_id
+      - cyberware_id
       properties:
         player_id:
           type: string
@@ -1281,7 +1387,17 @@ components:
           description: Cyberware to check compatibility of
         installation_slot:
           type: string
-          enum: [BRAIN_STEM, SPINAL_CORD, LIMB_LEFT_ARM, LIMB_RIGHT_ARM, LIMB_LEFT_LEG, LIMB_RIGHT_LEG, TORSO, HEAD, EYES, EARS]
+          enum:
+          - BRAIN_STEM
+          - SPINAL_CORD
+          - LIMB_LEFT_ARM
+          - LIMB_RIGHT_ARM
+          - LIMB_LEFT_LEG
+          - LIMB_RIGHT_LEG
+          - TORSO
+          - HEAD
+          - EYES
+          - EARS
           description: Proposed installation location
         include_existing:
           type: boolean
@@ -1294,13 +1410,11 @@ components:
           maximum: 100
           default: 25
           description: Maximum acceptable risk percentage
-      description: "Compatibility check request with risk assessment"
-
-    # Optimize Performance Request
+      description: Compatibility check request with risk assessment
     OptimizePerformanceRequest:
       type: object
       required:
-        - player_id
+      - player_id
       properties:
         player_id:
           type: string
@@ -1310,11 +1424,18 @@ components:
           type: array
           items:
             type: string
-            enum: [PERFORMANCE, EFFICIENCY, STABILITY, NEURAL_LOAD, CYBERPSYCHOSIS_RISK]
+            enum:
+            - PERFORMANCE
+            - EFFICIENCY
+            - STABILITY
+            - NEURAL_LOAD
+            - CYBERPSYCHOSIS_RISK
           description: Optimization priorities
           minItems: 1
           maxItems: 5
-          default: ["PERFORMANCE", "STABILITY"]
+          default:
+          - PERFORMANCE
+          - STABILITY
         exclude_installations:
           type: array
           items:
@@ -1326,19 +1447,13 @@ components:
           type: boolean
           default: false
           description: Use aggressive optimization (higher risk)
-      description: "System-wide performance optimization request"
-
-    # ============================================================================
-    # RESULT SCHEMAS
-    # ============================================================================
-
-    # Cyberware Removal Result
+      description: System-wide performance optimization request
     CyberwareRemovalResult:
       type: object
       required:
-        - installation_id
-        - removal_status
-        - neural_stabilization_time
+      - installation_id
+      - removal_status
+      - neural_stabilization_time
       properties:
         installation_id:
           type: string
@@ -1346,7 +1461,11 @@ components:
           description: Removed installation ID
         removal_status:
           type: string
-          enum: [SUCCESS, PARTIAL, EMERGENCY, FAILED]
+          enum:
+          - SUCCESS
+          - PARTIAL
+          - EMERGENCY
+          - FAILED
           description: Removal outcome
         neural_stabilization_time:
           type: integer
@@ -1368,15 +1487,13 @@ components:
           minimum: 0
           maximum: 100
           description: Physical damage to installation slot
-      description: "Cyberware removal outcome with stabilization requirements"
-
-    # Cyberware Calibration Result
+      description: Cyberware removal outcome with stabilization requirements
     CyberwareCalibrationResult:
       type: object
       required:
-        - installation_id
-        - calibration_status
-        - performance_improvement
+      - installation_id
+      - calibration_status
+      - performance_improvement
       properties:
         installation_id:
           type: string
@@ -1384,7 +1501,11 @@ components:
           description: Calibrated installation ID
         calibration_status:
           type: string
-          enum: [SUCCESS, PARTIAL, FAILED, REQUIRES_MAINTENANCE]
+          enum:
+          - SUCCESS
+          - PARTIAL
+          - FAILED
+          - REQUIRES_MAINTENANCE
           description: Calibration outcome
         performance_improvement:
           type: number
@@ -1411,15 +1532,13 @@ components:
           type: string
           format: date-time
           description: When next calibration is recommended
-      description: "Calibration outcome with performance metrics"
-
-    # Cyberware Compatibility Result
+      description: Calibration outcome with performance metrics
     CyberwareCompatibilityResult:
       type: object
       required:
-        - cyberware_id
-        - overall_compatibility
-        - risk_assessment
+      - cyberware_id
+      - overall_compatibility
+      - risk_assessment
       properties:
         cyberware_id:
           type: string
@@ -1427,7 +1546,10 @@ components:
           description: Checked cyberware ID
         overall_compatibility:
           type: string
-          enum: [COMPATIBLE, CONDITIONAL, INCOMPATIBLE]
+          enum:
+          - COMPATIBLE
+          - CONDITIONAL
+          - INCOMPATIBLE
           description: Overall compatibility rating
         risk_assessment:
           type: object
@@ -1458,19 +1580,27 @@ components:
           items:
             type: object
             required:
-              - installation_id
-              - conflict_type
-              - severity
+            - installation_id
+            - conflict_type
+            - severity
             properties:
               installation_id:
                 type: string
                 format: uuid
               conflict_type:
                 type: string
-                enum: [NEURAL_OVERLOAD, POWER_CONFLICT, SLOT_OCCUPIED, TYPE_INCOMPATIBLE]
+                enum:
+                - NEURAL_OVERLOAD
+                - POWER_CONFLICT
+                - SLOT_OCCUPIED
+                - TYPE_INCOMPATIBLE
               severity:
                 type: string
-                enum: [LOW, MEDIUM, HIGH, CRITICAL]
+                enum:
+                - LOW
+                - MEDIUM
+                - HIGH
+                - CRITICAL
           description: Existing installations that conflict
         recommended_modifications:
           type: array
@@ -1481,17 +1611,25 @@ components:
           type: array
           items:
             type: string
-            enum: [BRAIN_STEM, SPINAL_CORD, LIMB_LEFT_ARM, LIMB_RIGHT_ARM, LIMB_LEFT_LEG, LIMB_RIGHT_LEG, TORSO, HEAD, EYES, EARS]
+            enum:
+            - BRAIN_STEM
+            - SPINAL_CORD
+            - LIMB_LEFT_ARM
+            - LIMB_RIGHT_ARM
+            - LIMB_LEFT_LEG
+            - LIMB_RIGHT_LEG
+            - TORSO
+            - HEAD
+            - EYES
+            - EARS
           description: Alternative installation locations
-      description: "Comprehensive compatibility analysis with risk assessment"
-
-    # Performance Optimization Result
+      description: Comprehensive compatibility analysis with risk assessment
     PerformanceOptimizationResult:
       type: object
       required:
-        - player_id
-        - optimization_status
-        - overall_improvement
+      - player_id
+      - optimization_status
+      - overall_improvement
       properties:
         player_id:
           type: string
@@ -1499,7 +1637,10 @@ components:
           description: Optimized player ID
         optimization_status:
           type: string
-          enum: [SUCCESS, PARTIAL, FAILED]
+          enum:
+          - SUCCESS
+          - PARTIAL
+          - FAILED
           description: Optimization outcome
         overall_improvement:
           type: number
@@ -1533,15 +1674,13 @@ components:
           items:
             type: string
           description: Optimization warnings and limitations
-      description: "System-wide performance optimization results"
-
-    # Cyberware Diagnostics
+      description: System-wide performance optimization results
     CyberwareDiagnostics:
       type: object
       required:
-        - installation_id
-        - diagnostic_timestamp
-        - overall_health
+      - installation_id
+      - diagnostic_timestamp
+      - overall_health
       properties:
         installation_id:
           type: string
@@ -1586,16 +1725,20 @@ components:
           items:
             type: object
             required:
-              - code
-              - severity
-              - description
+            - code
+            - severity
+            - description
             properties:
               code:
                 type: string
-                pattern: '^[A-Z0-9_]+$'
+                pattern: ^[A-Z0-9_]+$
               severity:
                 type: string
-                enum: [INFO, WARNING, ERROR, CRITICAL]
+                enum:
+                - INFO
+                - WARNING
+                - ERROR
+                - CRITICAL
               description:
                 type: string
                 maxLength: 200
@@ -1625,16 +1768,25 @@ components:
           items:
             type: object
             required:
-              - action
-              - priority
-              - description
+            - action
+            - priority
+            - description
             properties:
               action:
                 type: string
-                enum: [CALIBRATION, MAINTENANCE, FIRMWARE_UPDATE, COMPONENT_REPLACEMENT, NEURAL_RECALIBRATION]
+                enum:
+                - CALIBRATION
+                - MAINTENANCE
+                - FIRMWARE_UPDATE
+                - COMPONENT_REPLACEMENT
+                - NEURAL_RECALIBRATION
               priority:
                 type: string
-                enum: [LOW, MEDIUM, HIGH, CRITICAL]
+                enum:
+                - LOW
+                - MEDIUM
+                - HIGH
+                - CRITICAL
               description:
                 type: string
                 maxLength: 300
@@ -1651,12 +1803,11 @@ components:
           type: object
           description: Historical performance and health trends (when requested)
           additionalProperties: true
-      description: "Comprehensive cyberware diagnostic report"
-
+      description: Comprehensive cyberware diagnostic report
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
+      $ref: ../common-service/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      $ref: ../common/security/security.yaml#/ApiKeyAuth
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      $ref: ../common/security/security.yaml#/ServiceAuth
+      $ref: ../common-service/security/security.yaml#/ServiceAuth

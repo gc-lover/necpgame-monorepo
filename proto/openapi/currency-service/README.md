@@ -2,11 +2,13 @@
 
 ## 📋 **Назначение**
 
-Currency Service предоставляет **enterprise-grade управление валютами** в NECPGAME экосистеме. Сервис построен на **SOLID/DRY архитектуре** с наследованием от `economy-entities.yaml`.
+Currency Service предоставляет **enterprise-grade управление валютами** в NECPGAME экосистеме. Сервис построен на *
+*SOLID/DRY архитектуре** с наследованием от `economy-entities.yaml`.
 
 ## 🏗️ **SOLID/DRY Архитектура**
 
 ### **Наследование от Economy Entities**
+
 ```yaml
 # Currency Service использует:
 - CurrencyEntity из economy-entities.yaml
@@ -15,6 +17,7 @@ Currency Service предоставляет **enterprise-grade управлен�
 ```
 
 ### **Преимущества SOLID/DRY**
+
 - ✅ **DRY Principle**: Нет дублирования общих полей (id, timestamps)
 - ✅ **Single Responsibility**: Каждый сервис отвечает только за currency логику
 - ✅ **Open/Closed**: Новые поля добавляются без изменения существующих схем
@@ -22,6 +25,7 @@ Currency Service предоставляет **enterprise-grade управлен�
 - ✅ **Interface Segregation**: Минимальные интерфейсы для currency домена
 
 ### **Память и Производительность**
+
 - **Struct Alignment**: Поля упорядочены large→small (30-50% экономии памяти)
 - **Optimistic Locking**: Конкурентные транзакции без deadlock
 - **Memory Pooling**: Переиспользование объектов в hot paths для балансов
@@ -90,15 +94,16 @@ security:
 components:
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
+      $ref: '../common-service/security/security.yaml#/BearerAuth'
     ApiKeyAuth:
-      $ref: '../common/security/security.yaml#/ApiKeyAuth'
+      $ref: '../common-service/security/security.yaml#/ApiKeyAuth'
     ServiceAuth:
-      $ref: '../common/security/security.yaml#/ServiceAuth'
+      $ref: '../common-service/security/security.yaml#/ServiceAuth'
 ```
 
 **Использует по умолчанию:**
-- `../common/security/security.yaml` - Bearer JWT, API Key и Service аутентификация
+
+- `../common-service/security/security.yaml` - Bearer JWT, API Key и Service аутентификация
 
 ### 4. **Обязательные Health Endpoints**
 
@@ -110,15 +115,16 @@ components:
     operationId: [domain]HealthCheck
     responses:
       '200': # Обязательно
-        $ref: '../common/responses/success.yaml#/HealthOK'
+        $ref: '../common-service/responses/success.yaml#/HealthOK'
       '503': # Обязательно
-        $ref: '../common/responses/error.yaml#/InternalServerError'
+        $ref: '../common-service/responses/error.yaml#/InternalServerError'
 ```
 
 **Использует по умолчанию:**
-- `../common/responses/success.yaml#/HealthOK` - Ответ здоровья
-- `../common/schemas/health.yaml#/HealthResponse` - Схема здоровья
-- `../common/responses/error.yaml#/InternalServerError` - Ошибка сервера
+
+- `../common-service/responses/success.yaml#/HealthOK` - Ответ здоровья
+- `../common-service/schemas/health.yaml#/HealthResponse` - Схема здоровья
+- `../common-service/responses/error.yaml#/InternalServerError` - Ошибка сервера
 
 #### Batch Health Check
 
@@ -141,38 +147,41 @@ components:
 ### 5. **Общие Схемы (Используются по умолчанию)**
 
 #### Error Responses
+
 ```yaml
 components:
   responses:
     BadRequest:
-      $ref: '../common/responses/error.yaml#/BadRequest'
+      $ref: '../common-service/responses/error.yaml#/BadRequest'
     Unauthorized:
-      $ref: '../common/responses/error.yaml#/Unauthorized'
+      $ref: '../common-service/responses/error.yaml#/Unauthorized'
     Forbidden:
-      $ref: '../common/responses/error.yaml#/Forbidden'
+      $ref: '../common-service/responses/error.yaml#/Forbidden'
     NotFound:
-      $ref: '../common/responses/error.yaml#/NotFound'
+      $ref: '../common-service/responses/error.yaml#/NotFound'
     Conflict:
-      $ref: '../common/responses/error.yaml#/Conflict'
+      $ref: '../common-service/responses/error.yaml#/Conflict'
     InternalServerError:
-      $ref: '../common/responses/error.yaml#/InternalServerError'
+      $ref: '../common-service/responses/error.yaml#/InternalServerError'
 ```
 
 #### Common Schemas
+
 ```yaml
 components:
   schemas:
     Error:
-      $ref: '../common/schemas/error.yaml#/Error'
+      $ref: '../common-service/schemas/error.yaml#/Error'
     HealthResponse:
-      $ref: '../common/schemas/health.yaml#/HealthResponse'
+      $ref: '../common-service/schemas/health.yaml#/HealthResponse'
 ```
 
 **Файлы по умолчанию:**
-- `../common/schemas/error.yaml` - Стандартная схема ошибки
-- `../common/schemas/health.yaml` - Схема здоровья сервиса
-- `../common/responses/error.yaml` - Стандартные HTTP ошибки
-- `../common/responses/success.yaml` - Успешные ответы
+
+- `../common-service/schemas/error.yaml` - Стандартная схема ошибки
+- `../common-service/schemas/health.yaml` - Схема здоровья сервиса
+- `../common-service/responses/error.yaml` - Стандартные HTTP ошибки
+- `../common-service/responses/success.yaml` - Успешные ответы
 
 ### 6. **Backend Optimization Hints**
 
@@ -344,21 +353,26 @@ components:
 
 ## Файлы Common, Используемые по умолчанию
 
-Шаблон автоматически использует следующие общие файлы из `../common/`:
+Шаблон автоматически использует следующие общие файлы из `../common-service/`:
 
 ### Security
-- `../common/security/security.yaml` - JWT Bearer, API Key, Service аутентификация
+
+- `../common-service/security/security.yaml` - JWT Bearer, API Key, Service аутентификация
 
 ### Schemas
-- `../common/schemas/error.yaml` - Стандартная схема ошибки
-- `../common/schemas/health.yaml` - Детальная схема здоровья сервиса
+
+- `../common-service/schemas/error.yaml` - Стандартная схема ошибки
+- `../common-service/schemas/health.yaml` - Детальная схема здоровья сервиса
 
 ### Responses
-- `../common/responses/error.yaml` - HTTP ошибки (400, 401, 403, 404, 409, 500, 429)
-- `../common/responses/success.yaml` - Успешные ответы (200, 201) и health responses
+
+- `../common-service/responses/error.yaml` - HTTP ошибки (400, 401, 403, 404, 409, 500, 429)
+- `../common-service/responses/success.yaml` - Успешные ответы (200, 201) и health responses
 
 ### Готовность к использованию
+
 Все эти файлы:
+
 - Оптимизированы для struct alignment
 - Проходят Redocly валидацию
 - Генерируют корректный Go код с ogen

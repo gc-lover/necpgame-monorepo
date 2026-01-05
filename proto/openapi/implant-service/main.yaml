@@ -4,17 +4,17 @@ info:
   description: "**Enterprise-Grade Implant Management API for NECPGAME**
 
     This API manages cybernetic implants, neural interfaces, and augmentation systems
-    in the cyberpunk world, providing installation, activation, maintenance, and
-    upgrade functionality.
+    in the cyberpunk world, providing installation, activation, maintenance, and upgrade
+    functionality.
 
     ## Key Features
 
-    - **Implant Management**: Full lifecycle management of cybernetic implants
-    - **Neural Integration**: Neural link management and synchronization
-    - **System Diagnostics**: Real-time implant health monitoring
-    - **Upgrade Systems**: Tier progression and enhancement mechanics
-    - **Safety Protocols**: Risk assessment and compatibility validation
-    - **Performance Optimized**: MMOFPS-grade performance with <50ms P99 latency
+    - **Implant Management**: Full lifecycle management of cybernetic implants - **Neural
+    Integration**: Neural link management and synchronization - **System Diagnostics**:
+    Real-time implant health monitoring - **Upgrade Systems**: Tier progression and
+    enhancement mechanics - **Safety Protocols**: Risk assessment and compatibility
+    validation - **Performance Optimized**: MMOFPS-grade performance with <50ms P99
+    latency
 
     ## Domain Purpose
 
@@ -24,13 +24,12 @@ info:
 
     ## Performance Targets
 
-    - P99 Latency: <50ms for implant operations
-    - Memory: <25KB per active implant session
-    - Concurrent users: 50,000+ simultaneous augmentations
-    - Neural sync: <10ms response time
+    - P99 Latency: <50ms for implant operations - Memory: <25KB per active implant
+    session - Concurrent users: 50,000+ simultaneous augmentations - Neural sync:
+    <10ms response time
 
     "
-  version: "1.0.0"
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
@@ -101,13 +100,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
         "503":
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
         "429":
           description: Too many requests - rate limit exceeded
           headers:
@@ -118,7 +117,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /health/batch:
     post:
       summary: Batch health check for multiple domain services
@@ -159,13 +164,13 @@ paths:
                   description: List of services to check
       responses:
         "200":
-          $ref: "../common/responses/success.yaml#/HealthBatchSuccess"
+          $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
         "400":
           description: Invalid request - malformed service list
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "429":
           description: Too many requests - rate limit exceeded
           headers:
@@ -177,7 +182,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
@@ -255,13 +266,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "401":
           description: Unauthorized - authentication required for WebSocket
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "429":
           description: Too many requests - WebSocket connection limit exceeded
           headers:
@@ -272,7 +283,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /implants:
     get:
       summary: List implants with pagination and filtering
@@ -308,7 +325,13 @@ paths:
           in: query
           schema:
             type: string
-            enum: [NEURAL, MUSCULAR, SENSORY, WEAPON, DEFENSIVE, UTILITY]
+            enum:
+              - NEURAL
+              - MUSCULAR
+              - SENSORY
+              - WEAPON
+              - DEFENSIVE
+              - UTILITY
           description: Filter by implant category
         - name: tier
           in: query
@@ -321,7 +344,11 @@ paths:
           in: query
           schema:
             type: string
-            enum: [ACTIVE, INACTIVE, MALFUNCTIONING, MAINTENANCE]
+            enum:
+              - ACTIVE
+              - INACTIVE
+              - MALFUNCTIONING
+              - MAINTENANCE
           description: Filter by implant status
         - name: stability_min
           in: query
@@ -344,19 +371,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "422":
           description: Unprocessable entity - validation failed
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     post:
       summary: Install new implant
       description: "**Enterprise-grade installation endpoint**
 
-        Validates neural compatibility, checks system capacity, and ensures
-        safe integration with existing cyberware.
+        Validates neural compatibility, checks system capacity, and ensures safe integration
+        with existing cyberware.
 
         Supports optimistic locking for concurrent operations.
 
@@ -382,19 +415,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "409":
           description: Conflict - implant slot occupied or compatibility issue
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "422":
           description: Unprocessable entity - business rule validation failed
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "429":
           description: Too many requests - installation rate limit exceeded
           headers:
@@ -405,7 +438,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /implants/{implant_id}:
     get:
       summary: Get implant by ID
@@ -465,13 +504,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "404":
           description: Implant not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "429":
           description: Too many requests - rate limit exceeded
           headers:
@@ -482,7 +521,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     put:
       summary: Update implant configuration
       description: "**Enterprise-grade update endpoint**
@@ -534,13 +579,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "404":
           description: Implant not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "409":
           description:
             Conflict - version conflict (optimistic locking) or precondition
@@ -554,7 +599,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "412":
           description:
             Precondition failed - If-Match or If-Unmodified-Since condition
@@ -568,13 +613,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "422":
           description: Unprocessable entity - business rule validation failed
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "429":
           description: Too many requests - update rate limit exceeded
           headers:
@@ -585,7 +630,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     delete:
       summary: Remove implant
       description: "**Enterprise-grade removal endpoint**
@@ -618,19 +669,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "404":
           description: Implant not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "409":
           description: Conflict - implant cannot be removed (active dependencies)
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "429":
           description: Too many requests - removal rate limit exceeded
           headers:
@@ -641,14 +692,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /implants/{implant_id}/activate:
     post:
       summary: Activate implant
       description: "**Neural activation endpoint**
 
-        Initiates neural synchronization and power-up sequence.
-        Validates system stability and neural compatibility.
+        Initiates neural synchronization and power-up sequence. Validates system stability
+        and neural compatibility.
 
         **Critical Operation:** Requires neural link verification
 
@@ -684,20 +741,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "409":
           description: Implant already active or incompatible
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /implants/{implant_id}/deactivate:
     post:
       summary: Deactivate implant
       description: "**Safe deactivation endpoint**
 
-        Performs controlled shutdown and neural disconnection.
-        Preserves implant integrity and system stability.
+        Performs controlled shutdown and neural disconnection. Preserves implant integrity
+        and system stability.
 
         "
       operationId: deactivateImplant
@@ -725,14 +788,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /implants/{implant_id}/upgrade:
     post:
       summary: Upgrade implant tier
       description: "**Tier progression endpoint**
 
-        Performs firmware upgrade and hardware enhancement.
-        Requires compatible upgrade materials and neural recalibration.
+        Performs firmware upgrade and hardware enhancement. Requires compatible upgrade
+        materials and neural recalibration.
 
         **Risk Operation:** May cause temporary neural disruption
 
@@ -768,20 +837,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "409":
           description: Implant at maximum tier or incompatible upgrade
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /implants/{implant_id}/diagnostics:
     get:
       summary: Get implant diagnostics
       description: "**System health monitoring**
 
-        Provides comprehensive implant status, neural connectivity,
-        and performance metrics for maintenance and troubleshooting.
+        Provides comprehensive implant status, neural connectivity, and performance
+        metrics for maintenance and troubleshooting.
 
         "
       operationId: getImplantDiagnostics
@@ -815,14 +890,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /neural-links/{player_id}/sync:
     post:
       summary: Synchronize neural link
       description: "**Neural synchronization endpoint**
 
-        Performs full neural interface calibration and synchronization.
-        Critical for implant functionality and player neural health.
+        Performs full neural interface calibration and synchronization. Critical for
+        implant functionality and player neural health.
 
         **High-Risk Operation:** May cause temporary neural feedback
 
@@ -858,43 +939,39 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: "#/components/schemas/Error"
         "409":
           description: Neural link busy or incompatible
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
-  # ============================================================================
-  # COMMON REFERENCES (DRY Principle)
-  # ============================================================================
-
   responses:
-    # Use common success responses
     OK:
-      $ref: '../common/responses/success.yaml#/OK'
+      $ref: ../common-service/responses/success.yaml#/OK
     Created:
-      $ref: '../common/responses/success.yaml#/Created'
+      $ref: ../common-service/responses/success.yaml#/Created
     Updated:
-      $ref: '../common/responses/success.yaml#/Updated'
+      $ref: ../common-service/responses/success.yaml#/Updated
     Deleted:
-      $ref: '../common/responses/success.yaml#/Deleted'
+      $ref: ../common-service/responses/success.yaml#/Deleted
     BadRequest:
-      $ref: '../common/responses/error.yaml#/BadRequest'
+      $ref: ../common-service/responses/error.yaml#/BadRequest
     Unauthorized:
-      $ref: '../common/responses/error.yaml#/Unauthorized'
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
     NotFound:
-      $ref: '../common/responses/error.yaml#/NotFound'
+      $ref: ../common-service/responses/error.yaml#/NotFound
     TooManyRequests:
-      $ref: '../common/responses/error.yaml#/TooManyRequests'
-
-    # Health responses
+      $ref: ../common-service/responses/error.yaml#/TooManyRequests
     HealthBatchSuccess:
-      $ref: '../common/responses/success.yaml#/HealthBatchSuccess'
-
-    # Domain-specific responses
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
     ImplantListSuccess:
       description: Implants retrieved successfully
       headers:
@@ -995,10 +1072,9 @@ components:
             type: integer
             example: 15
             description: Processing time in milliseconds
-
   schemas:
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
     WebSocketHealthMessage:
       type: object
       required:
@@ -1024,21 +1100,33 @@ components:
           description: Timestamp of the health message
           maxLength: 1000
         health:
-          $ref: "../common/schemas/health.yaml#/HealthResponse"
+          $ref: ../common-service/schemas/health.yaml#/HealthResponse
       description:
         "BACKEND NOTE: Fields ordered for struct alignment (large → small).
         Expected memory savings: 30-50%."
     Error:
-      $ref: ../common/schemas/error.yaml#/Error
-
-    # ============================================================================
-    # IMPLANT ENTITIES (Game Domain Inheritance)
-    # ============================================================================
-
-    # Implant Entity - Demonstrates BaseEntity inheritance
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: "Internal server error"
+          maxLength: 1000
+        details:
+          type: object
+          description: "Additional error details"
+      description: "Standard error response format"
     ImplantEntity:
       allOf:
-        - $ref: '../common/schemas/common.yaml#/AuditableEntity'  # id, timestamps, created_by, updated_by
+        - $ref: ../common-service/schemas/common.yaml#/AuditableEntity
         - type: object
           required:
             - name
@@ -1051,10 +1139,16 @@ components:
               minLength: 1
               maxLength: 100
               description: Implant display name
-              example: "Neural Accelerator v2.1"
+              example: Neural Accelerator v2.1
             category:
               type: string
-              enum: [NEURAL, MUSCULAR, SENSORY, WEAPON, DEFENSIVE, UTILITY]
+              enum:
+                - NEURAL
+                - MUSCULAR
+                - SENSORY
+                - WEAPON
+                - DEFENSIVE
+                - UTILITY
               description: Implant category
               example: NEURAL
             tier:
@@ -1065,7 +1159,11 @@ components:
               example: 3
             status:
               type: string
-              enum: [ACTIVE, INACTIVE, MALFUNCTIONING, MAINTENANCE]
+              enum:
+                - ACTIVE
+                - INACTIVE
+                - MALFUNCTIONING
+                - MAINTENANCE
               default: INACTIVE
               description: Current implant status
               example: ACTIVE
@@ -1073,11 +1171,13 @@ components:
               type: string
               maxLength: 1000
               description: Detailed implant description
-              example: "Advanced neural processing enhancement providing 40% faster reaction time."
+              example:
+                Advanced neural processing enhancement providing 40% faster reaction
+                time.
             effects:
               type: array
               items:
-                $ref: '#/components/schemas/ImplantEffect'
+                $ref: "#/components/schemas/ImplantEffect"
               description: Active effects provided by this implant
               maxItems: 10
             powerConsumption:
@@ -1112,9 +1212,9 @@ components:
               type: string
               format: date-time
               description: When implant was installed
-      description: "BACKEND NOTE: Inherits from AuditableEntity. Only domain-specific fields defined here. Memory savings: 30-50% via struct alignment."
-
-    # Implant Effect - Effect system integration
+      description:
+        "BACKEND NOTE: Inherits from AuditableEntity. Only domain-specific
+        fields defined here. Memory savings: 30-50% via struct alignment."
     ImplantEffect:
       type: object
       required:
@@ -1123,7 +1223,17 @@ components:
       properties:
         effect_type:
           type: string
-          enum: [STRENGTH, AGILITY, INTELLIGENCE, REFLEXES, PERCEPTION, ENDURANCE, LUCK, CRITICAL_CHANCE, DAMAGE_MULTIPLIER, DEFENSE_BONUS]
+          enum:
+            - STRENGTH
+            - AGILITY
+            - INTELLIGENCE
+            - REFLEXES
+            - PERCEPTION
+            - ENDURANCE
+            - LUCK
+            - CRITICAL_CHANCE
+            - DAMAGE_MULTIPLIER
+            - DEFENSE_BONUS
           description: Type of effect
           example: REFLEXES
         value:
@@ -1143,13 +1253,13 @@ components:
             maxLength: 100
           description: Activation conditions
           maxItems: 5
-          example: ["combat_active", "health_above_50"]
+          example:
+            - combat_active
+            - health_above_50
       description: "BACKEND NOTE: Effect system integration with conditional activation."
-
-    # Neural Link Entity - Neural interface management
     NeuralLinkEntity:
       allOf:
-        - $ref: '../common/schemas/common.yaml#/AuditableEntity'
+        - $ref: ../common-service/schemas/common.yaml#/AuditableEntity
         - type: object
           required:
             - player_id
@@ -1161,7 +1271,11 @@ components:
               description: Associated player
             sync_status:
               type: string
-              enum: [SYNCHRONIZED, DESYNCHRONIZED, CALIBRATING, ERROR]
+              enum:
+                - SYNCHRONIZED
+                - DESYNCHRONIZED
+                - CALIBRATING
+                - ERROR
               description: Neural synchronization status
               example: SYNCHRONIZED
             sync_strength:
@@ -1190,19 +1304,13 @@ components:
               description: Neural pathway health
               example: 89.2
       description: "BACKEND NOTE: Neural link management with health monitoring."
-
-    # ============================================================================
-    # REQUEST/RESPONSE SCHEMAS
-    # ============================================================================
-
-    # Response wrapper for single entity
     ImplantResponse:
       type: object
       required:
         - data
       properties:
         data:
-          $ref: '#/components/schemas/ImplantEntity'
+          $ref: "#/components/schemas/ImplantEntity"
         meta:
           type: object
           properties:
@@ -1212,9 +1320,7 @@ components:
             processing_time_ms:
               type: integer
               example: 15
-      description: "Standard response wrapper for single implant entity"
-
-    # Response wrapper for entity list with pagination
+      description: Standard response wrapper for single implant entity
     ImplantListResponse:
       type: object
       required:
@@ -1224,22 +1330,16 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/ImplantEntity'
+            $ref: "#/components/schemas/ImplantEntity"
         meta:
           allOf:
-            - $ref: '../common/schemas/pagination.yaml#/PaginatedResponse'
+            - $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
             - type: object
               properties:
                 processing_time_ms:
                   type: integer
                   example: 45
-      description: "Standard paginated response wrapper"
-
-    # ============================================================================
-    # REQUEST SCHEMAS
-    # ============================================================================
-
-    # Install Implant Request
+      description: Standard paginated response wrapper
     InstallImplantRequest:
       type: object
       required:
@@ -1261,7 +1361,13 @@ components:
           description: Neural link for integration
         installation_slot:
           type: string
-          enum: [BRAIN_STEM, SPINAL_CORD, LIMB_LEFT, LIMB_RIGHT, TORSO, HEAD]
+          enum:
+            - BRAIN_STEM
+            - SPINAL_CORD
+            - LIMB_LEFT
+            - LIMB_RIGHT
+            - TORSO
+            - HEAD
           description: Installation location
         priority_level:
           type: integer
@@ -1269,17 +1375,18 @@ components:
           maximum: 10
           default: 5
           description: Installation priority
-      description: "Install new implant request with neural integration validation"
-
-    # Update Implant Request
+      description: Install new implant request with neural integration validation
     UpdateImplantRequest:
       allOf:
-        - $ref: '../common/operations/crud.yaml#/UpdateRequest'
+        - $ref: ../common-service/operations/crud.yaml#/UpdateRequest
         - type: object
           properties:
             status:
               type: string
-              enum: [ACTIVE, INACTIVE, MAINTENANCE]
+              enum:
+                - ACTIVE
+                - INACTIVE
+                - MAINTENANCE
               description: New implant status
             settings:
               type: object
@@ -1289,9 +1396,7 @@ components:
               type: object
               description: Neural calibration parameters
               additionalProperties: true
-      description: "Update implant with optimistic locking (version field from UpdateRequest)"
-
-    # Activate Implant Request
+      description: Update implant with optimistic locking (version field from UpdateRequest)
     ActivateImplantRequest:
       type: object
       properties:
@@ -1311,9 +1416,7 @@ components:
           type: boolean
           default: false
           description: Force activation despite warnings
-      description: "Neural activation parameters with safety controls"
-
-    # Upgrade Implant Request
+      description: Neural activation parameters with safety controls
     UpgradeImplantRequest:
       type: object
       required:
@@ -1338,15 +1441,13 @@ components:
           maxItems: 10
         firmware_version:
           type: string
-          pattern: '^\\d+\\.\\d+\\.\\d+$'
+          pattern: ^\\d+\\.\\d+\\.\\d+$
           description: Target firmware version
         risk_override:
           type: boolean
           default: false
           description: Override upgrade risk warnings
-      description: "Implant upgrade with material requirements and risk assessment"
-
-    # Neural Sync Request
+      description: Implant upgrade with material requirements and risk assessment
     NeuralSyncRequest:
       type: object
       required:
@@ -1357,7 +1458,10 @@ components:
           format: uuid
         sync_type:
           type: string
-          enum: [FULL, PARTIAL, EMERGENCY]
+          enum:
+            - FULL
+            - PARTIAL
+            - EMERGENCY
           default: FULL
           description: Synchronization scope
         force_sync:
@@ -1371,13 +1475,7 @@ components:
             format: uuid
           description: Specific implants to synchronize
           maxItems: 20
-      description: "Neural link synchronization parameters"
-
-    # ============================================================================
-    # RESULT SCHEMAS
-    # ============================================================================
-
-    # Activation Result
+      description: Neural link synchronization parameters
     ImplantActivationResult:
       type: object
       required:
@@ -1390,7 +1488,10 @@ components:
           format: uuid
         activation_status:
           type: string
-          enum: [SUCCESS, PARTIAL, FAILED]
+          enum:
+            - SUCCESS
+            - PARTIAL
+            - FAILED
         neural_sync_strength:
           type: number
           format: float
@@ -1409,9 +1510,7 @@ components:
         duration_seconds:
           type: integer
           description: Actual activation duration
-      description: "Implant activation outcome with neural feedback"
-
-    # Deactivation Result
+      description: Implant activation outcome with neural feedback
     ImplantDeactivationResult:
       type: object
       required:
@@ -1423,7 +1522,10 @@ components:
           format: uuid
         deactivation_status:
           type: string
-          enum: [SUCCESS, GRACEFUL_SHUTDOWN, FORCED_SHUTDOWN]
+          enum:
+            - SUCCESS
+            - GRACEFUL_SHUTDOWN
+            - FORCED_SHUTDOWN
         cooldown_period:
           type: integer
           description: Cooldown before reactivation (seconds)
@@ -1432,9 +1534,7 @@ components:
           items:
             type: string
           description: Lingering effects after deactivation
-      description: "Safe implant deactivation result"
-
-    # Upgrade Result
+      description: Safe implant deactivation result
     ImplantUpgradeResult:
       type: object
       required:
@@ -1447,7 +1547,10 @@ components:
           format: uuid
         upgrade_status:
           type: string
-          enum: [SUCCESS, PARTIAL_UPGRADE, FAILED]
+          enum:
+            - SUCCESS
+            - PARTIAL_UPGRADE
+            - FAILED
         new_tier:
           type: integer
           minimum: 1
@@ -1463,9 +1566,7 @@ components:
           items:
             type: string
           description: Risks that occurred during upgrade
-      description: "Implant upgrade outcome with performance metrics"
-
-    # Neural Sync Result
+      description: Implant upgrade outcome with performance metrics
     NeuralSyncResult:
       type: object
       required:
@@ -1478,7 +1579,10 @@ components:
           format: uuid
         sync_status:
           type: string
-          enum: [SUCCESS, PARTIAL, FAILED]
+          enum:
+            - SUCCESS
+            - PARTIAL
+            - FAILED
         sync_strength:
           type: number
           format: float
@@ -1500,9 +1604,7 @@ components:
           type: object
           description: Neural calibration results
           additionalProperties: true
-      description: "Neural synchronization outcome"
-
-    # Diagnostics Data
+      description: Neural synchronization outcome
     ImplantDiagnostics:
       type: object
       required:
@@ -1545,7 +1647,11 @@ components:
                 type: string
               severity:
                 type: string
-                enum: [LOW, MEDIUM, HIGH, CRITICAL]
+                enum:
+                  - LOW
+                  - MEDIUM
+                  - HIGH
+                  - CRITICAL
               message:
                 type: string
           description: Recent error log entries
@@ -1559,12 +1665,11 @@ components:
           items:
             type: string
           description: Maintenance recommendations
-      description: "Comprehensive implant diagnostics data"
-
+      description: Comprehensive implant diagnostics data
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
+      $ref: ../common-service/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      $ref: ../common/security/security.yaml#/ApiKeyAuth
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      $ref: ../common/security/security.yaml#/ServiceAuth
+      $ref: ../common-service/security/security.yaml#/ServiceAuth

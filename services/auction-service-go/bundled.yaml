@@ -1,0 +1,2498 @@
+openapi: 3.0.3
+info:
+  title: Auction Service API - Enterprise-Grade Auction System
+  description: '**Enterprise-Grade Auction API for NECPGAME**
+
+    Auction Service handles real-time bidding, auction management, bid validation,
+    and auction lifecycle operations. Supports both traditional auctions and real-time
+    competitive bidding systems.
+
+    ## Key Features
+
+    - **Real-time bidding** with WebSocket support - **Auction lifecycle management**
+    from creation to settlement - **Bid validation** and fraud prevention - **Multi-item
+    auctions** with complex rules - **Performance-optimized** for high-frequency bidding
+    - **Enterprise-grade** transaction handling
+
+    ## Domain Purpose
+
+    Handles all auction operations including bid placement, auction creation, bid
+    validation, winner determination, and settlement. Provides both traditional timed
+    auctions and real-time competitive bidding.
+
+    ## Performance Targets
+
+    - P99 Latency: <50ms for bid placement - Memory: <50KB per active auction - Concurrent
+    users: 10,000+ simultaneous bidders - Real-time updates: <100ms delivery
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/auction
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/auction
+  description: Staging server
+- url: http://localhost:8080/api/v1/auction
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Auctions
+  description: Auction creation and management
+- name: Bidding
+  description: Bid placement and validation
+- name: Auction Lifecycle
+  description: Auction start, end, and settlement
+- name: Auction Items
+  description: Item management in auctions
+paths:
+  /health:
+    get:
+      summary: Auction service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the auction service microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds'
+      operationId: auctionServiceHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          example: gzip
+          description: Accepted encoding types
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"auction-health-v1.0"'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                    maxLength: 255
+                  domain:
+                    type: string
+                    example: service-name
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-12-28T10:00:00Z'
+                    maxLength: 255
+                  version:
+                    type: string
+                    example: 1.0.0
+                    maxLength: 50
+                  uptime_seconds:
+                    type: integer
+                    example: 3600
+                    minimum: 0
+                  active_connections:
+                    type: integer
+                    example: 1500
+                    minimum: 0
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                  → small). Expected memory savings: 30-50%.'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                    maxLength: 255
+                  domain:
+                    type: string
+                    example: service-name
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-12-28T10:00:00Z'
+                    maxLength: 255
+                  version:
+                    type: string
+                    example: 1.0.0
+                    maxLength: 50
+                  uptime_seconds:
+                    type: integer
+                    example: 3600
+                    minimum: 0
+                  active_connections:
+                    type: integer
+                    example: 1500
+                    minimum: 0
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                  → small). Expected memory savings: 30-50%.'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /auctions:
+    post:
+      summary: Create new auction
+      description: '**Create auction for item with bidding system**
+
+        Initiates a timed auction with configurable bidding rules and buyout options.
+
+        **Security:** Only item owner can create auctions **Performance:** <50ms P99
+        latency for auction creation'
+      operationId: createAuction
+      tags:
+      - Auction Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuctionRequest'
+      responses:
+        '201':
+          description: Auction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionResponse'
+        '400':
+          description: Invalid auction data
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '403':
+          description: Not authorized to auction this item
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    get:
+      summary: List auctions
+      description: '**Get paginated list of active auctions**
+
+        Returns auctions with filtering by status, item type, and price range.
+
+        **Performance:** Optimized with database indexes on status and end_time'
+      operationId: listAuctions
+      tags:
+      - Auction Management
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        description: Number of items to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
+        description: Number of items to skip
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - scheduled
+          - active
+          - ended
+          - cancelled
+        description: Filter by auction status
+      - name: min_price
+        in: query
+        schema:
+          type: number
+          minimum: 0
+        description: Minimum current bid price
+      - name: max_price
+        in: query
+        schema:
+          type: number
+          minimum: 0
+        description: Maximum current bid price
+      responses:
+        '200':
+          description: Auctions retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/PaginatedResponse'
+                - type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AuctionResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /auctions/{auctionId}:
+    get:
+      summary: Get auction details
+      description: '**Retrieve detailed auction information**
+
+        Returns complete auction data including bidding history and current bids.
+
+        **Performance:** Cached for active auctions'
+      operationId: getAuction
+      tags:
+      - Auction Management
+      parameters:
+      - name: auctionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Auction UUID
+      responses:
+        '200':
+          description: Auction details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionResponse'
+        '404':
+          description: Auction not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    put:
+      summary: Update auction
+      description: '**Update auction configuration**
+
+        Allows auction owner to modify auction settings before start.
+
+        **Security:** Only auction creator can update'
+      operationId: updateAuction
+      tags:
+      - Auction Management
+      parameters:
+      - name: auctionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Auction UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                buyout_price:
+                  type: number
+                  minimum: 0
+                  description: New buyout price
+                minimum_bid_increment:
+                  type: number
+                  minimum: 0.01
+                  description: New minimum bid increment
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: New auction description
+      responses:
+        '200':
+          description: Auction updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuctionResponse'
+        '403':
+          description: Not authorized to update this auction
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Auction already started
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /auctions/{auctionId}/bids:
+    post:
+      summary: Place bid on auction
+      description: '**Place a bid on active auction**
+
+        Validates bid amount, updates current price, and handles automatic bidding.
+
+        **Concurrency:** Optimistic locking prevents bid conflicts **Performance:**
+        <30ms P99 latency for bid placement'
+      operationId: placeBid
+      tags:
+      - Bidding Operations
+      parameters:
+      - name: auctionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Auction UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceBidRequest'
+      responses:
+        '200':
+          description: Bid placed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - auction
+                - bid_result
+                properties:
+                  auction:
+                    $ref: '#/components/schemas/AuctionResponse'
+                  bid_result:
+                    type: object
+                    properties:
+                      bid_amount:
+                        type: number
+                        description: Actual bid amount placed
+                      is_winning:
+                        type: boolean
+                        description: Whether this bid is currently winning
+                      outbid_previous:
+                        type: boolean
+                        description: Whether previous bidder was outbid
+        '400':
+          description: Invalid bid (too low, auction ended, etc.)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Optimistic locking conflict - auction state changed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    get:
+      summary: Get auction bidding history
+      description: '**Get paginated bidding history for auction**
+
+        Returns chronological list of all bids placed on the auction.
+
+        **Performance:** Indexed queries with efficient pagination'
+      operationId: getAuctionBids
+      tags:
+      - Bidding Operations
+      parameters:
+      - name: auctionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Auction UUID
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        description: Number of items to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
+        description: Number of items to skip
+      responses:
+        '200':
+          description: Bidding history retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/PaginatedResponse'
+                - type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                        - bidder_id
+                        - bid_amount
+                        - bid_time
+                        properties:
+                          bidder_id:
+                            type: string
+                            format: uuid
+                            description: Universally Unique Identifier (UUID v4)
+                            example: 123e4567-e89b-12d3-a456-426614174000
+                            maxLength: 36
+                          bid_amount:
+                            type: number
+                            description: Bid amount
+                          bid_time:
+                            type: string
+                            format: date-time
+                            description: ISO 8601 timestamp
+                            example: '2025-12-28T10:00:00Z'
+                            maxLength: 30
+                          is_auto_bid:
+                            type: boolean
+                            description: Whether this was an automatic bid
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /auctions/{auctionId}/buyout:
+    post:
+      summary: Buyout auction immediately
+      description: '**Immediately purchase auction at buyout price**
+
+        Ends auction early if buyout price is set and buyer has sufficient funds.
+
+        **Atomicity:** All operations executed in single transaction'
+      operationId: buyoutAuction
+      tags:
+      - Auction Management
+      parameters:
+      - name: auctionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Auction UUID
+      responses:
+        '200':
+          description: Auction bought out successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                    maxLength: 255
+                  domain:
+                    type: string
+                    example: service-name
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-12-28T10:00:00Z'
+                    maxLength: 255
+                  version:
+                    type: string
+                    example: 1.0.0
+                    maxLength: 50
+                  uptime_seconds:
+                    type: integer
+                    example: 3600
+                    minimum: 0
+                  active_connections:
+                    type: integer
+                    example: 1500
+                    minimum: 0
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                  → small). Expected memory savings: 30-50%.'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+              ETag:
+                schema:
+                  type: string
+                  example: '"health-v1.0"'
+              Content-Encoding:
+                schema:
+                  type: string
+                  enum:
+                  - gzip
+                  - deflate
+                  - br
+        '400':
+          description: Buyout not available or insufficient funds
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+              Content-Encoding:
+                schema:
+                  type: string
+                  enum:
+                  - gzip
+                  - deflate
+                  - br
+        503:
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                    maxLength: 255
+                  domain:
+                    type: string
+                    example: service-name
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-12-28T10:00:00Z'
+                    maxLength: 255
+                  version:
+                    type: string
+                    example: 1.0.0
+                    maxLength: 50
+                  uptime_seconds:
+                    type: integer
+                    example: 3600
+                    minimum: 0
+                  active_connections:
+                    type: integer
+                    example: 1500
+                    minimum: 0
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                  → small). Expected memory savings: 30-50%.'
+        429:
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/batch:
+    post:
+      summary: Batch health check for multiple services
+      description: '**Performance optimization:** Check multiple services health in
+        single request
+
+        Reduces N HTTP calls to 1 call. Critical for orchestration.
+
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+
+        '
+      operationId: auctionServiceBatchHealthCheck
+      tags:
+      - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - auth-service
+                    - user-service
+                    - session-service
+                  maxItems: 10
+                  description: List of services to check
+      responses:
+        '200':
+          $ref: '#/components/responses/HealthBatchSuccess'
+        '400':
+          description: Invalid request - malformed service list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      description: '**Performance optimization:** Real-time health updates without
+        polling
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+
+        Perfect for dashboard monitoring and alerting systems.
+
+        **Protocol:** WebSocket with JSON payloads
+
+        **Heartbeat:** 30 second intervals
+
+        **Reconnection:** Automatic with exponential backoff
+
+        '
+      operationId: auctionServiceHealthWebSocket
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - auth-service
+            - user-service
+            - session-service
+        description: Services to monitor (optional, monitors all if not specified)
+      responses:
+        '200':
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: ws://localhost:8080/api/v1/auction/health/ws
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - health-monitoring-v1
+        '101':
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+        '400':
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+components:
+  schemas:
+    AuctionEntity:
+      description: Auction entity with economy domain inheritance
+      allOf:
+      - allOf:
+        - allOf:
+          - $ref: '#/components/schemas/BaseEntity'
+          - type: object
+            required:
+            - version
+            properties:
+              version:
+                type: integer
+                minimum: 1
+                description: Optimistic locking version
+                example: 1
+          description: 'BACKEND NOTE: Extends BaseEntity with version control. Use
+            for concurrent-safe updates.'
+        - type: object
+          required:
+          - seller_id
+          - item_id
+          - starting_price
+          - currency_code
+          - start_time
+          - end_time
+          properties:
+            seller_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            item_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            starting_price:
+              type: number
+              minimum: 0.01
+              description: Auction starting price
+              example: 100.0
+            currency_code:
+              type: string
+              pattern: ^[A-Z]{3}$
+              description: Auction currency
+              example: EDY
+            current_bid:
+              type: number
+              minimum: 0
+              description: Current highest bid
+              example: 250.0
+            current_bidder_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            bid_count:
+              type: integer
+              minimum: 0
+              description: Total number of bids
+              example: 12
+            start_time:
+              type: string
+              format: date-time
+              description: ISO 8601 timestamp
+              example: '2025-12-28T10:00:00Z'
+              maxLength: 30
+            end_time:
+              type: string
+              format: date-time
+              description: ISO 8601 timestamp
+              example: '2025-12-28T10:00:00Z'
+              maxLength: 30
+            status:
+              type: string
+              enum:
+              - scheduled
+              - active
+              - ended
+              - cancelled
+              description: Auction status
+              example: active
+            minimum_bid_increment:
+              type: number
+              minimum: 0.01
+              description: Minimum bid increase
+              example: 10.0
+            buyout_price:
+              type: number
+              minimum: 0
+              description: Optional buyout price
+              example: 500.0
+            winner_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            final_price:
+              type: number
+              description: Winning bid amount
+              example: 375.0
+        description: 'BACKEND NOTE: Auction system with bid management and optimistic
+          locking.'
+      - type: object
+    MarketplaceListingEntity:
+      allOf:
+      - allOf:
+        - allOf:
+          - $ref: '#/components/schemas/BaseEntity'
+          - type: object
+            properties:
+              created_by:
+                type: string
+                format: uuid
+                description: ID of user who created the entity
+                example: 123e4567-e89b-12d3-a456-426614174001
+                maxLength: 36
+              updated_by:
+                type: string
+                format: uuid
+                description: ID of user who last modified the entity
+                example: 123e4567-e89b-12d3-a456-426614174002
+                maxLength: 36
+          description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for
+            admin-managed entities.'
+        - type: object
+          required:
+          - seller_id
+          - item_id
+          - price
+          - currency_code
+          - status
+          properties:
+            seller_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            item_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            price:
+              type: number
+              minimum: 0.01
+              description: Listing price
+              example: 299.99
+            currency_code:
+              type: string
+              pattern: ^[A-Z]{3}$
+              description: Price currency
+              example: EDY
+            quantity:
+              type: integer
+              minimum: 1
+              description: Items available
+              example: 1
+            status:
+              type: string
+              enum:
+              - active
+              - sold
+              - cancelled
+              - expired
+              description: Listing status
+              example: active
+            listed_at:
+              type: string
+              format: date-time
+              description: ISO 8601 timestamp
+              example: '2025-12-28T10:00:00Z'
+              maxLength: 30
+            expires_at:
+              type: string
+              format: date-time
+              description: ISO 8601 timestamp
+              example: '2025-12-28T10:00:00Z'
+              maxLength: 30
+            sold_at:
+              type: string
+              format: date-time
+              description: ISO 8601 timestamp
+              example: '2025-12-28T10:00:00Z'
+              maxLength: 30
+            buyer_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            transaction_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+        - type: object
+          required:
+          - seller_id
+          - item_id
+          - price
+          - currency_code
+          - status
+          properties:
+            seller_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            item_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            item_details:
+              type: object
+              description: Cached item details for performance
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                rarity:
+                  type: string
+                  enum:
+                  - common
+                  - uncommon
+                  - rare
+                  - epic
+                  - legendary
+                  - unique
+                category:
+                  type: string
+                  enum:
+                  - weapon
+                  - armor
+                  - consumable
+                  - material
+                  - cosmetic
+            price:
+              type: number
+              minimum: 0.01
+              description: Listing price
+              example: 299.99
+            currency_code:
+              type: string
+              pattern: ^[A-Z]{3}$
+              description: Price currency
+              example: EDY
+            quantity:
+              type: integer
+              minimum: 1
+              description: Items available
+              example: 1
+            status:
+              type: string
+              enum:
+              - active
+              - sold
+              - cancelled
+              - expired
+              - suspended
+              description: Listing status
+              example: active
+            listing_type:
+              type: string
+              enum:
+              - fixed_price
+              - auction
+              - barter
+              description: Type of marketplace listing
+              example: fixed_price
+            listed_at:
+              type: string
+              format: date-time
+              description: ISO 8601 timestamp
+              example: '2025-12-28T10:00:00Z'
+              maxLength: 30
+            expires_at:
+              type: string
+              format: date-time
+              description: ISO 8601 timestamp
+              example: '2025-12-28T10:00:00Z'
+              maxLength: 30
+            sold_at:
+              type: string
+              format: date-time
+              description: ISO 8601 timestamp
+              example: '2025-12-28T10:00:00Z'
+              maxLength: 30
+            buyer_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            transaction_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            views_count:
+              type: integer
+              minimum: 0
+              description: Number of times listing was viewed
+              example: 45
+            favorite_count:
+              type: integer
+              minimum: 0
+              description: Number of users who favorited this listing
+              example: 12
+        description: 'BACKEND NOTE: Marketplace item listings with analytics and seller
+          management.'
+      - type: object
+    TransactionEntity:
+      allOf:
+      - allOf:
+        - allOf:
+          - $ref: '#/components/schemas/BaseEntity'
+          - type: object
+            properties:
+              created_by:
+                type: string
+                format: uuid
+                description: ID of user who created the entity
+                example: 123e4567-e89b-12d3-a456-426614174001
+                maxLength: 36
+              updated_by:
+                type: string
+                format: uuid
+                description: ID of user who last modified the entity
+                example: 123e4567-e89b-12d3-a456-426614174002
+                maxLength: 36
+          description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for
+            admin-managed entities.'
+        - type: object
+          required:
+          - type
+          - amount
+          - currency_code
+          - status
+          properties:
+            type:
+              type: string
+              enum:
+              - deposit
+              - withdrawal
+              - transfer
+              - purchase
+              - sale
+              - refund
+              - fee
+              - reward
+              description: Transaction type
+              example: purchase
+            amount:
+              type: number
+              description: Transaction amount
+              example: 99.99
+            currency_code:
+              type: string
+              pattern: ^[A-Z]{3}$
+              description: Transaction currency
+              example: EDY
+            status:
+              type: string
+              enum:
+              - pending
+              - processing
+              - completed
+              - failed
+              - cancelled
+              - refunded
+              description: Transaction status
+              example: completed
+            from_wallet_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            to_wallet_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            reference_id:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            external_reference:
+              type: string
+              description: External system reference
+              example: stripe_ch_1234567890
+              maxLength: 100
+            description:
+              type: string
+              description: Transaction description
+              example: Purchase of Legendary Weapon Skin
+              maxLength: 255
+            metadata:
+              type: object
+              description: Additional transaction data
+              properties:
+                item_id:
+                  type: string
+                  format: uuid
+                  description: Universally Unique Identifier (UUID v4)
+                  example: 123e4567-e89b-12d3-a456-426614174000
+                  maxLength: 36
+                quantity:
+                  type: integer
+                  minimum: 1
+                vendor_id:
+                  type: string
+                  format: uuid
+                  description: Universally Unique Identifier (UUID v4)
+                  example: 123e4567-e89b-12d3-a456-426614174000
+                  maxLength: 36
+            processed_at:
+              type: string
+              format: date-time
+              description: ISO 8601 timestamp
+              example: '2025-12-28T10:00:00Z'
+              maxLength: 30
+            failure_reason:
+              type: string
+              description: Failure reason if applicable
+              example: Insufficient funds
+              maxLength: 200
+        description: 'BACKEND NOTE: Financial transactions with audit trail and metadata.'
+      - type: object
+    CreateAuctionRequest:
+      allOf:
+      - allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          properties:
+            created_by:
+              type: string
+              format: uuid
+              description: ID of user who created the entity
+              example: 123e4567-e89b-12d3-a456-426614174001
+              maxLength: 36
+            updated_by:
+              type: string
+              format: uuid
+              description: ID of user who last modified the entity
+              example: 123e4567-e89b-12d3-a456-426614174002
+              maxLength: 36
+        description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
+          entities.'
+      - type: object
+        required:
+        - item_id
+        - starting_price
+        - currency_code
+        - start_time
+        - end_time
+        properties:
+          item_id:
+            type: string
+            format: uuid
+            description: Universally Unique Identifier (UUID v4)
+            example: 123e4567-e89b-12d3-a456-426614174000
+            maxLength: 36
+          starting_price:
+            type: number
+            minimum: 0.01
+            description: Auction starting price
+            example: 100.0
+          currency_code:
+            type: string
+            pattern: ^[A-Z]{3}$
+            description: Auction currency
+            example: EDY
+          minimum_bid_increment:
+            type: number
+            minimum: 0.01
+            description: Minimum bid increase
+            example: 10.0
+          buyout_price:
+            type: number
+            minimum: 0
+            description: Optional buyout price
+            example: 500.0
+          start_time:
+            type: string
+            format: date-time
+            description: ISO 8601 timestamp
+            example: '2025-12-28T10:00:00Z'
+            maxLength: 30
+          end_time:
+            type: string
+            format: date-time
+            description: ISO 8601 timestamp
+            example: '2025-12-28T10:00:00Z'
+            maxLength: 30
+          description:
+            type: string
+            maxLength: 1000
+            description: Auction description
+            example: Rare cybernetic implant from Arasaka raid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Optimistic locking for concurrent auctions.'
+    PlaceBidRequest:
+      type: object
+      required:
+      - auction_id
+      - bid_amount
+      properties:
+        auction_id:
+          type: string
+          format: uuid
+          description: Universally Unique Identifier (UUID v4)
+          example: 123e4567-e89b-12d3-a456-426614174000
+          maxLength: 36
+        bid_amount:
+          type: number
+          minimum: 0.01
+          description: Bid amount
+          example: 150.0
+        max_bid:
+          type: number
+          minimum: 0
+          description: Maximum bid for automatic bidding
+          example: 300.0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    AuctionResponse:
+      allOf:
+      - $ref: '#/components/schemas/AuctionEntity'
+      - type: object
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    PaginationParams:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
+    PaginatedResponse:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          description: Array of items
+        total:
+          type: integer
+          minimum: 0
+          example: 100
+          description: Total number of items
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+          description: Number of items to skip
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID v4)
+          example: 123e4567-e89b-12d3-a456-426614174000
+          maxLength: 36
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp (ISO 8601)
+          example: '2025-12-28T10:30:00Z'
+          maxLength: 30
+      description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
+        Memory savings: 30-50%. All domain entities should extend this.'
+    AuditableEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        properties:
+          created_by:
+            type: string
+            format: uuid
+            description: ID of user who created the entity
+            example: 123e4567-e89b-12d3-a456-426614174001
+            maxLength: 36
+          updated_by:
+            type: string
+            format: uuid
+            description: ID of user who last modified the entity
+            example: 123e4567-e89b-12d3-a456-426614174002
+            maxLength: 36
+      description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
+        entities.'
+    VersionedEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - version
+        properties:
+          version:
+            type: integer
+            minimum: 1
+            description: Optimistic locking version
+            example: 1
+      description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
+        concurrent-safe updates.'
+    SoftDeletableEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        properties:
+          deleted_at:
+            type: string
+            format: date-time
+            nullable: true
+            description: Soft deletion timestamp (null if not deleted)
+            example: null
+            maxLength: 30
+      description: 'BACKEND NOTE: Extends BaseEntity with soft delete capability.
+        Use for recoverable deletions.'
+    UpdateRequest:
+      type: object
+      required:
+      - id
+      description: Base schema for update operations with optimistic locking support.
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        version:
+          type: integer
+          minimum: 1
+          description: Current entity version for optimistic locking
+        metadata:
+          type: object
+          properties:
+            updated_by:
+              $ref: '#/components/schemas/UUID'
+            reason:
+              type: string
+              maxLength: 200
+              description: Update reason for audit trail
+    UUID:
+      type: string
+      format: uuid
+      description: Universally Unique Identifier (UUID v4)
+      example: 123e4567-e89b-12d3-a456-426614174000
+      maxLength: 36
+    Email:
+      type: string
+      format: email
+      description: Email address
+      example: user@necpgame.com
+      maxLength: 255
+    Timestamp:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp
+      example: '2025-12-28T10:00:00Z'
+      maxLength: 30
+    Version:
+      type: string
+      pattern: ^\d+\.\d+\.\d+$
+      description: Semantic version (MAJOR.MINOR.PATCH)
+      example: 1.0.0
+      maxLength: 20
+    ValidationResult:
+      type: object
+      required:
+      - valid
+      properties:
+        valid:
+          type: boolean
+          description: Whether validation passed
+          example: true
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation error messages
+          example:
+          - Field is required
+          - Invalid format
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Validation warnings
+          example:
+          - Deprecated field usage
+    CurrencyEntity:
+      allOf:
+      - allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          properties:
+            created_by:
+              type: string
+              format: uuid
+              description: ID of user who created the entity
+              example: 123e4567-e89b-12d3-a456-426614174001
+              maxLength: 36
+            updated_by:
+              type: string
+              format: uuid
+              description: ID of user who last modified the entity
+              example: 123e4567-e89b-12d3-a456-426614174002
+              maxLength: 36
+        description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
+          entities.'
+      - type: object
+        required:
+        - code
+        - name
+        - symbol
+        - type
+        properties:
+          code:
+            type: string
+            pattern: ^[A-Z]{3}$
+            description: Currency code (ISO 4217)
+            example: EDY
+            maxLength: 3
+          name:
+            type: string
+            description: Currency display name
+            example: Eurodollar
+            maxLength: 50
+          symbol:
+            type: string
+            description: Currency symbol
+            example: €$
+            maxLength: 10
+          type:
+            type: string
+            enum:
+            - fiat
+            - crypto
+            - game_currency
+            - premium_currency
+            description: Currency category
+            example: game_currency
+          exchange_rate:
+            type: number
+            minimum: 0
+            description: Exchange rate to base currency
+            example: 1.0
+          is_active:
+            type: boolean
+            description: Whether currency is currently tradable
+            example: true
+          decimal_places:
+            type: integer
+            minimum: 0
+            maximum: 8
+            description: Decimal precision
+            example: 2
+      description: 'BACKEND NOTE: Currency definitions with exchange rates.'
+    WalletEntity:
+      allOf:
+      - allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          required:
+          - version
+          properties:
+            version:
+              type: integer
+              minimum: 1
+              description: Optimistic locking version
+              example: 1
+        description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
+          concurrent-safe updates.'
+      - type: object
+        required:
+        - owner_id
+        - currency_code
+        properties:
+          owner_id:
+            type: string
+            format: uuid
+            description: Universally Unique Identifier (UUID v4)
+            example: 123e4567-e89b-12d3-a456-426614174000
+            maxLength: 36
+          currency_code:
+            type: string
+            pattern: ^[A-Z]{3}$
+            description: Currency code
+            example: EDY
+          balance:
+            type: number
+            minimum: 0
+            description: Current balance
+            example: 1500.5
+          reserved_balance:
+            type: number
+            minimum: 0
+            description: Reserved for pending transactions
+            example: 100.0
+          available_balance:
+            type: number
+            minimum: 0
+            description: Available for spending (balance - reserved)
+            example: 1400.5
+          is_frozen:
+            type: boolean
+            description: Whether wallet is frozen
+            example: false
+          freeze_reason:
+            type: string
+            description: Reason for freezing
+            example: Suspicious activity
+            maxLength: 200
+          last_transaction_at:
+            type: string
+            format: date-time
+            description: ISO 8601 timestamp
+            example: '2025-12-28T10:00:00Z'
+            maxLength: 30
+      description: 'BACKEND NOTE: Player wallets with balance management and optimistic
+        locking.'
+    TradeSessionEntity:
+      allOf:
+      - allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          required:
+          - version
+          properties:
+            version:
+              type: integer
+              minimum: 1
+              description: Optimistic locking version
+              example: 1
+        description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
+          concurrent-safe updates.'
+      - type: object
+        required:
+        - initiator_id
+        - participants
+        - status
+        properties:
+          initiator_id:
+            type: string
+            format: uuid
+            description: Universally Unique Identifier (UUID v4)
+            example: 123e4567-e89b-12d3-a456-426614174000
+            maxLength: 36
+          participants:
+            type: array
+            items:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            minItems: 2
+            maxItems: 10
+            description: Users participating in trade
+          status:
+            type: string
+            enum:
+            - negotiating
+            - pending_confirmation
+            - confirmed
+            - completed
+            - cancelled
+            - disputed
+            description: Trade session status
+            example: negotiating
+          current_offer:
+            type: object
+            properties:
+              offered_items:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - item_id
+                  - quantity
+                  properties:
+                    item_id:
+                      type: string
+                      format: uuid
+                      description: Universally Unique Identifier (UUID v4)
+                      example: 123e4567-e89b-12d3-a456-426614174000
+                      maxLength: 36
+                    quantity:
+                      type: integer
+                      minimum: 1
+                description: Items offered in current trade
+              requested_items:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - item_id
+                  - quantity
+                  properties:
+                    item_id:
+                      type: string
+                      format: uuid
+                      description: Universally Unique Identifier (UUID v4)
+                      example: 123e4567-e89b-12d3-a456-426614174000
+                      maxLength: 36
+                    quantity:
+                      type: integer
+                      minimum: 1
+                description: Items requested in current trade
+              offered_currency:
+                type: object
+                properties:
+                  amount:
+                    type: number
+                    minimum: 0
+                  currency_code:
+                    type: string
+                    pattern: ^[A-Z]{3}$
+                description: Currency offered
+              requested_currency:
+                type: object
+                properties:
+                  amount:
+                    type: number
+                    minimum: 0
+                  currency_code:
+                    type: string
+                    pattern: ^[A-Z]{3}$
+                description: Currency requested
+            description: Current trade offer details
+          expires_at:
+            type: string
+            format: date-time
+            description: ISO 8601 timestamp
+            example: '2025-12-28T10:00:00Z'
+            maxLength: 30
+          confirmed_at:
+            type: string
+            format: date-time
+            description: ISO 8601 timestamp
+            example: '2025-12-28T10:00:00Z'
+            maxLength: 30
+          completed_at:
+            type: string
+            format: date-time
+            description: ISO 8601 timestamp
+            example: '2025-12-28T10:00:00Z'
+            maxLength: 30
+          transaction_ids:
+            type: array
+            items:
+              type: string
+              format: uuid
+              description: Universally Unique Identifier (UUID v4)
+              example: 123e4567-e89b-12d3-a456-426614174000
+              maxLength: 36
+            description: Resulting transaction IDs
+      description: 'BACKEND NOTE: P2P trade sessions with escrow and validation.'
+    TradeOfferEntity:
+      allOf:
+      - allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          required:
+          - version
+          properties:
+            version:
+              type: integer
+              minimum: 1
+              description: Optimistic locking version
+              example: 1
+        description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
+          concurrent-safe updates.'
+      - type: object
+        required:
+        - initiator_id
+        - recipient_id
+        - offered_items
+        - requested_items
+        properties:
+          initiator_id:
+            type: string
+            format: uuid
+            description: Universally Unique Identifier (UUID v4)
+            example: 123e4567-e89b-12d3-a456-426614174000
+            maxLength: 36
+          recipient_id:
+            type: string
+            format: uuid
+            description: Universally Unique Identifier (UUID v4)
+            example: 123e4567-e89b-12d3-a456-426614174000
+            maxLength: 36
+          offered_items:
+            type: array
+            items:
+              type: object
+              required:
+              - item_id
+              - quantity
+              properties:
+                item_id:
+                  type: string
+                  format: uuid
+                  description: Universally Unique Identifier (UUID v4)
+                  example: 123e4567-e89b-12d3-a456-426614174000
+                  maxLength: 36
+                quantity:
+                  type: integer
+                  minimum: 1
+            description: Items offered by initiator
+          requested_items:
+            type: array
+            items:
+              type: object
+              required:
+              - item_id
+              - quantity
+              properties:
+                item_id:
+                  type: string
+                  format: uuid
+                  description: Universally Unique Identifier (UUID v4)
+                  example: 123e4567-e89b-12d3-a456-426614174000
+                  maxLength: 36
+                quantity:
+                  type: integer
+                  minimum: 1
+            description: Items requested from recipient
+          offered_currency:
+            type: object
+            properties:
+              amount:
+                type: number
+                minimum: 0
+              currency_code:
+                type: string
+                pattern: ^[A-Z]{3}$
+            description: Currency offered by initiator
+          requested_currency:
+            type: object
+            properties:
+              amount:
+                type: number
+                minimum: 0
+              currency_code:
+                type: string
+                pattern: ^[A-Z]{3}$
+            description: Currency requested from recipient
+          status:
+            type: string
+            enum:
+            - pending
+            - accepted
+            - rejected
+            - cancelled
+            - expired
+            description: Trade offer status
+            example: pending
+          expires_at:
+            type: string
+            format: date-time
+            description: ISO 8601 timestamp
+            example: '2025-12-28T10:00:00Z'
+            maxLength: 30
+          accepted_at:
+            type: string
+            format: date-time
+            description: ISO 8601 timestamp
+            example: '2025-12-28T10:00:00Z'
+            maxLength: 30
+          transaction_id:
+            type: string
+            format: uuid
+            description: Universally Unique Identifier (UUID v4)
+            example: 123e4567-e89b-12d3-a456-426614174000
+            maxLength: 36
+      description: 'BACKEND NOTE: Legacy trade offers - prefer TradeSessionEntity
+        for new implementations.'
+  responses:
+    HealthBatchSuccess:
+      description: Batch health results retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - results
+            - total_time_ms
+            properties:
+              results:
+                type: array
+                items:
+                  HealthResponse:
+                    type: object
+                    required:
+                    - status
+                    - timestamp
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                        - healthy
+                        - degraded
+                        - unhealthy
+                        example: healthy
+                        maxLength: 255
+                      domain:
+                        type: string
+                        example: service-name
+                        maxLength: 255
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: '2025-12-28T10:00:00Z'
+                        maxLength: 255
+                      version:
+                        type: string
+                        example: 1.0.0
+                        maxLength: 50
+                      uptime_seconds:
+                        type: integer
+                        example: 3600
+                        minimum: 0
+                      active_connections:
+                        type: integer
+                        example: 1500
+                        minimum: 0
+                    description: 'BACKEND NOTE: Fields ordered for struct alignment
+                      (large → small). Expected memory savings: 30-50%.'
+                description: Health status for each requested service
+              total_time_ms:
+                type: integer
+                description: Total processing time in milliseconds
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            example: 60
+            description: Seconds to wait before retrying
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API Key authentication
+    ServiceAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Service-to-service authentication token

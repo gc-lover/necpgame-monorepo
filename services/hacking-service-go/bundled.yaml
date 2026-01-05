@@ -1,0 +1,3297 @@
+openapi: 3.0.3
+info:
+  title: Hacking Service API - Enterprise-Grade Cyber Operations
+  description: '**Enterprise-Grade Hacking and Cyber Operations API for NECPGAME**
+
+    This API manages all aspects of cyber operations, digital intrusion, and network
+    manipulation in the cyberpunk world, providing secure hacking sessions, ICE defense
+    systems, and cyber attack mechanics with enterprise-grade security and performance.
+
+    ## Key Features
+
+    - **Session Management**: Secure hacking session lifecycle management - **ICE
+    Defense**: Black ICE and security countermeasures - **Network Operations**: Multi-layer
+    network penetration and control - **Risk Assessment**: Dynamic risk calculation
+    and mitigation - **Performance Optimized**: MMOFPS-grade performance with <50ms
+    P99 latency
+
+    ## Domain Purpose
+
+    The Hacking domain handles all cyber operations in Night City. Players can hack
+    systems, breach networks, deploy countermeasures, and manage digital security
+    with realistic cyberpunk mechanics and risk management.
+
+    ## Performance Targets
+
+    - P99 Latency: <50ms for hacking operations - Memory: <25KB per active hacking
+    session - Concurrent users: 50,000+ simultaneous cyber operations - Risk calculations:
+    <10ms response time
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/hacking
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/hacking
+  description: Staging server
+- url: http://localhost:8080/api/v1/hacking
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Hacking Operations
+  description: Core hacking session management
+- name: ICE Defense
+  description: Black ICE and security countermeasures
+- name: Network Control
+  description: Network penetration and manipulation
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Hacking domain health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the hacking domain microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: hackingDomainHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"-api-v1-hacking-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                    maxLength: 255
+                  domain:
+                    type: string
+                    example: service-name
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-12-28T10:00:00Z'
+                    maxLength: 255
+                  version:
+                    type: string
+                    example: 1.0.0
+                    maxLength: 50
+                  uptime_seconds:
+                    type: integer
+                    example: 3600
+                    minimum: 0
+                  active_connections:
+                    type: integer
+                    example: 1500
+                    minimum: 0
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                  → small). Expected memory savings: 30-50%.'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                    maxLength: 255
+                  domain:
+                    type: string
+                    example: service-name
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-12-28T10:00:00Z'
+                    maxLength: 255
+                  version:
+                    type: string
+                    example: 1.0.0
+                    maxLength: 50
+                  uptime_seconds:
+                    type: integer
+                    example: 3600
+                    minimum: 0
+                  active_connections:
+                    type: integer
+                    example: 1500
+                    minimum: 0
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                  → small). Expected memory savings: 30-50%.'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/batch:
+    post:
+      summary: Batch health check for multiple domain services
+      description: '**Performance optimization:** Check multiple domain health in
+        single request
+
+        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+
+        Eliminates network overhead in health monitoring scenarios.
+
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+
+        '
+      operationId: hackingDomainBatchHealthCheck
+      tags:
+      - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - hacking
+                    - cyberspace
+                    - neural-link
+                    - implant
+                    - cyberware
+                    maxItems: 10
+                  description: List of services to check
+      responses:
+        '200':
+          description: Batch health results retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-cache
+            X-Processing-Time:
+              schema:
+                type: integer
+                example: 15
+                description: Processing time in milliseconds
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - results
+                - total_time_ms
+                properties:
+                  results:
+                    type: array
+                    items:
+                      HealthResponse:
+                        type: object
+                        required:
+                        - status
+                        - timestamp
+                        properties:
+                          status:
+                            type: string
+                            enum:
+                            - healthy
+                            - degraded
+                            - unhealthy
+                            example: healthy
+                            maxLength: 255
+                          domain:
+                            type: string
+                            example: service-name
+                            maxLength: 255
+                          timestamp:
+                            type: string
+                            format: date-time
+                            example: '2025-12-28T10:00:00Z'
+                            maxLength: 255
+                          version:
+                            type: string
+                            example: 1.0.0
+                            maxLength: 50
+                          uptime_seconds:
+                            type: integer
+                            example: 3600
+                            minimum: 0
+                          active_connections:
+                            type: integer
+                            example: 1500
+                            minimum: 0
+                        description: 'BACKEND NOTE: Fields ordered for struct alignment
+                          (large → small). Expected memory savings: 30-50%.'
+                    description: Health status for each requested service
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time in milliseconds
+        '400':
+          description: Invalid request - malformed service list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      description: '**Performance optimization:** Real-time health updates without
+        polling
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+
+        Perfect for dashboard monitoring and alerting systems.
+
+        **Protocol:** WebSocket with JSON payloads
+
+        **Heartbeat:** 30 second intervals
+
+        **Reconnection:** Automatic with exponential backoff
+
+        '
+      operationId: hackingDomainHealthWebSocket
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - hacking
+            - cyberspace
+            - neural-link
+            example:
+            - hacking
+            - cyberspace
+        description: Services to monitor (optional, monitors all if not specified)
+      responses:
+        '200':
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: ws://localhost:8080/api/v1/hacking/health/ws
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - health-monitoring-v1
+        '101':
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /hacking/sessions:
+    post:
+      summary: Initiate hacking session
+      description: '**Enterprise-grade hacking session initiation**
+
+        Creates secure hacking session with risk assessment, neural validation, and
+        ICE detection. Initializes all security protocols and monitoring.
+
+        **Critical Operation:** Requires full neural link verification
+
+        '
+      operationId: initiateHackingSession
+      tags:
+      - Hacking Operations
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiateHackingRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/HackingSessionCreated'
+        '400':
+          description: Invalid request - insufficient hacking skills or incompatible
+            equipment
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '403':
+          description: Forbidden - neural link not synchronized or blacklisted
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Conflict - active hacking session already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - hacking session rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 300
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    get:
+      summary: List hacking sessions with filtering
+      description: '**Enterprise-grade session listing**
+
+        Lists active and historical hacking sessions with comprehensive filtering
+        by status, target, risk level, and time range.
+
+        **Performance:** <10ms P95, supports complex queries
+
+        '
+      operationId: listHackingSessions
+      tags:
+      - Hacking Operations
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by player
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - INITIATING
+          - ACTIVE
+          - COMPLETED
+          - FAILED
+          - ABORTED
+        description: Filter by session status
+      - name: risk_level
+        in: query
+        schema:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - EXTREME
+        description: Filter by risk assessment
+      - name: target_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - CORPORATION
+          - PERSONAL
+          - GOVERNMENT
+          - UNDERGROUND
+        description: Filter by target type
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      responses:
+        '200':
+          $ref: '#/components/responses/HackingSessionListSuccess'
+        '400':
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /hacking/sessions/{session_id}:
+    get:
+      summary: Get hacking session details
+      description: '**Enterprise-grade session retrieval**
+
+        Returns comprehensive hacking session information including real-time status,
+        ICE encounters, network topology, and risk metrics.
+
+        **Performance:** <5ms P95 with Redis caching
+
+        '
+      operationId: getHackingSession
+      tags:
+      - Hacking Operations
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Hacking session unique identifier
+      - name: include_ice_data
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include detailed ICE encounter data
+      - name: include_network_map
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include network topology mapping
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+        description: Conditional request - return 304 if ETag matches
+      responses:
+        '200':
+          $ref: '#/components/responses/HackingSessionRetrieved'
+        '304':
+          description: Not modified - session has not changed
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"session-123-v1"'
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, private
+        '404':
+          description: Hacking session not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    put:
+      summary: Update hacking session
+      description: '**Enterprise-grade session update**
+
+        Updates session parameters, risk tolerance, or defensive measures. Supports
+        optimistic locking for concurrent modifications.
+
+        **Performance:** <25ms P95, includes validation and conflict resolution
+
+        '
+      operationId: updateHackingSession
+      tags:
+      - Hacking Operations
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Hacking session unique identifier
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+        description: ETag for optimistic locking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateHackingSessionRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/HackingSessionUpdated'
+        '400':
+          description: Invalid request - malformed data or session ID
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '404':
+          description: Hacking session not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Conflict - version conflict or concurrent modification
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"session-123-v1"'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    delete:
+      summary: Abort hacking session
+      description: '**Emergency session termination**
+
+        Immediately terminates hacking session with emergency shutdown protocols.
+        Preserves session data and generates incident report.
+
+        **High-Risk Operation:** May trigger ICE countermeasures
+
+        '
+      operationId: abortHackingSession
+      tags:
+      - Hacking Operations
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Hacking session to abort
+      - name: emergency_shutdown
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Force emergency shutdown (may cause data loss)
+      responses:
+        '200':
+          description: Session aborted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HackingSessionAbortResult'
+        '404':
+          description: Hacking session not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Cannot abort - session in critical operation
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /hacking/sessions/{session_id}/execute:
+    post:
+      summary: Execute hacking operation
+      description: '**Core hacking execution**
+
+        Performs actual hacking operation: ICE penetration, data extraction, system
+        manipulation. Real-time risk monitoring and countermeasures.
+
+        **Critical Operation:** High neural load, risk of detection
+
+        '
+      operationId: executeHackingOperation
+      tags:
+      - Hacking Operations
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Active hacking session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteHackingRequest'
+      responses:
+        '200':
+          description: Operation executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HackingExecutionResult'
+        '400':
+          description: Invalid operation parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Operation blocked - ICE countermeasures active
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many operations - neural overload protection
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 10
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /hacking/sessions/{session_id}/ice/{ice_id}/counter:
+    post:
+      summary: Deploy ICE countermeasure
+      description: '**ICE defense operation**
+
+        Deploys countermeasures against specific ICE instance. Requires appropriate
+        hacking tools and neural capacity.
+
+        **Specialized Operation:** Tool and implant dependent
+
+        '
+      operationId: deployICECountermeasure
+      tags:
+      - ICE Defense
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Active hacking session
+      - name: ice_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ICE instance to counter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeployICECountermeasureRequest'
+      responses:
+        '200':
+          description: Countermeasure deployed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICECountermeasureResult'
+        '400':
+          description: Invalid countermeasure or insufficient tools
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: ICE already neutralized or countermeasure ineffective
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /hacking/sessions/{session_id}/network/scan:
+    post:
+      summary: Perform network scan
+      description: '**Network reconnaissance**
+
+        Scans target network for vulnerabilities, ICE presence, and access points.
+        Builds network topology map for strategic planning.
+
+        **Intelligence Operation:** Provides critical mission data
+
+        '
+      operationId: performNetworkScan
+      tags:
+      - Network Control
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Active hacking session
+      - name: scan_depth
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+          default: 1
+        description: Scan depth (higher = more data but higher risk)
+      responses:
+        '200':
+          description: Network scan completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkScanResult'
+        '400':
+          description: Invalid scan parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Scan blocked - detection risk too high
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /hacking/sessions/{session_id}/complete:
+    post:
+      summary: Complete hacking session
+      description: '**Session completion**
+
+        Finalizes successful hacking operation, extracts all data, and safely disconnects
+        from target network.
+
+        **Critical Operation:** Proper disconnection prevents traces
+
+        '
+      operationId: completeHackingSession
+      tags:
+      - Hacking Operations
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Session to complete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteHackingRequest'
+      responses:
+        '200':
+          description: Session completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HackingSessionCompleteResult'
+        '400':
+          description: Completion failed - data extraction incomplete
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Cannot complete - session compromised
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+components:
+  responses:
+    OK:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Operation completed
+    Created:
+      description: Resource created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            format: uri
+          description: URI of the created resource
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of created resource
+              created_at:
+                type: string
+                format: date-time
+                description: Creation timestamp
+    Updated:
+      description: Resource updated successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of updated resource
+              updated_at:
+                type: string
+                format: date-time
+                description: Last modification timestamp
+    Deleted:
+      description: Resource deleted successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of deleted resource
+              deleted_at:
+                type: string
+                format: date-time
+                description: Deletion timestamp
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            allOf:
+            - type: object
+              required:
+              - code
+              - message
+              properties:
+                code:
+                  type: integer
+                  example: 500
+                  format: int32
+                  minimum: 100
+                  maximum: 599
+                message:
+                  type: string
+                  example: Internal server error
+                  maxLength: 1000
+                details:
+                  type: object
+                  description: Additional error details
+              description: Standard error response format
+            - type: object
+              properties:
+                retry_after:
+                  type: integer
+                  example: 60
+                  description: Seconds to wait before retrying
+    HealthBatchSuccess:
+      description: Batch health results retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - results
+            - total_time_ms
+            properties:
+              results:
+                type: array
+                items:
+                  HealthResponse:
+                    type: object
+                    required:
+                    - status
+                    - timestamp
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                        - healthy
+                        - degraded
+                        - unhealthy
+                        example: healthy
+                        maxLength: 255
+                      domain:
+                        type: string
+                        example: service-name
+                        maxLength: 255
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: '2025-12-28T10:00:00Z'
+                        maxLength: 255
+                      version:
+                        type: string
+                        example: 1.0.0
+                        maxLength: 50
+                      uptime_seconds:
+                        type: integer
+                        example: 3600
+                        minimum: 0
+                      active_connections:
+                        type: integer
+                        example: 1500
+                        minimum: 0
+                    description: 'BACKEND NOTE: Fields ordered for struct alignment
+                      (large → small). Expected memory savings: 30-50%.'
+                description: Health status for each requested service
+              total_time_ms:
+                type: integer
+                description: Total processing time in milliseconds
+    HackingSessionCreated:
+      description: Hacking session initiated successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            example: /api/v1/hacking/sessions/550e8400-e29b-41d4-a716-446655440000
+            description: URL of the created session
+        ETag:
+          schema:
+            type: string
+            example: '"session-123-v1"'
+            description: Entity tag for caching and optimistic locking
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HackingSessionResponse'
+    HackingSessionRetrieved:
+      description: Hacking session retrieved successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"session-123-v1"'
+            description: Entity tag for caching
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=30, private
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:00:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 5
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HackingSessionResponse'
+    HackingSessionUpdated:
+      description: Hacking session updated successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"session-123-v2"'
+            description: New entity tag after update
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:05:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 25
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HackingSessionResponse'
+    HackingSessionListSuccess:
+      description: Hacking sessions retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+        X-Total-Count:
+          schema:
+            type: integer
+            example: 150
+            description: Total number of sessions matching criteria
+        X-Page-Count:
+          schema:
+            type: integer
+            example: 8
+            description: Total number of pages
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HackingSessionListResponse'
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+          example: health_update
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+          maxLength: 1000
+        health:
+          type: object
+          required:
+          - status
+          - timestamp
+          properties:
+            status:
+              type: string
+              enum:
+              - healthy
+              - degraded
+              - unhealthy
+              example: healthy
+              maxLength: 255
+            domain:
+              type: string
+              example: service-name
+              maxLength: 255
+            timestamp:
+              type: string
+              format: date-time
+              example: '2025-12-28T10:00:00Z'
+              maxLength: 255
+            version:
+              type: string
+              example: 1.0.0
+              maxLength: 50
+            uptime_seconds:
+              type: integer
+              example: 3600
+              minimum: 0
+            active_connections:
+              type: integer
+              example: 1500
+              minimum: 0
+          description: 'BACKEND NOTE: Fields ordered for struct alignment (large →
+            small). Expected memory savings: 30-50%.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
+    HackingSessionEntity:
+      allOf:
+      - allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          properties:
+            created_by:
+              type: string
+              format: uuid
+              description: ID of user who created the entity
+              example: 123e4567-e89b-12d3-a456-426614174001
+              maxLength: 36
+            updated_by:
+              type: string
+              format: uuid
+              description: ID of user who last modified the entity
+              example: 123e4567-e89b-12d3-a456-426614174002
+              maxLength: 36
+        description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
+          entities.'
+      - type: object
+        required:
+        - player_id
+        - target_id
+        - status
+        - risk_level
+        properties:
+          player_id:
+            type: string
+            format: uuid
+            description: Hacker player ID
+          target_id:
+            type: string
+            format: uuid
+            description: Target system/network ID
+          target_type:
+            type: string
+            enum:
+            - CORPORATION
+            - PERSONAL
+            - GOVERNMENT
+            - UNDERGROUND
+            description: Type of target
+            example: CORPORATION
+          status:
+            type: string
+            enum:
+            - INITIATING
+            - ACTIVE
+            - COMPLETED
+            - FAILED
+            - ABORTED
+            description: Current session status
+            example: ACTIVE
+          risk_level:
+            type: string
+            enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - EXTREME
+            description: Overall risk assessment
+            example: HIGH
+          detection_risk:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 100
+            description: Current detection probability
+            example: 23.5
+          neural_load:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 100
+            description: Neural processing load
+            example: 67.8
+          session_duration:
+            type: integer
+            description: Session duration in seconds
+            example: 1247
+          ice_encounters:
+            type: array
+            items:
+              $ref: '#/components/schemas/ICEEncounter'
+            description: Black ICE encounters during session
+            maxItems: 50
+          network_topology:
+            type: object
+            description: Mapped network structure
+            additionalProperties: true
+          data_extracted:
+            type: object
+            description: Successfully extracted data
+            additionalProperties: true
+          tools_used:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: Hacking tools and implants used
+            maxItems: 20
+          start_time:
+            type: string
+            format: date-time
+            description: Session start timestamp
+          end_time:
+            type: string
+            format: date-time
+            description: Session end timestamp (if completed)
+      description: 'BACKEND NOTE: Inherits from AuditableEntity. Complex session management
+        with risk monitoring. Memory savings: 30-50% via struct alignment.'
+    ICEEncounter:
+      type: object
+      required:
+      - ice_id
+      - ice_type
+      - threat_level
+      - status
+      properties:
+        ice_id:
+          type: string
+          format: uuid
+          description: Unique ICE instance ID
+        ice_type:
+          type: string
+          enum:
+          - SCORCHER
+          - ASP
+          - CERBERUS
+          - ANGEL
+          - JESTER
+          - BARGHEST
+          - RAVEN
+          description: Type of Black ICE
+          example: SCORCHER
+        threat_level:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - EXTREME
+          description: ICE threat assessment
+          example: HIGH
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - NEUTRALIZED
+          - BYPASSED
+          - ESCALATING
+          description: Current ICE status
+          example: ACTIVE
+        damage_potential:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Potential damage percentage
+          example: 85.3
+        countermeasures_applied:
+          type: array
+          items:
+            type: string
+            maxLength: 100
+          description: Applied countermeasures
+          maxItems: 10
+          example:
+          - decoy
+          - overload
+          - neural_shield
+        encounter_time:
+          type: string
+          format: date-time
+          description: When ICE was encountered
+      description: 'BACKEND NOTE: ICE threat tracking with countermeasure history.'
+    HackingSessionResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/HackingSessionEntity'
+        meta:
+          type: object
+          properties:
+            version:
+              type: string
+              example: '1.0'
+            processing_time_ms:
+              type: integer
+              example: 15
+      description: Standard response wrapper for single hacking session
+    HackingSessionListResponse:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/HackingSessionEntity'
+        meta:
+          allOf:
+          - type: object
+            required:
+            - items
+            - total
+            - limit
+            - offset
+            properties:
+              items:
+                type: array
+                description: Array of items
+              total:
+                type: integer
+                minimum: 0
+                example: 100
+                description: Total number of items
+              limit:
+                type: integer
+                minimum: 1
+                maximum: 100
+                example: 20
+                description: Items per page
+              offset:
+                type: integer
+                minimum: 0
+                example: 0
+                description: Number of items to skip
+          - type: object
+            properties:
+              processing_time_ms:
+                type: integer
+                example: 45
+      description: Standard paginated response wrapper
+    InitiateHackingRequest:
+      type: object
+      required:
+      - player_id
+      - target_id
+      - hacking_tools
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player initiating the hack
+        target_id:
+          type: string
+          format: uuid
+          description: Target system/network to hack
+        target_type:
+          type: string
+          enum:
+          - CORPORATION
+          - PERSONAL
+          - GOVERNMENT
+          - UNDERGROUND
+          description: Type of target for risk calculation
+        hacking_tools:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Hacking tools and implants to use
+          minItems: 1
+          maxItems: 10
+        risk_tolerance:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - EXTREME
+          default: MEDIUM
+          description: Acceptable risk level
+        session_timeout:
+          type: integer
+          minimum: 60
+          maximum: 3600
+          default: 1800
+          description: Maximum session duration in seconds
+        stealth_mode:
+          type: boolean
+          default: true
+          description: Prioritize stealth over speed
+      description: Hacking session initiation with risk assessment and tool validation
+    UpdateHackingSessionRequest:
+      allOf:
+      - type: object
+        required:
+        - id
+        description: Base schema for update operations with optimistic locking support.
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Universally Unique Identifier (UUID v4)
+            example: 123e4567-e89b-12d3-a456-426614174000
+            maxLength: 36
+          version:
+            type: integer
+            minimum: 1
+            description: Current entity version for optimistic locking
+          metadata:
+            type: object
+            properties:
+              updated_by:
+                type: string
+                format: uuid
+                description: Universally Unique Identifier (UUID v4)
+                example: 123e4567-e89b-12d3-a456-426614174000
+                maxLength: 36
+              reason:
+                type: string
+                maxLength: 200
+                description: Update reason for audit trail
+      - type: object
+        properties:
+          risk_tolerance:
+            type: string
+            enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - EXTREME
+            description: Update acceptable risk level
+          add_tools:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: Additional tools to deploy
+            maxItems: 5
+          remove_tools:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: Tools to withdraw
+            maxItems: 5
+          stealth_mode:
+            type: boolean
+            description: Toggle stealth priority
+          extend_timeout:
+            type: integer
+            minimum: 60
+            maximum: 1800
+            description: Extend session timeout by seconds
+      description: Session update with optimistic locking (version field from UpdateRequest)
+    ExecuteHackingRequest:
+      type: object
+      required:
+      - operation_type
+      properties:
+        operation_type:
+          type: string
+          enum:
+          - SCAN
+          - BREACH
+          - EXTRACT
+          - CONTROL
+          - ESCAPE
+          description: Type of hacking operation to execute
+        target_node:
+          type: string
+          format: uuid
+          description: Specific network node to target
+        parameters:
+          type: object
+          description: Operation-specific parameters
+          additionalProperties: true
+        risk_override:
+          type: boolean
+          default: false
+          description: Override risk warnings for this operation
+        priority:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - CRITICAL
+          default: MEDIUM
+          description: Operation priority
+      description: Hacking operation execution with risk management
+    DeployICECountermeasureRequest:
+      type: object
+      required:
+      - countermeasure_type
+      - tool_id
+      properties:
+        countermeasure_type:
+          type: string
+          enum:
+          - DECOY
+          - OVERLOAD
+          - NEURAL_SHIELD
+          - DATA_CORRUPTION
+          - SYSTEM_CRASH
+          description: Type of countermeasure to deploy
+        tool_id:
+          type: string
+          format: uuid
+          description: Tool to use for countermeasure
+        intensity:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 1.0
+          default: 1.0
+          description: Countermeasure intensity
+        duration:
+          type: integer
+          minimum: 5
+          maximum: 300
+          description: Countermeasure duration in seconds
+      description: ICE countermeasure deployment with tool validation
+    CompleteHackingRequest:
+      type: object
+      properties:
+        extract_all_data:
+          type: boolean
+          default: true
+          description: Extract all accessible data before disconnecting
+        cleanup_traces:
+          type: boolean
+          default: true
+          description: Attempt to clean up access traces
+        generate_report:
+          type: boolean
+          default: true
+          description: Generate detailed mission report
+        disconnect_safely:
+          type: boolean
+          default: true
+          description: Use safe disconnection protocols
+      description: Hacking session completion with data extraction and cleanup
+    HackingExecutionResult:
+      type: object
+      required:
+      - operation_id
+      - status
+      - execution_time_ms
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+          description: Unique operation identifier
+        status:
+          type: string
+          enum:
+          - SUCCESS
+          - PARTIAL_SUCCESS
+          - FAILED
+          - BLOCKED
+          description: Operation outcome
+        execution_time_ms:
+          type: integer
+          description: Time taken to execute operation
+        data_extracted:
+          type: object
+          description: Data successfully extracted
+          additionalProperties: true
+        ice_alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICEEncounter'
+          description: New ICE encounters triggered
+        risk_increase:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Detection risk increase
+        neural_impact:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Neural processing impact
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Operation warnings
+      description: Hacking operation outcome with risk and performance metrics
+    ICECountermeasureResult:
+      type: object
+      required:
+      - ice_id
+      - countermeasure_type
+      - effectiveness
+      properties:
+        ice_id:
+          type: string
+          format: uuid
+          description: Targeted ICE instance
+        countermeasure_type:
+          type: string
+          enum:
+          - DECOY
+          - OVERLOAD
+          - NEURAL_SHIELD
+          - DATA_CORRUPTION
+          - SYSTEM_CRASH
+          description: Applied countermeasure
+        effectiveness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Countermeasure effectiveness percentage
+        ice_status_change:
+          type: string
+          enum:
+          - NEUTRALIZED
+          - WEAKENED
+          - UNAFFECTED
+          - ESCALATED
+          description: How ICE status changed
+        duration_applied:
+          type: integer
+          description: Actual duration countermeasure was active
+        side_effects:
+          type: array
+          items:
+            type: string
+          description: Unintended consequences
+      description: ICE countermeasure deployment outcome
+    NetworkScanResult:
+      type: object
+      required:
+      - scan_id
+      - scan_depth
+      - nodes_discovered
+      properties:
+        scan_id:
+          type: string
+          format: uuid
+          description: Unique scan identifier
+        scan_depth:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Depth of scan performed
+        nodes_discovered:
+          type: integer
+          description: Number of network nodes found
+        vulnerabilities_found:
+          type: array
+          items:
+            type: object
+            required:
+            - node_id
+            - vulnerability_type
+            - severity
+            properties:
+              node_id:
+                type: string
+                format: uuid
+              vulnerability_type:
+                type: string
+                enum:
+                - WEAK_ENCRYPTION
+                - OUTDATED_ICE
+                - CONFIG_ERROR
+                - BACKDOOR
+              severity:
+                type: string
+                enum:
+                - LOW
+                - MEDIUM
+                - HIGH
+                - CRITICAL
+          description: Security vulnerabilities discovered
+        ice_presence:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICEEncounter'
+          description: ICE instances detected
+        access_points:
+          type: array
+          items:
+            type: object
+            required:
+            - node_id
+            - access_type
+            - difficulty
+            properties:
+              node_id:
+                type: string
+                format: uuid
+              access_type:
+                type: string
+                enum:
+                - DIRECT
+                - RELAY
+                - BACKDOOR
+                - EXPLOIT
+              difficulty:
+                type: string
+                enum:
+                - EASY
+                - MEDIUM
+                - HARD
+                - EXTREME
+          description: Potential access points identified
+        risk_assessment:
+          type: object
+          properties:
+            detection_probability:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+            average_ice_threat:
+              type: string
+              enum:
+              - LOW
+              - MEDIUM
+              - HIGH
+              - EXTREME
+            recommended_approach:
+              type: string
+              enum:
+              - STEALTH
+              - AGGRESSIVE
+              - MIXED
+          description: Overall network risk assessment
+      description: Network reconnaissance results with vulnerability assessment
+    HackingSessionAbortResult:
+      type: object
+      required:
+      - session_id
+      - abort_reason
+      - data_preserved
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Aborted session ID
+        abort_reason:
+          type: string
+          enum:
+          - USER_REQUEST
+          - DETECTION_RISK
+          - ICE_THREAT
+          - NEURAL_OVERLOAD
+          - SYSTEM_ERROR
+          description: Reason for abort
+        data_preserved:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Percentage of data successfully preserved
+        partial_results:
+          type: object
+          description: Any partial results obtained before abort
+          additionalProperties: true
+        consequences:
+          type: array
+          items:
+            type: string
+          description: Negative consequences of abort
+        recovery_time:
+          type: integer
+          description: Neural recovery time required (seconds)
+      description: Emergency session abort outcome with data preservation status
+    HackingSessionCompleteResult:
+      type: object
+      required:
+      - session_id
+      - completion_status
+      - total_duration
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Completed session ID
+        completion_status:
+          type: string
+          enum:
+          - SUCCESS
+          - PARTIAL_SUCCESS
+          - CLEAN_EXTRACTION
+          - TRACED_EXIT
+          description: How session was completed
+        total_duration:
+          type: integer
+          description: Total session duration in seconds
+        data_extracted_total:
+          type: integer
+          description: Total amount of data extracted (in arbitrary units)
+        data_extracted_details:
+          type: object
+          description: Detailed breakdown of extracted data
+          additionalProperties: true
+        ice_encounters_total:
+          type: integer
+          description: Total ICE encounters during session
+        ice_neutralized:
+          type: integer
+          description: Number of ICE instances successfully neutralized
+        detection_events:
+          type: integer
+          description: Number of detection events triggered
+        final_risk_assessment:
+          type: string
+          enum:
+          - CLEAN
+          - MINOR_TRACES
+          - DETECTED
+          - FULL_ALERT
+          description: Final security assessment
+        mission_report:
+          type: object
+          description: Detailed mission summary and statistics
+          additionalProperties: true
+      description: Successful hacking session completion with comprehensive results
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID v4)
+          example: 123e4567-e89b-12d3-a456-426614174000
+          maxLength: 36
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp (ISO 8601)
+          example: '2025-12-28T10:30:00Z'
+          maxLength: 30
+      description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
+        Memory savings: 30-50%. All domain entities should extend this.'
+    AuditableEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        properties:
+          created_by:
+            type: string
+            format: uuid
+            description: ID of user who created the entity
+            example: 123e4567-e89b-12d3-a456-426614174001
+            maxLength: 36
+          updated_by:
+            type: string
+            format: uuid
+            description: ID of user who last modified the entity
+            example: 123e4567-e89b-12d3-a456-426614174002
+            maxLength: 36
+      description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
+        entities.'
+    VersionedEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - version
+        properties:
+          version:
+            type: integer
+            minimum: 1
+            description: Optimistic locking version
+            example: 1
+      description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
+        concurrent-safe updates.'
+    SoftDeletableEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        properties:
+          deleted_at:
+            type: string
+            format: date-time
+            nullable: true
+            description: Soft deletion timestamp (null if not deleted)
+            example: null
+            maxLength: 30
+      description: 'BACKEND NOTE: Extends BaseEntity with soft delete capability.
+        Use for recoverable deletions.'
+    UpdateRequest:
+      type: object
+      required:
+      - id
+      description: Base schema for update operations with optimistic locking support.
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        version:
+          type: integer
+          minimum: 1
+          description: Current entity version for optimistic locking
+        metadata:
+          type: object
+          properties:
+            updated_by:
+              $ref: '#/components/schemas/UUID'
+            reason:
+              type: string
+              maxLength: 200
+              description: Update reason for audit trail
+    PaginationParams:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
+    PaginatedResponse:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          description: Array of items
+        total:
+          type: integer
+          minimum: 0
+          example: 100
+          description: Total number of items
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+          description: Number of items to skip
+    UUID:
+      type: string
+      format: uuid
+      description: Universally Unique Identifier (UUID v4)
+      example: 123e4567-e89b-12d3-a456-426614174000
+      maxLength: 36
+    Email:
+      type: string
+      format: email
+      description: Email address
+      example: user@necpgame.com
+      maxLength: 255
+    Timestamp:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp
+      example: '2025-12-28T10:00:00Z'
+      maxLength: 30
+    Version:
+      type: string
+      pattern: ^\d+\.\d+\.\d+$
+      description: Semantic version (MAJOR.MINOR.PATCH)
+      example: 1.0.0
+      maxLength: 20
+    ValidationResult:
+      type: object
+      required:
+      - valid
+      properties:
+        valid:
+          type: boolean
+          description: Whether validation passed
+          example: true
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation error messages
+          example:
+          - Field is required
+          - Invalid format
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Validation warnings
+          example:
+          - Deprecated field usage
+    CreateRequest:
+      type: object
+      description: Base schema for create operations. Extend with domain-specific
+        fields.
+      properties:
+        metadata:
+          type: object
+          description: Optional creation metadata
+          properties:
+            source:
+              type: string
+              description: Creation source (api, game, admin)
+              example: api
+            tags:
+              type: array
+              items:
+                type: string
+                maxLength: 50
+              description: Entity tags for categorization
+    BulkOperationRequest:
+      type: object
+      required:
+      - operation
+      - items
+      properties:
+        operation:
+          type: string
+          enum:
+          - create
+          - update
+          - delete
+          description: Bulk operation type
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Items to process
+        continue_on_error:
+          type: boolean
+          default: false
+          description: Continue processing if individual items fail
+        dry_run:
+          type: boolean
+          default: false
+          description: Validate without executing
+    BulkOperationResponse:
+      type: object
+      required:
+      - total_requested
+      - total_processed
+      - total_failed
+      properties:
+        total_requested:
+          type: integer
+          minimum: 0
+          description: Total items requested for processing
+        total_processed:
+          type: integer
+          minimum: 0
+          description: Successfully processed items
+        total_failed:
+          type: integer
+          minimum: 0
+          description: Failed items
+        results:
+          type: array
+          items:
+            type: object
+            required:
+            - index
+            - success
+            properties:
+              index:
+                type: integer
+                minimum: 0
+                description: Original item index in request
+              success:
+                type: boolean
+              id:
+                type: string
+                format: uuid
+                description: Universally Unique Identifier (UUID v4)
+                example: 123e4567-e89b-12d3-a456-426614174000
+                maxLength: 36
+              error:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        processing_time_ms:
+          type: integer
+          minimum: 0
+          description: Total processing time
+    SearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Full-text search query
+          maxLength: 255
+        filters:
+          type: object
+          description: Field-specific filters
+          additionalProperties:
+            type: object
+            properties:
+              operator:
+                type: string
+                enum:
+                - eq
+                - ne
+                - gt
+                - gte
+                - lt
+                - lte
+                - in
+                - nin
+                - contains
+                - starts_with
+                - ends_with
+              value:
+                description: Filter value
+        sort:
+          type: array
+          items:
+            type: object
+            required:
+            - field
+            - direction
+            properties:
+              field:
+                type: string
+                description: Field to sort by
+              direction:
+                type: string
+                enum:
+                - asc
+                - desc
+          maxItems: 5
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API Key authentication
+    ServiceAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Service-to-service authentication token

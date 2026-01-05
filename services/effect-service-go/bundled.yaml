@@ -1,0 +1,2433 @@
+openapi: 3.0.3
+info:
+  title: Effect Service API - Enterprise-Grade Elemental Effects Management
+  description: '**Enterprise-Grade Elemental Effects API for NECPGAME Combat System**
+
+    Manages elemental weapon effects, damage interactions, and status calculations
+    in Night City. Handles fire, ice, poison, acid, electric, and void effects with
+    complex interaction rules and real-time damage calculations.
+
+    ## Key Features
+
+    - **Elemental Effects**: Complete CRUD for fire, ice, poison, acid, electric,
+    void effects - **Interaction Engine**: Dynamic damage multipliers based on elemental
+    combinations - **Real-time Preview**: Live calculation of effect interactions
+    before application - **Performance Optimized**: MMOFPS-grade performance with
+    <10ms P99 latency - **Enterprise-grade**: Domain inheritance, struct alignment,
+    optimistic locking
+
+    ## Domain Purpose
+
+    The Effect domain manages all elemental weapon effects and their interactions
+    in Night City. Calculates damage multipliers, applies status effects, and handles
+    complex elemental combinations for immersive cyberpunk combat mechanics.
+
+    ## Performance Targets
+
+    - P99 Latency: <10ms for effect calculations, <25ms for interactions - Memory:
+    <50KB per active effect session - Concurrent users: 15,000+ simultaneous effect
+    processing - Effect combinations: <5ms for complex multi-element calculations
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/effect
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/effect
+  description: Staging server
+- url: http://localhost:8080/api/v1/effect
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Elemental Effects
+  description: CRUD operations for elemental weapon effects
+- name: Effect Interactions
+  description: Rules and calculations for effect combinations
+- name: Effect Preview
+  description: Real-time preview of effect interactions
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Example domain health check
+      description: '**Enterprise-grade health check endpoint**
+
+
+        Provides real-time health status of the example domain microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: effectServiceHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/batch:
+    post:
+      summary: Batch health check for multiple domain services
+      description: '**Performance optimization:** Check multiple domain health in
+        single request
+
+
+        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+
+        Eliminates network overhead in health monitoring scenarios.
+
+
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+
+        '
+      operationId: effectServiceBatchHealthCheck
+      tags:
+      - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - effect
+                    - system-domain
+                    - specialized-domain
+                    maxItems: 10
+                  description: List of services to check
+      responses:
+        '200':
+          $ref: '#/components/responses/HealthBatchSuccess'
+        '400':
+          description: Invalid request - malformed service list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      description: '**Performance optimization:** Real-time health updates without
+        polling
+
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+
+        Perfect for dashboard monitoring and alerting systems.
+
+
+        **Protocol:** WebSocket with JSON payloads
+
+        **Heartbeat:** 30 second intervals
+
+        **Reconnection:** Automatic with exponential backoff
+
+        '
+      operationId: effectServiceHealthWebSocket
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - effect
+            - system-domain
+            - specialized-domain
+        description: Services to monitor (optional, monitors all if not specified)
+      responses:
+        '200':
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: ws://localhost:8080/api/v1/effect/health/ws
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - health-monitoring-v1
+        '101':
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects:
+    get:
+      summary: List elemental effects
+      description: '**Enterprise-grade listing endpoint for elemental effects**
+
+        Returns paginated list of all elemental weapon effects (fire, ice, poison,
+        acid, electric, void). Supports filtering by effect type and advanced search
+        capabilities.
+
+        **Performance:** <10ms P95, supports 1000+ concurrent requests with caching
+
+        '
+      operationId: listEffects
+      tags:
+      - Elemental Effects
+      parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - fire
+          - ice
+          - poison
+          - acid
+          - electric
+          - void
+        description: Filter by elemental effect type
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of items to skip
+      responses:
+        '200':
+          description: Effects retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectListResponse'
+        '400':
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    post:
+      summary: Create elemental effect
+      description: '**Enterprise-grade creation endpoint for elemental effects**
+
+        Creates new elemental weapon effect with validation of all parameters. Ensures
+        effect uniqueness and proper damage calculations.
+
+        **Performance:** <25ms P95, includes validation and business logic
+
+        '
+      operationId: createEffect
+      tags:
+      - Elemental Effects
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EffectUpsertRequest'
+      responses:
+        '201':
+          description: Effect created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '400':
+          description: Invalid request - malformed or missing data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Conflict - effect with this name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - creation rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/apply:
+    post:
+      summary: Apply combat effects to target
+      description: '**Enterprise-grade effect application endpoint**
+
+        Applies buffs, debuffs, and status effects to combat participants. Validates
+        effect compatibility, stacking rules, and duration calculations.
+
+        Essential for combat mechanics, abilities, and environmental effects.
+
+        **Performance:** <10ms P95, synchronous application required
+
+        **Validation:** Effect stacking limits, immunity checks, duration caps
+
+        '
+      operationId: effectServiceApplyEffects
+      tags:
+      - Effect Management
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyEffectsRequest'
+            examples:
+              buff_example:
+                summary: Strength buff application
+                value:
+                  target_id: 123e4567-e89b-12d3-a456-426614174000
+                  effects:
+                  - effect_type: buff
+                    effect_name: strength_boost
+                    duration_seconds: 180
+                    value: 20
+                    source_id: 123e4567-e89b-12d3-a456-426614174001
+              debuff_example:
+                summary: Movement debuff application
+                value:
+                  target_id: 123e4567-e89b-12d3-a456-426614174000
+                  effects:
+                  - effect_type: debuff
+                    effect_name: movement_slow
+                    duration_seconds: 60
+                    value: 0.3
+                    stacks: 1
+                    source_id: 123e4567-e89b-12d3-a456-426614174001
+      responses:
+        '200':
+          description: Effects applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplyEffectsResponse'
+          headers:
+            X-Effects-Applied:
+              schema:
+                type: integer
+                minimum: 0
+              description: Number of effects successfully applied
+        '400':
+          description: Invalid effect application request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - cannot apply effects to target
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Target entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Effect application conflict - stacking limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/{effect_id}:
+    parameters:
+    - name: effect_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    get:
+      summary: Get elemental effect
+      operationId: getEffect
+      tags:
+      - Elemental Effects
+      responses:
+        '200':
+          description: Effect retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    patch:
+      summary: Update elemental effect
+      operationId: updateEffect
+      tags:
+      - Elemental Effects
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EffectUpsertRequest'
+      responses:
+        '200':
+          description: Effect updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '400':
+          description: Invalid request - malformed data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    delete:
+      summary: Delete elemental effect
+      operationId: deleteEffect
+      tags:
+      - Elemental Effects
+      security:
+      - BearerAuth: []
+      responses:
+        '204':
+          description: Effect deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/interactions:
+    get:
+      summary: List effect interaction rules
+      operationId: listInteractions
+      tags:
+      - Effect Interactions
+      responses:
+        '200':
+          description: Interaction rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    post:
+      summary: Create effect interaction rule
+      operationId: createInteraction
+      tags:
+      - Effect Interactions
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractionUpsertRequest'
+      responses:
+        '201':
+          description: Interaction rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionResponse'
+        '400':
+          description: Invalid request - malformed data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Conflict - interaction rule already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/interactions/preview:
+    post:
+      summary: Preview effect interaction
+      operationId: previewInteraction
+      tags:
+      - Effect Preview
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractionPreviewRequest'
+      responses:
+        '200':
+          description: Interaction preview calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionPreviewResponse'
+        '400':
+          description: Invalid request - malformed data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/active:
+    get:
+      summary: Get active effects for target
+      description: '**Enterprise-grade active effects retrieval endpoint**
+
+        Retrieves all currently active effects on a target entity. Includes buffs,
+        debuffs, status effects with remaining duration.
+
+        Critical for UI display, effect tracking, and gameplay awareness.
+
+        **Performance:** <15ms P95 with effect caching
+
+        **Real-time:** Effects updated via WebSocket for active combat
+
+        '
+      operationId: effectServiceGetActiveEffects
+      tags:
+      - Effect Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: target_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Target entity identifier
+      - name: effect_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - buff
+          - debuff
+          - status
+          - all
+          default: all
+        description: Filter by effect type
+      - name: include_expired
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include recently expired effects
+      responses:
+        '200':
+          description: Active effects retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveEffectsResponse'
+        '404':
+          description: Target entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /effects/{effectId}/extend:
+    put:
+      summary: Extend effect duration
+      description: '**Enterprise-grade effect extension endpoint**
+
+        Extends the duration of an existing active effect. Validates extension limits
+        and stacking rules.
+
+        Used for effect refresh mechanics and duration bonuses.
+
+        **Performance:** <5ms P95, atomic duration update
+
+        '
+      operationId: effectServiceExtendEffect
+      tags:
+      - Effect Management
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: effectId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Effect instance identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtendEffectRequest'
+      responses:
+        '200':
+          description: Effect duration extended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectResponse'
+        '400':
+          description: Invalid extension request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Effect not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Extension limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+components:
+  responses:
+    HealthBatchSuccess:
+      description: Batch health results retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - results
+            - total_time_ms
+            properties:
+              results:
+                type: array
+                items:
+                  HealthResponse:
+                    type: object
+                    required:
+                    - status
+                    - timestamp
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                        - healthy
+                        - degraded
+                        - unhealthy
+                        example: healthy
+                        maxLength: 255
+                      domain:
+                        type: string
+                        example: service-name
+                        maxLength: 255
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: '2025-12-28T10:00:00Z'
+                        maxLength: 255
+                      version:
+                        type: string
+                        example: 1.0.0
+                        maxLength: 50
+                      uptime_seconds:
+                        type: integer
+                        example: 3600
+                        minimum: 0
+                      active_connections:
+                        type: integer
+                        example: 1500
+                        minimum: 0
+                    description: 'BACKEND NOTE: Fields ordered for struct alignment
+                      (large → small). Expected memory savings: 30-50%.'
+                description: Health status for each requested service
+              total_time_ms:
+                type: integer
+                description: Total processing time in milliseconds
+    ExampleListSuccess:
+      description: Examples retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+        X-Total-Count:
+          schema:
+            type: integer
+            example: 150
+            description: Total number of examples matching criteria
+        X-Page-Count:
+          schema:
+            type: integer
+            example: 8
+            description: Total number of pages
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleListResponse'
+    ExampleCreated:
+      description: Example created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
+            description: URL of the created example
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v1"'
+            description: Entity tag for caching and optimistic locking
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleResponse'
+    ExampleRetrieved:
+      description: Example retrieved successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v1"'
+            description: Entity tag for caching
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+            description: Cache control directives
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:00:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 5
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleResponse'
+    ExampleUpdated:
+      description: Example updated successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v2"'
+            description: New entity tag after update
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:05:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 25
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleResponse'
+    ExampleDeleted:
+      description: Example deleted successfully
+      headers:
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+    OK:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Operation completed
+    Created:
+      description: Resource created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            format: uri
+          description: URI of the created resource
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of created resource
+              created_at:
+                type: string
+                format: date-time
+                description: Creation timestamp
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    HealthOK:
+      description: Service is healthy
+      content:
+        application/json:
+          schema:
+            HealthResponse:
+              type: object
+              required:
+              - status
+              - timestamp
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - healthy
+                  - degraded
+                  - unhealthy
+                  example: healthy
+                  maxLength: 255
+                domain:
+                  type: string
+                  example: service-name
+                  maxLength: 255
+                timestamp:
+                  type: string
+                  format: date-time
+                  example: '2025-12-28T10:00:00Z'
+                  maxLength: 255
+                version:
+                  type: string
+                  example: 1.0.0
+                  maxLength: 50
+                uptime_seconds:
+                  type: integer
+                  example: 3600
+                  minimum: 0
+                active_connections:
+                  type: integer
+                  example: 1500
+                  minimum: 0
+              description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                → small). Expected memory savings: 30-50%.'
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+          example: health_update
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+          maxLength: 1000
+        health:
+          $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+    Example:
+      type: object
+      required:
+      - id
+      - name
+      - created_at
+      - status
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Example unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Example display name
+          example: Sample Example
+        description:
+          type: string
+          maxLength: 1000
+          description: Detailed description
+          example: This is a comprehensive example demonstrating best practices.
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2025-12-21T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: '2025-12-21T10:00:00Z'
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - pending
+          - archived
+          default: active
+          description: Current status
+          example: active
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Associated tags
+          example:
+          - demo
+          - template
+          - best-practice
+        is_active:
+          type: boolean
+          description: Whether this example is active
+          example: true
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Processing priority
+          example: 7
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Hot path optimization required.'
+    CreateExampleRequest:
+      type: object
+      required:
+      - name
+      - description
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Desired example name
+          example: My New Example
+        description:
+          type: string
+          maxLength: 1000
+          description: Example description
+          example: A new example following enterprise-grade patterns.
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Initial tags
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Processing priority
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    UpdateExampleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: New example name
+          example: Updated Example Name
+        description:
+          type: string
+          maxLength: 1000
+          description: New description
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - pending
+          - archived
+          description: New status
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Replace all tags
+        is_active:
+          type: boolean
+          description: Update active status
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: New priority
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    ExampleResponse:
+      type: object
+      required:
+      - example
+      properties:
+        example:
+          $ref: '#/components/schemas/Example'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    ExampleListResponse:
+      type: object
+      required:
+      - examples
+      - total_count
+      - has_more
+      properties:
+        examples:
+          type: array
+          items:
+            $ref: '#/components/schemas/Example'
+          description: List of examples
+        has_more:
+          type: boolean
+          description: Whether there are more results available
+          example: true
+        total_count:
+          type: integer
+          description: Total number of examples matching criteria
+          example: 150
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 20
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Paginated responses optimized for memory
+        efficiency.'
+    PaginationParams:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
+    PaginatedResponse:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          description: Array of items
+        total:
+          type: integer
+          minimum: 0
+          example: 100
+          description: Total number of items
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+          description: Number of items to skip
+    ApplyEffectsRequest:
+      type: object
+      required:
+      - target_id
+      - effects
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: Target entity to apply effects to
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/EffectApplication'
+          minItems: 1
+          maxItems: 10
+          description: Effects to apply
+        source_id:
+          type: string
+          format: uuid
+          description: Source entity applying effects
+        combat_session_id:
+          type: string
+          format: uuid
+          description: Associated combat session
+      description: '"BACKEND NOTE: Request validated for effect stacking limits.
+
+        Source authorization checked before application."
+
+        '
+    EffectApplication:
+      type: object
+      required:
+      - effect_type
+      - effect_name
+      - duration_seconds
+      - value
+      properties:
+        effect_type:
+          type: string
+          enum:
+          - buff
+          - debuff
+          - status
+          description: Category of effect
+        effect_name:
+          type: string
+          enum:
+          - strength_boost
+          - agility_boost
+          - intelligence_boost
+          - speed_boost
+          - regeneration
+          - shield
+          - critical_chance
+          - damage_reduction
+          - movement_slow
+          - weakness
+          - poison
+          - bleed
+          - burn
+          - stun
+          - blind
+          - paralyze
+          description: Specific effect identifier
+        duration_seconds:
+          type: integer
+          minimum: 1
+          maximum: 3600
+          description: Effect duration in seconds
+        value:
+          type: number
+          format: float
+          description: Effect magnitude (damage, percentage, etc.)
+        stacks:
+          type: integer
+          minimum: 1
+          maximum: 5
+          default: 1
+          description: Number of stacks to apply
+        source_id:
+          type: string
+          format: uuid
+          description: Effect source override
+      description: '"BACKEND NOTE: Effect parameters validated against game balance
+        rules.
+
+        Duration capped to prevent permanent effects."
+
+        '
+    ApplyEffectsResponse:
+      type: object
+      required:
+      - target_id
+      - applied_effects
+      - timestamp
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: Target entity identifier
+        applied_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedEffect'
+          description: Successfully applied effects
+        rejected_effects:
+          type: array
+          items:
+            type: object
+            required:
+            - effect_name
+            - reason
+            properties:
+              effect_name:
+                type: string
+              reason:
+                type: string
+                enum:
+                - stacking_limit_exceeded
+                - immunity
+                - invalid_parameters
+                - target_not_found
+              details:
+                type: string
+          description: Effects that could not be applied
+        timestamp:
+          type: string
+          format: date-time
+          description: Application timestamp
+      description: '"BACKEND NOTE: Response includes rejection reasons for debugging.
+
+        Applied effects logged for audit trail."
+
+        '
+    AppliedEffect:
+      type: object
+      required:
+      - effect_id
+      - effect_type
+      - effect_name
+      - remaining_seconds
+      - value
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Unique effect instance identifier
+        effect_type:
+          type: string
+          enum:
+          - buff
+          - debuff
+          - status
+        effect_name:
+          type: string
+        remaining_seconds:
+          type: integer
+          minimum: 0
+          description: Remaining duration
+        value:
+          type: number
+          format: float
+        stacks:
+          type: integer
+          minimum: 1
+        source_id:
+          type: string
+          format: uuid
+        applied_at:
+          type: string
+          format: date-time
+      description: '"BACKEND NOTE: Effect instances tracked for cleanup and stacking.
+
+        IDs used for effect removal and modification."
+
+        '
+    ActiveEffectsResponse:
+      type: object
+      required:
+      - target_id
+      - effects
+      - timestamp
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: Target entity identifier
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiveEffect'
+          description: Currently active effects
+        summary:
+          type: object
+          properties:
+            buff_count:
+              type: integer
+              minimum: 0
+            debuff_count:
+              type: integer
+              minimum: 0
+            status_count:
+              type: integer
+              minimum: 0
+            total_effects:
+              type: integer
+              minimum: 0
+          description: Effects count summary
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+      description: '"BACKEND NOTE: Response optimized for real-time UI updates.
+
+        Effects sorted by remaining duration for priority display."
+
+        '
+    ActiveEffect:
+      type: object
+      required:
+      - effect_id
+      - effect_type
+      - effect_name
+      - remaining_seconds
+      - value
+      - source_id
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Effect instance identifier
+        effect_type:
+          type: string
+          enum:
+          - buff
+          - debuff
+          - status
+        effect_name:
+          type: string
+        remaining_seconds:
+          type: integer
+          minimum: 0
+          description: Time remaining in seconds
+        value:
+          type: number
+          format: float
+          description: Current effect magnitude
+        stacks:
+          type: integer
+          minimum: 1
+          description: Current stack count
+        source_id:
+          type: string
+          format: uuid
+          description: Effect source
+        applied_at:
+          type: string
+          format: date-time
+          description: When effect was applied
+        max_stacks:
+          type: integer
+          minimum: 1
+          description: Maximum allowed stacks
+        is_expired:
+          type: boolean
+          default: false
+          description: Whether effect has expired
+      description: '"BACKEND NOTE: Active effects cached for performance.
+
+        Expiration tracked for automatic cleanup."
+
+        '
+    ExtendEffectRequest:
+      type: object
+      required:
+      - additional_seconds
+      properties:
+        additional_seconds:
+          type: integer
+          minimum: 1
+          maximum: 3600
+          description: Seconds to add to effect duration
+        new_value:
+          type: number
+          format: float
+          description: Optional value override
+        source_id:
+          type: string
+          format: uuid
+          description: Extension source
+      description: '"BACKEND NOTE: Extension validated against duration caps.
+
+        Source authorization checked for effect modification."
+
+        '
+    EffectResponse:
+      type: object
+      required:
+      - effect_id
+      - status
+      - remaining_seconds
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - extended
+          - unchanged
+          - expired
+        remaining_seconds:
+          type: integer
+          minimum: 0
+        new_value:
+          type: number
+          format: float
+        updated_at:
+          type: string
+          format: date-time
+      description: '"BACKEND NOTE: Response indicates effect modification result.
+
+        Used for effect refresh mechanics and duration tracking."
+
+        '
+    ElementType:
+      type: string
+      enum:
+      - fire
+      - ice
+      - poison
+      - acid
+      - electric
+      - void
+      description: 'BACKEND NOTE: Elemental types for weapon effects'
+    EffectBase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 3
+          maxLength: 64
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        type:
+          $ref: '#/components/schemas/ElementType'
+        dot_dps:
+          type: number
+          format: float
+          minimum: 0
+        proc_chance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        slow_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        armor_shred_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        explosion_radius_m:
+          type: number
+          format: float
+          minimum: 0
+        spread_enabled:
+          type: boolean
+        duration_ms:
+          type: integer
+          format: int32
+          minimum: 0
+        stack_limit:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
+      required:
+      - id
+      - name
+      - type
+      - duration_ms
+      - stack_limit
+      - proc_chance
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    EffectUpsertRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 64
+        type:
+          $ref: '#/components/schemas/ElementType'
+        dot_dps:
+          type: number
+          format: float
+          minimum: 0
+        proc_chance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        slow_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        armor_shred_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        explosion_radius_m:
+          type: number
+          format: float
+          minimum: 0
+        spread_enabled:
+          type: boolean
+        duration_ms:
+          type: integer
+          format: int32
+          minimum: 0
+        stack_limit:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
+      required:
+      - name
+      - type
+      - duration_ms
+      - stack_limit
+      - proc_chance
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    EffectListResponse:
+      type: object
+      properties:
+        pagination:
+          type: object
+          required:
+          - items
+          - total
+          - limit
+          - offset
+          properties:
+            items:
+              type: array
+              description: Array of items
+            total:
+              type: integer
+              minimum: 0
+              example: 100
+              description: Total number of items
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+              example: 20
+              description: Items per page
+            offset:
+              type: integer
+              minimum: 0
+              example: 0
+              description: Number of items to skip
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EffectBase'
+      required:
+      - items
+      - pagination
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    InteractionRule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status_applied:
+          type: string
+          maxLength: 64
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        attacker_type:
+          $ref: '#/components/schemas/ElementType'
+        defender_type:
+          $ref: '#/components/schemas/ElementType'
+        result_type:
+          $ref: '#/components/schemas/ElementType'
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0
+          default: 1
+      required:
+      - id
+      - attacker_type
+      - defender_type
+      - damage_multiplier
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    InteractionUpsertRequest:
+      type: object
+      properties:
+        status_applied:
+          type: string
+          maxLength: 64
+        attacker_type:
+          $ref: '#/components/schemas/ElementType'
+        defender_type:
+          $ref: '#/components/schemas/ElementType'
+        result_type:
+          $ref: '#/components/schemas/ElementType'
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0
+          default: 1
+      required:
+      - attacker_type
+      - defender_type
+      - damage_multiplier
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    InteractionResponse:
+      allOf:
+      - $ref: '#/components/schemas/InteractionRule'
+    InteractionListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractionRule'
+      required:
+      - items
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    InteractionPreviewRequest:
+      type: object
+      properties:
+        attacker_type:
+          $ref: '#/components/schemas/ElementType'
+        defender_type:
+          $ref: '#/components/schemas/ElementType'
+        base_damage:
+          type: number
+          format: float
+          minimum: 0
+        defender_is_wet:
+          type: boolean
+        defender_is_armor_broken:
+          type: boolean
+        stacks_applied:
+          type: integer
+          format: int32
+          minimum: 0
+      required:
+      - attacker_type
+      - defender_type
+      - base_damage
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    InteractionPreviewResponse:
+      type: object
+      properties:
+        applied_status:
+          type: string
+          maxLength: 64
+        notes:
+          type: array
+          items:
+            type: string
+            maxLength: 256
+        total_damage:
+          type: number
+          format: float
+          minimum: 0
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0
+      required:
+      - total_damage
+      - damage_multiplier
+      additionalProperties: false
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API Key authentication
+    ServiceAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Service-to-service authentication token

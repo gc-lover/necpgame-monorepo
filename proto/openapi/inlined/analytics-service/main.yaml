@@ -1,0 +1,457 @@
+components:
+  responses:
+    BadRequest:
+      $ref: ../common-service/responses/error.yaml#/BadRequest
+    Created:
+      $ref: ../common-service/responses/success.yaml#/Created
+    Deleted:
+      $ref: ../common-service/responses/success.yaml#/Deleted
+    NotFound:
+      $ref: ../common-service/responses/error.yaml#/NotFound
+    OK:
+      $ref: ../common-service/responses/success.yaml#/OK
+    TooManyRequests:
+      $ref: ../common-service/responses/error.yaml#/TooManyRequests
+    Unauthorized:
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
+    Updated:
+      $ref: ../common-service/responses/success.yaml#/Updated
+  schemas:
+    CombatAnalyticsOverview:
+      description: 'BACKEND NOTE: Combat analytics with memory-aligned structure.'
+      properties:
+        metrics:
+          description: Key combat metrics
+          properties:
+            average_dps:
+              description: Average Damage Per Second
+              minimum: 0
+              type: number
+            average_ttk:
+              description: Average Time To Kill in seconds
+              minimum: 0
+              type: number
+            total_battles:
+              minimum: 0
+              type: integer
+            win_rate:
+              description: Overall win rate
+              maximum: 1
+              minimum: 0
+              type: number
+          type: object
+        period:
+          description: Analysis period
+          type: string
+        trends:
+          items:
+            description: Time-series trend data
+            properties:
+              metric:
+                type: string
+              timestamp:
+                format: date-time
+                type: string
+              value:
+                type: number
+            type: object
+          type: array
+      type: object
+    Error:
+      $ref: ../common-service/schemas/common.yaml#/Error
+    HealthResponse:
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
+    MarketAnalyticsResponse:
+      description: 'BACKEND NOTE: Market analytics with AI predictions.'
+      properties:
+        asset_type:
+          type: string
+        current_price:
+          minimum: 0
+          type: number
+        market_cap:
+          description: Market capitalization
+          minimum: 0
+          type: number
+        predictions:
+          description: AI-driven market predictions
+          properties:
+            confidence:
+              description: Prediction confidence score
+              maximum: 1
+              minimum: 0
+              type: number
+            next_hour:
+              description: AI-predicted price for next hour
+              type: number
+          type: object
+        price_change_24h:
+          description: 24-hour price change percentage
+          type: number
+        timeframe:
+          type: string
+        volume_24h:
+          description: 24-hour trading volume
+          minimum: 0
+          type: number
+      type: object
+    PlayerBehaviorAnalytics:
+      description: 'BACKEND NOTE: Player behavior metrics for game optimization.'
+      properties:
+        active_users:
+          minimum: 0
+          type: integer
+        average_session_time:
+          description: Average session time in minutes
+          minimum: 0
+          type: integer
+        engagement_score:
+          description: Composite engagement score
+          maximum: 100
+          minimum: 0
+          type: number
+        metric:
+          type: string
+        retention_rate:
+          description: Player retention rate
+          maximum: 1
+          minimum: 0
+          type: number
+        segment:
+          type: string
+        total_players:
+          minimum: 0
+          type: integer
+      type: object
+    SystemPerformanceMetrics:
+      description: 'BACKEND NOTE: System performance monitoring data.'
+      properties:
+        average_response_time:
+          description: Average response time in milliseconds
+          minimum: 0
+          type: number
+        component:
+          type: string
+        error_rate:
+          description: Error rate percentage
+          maximum: 1
+          minimum: 0
+          type: number
+        p95_response_time:
+          description: 95th percentile response time
+          minimum: 0
+          type: number
+        resource_utilization:
+          description: Resource usage metrics
+          properties:
+            cpu_percentage:
+              maximum: 100
+              minimum: 0
+              type: number
+            disk_io:
+              minimum: 0
+              type: number
+            memory_mb:
+              minimum: 0
+              type: integer
+          type: object
+        throughput:
+          description: Requests per second
+          minimum: 0
+          type: integer
+        uptime_percentage:
+          maximum: 100
+          minimum: 0
+          type: number
+      type: object
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common-service/security/security.yaml#/BearerAuth
+info:
+  contact:
+    email: api@necpgame.com
+    name: NECPGAME API Support
+  description: '**Enterprise-Grade Analytics & Monitoring API for NECPGAME**
+
+    This API provides comprehensive analytics, metrics, and monitoring capabilities
+    for all game systems in the Night City universe, enabling data-driven insights
+    and performance optimization.
+
+    ## Key Features
+
+    - **Real-time Analytics**: Live metrics and performance data - **Combat Analytics**:
+    Battle statistics, effectiveness tracking - **Economy Analytics**: Market trends,
+    portfolio analysis - **Player Behavior**: Usage patterns and engagement metrics
+    - **Anti-cheat Monitoring**: Fraud detection and prevention - **Performance Optimized**:
+    MMOFPS-grade performance with <25ms P99 latency
+
+    ## Domain Purpose
+
+    The Analytics domain provides comprehensive monitoring and analytics for all NECPGAME
+    systems, enabling data-driven decisions and continuous improvement.
+
+    ## Performance Targets
+
+    - P99 Latency: <25ms for analytics queries - Memory: <20KB per active analytics
+    session - Concurrent users: 50,000+ simultaneous analytics operations - Data processing:
+    <10ms response time
+
+    '
+  license:
+    name: MIT
+  title: Analytics Service API - Enterprise-Grade Domain Service
+  version: 1.0.0
+openapi: 3.0.3
+paths:
+  /analytics/combat/overview:
+    get:
+      description: 'Retrieve comprehensive combat analytics overview with metrics
+        and trends.
+
+        **Performance:** Optimized for dashboard queries, <5ms response time.'
+      operationId: getCombatAnalyticsOverview
+      parameters:
+      - description: Time period for analytics
+        in: query
+        name: period
+        schema:
+          default: day
+          enum:
+          - hour
+          - day
+          - week
+          - month
+          type: string
+      - description: Filter by game mode
+        in: query
+        name: game_mode
+        schema:
+          enum:
+          - solo
+          - team
+          - ranked
+          - casual
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatAnalyticsOverview'
+          description: Combat analytics overview
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+      security:
+      - BearerAuth: []
+      summary: Get combat analytics overview
+      tags:
+      - Combat Analytics
+  /analytics/economy/market:
+    get:
+      description: 'Retrieve market trends, price movements, and economic indicators.
+
+        **AI Integration:** Uses predictive analytics for market forecasting.'
+      operationId: getEconomyMarketAnalytics
+      parameters:
+      - description: Type of economic asset
+        in: query
+        name: asset_type
+        schema:
+          enum:
+          - currency
+          - item
+          - stock
+          - real_estate
+          type: string
+      - description: Analysis timeframe
+        in: query
+        name: timeframe
+        schema:
+          default: medium
+          enum:
+          - short
+          - medium
+          - long
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketAnalyticsResponse'
+          description: Market analytics data
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+      security:
+      - BearerAuth: []
+      summary: Get economy market analytics
+      tags:
+      - Economy Analytics
+  /analytics/players/behavior:
+    get:
+      description: 'Analyze player behavior patterns, engagement metrics, and retention
+        data.
+
+        **Privacy:** Aggregated and anonymized data only.'
+      operationId: getPlayerBehaviorAnalytics
+      parameters:
+      - description: Player segment to analyze
+        in: query
+        name: segment
+        schema:
+          enum:
+          - new_players
+          - veterans
+          - casual
+          - hardcore
+          type: string
+      - description: Behavior metric to analyze
+        in: query
+        name: metric
+        schema:
+          default: engagement
+          enum:
+          - engagement
+          - retention
+          - progression
+          - spending
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBehaviorAnalytics'
+          description: Player behavior analytics
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+      security:
+      - BearerAuth: []
+      summary: Get player behavior analytics
+      tags:
+      - Player Analytics
+  /analytics/system/performance:
+    get:
+      description: 'Monitor system performance, latency, and resource utilization.
+
+        **Real-time:** Live metrics with sub-second updates.'
+      operationId: getSystemPerformanceMetrics
+      parameters:
+      - description: System component to monitor
+        in: query
+        name: component
+        schema:
+          enum:
+          - api
+          - database
+          - cache
+          - networking
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemPerformanceMetrics'
+          description: System performance metrics
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+      security:
+      - BearerAuth: []
+      summary: Get system performance metrics
+      tags:
+      - System Monitoring
+  /health:
+    get:
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the analytics service.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: analyticsServiceHealthCheck
+      parameters:
+      - in: header
+        name: Accept-Encoding
+        schema:
+          enum:
+          - gzip
+          - deflate
+          - br
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                example: max-age=30, s-maxage=60
+                type: string
+            Content-Encoding:
+              schema:
+                enum:
+                - gzip
+                - deflate
+                - br
+                type: string
+            ETag:
+              schema:
+                example: '"health-v1.0"'
+                type: string
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                example: 60
+                type: integer
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          description: Service is unhealthy
+      summary: Analytics Service Health Check
+      tags:
+      - Health Monitoring
+security:
+- BearerAuth: []
+servers:
+- description: Production server
+  url: https://api.necpgame.com/v1/analytics
+- description: Staging server
+  url: https://staging-api.necpgame.com/v1/analytics
+- description: Local development server
+  url: http://localhost:8080/api/v1/analytics
+tags:
+- description: Battle and combat performance metrics
+  name: Combat Analytics
+- description: Market trends and economic indicators
+  name: Economy Analytics
+- description: Player behavior and engagement metrics
+  name: Player Analytics
+- description: Infrastructure and system health monitoring
+  name: System Monitoring
+- description: Fraud detection and prevention monitoring
+  name: Anti-Cheat
+- description: System health and performance monitoring
+  name: Health Monitoring

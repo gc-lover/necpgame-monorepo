@@ -1,0 +1,1063 @@
+# Issue: #141889238
+# PERFORMANCE: Enterprise-grade OpenAPI spec for stock analytics tools service
+# MEMORY: Optimized for complex financial calculations and data analysis
+# SCALING: Designed for heavy computational workloads in financial analytics
+
+openapi: 3.0.3
+info:
+  title: Stock Analytics Tools Service API
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  description: |
+    Advanced stock analytics tools service for complex financial analysis and trading strategies.
+    Optimized for MMOFPS RPG economy system with heavy computational capabilities.
+
+servers:
+  - url: http://localhost:8151
+    description: Stock Analytics Tools Service
+
+tags:
+  - name: health
+    description: Health check endpoints
+  - name: analysis
+    description: Financial analysis tools
+  - name: portfolio
+    description: Portfolio analysis endpoints
+  - name: risk
+    description: Risk assessment tools
+  - name: prediction
+    description: Predictive analytics
+  - name: backtesting
+    description: Strategy backtesting
+
+paths:
+  /health:
+    get:
+      tags: [ health ]
+      operationId: healthCheck
+      summary: Service health check
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  service:
+                    type: string
+                    example: "stock-analytics-tools-service"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /ready:
+    get:
+      tags: [ health ]
+      operationId: readinessCheck
+      summary: Service readiness check
+      responses:
+        "200":
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ready"
+
+  /metrics:
+    get:
+      tags: [ health ]
+      operationId: metrics
+      summary: Service metrics
+      responses:
+        "200":
+          description: Service metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/analysis/fundamental/{symbol}:
+    get:
+      tags: [ analysis ]
+      operationId: getFundamentalAnalysis
+      summary: Get fundamental analysis for a stock
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "AAPL"
+      responses:
+        "200":
+          description: Fundamental analysis data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FundamentalAnalysis"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/analysis/technical/{symbol}:
+    get:
+      tags: [ analysis ]
+      operationId: getTechnicalAnalysis
+      summary: Get comprehensive technical analysis
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "AAPL"
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [ 1d, 1w, 1M, 3M, 6M, 1y ]
+            default: "1M"
+      responses:
+        "200":
+          description: Technical analysis report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TechnicalAnalysis"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/portfolio/optimization:
+    post:
+      tags: [ portfolio ]
+      operationId: optimizePortfolio
+      summary: Optimize portfolio allocation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PortfolioOptimizationRequest"
+      responses:
+        "200":
+          description: Optimized portfolio
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioOptimizationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/risk/assessment:
+    post:
+      tags: [ risk ]
+      operationId: assessRisk
+      summary: Perform risk assessment analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RiskAssessmentRequest"
+      responses:
+        "200":
+          description: Risk assessment results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiskAssessmentResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/prediction/price/{symbol}:
+    get:
+      tags: [ prediction ]
+      operationId: predictPrice
+      summary: Get price prediction using ML models
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "AAPL"
+        - name: days
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 30
+        - name: model
+          in: query
+          schema:
+            type: string
+            enum: [ linear, neural, ensemble, arima ]
+            default: "ensemble"
+      responses:
+        "200":
+          description: Price prediction results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PricePrediction"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/backtesting/strategy:
+    post:
+      tags: [ backtesting ]
+      operationId: backtestStrategy
+      summary: Backtest trading strategy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BacktestingRequest"
+      responses:
+        "200":
+          description: Backtesting results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BacktestingResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/analysis/correlations:
+    get:
+      tags: [ analysis ]
+      operationId: getCorrelations
+      summary: Get correlation analysis between stocks
+      parameters:
+        - name: symbols
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+            minItems: 2
+            maxItems: 50
+            example: [ "AAPL", "MSFT", "GOOGL" ]
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [ 1M, 3M, 6M, 1y, 2y ]
+            default: "3M"
+      responses:
+        "200":
+          description: Correlation matrix
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CorrelationAnalysis"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/analysis/volatility/{symbol}:
+    get:
+      tags: [ analysis ]
+      operationId: getVolatilityAnalysis
+      summary: Get volatility analysis and metrics
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "AAPL"
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [ 1M, 3M, 6M, 1y, 2y ]
+            default: "3M"
+      responses:
+        "200":
+          description: Volatility analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VolatilityAnalysis"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+components:
+  schemas:
+    # PERFORMANCE: Memory-aligned structures for financial calculations
+    FundamentalAnalysis:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "AAPL"
+        company_info:
+          $ref: "#/components/schemas/CompanyInfo"
+        financial_ratios:
+          $ref: "#/components/schemas/FinancialRatios"
+        valuation_metrics:
+          $ref: "#/components/schemas/ValuationMetrics"
+        analyst_ratings:
+          $ref: "#/components/schemas/AnalystRatings"
+        last_updated:
+          type: string
+          format: date-time
+
+    CompanyInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Apple Inc."
+        sector:
+          type: string
+          example: "Technology"
+        industry:
+          type: string
+          example: "Consumer Electronics"
+        market_cap:
+          type: number
+          format: float
+          example: 3000000000000
+        employees:
+          type: integer
+          example: 147000
+
+    FinancialRatios:
+      type: object
+      properties:
+        pe_ratio:
+          type: number
+          format: float
+          example: 28.5
+        pb_ratio:
+          type: number
+          format: float
+          example: 8.2
+        roe:
+          type: number
+          format: float
+          example: 0.85
+        roa:
+          type: number
+          format: float
+          example: 0.22
+        debt_to_equity:
+          type: number
+          format: float
+          example: 1.8
+        current_ratio:
+          type: number
+          format: float
+          example: 1.2
+
+    ValuationMetrics:
+      type: object
+      properties:
+        intrinsic_value:
+          type: number
+          format: float
+          example: 180.50
+        fair_value_range:
+          type: object
+          properties:
+            low:
+              type: number
+              format: float
+              example: 165.00
+            high:
+              type: number
+              format: float
+              example: 195.00
+        growth_rate:
+          type: number
+          format: float
+          example: 0.08
+        discount_rate:
+          type: number
+          format: float
+          example: 0.10
+
+    AnalystRatings:
+      type: object
+      properties:
+        consensus_rating:
+          type: string
+          enum: [ strong_buy, buy, hold, sell, strong_sell ]
+          example: "buy"
+        average_price_target:
+          type: number
+          format: float
+          example: 185.50
+        number_of_analysts:
+          type: integer
+          example: 35
+        rating_distribution:
+          type: object
+          properties:
+            strong_buy:
+              type: integer
+              example: 12
+            buy:
+              type: integer
+              example: 15
+            hold:
+              type: integer
+              example: 6
+            sell:
+              type: integer
+              example: 2
+            strong_sell:
+              type: integer
+              example: 0
+
+    TechnicalAnalysis:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "AAPL"
+        trend_analysis:
+          $ref: "#/components/schemas/TrendAnalysis"
+        momentum_indicators:
+          $ref: "#/components/schemas/MomentumIndicators"
+        volatility_indicators:
+          $ref: "#/components/schemas/VolatilityIndicators"
+        volume_analysis:
+          $ref: "#/components/schemas/VolumeAnalysis"
+        support_resistance:
+          $ref: "#/components/schemas/SupportResistance"
+        pattern_recognition:
+          type: array
+          items:
+            type: string
+          example: [ "ascending_triangle", "bullish_engulfing" ]
+
+    TrendAnalysis:
+      type: object
+      properties:
+        primary_trend:
+          type: string
+          enum: [ bullish, bearish, sideways ]
+          example: "bullish"
+        secondary_trend:
+          type: string
+          enum: [ bullish, bearish, sideways ]
+          example: "bullish"
+        trend_strength:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.75
+
+    MomentumIndicators:
+      type: object
+      properties:
+        rsi:
+          type: number
+          format: float
+          example: 65.5
+        stochastic_k:
+          type: number
+          format: float
+          example: 72.3
+        stochastic_d:
+          type: number
+          format: float
+          example: 68.9
+        williams_r:
+          type: number
+          format: float
+          example: -27.7
+        macd_histogram:
+          type: number
+          format: float
+          example: 1.25
+
+    VolatilityIndicators:
+      type: object
+      properties:
+        bollinger_bandwidth:
+          type: number
+          format: float
+          example: 0.15
+        average_true_range:
+          type: number
+          format: float
+          example: 3.25
+        historical_volatility:
+          type: number
+          format: float
+          example: 0.22
+
+    VolumeAnalysis:
+      type: object
+      properties:
+        volume_trend:
+          type: string
+          enum: [ increasing, decreasing, stable ]
+          example: "increasing"
+        volume_price_trend:
+          type: string
+          enum: [ confirmation, divergence, neutral ]
+          example: "confirmation"
+        obv:
+          type: number
+          format: float
+          example: 125000000
+        volume_ratio:
+          type: number
+          format: float
+          example: 1.15
+
+    SupportResistance:
+      type: object
+      properties:
+        support_levels:
+          type: array
+          items:
+            type: number
+            format: float
+          example: [ 145.50, 142.25, 138.75 ]
+        resistance_levels:
+          type: array
+          items:
+            type: number
+            format: float
+          example: [ 152.75, 155.50, 158.25 ]
+        pivot_point:
+          type: number
+          format: float
+          example: 149.25
+
+    PortfolioOptimizationRequest:
+      type: object
+      properties:
+        symbols:
+          type: array
+          items:
+            type: string
+          minItems: 2
+          maxItems: 20
+          example: [ "AAPL", "MSFT", "GOOGL", "AMZN" ]
+        constraints:
+          $ref: "#/components/schemas/PortfolioConstraints"
+        risk_tolerance:
+          type: string
+          enum: [ conservative, moderate, aggressive ]
+          default: "moderate"
+        investment_amount:
+          type: number
+          format: float
+          example: 100000
+      required: [ symbols ]
+
+    PortfolioConstraints:
+      type: object
+      properties:
+        max_weight:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.3
+          example: 0.25
+        min_weight:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.01
+          example: 0.05
+        max_sector_weight:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.4
+          example: 0.35
+
+    PortfolioOptimizationResponse:
+      type: object
+      properties:
+        allocations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssetAllocation"
+        expected_return:
+          type: number
+          format: float
+          example: 0.12
+        expected_volatility:
+          type: number
+          format: float
+          example: 0.18
+        sharpe_ratio:
+          type: number
+          format: float
+          example: 1.45
+        optimization_date:
+          type: string
+          format: date-time
+
+    AssetAllocation:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "AAPL"
+        weight:
+          type: number
+          format: float
+          example: 0.25
+        expected_return:
+          type: number
+          format: float
+          example: 0.15
+        volatility:
+          type: number
+          format: float
+          example: 0.22
+
+    RiskAssessmentRequest:
+      type: object
+      properties:
+        portfolio:
+          type: array
+          items:
+            $ref: "#/components/schemas/PortfolioHolding"
+        market_conditions:
+          type: string
+          enum: [ bull_market, bear_market, sideways_market ]
+          default: "bull_market"
+        time_horizon:
+          type: string
+          enum: [ short_term, medium_term, long_term ]
+          default: "medium_term"
+      required: [ portfolio ]
+
+    PortfolioHolding:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "AAPL"
+        weight:
+          type: number
+          format: float
+          example: 0.3
+        quantity:
+          type: integer
+          example: 100
+        purchase_price:
+          type: number
+          format: float
+          example: 150.50
+
+    RiskAssessmentResponse:
+      type: object
+      properties:
+        overall_risk_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          example: 6.5
+        risk_metrics:
+          $ref: "#/components/schemas/RiskMetrics"
+        stress_test_results:
+          type: array
+          items:
+            $ref: "#/components/schemas/StressTestResult"
+        recommendations:
+          type: array
+          items:
+            type: string
+          example: [ "Diversify into bonds", "Reduce technology sector exposure" ]
+
+    RiskMetrics:
+      type: object
+      properties:
+        value_at_risk_95:
+          type: number
+          format: float
+          example: -0.12
+        expected_shortfall:
+          type: number
+          format: float
+          example: -0.18
+        beta:
+          type: number
+          format: float
+          example: 1.15
+        max_drawdown:
+          type: number
+          format: float
+          example: -0.25
+        volatility:
+          type: number
+          format: float
+          example: 0.22
+
+    StressTestResult:
+      type: object
+      properties:
+        scenario:
+          type: string
+          example: "Market Crash 2008"
+        probability:
+          type: number
+          format: float
+          example: 0.05
+        portfolio_loss:
+          type: number
+          format: float
+          example: -0.35
+        recovery_time_months:
+          type: integer
+          example: 24
+
+    PricePrediction:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "AAPL"
+        model_used:
+          type: string
+          example: "ensemble"
+        current_price:
+          type: number
+          format: float
+          example: 175.25
+        predictions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PricePredictionPoint"
+        confidence_interval:
+          type: object
+          properties:
+            lower_bound:
+              type: number
+              format: float
+              example: 165.00
+            upper_bound:
+              type: number
+              format: float
+              example: 185.00
+        model_accuracy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.78
+
+    PricePredictionPoint:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        predicted_price:
+          type: number
+          format: float
+          example: 180.50
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.85
+
+    BacktestingRequest:
+      type: object
+      properties:
+        strategy:
+          $ref: "#/components/schemas/TradingStrategy"
+        symbols:
+          type: array
+          items:
+            type: string
+          example: [ "AAPL", "MSFT" ]
+        start_date:
+          type: string
+          format: date
+          example: "2020-01-01"
+        end_date:
+          type: string
+          format: date
+          example: "2023-12-31"
+        initial_capital:
+          type: number
+          format: float
+          default: 100000
+          example: 100000
+        commission_per_trade:
+          type: number
+          format: float
+          default: 5.0
+          example: 4.95
+      required: [ strategy, symbols, start_date, end_date ]
+
+    TradingStrategy:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Moving Average Crossover"
+        type:
+          type: string
+          enum: [ technical, fundamental, quantitative ]
+          example: "technical"
+        parameters:
+          type: object
+          additionalProperties: true
+          example:
+            fast_ma: 50
+            slow_ma: 200
+            stop_loss: 0.05
+            take_profit: 0.10
+
+    BacktestingResponse:
+      type: object
+      properties:
+        strategy_name:
+          type: string
+          example: "Moving Average Crossover"
+        period:
+          type: object
+          properties:
+            start_date:
+              type: string
+              format: date
+            end_date:
+              type: string
+              format: date
+        performance_metrics:
+          $ref: "#/components/schemas/PerformanceMetrics"
+        trades:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeRecord"
+        equity_curve:
+          type: array
+          items:
+            $ref: "#/components/schemas/EquityPoint"
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        total_return:
+          type: number
+          format: float
+          example: 0.85
+        annualized_return:
+          type: number
+          format: float
+          example: 0.18
+        volatility:
+          type: number
+          format: float
+          example: 0.22
+        sharpe_ratio:
+          type: number
+          format: float
+          example: 1.45
+        max_drawdown:
+          type: number
+          format: float
+          example: -0.15
+        win_rate:
+          type: number
+          format: float
+          example: 0.58
+        profit_factor:
+          type: number
+          format: float
+          example: 1.35
+
+    TradeRecord:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "AAPL"
+        side:
+          type: string
+          enum: [ buy, sell ]
+          example: "buy"
+        quantity:
+          type: integer
+          example: 100
+        price:
+          type: number
+          format: float
+          example: 150.25
+        timestamp:
+          type: string
+          format: date-time
+        commission:
+          type: number
+          format: float
+          example: 4.95
+
+    EquityPoint:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        equity:
+          type: number
+          format: float
+          example: 125000.50
+
+    CorrelationAnalysis:
+      type: object
+      properties:
+        symbols:
+          type: array
+          items:
+            type: string
+          example: [ "AAPL", "MSFT", "GOOGL" ]
+        period:
+          type: string
+          example: "3M"
+        correlation_matrix:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+              format: float
+        average_correlations:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          example:
+            "AAPL": 0.65
+            "MSFT": 0.72
+            "GOOGL": 0.58
+
+    VolatilityAnalysis:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "AAPL"
+        period:
+          type: string
+          example: "3M"
+        historical_volatility:
+          type: number
+          format: float
+          example: 0.28
+        implied_volatility:
+          type: number
+          format: float
+          example: 0.32
+        realized_volatility:
+          type: number
+          format: float
+          example: 0.25
+        volatility_cone:
+          type: array
+          items:
+            $ref: "#/components/schemas/VolatilityPoint"
+        garch_model:
+          $ref: "#/components/schemas/GarchParameters"
+
+    VolatilityPoint:
+      type: object
+      properties:
+        percentile:
+          type: number
+          format: float
+          example: 0.25
+        volatility:
+          type: number
+          format: float
+          example: 0.18
+
+    GarchParameters:
+      type: object
+      properties:
+        omega:
+          type: number
+          format: float
+          example: 0.0001
+        alpha:
+          type: number
+          format: float
+          example: 0.05
+        beta:
+          type: number
+          format: float
+          example: 0.92
+        model_fit:
+          type: number
+          format: float
+          example: 0.89
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+              details:
+                type: object
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+

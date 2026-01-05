@@ -1,0 +1,1025 @@
+openapi: 3.0.3
+info:
+  title: Social Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Social Interaction API for NECPGAME**
+
+    This API manages all social interactions, relationships, and community features
+    in the Night City universe, providing comprehensive social gameplay mechanics.
+
+    ## Key Features
+
+    - **Chat System**: Real-time messaging and moderation - **Guild Management**:
+    Guild creation, management, and warfare - **Party System**: Temporary player groups
+    and coordination - **Relationships**: NPC and player relationship dynamics - **Notifications**:
+    Event-driven notification system - **Voice Communication**: Voice chat integration
+    - **Reputation System**: Social standing and benefits
+
+    ## Domain Purpose
+
+    The Social domain handles all player-to-player and player-to-NPC interactions,
+    community building, and social gameplay mechanics in Night City.
+
+    ## Performance Targets
+
+    - P99 Latency: <30ms for social operations - Memory: <18KB per active social session
+    - Concurrent users: 60,000+ simultaneous social interactions - Message delivery:
+    <2ms response time
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+  license:
+    name: MIT
+servers:
+- url: https://api.necpgame.com/v1/social
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/social
+  description: Staging server
+- url: http://localhost:8080/api/v1/social
+  description: Local development server
+tags:
+- name: Chat
+  description: Real-time messaging and communication
+- name: Guilds
+  description: Guild management and social groups
+- name: Parties
+  description: Temporary player groups
+- name: Relationships
+  description: NPC and player relationships
+- name: Notifications
+  description: Event notifications
+- name: Voice
+  description: Voice communication
+- name: Health Monitoring
+  description: System health and performance monitoring
+security:
+- BearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Social Service Health Check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the social service.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: socialServiceHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /social/chat/messages:
+    post:
+      summary: Send chat message
+      operationId: sendChatMessage
+      description: 'Send a real-time chat message with moderation and anti-spam filtering.
+
+        **Real-time:** WebSocket-based delivery for instant messaging.'
+      tags:
+      - Chat
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '200':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /social/guilds:
+    post:
+      summary: Create guild
+      operationId: createGuild
+      description: 'Create a new player guild with customizable settings and permissions.
+
+        **Community:** Foundation for social gameplay and cooperation.'
+      tags:
+      - Guilds
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildRequest'
+      responses:
+        '201':
+          description: Guild created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /social/parties:
+    post:
+      summary: Create party
+      operationId: createParty
+      description: 'Create a temporary player party for cooperative gameplay.
+
+        **Dynamic:** Short-lived groups for specific missions or activities.'
+      tags:
+      - Parties
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePartyRequest'
+      responses:
+        '201':
+          description: Party created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+components:
+  responses:
+    OK:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Operation completed
+    Created:
+      description: Resource created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            format: uri
+          description: URI of the created resource
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of created resource
+              created_at:
+                type: string
+                format: date-time
+                description: Creation timestamp
+    Updated:
+      description: Resource updated successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of updated resource
+              updated_at:
+                type: string
+                format: date-time
+                description: Last modification timestamp
+    Deleted:
+      description: Resource deleted successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of deleted resource
+              deleted_at:
+                type: string
+                format: date-time
+                description: Deletion timestamp
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            allOf:
+            - type: object
+              required:
+              - code
+              - message
+              properties:
+                code:
+                  type: integer
+                  example: 500
+                  format: int32
+                  minimum: 100
+                  maximum: 599
+                message:
+                  type: string
+                  example: Internal server error
+                  maxLength: 1000
+                details:
+                  type: object
+                  description: Additional error details
+              description: Standard error response format
+            - type: object
+              properties:
+                retry_after:
+                  type: integer
+                  example: 60
+                  description: Seconds to wait before retrying
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
+    SendMessageRequest:
+      type: object
+      required:
+      - channel_id
+      - content
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+          description: Chat channel identifier
+        content:
+          type: string
+          maxLength: 500
+          description: Message content
+        message_type:
+          type: string
+          enum:
+          - text
+          - emoji
+          - system
+          default: text
+          description: Type of message
+      description: 'BACKEND NOTE: Chat message with anti-spam validation.'
+    MessageResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+          format: uuid
+          description: Unique message identifier
+        channel_id:
+          type: string
+          format: uuid
+          description: Channel where message was sent
+        sender_id:
+          type: string
+          format: uuid
+          description: Sender's player ID
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+        status:
+          type: string
+          enum:
+          - sent
+          - delivered
+          - moderated
+          description: Message delivery status
+      description: 'BACKEND NOTE: Message confirmation with delivery tracking.'
+    CreateGuildRequest:
+      type: object
+      required:
+      - name
+      - description
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Guild name
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+        emblem:
+          type: string
+          description: Guild emblem/crest data
+        settings:
+          type: object
+          properties:
+            is_public:
+              type: boolean
+              default: true
+              description: Whether guild is public
+            max_members:
+              type: integer
+              minimum: 5
+              maximum: 500
+              default: 50
+              description: Maximum guild members
+          description: Guild configuration settings
+      description: 'BACKEND NOTE: Guild creation with validation and limits.'
+    GuildResponse:
+      type: object
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+          description: Unique guild identifier
+        name:
+          type: string
+          description: Guild name
+        leader_id:
+          type: string
+          format: uuid
+          description: Guild leader's player ID
+        member_count:
+          type: integer
+          minimum: 1
+          description: Current member count
+        created_at:
+          type: string
+          format: date-time
+          description: Guild creation timestamp
+        level:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Guild level
+      description: 'BACKEND NOTE: Guild information with membership data.'
+    CreatePartyRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 30
+          description: Party name
+        description:
+          type: string
+          maxLength: 200
+          description: Party description
+        max_size:
+          type: integer
+          minimum: 2
+          maximum: 8
+          default: 4
+          description: Maximum party size
+        is_public:
+          type: boolean
+          default: true
+          description: Whether party accepts join requests
+      description: 'BACKEND NOTE: Party creation for cooperative gameplay.'
+    PartyResponse:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+          description: Unique party identifier
+        name:
+          type: string
+          description: Party name
+        leader_id:
+          type: string
+          format: uuid
+          description: Party leader's player ID
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: string
+                format: uuid
+              role:
+                type: string
+                enum:
+                - leader
+                - member
+              joined_at:
+                type: string
+                format: date-time
+            description: Party member information
+          description: Current party members
+        created_at:
+          type: string
+          format: date-time
+          description: Party creation timestamp
+      description: 'BACKEND NOTE: Party information with member management.'
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID v4)
+          example: 123e4567-e89b-12d3-a456-426614174000
+          maxLength: 36
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp (ISO 8601)
+          example: '2025-12-28T10:30:00Z'
+          maxLength: 30
+      description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
+        Memory savings: 30-50%. All domain entities should extend this.'
+    AuditableEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        properties:
+          created_by:
+            type: string
+            format: uuid
+            description: ID of user who created the entity
+            example: 123e4567-e89b-12d3-a456-426614174001
+            maxLength: 36
+          updated_by:
+            type: string
+            format: uuid
+            description: ID of user who last modified the entity
+            example: 123e4567-e89b-12d3-a456-426614174002
+            maxLength: 36
+      description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
+        entities.'
+    VersionedEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - version
+        properties:
+          version:
+            type: integer
+            minimum: 1
+            description: Optimistic locking version
+            example: 1
+      description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
+        concurrent-safe updates.'
+    SoftDeletableEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        properties:
+          deleted_at:
+            type: string
+            format: date-time
+            nullable: true
+            description: Soft deletion timestamp (null if not deleted)
+            example: null
+            maxLength: 30
+      description: 'BACKEND NOTE: Extends BaseEntity with soft delete capability.
+        Use for recoverable deletions.'
+    UpdateRequest:
+      type: object
+      required:
+      - id
+      description: Base schema for update operations with optimistic locking support.
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        version:
+          type: integer
+          minimum: 1
+          description: Current entity version for optimistic locking
+        metadata:
+          type: object
+          properties:
+            updated_by:
+              $ref: '#/components/schemas/UUID'
+            reason:
+              type: string
+              maxLength: 200
+              description: Update reason for audit trail
+    PaginationParams:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
+    PaginatedResponse:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          description: Array of items
+        total:
+          type: integer
+          minimum: 0
+          example: 100
+          description: Total number of items
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+          description: Number of items to skip
+    UUID:
+      type: string
+      format: uuid
+      description: Universally Unique Identifier (UUID v4)
+      example: 123e4567-e89b-12d3-a456-426614174000
+      maxLength: 36
+    Email:
+      type: string
+      format: email
+      description: Email address
+      example: user@necpgame.com
+      maxLength: 255
+    Timestamp:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp
+      example: '2025-12-28T10:00:00Z'
+      maxLength: 30
+    Version:
+      type: string
+      pattern: ^\d+\.\d+\.\d+$
+      description: Semantic version (MAJOR.MINOR.PATCH)
+      example: 1.0.0
+      maxLength: 20
+    ValidationResult:
+      type: object
+      required:
+      - valid
+      properties:
+        valid:
+          type: boolean
+          description: Whether validation passed
+          example: true
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation error messages
+          example:
+          - Field is required
+          - Invalid format
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Validation warnings
+          example:
+          - Deprecated field usage
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication

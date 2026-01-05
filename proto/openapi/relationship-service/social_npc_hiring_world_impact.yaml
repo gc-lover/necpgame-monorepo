@@ -1,0 +1,715 @@
+# Issue: #140894831
+openapi: 3.0.3
+info:
+  title: Social NPC Hiring World Impact Service API
+  description: |
+    API для найма NPC с учетом влияния на игровой мир в MMOFPS RPG.
+
+    **Основные возможности:**
+    - Расчет влияния найма NPC на экономику мира
+    - Отслеживание социальных изменений от активности NPC
+    - Политические последствия найма высокоуровневых NPC
+    - Развитие городов и регионов через активность NPC
+    - Система лояльности NPC и ее влияние на мир
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1/social/npc-hiring-impact
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/social/npc-hiring-impact
+    description: Продакшен сервер
+
+tags:
+  - name: NPC Hiring Impact
+    description: Влияние найма NPC на игровой мир
+
+paths:
+  /npc-hiring/{hire_id}/world-impact:
+    get:
+      tags:
+        - NPC Hiring Impact
+      summary: Получить влияние конкретного найма NPC на мир
+      description: |
+        Возвращает детальный анализ влияния конкретного найма NPC на различные аспекты игрового мира.
+        Включает экономические, социальные и политические последствия.
+      operationId: getNPCHireWorldImpact
+      parameters:
+        - name: hire_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Влияние найма NPC на мир
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NPCHireWorldImpact"
+        "404":
+          $ref: "../../common-schemas.yaml#/components/responses/NotFound"
+
+  /npc-hiring/world-impacts:
+    get:
+      tags:
+        - NPC Hiring Impact
+      summary: Получить общее влияние найма NPC на мир
+      description: |
+        Возвращает агрегированное влияние всех активных наймов NPC на игровой мир.
+        Полезно для понимания текущего состояния мира.
+      operationId: getWorldImpactsFromNPCHiring
+      parameters:
+        - name: region_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+            description: ID региона для фильтрации (опционально)
+        - name: time_period
+          in: query
+          schema:
+            type: string
+            enum: [ hour, day, week, month ]
+            default: day
+            description: Период времени для анализа
+      responses:
+        "200":
+          description: Общее влияние найма NPC на мир
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorldImpactsSummary"
+
+  /npc-hiring/impact-prediction:
+    post:
+      tags:
+        - NPC Hiring Impact
+      summary: Предсказать влияние найма NPC на мир
+      description: |
+        Рассчитывает прогнозируемое влияние найма NPC перед его осуществлением.
+        Помогает игрокам понять последствия своих решений.
+      operationId: predictNPCHiringImpact
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NPCHiringPredictionRequest"
+      responses:
+        "200":
+          description: Предсказанное влияние найма NPC
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NPCHiringImpactPrediction"
+        "400":
+          $ref: "../../common-schemas.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "../../common-schemas.yaml#/components/responses/Unauthorized"
+
+  /npc-hiring/loyalty-effects:
+    get:
+      tags:
+        - NPC Hiring Impact
+      summary: Получить эффекты лояльности NPC на мир
+      description: |
+        Анализирует как уровень лояльности нанятых NPC влияет на различные аспекты мира.
+        Высокая лояльность может приводить к положительным изменениям, низкая - к негативным.
+      operationId: getNPCLoyaltyEffects
+      parameters:
+        - name: npc_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+            description: ID конкретного NPC (опционально)
+        - name: loyalty_level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            description: Уровень лояльности для фильтрации
+        - name: region_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+            description: ID региона для фильтрации
+      responses:
+        "200":
+          description: Эффекты лояльности NPC
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NPCLoyaltyEffects"
+
+  /npc-hiring/economic-impact:
+    get:
+      tags:
+        - NPC Hiring Impact
+      summary: Получить экономическое влияние найма NPC
+      description: |
+        Детальный анализ экономических последствий найма NPC в регионе или городе.
+        Включает изменения зарплат, налогов, цен на услуги и т.д.
+      operationId: getNPCHiringEconomicImpact
+      parameters:
+        - name: region_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+            description: ID региона
+        - name: npc_type
+          in: query
+          schema:
+            type: string
+            enum: [ mercenary, fixer, informant, bodyguard, hacker, medic, driver ]
+            description: Тип NPC для фильтрации
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: [ last_hour, last_day, last_week, last_month ]
+            default: last_week
+      responses:
+        "200":
+          description: Экономическое влияние найма NPC
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EconomicImpactAnalysis"
+
+  /npc-hiring/social-changes:
+    get:
+      tags:
+        - NPC Hiring Impact
+      summary: Получить социальные изменения от найма NPC
+      description: |
+        Анализ социальных последствий активности нанятых NPC.
+        Включает изменения в преступности, безопасности, общественном мнении.
+      operationId: getNPCHiringSocialChanges
+      parameters:
+        - name: region_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: change_type
+          in: query
+          schema:
+            type: string
+            enum: [ crime_rate, security_level, public_opinion, community_trust ]
+            description: Тип социальных изменений
+      responses:
+        "200":
+          description: Социальные изменения от найма NPC
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SocialChangesAnalysis"
+
+  /npc-hiring/political-consequences:
+    post:
+      tags:
+        - NPC Hiring Impact
+      summary: Рассчитать политические последствия найма NPC
+      description: |
+        Анализирует политические последствия найма влиятельных NPC.
+        Может влиять на отношения с фракциями, политическую стабильность региона.
+      operationId: calculatePoliticalConsequences
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PoliticalConsequencesRequest"
+      responses:
+        "200":
+          description: Политические последствия найма NPC
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PoliticalConsequences"
+        "400":
+          $ref: "../../common-schemas.yaml#/components/responses/BadRequest"
+        "401":
+          $ref: "../../common-schemas.yaml#/components/responses/Unauthorized"
+
+components:
+  schemas:
+    NPCHireWorldImpact:
+      type: object
+      description: Влияние конкретного найма NPC на игровой мир
+      properties:
+        hire_id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        npc_name:
+          type: string
+        economic_impact:
+          $ref: "#/components/schemas/EconomicImpact"
+        social_impact:
+          $ref: "#/components/schemas/SocialImpact"
+        political_impact:
+          $ref: "#/components/schemas/PoliticalImpact"
+        regional_development:
+          $ref: "#/components/schemas/RegionalDevelopment"
+        timestamp:
+          type: string
+          format: date-time
+
+    EconomicImpact:
+      type: object
+      description: Экономическое влияние найма NPC
+      properties:
+        wage_distribution:
+          type: object
+          description: Распределение заработных плат
+          properties:
+            total_paid:
+              type: integer
+              description: Общая сумма выплат NPC
+            average_hourly_rate:
+              type: number
+              description: Средняя почасовая ставка
+            currency:
+              type: string
+              enum: [ eurodollar, bitcoin, corporate_script, street_cred ]
+        market_effects:
+          type: object
+          description: Влияние на рынок
+          properties:
+            service_price_changes:
+              type: object
+              description: Изменения цен на услуги
+              additionalProperties:
+                type: number
+                description: Процент изменения цены
+            competition_level:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Уровень конкуренции (%)
+        tax_revenue:
+          type: integer
+          description: Налоговые поступления от деятельности NPC
+
+    SocialImpact:
+      type: object
+      description: Социальное влияние найма NPC
+      properties:
+        community_trust:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Уровень доверия сообщества (%)
+        security_perception:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Восприятие безопасности (%)
+        npc_integration_level:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Уровень интеграции NPC в общество (%)
+        reputation_effects:
+          type: array
+          description: Эффекты на репутацию
+          items:
+            type: object
+            properties:
+              faction_id:
+                type: string
+                format: uuid
+              reputation_change:
+                type: integer
+              reason:
+                type: string
+
+    PoliticalImpact:
+      type: object
+      description: Политическое влияние найма NPC
+      properties:
+        faction_relations:
+          type: array
+          description: Изменения отношений с фракциями
+          items:
+            type: object
+            properties:
+              faction_id:
+                type: string
+                format: uuid
+              relation_change:
+                type: integer
+                minimum: -100
+                maximum: 100
+              influence_level:
+                type: string
+                enum: [ none, minor, moderate, major, critical ]
+        power_balance_shift:
+          type: object
+          description: Сдвиг баланса сил
+          properties:
+            region_stability:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Стабильность региона (%)
+            faction_dominance:
+              type: object
+              description: Доминирование фракций
+              additionalProperties:
+                type: number
+                minimum: 0
+                maximum: 100
+        political_events:
+          type: array
+          description: Возможные политические события
+          items:
+            type: object
+            properties:
+              event_type:
+                type: string
+                enum: [ alliance_formation, conflict_escalation, power_shift, diplomatic_incident ]
+              probability:
+                type: number
+                minimum: 0
+                maximum: 100
+              description:
+                type: string
+
+    RegionalDevelopment:
+      type: object
+      description: Развитие региона от активности NPC
+      properties:
+        infrastructure_improvements:
+          type: array
+          description: Улучшения инфраструктуры
+          items:
+            type: string
+        economic_growth:
+          type: number
+          description: Экономический рост (%)
+        population_changes:
+          type: object
+          description: Изменения в населении
+          properties:
+            immigration_rate:
+              type: number
+              description: Уровень иммиграции (%)
+            emigration_rate:
+              type: number
+              description: Уровень эмиграции (%)
+        quality_of_life:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Качество жизни (%)
+
+    WorldImpactsSummary:
+      type: object
+      description: Суммарное влияние найма NPC на мир
+      properties:
+        total_hired_npcs:
+          type: integer
+          description: Общее количество нанятых NPC
+        active_regions:
+          type: integer
+          description: Количество регионов с активными NPC
+        economic_summary:
+          $ref: "#/components/schemas/EconomicImpact"
+        social_summary:
+          $ref: "#/components/schemas/SocialImpact"
+        political_summary:
+          $ref: "#/components/schemas/PoliticalImpact"
+        top_impacted_regions:
+          type: array
+          description: Самые affected регионы
+          items:
+            type: object
+            properties:
+              region_id:
+                type: string
+                format: uuid
+              region_name:
+                type: string
+              impact_score:
+                type: number
+                description: Общий уровень влияния
+        time_period:
+          type: string
+
+    NPCHiringPredictionRequest:
+      type: object
+      description: Запрос на предсказание влияния найма NPC
+      required:
+        - npc_id
+        - hire_duration_hours
+        - activity_level
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        hire_duration_hours:
+          type: integer
+          minimum: 1
+          maximum: 720  # 30 days
+        activity_level:
+          type: string
+          enum: [ low, medium, high, extreme ]
+          description: Уровень активности NPC
+        region_id:
+          type: string
+          format: uuid
+          description: Регион, где будет работать NPC
+        special_conditions:
+          type: array
+          description: Особые условия найма
+          items:
+            type: string
+            enum: [ high_profile_mission, faction_sensitive, time_critical, resource_intensive ]
+
+    NPCHiringImpactPrediction:
+      type: object
+      description: Предсказанное влияние найма NPC
+      $ref:
+
+
+    NPCLoyaltyEffects:
+      type: object
+      description: Эффекты лояльности NPC на мир
+      properties:
+        loyalty_breakdown:
+          type: object
+          description: Разбивка по уровням лояльности
+          properties:
+            high_loyalty_npcs:
+              type: integer
+              description: Количество NPC с высокой лояльностью (8-10)
+            medium_loyalty_npcs:
+              type: integer
+              description: Количество NPC со средней лояльностью (4-7)
+            low_loyalty_npcs:
+              type: integer
+              description: Количество NPC с низкой лояльностью (1-3)
+        world_effects_by_loyalty:
+          type: object
+          description: Эффекты на мир по уровням лояльности
+          properties:
+            high_loyalty_benefits:
+              type: array
+              description: Положительные эффекты высокой лояльности
+              items:
+                type: string
+            low_loyalty_consequences:
+              type: array
+              description: Отрицательные последствия низкой лояльности
+              items:
+                type: string
+        loyalty_trends:
+          type: object
+          description: Тренды изменения лояльности
+          properties:
+            average_loyalty_change:
+              type: number
+              description: Среднее изменение лояльности за период
+            loyalty_stability_index:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Индекс стабильности лояльности (%)
+
+    EconomicImpactAnalysis:
+      type: object
+      description: Детальный анализ экономического влияния
+      properties:
+        region_id:
+          type: string
+          format: uuid
+        time_period:
+          type: string
+        npc_type_distribution:
+          type: object
+          description: Распределение типов NPC
+          additionalProperties:
+            type: integer
+        cost_analysis:
+          type: object
+          description: Анализ расходов
+          properties:
+            total_costs:
+              type: integer
+            average_cost_per_hour:
+              type: number
+            cost_efficiency_ratio:
+              type: number
+              description: Отношение затрат к получаемой пользе
+        market_dynamics:
+          type: object
+          description: Динамика рынка
+          properties:
+            supply_demand_ratio:
+              type: number
+              description: Соотношение спроса и предложения услуг NPC
+            price_volatility:
+              type: number
+              description: Волатильность цен (%)
+            market_saturation:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Насыщенность рынка (%)
+
+    SocialChangesAnalysis:
+      type: object
+      description: Анализ социальных изменений
+      properties:
+        region_id:
+          type: string
+          format: uuid
+        change_metrics:
+          type: object
+          description: Метрики изменений
+          properties:
+            crime_rate_change:
+              type: number
+              description: Изменение уровня преступности (%)
+            security_index_change:
+              type: number
+              description: Изменение индекса безопасности (%)
+            community_satisfaction:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Удовлетворенность сообщества (%)
+        npc_social_integration:
+          type: object
+          description: Интеграция NPC в общество
+          properties:
+            acceptance_rate:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Уровень принятия NPC (%)
+            social_bonds_formed:
+              type: integer
+              description: Количество социальных связей, образованных NPC
+            cultural_exchange_events:
+              type: integer
+              description: Количество событий культурного обмена
+
+    PoliticalConsequencesRequest:
+      type: object
+      description: Запрос на расчет политических последствий
+      required:
+        - npc_id
+        - hire_context
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        hire_context:
+          type: object
+          description: Контекст найма
+          properties:
+            mission_type:
+              type: string
+              enum: [ espionage, assassination, protection, diplomacy, sabotage ]
+            target_faction:
+              type: string
+              format: uuid
+            region_id:
+              type: string
+              format: uuid
+            expected_duration:
+              type: integer
+              description: Ожидаемая продолжительность (часы)
+        special_factors:
+          type: array
+          description: Особые факторы
+          items:
+            type: string
+            enum: [ high_profile_target, faction_leader_involved, international_implications, media_attention ]
+
+    PoliticalConsequences:
+      type: object
+      description: Политические последствия найма NPC
+      properties:
+        immediate_consequences:
+          type: array
+          description: Немедленные последствия
+          items:
+            type: object
+            properties:
+              consequence_type:
+                type: string
+                enum: [ diplomatic_tension, alliance_strain, power_shift, reputation_damage ]
+              severity:
+                type: string
+                enum: [ minor, moderate, major, critical ]
+              affected_factions:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+              probability:
+                type: number
+                minimum: 0
+                maximum: 100
+        long_term_implications:
+          type: object
+          description: Долгосрочные последствия
+          properties:
+            geopolitical_changes:
+              type: array
+              description: Геополитические изменения
+              items:
+                type: string
+            power_balance_alterations:
+              type: array
+              description: Изменения баланса сил
+              items:
+                type: string
+            strategic_opportunities:
+              type: array
+              description: Стратегические возможности
+              items:
+                type: string
+        risk_mitigation_strategies:
+          type: array
+          description: Стратегии снижения рисков
+          items:
+            type: object
+            properties:
+              strategy:
+                type: string
+              effectiveness:
+                type: number
+                minimum: 0
+                maximum: 100
+              implementation_complexity:
+                type: string
+                enum: [ low, medium, high ]
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

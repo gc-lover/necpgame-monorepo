@@ -1,0 +1,1144 @@
+openapi: 3.0.3
+info:
+  title: Analytics Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Analytics & Monitoring API for NECPGAME**
+
+    This API provides comprehensive analytics, metrics, and monitoring capabilities
+    for all game systems in the Night City universe, enabling data-driven insights
+    and performance optimization.
+
+    ## Key Features
+
+    - **Real-time Analytics**: Live metrics and performance data - **Combat Analytics**:
+    Battle statistics, effectiveness tracking - **Economy Analytics**: Market trends,
+    portfolio analysis - **Player Behavior**: Usage patterns and engagement metrics
+    - **Anti-cheat Monitoring**: Fraud detection and prevention - **Performance Optimized**:
+    MMOFPS-grade performance with <25ms P99 latency
+
+    ## Domain Purpose
+
+    The Analytics domain provides comprehensive monitoring and analytics for all NECPGAME
+    systems, enabling data-driven decisions and continuous improvement.
+
+    ## Performance Targets
+
+    - P99 Latency: <25ms for analytics queries - Memory: <20KB per active analytics
+    session - Concurrent users: 50,000+ simultaneous analytics operations - Data processing:
+    <10ms response time
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+  license:
+    name: MIT
+servers:
+- url: https://api.necpgame.com/v1/analytics
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/analytics
+  description: Staging server
+- url: http://localhost:8080/api/v1/analytics
+  description: Local development server
+tags:
+- name: Combat Analytics
+  description: Battle and combat performance metrics
+- name: Economy Analytics
+  description: Market trends and economic indicators
+- name: Player Analytics
+  description: Player behavior and engagement metrics
+- name: System Monitoring
+  description: Infrastructure and system health monitoring
+- name: Anti-Cheat
+  description: Fraud detection and prevention monitoring
+- name: Health Monitoring
+  description: System health and performance monitoring
+security:
+- BearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Analytics Service Health Check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the analytics service.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: analyticsServiceHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /analytics/combat/overview:
+    get:
+      summary: Get combat analytics overview
+      operationId: getCombatAnalyticsOverview
+      description: 'Retrieve comprehensive combat analytics overview with metrics
+        and trends.
+
+        **Performance:** Optimized for dashboard queries, <5ms response time.'
+      tags:
+      - Combat Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - hour
+          - day
+          - week
+          - month
+          default: day
+        description: Time period for analytics
+      - name: game_mode
+        in: query
+        schema:
+          type: string
+          enum:
+          - solo
+          - team
+          - ranked
+          - casual
+        description: Filter by game mode
+      responses:
+        '200':
+          description: Combat analytics overview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatAnalyticsOverview'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /analytics/economy/market:
+    get:
+      summary: Get economy market analytics
+      operationId: getEconomyMarketAnalytics
+      description: 'Retrieve market trends, price movements, and economic indicators.
+
+        **AI Integration:** Uses predictive analytics for market forecasting.'
+      tags:
+      - Economy Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: asset_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - currency
+          - item
+          - stock
+          - real_estate
+        description: Type of economic asset
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - short
+          - medium
+          - long
+          default: medium
+        description: Analysis timeframe
+      responses:
+        '200':
+          description: Market analytics data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketAnalyticsResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /analytics/players/behavior:
+    get:
+      summary: Get player behavior analytics
+      operationId: getPlayerBehaviorAnalytics
+      description: 'Analyze player behavior patterns, engagement metrics, and retention
+        data.
+
+        **Privacy:** Aggregated and anonymized data only.'
+      tags:
+      - Player Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: segment
+        in: query
+        schema:
+          type: string
+          enum:
+          - new_players
+          - veterans
+          - casual
+          - hardcore
+        description: Player segment to analyze
+      - name: metric
+        in: query
+        schema:
+          type: string
+          enum:
+          - engagement
+          - retention
+          - progression
+          - spending
+          default: engagement
+        description: Behavior metric to analyze
+      responses:
+        '200':
+          description: Player behavior analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBehaviorAnalytics'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /analytics/system/performance:
+    get:
+      summary: Get system performance metrics
+      operationId: getSystemPerformanceMetrics
+      description: 'Monitor system performance, latency, and resource utilization.
+
+        **Real-time:** Live metrics with sub-second updates.'
+      tags:
+      - System Monitoring
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: component
+        in: query
+        schema:
+          type: string
+          enum:
+          - api
+          - database
+          - cache
+          - networking
+        description: System component to monitor
+      responses:
+        '200':
+          description: System performance metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemPerformanceMetrics'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+components:
+  responses:
+    OK:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Operation completed
+    Created:
+      description: Resource created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            format: uri
+          description: URI of the created resource
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of created resource
+              created_at:
+                type: string
+                format: date-time
+                description: Creation timestamp
+    Updated:
+      description: Resource updated successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of updated resource
+              updated_at:
+                type: string
+                format: date-time
+                description: Last modification timestamp
+    Deleted:
+      description: Resource deleted successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of deleted resource
+              deleted_at:
+                type: string
+                format: date-time
+                description: Deletion timestamp
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            allOf:
+            - type: object
+              required:
+              - code
+              - message
+              properties:
+                code:
+                  type: integer
+                  example: 500
+                  format: int32
+                  minimum: 100
+                  maximum: 599
+                message:
+                  type: string
+                  example: Internal server error
+                  maxLength: 1000
+                details:
+                  type: object
+                  description: Additional error details
+              description: Standard error response format
+            - type: object
+              properties:
+                retry_after:
+                  type: integer
+                  example: 60
+                  description: Seconds to wait before retrying
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
+    CombatAnalyticsOverview:
+      type: object
+      properties:
+        period:
+          type: string
+          description: Analysis period
+        metrics:
+          type: object
+          properties:
+            total_battles:
+              type: integer
+              minimum: 0
+            average_ttk:
+              type: number
+              minimum: 0
+              description: Average Time To Kill in seconds
+            average_dps:
+              type: number
+              minimum: 0
+              description: Average Damage Per Second
+            win_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Overall win rate
+          description: Key combat metrics
+        trends:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              metric:
+                type: string
+              value:
+                type: number
+            description: Time-series trend data
+      description: 'BACKEND NOTE: Combat analytics with memory-aligned structure.'
+    MarketAnalyticsResponse:
+      type: object
+      properties:
+        asset_type:
+          type: string
+        timeframe:
+          type: string
+        current_price:
+          type: number
+          minimum: 0
+        price_change_24h:
+          type: number
+          description: 24-hour price change percentage
+        volume_24h:
+          type: number
+          minimum: 0
+          description: 24-hour trading volume
+        market_cap:
+          type: number
+          minimum: 0
+          description: Market capitalization
+        predictions:
+          type: object
+          properties:
+            next_hour:
+              type: number
+              description: AI-predicted price for next hour
+            confidence:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Prediction confidence score
+          description: AI-driven market predictions
+      description: 'BACKEND NOTE: Market analytics with AI predictions.'
+    PlayerBehaviorAnalytics:
+      type: object
+      properties:
+        segment:
+          type: string
+        metric:
+          type: string
+        total_players:
+          type: integer
+          minimum: 0
+        active_users:
+          type: integer
+          minimum: 0
+        average_session_time:
+          type: integer
+          minimum: 0
+          description: Average session time in minutes
+        retention_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Player retention rate
+        engagement_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Composite engagement score
+      description: 'BACKEND NOTE: Player behavior metrics for game optimization.'
+    SystemPerformanceMetrics:
+      type: object
+      properties:
+        component:
+          type: string
+        uptime_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        average_response_time:
+          type: number
+          minimum: 0
+          description: Average response time in milliseconds
+        p95_response_time:
+          type: number
+          minimum: 0
+          description: 95th percentile response time
+        error_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Error rate percentage
+        throughput:
+          type: integer
+          minimum: 0
+          description: Requests per second
+        resource_utilization:
+          type: object
+          properties:
+            cpu_percentage:
+              type: number
+              minimum: 0
+              maximum: 100
+            memory_mb:
+              type: integer
+              minimum: 0
+            disk_io:
+              type: number
+              minimum: 0
+          description: Resource usage metrics
+      description: 'BACKEND NOTE: System performance monitoring data.'
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID v4)
+          example: 123e4567-e89b-12d3-a456-426614174000
+          maxLength: 36
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp (ISO 8601)
+          example: '2025-12-28T10:30:00Z'
+          maxLength: 30
+      description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
+        Memory savings: 30-50%. All domain entities should extend this.'
+    AuditableEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        properties:
+          created_by:
+            type: string
+            format: uuid
+            description: ID of user who created the entity
+            example: 123e4567-e89b-12d3-a456-426614174001
+            maxLength: 36
+          updated_by:
+            type: string
+            format: uuid
+            description: ID of user who last modified the entity
+            example: 123e4567-e89b-12d3-a456-426614174002
+            maxLength: 36
+      description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
+        entities.'
+    VersionedEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - version
+        properties:
+          version:
+            type: integer
+            minimum: 1
+            description: Optimistic locking version
+            example: 1
+      description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
+        concurrent-safe updates.'
+    SoftDeletableEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        properties:
+          deleted_at:
+            type: string
+            format: date-time
+            nullable: true
+            description: Soft deletion timestamp (null if not deleted)
+            example: null
+            maxLength: 30
+      description: 'BACKEND NOTE: Extends BaseEntity with soft delete capability.
+        Use for recoverable deletions.'
+    UpdateRequest:
+      type: object
+      required:
+      - id
+      description: Base schema for update operations with optimistic locking support.
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        version:
+          type: integer
+          minimum: 1
+          description: Current entity version for optimistic locking
+        metadata:
+          type: object
+          properties:
+            updated_by:
+              $ref: '#/components/schemas/UUID'
+            reason:
+              type: string
+              maxLength: 200
+              description: Update reason for audit trail
+    PaginationParams:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
+    PaginatedResponse:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          description: Array of items
+        total:
+          type: integer
+          minimum: 0
+          example: 100
+          description: Total number of items
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+          description: Number of items to skip
+    UUID:
+      type: string
+      format: uuid
+      description: Universally Unique Identifier (UUID v4)
+      example: 123e4567-e89b-12d3-a456-426614174000
+      maxLength: 36
+    Email:
+      type: string
+      format: email
+      description: Email address
+      example: user@necpgame.com
+      maxLength: 255
+    Timestamp:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp
+      example: '2025-12-28T10:00:00Z'
+      maxLength: 30
+    Version:
+      type: string
+      pattern: ^\d+\.\d+\.\d+$
+      description: Semantic version (MAJOR.MINOR.PATCH)
+      example: 1.0.0
+      maxLength: 20
+    ValidationResult:
+      type: object
+      required:
+      - valid
+      properties:
+        valid:
+          type: boolean
+          description: Whether validation passed
+          example: true
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation error messages
+          example:
+          - Field is required
+          - Invalid format
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Validation warnings
+          example:
+          - Deprecated field usage
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication

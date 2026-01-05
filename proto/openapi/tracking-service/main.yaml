@@ -1,8 +1,7 @@
 openapi: 3.0.3
 info:
   title: Tracking Service API - Enterprise-Grade User Behavior Tracking
-  description:
-    "**Enterprise-Grade User Behavior and Analytics Tracking API for NECPGAME**
+  description: '**Enterprise-Grade User Behavior and Analytics Tracking API for NECPGAME**
 
     This API manages comprehensive user behavior tracking, analytics data collection,
     and privacy-compliant user activity monitoring in Night City, providing detailed
@@ -10,12 +9,12 @@ info:
 
     ## Key Features
 
-    - **Behavior Tracking**: Comprehensive user action and event tracking
-    - **Privacy Compliance**: GDPR and CCPA compliant data handling
-    - **Analytics Integration**: Real-time analytics data collection and processing
-    - **Performance Monitoring**: User experience and system performance metrics
-    - **Fraud Detection**: Behavioral anomaly detection and security monitoring
-    - **Performance Optimized**: High-throughput tracking operations with <15ms P99 latency
+    - **Behavior Tracking**: Comprehensive user action and event tracking - **Privacy
+    Compliance**: GDPR and CCPA compliant data handling - **Analytics Integration**:
+    Real-time analytics data collection and processing - **Performance Monitoring**:
+    User experience and system performance metrics - **Fraud Detection**: Behavioral
+    anomaly detection and security monitoring - **Performance Optimized**: High-throughput
+    tracking operations with <15ms P99 latency
 
     ## Domain Purpose
 
@@ -25,12 +24,11 @@ info:
 
     ## Performance Targets
 
-    - P99 Latency: <15ms for tracking operations
-    - Memory: <12KB per active tracking session
-    - Concurrent users: 200,000+ simultaneous tracking operations
-    - Throughput: 80,000+ operations per second
+    - P99 Latency: <15ms for tracking operations - Memory: <12KB per active tracking
+    session - Concurrent users: 200,000+ simultaneous tracking operations - Throughput:
+    80,000+ operations per second
 
-    "
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -40,26 +38,26 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necpgame.com/v1/tracking
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/tracking
-    description: Staging server
-  - url: http://localhost:8080/api/v1/tracking
-    description: Local development server
+- url: https://api.necpgame.com/v1/tracking
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/tracking
+  description: Staging server
+- url: http://localhost:8080/api/v1/tracking
+  description: Local development server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: Tracking Management
-    description: Core tracking operations and management
-  - name: Analytics Collection
-    description: User behavior and analytics operations
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: Tracking Management
+  description: Core tracking operations and management
+- name: Analytics Collection
+  description: User behavior and analytics operations
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
   /health:
     get:
       summary: Example domain health check
-      description: "**Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
 
 
         Provides real-time health status of the example domain microservice.
@@ -69,21 +67,21 @@ paths:
 
         **Performance:** <1ms response time, cached for 30 seconds
 
-        "
+        '
       operationId: trackingServiceHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -98,20 +96,20 @@ paths:
               schema:
                 type: string
                 enum:
-                  - gzip
-                  - deflate
-                  - br
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "503":
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "429":
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -121,12 +119,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/batch:
     post:
       summary: Batch health check for multiple domain services
-      description:
-        "**Performance optimization:** Check multiple domain health in
+      description: '**Performance optimization:** Check multiple domain health in
         single request
 
 
@@ -137,10 +140,10 @@ paths:
 
         **Use case:** Service mesh health checks, Kubernetes readiness probes
 
-        "
+        '
       operationId: exampleDomainBatchHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       requestBody:
         required: true
         content:
@@ -148,28 +151,28 @@ paths:
             schema:
               type: object
               required:
-                - services
+              - services
               properties:
                 services:
                   type: array
                   items:
                     type: string
                     enum:
-                      - example-domain
-                      - system-domain
-                      - specialized-domain
+                    - example-domain
+                    - system-domain
+                    - specialized-domain
                     maxItems: 10
                   description: List of services to check
       responses:
-        "200":
-          $ref: "../common/responses/success.yaml#/HealthBatchSuccess"
-        "400":
+        '200':
+          $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
+        '400':
           description: Invalid request - malformed service list
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -180,12 +183,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
-      description:
-        "**Performance optimization:** Real-time health updates without
+      description: '**Performance optimization:** Real-time health updates without
         polling
 
 
@@ -200,24 +208,24 @@ paths:
 
         **Reconnection:** Automatic with exponential backoff
 
-        "
+        '
       operationId: trackingServiceHealthWebSocket
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: services
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - example-domain
-                - system-domain
-                - specialized-domain
-          description: Services to monitor (optional, monitors all if not specified)
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - example-domain
+            - system-domain
+            - specialized-domain
+        description: Services to monitor (optional, monitors all if not specified)
       responses:
-        "200":
+        '200':
           description: WebSocket upgrade information returned
           content:
             application/json:
@@ -232,8 +240,8 @@ paths:
                     items:
                       type: string
                     example:
-                      - health-monitoring-v1
-        "101":
+                    - health-monitoring-v1
+        '101':
           description: WebSocket connection established successfully
           headers:
             Upgrade:
@@ -251,20 +259,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketHealthMessage"
-        "400":
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
           description: Invalid request - malformed service parameters
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "401":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '401':
           description: Unauthorized - authentication required for WebSocket
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - WebSocket connection limit exceeded
           headers:
             Retry-After:
@@ -274,11 +282,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /examples:
     get:
       summary: List examples with filtering and pagination
-      description: "**Enterprise-grade listing endpoint**
+      description: '**Enterprise-grade listing endpoint**
 
 
         Supports complex filtering, sorting, and pagination patterns.
@@ -288,72 +302,78 @@ paths:
 
         **Performance:** <10ms P95, supports 1000+ concurrent requests
 
-        "
+        '
       operationId: listTrackingEvents
       tags:
-        - Tracking Management
+      - Tracking Management
       parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number for pagination
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of items per page
-        - name: sort_by
-          in: query
-          schema:
-            type: string
-            enum:
-              - created_at
-              - name
-              - priority
-            default: created_at
-          description: Sort field
-        - name: sort_order
-          in: query
-          schema:
-            type: string
-            enum:
-              - asc
-              - desc
-            default: desc
-          description: Sort order
-        - name: filter_status
-          in: query
-          schema:
-            type: string
-            enum:
-              - active
-              - inactive
-              - pending
-          description: Filter by status
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - created_at
+          - name
+          - priority
+          default: created_at
+        description: Sort field
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+        description: Sort order
+      - name: filter_status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - pending
+        description: Filter by status
       responses:
-        "200":
-          $ref: "#/components/responses/ExampleListSuccess"
-        "400":
+        '200':
+          $ref: '#/components/responses/ExampleListSuccess'
+        '400':
           description: Invalid request - malformed query parameters
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "422":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '422':
           description: Unprocessable entity - validation failed
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     post:
       summary: Create new example
-      description: "**Enterprise-grade creation endpoint**
+      description: '**Enterprise-grade creation endpoint**
 
 
         Validates business rules, applies security checks, and ensures data consistency.
@@ -363,40 +383,40 @@ paths:
 
         **Performance:** <50ms P95, includes validation and business logic
 
-        "
+        '
       operationId: createExample
       tags:
-        - Tracking Management
+      - Tracking Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateExampleRequest"
+              $ref: '#/components/schemas/CreateExampleRequest'
       responses:
-        "201":
-          $ref: "#/components/responses/ExampleCreated"
-        "400":
+        '201':
+          $ref: '#/components/responses/ExampleCreated'
+        '400':
           description: Invalid request - malformed or missing data
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
           description: Conflict - example with this identifier already exists
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "422":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '422':
           description: Unprocessable entity - business rule validation failed
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - creation rate limit exceeded
           headers:
             Retry-After:
@@ -406,11 +426,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /examples/{example_id}:
     get:
       summary: Get specific example by ID
-      description: "**Enterprise-grade retrieval endpoint**
+      description: '**Enterprise-grade retrieval endpoint**
 
 
         Optimized with proper caching strategies and database indexing.
@@ -420,39 +446,39 @@ paths:
 
         **Performance:** <5ms P95 with Redis caching
 
-        "
+        '
       operationId: getExample
       tags:
-        - Tracking Management
+      - Tracking Management
       parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
-        - name: include_related
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include related data in response
-        - name: If-None-Match
-          in: header
-          schema:
-            type: string
-          description: Conditional request - return 304 if ETag matches
-        - name: If-Modified-Since
-          in: header
-          schema:
-            type: string
-            format: date-time
-          description: Conditional request - return 304 if not modified since this time
+      - name: example_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
+      - name: include_related
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include related data in response
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+        description: Conditional request - return 304 if ETag matches
+      - name: If-Modified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional request - return 304 if not modified since this time
       responses:
-        "200":
-          $ref: "#/components/responses/ExampleRetrieved"
-        "304":
+        '200':
+          $ref: '#/components/responses/ExampleRetrieved'
+        '304':
           description: Not modified - resource has not changed
           headers:
             ETag:
@@ -463,19 +489,19 @@ paths:
               schema:
                 type: string
                 example: max-age=300, private
-        "400":
+        '400':
           description: Invalid request - malformed example ID
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
           description: Example not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -485,10 +511,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     put:
       summary: Update existing example
-      description: "**Enterprise-grade update endpoint**
+      description: '**Enterprise-grade update endpoint**
 
 
         Supports partial updates, optimistic locking, and audit trails.
@@ -498,57 +530,55 @@ paths:
 
         **Performance:** <25ms P95, includes validation and conflict resolution
 
-        "
+        '
       operationId: updateExample
       tags:
-        - Tracking Management
+      - Tracking Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
-        - name: If-Match
-          in: header
-          schema:
-            type: string
-          description: ETag for optimistic locking - prevents concurrent updates
-        - name: If-Unmodified-Since
-          in: header
-          schema:
-            type: string
-            format: date-time
-          description:
-            Conditional update - proceed only if not modified since this
-            time
+      - name: example_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+        description: ETag for optimistic locking - prevents concurrent updates
+      - name: If-Unmodified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional update - proceed only if not modified since this
+          time
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateExampleRequest"
+              $ref: '#/components/schemas/UpdateExampleRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/ExampleUpdated"
-        "400":
+        '200':
+          $ref: '#/components/responses/ExampleUpdated'
+        '400':
           description: Invalid request - malformed data or example ID
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
           description: Example not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
-          description:
-            Conflict - version conflict (optimistic locking) or precondition
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
+          description: Conflict - version conflict (optimistic locking) or precondition
             failed
           headers:
             ETag:
@@ -559,10 +589,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "412":
-          description:
-            Precondition failed - If-Match or If-Unmodified-Since condition
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '412':
+          description: Precondition failed - If-Match or If-Unmodified-Since condition
             not met
           headers:
             ETag:
@@ -573,14 +602,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "422":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '422':
           description: Unprocessable entity - business rule validation failed
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - update rate limit exceeded
           headers:
             Retry-After:
@@ -590,10 +619,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     delete:
       summary: Delete example
-      description: "**Enterprise-grade deletion endpoint**
+      description: '**Enterprise-grade deletion endpoint**
 
 
         Supports soft deletes with audit trails and cleanup scheduling.
@@ -603,42 +638,42 @@ paths:
 
         **Performance:** <15ms P95, includes cleanup operations
 
-        "
+        '
       operationId: deleteExample
       tags:
-        - Tracking Management
+      - Tracking Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
+      - name: example_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
       responses:
-        "204":
-          $ref: "#/components/responses/ExampleDeleted"
-        "400":
+        '204':
+          $ref: '#/components/responses/ExampleDeleted'
+        '400':
           description: Invalid request - malformed example ID
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
           description: Example not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
           description: Conflict - example cannot be deleted (referential integrity)
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - deletion rate limit exceeded
           headers:
             Retry-After:
@@ -648,11 +683,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
   responses:
     HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
     ExampleListSuccess:
       description: Examples retrieved successfully
       headers:
@@ -673,7 +714,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ExampleListResponse"
+            $ref: '#/components/schemas/ExampleListResponse'
     ExampleCreated:
       description: Example created successfully
       headers:
@@ -694,7 +735,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ExampleResponse"
+            $ref: '#/components/schemas/ExampleResponse'
     ExampleRetrieved:
       description: Example retrieved successfully
       headers:
@@ -712,7 +753,7 @@ components:
           schema:
             type: string
             format: date-time
-            example: "2025-12-21T10:00:00Z"
+            example: '2025-12-21T10:00:00Z'
             description: Last modification timestamp
         X-Processing-Time:
           schema:
@@ -722,7 +763,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ExampleResponse"
+            $ref: '#/components/schemas/ExampleResponse'
     ExampleUpdated:
       description: Example updated successfully
       headers:
@@ -735,7 +776,7 @@ components:
           schema:
             type: string
             format: date-time
-            example: "2025-12-21T10:05:00Z"
+            example: '2025-12-21T10:05:00Z'
             description: Last modification timestamp
         X-Processing-Time:
           schema:
@@ -745,7 +786,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ExampleResponse"
+            $ref: '#/components/schemas/ExampleResponse'
     ExampleDeleted:
       description: Example deleted successfully
       headers:
@@ -755,39 +796,39 @@ components:
             example: 15
             description: Processing time in milliseconds
     OK:
-      $ref: ../common/responses/success.yaml#/OK
+      $ref: ../common-service/responses/success.yaml#/OK
     Created:
-      $ref: ../common/responses/success.yaml#/Created
+      $ref: ../common-service/responses/success.yaml#/Created
     BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
+      $ref: ../common-service/responses/error.yaml#/BadRequest
     Unauthorized:
-      $ref: ../common/responses/error.yaml#/Unauthorized
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
     Forbidden:
-      $ref: ../common/responses/error.yaml#/Forbidden
+      $ref: ../common-service/responses/error.yaml#/Forbidden
     NotFound:
-      $ref: ../common/responses/error.yaml#/NotFound
+      $ref: ../common-service/responses/error.yaml#/NotFound
     Conflict:
-      $ref: ../common/responses/error.yaml#/Conflict
+      $ref: ../common-service/responses/error.yaml#/Conflict
     InternalServerError:
-      $ref: ../common/responses/error.yaml#/InternalServerError
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
     HealthOK:
-      $ref: ../common/responses/success.yaml#/HealthOK
+      $ref: ../common-service/responses/success.yaml#/HealthOK
   schemas:
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
     WebSocketHealthMessage:
       type: object
       required:
-        - type
-        - timestamp
-        - health
+      - type
+      - timestamp
+      - health
       properties:
         type:
           type: string
           enum:
-            - health_update
-            - health_alert
-            - service_down
+          - health_update
+          - health_alert
+          - service_down
           example: health_update
           maxLength: 255
         timestamp:
@@ -800,20 +841,19 @@ components:
           description: Timestamp of the health message
           maxLength: 1000
         health:
-          $ref: "../common/schemas/health.yaml#/HealthResponse"
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
+          $ref: ../common-service/schemas/health.yaml#/HealthResponse
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     Error:
-      $ref: ../common/schemas/error.yaml#/Error
+      $ref: ../common-service/schemas/error.yaml#/Error
     Example:
       type: object
       required:
-        - id
-        - name
-        - created_at
-        - status
-        - is_active
+      - id
+      - name
+      - created_at
+      - status
+      - is_active
       properties:
         id:
           type: string
@@ -835,19 +875,19 @@ components:
           type: string
           format: date-time
           description: Creation timestamp
-          example: "2025-12-21T10:00:00Z"
+          example: '2025-12-21T10:00:00Z'
         updated_at:
           type: string
           format: date-time
           description: Last update timestamp
-          example: "2025-12-21T10:00:00Z"
+          example: '2025-12-21T10:00:00Z'
         status:
           type: string
           enum:
-            - active
-            - inactive
-            - pending
-            - archived
+          - active
+          - inactive
+          - pending
+          - archived
           default: active
           description: Current status
           example: active
@@ -859,9 +899,9 @@ components:
           maxItems: 10
           description: Associated tags
           example:
-            - demo
-            - template
-            - best-practice
+          - demo
+          - template
+          - best-practice
         is_active:
           type: boolean
           description: Whether this example is active
@@ -873,14 +913,13 @@ components:
           default: 5
           description: Processing priority
           example: 7
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Hot path optimization required."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%. Hot path optimization required.'
     CreateExampleRequest:
       type: object
       required:
-        - name
-        - description
+      - name
+      - description
       properties:
         name:
           type: string
@@ -906,9 +945,8 @@ components:
           maximum: 10
           default: 5
           description: Processing priority
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     UpdateExampleRequest:
       type: object
       properties:
@@ -925,10 +963,10 @@ components:
         status:
           type: string
           enum:
-            - active
-            - inactive
-            - pending
-            - archived
+          - active
+          - inactive
+          - pending
+          - archived
           description: New status
         tags:
           type: array
@@ -945,30 +983,28 @@ components:
           minimum: 1
           maximum: 10
           description: New priority
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     ExampleResponse:
       type: object
       required:
-        - example
+      - example
       properties:
         example:
-          $ref: "#/components/schemas/Example"
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
+          $ref: '#/components/schemas/Example'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     ExampleListResponse:
       type: object
       required:
-        - examples
-        - total_count
-        - has_more
+      - examples
+      - total_count
+      - has_more
       properties:
         examples:
           type: array
           items:
-            $ref: "#/components/schemas/Example"
+            $ref: '#/components/schemas/Example'
           description: List of examples
         has_more:
           type: boolean
@@ -986,22 +1022,21 @@ components:
           type: integer
           description: Items per page
           example: 20
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
         Expected memory savings: 30-50%. Paginated responses optimized for memory
-        efficiency."
+        efficiency.'
     ETagHeader:
       type: string
       description: Entity tag for caching and optimistic locking
       example: '"tracking-123-v1"'
     PaginationParams:
-      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
     PaginatedResponse:
-      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
+      $ref: ../common-service/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      $ref: ../common/security/security.yaml#/ApiKeyAuth
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      $ref: ../common/security/security.yaml#/ServiceAuth
+      $ref: ../common-service/security/security.yaml#/ServiceAuth

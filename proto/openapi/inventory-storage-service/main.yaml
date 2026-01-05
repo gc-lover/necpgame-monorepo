@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Inventory Storage Service API - Enterprise-Grade Domain Service
-  description: "**Enterprise-Grade Inventory Storage API for NECPGAME**
+  description: '**Enterprise-Grade Inventory Storage API for NECPGAME**
 
     This API manages player inventory storage, item organization, capacity management,
     and storage optimization for the cyberpunk RPG experience.
@@ -9,10 +9,10 @@ info:
     ## Key Features
 
     - **Storage Management**: Multi-level inventory organization and categorization
-    - **Capacity Optimization**: Dynamic storage expansion and weight management
-    - **Item Organization**: Smart sorting, filtering, and search capabilities
-    - **Storage Security**: Item protection and anti-theft mechanisms
-    - **Performance Optimized**: MMOFPS-grade performance with <50ms P99 latency
+    - **Capacity Optimization**: Dynamic storage expansion and weight management -
+    **Item Organization**: Smart sorting, filtering, and search capabilities - **Storage
+    Security**: Item protection and anti-theft mechanisms - **Performance Optimized**:
+    MMOFPS-grade performance with <50ms P99 latency
 
     ## Domain Purpose
 
@@ -22,13 +22,12 @@ info:
 
     ## Performance Targets
 
-    - P99 Latency: <50ms for inventory operations
-    - Memory: <30KB per active player inventory
-    - Concurrent users: 100,000+ simultaneous inventory accesses
-    - Storage operations: <15ms response time
+    - P99 Latency: <50ms for inventory operations - Memory: <30KB per active player
+    inventory - Concurrent users: 100,000+ simultaneous inventory accesses - Storage
+    operations: <15ms response time
 
-    "
-  version: "1.0.0"
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
@@ -37,24 +36,24 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necpgame.com/v1/inventory-storage
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/inventory-storage
-    description: Staging server
-  - url: http://localhost:8080/api/v1/inventory-storage
-    description: Local development server
+- url: https://api.necpgame.com/v1/inventory-storage
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/inventory-storage
+  description: Staging server
+- url: http://localhost:8080/api/v1/inventory-storage
+  description: Local development server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: Inventory Storage
-    description: Core inventory storage operations
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: Inventory Storage
+  description: Core inventory storage operations
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
   /health:
     get:
       summary: Inventory storage health check
-      description: "**Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
 
 
         Provides real-time health status of the inventory storage microservice.
@@ -64,21 +63,21 @@ paths:
 
         **Performance:** <1ms response time, cached for 30 seconds
 
-        "
+        '
       operationId: inventoryStorageHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -93,20 +92,20 @@ paths:
               schema:
                 type: string
                 enum:
-                  - gzip
-                  - deflate
-                  - br
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "503":
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "429":
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -116,12 +115,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/batch:
     post:
       summary: Batch health check for multiple domain services
-      description:
-        "**Performance optimization:** Check multiple domain health in
+      description: '**Performance optimization:** Check multiple domain health in
         single request
 
 
@@ -132,10 +136,10 @@ paths:
 
         **Use case:** Service mesh health checks, Kubernetes readiness probes
 
-        "
+        '
       operationId: inventoryStorageBatchHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       requestBody:
         required: true
         content:
@@ -143,29 +147,29 @@ paths:
             schema:
               type: object
               required:
-                - services
+              - services
               properties:
                 services:
                   type: array
                   items:
                     type: string
                     enum:
-                      - inventory-storage
-                      - item-service
-                      - equipment-service
-                      - crafting-service
+                    - inventory-storage
+                    - item-service
+                    - equipment-service
+                    - crafting-service
                   maxItems: 10
                   description: List of services to check
       responses:
-        "200":
-          $ref: "../common/responses/success.yaml#/HealthBatchSuccess"
-        "400":
+        '200':
+          $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
+        '400':
           description: Invalid request - malformed service list
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -176,12 +180,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
-      description:
-        "**Performance optimization:** Real-time health updates without
+      description: '**Performance optimization:** Real-time health updates without
         polling
 
 
@@ -196,25 +205,25 @@ paths:
 
         **Reconnection:** Automatic with exponential backoff
 
-        "
+        '
       operationId: inventoryStorageHealthWebSocket
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: services
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - inventory-storage
-                - item-service
-                - equipment-service
-                - crafting-service
-          description: Services to monitor (optional, monitors all if not specified)
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inventory-storage
+            - item-service
+            - equipment-service
+            - crafting-service
+        description: Services to monitor (optional, monitors all if not specified)
       responses:
-        "200":
+        '200':
           description: WebSocket upgrade information returned
           content:
             application/json:
@@ -229,8 +238,8 @@ paths:
                     items:
                       type: string
                     example:
-                      - health-monitoring-v1
-        "101":
+                    - health-monitoring-v1
+        '101':
           description: WebSocket connection established successfully
           headers:
             Upgrade:
@@ -248,20 +257,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketHealthMessage"
-        "400":
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
           description: Invalid request - malformed service parameters
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "401":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '401':
           description: Unauthorized - authentication required for WebSocket
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - WebSocket connection limit exceeded
           headers:
             Retry-After:
@@ -271,179 +280,205 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /inventory/{userId}:
     get:
       summary: Get user inventory
-      description: "**Enterprise-grade inventory retrieval endpoint**
+      description: '**Enterprise-grade inventory retrieval endpoint**
 
-        Retrieves complete inventory information for a user including all items,
-        storage capacity, organization settings, and metadata.
+        Retrieves complete inventory information for a user including all items, storage
+        capacity, organization settings, and metadata.
 
         Optimized for high-throughput scenarios with proper caching.
 
         **Performance:** <15ms P95, supports 1000+ concurrent requests
 
-        "
+        '
       operationId: getUserInventory
       tags:
-        - Inventory Storage
+      - Inventory Storage
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User identifier
-        - name: include_metadata
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Include item metadata and statistics
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum:
-              - weapons
-              - armor
-              - implants
-              - consumables
-              - quest_items
-              - all
-            default: all
-          description: Filter by item category
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User identifier
+      - name: include_metadata
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include item metadata and statistics
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - implants
+          - consumables
+          - quest_items
+          - all
+          default: all
+        description: Filter by item category
       responses:
-        "200":
+        '200':
           description: Inventory retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InventoryResponse"
-        "400":
+                $ref: '#/components/schemas/InventoryResponse'
+        '400':
           description: Invalid request - malformed parameters
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
           description: User not found or inventory unavailable
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     put:
       summary: Update inventory settings
-      description: "**Enterprise-grade inventory configuration endpoint**
+      description: '**Enterprise-grade inventory configuration endpoint**
 
-        Updates inventory organization settings, capacity preferences, and display options.
+        Updates inventory organization settings, capacity preferences, and display
+        options.
 
         Supports partial updates with optimistic locking.
 
         **Performance:** <25ms P95, includes validation and persistence
 
-        "
+        '
       operationId: updateInventorySettings
       tags:
-        - Inventory Storage
+      - Inventory Storage
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User identifier
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateInventorySettingsRequest"
+              $ref: '#/components/schemas/UpdateInventorySettingsRequest'
       responses:
-        "200":
+        '200':
           description: Inventory settings updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InventorySettingsResponse"
-        "400":
+                $ref: '#/components/schemas/InventorySettingsResponse'
+        '400':
           description: Invalid request - validation failed
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '409':
           description: Conflict - concurrent modification detected
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /inventory/{userId}/items:
     post:
       summary: Add items to inventory
-      description: "**Enterprise-grade item addition endpoint**
+      description: '**Enterprise-grade item addition endpoint**
 
-        Adds one or multiple items to user inventory with validation and capacity checks.
+        Adds one or multiple items to user inventory with validation and capacity
+        checks.
 
         Supports bulk operations and automatic organization.
 
         **Performance:** <30ms P95, includes validation and capacity management
 
-        "
+        '
       operationId: addItemsToInventory
       tags:
-        - Inventory Storage
+      - Inventory Storage
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User identifier
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddItemsRequest"
+              $ref: '#/components/schemas/AddItemsRequest'
       responses:
-        "200":
+        '200':
           description: Items added successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AddItemsResponse"
-        "400":
+                $ref: '#/components/schemas/AddItemsResponse'
+        '400':
           description: Invalid request - validation failed
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "413":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '413':
           description: Payload too large - too many items
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "507":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '507':
           description: Insufficient storage - inventory full
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     delete:
       summary: Remove items from inventory
-      description: "**Enterprise-grade item removal endpoint**
+      description: '**Enterprise-grade item removal endpoint**
 
         Removes items from user inventory with proper cleanup and validation.
 
@@ -451,49 +486,55 @@ paths:
 
         **Performance:** <20ms P95, includes validation and cleanup
 
-        "
+        '
       operationId: removeItemsFromInventory
       tags:
-        - Inventory Storage
+      - Inventory Storage
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User identifier
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RemoveItemsRequest"
+              $ref: '#/components/schemas/RemoveItemsRequest'
       responses:
-        "200":
+        '200':
           description: Items removed successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RemoveItemsResponse"
-        "400":
+                $ref: '#/components/schemas/RemoveItemsResponse'
+        '400':
           description: Invalid request - validation failed
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '404':
           description: Item not found in inventory
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /inventory/{userId}/capacity:
     get:
       summary: Get inventory capacity information
-      description: "**Enterprise-grade capacity check endpoint**
+      description: '**Enterprise-grade capacity check endpoint**
 
         Returns current inventory capacity, usage statistics, and expansion options.
 
@@ -501,36 +542,42 @@ paths:
 
         **Performance:** <5ms P95, cached for 30 seconds
 
-        "
+        '
       operationId: getInventoryCapacity
       tags:
-        - Inventory Storage
+      - Inventory Storage
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User identifier
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User identifier
       responses:
-        "200":
+        '200':
           description: Capacity information retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InventoryCapacityResponse"
-        "404":
+                $ref: '#/components/schemas/InventoryCapacityResponse'
+        '404':
           description: User inventory not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     post:
       summary: Expand inventory capacity
-      description: "**Enterprise-grade capacity expansion endpoint**
+      description: '**Enterprise-grade capacity expansion endpoint**
 
         Increases inventory capacity using various expansion methods.
 
@@ -538,119 +585,128 @@ paths:
 
         **Performance:** <50ms P95, includes payment processing
 
-        "
+        '
       operationId: expandInventoryCapacity
       tags:
-        - Inventory Storage
+      - Inventory Storage
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User identifier
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ExpandCapacityRequest"
+              $ref: '#/components/schemas/ExpandCapacityRequest'
       responses:
-        "200":
+        '200':
           description: Capacity expanded successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ExpandCapacityResponse"
-        "400":
+                $ref: '#/components/schemas/ExpandCapacityResponse'
+        '400':
           description: Invalid expansion method or insufficient funds
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "402":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '402':
           description: Payment required - insufficient currency
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
   responses:
     HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
     InventoryRetrieved:
       description: Inventory retrieved successfully
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/InventoryResponse"
+            $ref: '#/components/schemas/InventoryResponse'
     InventoryUpdated:
       description: Inventory settings updated successfully
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/InventorySettingsResponse"
+            $ref: '#/components/schemas/InventorySettingsResponse'
     ItemsAdded:
       description: Items added to inventory successfully
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/AddItemsResponse"
+            $ref: '#/components/schemas/AddItemsResponse'
     ItemsRemoved:
       description: Items removed from inventory successfully
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/RemoveItemsResponse"
+            $ref: '#/components/schemas/RemoveItemsResponse'
     CapacityRetrieved:
       description: Capacity information retrieved successfully
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/InventoryCapacityResponse"
+            $ref: '#/components/schemas/InventoryCapacityResponse'
     CapacityExpanded:
       description: Inventory capacity expanded successfully
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ExpandCapacityResponse"
+            $ref: '#/components/schemas/ExpandCapacityResponse'
   schemas:
     InventoryResponse:
       type: object
       required:
-        - user_id
-        - capacity
-        - items
-        - settings
-        - metadata
+      - user_id
+      - capacity
+      - items
+      - settings
+      - metadata
       properties:
         user_id:
           type: string
           format: uuid
           description: User identifier
         capacity:
-          $ref: "#/components/schemas/InventoryCapacity"
+          $ref: '#/components/schemas/InventoryCapacity'
         items:
           type: array
           items:
-            $ref: "#/components/schemas/InventoryItem"
+            $ref: '#/components/schemas/InventoryItem'
           description: List of items in inventory
         settings:
-          $ref: "#/components/schemas/InventorySettings"
+          $ref: '#/components/schemas/InventorySettings'
         metadata:
-          $ref: "#/components/schemas/InventoryMetadata"
-      description: |
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Inventory responses optimized for memory efficiency."
+          $ref: '#/components/schemas/InventoryMetadata'
+      description: '"BACKEND NOTE: Fields ordered for struct alignment (large → small).
+
+        Expected memory savings: 30-50%. Inventory responses optimized for memory
+        efficiency."
+
+        '
     InventoryCapacity:
       type: object
       required:
-        - current
-        - maximum
-        - used_percentage
+      - current
+      - maximum
+      - used_percentage
       properties:
         current:
           type: integer
@@ -675,10 +731,10 @@ components:
     InventoryItem:
       type: object
       required:
-        - id
-        - item_id
-        - quantity
-        - category
+      - id
+      - item_id
+      - quantity
+      - category
       properties:
         id:
           type: string
@@ -696,12 +752,12 @@ components:
         category:
           type: string
           enum:
-            - weapon
-            - armor
-            - implant
-            - consumable
-            - quest_item
-            - miscellaneous
+          - weapon
+          - armor
+          - implant
+          - consumable
+          - quest_item
+          - miscellaneous
           description: Item category for organization
         equipped:
           type: boolean
@@ -725,25 +781,25 @@ components:
         sort_by:
           type: string
           enum:
-            - name
-            - category
-            - rarity
-            - quantity
+          - name
+          - category
+          - rarity
+          - quantity
           description: Sort criteria
           example: category
         sort_order:
           type: string
           enum:
-            - asc
-            - desc
+          - asc
+          - desc
           description: Sort order
           example: asc
         display_mode:
           type: string
           enum:
-            - grid
-            - list
-            - compact
+          - grid
+          - list
+          - compact
           description: UI display mode
           example: grid
         show_tooltips:
@@ -753,9 +809,9 @@ components:
     InventoryMetadata:
       type: object
       required:
-        - total_items
-        - total_value
-        - last_updated
+      - total_items
+      - total_value
+      - last_updated
       properties:
         total_items:
           type: integer
@@ -785,34 +841,37 @@ components:
         sort_by:
           type: string
           enum:
-            - name
-            - category
-            - rarity
-            - quantity
+          - name
+          - category
+          - rarity
+          - quantity
         sort_order:
           type: string
           enum:
-            - asc
-            - desc
+          - asc
+          - desc
         display_mode:
           type: string
           enum:
-            - grid
-            - list
-            - compact
+          - grid
+          - list
+          - compact
         show_tooltips:
           type: boolean
-      description: |
-        "BACKEND NOTE: Partial update request. Only provided fields are updated.
+      description: '"BACKEND NOTE: Partial update request. Only provided fields are
+        updated.
+
         Struct alignment optimized for common update patterns."
+
+        '
     InventorySettingsResponse:
       type: object
       required:
-        - settings
-        - updated_at
+      - settings
+      - updated_at
       properties:
         settings:
-          $ref: "#/components/schemas/InventorySettings"
+          $ref: '#/components/schemas/InventorySettings'
         updated_at:
           type: string
           format: date-time
@@ -820,33 +879,35 @@ components:
     AddItemsRequest:
       type: object
       required:
-        - items
+      - items
       properties:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/AddItemEntry"
+            $ref: '#/components/schemas/AddItemEntry'
           minItems: 1
           maxItems: 100
           description: Items to add to inventory
         source:
           type: string
           enum:
-            - loot
-            - purchase
-            - reward
-            - craft
-            - trade
+          - loot
+          - purchase
+          - reward
+          - craft
+          - trade
           description: Source of items
           example: loot
-      description: |
-        "BACKEND NOTE: Bulk operation optimized for performance.
+      description: '"BACKEND NOTE: Bulk operation optimized for performance.
+
         Maximum 100 items per request to prevent memory issues."
+
+        '
     AddItemEntry:
       type: object
       required:
-        - item_id
-        - quantity
+      - item_id
+      - quantity
       properties:
         item_id:
           type: string
@@ -865,16 +926,16 @@ components:
     AddItemsResponse:
       type: object
       required:
-        - added_items
-        - capacity_after
+      - added_items
+      - capacity_after
       properties:
         added_items:
           type: array
           items:
-            $ref: "#/components/schemas/AddedItemResult"
+            $ref: '#/components/schemas/AddedItemResult'
           description: Results of adding each item
         capacity_after:
-          $ref: "#/components/schemas/InventoryCapacity"
+          $ref: '#/components/schemas/InventoryCapacity'
         warnings:
           type: array
           items:
@@ -883,9 +944,9 @@ components:
     AddedItemResult:
       type: object
       required:
-        - item_id
-        - quantity_added
-        - success
+      - item_id
+      - quantity_added
+      - success
       properties:
         item_id:
           type: string
@@ -904,30 +965,30 @@ components:
     RemoveItemsRequest:
       type: object
       required:
-        - items
+      - items
       properties:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/RemoveItemEntry"
+            $ref: '#/components/schemas/RemoveItemEntry'
           minItems: 1
           maxItems: 50
           description: Items to remove from inventory
         reason:
           type: string
           enum:
-            - consume
-            - sell
-            - discard
-            - equip
-            - trade
+          - consume
+          - sell
+          - discard
+          - equip
+          - trade
           description: Reason for removal
           example: consume
     RemoveItemEntry:
       type: object
       required:
-        - inventory_item_id
-        - quantity
+      - inventory_item_id
+      - quantity
       properties:
         inventory_item_id:
           type: string
@@ -940,22 +1001,22 @@ components:
     RemoveItemsResponse:
       type: object
       required:
-        - removed_items
-        - capacity_after
+      - removed_items
+      - capacity_after
       properties:
         removed_items:
           type: array
           items:
-            $ref: "#/components/schemas/RemovedItemResult"
+            $ref: '#/components/schemas/RemovedItemResult'
           description: Results of removing each item
         capacity_after:
-          $ref: "#/components/schemas/InventoryCapacity"
+          $ref: '#/components/schemas/InventoryCapacity'
     RemovedItemResult:
       type: object
       required:
-        - inventory_item_id
-        - quantity_removed
-        - success
+      - inventory_item_id
+      - quantity_removed
+      - success
       properties:
         inventory_item_id:
           type: string
@@ -975,30 +1036,30 @@ components:
     InventoryCapacityResponse:
       type: object
       required:
-        - capacity
-        - expansion_options
+      - capacity
+      - expansion_options
       properties:
         capacity:
-          $ref: "#/components/schemas/InventoryCapacity"
+          $ref: '#/components/schemas/InventoryCapacity'
         expansion_options:
           type: array
           items:
-            $ref: "#/components/schemas/ExpansionOption"
+            $ref: '#/components/schemas/ExpansionOption'
           description: Available capacity expansion options
     ExpansionOption:
       type: object
       required:
-        - type
-        - cost
-        - capacity_gain
+      - type
+      - cost
+      - capacity_gain
       properties:
         type:
           type: string
           enum:
-            - premium
-            - currency
-            - item
-            - achievement
+          - premium
+          - currency
+          - item
+          - achievement
           description: Type of expansion
           example: currency
         cost:
@@ -1017,15 +1078,15 @@ components:
     ExpandCapacityRequest:
       type: object
       required:
-        - expansion_type
+      - expansion_type
       properties:
         expansion_type:
           type: string
           enum:
-            - premium
-            - currency
-            - item
-            - achievement
+          - premium
+          - currency
+          - item
+          - achievement
           description: Type of expansion to perform
         payment_method:
           type: string
@@ -1034,16 +1095,16 @@ components:
     ExpandCapacityResponse:
       type: object
       required:
-        - capacity_before
-        - capacity_after
-        - expansion_applied
+      - capacity_before
+      - capacity_after
+      - expansion_applied
       properties:
         capacity_before:
-          $ref: "#/components/schemas/InventoryCapacity"
+          $ref: '#/components/schemas/InventoryCapacity'
         capacity_after:
-          $ref: "#/components/schemas/InventoryCapacity"
+          $ref: '#/components/schemas/InventoryCapacity'
         expansion_applied:
-          $ref: "#/components/schemas/ExpansionOption"
+          $ref: '#/components/schemas/ExpansionOption'
         transaction_id:
           type: string
           format: uuid
@@ -1051,16 +1112,16 @@ components:
     WebSocketHealthMessage:
       type: object
       required:
-        - type
-        - timestamp
-        - health
+      - type
+      - timestamp
+      - health
       properties:
         type:
           type: string
           enum:
-            - health_update
-            - health_alert
-            - service_down
+          - health_update
+          - health_alert
+          - service_down
           example: health_update
           maxLength: 255
         timestamp:
@@ -1073,16 +1134,15 @@ components:
           description: Timestamp of the health message
           maxLength: 1000
         health:
-          $ref: "../common/schemas/health.yaml#/HealthResponse"
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
+          $ref: ../common-service/schemas/health.yaml#/HealthResponse
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     Error:
-      $ref: ../common/schemas/error.yaml#/Error
+      $ref: ../common-service/schemas/error.yaml#/Error
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
     PaginationMeta:
-      $ref: ../common/schemas/pagination.yaml#/PaginationMeta
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationMeta
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
+      $ref: ../common-service/security/security.yaml#/BearerAuth

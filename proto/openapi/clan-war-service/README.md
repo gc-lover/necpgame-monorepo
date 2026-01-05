@@ -42,17 +42,29 @@ clan-war-service/
 ## 🚀 **Использование**
 
 ### Валидация
+
 ```bash
 npx @redocly/cli lint main.yaml
 ```
 
 ### Генерация Go кода
+
 ```bash
 ogen --target ../../services/clan-war-service-go/pkg/api \
      --package api --clean main.yaml
 ```
 
 ### Документация
+
 ```bash
 npx @redocly/cli build-docs main.yaml -o docs/index.html
 ```
+
+
+
+
+
+
+
+
+

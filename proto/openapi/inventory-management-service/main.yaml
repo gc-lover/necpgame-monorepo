@@ -1,0 +1,2052 @@
+openapi: 3.0.3
+info:
+  title: Inventory Management Service API - Enterprise-Grade Player Inventory Management
+  description: '**Enterprise-Grade Inventory Management Service API for NECPGAME**
+
+    Comprehensive player inventory management system with advanced item operations,
+    equipment management, inventory optimization, and trading integration for the
+    MMOFPS RPG ecosystem.
+
+    ## Key Features
+
+    - **Enterprise-grade architecture** with proper domain separation and CQRS patterns
+
+    - **Backend optimization hints** for struct alignment and performance (30-50%
+    memory savings)
+
+    - **Complete validation** with redocly and ogen code generation compatibility
+
+    - **Security-first approach** with JWT authentication and anti-cheat validation
+
+    - **Performance-optimized** response structures with field ordering for memory
+    efficiency
+
+    - **Comprehensive error handling** with proper HTTP status codes and detailed
+    error responses
+
+    - **Event-sourced architecture** for inventory consistency and audit trails
+
+    ## Domain Purpose
+
+    The Inventory Management Service provides comprehensive inventory operations for
+    NECPGAME players, managing items, equipment, consumables, inventory capacity,
+    item durability, and integration with trading, crafting, and combat systems. Supports
+    high-throughput operations critical for MMOFPS gameplay.
+
+    ## Performance Targets
+
+    - P99 Latency: <25ms for hot inventory operations (equipment swaps, item usage)
+
+    - P99 Latency: <75ms for complex operations (inventory sorting, bulk operations)
+
+    - Memory: <15KB per active inventory session with pooling optimization
+
+    - Concurrent users: 50,000+ simultaneous inventory operations
+
+    - Item operations: 10,000+ operations/minute sustained throughput
+
+    - Data consistency: Event-sourced with CQRS patterns and optimistic locking
+
+    - Cache hit rate: 95%+ for frequently accessed items '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/inventory-management
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/inventory-management
+  description: Staging server
+- url: http://localhost:8080/api/v1/inventory-management
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Inventory Management
+  description: Core inventory operations and item management
+- name: Equipment Management
+  description: Player equipment and gear management
+- name: Inventory Operations
+  description: Bulk operations, sorting, and organization
+- name: Trading Integration
+  description: Integration with trading and marketplace systems
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Inventory Management Service health check
+      description: '**Enterprise-grade health check endpoint**
+
+
+        Provides real-time health status of the inventory management microservice.
+
+        Critical for service discovery, load balancing, and monitoring in MMOFPS environments.
+
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: inventoryManagementHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /health/batch:
+    post:
+      summary: Batch health check for multiple domain services
+      description: '**Performance optimization:** Check multiple domain health in
+        single request
+
+
+        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+
+        Eliminates network overhead in health monitoring scenarios.
+
+
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+
+        '
+      operationId: exampleDomainBatchHealthCheck
+      tags:
+      - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - example-domain
+                    - system-domain
+                    - specialized-domain
+                    maxItems: 10
+                  description: List of services to check
+      responses:
+        '200':
+          $ref: '#/components/responses/HealthBatchSuccess'
+        '400':
+          description: Invalid request - malformed service list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      description: '**Performance optimization:** Real-time health updates without
+        polling
+
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+
+        Perfect for dashboard monitoring and alerting systems.
+
+
+        **Protocol:** WebSocket with JSON payloads
+
+        **Heartbeat:** 30 second intervals
+
+        **Reconnection:** Automatic with exponential backoff
+
+        '
+      operationId: exampleDomainHealthWebSocket
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - example-domain
+            - system-domain
+            - specialized-domain
+        description: Services to monitor (optional, monitors all if not specified)
+      responses:
+        '200':
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: ws://localhost:8080/api/v1/example-domain/health/ws
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - health-monitoring-v1
+        '101':
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /examples:
+    get:
+      summary: List examples with filtering and pagination
+      description: '**Enterprise-grade listing endpoint**
+
+
+        Supports complex filtering, sorting, and pagination patterns.
+
+        Optimized for high-throughput scenarios with proper indexing.
+
+
+        **Performance:** <10ms P95, supports 1000+ concurrent requests
+
+        '
+      operationId: listExamples
+      tags:
+      - Example Domain
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - created_at
+          - name
+          - priority
+          default: created_at
+        description: Sort field
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+        description: Sort order
+      - name: filter_status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - pending
+        description: Filter by status
+      responses:
+        '200':
+          $ref: '#/components/responses/ExampleListSuccess'
+        '400':
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable entity - validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    post:
+      summary: Create new example
+      description: '**Enterprise-grade creation endpoint**
+
+
+        Validates business rules, applies security checks, and ensures data consistency.
+
+        Supports optimistic locking for concurrent operations.
+
+
+        **Performance:** <50ms P95, includes validation and business logic
+
+        '
+      operationId: createExample
+      tags:
+      - Example Domain
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExampleRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ExampleCreated'
+        '400':
+          description: Invalid request - malformed or missing data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - example with this identifier already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - creation rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /examples/{example_id}:
+    get:
+      summary: Get specific example by ID
+      description: '**Enterprise-grade retrieval endpoint**
+
+
+        Optimized with proper caching strategies and database indexing.
+
+        Supports conditional requests with ETags.
+
+
+        **Performance:** <5ms P95 with Redis caching
+
+        '
+      operationId: getExample
+      tags:
+      - Example Domain
+      parameters:
+      - name: example_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
+      - name: include_related
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include related data in response
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+        description: Conditional request - return 304 if ETag matches
+      - name: If-Modified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional request - return 304 if not modified since this time
+      responses:
+        '200':
+          $ref: '#/components/responses/ExampleRetrieved'
+        '304':
+          description: Not modified - resource has not changed
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"example-123-v1"'
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, private
+        '400':
+          description: Invalid request - malformed example ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    put:
+      summary: Update existing example
+      description: '**Enterprise-grade update endpoint**
+
+
+        Supports partial updates, optimistic locking, and audit trails.
+
+        Ensures data consistency with event sourcing patterns.
+
+
+        **Performance:** <25ms P95, includes validation and conflict resolution
+
+        '
+      operationId: updateExample
+      tags:
+      - Example Domain
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: example_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+        description: ETag for optimistic locking - prevents concurrent updates
+      - name: If-Unmodified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional update - proceed only if not modified since this
+          time
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExampleRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ExampleUpdated'
+        '400':
+          description: Invalid request - malformed data or example ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - version conflict (optimistic locking) or precondition
+            failed
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"example-123-v1"'
+                description: Current entity tag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '412':
+          description: Precondition failed - If-Match or If-Unmodified-Since condition
+            not met
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"example-123-v1"'
+                description: Current entity tag
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - update rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    delete:
+      summary: Delete example
+      description: '**Enterprise-grade deletion endpoint**
+
+
+        Supports soft deletes with audit trails and cleanup scheduling.
+
+        Ensures referential integrity and cascading deletes.
+
+
+        **Performance:** <15ms P95, includes cleanup operations
+
+        '
+      operationId: deleteExample
+      tags:
+      - Example Domain
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: example_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Example unique identifier
+      responses:
+        '204':
+          $ref: '#/components/responses/ExampleDeleted'
+        '400':
+          description: Invalid request - malformed example ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - example cannot be deleted (referential integrity)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - deletion rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/inventory/{playerId}:
+    get:
+      summary: Get player inventory
+      description: '**HOT PATH:** Retrieve complete player inventory with items, equipment,
+        and metadata
+
+
+        Critical for character screens, inventory management UI, and gameplay systems.
+
+        Includes equipment slots, item stacks, durability, and enhancement status.
+
+
+        **Performance:** P99 <25ms, cached for 30 seconds, 10k+ concurrent requests
+
+        **Memory optimization:** Struct field alignment for 30-50% memory savings
+
+        '
+      operationId: getPlayerInventory
+      tags:
+      - Inventory Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      - name: includeMetadata
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include item metadata and statistics
+      - name: filter
+        in: query
+        schema:
+          type: string
+          enum:
+          - all
+          - equipped
+          - consumables
+          - materials
+          - quest_items
+          default: all
+        description: Filter inventory items by category
+      responses:
+        '200':
+          description: Player inventory retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30
+            ETag:
+              schema:
+                type: string
+                example: '"abc123"'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryResponse'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    put:
+      summary: Update player inventory
+      description: '**Enterprise-grade inventory update with validation and consistency**
+
+
+        Updates player inventory with item movements, equipment changes, and stack
+        modifications.
+
+        Includes anti-cheat validation, durability calculations, and event sourcing.
+
+
+        **Performance:** P99 <75ms, atomic operations, rollback on failure
+
+        **Consistency:** Event-sourced with optimistic locking
+
+        '
+      operationId: updatePlayerInventory
+      tags:
+      - Inventory Operations
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventoryUpdateRequest'
+      responses:
+        '200':
+          description: Inventory updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryUpdateResponse'
+        '400':
+          description: Invalid inventory update request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Inventory conflict - concurrent modification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/inventory/{playerId}/items/{itemId}:
+    get:
+      summary: Get specific inventory item
+      description: '**High-performance item retrieval for UI and gameplay systems**
+
+
+        Retrieve detailed information about a specific inventory item including stats,
+        durability, enhancements, and trading status.
+
+
+        **Performance:** P99 <15ms, Redis-cached, optimized for frequent access
+
+        '
+      operationId: getInventoryItem
+      tags:
+      - Inventory Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Item retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemResponse'
+        '404':
+          description: Item not found in player inventory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    put:
+      summary: Update specific inventory item
+      description: '**Atomic item updates with validation and consistency**
+
+
+        Update item properties like durability, enhancements, or customizations.
+
+        Includes validation, event logging, and anti-cheat checks.
+
+
+        **Performance:** P99 <50ms, atomic operations
+
+        '
+      operationId: updateInventoryItem
+      tags:
+      - Inventory Operations
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemUpdateRequest'
+      responses:
+        '200':
+          description: Item updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemUpdateResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/inventory/{playerId}/equipment:
+    get:
+      summary: Get player equipment
+      description: '**HOT PATH:** Get current equipment loadout for combat and character
+        display
+
+
+        Critical for battle preparation, character screens, and matchmaking.
+
+        Includes weapon stats, armor values, and equipment effects.
+
+
+        **Performance:** P99 <20ms, heavily cached, 50k+ concurrent requests
+
+        '
+      operationId: getPlayerEquipment
+      tags:
+      - Equipment Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Equipment retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    put:
+      summary: Equip/unequip items
+      description: '**Combat-critical equipment changes with instant validation**
+
+
+        Equip or unequip items with immediate stat recalculation.
+
+        Critical for pre-combat loadout changes and mid-battle switches.
+
+
+        **Performance:** P99 <25ms, instant validation, no caching for consistency
+
+        '
+      operationId: updatePlayerEquipment
+      tags:
+      - Equipment Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipmentUpdateRequest'
+      responses:
+        '200':
+          description: Equipment updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentUpdateResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/inventory/{playerId}/operations/sort:
+    post:
+      summary: Sort inventory
+      description: '**Inventory organization with multiple sorting algorithms**
+
+
+        Sort inventory by various criteria with automatic stack merging.
+
+        Includes smart categorization and visual organization.
+
+
+        **Performance:** P99 <100ms for large inventories, background processing
+
+        '
+      operationId: sortPlayerInventory
+      tags:
+      - Inventory Operations
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InventorySortRequest'
+      responses:
+        '200':
+          description: Inventory sorted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventorySortResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/inventory/{playerId}/trading/lock:
+    post:
+      summary: Lock items for trading
+      description: '**Trading preparation with item locking and validation**
+
+
+        Lock items for marketplace trading with escrow protection.
+
+        Prevents item usage during trade negotiations.
+
+
+        **Performance:** P99 <30ms, atomic locking with timeout
+
+        '
+      operationId: lockItemsForTrading
+      tags:
+      - Trading Integration
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TradingLockRequest'
+      responses:
+        '200':
+          description: Items locked for trading successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradingLockResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/inventory/admin/{playerId}/override:
+    post:
+      summary: Administrative inventory override
+      description: '**Admin-only:** Emergency inventory modifications for game support
+
+
+        Allows game masters to add/remove/modify items for bug fixes or player support.
+
+        Includes full audit logging and approval workflows.
+
+
+        **Security:** Requires elevated admin permissions
+
+        '
+      operationId: adminInventoryOverride
+      tags:
+      - Inventory Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminOverrideRequest'
+      responses:
+        '200':
+          description: Inventory override applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOverrideResponse'
+        '403':
+          description: Insufficient admin permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+components:
+  responses:
+    HealthBatchSuccess:
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
+    ExampleListSuccess:
+      description: Examples retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+        X-Total-Count:
+          schema:
+            type: integer
+            example: 150
+            description: Total number of examples matching criteria
+        X-Page-Count:
+          schema:
+            type: integer
+            example: 8
+            description: Total number of pages
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleListResponse'
+    ExampleCreated:
+      description: Example created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
+            description: URL of the created example
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v1"'
+            description: Entity tag for caching and optimistic locking
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleResponse'
+    ExampleRetrieved:
+      description: Example retrieved successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v1"'
+            description: Entity tag for caching
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+            description: Cache control directives
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:00:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 5
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleResponse'
+    ExampleUpdated:
+      description: Example updated successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"example-123-v2"'
+            description: New entity tag after update
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:05:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 25
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ExampleResponse'
+    ExampleDeleted:
+      description: Example deleted successfully
+      headers:
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+    OK:
+      $ref: ../common-service/responses/success.yaml#/OK
+    Created:
+      $ref: ../common-service/responses/success.yaml#/Created
+    BadRequest:
+      $ref: ../common-service/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common-service/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common-service/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common-service/responses/error.yaml#/Conflict
+    InternalServerError:
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
+    HealthOK:
+      $ref: ../common-service/responses/success.yaml#/HealthOK
+  schemas:
+    HealthResponse:
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
+    InventoryResponse:
+      type: object
+      required:
+      - player_id
+      - items
+      - capacity
+      - last_updated
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+          description: Player unique identifier
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItem'
+          maxItems: 1000
+          description: Array of inventory items
+        capacity:
+          $ref: '#/components/schemas/InventoryCapacity'
+        equipment_slots:
+          $ref: '#/components/schemas/EquipmentSlots'
+        statistics:
+          $ref: '#/components/schemas/InventoryStatistics'
+        last_updated:
+          type: string
+          format: date-time
+          example: '2025-12-27T18:00:00Z'
+        version:
+          type: integer
+          example: 42
+          description: Inventory version for optimistic locking
+      description: 'BACKEND NOTE: Struct aligned for performance. Items array first
+        for memory efficiency.'
+    InventoryItem:
+      type: object
+      required:
+      - id
+      - item_id
+      - quantity
+      - acquired_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+          description: Inventory item instance ID
+        item_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+          description: Item template ID
+        name:
+          type: string
+          maxLength: 100
+          example: Mantis Blades
+          description: Item display name
+        type:
+          type: string
+          enum:
+          - weapon
+          - armor
+          - consumable
+          - material
+          - quest_item
+          - cosmetic
+          example: weapon
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          - unique
+          example: epic
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 999
+          example: 1
+          description: Stack quantity
+        max_stack:
+          type: integer
+          minimum: 1
+          maximum: 999
+          example: 1
+          description: Maximum stack size
+        durability:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 85
+          description: Current durability percentage
+        enhancements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemEnhancement'
+          maxItems: 5
+          description: Applied enhancements
+        trade_locked:
+          type: boolean
+          example: false
+          description: Whether item is locked for trading
+        equipped:
+          type: boolean
+          example: false
+          description: Whether item is currently equipped
+        acquired_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T17:00:00Z'
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional item metadata
+      description: 'BACKEND NOTE: Critical fields first for struct alignment. Memory
+        optimized for MMOFPS item operations.'
+    InventoryCapacity:
+      type: object
+      required:
+      - current
+      - maximum
+      - weight_current
+      - weight_maximum
+      properties:
+        current:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          example: 45
+          description: Current number of item stacks
+        maximum:
+          type: integer
+          minimum: 50
+          maximum: 2000
+          example: 100
+          description: Maximum inventory slots
+        weight_current:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1000
+          example: 12.5
+          description: Current inventory weight
+        weight_maximum:
+          type: number
+          format: float
+          minimum: 10
+          maximum: 2000
+          example: 50.0
+          description: Maximum carry weight
+      description: 'BACKEND NOTE: Capacity fields optimized for quick validation checks.'
+    EquipmentSlots:
+      type: object
+      properties:
+        weapon_primary:
+          $ref: '#/components/schemas/EquippedItem'
+        weapon_secondary:
+          $ref: '#/components/schemas/EquippedItem'
+        armor_head:
+          $ref: '#/components/schemas/EquippedItem'
+        armor_chest:
+          $ref: '#/components/schemas/EquippedItem'
+        armor_arms:
+          $ref: '#/components/schemas/EquippedItem'
+        armor_legs:
+          $ref: '#/components/schemas/EquippedItem'
+        cyberware_neural:
+          $ref: '#/components/schemas/EquippedItem'
+        cyberware_subdermal:
+          $ref: '#/components/schemas/EquippedItem'
+        quick_access_1:
+          $ref: '#/components/schemas/EquippedItem'
+        quick_access_2:
+          $ref: '#/components/schemas/EquippedItem'
+      description: 'BACKEND NOTE: Equipment slots mapped for instant combat stat lookups.'
+    EquippedItem:
+      type: object
+      required:
+      - item_id
+      - equipped_at
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440003
+        name:
+          type: string
+          maxLength: 100
+          example: Militech M-10AF Lexington
+        stats_modifier:
+          $ref: '#/components/schemas/ItemStatsModifier'
+        equipped_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T16:30:00Z'
+      description: 'BACKEND NOTE: Minimal fields for fast equipment lookups in combat.'
+    ItemStatsModifier:
+      type: object
+      properties:
+        damage:
+          type: integer
+          example: 25
+        armor:
+          type: integer
+          example: 15
+        health:
+          type: integer
+          example: 50
+        stamina:
+          type: integer
+          example: 20
+        crit_chance:
+          type: number
+          format: float
+          example: 0.05
+        crit_damage:
+          type: number
+          format: float
+          example: 0.15
+      description: 'BACKEND NOTE: Stat modifiers optimized for combat calculations.'
+    ItemEnhancement:
+      type: object
+      required:
+      - type
+      - level
+      - applied_at
+      properties:
+        type:
+          type: string
+          enum:
+          - damage
+          - armor
+          - durability
+          - special
+          example: damage
+        level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          example: 3
+        applied_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T15:45:00Z'
+        effects:
+          type: object
+          additionalProperties: true
+          description: Enhancement-specific effects
+      description: 'BACKEND NOTE: Enhancement data structured for quick application.'
+    InventoryStatistics:
+      type: object
+      properties:
+        total_items:
+          type: integer
+          example: 45
+        total_value:
+          type: number
+          format: float
+          example: 12500.5
+        rare_items_count:
+          type: integer
+          example: 8
+        equipped_items_count:
+          type: integer
+          example: 6
+        trade_locked_count:
+          type: integer
+          example: 3
+      description: 'BACKEND NOTE: Statistics for UI display and analytics.'
+    InventoryUpdateRequest:
+      type: object
+      required:
+      - operations
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryOperation'
+          maxItems: 50
+          description: Batch of inventory operations
+        version:
+          type: integer
+          example: 42
+          description: Expected inventory version for optimistic locking
+      description: 'BACKEND NOTE: Operations batched for atomic updates.'
+    InventoryOperation:
+      type: object
+      required:
+      - type
+      - item_id
+      properties:
+        type:
+          type: string
+          enum:
+          - add
+          - remove
+          - move
+          - update_quantity
+          - update_durability
+          example: add
+        item_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440004
+        quantity:
+          type: integer
+          minimum: -999
+          maximum: 999
+          example: 1
+        target_slot:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Target inventory slot for move operations
+        durability_change:
+          type: integer
+          minimum: -100
+          maximum: 100
+          description: Durability modification
+      description: 'BACKEND NOTE: Operation types optimized for common inventory actions.'
+    InventoryUpdateResponse:
+      type: object
+      required:
+      - success
+      - version
+      - applied_operations
+      properties:
+        success:
+          type: boolean
+          example: true
+        version:
+          type: integer
+          example: 43
+          description: New inventory version
+        applied_operations:
+          type: integer
+          example: 3
+          description: Number of operations successfully applied
+        failed_operations:
+          type: array
+          items:
+            type: string
+          maxItems: 50
+          description: Failed operation details
+        inventory_changes:
+          $ref: '#/components/schemas/InventoryResponse'
+      description: 'BACKEND NOTE: Response optimized for client-side inventory sync.'
+    ItemResponse:
+      type: object
+      required:
+      - item
+      properties:
+        item:
+          $ref: '#/components/schemas/InventoryItem'
+        trading_info:
+          $ref: '#/components/schemas/ItemTradingInfo'
+      description: 'BACKEND NOTE: Item details with trading context.'
+    ItemTradingInfo:
+      type: object
+      properties:
+        market_value:
+          type: number
+          format: float
+          example: 2500.0
+        trade_locked_until:
+          type: string
+          format: date-time
+          description: When trading lock expires
+        auction_active:
+          type: boolean
+          example: false
+      description: 'BACKEND NOTE: Trading context for marketplace integration.'
+    EquipmentResponse:
+      type: object
+      required:
+      - slots
+      - stats_summary
+      properties:
+        slots:
+          $ref: '#/components/schemas/EquipmentSlots'
+        stats_summary:
+          $ref: '#/components/schemas/CharacterStatsSummary'
+      description: 'BACKEND NOTE: Equipment data optimized for character screens.'
+    CharacterStatsSummary:
+      type: object
+      properties:
+        total_damage:
+          type: integer
+          example: 85
+        total_armor:
+          type: integer
+          example: 120
+        total_health:
+          type: integer
+          example: 200
+        movement_speed:
+          type: number
+          format: float
+          example: 1.2
+        crit_chance:
+          type: number
+          format: float
+          example: 0.08
+      description: 'BACKEND NOTE: Computed stats for UI display.'
+    EquipmentUpdateRequest:
+      type: object
+      required:
+      - operations
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentOperation'
+          maxItems: 10
+      description: 'BACKEND NOTE: Equipment changes batched for consistency.'
+    EquipmentOperation:
+      type: object
+      required:
+      - action
+      - slot
+      properties:
+        action:
+          type: string
+          enum:
+          - equip
+          - unequip
+          example: equip
+        slot:
+          type: string
+          enum:
+          - weapon_primary
+          - weapon_secondary
+          - armor_head
+          - armor_chest
+          - armor_arms
+          - armor_legs
+          - cyberware_neural
+          - cyberware_subdermal
+          - quick_access_1
+          - quick_access_2
+          example: weapon_primary
+        item_id:
+          type: string
+          format: uuid
+          description: Item to equip (required for equip action)
+      description: 'BACKEND NOTE: Equipment operations for instant loadout changes.'
+    EquipmentUpdateResponse:
+      type: object
+      required:
+      - success
+      - stats_updated
+      properties:
+        success:
+          type: boolean
+          example: true
+        stats_updated:
+          $ref: '#/components/schemas/CharacterStatsSummary'
+        equipment_changes:
+          $ref: '#/components/schemas/EquipmentSlots'
+      description: 'BACKEND NOTE: Response optimized for combat stat updates.'
+    InventorySortRequest:
+      type: object
+      required:
+      - sort_by
+      properties:
+        sort_by:
+          type: string
+          enum:
+          - name
+          - type
+          - rarity
+          - quantity
+          - acquired_date
+          example: rarity
+        sort_order:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: asc
+          example: desc
+        group_by_type:
+          type: boolean
+          default: true
+          example: true
+        merge_stacks:
+          type: boolean
+          default: true
+          example: true
+      description: 'BACKEND NOTE: Sorting options for inventory organization.'
+    InventorySortResponse:
+      type: object
+      required:
+      - success
+      - sorted_inventory
+      properties:
+        success:
+          type: boolean
+          example: true
+        sorted_inventory:
+          $ref: '#/components/schemas/InventoryResponse'
+        stacks_merged:
+          type: integer
+          example: 5
+          description: Number of item stacks merged
+      description: 'BACKEND NOTE: Sorted inventory for client-side updates.'
+    TradingLockRequest:
+      type: object
+      required:
+      - items
+      - duration_minutes
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 20
+          description: Item IDs to lock for trading
+        duration_minutes:
+          type: integer
+          minimum: 5
+          maximum: 1440
+          example: 60
+          description: Lock duration in minutes
+        marketplace_fee:
+          type: number
+          format: float
+          example: 25.0
+          description: Marketplace listing fee
+      description: 'BACKEND NOTE: Trading preparation with escrow protection.'
+    TradingLockResponse:
+      type: object
+      required:
+      - success
+      - locked_items
+      properties:
+        success:
+          type: boolean
+          example: true
+        locked_items:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Successfully locked item IDs
+        unlock_time:
+          type: string
+          format: date-time
+          example: '2025-12-27T19:00:00Z'
+        escrow_amount:
+          type: number
+          format: float
+          example: 25.0
+      description: 'BACKEND NOTE: Trading lock confirmation for marketplace.'
+    AdminOverrideRequest:
+      type: object
+      required:
+      - admin_id
+      - reason
+      - operations
+      properties:
+        admin_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440005
+        reason:
+          type: string
+          maxLength: 500
+          example: 'Bug fix: Missing legendary weapon after quest completion'
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryOperation'
+          maxItems: 10
+        approval_required:
+          type: boolean
+          default: true
+          example: true
+      description: 'BACKEND NOTE: Admin overrides with audit trails for support.'
+    AdminOverrideResponse:
+      type: object
+      required:
+      - success
+      - audit_log_id
+      properties:
+        success:
+          type: boolean
+          example: true
+        audit_log_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440006
+        applied_operations:
+          type: integer
+          example: 2
+        inventory_snapshot:
+          $ref: '#/components/schemas/InventoryResponse'
+      description: 'BACKEND NOTE: Admin action audit trail for compliance.'
+    ItemUpdateRequest:
+      type: object
+      required:
+      - updates
+      properties:
+        updates:
+          type: object
+          properties:
+            durability:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: New durability value
+            enhancements:
+              type: array
+              items:
+                $ref: '#/components/schemas/ItemEnhancement'
+              maxItems: 5
+              description: New enhancement list
+            custom_name:
+              type: string
+              maxLength: 100
+              description: Custom item name
+          description: Fields to update
+      description: 'BACKEND NOTE: Partial item updates for modifications.'
+    ItemUpdateResponse:
+      type: object
+      required:
+      - success
+      - updated_item
+      properties:
+        success:
+          type: boolean
+          example: true
+        updated_item:
+          $ref: '#/components/schemas/InventoryItem'
+      description: 'BACKEND NOTE: Updated item data for client sync.'
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+          example: health_update
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+          maxLength: 1000
+        health:
+          $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Example:
+      type: object
+      required:
+      - id
+      - name
+      - description
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          maxLength: 100
+          example: Sample Example
+        description:
+          type: string
+          maxLength: 500
+          example: This is a sample example for demonstration
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T12:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-12-27T12:30:00Z'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    ExampleResponse:
+      type: object
+      required:
+      - example
+      properties:
+        example:
+          $ref: '#/components/schemas/Example'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    ExampleListResponse:
+      type: object
+      required:
+      - examples
+      - total_count
+      - has_more
+      properties:
+        examples:
+          type: array
+          items:
+            $ref: '#/components/schemas/Example'
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of examples available
+        has_more:
+          type: boolean
+          description: Whether there are more examples available
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    CreateExampleRequest:
+      type: object
+      required:
+      - name
+      - description
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          example: New Example
+        description:
+          type: string
+          maxLength: 500
+          example: Description of the new example
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    UpdateExampleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          description: Updated name for the example
+        description:
+          type: string
+          maxLength: 500
+          description: Updated description for the example
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Error:
+      $ref: ../common-service/schemas/error.yaml#/Error
+    PaginationParams:
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common-service/security/security.yaml#/BearerAuth
+    ApiKeyAuth:
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
+    ServiceAuth:
+      $ref: ../common-service/security/security.yaml#/ServiceAuth

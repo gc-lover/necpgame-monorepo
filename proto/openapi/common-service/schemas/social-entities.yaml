@@ -1,0 +1,507 @@
+# Social Domain Common Schemas
+# SOLID/DRY foundation for social entities
+
+components:
+  schemas:
+
+    # ============================================================================
+    # USER & PROFILE ENTITIES
+    # ============================================================================
+
+    # User Profile Entity
+    UserProfileEntity:
+      allOf:
+        - $ref: './common.yaml#/AuditableEntity'
+        - type: object
+          required:
+            - username
+            - display_name
+          properties:
+            username:
+              type: string
+              pattern: '^[a-zA-Z0-9_-]{3,30}$'
+              description: "Unique username"
+              example: "night_runner_2077"
+              maxLength: 30
+            display_name:
+              type: string
+              description: "Display name shown to other players"
+              example: "Night Runner"
+              maxLength: 50
+            email:
+              $ref: './common.yaml#/Email'
+            avatar_url:
+              type: string
+              format: uri
+              description: "Profile avatar image URL"
+              example: "https://cdn.necpgame.com/avatars/night_runner.png"
+            bio:
+              type: string
+              description: "User biography/description"
+              example: "Cyberpunk mercenary with a heart of gold"
+              maxLength: 500
+            country:
+              type: string
+              pattern: '^[A-Z]{2}$'
+              description: "ISO 3166-1 alpha-2 country code"
+              example: "US"
+            timezone:
+              type: string
+              description: "User timezone (IANA format)"
+              example: "America/New_York"
+              maxLength: 50
+            preferred_language:
+              type: string
+              pattern: '^[a-z]{2}(-[A-Z]{2})?$'
+              description: "Preferred language (ISO 639-1)"
+              example: "en-US"
+            is_online:
+              type: boolean
+              description: "Current online status"
+              example: true
+            last_seen_at:
+              $ref: './common.yaml#/Timestamp'
+            reputation_score:
+              type: integer
+              minimum: 0
+              description: "Community reputation score"
+              example: 1250
+      description: "BACKEND NOTE: User profiles with social metadata."
+
+    # ============================================================================
+    # FRIENDSHIP ENTITIES
+    # ============================================================================
+
+    # Friendship Entity
+    FriendshipEntity:
+      allOf:
+        - $ref: './common.yaml#/BaseEntity'
+        - type: object
+          required:
+            - user_id
+            - friend_id
+            - status
+          properties:
+            user_id:
+              $ref: './common.yaml#/UUID'
+            friend_id:
+              $ref: './common.yaml#/UUID'
+            status:
+              type: string
+              enum:
+                - pending
+                - accepted
+                - blocked
+              description: "Friendship status"
+              example: "accepted"
+            requested_at:
+              $ref: './common.yaml#/Timestamp'
+            accepted_at:
+              $ref: './common.yaml#/Timestamp'
+            blocked_at:
+              $ref: './common.yaml#/Timestamp'
+            friendship_level:
+              type: integer
+              minimum: 1
+              maximum: 10
+              description: "Friendship intimacy level"
+              example: 5
+            shared_experiences:
+              type: integer
+              minimum: 0
+              description: "Number of shared gaming sessions"
+              example: 47
+      description: "BACKEND NOTE: Friendship relationships with status tracking."
+
+    # ============================================================================
+    # GUILD/CLAN ENTITIES
+    # ============================================================================
+
+    # Guild Entity
+    GuildEntity:
+      allOf:
+        - $ref: './common.yaml#/AuditableEntity'
+        - type: object
+          required:
+            - name
+            - leader_id
+            - member_count
+          properties:
+            name:
+              type: string
+              description: "Guild display name"
+              example: "Cyberpunk Legends"
+              maxLength: 50
+            description:
+              type: string
+              description: "Guild description"
+              example: "Elite cyberpunk mercenaries"
+              maxLength: 500
+            leader_id:
+              $ref: './common.yaml#/UUID'
+            tag:
+              type: string
+              pattern: '^[A-Z0-9]{2,5}$'
+              description: "Guild tag/acronym"
+              example: "CPL"
+              maxLength: 5
+            member_count:
+              type: integer
+              minimum: 1
+              maximum: 1000
+              description: "Current member count"
+              example: 156
+            max_members:
+              type: integer
+              minimum: 1
+              maximum: 1000
+              description: "Maximum allowed members"
+              example: 200
+            level:
+              type: integer
+              minimum: 1
+              description: "Guild level"
+              example: 25
+            experience:
+              type: integer
+              minimum: 0
+              description: "Guild experience points"
+              example: 50000
+            reputation:
+              type: integer
+              description: "Guild reputation score"
+              example: 8750
+            is_recruiting:
+              type: boolean
+              description: "Whether guild is accepting new members"
+              example: true
+            requirements:
+              type: object
+              properties:
+                min_level:
+                  type: integer
+                  minimum: 1
+                min_reputation:
+                  type: integer
+                  minimum: 0
+              description: "Membership requirements"
+            emblem_url:
+              type: string
+              format: uri
+              description: "Guild emblem/logo URL"
+            founded_at:
+              $ref: './common.yaml#/Timestamp'
+      description: "BACKEND NOTE: Guild/clan organizations with membership management."
+
+    # Guild Member Entity
+    GuildMemberEntity:
+      allOf:
+        - $ref: './common.yaml#/BaseEntity'
+        - type: object
+          required:
+            - guild_id
+            - user_id
+            - role
+            - joined_at
+          properties:
+            guild_id:
+              $ref: './common.yaml#/UUID'
+            user_id:
+              $ref: './common.yaml#/UUID'
+            role:
+              type: string
+              enum:
+                - leader
+                - officer
+                - veteran
+                - member
+                - recruit
+              description: "Member role in guild"
+              example: "officer"
+            joined_at:
+              $ref: './common.yaml#/Timestamp'
+            rank:
+              type: integer
+              minimum: 1
+              description: "Member rank/position"
+              example: 3
+            contribution_points:
+              type: integer
+              minimum: 0
+              description: "Points contributed to guild"
+              example: 1250
+            permissions:
+              type: array
+              items:
+                type: string
+                enum:
+                  - invite_members
+                  - kick_members
+                  - manage_roles
+                  - manage_bank
+                  - declare_war
+              description: "Granted permissions"
+            is_active:
+              type: boolean
+              description: "Whether member is active"
+              example: true
+            last_active_at:
+              $ref: './common.yaml#/Timestamp'
+      description: "BACKEND NOTE: Guild membership with roles and permissions."
+
+    # ============================================================================
+    # COMMUNICATION ENTITIES
+    # ============================================================================
+
+    # Chat Channel Entity
+    ChatChannelEntity:
+      allOf:
+        - $ref: './common.yaml#/AuditableEntity'
+        - type: object
+          required:
+            - name
+            - type
+            - is_private
+          properties:
+            name:
+              type: string
+              description: "Channel display name"
+              example: "General Chat"
+              maxLength: 50
+            type:
+              type: string
+              enum:
+                - global
+                - guild
+                - party
+                - private
+                - trade
+                - help
+              description: "Channel type"
+              example: "guild"
+            is_private:
+              type: boolean
+              description: "Whether channel is private"
+              example: false
+            owner_id:
+              $ref: './common.yaml#/UUID'
+            guild_id:
+              $ref: './common.yaml#/UUID'
+            member_count:
+              type: integer
+              minimum: 0
+              description: "Current member count"
+              example: 42
+            max_members:
+              type: integer
+              minimum: 1
+              description: "Maximum allowed members"
+              example: 100
+            last_message_at:
+              $ref: './common.yaml#/Timestamp'
+            is_moderated:
+              type: boolean
+              description: "Whether channel has moderation"
+              example: true
+            allowed_roles:
+              type: array
+              items:
+                type: string
+              description: "Roles allowed to join"
+      description: "BACKEND NOTE: Chat channels with access control."
+
+    # Chat Message Entity
+    ChatMessageEntity:
+      allOf:
+        - $ref: './common.yaml#/BaseEntity'
+        - type: object
+          required:
+            - channel_id
+            - sender_id
+            - content
+            - sent_at
+          properties:
+            channel_id:
+              $ref: './common.yaml#/UUID'
+            sender_id:
+              $ref: './common.yaml#/UUID'
+            content:
+              type: string
+              description: "Message content"
+              example: "Anyone up for a gig tonight?"
+              maxLength: 2000
+            sent_at:
+              $ref: './common.yaml#/Timestamp'
+            edited_at:
+              $ref: './common.yaml#/Timestamp'
+            is_deleted:
+              type: boolean
+              description: "Whether message was deleted"
+              example: false
+            attachments:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [ "image", "link", "item", "location" ]
+                  url:
+                    type: string
+                    format: uri
+                  metadata:
+                    type: object
+              description: "Message attachments"
+            mentions:
+              type: array
+              items:
+                $ref: './common.yaml#/UUID'
+              description: "Mentioned user IDs"
+            reactions:
+              type: array
+              items:
+                type: object
+                required:
+                  - emoji
+                  - user_id
+                properties:
+                  emoji:
+                    type: string
+                    maxLength: 10
+                  user_id:
+                    $ref: './common.yaml#/UUID'
+                  reacted_at:
+                    $ref: './common.yaml#/Timestamp'
+              description: "Message reactions"
+      description: "BACKEND NOTE: Chat messages with rich content and reactions."
+
+    # ============================================================================
+    # RELATIONSHIP ENTITIES
+    # ============================================================================
+
+    # Relationship Entity
+    RelationshipEntity:
+      allOf:
+        - $ref: './common.yaml#/BaseEntity'
+        - type: object
+          required:
+            - character_id
+            - target_id
+            - type
+            - level
+          properties:
+            character_id:
+              $ref: './common.yaml#/UUID'
+            target_id:
+              $ref: './common.yaml#/UUID'
+            type:
+              type: string
+              enum:
+                - friendship
+                - romance
+                - rivalry
+                - mentorship
+                - business
+                - enmity
+              description: "Relationship type"
+              example: "romance"
+            level:
+              type: integer
+              minimum: -10
+              maximum: 10
+              description: "Relationship intensity (-10 to +10)"
+              example: 7
+            description:
+              type: string
+              description: "Relationship description"
+              example: "Close romantic partner"
+              maxLength: 200
+            established_at:
+              $ref: './common.yaml#/Timestamp'
+            last_interaction_at:
+              $ref: './common.yaml#/Timestamp'
+            interaction_count:
+              type: integer
+              minimum: 0
+              description: "Number of interactions"
+              example: 23
+            flags:
+              type: array
+              items:
+                type: string
+                enum:
+                  - exclusive
+                  - public
+                  - secret
+                  - temporary
+              description: "Relationship flags"
+      description: "BACKEND NOTE: Character relationships with intensity tracking."
+
+
+
+    # ============================================================================
+    # REPUTATION ENTITIES
+    # ============================================================================
+
+    # Reputation Entity
+    ReputationEntity:
+      allOf:
+        - $ref: './common.yaml#/BaseEntity'
+        - type: object
+          required:
+            - subject_id
+            - target_id
+            - score
+          properties:
+            subject_id:
+              $ref: './common.yaml#/UUID'
+            target_id:
+              $ref: './common.yaml#/UUID'
+            score:
+              type: integer
+              minimum: -100
+              maximum: 100
+              description: "Reputation score (-100 to +100)"
+              example: 45
+            category:
+              type: string
+              enum:
+                - trading
+                - combat
+                - social
+                - leadership
+                - craftsmanship
+                - reliability
+                - generosity
+                - combat_skill
+              description: "Reputation category"
+              example: "trading"
+            evidence_count:
+              type: integer
+              minimum: 0
+              description: "Number of reputation events"
+              example: 12
+            last_updated_at:
+              $ref: './common.yaml#/Timestamp'
+            is_public:
+              type: boolean
+              description: "Whether reputation is visible to others"
+              example: true
+            evidence:
+              type: array
+              items:
+                type: object
+                properties:
+                  event_type:
+                    type: string
+                    enum: [ "trade_completed", "combat_assist", "guild_help", "quest_shared" ]
+                  points:
+                    type: integer
+                  timestamp:
+                    $ref: './common.yaml#/Timestamp'
+                  description:
+                    type: string
+                    maxLength: 200
+              description: "Reputation evidence/events"
+              maxItems: 50
+      description: "BACKEND NOTE: Reputation system with evidence tracking and multiple categories."

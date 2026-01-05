@@ -139,11 +139,16 @@
 
 | Домен                     | Назначение                 | API                                             |
 |---------------------------|----------------------------|-------------------------------------------------|
+| **ability-service**       | Способности персонажей     | `proto/openapi/ability-service/main.yaml`       |
+| **analytics-service**     | Аналитика и мониторинг     | `proto/openapi/analytics-service/main.yaml`     |
 | **arena-domain**          | Арены и PvP                | `proto/openapi/arena-domain/main.yaml`          |
+| **social-service**        | Социальные взаимодействия   | `proto/openapi/social-service/main.yaml`        |
 | **auth-expansion-domain** | Расширенная аутентификация | `proto/openapi/auth-expansion-domain/main.yaml` |
+| **combo-service**         | Комбо-системы              | `proto/openapi/combo-service/main.yaml`         |
 | **cosmetic-domain**       | Косметические предметы     | `proto/openapi/cosmetic-domain/main.yaml`       |
 | **cyberpunk-domain**      | Киберпанковские механики   | `proto/openapi/cyberpunk-domain/main.yaml`      |
 | **economy-domain**        | Экономика                  | `proto/openapi/economy-domain/main.yaml`        |
+| **equipment-service**     | Оборудование               | `proto/openapi/equipment-service/main.yaml`     |
 | **faction-domain**        | Фракции и корпорации       | `proto/openapi/faction-domain/main.yaml`        |
 | **integration-domain**    | Внешние интеграции         | `proto/openapi/integration-domain/main.yaml`    |
 | **misc-domain**           | Утилиты и вспомогательные  | `proto/openapi/misc-domain/main.yaml`           |
@@ -157,7 +162,8 @@
 ### API Designer
 
 - **System services** → `system-domain`
-- **Game mechanics** → `specialized-domain`
+- **Game mechanics** → `specialized-domain`, `ability-service`, `combo-service`
+- **Equipment** → `equipment-service`
 - **Social features** → `social-domain`
 - **Economy** → `economy-domain`
 - **World features** → `world-domain`

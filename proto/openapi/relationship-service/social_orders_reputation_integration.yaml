@@ -1,0 +1,502 @@
+# Issue: #140894823
+openapi: 3.0.3
+info:
+  title: Social Orders Reputation Integration Service API
+  description: |
+    API для интеграции системы заказов с репутацией в MMOFPS RPG.
+
+    **Основные возможности:**
+    - Расчет стоимости заказов с учетом репутации
+    - Применение бонусов/штрафов репутации к заказам
+    - Проверка требований репутации для заказов
+    - Автоматическое изменение репутации после выполнения заказов
+    - Система рейтинга исполнителей на основе репутации
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8080/api/v1/social/orders-reputation
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/social/orders-reputation
+    description: Продакшен сервер
+
+tags:
+  - name: Orders-Reputation
+    description: Интеграция заказов и репутации
+
+paths:
+  /orders/{order_id}/reputation-cost:
+    get:
+      tags:
+        - Orders-Reputation
+      summary: Расчет стоимости заказа с учетом репутации
+      description: |
+        Рассчитывает итоговую стоимость заказа с учетом репутации клиента и исполнителя.
+        Репутация влияет на:
+        - Стоимость для клиента (высокая репутация = скидки)
+        - Вознаграждение для исполнителя (высокая репутация = премии)
+        - Доступность заказов (низкая репутация = ограничения)
+      operationId: calculateOrderReputationCost
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID клиента (заказчика)
+        - name: contractor_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+            description: ID исполнителя (опционально, для расчета премий)
+      responses:
+        "200":
+          description: Рассчитанная стоимость заказа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderReputationCost"
+        "400":
+          $ref: "../../common-schemas.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "../../common-schemas.yaml#/components/responses/NotFound"
+
+  /orders/{order_id}/reputation-requirements:
+    get:
+      tags:
+        - Orders-Reputation
+      summary: Проверка требований репутации для заказа
+      description: |
+        Проверяет соответствие репутации клиента и исполнителя требованиям заказа.
+        Для некоторых типов заказов требуется минимальный уровень репутации.
+      operationId: checkOrderReputationRequirements
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа для проверки
+        - name: role
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [ client, contractor ]
+          description: Роль персонажа в заказе
+      responses:
+        "200":
+          description: Результат проверки требований
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReputationRequirementsCheck"
+        "400":
+          $ref: "../../common-schemas.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "../../common-schemas.yaml#/components/responses/NotFound"
+
+  /orders/{order_id}/complete-reputation:
+    post:
+      tags:
+        - Orders-Reputation
+      summary: Изменение репутации после выполнения заказа
+      description: |
+        Автоматически изменяет репутацию участников заказа после его завершения.
+        Учитывает:
+        - Качество выполнения
+        - Своевременность
+        - Обратную связь
+        - Тип заказа и его сложность
+      operationId: applyOrderCompletionReputation
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderCompletionReputationRequest"
+      responses:
+        "200":
+          description: Репутация обновлена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderCompletionReputationResponse"
+        "400":
+          $ref: "../../common-schemas.yaml#/components/responses/BadRequest"
+        "403":
+          $ref: "../../common-schemas.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../common-schemas.yaml#/components/responses/NotFound"
+
+  /contractors/reputation-ranking:
+    get:
+      tags:
+        - Orders-Reputation
+      summary: Рейтинг исполнителей по репутации
+      description: |
+        Возвращает рейтинг лучших исполнителей на основе их репутации в системе заказов.
+        Учитывает успешность выполнения заказов и отзывы клиентов.
+      operationId: getContractorsReputationRanking
+      parameters:
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции для фильтрации (опционально)
+        - name: order_type
+          in: query
+          schema:
+            type: string
+            enum: [ assassination, protection, delivery, investigation, bounty, escort, sabotage, recovery ]
+          description: Тип заказов для фильтрации (опционально)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Рейтинг исполнителей
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractorsReputationRanking"
+        "400":
+          $ref: "../../common-schemas.yaml#/components/responses/BadRequest"
+
+  /orders/reputation-bonuses:
+    get:
+      tags:
+        - Orders-Reputation
+      summary: Получение бонусов репутации для заказов
+      description: |
+        Возвращает доступные бонусы и штрафы репутации, которые применяются к заказам.
+        Используется для отображения в интерфейсе создания заказа.
+      operationId: getReputationBonuses
+      parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID персонажа
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: ID фракции (опционально)
+      responses:
+        "200":
+          description: Бонусы репутации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReputationBonuses"
+        "400":
+          $ref: "../../common-schemas.yaml#/components/responses/BadRequest"
+        "404":
+          $ref: "../../common-schemas.yaml#/components/responses/NotFound"
+
+components:
+  schemas:
+    OrderReputationCost:
+      type: object
+      description: Рассчитанная стоимость заказа с учетом репутации
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        base_cost:
+          type: object
+          description: Базовая стоимость заказа
+          properties:
+            amount:
+              type: integer
+              minimum: 0
+            currency:
+              type: string
+              enum: [ eurodollar, bitcoin, corporate_script, street_cred ]
+        client_modifier:
+          type: object
+          description: Модификатор для клиента (скидки/наценки)
+          properties:
+            type:
+              type: string
+              enum: [ discount, surcharge ]
+            percentage:
+              type: number
+              minimum: 0
+              maximum: 100
+            reason:
+              type: string
+              enum: [ high_reputation, low_reputation, faction_ally, faction_enemy ]
+        contractor_modifier:
+          type: object
+          description: Модификатор для исполнителя (премии/штрафы)
+          properties:
+            type:
+              type: string
+              enum: [ bonus, penalty ]
+            percentage:
+              type: number
+              minimum: 0
+              maximum: 100
+            reason:
+              type: string
+              enum: [ high_reputation, low_reputation, specialization_bonus ]
+        final_client_cost:
+          type: object
+          description: Итоговая стоимость для клиента
+          properties:
+            amount:
+              type: integer
+              minimum: 0
+            currency:
+              type: string
+              enum: [ eurodollar, bitcoin, corporate_script, street_cred ]
+        final_contractor_reward:
+          type: object
+          description: Итоговое вознаграждение для исполнителя
+          properties:
+            amount:
+              type: integer
+              minimum: 0
+            currency:
+              type: string
+              enum: [ eurodollar, bitcoin, corporate_script, street_cred ]
+
+    ReputationRequirementsCheck:
+      type: object
+      description: Результат проверки требований репутации
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [ client, contractor ]
+        meets_requirements:
+          type: boolean
+          description: Соответствует ли требованиям
+        required_reputation:
+          type: object
+          description: Требуемая репутация
+          properties:
+            faction_id:
+              type: string
+              format: uuid
+            min_tier:
+              type: string
+              enum: [ hated, hostile, unfriendly, neutral, friendly, honored, revered, exalted ]
+            min_value:
+              type: integer
+        current_reputation:
+          type: object
+          description: Текущая репутация персонажа
+          properties:
+            faction_id:
+              type: string
+              format: uuid
+            tier:
+              type: string
+              enum: [ hated, hostile, unfriendly, neutral, friendly, honored, revered, exalted ]
+            value:
+              type: integer
+        blocking_reasons:
+          type: array
+          description: Причины блокировки (если не соответствует)
+          items:
+            type: string
+            enum: [ insufficient_reputation, faction_restricted, blacklisted ]
+
+    OrderCompletionReputationRequest:
+      type: object
+      description: Запрос на изменение репутации после выполнения заказа
+      required:
+        - completion_quality
+      properties:
+        completion_quality:
+          type: string
+          enum: [ failed, poor, average, good, excellent ]
+          description: Качество выполнения заказа
+        was_on_time:
+          type: boolean
+          default: true
+          description: Выполнен ли заказ в срок
+        client_feedback_rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Рейтинг от клиента (1-5)
+        additional_notes:
+          type: string
+          maxLength: 500
+          description: Дополнительные заметки
+
+    OrderCompletionReputationResponse:
+      type: object
+      description: Результат изменения репутации после выполнения заказа
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        client_reputation_changes:
+          type: array
+          description: Изменения репутации клиента
+          items:
+            $ref: "../reputation/social-reputation-schemas.yaml#/components/schemas/ReputationChange"
+        contractor_reputation_changes:
+          type: array
+          description: Изменения репутации исполнителя
+          items:
+            $ref: "../reputation/social-reputation-schemas.yaml#/components/schemas/ReputationChange"
+        order_rating:
+          type: number
+          minimum: 0
+          maximum: 5
+          description: Общий рейтинг заказа
+        experience_gained:
+          type: integer
+          minimum: 0
+          description: Опыт, полученный исполнителем
+
+    ContractorsReputationRanking:
+      type: object
+      description: Рейтинг исполнителей по репутации
+      properties:
+        ranking:
+          type: array
+          items:
+            type: object
+            properties:
+              contractor_id:
+                type: string
+                format: uuid
+              character_name:
+                type: string
+              faction_id:
+                type: string
+                format: uuid
+              reputation_score:
+                type: number
+                description: Общий рейтинг репутации (0-100)
+              completed_orders:
+                type: integer
+                minimum: 0
+              success_rate:
+                type: number
+                minimum: 0
+                maximum: 100
+                description: Процент успешных заказов
+              average_rating:
+                type: number
+                minimum: 0
+                maximum: 5
+                description: Средний рейтинг от клиентов
+              specialization:
+                type: array
+                description: Специализации исполнителя
+                items:
+                  type: string
+                  enum: [ assassination, protection, delivery, investigation, bounty, escort, sabotage, recovery ]
+        total_count:
+          type: integer
+          minimum: 0
+
+    ReputationBonuses:
+      type: object
+      description: Бонусы и штрафы репутации для заказов
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        faction_bonuses:
+          type: array
+          description: Бонусы по фракциям
+          items:
+            type: object
+            properties:
+              faction_id:
+                type: string
+                format: uuid
+              faction_name:
+                type: string
+              reputation_tier:
+                type: string
+                enum: [ hated, hostile, unfriendly, neutral, friendly, honored, revered, exalted ]
+              cost_modifier:
+                type: number
+                description: Модификатор стоимости (положительный = скидка, отрицательный = наценка)
+              reward_modifier:
+                type: number
+                description: Модификатор вознаграждения (положительный = премия)
+              available_orders:
+                type: array
+                description: Доступные типы заказов
+                items:
+                  type: string
+                  enum: [ assassination, protection, delivery, investigation, bounty, escort, sabotage, recovery ]
+        global_bonuses:
+          type: object
+          description: Глобальные бонусы (независимо от фракции)
+          properties:
+            high_reputation_discount:
+              type: number
+              minimum: 0
+              maximum: 50
+              description: Скидка для высокоуважаемых персонажей (%)
+            low_reputation_penalty:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: Штраф для персонажей с плохой репутацией (%)
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

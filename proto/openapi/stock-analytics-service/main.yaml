@@ -1,0 +1,732 @@
+openapi: 3.0.3
+info:
+  title: Stock Analytics Charts Service API
+  description: '**Enterprise-Grade Stock Analytics Charts API for NECPGAME**
+
+    High-performance real-time stock charts and technical analysis API for MMOFPS
+    trading mechanics.
+
+    ## Key Features
+
+    - **Real-time chart data** with sub-millisecond latency - **Technical indicators**
+    calculations (RSI, MACD, Bollinger Bands) - **WebSocket streaming** for live chart
+    updates - **Market overview** with sector performance - **Custom chart configurations**
+    for trading strategies
+
+    ## Domain Purpose
+
+    Provides financial market data and technical analysis for in-game trading systems,
+    supporting real-time decision making for players in the NECPGAME economy.
+
+    ## Performance Targets
+
+    - P99 Latency: <100ms for chart data retrieval - Memory: <25KB per chart request
+    - Concurrent users: 50,000+ simultaneous chart viewers - Data throughput: 10,000+
+    charts/second - WebSocket connections: 25,000+ active streams
+
+    ## Enterprise Architecture
+
+    - **Microservice domain:** economy-domain (financial systems) - **Data source:**
+    PostgreSQL with TimescaleDB for time-series - **Caching:** Redis for hot chart
+    data - **Streaming:** WebSocket with connection pooling - **Security:** JWT authentication
+    with financial data encryption '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: http://localhost:8150
+  description: Local development server
+- url: https://api.necpgame.com/stock-analytics-charts/v1
+  description: Production server
+security:
+- BearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /readiness:
+    get:
+      summary: Readiness check endpoint
+      operationId: readinessCheck
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessCheckResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /metrics:
+    get:
+      summary: Prometheus metrics endpoint
+      operationId: metrics
+      responses:
+        '200':
+          description: Metrics in Prometheus format
+          content:
+            text/plain:
+              schema:
+                type: string
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/stock/chart:
+    get:
+      summary: Get stock chart data
+      description: Retrieve historical chart data for a specific stock symbol with
+        customizable timeframe and limit
+      operationId: getStockChart
+      parameters:
+      - name: symbol
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 10
+        description: Stock symbol (e.g., AAPL, GOOGL)
+      - name: timeframe
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 4h
+          - 1d
+          - 1w
+          - 1M
+        description: Chart timeframe
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Maximum number of data points to return
+      responses:
+        '200':
+          description: Stock chart data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockChartData'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Stock symbol not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/stock/indicators:
+    get:
+      summary: Get technical indicators
+      description: Calculate and return technical indicators for a stock symbol
+      operationId: getStockIndicators
+      parameters:
+      - name: symbol
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 10
+        description: Stock symbol
+      - name: indicators
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - rsi
+            - macd
+            - bollinger
+            - sma
+            - ema
+            - stochastic
+          minItems: 1
+        description: List of indicators to calculate
+        style: form
+        explode: false
+      responses:
+        '200':
+          description: Technical indicators calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockIndicators'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/market/overview:
+    get:
+      summary: Get market overview
+      description: Retrieve comprehensive market overview with major indices, sector
+        performance, and volume leaders
+      operationId: getMarketOverview
+      responses:
+        '200':
+          description: Market overview retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketOverview'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/stock/chart/custom:
+    post:
+      summary: Create custom chart configuration
+      description: Create a custom chart configuration with specific parameters
+      operationId: createCustomChart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomChartRequest'
+      responses:
+        '201':
+          description: Custom chart created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomChartResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/stock/stream:
+    get:
+      summary: WebSocket stream for real-time chart data
+      description: Establish WebSocket connection for real-time stock chart updates
+      operationId: streamStockData
+      parameters:
+      - name: symbol
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 10
+        description: Stock symbol to stream
+      responses:
+        '101':
+          description: WebSocket connection established
+        '400':
+          description: Invalid request parameters
+        '500':
+          description: Internal server error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+components:
+  schemas:
+    Error:
+      $ref: ../common-service/schemas/error.yaml#/Error
+    HealthCheckResponse:
+      type: object
+      required:
+      - status
+      - service
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - unhealthy
+        service:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        error:
+          $ref: '#/components/schemas/Error'
+    ReadinessCheckResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - ready
+          - not_ready
+        timestamp:
+          type: string
+          format: date-time
+        error:
+          $ref: '#/components/schemas/Error'
+    StockChartData:
+      type: object
+      required:
+      - symbol
+      - timeframe
+      - data
+      properties:
+        symbol:
+          type: string
+          description: Stock symbol
+        timeframe:
+          type: string
+          description: Chart timeframe interval
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChartPoint'
+          description: Array of chart data points
+        metadata:
+          $ref: '#/components/schemas/ChartMetadata'
+    ChartPoint:
+      type: object
+      required:
+      - timestamp
+      - open
+      - high
+      - low
+      - close
+      - volume
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Data point timestamp
+        open:
+          type: number
+          format: float
+          description: Opening price
+        high:
+          type: number
+          format: float
+          description: Highest price
+        low:
+          type: number
+          format: float
+          description: Lowest price
+        close:
+          type: number
+          format: float
+          description: Closing price
+        volume:
+          type: integer
+          format: int64
+          description: Trading volume
+    ChartMetadata:
+      type: object
+      required:
+      - totalPoints
+      - dataQuality
+      - lastUpdated
+      properties:
+        totalPoints:
+          type: integer
+          description: Total number of data points
+        dataQuality:
+          type: string
+          enum:
+          - high
+          - medium
+          - low
+          description: Quality rating of the data
+        lastUpdated:
+          type: string
+          format: date-time
+          description: When the data was last updated
+    StockIndicators:
+      type: object
+      required:
+      - symbol
+      properties:
+        symbol:
+          type: string
+          description: Stock symbol
+        rsi:
+          $ref: '#/components/schemas/RSIIndicator'
+        macd:
+          $ref: '#/components/schemas/MACDIndicator'
+        bollinger:
+          $ref: '#/components/schemas/BollingerBands'
+    RSIIndicator:
+      type: object
+      required:
+      - period
+      - values
+      properties:
+        period:
+          type: integer
+          description: RSI calculation period
+        values:
+          type: array
+          items:
+            type: number
+            format: float
+          description: RSI values array
+    MACDIndicator:
+      type: object
+      required:
+      - fastPeriod
+      - slowPeriod
+      - signalPeriod
+      - values
+      properties:
+        fastPeriod:
+          type: integer
+          description: Fast EMA period
+        slowPeriod:
+          type: integer
+          description: Slow EMA period
+        signalPeriod:
+          type: integer
+          description: Signal line period
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/MACDValue'
+          description: MACD values array
+    MACDValue:
+      type: object
+      required:
+      - macd
+      - signal
+      - histogram
+      properties:
+        macd:
+          type: number
+          format: float
+          description: MACD line value
+        signal:
+          type: number
+          format: float
+          description: Signal line value
+        histogram:
+          type: number
+          format: float
+          description: MACD histogram value
+    BollingerBands:
+      type: object
+      required:
+      - period
+      - multiplier
+      - upper
+      - middle
+      - lower
+      properties:
+        period:
+          type: integer
+          description: Bollinger Bands calculation period
+        multiplier:
+          type: number
+          format: float
+          description: Standard deviation multiplier
+        upper:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Upper band values
+        middle:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Middle band (SMA) values
+        lower:
+          type: array
+          items:
+            type: number
+            format: float
+          description: Lower band values
+    MarketOverview:
+      type: object
+      required:
+      - marketStatus
+      properties:
+        marketStatus:
+          type: string
+          enum:
+          - open
+          - closed
+          - pre_market
+          - after_hours
+          description: Current market status
+        majorIndices:
+          type: array
+          items:
+            $ref: '#/components/schemas/IndexData'
+          description: Major market indices
+        sectorPerformance:
+          type: array
+          items:
+            $ref: '#/components/schemas/SectorData'
+          description: Sector performance data
+        volumeLeaders:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockVolumeData'
+          description: Top volume leaders
+    IndexData:
+      type: object
+      required:
+      - symbol
+      - name
+      - value
+      - change
+      - changePercent
+      properties:
+        symbol:
+          type: string
+          description: Index symbol
+        name:
+          type: string
+          description: Index name
+        value:
+          type: number
+          format: float
+          description: Current index value
+        change:
+          type: number
+          format: float
+          description: Change from previous close
+        changePercent:
+          type: number
+          format: float
+          description: Percentage change
+    SectorData:
+      type: object
+      required:
+      - sector
+      - performance
+      - volume
+      properties:
+        sector:
+          type: string
+          description: Sector name
+        performance:
+          type: number
+          format: float
+          description: Sector performance percentage
+        volume:
+          type: integer
+          format: int64
+          description: Sector trading volume
+    StockVolumeData:
+      type: object
+      required:
+      - symbol
+      - volume
+      - price
+      properties:
+        symbol:
+          type: string
+          description: Stock symbol
+        volume:
+          type: integer
+          format: int64
+          description: Trading volume
+        price:
+          type: number
+          format: float
+          description: Current price
+    CustomChartRequest:
+      type: object
+      required:
+      - symbol
+      - chartType
+      - timeframe
+      properties:
+        symbol:
+          type: string
+          minLength: 1
+          maxLength: 10
+          description: Stock symbol
+        chartType:
+          type: string
+          enum:
+          - line
+          - candlestick
+          - bar
+          - area
+          description: Chart visualization type
+        timeframe:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 4h
+          - 1d
+          - 1w
+          - 1M
+          description: Chart timeframe
+        indicators:
+          type: array
+          items:
+            type: string
+            enum:
+            - rsi
+            - macd
+            - bollinger
+            - sma
+            - ema
+            - stochastic
+          description: Technical indicators to include
+        style:
+          type: object
+          description: Custom styling options
+          properties:
+            colors:
+              type: object
+              properties:
+                bullish:
+                  type: string
+                  description: Color for bullish candles
+                bearish:
+                  type: string
+                  description: Color for bearish candles
+                background:
+                  type: string
+                  description: Chart background color
+    CustomChartResponse:
+      type: object
+      required:
+      - chartID
+      - config
+      - createdAt
+      properties:
+        chartID:
+          type: string
+          description: Unique chart identifier
+        config:
+          $ref: '#/components/schemas/CustomChartRequest'
+        createdAt:
+          type: string
+          format: date-time
+          description: Chart creation timestamp
+    HealthResponse:
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
+    PaginationParams:
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
+    PaginatedResponse:
+      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
+  responses:
+    OK:
+      $ref: ../common-service/responses/success.yaml#/OK
+    Created:
+      $ref: ../common-service/responses/success.yaml#/Created
+    BadRequest:
+      $ref: ../common-service/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common-service/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common-service/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common-service/responses/error.yaml#/Conflict
+    InternalServerError:
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
+    HealthOK:
+      $ref: ../common-service/responses/success.yaml#/HealthOK
+    HealthBatchSuccess:
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common-service/security/security.yaml#/BearerAuth
+    ApiKeyAuth:
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
+    ServiceAuth:
+      $ref: ../common-service/security/security.yaml#/ServiceAuth

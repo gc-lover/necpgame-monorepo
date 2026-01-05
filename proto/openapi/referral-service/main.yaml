@@ -1,145 +1,105 @@
 openapi: 3.0.3
 info:
-  title: Referral Service API - Enterprise-Grade Referral Management
-  description: "**Enterprise-Grade Referral and User Acquisition API for NECPGAME**
+  title: Referral Domain API - Enterprise-Grade
+  description: '**Enterprise-Grade Referral Domain API for NECPGAME**
 
-    This API manages referral programs, user acquisition tracking, and reward distribution
-    for player referrals in Night City, providing seamless referral experience with
-    anti-fraud validation and performance tracking.
+    This domain provides comprehensive referral system functionality including code
+    generation, registration tracking, milestone rewards, and leaderboard management.
 
     ## Key Features
 
-    - **Referral Tracking**: Complete referral link generation and tracking
-    - **Reward Distribution**: Automated reward calculation and distribution
-    - **Anti-Fraud Validation**: Referral integrity checks and fraud prevention
-    - **Analytics Integration**: Referral performance metrics and reporting
-    - **Multi-Level Rewards**: Support for multi-tier referral programs
-    - **Performance Optimized**: High-throughput referral operations with <25ms P99 latency
+    - **Code Management**: Generate and validate unique referral codes - **Registration
+    Tracking**: Track referrals and their progression - **Milestone System**: Multi-level
+    rewards based on referral achievements - **Leaderboard**: Competitive ranking
+    system for referrers - **Reward Distribution**: Automated reward claiming and
+    distribution - **Analytics**: Comprehensive referral system analytics
 
     ## Domain Purpose
 
-    The Referral domain handles all aspects of player referral programs in Night City.
-    Players can invite friends, track referral progress, earn rewards, and participate
-    in user acquisition campaigns with full transparency and security.
+    The Referral Domain handles all aspects of player-to-player referrals, enabling
+    viral growth through incentivized player acquisition and engagement.
 
     ## Performance Targets
 
-    - P99 Latency: <25ms for referral operations
-    - Memory: <20KB per active referral session
-    - Concurrent users: 100,000+ simultaneous referral operations
-    - Throughput: 35,000+ operations per second
+    - P99 Latency: <100ms for hot paths (code validation, registration) - Memory:
+    <50KB per player instance - Concurrent users: 10,000+ simultaneous connections
+    - Data consistency: ACID for critical operations, Eventual for analytics
 
-    "
+    '
   version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
     email: api@necpgame.com
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necpgame.com/v1/referral
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/referral
-    description: Staging server
-  - url: http://localhost:8080/api/v1/referral
-    description: Local development server
+- url: http://localhost:8080/api/v1
+  description: Development server
+- url: https://api.necpgame.com/api/v1
+  description: Production server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: Referral Management
-    description: Core referral operations and management
-  - name: Reward Distribution
-    description: Referral reward and incentive operations
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: Referral Codes
+  description: Referral code generation and management
+- name: Referral Registration
+  description: Registration and referral tracking
+- name: Referral Statistics
+  description: Referral statistics and analytics
+- name: Referral Milestones
+  description: Milestone management and rewards
+- name: Referral Leaderboard
+  description: Leaderboard and ranking
+- name: Referral Rewards
+  description: Reward distribution and claiming
+- name: System
+  description: System health and monitoring
 paths:
   /health:
     get:
-      summary: Example domain health check
-      description: "**Enterprise-grade health check endpoint**
-
-
-        Provides real-time health status of the example domain microservice.
-
-        Critical for service discovery, load balancing, and monitoring.
-
-
-        **Performance:** <1ms response time, cached for 30 seconds
-
-        "
-      operationId: referralServiceHealthCheck
+      summary: Health check
+      operationId: healthCheck
       tags:
-        - Health Monitoring
-      parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - System
       responses:
-        "200":
-          description: Service is healthy
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
           headers:
             Cache-Control:
               schema:
                 type: string
-                example: max-age=30, s-maxage=60
+                example: max-age=300, s-maxage=600
             ETag:
               schema:
                 type: string
-                example: '"health-v1.0"'
+                example: '"referral-health-v1.0"'
             Content-Encoding:
               schema:
                 type: string
                 enum:
-                  - gzip
-                  - deflate
-                  - br
+                - gzip
+                - deflate
+                - br
+        default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "503":
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "429":
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/batch:
     post:
-      summary: Batch health check for multiple domain services
-      description:
-        "**Performance optimization:** Check multiple domain health in
-        single request
-
-
-        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
-
-        Eliminates network overhead in health monitoring scenarios.
-
-
-        **Use case:** Service mesh health checks, Kubernetes readiness probes
-
-        "
-      operationId: exampleDomainBatchHealthCheck
+      summary: Batch health check for multiple domains
+      operationId: batchHealthCheck
       tags:
-        - Health Monitoring
+      - System
+      description: 'Performance optimization: Check multiple domain health in single
+        request'
       requestBody:
         required: true
         content:
@@ -147,856 +107,969 @@ paths:
             schema:
               type: object
               required:
-                - services
+              - domains
               properties:
-                services:
+                domains:
                   type: array
                   items:
                     type: string
-                    enum:
-                      - example-domain
-                      - system-domain
-                      - specialized-domain
-                    maxItems: 10
-                  description: List of services to check
+                  maxItems: 10
       responses:
-        "200":
-          $ref: "../common/responses/success.yaml#/HealthBatchSuccess"
-        "400":
-          description: Invalid request - malformed service list
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-                description: Seconds to wait before retrying
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-  /health/ws:
-    get:
-      summary: Real-time health monitoring WebSocket
-      description:
-        "**Performance optimization:** Real-time health updates without
-        polling
-
-
-        Eliminates periodic HTTP requests, reduces server load by ~90%.
-
-        Perfect for dashboard monitoring and alerting systems.
-
-
-        **Protocol:** WebSocket with JSON payloads
-
-        **Heartbeat:** 30 second intervals
-
-        **Reconnection:** Automatic with exponential backoff
-
-        "
-      operationId: referralServiceHealthWebSocket
-      tags:
-        - Health Monitoring
-      parameters:
-        - name: services
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - example-domain
-                - system-domain
-                - specialized-domain
-          description: Services to monitor (optional, monitors all if not specified)
-      responses:
-        "200":
-          description: WebSocket upgrade information returned
+        '200':
+          description: Batch health results
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  websocket_url:
-                    type: string
-                    example: ws://localhost:8080/api/v1/example-domain/health/ws
-                  supported_protocols:
+                  results:
                     type: array
                     items:
-                      type: string
-                    example:
-                      - health-monitoring-v1
-        "101":
-          description: WebSocket connection established successfully
-          headers:
-            Upgrade:
-              schema:
-                type: string
-                example: websocket
-            Connection:
-              schema:
-                type: string
-                example: Upgrade
-            Sec-WebSocket-Accept:
-              schema:
-                type: string
-                description: WebSocket handshake acceptance key
+                      $ref: '#/components/schemas/HealthResponse'
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time
+        default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketHealthMessage"
-        "400":
-          description: Invalid request - malformed service parameters
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "401":
-          description: Unauthorized - authentication required for WebSocket
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - WebSocket connection limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-  /examples:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /health/ws:
     get:
-      summary: List examples with filtering and pagination
-      description: "**Enterprise-grade listing endpoint**
-
-
-        Supports complex filtering, sorting, and pagination patterns.
-
-        Optimized for high-throughput scenarios with proper indexing.
-
-
-        **Performance:** <10ms P95, supports 1000+ concurrent requests
-
-        "
-      operationId: listReferrals
+      summary: Real-time health monitoring WebSocket
+      operationId: healthWebSocket
       tags:
-        - Referral Management
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number for pagination
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of items per page
-        - name: sort_by
-          in: query
-          schema:
-            type: string
-            enum:
-              - created_at
-              - name
-              - priority
-            default: created_at
-          description: Sort field
-        - name: sort_order
-          in: query
-          schema:
-            type: string
-            enum:
-              - asc
-              - desc
-            default: desc
-          description: Sort order
-        - name: filter_status
-          in: query
-          schema:
-            type: string
-            enum:
-              - active
-              - inactive
-              - pending
-          description: Filter by status
+      - System
+      description: Real-time health updates without polling
       responses:
-        "200":
-          $ref: "#/components/responses/ExampleListSuccess"
-        "400":
-          description: Invalid request - malformed query parameters
+        '101':
+          description: WebSocket connection established
+        default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "422":
-          description: Unprocessable entity - validation failed
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/referral/code/{characterId}:
+    get:
+      summary: Get referral code for character
+      operationId: getReferralCode
+      tags:
+      - Referral Codes
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Referral code retrieved
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: '#/components/schemas/ReferralCodeResponse'
+        '404':
+          description: Referral code not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/referral/code/generate:
     post:
-      summary: Create new example
-      description: "**Enterprise-grade creation endpoint**
-
-
-        Validates business rules, applies security checks, and ensures data consistency.
-
-        Supports optimistic locking for concurrent operations.
-
-
-        **Performance:** <50ms P95, includes validation and business logic
-
-        "
-      operationId: createExample
+      summary: Generate new referral code
+      operationId: generateReferralCode
       tags:
-        - Referral Management
-      security:
-        - BearerAuth: []
+      - Referral Codes
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateExampleRequest"
+              $ref: '#/components/schemas/GenerateCodeRequest'
       responses:
-        "201":
-          $ref: "#/components/responses/ExampleCreated"
-        "400":
-          description: Invalid request - malformed or missing data
+        '201':
+          description: Referral code generated
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
-          description: Conflict - example with this identifier already exists
+                $ref: '#/components/schemas/ReferralCodeResponse'
+        '400':
+          description: Invalid request
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "422":
-          description: Unprocessable entity - business rule validation failed
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - creation rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/referral/code/validate:
+    post:
+      summary: Validate referral code
+      operationId: validateReferralCode
+      tags:
+      - Referral Codes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateCodeRequest'
+      responses:
+        '200':
+          description: Code is valid
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-  /examples/{example_id}:
+                $ref: '#/components/schemas/ValidateCodeResponse'
+        '400':
+          description: Invalid code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/referral/register:
+    post:
+      summary: Register with referral code
+      operationId: registerWithReferral
+      tags:
+      - Referral Registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReferralRegistrationRequest'
+      responses:
+        '201':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralRegistrationResponse'
+        '400':
+          description: Invalid referral code or registration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/referral/{characterId}/referrals:
     get:
-      summary: Get specific example by ID
-      description: "**Enterprise-grade retrieval endpoint**
-
-
-        Optimized with proper caching strategies and database indexing.
-
-        Supports conditional requests with ETags.
-
-
-        **Performance:** <5ms P95 with Redis caching
-
-        "
-      operationId: getExample
+      summary: Get referrals for character
+      operationId: getCharacterReferrals
       tags:
-        - Referral Management
+      - Referral Registration
       parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
-        - name: include_related
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include related data in response
-        - name: If-None-Match
-          in: header
-          schema:
-            type: string
-          description: Conditional request - return 304 if ETag matches
-        - name: If-Modified-Since
-          in: header
-          schema:
-            type: string
-            format: date-time
-          description: Conditional request - return 304 if not modified since this time
-      responses:
-        "200":
-          $ref: "#/components/responses/ExampleRetrieved"
-        "304":
-          description: Not modified - resource has not changed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=300, private
-        "400":
-          description: Invalid request - malformed example ID
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-    put:
-      summary: Update existing example
-      description: "**Enterprise-grade update endpoint**
-
-
-        Supports partial updates, optimistic locking, and audit trails.
-
-        Ensures data consistency with event sourcing patterns.
-
-
-        **Performance:** <25ms P95, includes validation and conflict resolution
-
-        "
-      operationId: updateExample
-      tags:
-        - Referral Management
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
-        - name: If-Match
-          in: header
-          schema:
-            type: string
-          description: ETag for optimistic locking - prevents concurrent updates
-        - name: If-Unmodified-Since
-          in: header
-          schema:
-            type: string
-            format: date-time
-          description:
-            Conditional update - proceed only if not modified since this
-            time
-      requestBody:
+      - name: characterId
+        in: path
         required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateExampleRequest"
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - active
+          - milestone_reached
+          - inactive
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
-        "200":
-          $ref: "#/components/responses/ExampleUpdated"
-        "400":
-          description: Invalid request - malformed data or example ID
+        '200':
+          description: Referrals retrieved
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
-          description: Example not found
+                $ref: '#/components/schemas/ReferralListResponse'
+        '404':
+          description: Character not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
-          description:
-            Conflict - version conflict (optimistic locking) or precondition
-            failed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "412":
-          description:
-            Precondition failed - If-Match or If-Unmodified-Since condition
-            not met
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "422":
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - update rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-    delete:
-      summary: Delete example
-      description: "**Enterprise-grade deletion endpoint**
-
-
-        Supports soft deletes with audit trails and cleanup scheduling.
-
-        Ensures referential integrity and cascading deletes.
-
-
-        **Performance:** <15ms P95, includes cleanup operations
-
-        "
-      operationId: deleteExample
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/referral/{characterId}/stats:
+    get:
+      summary: Get referral statistics for character
+      operationId: getReferralStats
       tags:
-        - Referral Management
-      security:
-        - BearerAuth: []
+      - Referral Statistics
       parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "204":
-          $ref: "#/components/responses/ExampleDeleted"
-        "400":
-          description: Invalid request - malformed example ID
+        '200':
+          description: Statistics retrieved
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
-          description: Example not found
+                $ref: '#/components/schemas/ReferralStatsResponse'
+        '404':
+          description: Character not found
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
-          description: Conflict - example cannot be deleted (referential integrity)
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - deletion rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/referral/{characterId}/milestones:
+    get:
+      summary: Get milestones for character
+      operationId: getCharacterMilestones
+      tags:
+      - Referral Milestones
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Milestones retrieved
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: '#/components/schemas/MilestoneListResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/referral/{characterId}/milestones/{milestoneId}/claim:
+    post:
+      summary: Claim milestone reward
+      operationId: claimMilestoneReward
+      tags:
+      - Referral Milestones
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: milestoneId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Reward claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardClaimResponse'
+        '400':
+          description: Milestone not eligible for claim
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/referral/leaderboard:
+    get:
+      summary: Get referral leaderboard
+      operationId: getReferralLeaderboard
+      tags:
+      - Referral Leaderboard
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Leaderboard retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/referral/leaderboard/{characterId}:
+    get:
+      summary: Get character position in leaderboard
+      operationId: getCharacterLeaderboardPosition
+      tags:
+      - Referral Leaderboard
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Position retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardPositionResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/referral/rewards/{characterId}:
+    get:
+      summary: Get available rewards for character
+      operationId: getCharacterRewards
+      tags:
+      - Referral Rewards
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - distributed
+          - claimed
+          - expired
+      responses:
+        '200':
+          description: Rewards retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardListResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /api/v1/referral/rewards/{rewardId}/claim:
+    post:
+      summary: Claim specific reward
+      operationId: claimReward
+      tags:
+      - Referral Rewards
+      parameters:
+      - name: rewardId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Reward claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardClaimResponse'
+        '400':
+          description: Reward not eligible for claim
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
-  responses:
-    HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
-    ExampleListSuccess:
-      description: Examples retrieved successfully
-      headers:
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 150
-            description: Total number of examples matching criteria
-        X-Page-Count:
-          schema:
-            type: integer
-            example: 8
-            description: Total number of pages
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ExampleListResponse"
-    ExampleCreated:
-      description: Example created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
-            description: URL of the created example
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ExampleResponse"
-    ExampleRetrieved:
-      description: Example retrieved successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-            description: Cache control directives
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: "2025-12-21T10:00:00Z"
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 5
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ExampleResponse"
-    ExampleUpdated:
-      description: Example updated successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v2"'
-            description: New entity tag after update
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: "2025-12-21T10:05:00Z"
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 25
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ExampleResponse"
-    ExampleDeleted:
-      description: Example deleted successfully
-      headers:
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 15
-            description: Processing time in milliseconds
-    OK:
-      $ref: ../common/responses/success.yaml#/OK
-    Created:
-      $ref: ../common/responses/success.yaml#/Created
-    BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
-    Unauthorized:
-      $ref: ../common/responses/error.yaml#/Unauthorized
-    Forbidden:
-      $ref: ../common/responses/error.yaml#/Forbidden
-    NotFound:
-      $ref: ../common/responses/error.yaml#/NotFound
-    Conflict:
-      $ref: ../common/responses/error.yaml#/Conflict
-    InternalServerError:
-      $ref: ../common/responses/error.yaml#/InternalServerError
-    HealthOK:
-      $ref: ../common/responses/success.yaml#/HealthOK
   schemas:
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
+    Error:
+      $ref: ../common-service/schemas/error.yaml#/Error
     WebSocketHealthMessage:
       type: object
       required:
-        - type
-        - timestamp
-        - health
+      - type
+      - message_timestamp
+      - health
       properties:
         type:
           type: string
           enum:
-            - health_update
-            - health_alert
-            - service_down
-          example: health_update
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          maxLength: 255
+          - health_update
+          - health_alert
+          - service_down
         message_timestamp:
           type: string
           format: date-time
           description: Timestamp of the health message
-          maxLength: 1000
         health:
-          $ref: "../common/schemas/health.yaml#/HealthResponse"
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-    Error:
-      $ref: ../common/schemas/error.yaml#/Error
-    Example:
+          $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    ReferralCodeResponse:
       type: object
       required:
-        - id
-        - name
-        - created_at
-        - status
-        - is_active
+      - code
+      - character_id
+      - created_at
+      - is_active
       properties:
         id:
           type: string
           format: uuid
-          description: Example unique identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
-        name:
+          description: Unique identifier for the referral code
+        character_id:
           type: string
-          minLength: 1
-          maxLength: 100
-          description: Example display name
-          example: Sample Example
-        description:
+          format: uuid
+          description: Character that owns this code
+        code:
           type: string
-          maxLength: 1000
-          description: Detailed description
-          example: This is a comprehensive example demonstrating best practices.
+          example: REF-ABC123XY
+          description: The referral code
+        prefix:
+          type: string
+          example: REF
+          description: Code prefix
         created_at:
           type: string
           format: date-time
-          description: Creation timestamp
-          example: "2025-12-21T10:00:00Z"
-        updated_at:
+          description: When the code was created
+        expires_at:
           type: string
           format: date-time
-          description: Last update timestamp
-          example: "2025-12-21T10:00:00Z"
+          description: When the code expires (optional)
+        is_active:
+          type: boolean
+          description: Whether the code is active
+        usage_count:
+          type: integer
+          description: How many times the code has been used
+        max_usage:
+          type: integer
+          description: Maximum usage count (optional)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    GenerateCodeRequest:
+      type: object
+      required:
+      - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character requesting the code
+        expires_in_days:
+          type: integer
+          minimum: 1
+          maximum: 365
+          description: Days until code expires (optional)
+        max_usage:
+          type: integer
+          minimum: 1
+          description: Maximum usage count (optional)
+    ValidateCodeRequest:
+      type: object
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          description: Referral code to validate
+    ValidateCodeResponse:
+      type: object
+      required:
+      - is_valid
+      - code
+      properties:
+        is_valid:
+          type: boolean
+          description: Whether the code is valid
+        code:
+          type: string
+          description: The validated code
+        character_id:
+          type: string
+          format: uuid
+          description: Owner of the code (if valid)
+        usage_count:
+          type: integer
+          description: Current usage count
+        max_usage:
+          type: integer
+          description: Maximum usage count
+        expires_at:
+          type: string
+          format: date-time
+          description: Expiration date
+    ReferralRegistrationRequest:
+      type: object
+      required:
+      - referral_code
+      - new_character_id
+      properties:
+        referral_code:
+          type: string
+          description: The referral code used
+        new_character_id:
+          type: string
+          format: uuid
+          description: New character being registered
+    ReferralRegistrationResponse:
+      type: object
+      required:
+      - referral_id
+      - referrer_id
+      - referred_id
+      - status
+      properties:
+        referral_id:
+          type: string
+          format: uuid
+          description: ID of the created referral
+        referrer_id:
+          type: string
+          format: uuid
+          description: Character who owns the code
+        referred_id:
+          type: string
+          format: uuid
+          description: New character being referred
         status:
           type: string
           enum:
-            - active
-            - inactive
-            - pending
-            - archived
-          default: active
-          description: Current status
-          example: active
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Associated tags
-          example:
-            - demo
-            - template
-            - best-practice
-        is_active:
+          - pending
+          - active
+          - milestone_reached
+          - inactive
+          description: Initial status of the referral
+        welcome_reward_granted:
           type: boolean
-          description: Whether this example is active
-          example: true
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-          example: 7
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Hot path optimization required."
-    CreateExampleRequest:
+          description: Whether welcome reward was granted
+    ReferralListResponse:
       type: object
       required:
-        - name
-        - description
+      - referrals
+      - total_count
       properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Desired example name
-          example: My New Example
-        description:
-          type: string
-          maxLength: 1000
-          description: Example description
-          example: A new example following enterprise-grade patterns.
-        tags:
+        referrals:
           type: array
           items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Initial tags
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-    UpdateExampleRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: New example name
-          example: Updated Example Name
-        description:
-          type: string
-          maxLength: 1000
-          description: New description
-        status:
-          type: string
-          enum:
-            - active
-            - inactive
-            - pending
-            - archived
-          description: New status
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Replace all tags
-        is_active:
-          type: boolean
-          description: Update active status
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: New priority
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-    ExampleResponse:
-      type: object
-      required:
-        - example
-      properties:
-        example:
-          $ref: "#/components/schemas/Example"
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-    ExampleListResponse:
-      type: object
-      required:
-        - examples
-        - total_count
-        - has_more
-      properties:
-        examples:
-          type: array
-          items:
-            $ref: "#/components/schemas/Example"
-          description: List of examples
-        has_more:
-          type: boolean
-          description: Whether there are more results available
-          example: true
+            $ref: '#/components/schemas/ReferralInfo'
         total_count:
           type: integer
-          description: Total number of examples matching criteria
-          example: 150
-        page:
-          type: integer
-          description: Current page number
-          example: 1
+          description: Total number of referrals
         limit:
           type: integer
-          description: Items per page
-          example: 20
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Paginated responses optimized for memory
-        efficiency."
+          description: Requested limit
+        offset:
+          type: integer
+          description: Requested offset
+    ReferralInfo:
+      type: object
+      required:
+      - id
+      - referrer_id
+      - referred_id
+      - status
+      - registered_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Referral ID
+        referrer_id:
+          type: string
+          format: uuid
+          description: Referrer character ID
+        referred_id:
+          type: string
+          format: uuid
+          description: Referred character ID
+        referral_code:
+          type: string
+          description: Code used for referral
+        status:
+          type: string
+          enum:
+          - pending
+          - active
+          - milestone_reached
+          - inactive
+          description: Current status
+        registered_at:
+          type: string
+          format: date-time
+          description: When referral was registered
+        level_10_reached_at:
+          type: string
+          format: date-time
+          description: When referred character reached level 10
+        milestone_reached_at:
+          type: string
+          format: date-time
+          description: When milestone was reached
+        welcome_reward_claimed:
+          type: boolean
+          description: Whether welcome reward was claimed
+        level_10_reward_claimed:
+          type: boolean
+          description: Whether level 10 reward was claimed
+        milestone_reward_claimed:
+          type: boolean
+          description: Whether milestone reward was claimed
+    ReferralStatsResponse:
+      type: object
+      required:
+      - character_id
+      - total_referrals
+      - active_referrals
+      - milestone_referrals
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        total_referrals:
+          type: integer
+          description: Total number of referrals
+        active_referrals:
+          type: integer
+          description: Number of active referrals (level 10+)
+        milestone_referrals:
+          type: integer
+          description: Number of referrals that reached milestones
+        pending_referrals:
+          type: integer
+          description: Number of pending referrals
+        inactive_referrals:
+          type: integer
+          description: Number of inactive referrals
+        total_rewards_earned:
+          type: number
+          format: decimal
+          description: Total rewards earned in game currency
+        conversion_rate:
+          type: number
+          format: decimal
+          description: Percentage of referrals that became active
+    MilestoneListResponse:
+      type: object
+      required:
+      - milestones
+      properties:
+        milestones:
+          type: array
+          items:
+            $ref: '#/components/schemas/MilestoneInfo'
+    MilestoneInfo:
+      type: object
+      required:
+      - id
+      - milestone_level
+      - required_referrals
+      - current_referrals
+      - is_completed
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Milestone ID
+        milestone_level:
+          type: integer
+          description: Milestone level (5, 10, 25, 50, 100)
+        required_referrals:
+          type: integer
+          description: Required number of referrals
+        current_referrals:
+          type: integer
+          description: Current number of referrals
+        reward_type:
+          type: string
+          description: Type of reward
+        reward_amount:
+          type: integer
+          description: Amount of reward
+        bonus_reward_type:
+          type: string
+          description: Type of bonus reward
+        bonus_reward_amount:
+          type: integer
+          description: Amount of bonus reward
+        is_completed:
+          type: boolean
+          description: Whether milestone is completed
+        completed_at:
+          type: string
+          format: date-time
+          description: When milestone was completed
+        is_reward_claimed:
+          type: boolean
+          description: Whether reward was claimed
+        reward_claimed_at:
+          type: string
+          format: date-time
+          description: When reward was claimed
+    RewardClaimResponse:
+      type: object
+      required:
+      - reward_id
+      - claimed_at
+      - reward_type
+      - reward_amount
+      properties:
+        reward_id:
+          type: string
+          format: uuid
+          description: ID of the claimed reward
+        claimed_at:
+          type: string
+          format: date-time
+          description: When reward was claimed
+        reward_type:
+          type: string
+          description: Type of reward
+        reward_amount:
+          type: integer
+          description: Amount rewarded
+        currency_type:
+          type: string
+          description: Type of currency (optional)
+        item_id:
+          type: string
+          format: uuid
+          description: Item ID if item reward (optional)
+    LeaderboardResponse:
+      type: object
+      required:
+      - entries
+      - total_count
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+        total_count:
+          type: integer
+          description: Total number of entries
+        last_updated:
+          type: string
+          format: date-time
+          description: When leaderboard was last updated
+    LeaderboardEntry:
+      type: object
+      required:
+      - rank
+      - character_id
+      - total_referrals
+      - active_referrals
+      - milestone_referrals
+      properties:
+        rank:
+          type: integer
+          description: Current rank
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        total_referrals:
+          type: integer
+          description: Total referrals
+        active_referrals:
+          type: integer
+          description: Active referrals
+        milestone_referrals:
+          type: integer
+          description: Milestone referrals
+        total_rewards:
+          type: number
+          format: decimal
+          description: Total rewards earned
+    LeaderboardPositionResponse:
+      type: object
+      required:
+      - character_id
+      - rank
+      - total_entries
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        rank:
+          type: integer
+          description: Current rank
+        total_entries:
+          type: integer
+          description: Total entries in leaderboard
+        surrounding_players:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+          description: Players around this position
+    RewardListResponse:
+      type: object
+      required:
+      - rewards
+      properties:
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardInfo'
+    RewardInfo:
+      type: object
+      required:
+      - id
+      - character_id
+      - reward_type
+      - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Reward ID
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        referral_id:
+          type: string
+          format: uuid
+          description: Associated referral ID (optional)
+        reward_type:
+          type: string
+          description: Type of reward
+        reward_amount:
+          type: integer
+          description: Amount of reward
+        currency_type:
+          type: string
+          description: Type of currency
+        item_id:
+          type: string
+          format: uuid
+          description: Item ID if applicable
+        status:
+          type: string
+          enum:
+          - pending
+          - distributed
+          - claimed
+          - expired
+          description: Current status
+        distributed_at:
+          type: string
+          format: date-time
+          description: When reward was distributed
+        claimed_at:
+          type: string
+          format: date-time
+          description: When reward was claimed
+        expires_at:
+          type: string
+          format: date-time
+          description: When reward expires
     PaginationParams:
-      $ref: ../common/schemas/pagination.yaml#/PaginationParams
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
     PaginatedResponse:
-      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
+  responses:
+    OK:
+      $ref: ../common-service/responses/success.yaml#/OK
+    Created:
+      $ref: ../common-service/responses/success.yaml#/Created
+    BadRequest:
+      $ref: ../common-service/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common-service/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common-service/responses/error.yaml#/NotFound
+    Conflict:
+      $ref: ../common-service/responses/error.yaml#/Conflict
+    InternalServerError:
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
+    HealthOK:
+      $ref: ../common-service/responses/success.yaml#/HealthOK
+    HealthBatchSuccess:
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
+      $ref: ../common-service/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      $ref: ../common/security/security.yaml#/ApiKeyAuth
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      $ref: ../common/security/security.yaml#/ServiceAuth
+      $ref: ../common-service/security/security.yaml#/ServiceAuth

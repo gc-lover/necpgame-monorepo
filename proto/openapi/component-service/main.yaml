@@ -9,11 +9,10 @@ info:
 
     ## Key Features
 
-    - **Combat Systems**: Wave-based combat mechanics and turn management
-    - **Gameplay Affixes**: Dynamic modifiers and enhancement systems
-    - **Cooperative Challenges**: Multiplayer challenge coordination
-    - **Difficulty Rating**: Adaptive difficulty scaling systems
-    - **World State Management**: Global game world state and flags
+    - **Combat Systems**: Wave-based combat mechanics and turn management - **Gameplay
+    Affixes**: Dynamic modifiers and enhancement systems - **Cooperative Challenges**:
+    Multiplayer challenge coordination - **Difficulty Rating**: Adaptive difficulty
+    scaling systems - **World State Management**: Global game world state and flags
     - **Challenge Modes**: Mythic+, restricted modes, and special content
 
     ## Domain Purpose
@@ -24,10 +23,9 @@ info:
 
     ## Performance Targets
 
-    - P99 Latency: <25ms for component operations
-    - Memory: <15KB per active component session
-    - Concurrent users: 100,000+ simultaneous interactions
-    - State updates: 50,000+ operations per second
+    - P99 Latency: <25ms for component operations - Memory: <15KB per active component
+    session - Concurrent users: 100,000+ simultaneous interactions - State updates:
+    50,000+ operations per second
 
     '
   version: 1.0.0
@@ -39,29 +37,29 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necpgame.com/v1/component
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/component
-    description: Staging server
-  - url: http://localhost:8080/api/v1/component
-    description: Local development server
+- url: https://api.necpgame.com/v1/component
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/component
+  description: Staging server
+- url: http://localhost:8080/api/v1/component
+  description: Local development server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: Combat Systems
-    description: Wave-based combat mechanics and turn management
-  - name: Gameplay Affixes
-    description: Dynamic modifiers and enhancement systems
-  - name: Cooperative Challenges
-    description: Multiplayer challenge coordination
-  - name: Difficulty Rating
-    description: Adaptive difficulty scaling systems
-  - name: World State
-    description: Global game world state and flags
-  - name: Challenge Modes
-    description: Special gameplay modes and content
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: Combat Systems
+  description: Wave-based combat mechanics and turn management
+- name: Gameplay Affixes
+  description: Dynamic modifiers and enhancement systems
+- name: Cooperative Challenges
+  description: Multiplayer challenge coordination
+- name: Difficulty Rating
+  description: Adaptive difficulty scaling systems
+- name: World State
+  description: Global game world state and flags
+- name: Challenge Modes
+  description: Special gameplay modes and content
+- name: Health Monitoring
+  description: System health and performance monitoring
 components:
   securitySchemes:
     BearerAuth:
@@ -70,19 +68,15 @@ components:
       bearerFormat: JWT
       description: '**JWT Bearer token authentication**
 
-        Required for all authenticated endpoints. Token must be obtained from
-        auth-service and included in Authorization header.
+        Required for all authenticated endpoints. Token must be obtained from auth-service
+        and included in Authorization header.
 
         **Format:** `Authorization: Bearer <token>`
 
-        **Token Expiry:** 15 minutes for access tokens, 7 days for refresh tokens
-        '
+        **Token Expiry:** 15 minutes for access tokens, 7 days for refresh tokens '
   schemas:
-    # Common schemas
     Error:
-      $ref: '../common/schemas/error.yaml#/Error'
-
-    # Component-specific schemas
+      $ref: ../common-service/schemas/error.yaml#/Error
     CombatWave:
       type: object
       description: Combat wave configuration and state
@@ -124,11 +118,10 @@ components:
           type: integer
           description: Time limit in seconds (optional)
       required:
-        - waveId
-        - encounterId
-        - waveNumber
-        - enemyTypes
-
+      - waveId
+      - encounterId
+      - waveNumber
+      - enemyTypes
     GameplayAffix:
       type: object
       description: Dynamic gameplay modifier
@@ -142,14 +135,24 @@ components:
           type: string
         type:
           type: string
-          enum: [damage, defense, speed, healing, resource, special]
+          enum:
+          - damage
+          - defense
+          - speed
+          - healing
+          - resource
+          - special
         target:
           type: string
-          enum: [player, enemy, environment, global]
+          enum:
+          - player
+          - enemy
+          - environment
+          - global
         value:
           oneOf:
-            - type: number
-            - type: string
+          - type: number
+          - type: string
           description: Modifier value or reference
         duration:
           type: integer
@@ -161,11 +164,10 @@ components:
           type: integer
           minimum: 1
       required:
-        - affixId
-        - name
-        - type
-        - target
-
+      - affixId
+      - name
+      - type
+      - target
     CooperativeChallenge:
       type: object
       description: Multiplayer cooperative challenge
@@ -191,7 +193,12 @@ components:
                 format: uuid
               type:
                 type: string
-                enum: [kill, collect, survive, achieve, coordinate]
+                enum:
+                - kill
+                - collect
+                - survive
+                - achieve
+                - coordinate
               target:
                 type: string
               count:
@@ -201,9 +208,9 @@ components:
               description:
                 type: string
             required:
-              - objectiveId
-              - type
-              - target
+            - objectiveId
+            - type
+            - target
         synchronization:
           type: object
           properties:
@@ -224,20 +231,23 @@ components:
             properties:
               type:
                 type: string
-                enum: [experience, currency, item, achievement]
+                enum:
+                - experience
+                - currency
+                - item
+                - achievement
               value:
                 oneOf:
-                  - type: integer
-                  - type: string
+                - type: integer
+                - type: string
               shared:
                 type: boolean
                 default: false
       required:
-        - challengeId
-        - name
-        - participantLimit
-        - objectives
-
+      - challengeId
+      - name
+      - participantLimit
+      - objectives
     DifficultyRating:
       type: object
       description: Dynamic difficulty assessment and scaling
@@ -251,7 +261,13 @@ components:
           description: Associated encounter/challenge/area ID
         baseDifficulty:
           type: string
-          enum: [very_easy, easy, normal, hard, very_hard, impossible]
+          enum:
+          - very_easy
+          - easy
+          - normal
+          - hard
+          - very_hard
+          - impossible
         playerCount:
           type: integer
           minimum: 1
@@ -277,7 +293,13 @@ components:
           description: Historical performance data
         adjustedDifficulty:
           type: string
-          enum: [very_easy, easy, normal, hard, very_hard, impossible]
+          enum:
+          - very_easy
+          - easy
+          - normal
+          - hard
+          - very_hard
+          - impossible
         scalingFactors:
           type: object
           properties:
@@ -295,10 +317,9 @@ components:
               format: float
           description: Applied scaling modifiers
       required:
-        - ratingId
-        - contextId
-        - baseDifficulty
-
+      - ratingId
+      - contextId
+      - baseDifficulty
     WorldState:
       type: object
       description: Global world state and flags
@@ -314,9 +335,9 @@ components:
           description: Global world flags and variables
           additionalProperties:
             oneOf:
-              - type: boolean
-              - type: integer
-              - type: string
+            - type: boolean
+            - type: integer
+            - type: string
         regions:
           type: object
           description: Regional state data
@@ -325,7 +346,12 @@ components:
             properties:
               status:
                 type: string
-                enum: [normal, alert, lockdown, event, disaster]
+                enum:
+                - normal
+                - alert
+                - lockdown
+                - event
+                - disaster
               activeEvents:
                 type: array
                 items:
@@ -336,9 +362,9 @@ components:
                 description: Regional modifiers
                 additionalProperties:
                   oneOf:
-                    - type: number
-                    - type: string
-                    - type: boolean
+                  - type: number
+                  - type: string
+                  - type: boolean
         globalEvents:
           type: array
           items:
@@ -351,7 +377,10 @@ components:
                 type: string
               impact:
                 type: string
-                enum: [local, regional, global]
+                enum:
+                - local
+                - regional
+                - global
               active:
                 type: boolean
               startTime:
@@ -359,10 +388,9 @@ components:
                 format: date-time
           description: Currently active global events
       required:
-        - stateId
-        - timestamp
-        - flags
-
+      - stateId
+      - timestamp
+      - flags
 paths:
   /health:
     get:
@@ -379,18 +407,18 @@ paths:
         '
       operationId: componentHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -405,9 +433,9 @@ paths:
               schema:
                 type: string
                 enum:
-                  - gzip
-                  - deflate
-                  - br
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
@@ -415,15 +443,16 @@ paths:
                 properties:
                   status:
                     type: string
-                    enum: [healthy]
+                    enum:
+                    - healthy
                     example: healthy
                   timestamp:
                     type: string
                     format: date-time
-                    example: "2024-01-15T10:30:00Z"
+                    example: '2024-01-15T10:30:00Z'
                   version:
                     type: string
-                    example: "1.0.0"
+                    example: 1.0.0
                   uptime:
                     type: integer
                     description: Uptime in seconds
@@ -444,12 +473,17 @@ paths:
                         format: float
                         example: 25.0
                 required:
-                  - status
-                  - timestamp
-                  - version
-        "503":
-          $ref: '../common/responses/error.yaml#/InternalServerError'
-
+                - status
+                - timestamp
+                - version
+        '503':
+          $ref: ../common-service/responses/error.yaml#/InternalServerError
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /combat/waves:
     get:
       summary: Get combat wave configurations
@@ -457,36 +491,43 @@ paths:
 
         Returns wave-based combat setups for dynamic encounters.
 
-        **Performance:** <20ms response time, cached for 5 minutes
-        '
+        **Performance:** <20ms response time, cached for 5 minutes '
       operationId: getCombatWaves
       tags:
-        - Combat Systems
+      - Combat Systems
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: encounter_type
-          in: query
-          schema:
-            type: string
-            enum: [random, story, challenge, boss]
-          description: Filter by encounter type
-        - name: difficulty
-          in: query
-          schema:
-            type: string
-            enum: [easy, medium, hard, expert]
-          description: Filter by difficulty level
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 50
-            default: 20
-          description: Maximum waves to return
+      - name: encounter_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - random
+          - story
+          - challenge
+          - boss
+        description: Filter by encounter type
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - expert
+        description: Filter by difficulty level
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        description: Maximum waves to return
       responses:
-        "200":
+        '200':
           description: Combat waves retrieved successfully
           content:
             application/json:
@@ -502,9 +543,14 @@ paths:
                       $ref: '#/components/schemas/CombatWave'
                   total:
                     type: integer
-        "401":
-          $ref: '../common/responses/error.yaml#/BadRequest'
-
+        '401':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /affixes/active:
     get:
       summary: Get active gameplay affixes
@@ -512,34 +558,43 @@ paths:
 
         Returns dynamic affixes that modify gameplay mechanics.
 
-        **Performance:** <15ms response time, real-time data
-        '
+        **Performance:** <15ms response time, real-time data '
       operationId: getActiveAffixes
       tags:
-        - Gameplay Affixes
+      - Gameplay Affixes
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: context_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Context ID (encounter, area, character)
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum: [damage, defense, speed, healing, resource, special]
-          description: Filter by affix type
-        - name: target
-          in: query
-          schema:
-            type: string
-            enum: [player, enemy, environment, global]
-          description: Filter by target type
+      - name: context_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Context ID (encounter, area, character)
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - damage
+          - defense
+          - speed
+          - healing
+          - resource
+          - special
+        description: Filter by affix type
+      - name: target
+        in: query
+        schema:
+          type: string
+          enum:
+          - player
+          - enemy
+          - environment
+          - global
+        description: Filter by target type
       responses:
-        "200":
+        '200':
           description: Active affixes retrieved successfully
           content:
             application/json:
@@ -554,11 +609,16 @@ paths:
                     items:
                       $ref: '#/components/schemas/GameplayAffix'
                   context:
-                        type: object
-                        description: Context information for applied affixes
-        "401":
-          $ref: '../common/responses/error.yaml#/BadRequest'
-
+                    type: object
+                    description: Context information for applied affixes
+        '401':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /challenges/cooperative/active:
     get:
       summary: Get active cooperative challenges
@@ -566,29 +626,31 @@ paths:
 
         Returns challenges requiring team coordination and participation.
 
-        **Performance:** <25ms response time, cached for 2 minutes
-        '
+        **Performance:** <25ms response time, cached for 2 minutes '
       operationId: getActiveCooperativeChallenges
       tags:
-        - Cooperative Challenges
+      - Cooperative Challenges
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Character identifier for availability check
-        - name: participant_range
-          in: query
-          schema:
-            type: string
-            enum: [small, medium, large]
-            description: Filter by team size (2-4, 5-10, 11+)
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character identifier for availability check
+      - name: participant_range
+        in: query
+        schema:
+          type: string
+          enum:
+          - small
+          - medium
+          - large
+          description: Filter by team size (2-4, 5-10, 11+)
       responses:
-        "200":
+        '200':
           description: Cooperative challenges retrieved successfully
           content:
             application/json:
@@ -603,16 +665,21 @@ paths:
                     items:
                       $ref: '#/components/schemas/CooperativeChallenge'
                   available:
-                        type: array
-                        items:
-                          type: string
-                          format: uuid
-                        description: Challenge IDs the character can join
-        "400":
-          $ref: '../common/responses/error.yaml#/BadRequest'
-        "401":
-          $ref: '../common/responses/error.yaml#/BadRequest'
-
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+                    description: Challenge IDs the character can join
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /difficulty/rate:
     post:
       summary: Calculate difficulty rating
@@ -620,13 +687,12 @@ paths:
 
         Analyzes context and player metrics to determine optimal difficulty scaling.
 
-        **Performance:** <100ms response time for rating calculation
-        '
+        **Performance:** <100ms response time for rating calculation '
       operationId: calculateDifficultyRating
       tags:
-        - Difficulty Rating
+      - Difficulty Rating
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -640,7 +706,11 @@ paths:
                   description: Context identifier (encounter, area, challenge)
                 contextType:
                   type: string
-                  enum: [encounter, area, challenge, event]
+                  enum:
+                  - encounter
+                  - area
+                  - challenge
+                  - event
                 playerMetrics:
                   type: object
                   properties:
@@ -665,20 +735,32 @@ paths:
                             type: boolean
                           difficulty:
                             type: string
-                            enum: [very_easy, easy, normal, hard, very_hard, impossible]
+                            enum:
+                            - very_easy
+                            - easy
+                            - normal
+                            - hard
+                            - very_hard
+                            - impossible
                   required:
-                    - count
-                    - averageLevel
+                  - count
+                  - averageLevel
                 baseDifficulty:
                   type: string
-                  enum: [very_easy, easy, normal, hard, very_hard, impossible]
+                  enum:
+                  - very_easy
+                  - easy
+                  - normal
+                  - hard
+                  - very_hard
+                  - impossible
                   description: Requested base difficulty
               required:
-                - contextId
-                - contextType
-                - playerMetrics
+              - contextId
+              - contextType
+              - playerMetrics
       responses:
-        "200":
+        '200':
           description: Difficulty rating calculated successfully
           content:
             application/json:
@@ -690,47 +772,51 @@ paths:
                     example: true
                   data:
                     $ref: '#/components/schemas/DifficultyRating'
-        "400":
-          $ref: '../common/responses/error.yaml#/BadRequest'
-        "401":
-          $ref: '../common/responses/error.yaml#/BadRequest'
-
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /world/state:
     get:
       summary: Get current world state
       description: '**Get global world state and active flags**
 
-        Returns current world state including global flags, regional status,
-        and active events affecting gameplay.
+        Returns current world state including global flags, regional status, and active
+        events affecting gameplay.
 
-        **Performance:** <10ms response time, cached for 30 seconds
-        '
+        **Performance:** <10ms response time, cached for 30 seconds '
       operationId: getWorldState
       tags:
-        - World State
+      - World State
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: include_regions
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Include regional state data
-        - name: include_events
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Include active global events
-        - name: region_filter
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter to specific region
+      - name: include_regions
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include regional state data
+      - name: include_events
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include active global events
+      - name: region_filter
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter to specific region
       responses:
-        "200":
+        '200':
           description: World state retrieved successfully
           content:
             application/json:
@@ -742,9 +828,14 @@ paths:
                     example: true
                   data:
                     $ref: '#/components/schemas/WorldState'
-        "401":
-          $ref: '../common/responses/error.yaml#/BadRequest'
-
+        '401':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /modes/challenge:
     get:
       summary: Get available challenge modes
@@ -752,35 +843,38 @@ paths:
 
         Returns Mythic+, restricted modes, and other special gameplay variants.
 
-        **Performance:** <20ms response time, cached for 10 minutes
-        '
+        **Performance:** <20ms response time, cached for 10 minutes '
       operationId: getChallengeModes
       tags:
-        - Challenge Modes
+      - Challenge Modes
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Character identifier for availability check
-        - name: mode_type
-          in: query
-          schema:
-            type: string
-            enum: [mythic_plus, restricted, master_challenge, special]
-          description: Filter by mode type
-        - name: unlocked_only
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Only return modes the character can access
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character identifier for availability check
+      - name: mode_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - mythic_plus
+          - restricted
+          - master_challenge
+          - special
+        description: Filter by mode type
+      - name: unlocked_only
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Only return modes the character can access
       responses:
-        "200":
+        '200':
           description: Challenge modes retrieved successfully
           content:
             application/json:
@@ -793,37 +887,52 @@ paths:
                   data:
                     type: array
                     items:
+                      type: object
+                      properties:
+                        modeId:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        type:
+                          type: string
+                          enum:
+                          - mythic_plus
+                          - restricted
+                          - master_challenge
+                          - special
+                        requirements:
                           type: object
-                          properties:
-                            modeId:
-                              type: string
-                              format: uuid
-                            name:
-                              type: string
-                            description:
-                              type: string
-                            type:
-                              type: string
-                              enum: [mythic_plus, restricted, master_challenge, special]
-                            requirements:
-                              type: object
-                              description: Access requirements
-                            rewards:
-                              type: object
-                              description: Mode-specific rewards
-                            unlocked:
-                              type: boolean
-                            recommendedLevel:
-                              type: integer
-                            difficulty:
-                              type: string
-                              enum: [easy, medium, hard, expert, nightmare]
-                          required:
-                            - modeId
-                            - name
-                            - type
-                            - unlocked
-        "400":
-          $ref: '../common/responses/error.yaml#/BadRequest'
-        "401":
-          $ref: '../common/responses/error.yaml#/BadRequest'
+                          description: Access requirements
+                        rewards:
+                          type: object
+                          description: Mode-specific rewards
+                        unlocked:
+                          type: boolean
+                        recommendedLevel:
+                          type: integer
+                        difficulty:
+                          type: string
+                          enum:
+                          - easy
+                          - medium
+                          - hard
+                          - expert
+                          - nightmare
+                      required:
+                      - modeId
+                      - name
+                      - type
+                      - unlocked
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error

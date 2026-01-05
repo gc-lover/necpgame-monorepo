@@ -1,0 +1,493 @@
+# Infrastructure Domain Common Schemas
+# SOLID/DRY foundation for infrastructure entities
+
+components:
+  schemas:
+
+    # ============================================================================
+    # AUTHENTICATION ENTITIES (from auth-service analysis)
+    # ============================================================================
+
+    # User Account Entity
+    UserAccountEntity:
+      allOf:
+        - $ref: './common.yaml#/AuditableEntity'
+        - type: object
+          required:
+            - username
+            - email
+            - status
+          properties:
+            username:
+              type: string
+              pattern: '^[a-zA-Z0-9_-]{3,30}$'
+              description: "Unique username"
+              example: "night_runner_2077"
+              maxLength: 30
+            email:
+              $ref: './common.yaml#/Email'
+            email_verified:
+              type: boolean
+              description: "Whether email is verified"
+              example: true
+            email_verified_at:
+              $ref: './common.yaml#/Timestamp'
+            password_hash:
+              type: string
+              description: "Bcrypt password hash"
+              example: "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPjYfY8HqK2K"
+              maxLength: 255
+            status:
+              type: string
+              enum:
+                - active
+                - inactive
+                - suspended
+                - banned
+                - pending_verification
+              description: "Account status"
+              example: "active"
+            role:
+              type: string
+              enum:
+                - player
+                - moderator
+                - admin
+                - developer
+              description: "Account role"
+              example: "player"
+            permissions:
+              type: array
+              items:
+                type: string
+                enum:
+                  - read_profile
+                  - write_profile
+                  - moderate_content
+                  - ban_users
+                  - system_admin
+                  - developer_access
+              description: "Granted permissions"
+            last_login_at:
+              $ref: './common.yaml#/Timestamp'
+            last_password_change_at:
+              $ref: './common.yaml#/Timestamp'
+            failed_login_attempts:
+              type: integer
+              minimum: 0
+              maximum: 10
+              description: "Failed login attempts in last hour"
+              example: 0
+            locked_until:
+              $ref: './common.yaml#/Timestamp'
+            two_factor_enabled:
+              type: boolean
+              description: "Whether 2FA is enabled"
+              example: false
+            two_factor_secret:
+              type: string
+              description: "TOTP secret for 2FA"
+              maxLength: 32
+            recovery_codes:
+              type: array
+              items:
+                type: string
+                pattern: '^[A-Z0-9]{10}$'
+              maxItems: 10
+              description: "Backup recovery codes"
+            account_settings:
+              type: object
+              description: "Account preferences"
+              properties:
+                email_notifications:
+                  type: boolean
+                  default: true
+                login_alerts:
+                  type: boolean
+                  default: true
+                session_timeout:
+                  type: integer
+                  minimum: 300
+                  maximum: 86400
+                  default: 3600
+                  description: "Session timeout in seconds"
+      description: "BACKEND NOTE: Core user account with security features and permissions."
+
+    # Session Entity
+    SessionEntity:
+      allOf:
+        - $ref: './common.yaml#/BaseEntity'
+        - type: object
+          required:
+            - user_id
+            - token
+            - expires_at
+          properties:
+            user_id:
+              $ref: './common.yaml#/UUID'
+            token:
+              type: string
+              pattern: '^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$'
+              description: "JWT token"
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              maxLength: 1000
+            refresh_token:
+              type: string
+              pattern: '^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$'
+              description: "JWT refresh token"
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              maxLength: 1000
+            expires_at:
+              $ref: './common.yaml#/Timestamp'
+            refresh_expires_at:
+              $ref: './common.yaml#/Timestamp'
+            ip_address:
+              type: string
+              pattern: '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+              description: "Client IP address"
+              example: "192.168.1.100"
+            user_agent:
+              type: string
+              description: "Client user agent"
+              example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+              maxLength: 500
+            device_fingerprint:
+              type: string
+              description: "Device fingerprint for security"
+              example: "abc123def456"
+              maxLength: 64
+            is_active:
+              type: boolean
+              description: "Whether session is active"
+              example: true
+            invalidated_at:
+              $ref: './common.yaml#/Timestamp'
+            last_activity_at:
+              $ref: './common.yaml#/Timestamp'
+            location:
+              type: object
+              description: "Approximate location based on IP"
+              properties:
+                country:
+                  type: string
+                  pattern: '^[A-Z]{2}$'
+                city:
+                  type: string
+                  maxLength: 100
+                timezone:
+                  type: string
+                  maxLength: 50
+      description: "BACKEND NOTE: User sessions with security tracking and device fingerprinting."
+
+    # OAuth Provider Entity
+    OAuthProviderEntity:
+      allOf:
+        - $ref: './common.yaml#/AuditableEntity'
+        - type: object
+          required:
+            - provider_name
+            - client_id
+            - client_secret
+          properties:
+            provider_name:
+              type: string
+              enum:
+                - google
+                - github
+                - discord
+                - steam
+                - epic_games
+                - microsoft
+              description: "OAuth provider"
+              example: "google"
+            display_name:
+              type: string
+              description: "Display name for UI"
+              example: "Google"
+              maxLength: 50
+            client_id:
+              type: string
+              description: "OAuth client ID"
+              example: "123456789.apps.googleusercontent.com"
+              maxLength: 255
+            client_secret:
+              type: string
+              description: "OAuth client secret (encrypted)"
+              example: "encrypted_secret_here"
+              maxLength: 255
+            authorization_url:
+              type: string
+              format: uri
+              description: "OAuth authorization URL"
+              example: "https://accounts.google.com/oauth/authorize"
+            token_url:
+              type: string
+              format: uri
+              description: "OAuth token exchange URL"
+              example: "https://oauth2.googleapis.com/token"
+            user_info_url:
+              type: string
+              format: uri
+              description: "User info endpoint URL"
+              example: "https://www.googleapis.com/oauth2/v2/userinfo"
+            scopes:
+              type: array
+              items:
+                type: string
+              description: "Required OAuth scopes"
+              example: [ "openid", "email", "profile" ]
+            is_active:
+              type: boolean
+              description: "Whether provider is enabled"
+              example: true
+            redirect_uris:
+              type: array
+              items:
+                type: string
+                format: uri
+              description: "Allowed redirect URIs"
+              maxItems: 10
+      description: "BACKEND NOTE: OAuth provider configurations with security validation."
+
+    # ============================================================================
+    # NOTIFICATION ENTITIES (from notification services analysis)
+    # ============================================================================
+
+    # Notification Entity
+    NotificationEntity:
+      allOf:
+        - $ref: './common.yaml#/BaseEntity'
+        - type: object
+          required:
+            - user_id
+            - type
+            - title
+            - message
+          properties:
+            user_id:
+              $ref: './common.yaml#/UUID'
+            type:
+              type: string
+              enum:
+                - system
+                - social
+                - game
+                - achievement
+                - trade
+                - guild
+                - event
+                - security
+              description: "Notification category"
+              example: "achievement"
+            title:
+              type: string
+              description: "Notification title"
+              example: "Achievement Unlocked!"
+              maxLength: 100
+            message:
+              type: string
+              description: "Notification message"
+              example: "You have unlocked the 'Night City Explorer' achievement!"
+              maxLength: 500
+            data:
+              type: object
+              description: "Additional notification data"
+              example: { "achievement_id": "uuid", "points": 100 }
+            priority:
+              type: string
+              enum:
+                - low
+                - normal
+                - high
+                - urgent
+              description: "Notification priority"
+              example: "normal"
+            channels:
+              type: array
+              items:
+                type: string
+                enum:
+                  - in_game
+                  - push
+                  - email
+                  - sms
+              description: "Delivery channels"
+              example: [ "in_game", "push" ]
+            is_read:
+              type: boolean
+              description: "Whether user has read the notification"
+              example: false
+            read_at:
+              $ref: './common.yaml#/Timestamp'
+            expires_at:
+              $ref: './common.yaml#/Timestamp'
+            sent_at:
+              $ref: './common.yaml#/Timestamp'
+            delivery_status:
+              type: object
+              description: "Delivery status per channel"
+              properties:
+                in_game:
+                  type: string
+                  enum: [ "pending", "sent", "delivered", "failed" ]
+                push:
+                  type: string
+                  enum: [ "pending", "sent", "delivered", "failed" ]
+                email:
+                  type: string
+                  enum: [ "pending", "sent", "delivered", "failed" ]
+      description: "BACKEND NOTE: Multi-channel notifications with delivery tracking."
+
+    # ============================================================================
+    # AUDIT & LOGGING ENTITIES
+    # ============================================================================
+
+    # Audit Log Entity
+    AuditLogEntity:
+      allOf:
+        - $ref: './common.yaml#/BaseEntity'
+        - type: object
+          required:
+            - user_id
+            - action
+            - resource_type
+            - resource_id
+          properties:
+            user_id:
+              $ref: './common.yaml#/UUID'
+            action:
+              type: string
+              enum:
+                - create
+                - read
+                - update
+                - delete
+                - login
+                - logout
+                - permission_change
+                - security_event
+              description: "Action performed"
+              example: "update"
+            resource_type:
+              type: string
+              enum:
+                - user
+                - character
+                - item
+                - guild
+                - trade
+                - session
+                - permission
+              description: "Type of resource affected"
+              example: "character"
+            resource_id:
+              $ref: './common.yaml#/UUID'
+            old_values:
+              type: object
+              description: "Previous values (for updates/deletes)"
+              example: { "name": "Old Name", "level": 10 }
+            new_values:
+              type: object
+              description: "New values (for creates/updates)"
+              example: { "name": "New Name", "level": 15 }
+            ip_address:
+              type: string
+              pattern: '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+              description: "Client IP address"
+            user_agent:
+              type: string
+              description: "Client user agent"
+              maxLength: 500
+            session_id:
+              $ref: './common.yaml#/UUID'
+            metadata:
+              type: object
+              description: "Additional audit metadata"
+              properties:
+                reason:
+                  type: string
+                  maxLength: 200
+                source:
+                  type: string
+                  enum: [ "api", "admin_panel", "game_client", "automation" ]
+                severity:
+                  type: string
+                  enum: [ "low", "medium", "high", "critical" ]
+      description: "BACKEND NOTE: Comprehensive audit logging for compliance and security."
+
+    # ============================================================================
+    # CONFIGURATION ENTITIES
+    # ============================================================================
+
+    # System Configuration Entity
+    SystemConfigEntity:
+      allOf:
+        - $ref: './common.yaml#/VersionedEntity'
+        - type: object
+          required:
+            - key
+            - value
+            - config_type
+          properties:
+            key:
+              type: string
+              pattern: '^[a-zA-Z0-9._-]{1,100}$'
+              description: "Configuration key"
+              example: "game.max_players_per_guild"
+              maxLength: 100
+            value:
+              type: string
+              description: "Configuration value (JSON string)"
+              example: "100"
+              maxLength: 10000
+            config_type:
+              type: string
+              enum:
+                - string
+                - number
+                - boolean
+                - json
+                - array
+              description: "Value type for validation"
+              example: "number"
+            category:
+              type: string
+              enum:
+                - game
+                - economy
+                - social
+                - security
+                - performance
+                - feature_flags
+              description: "Configuration category"
+              example: "game"
+            is_encrypted:
+              type: boolean
+              description: "Whether value is encrypted"
+              example: false
+            description:
+              type: string
+              description: "Configuration description"
+              example: "Maximum number of players allowed per guild"
+              maxLength: 500
+            validation_rules:
+              type: object
+              description: "Value validation rules"
+              properties:
+                min:
+                  type: number
+                max:
+                  type: number
+                pattern:
+                  type: string
+                enum:
+                  type: array
+                  items:
+                    type: string
+            last_modified_by:
+              $ref: './common.yaml#/UUID'
+            requires_restart:
+              type: boolean
+              description: "Whether change requires service restart"
+              example: false
+      description: "BACKEND NOTE: Dynamic system configuration with validation and versioning."

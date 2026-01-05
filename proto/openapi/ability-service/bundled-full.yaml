@@ -1,0 +1,790 @@
+openapi: 3.0.3
+info:
+  title: Ability Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Ability Management API for NECPGAME**
+
+    This API manages character abilities, skills, and special powers in the Night
+    City universe, providing comprehensive ability activation, cooldown management,
+    and resource tracking.
+
+    ## Key Features
+
+    - **Ability Activation**: Real-time ability execution with validation - **Cooldown
+    Management**: Dynamic cooldown tracking and reset mechanics - **Resource Tracking**:
+    Mana, energy, and resource consumption monitoring - **Ability Synergies**: Combo
+    interactions and ability chaining - **Performance Optimized**: MMOFPS-grade performance
+    with <15ms P99 latency - **Struct Alignment**: 30-50% memory savings for ability
+    structs
+
+    ## Domain Purpose
+
+    The Ability domain handles all character abilities and special powers in Night
+    City. Players activate abilities that define their combat style and strategic
+    capabilities in dynamic gameplay scenarios.
+
+    ## Performance Targets
+
+    - P99 Latency: <15ms for ability operations - Memory: <12KB per active ability
+    session - Concurrent users: 45,000+ simultaneous ability operations - Activation
+    time: <5ms response time
+
+    '
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@combat-abilities.necpgame.com
+servers:
+- url: https://api.necpgame.com/v1/ability
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/ability
+  description: Staging server
+- url: http://localhost:8080/api/v1/ability
+  description: Local development server
+tags:
+- name: Ability Management
+  description: Combat ability lifecycle operations
+- name: Ability Activation
+  description: Real-time ability activation and execution
+- name: Ability Cooldowns
+  description: Cooldown management and tracking
+- name: Ability Synergies
+  description: Ability combinations and synergies
+- name: Anti-Cheat
+  description: Ability validation and cheat prevention
+- name: AI Training
+  description: AI-powered ability learning and adaptation
+- name: AI Recommendations
+  description: Personalized ability recommendations
+paths:
+  /health:
+    get:
+      summary: Service health check
+      operationId: combatAbilitiesHealthCheck
+      tags:
+      - Health
+      responses:
+        '200':
+          $ref: '#/components/responses/OK'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /combat/abilities:
+    post:
+      summary: Activate combat ability
+      operationId: combatAbilitiesActivateAbility
+      description: 'Activate a combat ability with validation and anti-cheat checks.
+
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations. '
+      tags:
+      - Ability Activation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateAbilityRequest'
+      responses:
+        '200':
+          description: Ability activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivateAbilityResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+    get:
+      summary: List available abilities
+      operationId: combatAbilitiesListAbilities
+      description: Get list of available combat abilities for a character.
+      tags:
+      - Ability Management
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character ID
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Maximum number of abilities to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of abilities to skip
+      responses:
+        '200':
+          description: List of available abilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAbilitiesResponse'
+  /combat/abilities/{ability_id}/cooldown:
+    get:
+      summary: Get ability cooldown status
+      operationId: combatAbilitiesGetAbilityCooldown
+      description: Get current cooldown status for a specific ability.
+      tags:
+      - Ability Cooldowns
+      parameters:
+      - name: ability_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Ability ID
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character ID
+      responses:
+        '200':
+          description: Ability cooldown status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilityCooldownResponse'
+        '404':
+          description: Ability not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /combat/abilities/{ability_id}/synergies:
+    get:
+      summary: Get ability synergies
+      operationId: combatAbilitiesGetAbilitySynergies
+      description: Get synergies and combo possibilities for an ability.
+      tags:
+      - Ability Synergies
+      parameters:
+      - name: ability_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Ability ID
+      responses:
+        '200':
+          description: Ability synergies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilitySynergiesResponse'
+  /combat/abilities/validate:
+    post:
+      summary: Validate ability activation
+      operationId: combatAbilitiesValidateAbilityActivation
+      description: 'Validate ability activation for anti-cheat purposes.
+
+        **BACKEND NOTE:** Used for cheat detection and prevention. '
+      tags:
+      - Anti-Cheat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateAbilityRequest'
+        responses:
+          '200':
+            description: Validation result
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ValidateAbilityResponse'
+          '400':
+            description: Invalid validation request
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
+    /combat/abilities/adaptive/train:
+      post:
+        summary: Submit ability usage data for AI training
+        operationId: trainAbilityAI
+        description: 'Submit ability usage patterns for adaptive AI learning.
+
+          **AI Integration:** Trains models for personalized ability recommendations
+          and combat tactics.
+
+          **BACKEND NOTE:** Hot path for AI training data, batched processing.'
+        tags:
+        - AI Training
+        security:
+        - BearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilityTrainingData'
+        responses:
+          '200':
+            description: Training data accepted
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/TrainingResponse'
+          '400':
+            description: Invalid training data
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
+    /combat/abilities/adaptive/recommend:
+      get:
+        summary: Get AI-powered ability recommendations
+        operationId: getAbilityRecommendations
+        description: 'Get personalized ability recommendations based on player style
+          and combat patterns.
+
+          **AI Integration:** Uses trained models for tactical suggestions.'
+        tags:
+        - AI Recommendations
+        security:
+        - BearerAuth: []
+        parameters:
+        - name: character_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Character ID for personalization
+        - name: combat_context
+          in: query
+          schema:
+            type: string
+            enum:
+            - solo
+            - team
+            - boss
+            - pvp
+          description: Current combat context
+        responses:
+          '200':
+            description: Ability recommendations
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AbilityRecommendations'
+          '404':
+            description: Character not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Error'
+components:
+  responses:
+    OK:
+      $ref: ../common-service/responses/success.yaml#/OK
+    Created:
+      $ref: ../common-service/responses/success.yaml#/Created
+    Updated:
+      $ref: ../common-service/responses/success.yaml#/Updated
+    Deleted:
+      $ref: ../common-service/responses/success.yaml#/Deleted
+    BadRequest:
+      $ref: ../common-service/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
+    NotFound:
+      $ref: ../common-service/responses/error.yaml#/NotFound
+    TooManyRequests:
+      $ref: ../common-service/responses/error.yaml#/TooManyRequests
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
+  schemas:
+    HealthResponse:
+      $ref: ./health.yaml#/HealthResponse
+    Error:
+      $ref: ../common-service/schemas/error.yaml#/Error
+    Ability:
+      allOf:
+      - $ref: ../common-service/schemas/common.yaml#/BaseEntity
+      - type: object
+        required:
+        - name
+        - type
+        - cooldown
+        properties:
+          name:
+            type: string
+            description: Ability display name
+            example: Sandevistan Overdrive
+            maxLength: 100
+          description:
+            type: string
+            description: Ability description
+            example: Temporarily increases movement speed by 300%
+          type:
+            type: string
+            enum:
+            - passive
+            - active
+            - toggle
+            description: Ability activation type
+            example: active
+          cooldown:
+            type: integer
+            minimum: 0
+            description: Cooldown in milliseconds
+            example: 30000
+          mana_cost:
+            type: integer
+            minimum: 0
+            description: Mana/energy cost
+            example: 50
+      - type: object
+        properties:
+          synergy_abilities:
+            type: array
+            items:
+              $ref: ../common-service/schemas/common.yaml#/components/schemas/UUID
+            description: Compatible abilities for synergy activation
+            example:
+            - 123e4567-e89b-12d3-a456-426614174000
+          anti_cheat_token:
+            type: string
+            description: Token for anti-cheat validation
+          unlock_requirements:
+            type: array
+            items:
+              $ref: ../common-service/schemas/common.yaml#/components/schemas/UUID
+            description: Requirements to unlock this ability
+            example:
+            - 123e4567-e89b-12d3-a456-426614174001
+          is_unlocked:
+            type: boolean
+            description: Whether ability is unlocked for character
+      description: 'BACKEND NOTE: Ability entity with domain inheritance (SOLID/DRY).'
+    ActivateAbilityRequest:
+      type: object
+      required:
+      - ability_id
+      - character_id
+      - target_position
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        character_id:
+          type: string
+          format: uuid
+          description: Character activating the ability
+        target_entity_id:
+          type: string
+          format: uuid
+          description: Target entity ID (optional for area abilities)
+        client_version:
+          type: string
+          description: Client version for compatibility checks
+        target_position:
+          type: object
+          required:
+          - x
+          - y
+          - z
+          properties:
+            x:
+              type: number
+              format: float
+              description: X coordinate
+            y:
+              type: number
+              format: float
+              description: Y coordinate
+            z:
+              type: number
+              format: float
+              description: Z coordinate
+          description: 'BACKEND NOTE: 3D vector for positioning, optimized for game
+            coordinates. Target position for the ability'
+        synergy_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of synergistic abilities activated together
+          maxItems: 5
+        timestamp:
+          type: integer
+          format: int64
+          description: Client timestamp for anti-cheat validation
+        version:
+          type: integer
+          description: Optimistic locking version for concurrent operations
+          example: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
+        types). Expected memory savings: 30-50% for activation requests.'
+    ActivateAbilityResponse:
+      type: object
+      required:
+      - success
+      - activation_id
+      - cooldown_end_time
+      properties:
+        activation_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        ability_id:
+          type: string
+          format: uuid
+          description: Activated ability ID
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        validation_token:
+          type: string
+          description: Anti-cheat validation token
+        resource_cost:
+          type: object
+          properties:
+            health:
+              type: integer
+              format: int32
+            stamina:
+              type: integer
+              format: int32
+            mana:
+              type: integer
+              format: int32
+          description: Resources consumed by the ability
+        synergy_bonus:
+          type: number
+          format: float
+          description: Damage/resource multiplier from synergies
+        success:
+          type: boolean
+          description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
+        cooldown_end_time:
+          type: integer
+          format: int64
+          description: Timestamp when cooldown ends
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
+        types). Expected memory savings: 30-50% for activation responses.'
+    ListAbilitiesResponse:
+      type: object
+      required:
+      - abilities
+      - total_count
+      properties:
+        pagination:
+          type: object
+          properties:
+            offset:
+              type: integer
+              format: int32
+            limit:
+              type: integer
+              format: int32
+            has_more:
+              type: boolean
+          description: Pagination information
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ability'
+          description: 'BACKEND NOTE: Array of ability objects, ordered for optimal
+            struct layout'
+        total_count:
+          type: integer
+          format: int32
+          description: Total number of abilities available
+      description: 'BACKEND NOTE: Response optimized for struct alignment with large
+        arrays first.'
+    AbilityCooldownResponse:
+      type: object
+      required:
+      - ability_id
+      - is_on_cooldown
+      - remaining_time
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        is_on_cooldown:
+          type: boolean
+          description: Whether ability is currently on cooldown
+        remaining_time:
+          type: integer
+          format: int32
+          description: Remaining cooldown time in milliseconds
+        total_cooldown:
+          type: integer
+          format: int32
+          description: Total cooldown duration
+        last_used:
+          type: integer
+          format: int64
+          description: Timestamp when ability was last used
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
+        types).'
+    AbilitySynergiesResponse:
+      type: object
+      required:
+      - ability_id
+      - synergies
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: Ability for which synergies are being queried
+        synergies:
+          type: array
+          items:
+            type: object
+            required:
+            - partner_ability_id
+            - synergy_type
+            - bonus_multiplier
+            properties:
+              partner_ability_id:
+                type: string
+                format: uuid
+                description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct
+                  alignment'
+              synergy_type:
+                type: string
+                enum:
+                - damage_boost
+                - cooldown_reduction
+                - resource_efficiency
+                - critical_chance
+                description: Type of synergy effect
+              bonus_multiplier:
+                type: number
+                format: float
+                description: Multiplier for the synergy bonus
+              condition:
+                type: string
+                description: Condition for synergy activation
+              is_active:
+                type: boolean
+                description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct
+                  alignment'
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+              → small types).'
+          description: List of possible synergies for this ability
+        total_synergies:
+          type: integer
+          format: int32
+          description: Total number of synergies available
+      description: 'BACKEND NOTE: Response optimized for struct alignment.'
+    ValidateAbilityRequest:
+      type: object
+      required:
+      - ability_id
+      - character_id
+      - activation_data
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        client_hash:
+          type: string
+          description: Client-side hash for anti-cheat validation
+        activation_data:
+          type: object
+          properties:
+            timestamp:
+              type: integer
+              format: int64
+            position:
+              type: object
+              required:
+              - x
+              - y
+              - z
+              properties:
+                x:
+                  type: number
+                  format: float
+                  description: X coordinate
+                y:
+                  type: number
+                  format: float
+                  description: Y coordinate
+                z:
+                  type: number
+                  format: float
+                  description: Z coordinate
+              description: 'BACKEND NOTE: 3D vector for positioning, optimized for
+                game coordinates.'
+            target:
+              type: string
+              format: uuid
+          description: Activation context data for validation
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
+        types).'
+    ValidateAbilityResponse:
+      type: object
+      required:
+      - is_valid
+      - validation_token
+      properties:
+        validation_token:
+          type: string
+          description: 'BACKEND NOTE: String - variable length, ordered first'
+        violations:
+          type: array
+          items:
+            type: string
+          description: List of validation violations found
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence score of validation (0-1)
+        is_valid:
+          type: boolean
+          description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
+        types).'
+    AbilityTrainingData:
+      type: object
+      required:
+      - character_id
+      - ability_id
+      - usage_context
+      - outcome
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character using the ability
+        ability_id:
+          type: string
+          format: uuid
+          description: Ability being used
+        usage_context:
+          type: object
+          properties:
+            enemy_type:
+              type: string
+              description: Type of enemy faced
+            player_health:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Player health percentage
+            combat_phase:
+              type: string
+              enum:
+              - opening
+              - mid
+              - endgame
+              description: Combat phase
+          description: Context of ability usage
+        outcome:
+          type: object
+          properties:
+            damage_dealt:
+              type: integer
+              minimum: 0
+              description: Damage dealt with ability
+            effectiveness:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: Ability effectiveness rating
+            success:
+              type: boolean
+              description: Whether ability achieved its goal
+          description: Outcome of ability usage
+        timestamp:
+          type: string
+          format: date-time
+          description: Usage timestamp
+      description: 'BACKEND NOTE: AI training data for ability optimization. Large
+        object first for struct alignment.'
+    TrainingResponse:
+      type: object
+      properties:
+        training_data_id:
+          type: string
+          format: uuid
+          description: Unique training data identifier
+        status:
+          type: string
+          enum:
+          - accepted
+          - processed
+          - rejected
+          description: Training data processing status
+        message:
+          type: string
+          description: Processing result message
+      description: 'BACKEND NOTE: Response for training data submission.'
+    AbilityRecommendations:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              ability_id:
+                type: string
+                format: uuid
+                description: Recommended ability
+              confidence:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: AI confidence in recommendation
+              reasoning:
+                type: string
+                description: AI reasoning for recommendation
+            description: Individual recommendation
+          description: List of ability recommendations
+        generated_at:
+          type: string
+          format: date-time
+          description: Recommendation generation timestamp
+      description: 'BACKEND NOTE: AI-generated ability recommendations.'
+security:
+- BearerAuth: []

@@ -1,380 +1,234 @@
-# Performance Monitoring Service - OpenAPI Specification
+# Performance Monitoring Service
 
-## 📋 **Назначение**
+## Overview
 
-Performance Monitoring Service предоставляет **enterprise-grade API для мониторинга производительности** в NECPGAME экосистеме. Сервис отвечает за сбор метрик, анализ производительности, оповещения и оптимизацию системы.
+**Performance Monitoring Service API** - Enterprise-grade domain service providing comprehensive monitoring, metrics
+collection, health checks, and observability for the NECPGAME platform. This service implements SOLID/DRY principles
+with domain separation, ensuring reliable performance tracking across all game systems.
 
-## 🎯 **Функциональность**
+## Domain Purpose
 
-### 📊 **Мониторинг в Реальном Времени**
-- Живое отслеживание метрик производительности
-- Проверки здоровья сервисов и компонентов
-- Отслеживание использования ресурсов
+The Performance Monitoring Service serves as the central observability hub for the entire game platform, providing:
 
-### 📈 **Сбор Метрик**
-- Комплексная агрегация данных производительности
-- Анализ трендов и паттернов
-- Хранение исторических данных
+- **Real-time Health Monitoring**: Continuous health checks for all services and infrastructure components
+- **Performance Metrics**: Detailed performance analytics for game mechanics, AI systems, and user interactions
+- **Alert Management**: Proactive alerting system for performance degradation and system issues
+- **Distributed Tracing**: End-to-end request tracing across microservices
+- **Analytics Dashboard**: Comprehensive analytics for operational insights
 
-### 🚨 **Интеллектуальные Оповещения**
-- Обнаружение аномалий и отклонений
-- Автоматизированные реакции на проблемы
-- Эскалация критических ситуаций
+## Performance Targets
 
-### 🎯 **Оптимизация Производительности**
-- ИИ-рекомендации по улучшению
-- Планирование容量 и масштабирования
-- Предиктивная аналитика
+- **Latency**: < 50ms for health checks, < 200ms for metrics queries
+- **Memory**: < 512MB baseline, < 1GB under load
+- **RPS**: 1000+ sustained requests per second
+- **Uptime**: 99.9% availability SLA
 
-### Backend Optimization Hints
-
-- Struct alignment hints для оптимизации памяти
-- Performance targets и требования
-- Порядок полей: large -> small для экономии памяти
-
-### Complete Validation
-
-- Redocly lint: проходит валидацию
-- ogen: успешно генерирует Go код
-- Go compilation: код компилируется без ошибок
-
-### Security-First Approach
-
-- JWT Bearer authentication
-- Правильные HTTP статус коды
-- Error handling с дополнительным контекстом
-
-## Структура Шаблона
+## Structure
 
 ```
-proto/openapi/example-domain/
-├── main.yaml           # Основная спецификация (этот файл)
-└── README.md          # Это руководство
-
-proto/openapi/common/                   # Общие компоненты (используются по умолчанию)
-├── responses/
-│   ├── error.yaml      # Общие ответы ошибок (400, 401, 403, 404, 409, 500, 429)
-│   └── success.yaml    # Общие успешные ответы (200, 201, health checks)
-├── schemas/
-│   ├── common.yaml     # Основные схемы (HealthResponse, Error, Pagination)
-│   ├── error.yaml      # Схема ошибки
-│   ├── health.yaml     # Схема здоровья сервиса
-│   └── pagination.yaml # Схемы пагинации
-└── security/
-    └── security.yaml   # Схемы аутентификации (BearerAuth, ApiKeyAuth)
+performance-monitoring-service/
+├── main.yaml                 # Main OpenAPI specification
+├── README.md                 # This documentation
+└── (future) schemas/         # Domain-specific schemas
 ```
 
-## Обязательные Элементы
+## Dependencies
 
-### 1. **OpenAPI Header**
+- **Common Schemas**: `../common-service/schemas/health.yaml`, `../common-service/schemas/error.yaml`
+- **Common Responses**: `../common-service/responses/error.yaml`, `../common-service/responses/success.yaml`
+- **Common Operations**: `../common-service/operations/health.yaml`, `../common-service/operations/batch-health.yaml`
 
-```yaml
-openapi: 3.0.3
-info:
-  title: [Domain Name] API
-  description: Enterprise-grade API for [domain purpose]
-  version: "1.0.0"
-  contact:
-    name: NECPGAME API Support
-    email: api@necpgame.com
-  license:
-    name: MIT
-```
+## Usage
 
-### 2. **Servers Configuration**
-
-```yaml
-servers:
-  - url: https://api.necpgame.com/v1/[domain]
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/[domain]
-    description: Staging server
-  - url: http://localhost:8080/api/v1/[domain]
-    description: Local development server
-```
-
-### 3. **Security Schemes**
-
-```yaml
-security:
-  - BearerAuth: []
-
-components:
-  securitySchemes:
-    BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
-    ApiKeyAuth:
-      $ref: '../common/security/security.yaml#/ApiKeyAuth'
-    ServiceAuth:
-      $ref: '../common/security/security.yaml#/ServiceAuth'
-```
-
-**Использует по умолчанию:**
-- `../common/security/security.yaml` - Bearer JWT, API Key и Service аутентификация
-
-### 4. **Обязательные Health Endpoints**
-
-#### Health Check
-
-```yaml
-/health:
-  get:
-    operationId: [domain]HealthCheck
-    responses:
-      '200': # Обязательно
-        $ref: '../common/responses/success.yaml#/HealthOK'
-      '503': # Обязательно
-        $ref: '../common/responses/error.yaml#/InternalServerError'
-```
-
-**Использует по умолчанию:**
-- `../common/responses/success.yaml#/HealthOK` - Ответ здоровья
-- `../common/schemas/health.yaml#/HealthResponse` - Схема здоровья
-- `../common/responses/error.yaml#/InternalServerError` - Ошибка сервера
-
-#### Batch Health Check
-
-```yaml
-/health/batch:
-  post:
-    operationId: [domain]BatchHealthCheck
-    # Проверяет несколько доменов в одном запросе
-```
-
-#### WebSocket Health Monitoring
-
-```yaml
-/health/ws:
-  get:
-    operationId: [domain]HealthWebSocket
-    # Real-time monitoring без polling
-```
-
-### 5. **Общие Схемы (Используются по умолчанию)**
-
-#### Error Responses
-```yaml
-components:
-  responses:
-    BadRequest:
-      $ref: '../common/responses/error.yaml#/BadRequest'
-    Unauthorized:
-      $ref: '../common/responses/error.yaml#/Unauthorized'
-    Forbidden:
-      $ref: '../common/responses/error.yaml#/Forbidden'
-    NotFound:
-      $ref: '../common/responses/error.yaml#/NotFound'
-    Conflict:
-      $ref: '../common/responses/error.yaml#/Conflict'
-    InternalServerError:
-      $ref: '../common/responses/error.yaml#/InternalServerError'
-```
-
-#### Common Schemas
-```yaml
-components:
-  schemas:
-    Error:
-      $ref: '../common/schemas/error.yaml#/Error'
-    HealthResponse:
-      $ref: '../common/schemas/health.yaml#/HealthResponse'
-```
-
-**Файлы по умолчанию:**
-- `../common/schemas/error.yaml` - Стандартная схема ошибки
-- `../common/schemas/health.yaml` - Схема здоровья сервиса
-- `../common/responses/error.yaml` - Стандартные HTTP ошибки
-- `../common/responses/success.yaml` - Успешные ответы
-
-### 6. **Backend Optimization Hints**
-
-#### Struct Alignment
-
-```yaml
-description: 'BACKEND NOTE: Fields ordered for struct alignment (large -> small). Expected memory savings: 30-50%.'
-```
-
-#### Performance Targets
-
-```yaml
-description: |
-  **Performance:** <50ms P95, supports 1000+ concurrent requests
-  **Memory:** <50KB per instance
-  **Concurrent users:** 10,000+
-```
-
-## Как Использовать Шаблон
-
-### 1. **Копирование Шаблона**
+### Health Monitoring
 
 ```bash
-# Создайте новый домен
-mkdir proto/openapi/your-new-domain
-cp proto/openapi/example-domain/main.yaml proto/openapi/your-new-domain/main.yaml
+# Service health check
+GET /health
+
+# Batch health check for multiple services
+GET /health/batch?service_filter=all
+
+# WebSocket health monitoring
+GET /health/ws
 ```
 
-### 2. **Замена Placeholder'ов**
-
-- `[Domain Name]` -> Название вашего домена
-- `[domain purpose]` -> Описание назначения домена
-- `[domain]` -> Кодовое имя домена (kebab-case)
-- Замените example operations на реальные
-
-### 3. **Добавление Реальных Операций**
-
-Замените примеры CRUD операций на реальные endpoints вашего домена:
-
-```yaml
-# Заменить /examples на ваши реальные ресурсы
-/examples:
-  get: # List
-  post: # Create
-/examples/{id}:
-  get: # Get by ID
-  put: # Update
-  delete: # Delete
-```
-
-### 4. **Оптимизация Схем**
-
-Для каждой схемы:
-
-- Упорядочite поля: large -> small
-- Добавьте `BACKEND NOTE` с оптимизациями
-- Добавьте примеры и валидацию
-
-## Валидация Шаблона
-
-### Redocly Lint
+### Performance Metrics
 
 ```bash
-npx @redocly/cli lint proto/openapi/example-domain/main.yaml
-# Valid. 4 warnings (нормально)
+# Get service metrics
+GET /metrics/{service_name}?time_range=1h&metric_types=cpu,memory
+
+# Get alerts with filtering
+GET /alerts?severity=critical&status=active&limit=50
+
+# Acknowledge alert
+POST /alerts/{alert_id}/acknowledge
+```
+
+### Analytics
+
+```bash
+# Anti-cheat monitoring
+GET /anti-cheat/monitoring/stats
+
+# Economy analytics
+GET /economy/analytics/overview?time_range=24h
+
+# AI combat analytics
+GET /ai-combat/analytics/overview
+```
+
+## Validation
+
+### Redocly Lint Check
+
+```bash
+npx @redocly/cli lint proto/openapi/performance-monitoring-service/main.yaml
 ```
 
 ### Go Code Generation
 
 ```bash
-# Bundle
-npx @redocly/cli bundle proto/openapi/example-domain/main.yaml -o bundled.yaml
-
-# Generate Go code
-ogen --target temp --package api --clean bundled.yaml
-
-# Compile
-cd temp && go mod init test && go mod tidy && go build .
-# Success
+ogen proto/openapi/performance-monitoring-service/main.yaml \
+  --package performance_monitoring \
+  --generate server,client,models \
+  --output services/performance-monitoring-service-go/
 ```
+
+## Mandatory Elements
+
+### OpenAPI Header
+
+- OpenAPI 3.0.3 specification
+- Enterprise-grade info with version, description, contact
+- License and terms of service
+- External documentation links
+
+### Servers Configuration
+
+- Production: `https://api.necpgame.com/v1/performance-monitoring`
+- Staging: `https://staging-api.necpgame.com/v1/performance-monitoring`
+- Local: `http://localhost:8080/api/v1/performance-monitoring`
+
+### Security Schemes
+
+- BearerAuth (JWT tokens)
+- APIKeyAuth (service-to-service)
+- Mutual TLS for internal communications
+
+### Health Endpoints
+
+- `/health` - Basic health check
+- `/health/batch` - Batch health check for services
+- `/health/ws` - WebSocket real-time health monitoring
+
+### Common Schemas
+
+- `HealthResponse` from `../common-service/schemas/health.yaml`
+- `Error` from `../common-service/schemas/error.yaml`
+- `WebSocketHealthMessage` for real-time updates
+
+## Backend Optimization Hints
+
+### Memory Alignment
+
+```go
+// Struct field alignment for 30-50% memory savings
+type PerformanceMetrics struct {
+    Timestamp   time.Time `json:"timestamp"`   // 8 bytes
+    ServiceName string    `json:"service_name"` // 16 bytes
+    CPUUsage    float64   `json:"cpu_usage"`   // 8 bytes
+    MemoryUsage uint64    `json:"memory_usage"` // 8 bytes
+    // Total: 40 bytes, perfectly aligned
+}
+```
+
+### Connection Pooling
+
+```go
+// Database connection pool configuration
+db.SetMaxOpenConns(100)
+db.SetMaxIdleConns(10)
+db.SetConnMaxLifetime(time.Hour)
+
+// Redis connection pool
+redisPool := &redis.Pool{
+    MaxActive: 100,
+    MaxIdle:   10,
+    Wait:      true,
+}
+```
+
+### Context Timeouts
+
+```go
+// All operations must have context timeouts
+ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+defer cancel()
+
+result, err := service.GetMetrics(ctx, request)
+```
+
+## How to Use the Template
+
+1. **Copy Template**: Start from the enterprise template
+2. **Replace Placeholders**: Update service name, description, version
+3. **Add Real Operations**: Implement domain-specific endpoints
+4. **Optimize Schemas**: Apply memory alignment and performance hints
+5. **Validate**: Run Redocly lint and Ogen generation
+6. **Test**: Ensure all endpoints work correctly
 
 ## Performance Benchmarks
 
-Шаблон оптимизирован для:
+### Health Check Performance
 
-- **P99 Latency:** <50ms
-- **Memory per Instance:** <50KB
-- **Concurrent Users:** 10,000+
+- Single service: < 10ms response time
+- Batch check (10 services): < 50ms response time
+- WebSocket connection: < 100ms establishment
 
-## Связанные Документы
+### Metrics Query Performance
 
-- `.cursor/rules/agent-api-designer.mdc` - Правила API Designer агента
-- `.cursor/DOMAIN_REFERENCE.md` - Справочник enterprise-grade доменов
-- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - Чек-лист оптимизаций
-- `.cursor/PERFORMANCE_ENFORCEMENT.md` - Требования к производительности
+- 1-hour range: < 200ms
+- 24-hour range: < 500ms
+- 7-day range: < 2s
 
-## Следующие Шаги
+### Alert Processing
 
-1. Скопируйте этот шаблон для нового домена
-2. Замените placeholders на реальные значения
-3. Добавьте domain-specific операции
-4. Оптимизируйте схемы для struct alignment
-5. Проверьте валидацию и генерацию кода
-6. Зарегистрируйте домен в DOMAIN_REFERENCE.md
+- Alert detection: < 1s from event
+- Alert notification: < 500ms delivery
+- Alert escalation: < 30s for critical alerts
 
-## Важные Замечания
+## Related Documents
 
-- **НЕ** удаляйте обязательные health endpoints
-- **ВСЕГДА** добавляйте operationId для генерации Go кода
-- **ОПТИМИЗИРУЙТЕ** порядок полей в схемах
-- **ВАЛИДИРУЙТЕ** перед коммитом
-- **ДОКУМЕНТИРУЙТЕ** performance targets
+- `REORGANIZATION_INSTRUCTION.md` - Migration guidelines
+- `MIGRATION_GUIDE.md` - Step-by-step migration process
+- `.cursor/rules/agent-backend.mdc` - Backend implementation rules
+- `.cursor/rules/agent-performance.mdc` - Performance optimization guidelines
 
----
+## Next Steps
 
-## Использование Общих Схем Между Домеами
+1. **Implement Backend**: Create Go service in `services/performance-monitoring-service-go/`
+2. **Database Setup**: Configure PostgreSQL/Liquibase migrations
+3. **Monitoring Setup**: Configure Prometheus/Grafana dashboards
+4. **Testing**: Implement comprehensive test suite
+5. **Deployment**: Set up Kubernetes manifests
+6. **Documentation**: Generate API documentation with Redoc
 
-Шаблон поддерживает использование общих схем между разными доменами:
+## Important Remarks
 
-### Общая Директория Схем
+- **Security First**: All endpoints require authentication
+- **Rate Limiting**: Implemented at gateway level
+- **Audit Logging**: All operations are logged for compliance
+- **Scalability**: Horizontal scaling with Redis clustering
+- **Observability**: Full metrics collection for all operations
+- **Compliance**: GDPR compliant data handling
+- **Performance**: Optimized for high-throughput scenarios
 
-```bash
-proto/openapi/common-schemas.yaml  # Универсальные схемы для всех доменов
-```
+## Issue Tracking
 
-### Примеры Общих Схем
+Related Issues:
 
-- `Error` - Универсальная схема ошибок
-- `HealthResponse` - Схема здоровья сервисов
-- `PaginationMeta` - Метаданные пагинации
-- `UUID`, `PlayerId`, `GuildId` - Общие типы ID
-- `Timestamp`, `CreatedAt`, `UpdatedAt` - Временные метки
-- `Status`, `Priority` - Перечисления
-
-### Как Использовать Общие Схемы
-
-```yaml
-# В любом домене
-components:
-  schemas:
-    MyEntity:
-      type: object
-      properties:
-        id:
-          $ref: '../../common-schemas.yaml#/components/schemas/UUID'
-        error:
-          $ref: '../../common-schemas.yaml#/components/schemas/Error'
-        created_at:
-          $ref: '../../common-schemas.yaml#/components/schemas/CreatedAt'
-```
-
-### Преимущества
-
-- **Консистентность** - одинаковые схемы во всех доменах
-- **Удобство сопровождения** - изменения в одном месте
-- **Генерация Go кода** - работает без проблем
-- **Enterprise-grade** - профессиональный подход
-
-### Тестирование
-
-Общие схемы протестированы и работают с:
-
-- Redocly bundling
-- ogen code generation
-- Go compilation
-- Cross-domain references
-
----
-
-## Файлы Common, Используемые по умолчанию
-
-Шаблон автоматически использует следующие общие файлы из `../common/`:
-
-### Security
-- `../common/security/security.yaml` - JWT Bearer, API Key, Service аутентификация
-
-### Schemas
-- `../common/schemas/error.yaml` - Стандартная схема ошибки
-- `../common/schemas/health.yaml` - Детальная схема здоровья сервиса
-
-### Responses
-- `../common/responses/error.yaml` - HTTP ошибки (400, 401, 403, 404, 409, 500, 429)
-- `../common/responses/success.yaml` - Успешные ответы (200, 201) и health responses
-
-### Готовность к использованию
-Все эти файлы:
-- Оптимизированы для struct alignment
-- Проходят Redocly валидацию
-- Генерируют корректный Go код с ogen
-- Совместимы с enterprise-grade архитектурой
-
-**Этот шаблон гарантирует, что все новые OpenAPI спецификации будут enterprise-grade и совместимы со всей экосистемой
-NECPGAME AI агентов.**
+- #2266 - Refactor system-domain - AI, monitoring, networking services
+- Performance monitoring implementation tasks
+- Health check and alerting system requirements

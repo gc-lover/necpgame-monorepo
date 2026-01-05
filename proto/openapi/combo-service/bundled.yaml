@@ -1,0 +1,784 @@
+openapi: 3.0.3
+info:
+  title: Combo Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Combo Management API for NECPGAME**
+
+    This API manages combat combo systems, ability synergies, and tactical combinations
+    in the Night City universe, providing comprehensive combo mechanics, scoring,
+    and strategic gameplay enhancement.
+
+    ## Key Features
+
+    - **Combo Catalog**: Comprehensive combo database with activation rules - **Combo
+    Loadouts**: Player combo configurations and customization - **Combo Scoring**:
+    Performance metrics and combo effectiveness tracking - **Synergy Management**:
+    Ability interactions and combo multipliers - **Real-time Processing**: High-performance
+    combo validation and execution - **Performance Optimized**: MMOFPS-grade performance
+    with <20ms P99 latency
+
+    ## Domain Purpose
+
+    The Combo domain handles tactical combat combinations and ability synergies in
+    Night City. Players chain abilities into devastating combos that define their
+    combat style and effectiveness in dynamic battle scenarios.
+
+    ## Performance Targets
+
+    - P99 Latency: <20ms for combo operations - Memory: <15KB per active combo session
+    - Concurrent users: 40,000+ simultaneous combo operations - Combo validation:
+    <5ms response time
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+  license:
+    name: MIT
+servers:
+- url: https://api.necpgame.com/v1/combo
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/combo
+  description: Staging server
+- url: http://localhost:8080/api/v1/combo
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Combo Management
+  description: Core combo operations
+- name: Combo Loadouts
+  description: Player combo configurations
+- name: Combo Scoring
+  description: Performance metrics and scoring
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Combo Service Health Check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the combo service.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: comboServiceHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /combos/catalog:
+    get:
+      summary: Get combo catalog
+      operationId: getComboCatalog
+      description: Retrieve a paginated list of available combos with optional filtering
+      parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - solo
+          - team
+          - legendary
+        description: Filter by combo type
+      - name: complexity
+        in: query
+        schema:
+          type: string
+          enum:
+          - Bronze
+          - Silver
+          - Gold
+          - Platinum
+          - Legendary
+        description: Filter by complexity level
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of items to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of items to skip
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboCatalogResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /combos/{comboId}:
+    get:
+      summary: Get combo details
+      operationId: getComboDetails
+      description: Retrieve detailed information about a specific combo
+      parameters:
+      - name: comboId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique identifier of the combo
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboDetailResponse'
+        '404':
+          description: Combo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /combos/activate:
+    post:
+      summary: Activate combo
+      operationId: activateCombo
+      description: Activate a combo for a character
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateComboRequest'
+      responses:
+        '200':
+          description: Combo activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivateComboResponse'
+        '400':
+          description: Bad request or combo requirements not met
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Service overloaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /combos/loadout:
+    get:
+      summary: Get combo loadout
+      operationId: getComboLoadout
+      description: Retrieve the current combo loadout for the authenticated character
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboLoadoutResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Update combo loadout
+      operationId: updateComboLoadout
+      description: Update the combo loadout for the authenticated character
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComboLoadoutRequest'
+      responses:
+        '200':
+          description: Loadout updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboLoadoutResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /combos/analytics:
+    get:
+      summary: Get combo analytics
+      operationId: getComboAnalytics
+      description: Retrieve analytics data for combo usage
+      parameters:
+      - name: days
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 90
+          default: 7
+        description: Number of days to look back
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComboAnalyticsResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  responses:
+    OK:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Operation completed
+    Created:
+      description: Resource created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            format: uri
+          description: URI of the created resource
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of created resource
+              created_at:
+                type: string
+                format: date-time
+                description: Creation timestamp
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            Error:
+              type: object
+              required:
+              - code
+              - message
+              properties:
+                code:
+                  type: integer
+                  example: 500
+                  format: int32
+                  minimum: 100
+                  maximum: 599
+                message:
+                  type: string
+                  example: Internal server error
+                  maxLength: 1000
+                details:
+                  type: object
+                  description: Additional error details
+              description: Standard error response format
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            Error:
+              type: object
+              required:
+              - code
+              - message
+              properties:
+                code:
+                  type: integer
+                  example: 500
+                  format: int32
+                  minimum: 100
+                  maximum: 599
+                message:
+                  type: string
+                  example: Internal server error
+                  maxLength: 1000
+                details:
+                  type: object
+                  description: Additional error details
+              description: Standard error response format
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            Error:
+              type: object
+              required:
+              - code
+              - message
+              properties:
+                code:
+                  type: integer
+                  example: 500
+                  format: int32
+                  minimum: 100
+                  maximum: 599
+                message:
+                  type: string
+                  example: Internal server error
+                  maxLength: 1000
+                details:
+                  type: object
+                  description: Additional error details
+              description: Standard error response format
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            allOf:
+            - type: object
+              required:
+              - code
+              - message
+              properties:
+                code:
+                  type: integer
+                  example: 500
+                  format: int32
+                  minimum: 100
+                  maximum: 599
+                message:
+                  type: string
+                  example: Internal server error
+                  maxLength: 1000
+                details:
+                  type: object
+                  description: Additional error details
+              description: Standard error response format
+            - type: object
+              properties:
+                retry_after:
+                  type: integer
+                  example: 60
+                  description: Seconds to wait before retrying
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
+    ComboEntity:
+      allOf:
+      - type: object
+        required:
+        - id
+        - created_at
+        - updated_at
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique identifier (UUID v4)
+            example: 123e4567-e89b-12d3-a456-426614174000
+            maxLength: 36
+          created_at:
+            type: string
+            format: date-time
+            description: Creation timestamp (ISO 8601)
+            example: '2025-12-28T10:00:00Z'
+            maxLength: 30
+          updated_at:
+            type: string
+            format: date-time
+            description: Last modification timestamp (ISO 8601)
+            example: '2025-12-28T10:30:00Z'
+            maxLength: 30
+        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
+          Memory savings: 30-50%. All domain entities should extend this.'
+      - type: object
+        required:
+        - name
+        - combo_type
+        - abilities
+        properties:
+          name:
+            type: string
+            minLength: 1
+            maxLength: 100
+            description: Combo display name
+          combo_type:
+            type: string
+            enum:
+            - offensive
+            - defensive
+            - utility
+            - mixed
+            description: Type of combo
+          abilities:
+            type: array
+            items:
+              type: string
+              format: uuid
+            minItems: 2
+            maxItems: 5
+            description: Ability IDs in combo sequence
+          synergy_multiplier:
+            type: number
+            minimum: 1.0
+            maximum: 5.0
+            default: 1.0
+            description: Damage/effect multiplier
+          cooldown_seconds:
+            type: integer
+            minimum: 0
+            maximum: 300
+            description: Combo cooldown in seconds
+          is_active:
+            type: boolean
+            default: true
+            description: Whether combo is available
+    ComboCatalogResponse:
+      type: object
+      required:
+      - combos
+      - total_count
+      properties:
+        combos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComboEntity'
+        total_count:
+          type: integer
+          minimum: 0
+    ComboDetailResponse:
+      type: object
+      required:
+      - combo
+      properties:
+        combo:
+          $ref: '#/components/schemas/ComboEntity'
+    ActivateComboRequest:
+      type: object
+      required:
+      - combo_id
+      - target_ids
+      properties:
+        combo_id:
+          type: string
+          format: uuid
+          description: ID of combo to activate
+        target_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 0
+          maxItems: 10
+          description: Target entity IDs
+    ActivateComboResponse:
+      type: object
+      required:
+      - success
+      - combo_id
+      - damage_dealt
+      - effects_applied
+      properties:
+        success:
+          type: boolean
+        combo_id:
+          type: string
+          format: uuid
+        damage_dealt:
+          type: integer
+          minimum: 0
+        effects_applied:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_type:
+                type: string
+              duration_seconds:
+                type: integer
+                minimum: 0
+    ComboLoadoutEntity:
+      allOf:
+      - type: object
+        required:
+        - id
+        - created_at
+        - updated_at
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Unique identifier (UUID v4)
+            example: 123e4567-e89b-12d3-a456-426614174000
+            maxLength: 36
+          created_at:
+            type: string
+            format: date-time
+            description: Creation timestamp (ISO 8601)
+            example: '2025-12-28T10:00:00Z'
+            maxLength: 30
+          updated_at:
+            type: string
+            format: date-time
+            description: Last modification timestamp (ISO 8601)
+            example: '2025-12-28T10:30:00Z'
+            maxLength: 30
+        description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
+          Memory savings: 30-50%. All domain entities should extend this.'
+      - type: object
+        required:
+        - player_id
+        - name
+        - combos
+        properties:
+          player_id:
+            type: string
+            format: uuid
+            description: Player who owns this loadout
+          name:
+            type: string
+            minLength: 1
+            maxLength: 50
+            description: Loadout name
+          combos:
+            type: array
+            items:
+              type: string
+              format: uuid
+            maxItems: 10
+            description: Combo IDs in loadout
+    ComboLoadoutRequest:
+      type: object
+      required:
+      - name
+      - combo_ids
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        combo_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 10
+    ComboLoadoutResponse:
+      type: object
+      required:
+      - loadout
+      properties:
+        loadout:
+          $ref: '#/components/schemas/ComboLoadoutEntity'
+    ComboAnalyticsResponse:
+      type: object
+      required:
+      - period_days
+      - total_combos_executed
+      - popular_combos
+      - average_combo_damage
+      properties:
+        period_days:
+          type: integer
+          minimum: 1
+        total_combos_executed:
+          type: integer
+          minimum: 0
+        popular_combos:
+          type: array
+          items:
+            type: object
+            properties:
+              combo_id:
+                type: string
+                format: uuid
+              executions_count:
+                type: integer
+                minimum: 0
+              average_damage:
+                type: integer
+                minimum: 0
+        average_combo_damage:
+          type: integer
+          minimum: 0
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication

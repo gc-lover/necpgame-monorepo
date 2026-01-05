@@ -1,0 +1,457 @@
+openapi: 3.0.3
+info:
+  title: Misc Domain API
+  description: 'Miscellaneous Domain API for NECPGAME utility and helper services.
+
+    This API consolidates all miscellaneous functionality:
+
+    - Utility services and helpers
+
+    - Common schemas and data structures
+
+    - Configuration and setup services
+
+    - Knowledge base and documentation
+
+    All endpoints are organized into logical modules with  references.
+
+    '
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+- url: http://localhost:8080/api/v1
+  description: Development server
+- url: https://api.necpgame.com/api/v1
+  description: Production server
+security:
+- BearerAuth: []
+tags:
+- name: Misc Utilities
+  description: Utility and helper services
+- name: Misc Common
+  description: Common schemas and structures
+- name: Misc Services
+  description: Miscellaneous services
+- name: Misc Schemas
+  description: Common data schemas
+paths: {}
+components:
+  schemas:
+    CommonResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          maxLength: 1000
+        data:
+          type: object
+          additionalProperties: true
+        success:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    PaginationParams:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
+    PaginatedResponse:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          description: Array of items
+        total:
+          type: integer
+          minimum: 0
+          example: 100
+          description: Total number of items
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+          description: Number of items to skip
+  responses:
+    OK:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Operation completed
+    Created:
+      description: Resource created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            format: uri
+          description: URI of the created resource
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of created resource
+              created_at:
+                type: string
+                format: date-time
+                description: Creation timestamp
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    HealthOK:
+      description: Service is healthy
+      content:
+        application/json:
+          schema:
+            HealthResponse:
+              type: object
+              required:
+              - status
+              - timestamp
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - healthy
+                  - degraded
+                  - unhealthy
+                  example: healthy
+                  maxLength: 255
+                domain:
+                  type: string
+                  example: service-name
+                  maxLength: 255
+                timestamp:
+                  type: string
+                  format: date-time
+                  example: '2025-12-28T10:00:00Z'
+                  maxLength: 255
+                version:
+                  type: string
+                  example: 1.0.0
+                  maxLength: 50
+                uptime_seconds:
+                  type: integer
+                  example: 3600
+                  minimum: 0
+                active_connections:
+                  type: integer
+                  example: 1500
+                  minimum: 0
+              description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                → small). Expected memory savings: 30-50%.'
+    HealthBatchSuccess:
+      description: Batch health results retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - results
+            - total_time_ms
+            properties:
+              results:
+                type: array
+                items:
+                  HealthResponse:
+                    type: object
+                    required:
+                    - status
+                    - timestamp
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                        - healthy
+                        - degraded
+                        - unhealthy
+                        example: healthy
+                        maxLength: 255
+                      domain:
+                        type: string
+                        example: service-name
+                        maxLength: 255
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: '2025-12-28T10:00:00Z'
+                        maxLength: 255
+                      version:
+                        type: string
+                        example: 1.0.0
+                        maxLength: 50
+                      uptime_seconds:
+                        type: integer
+                        example: 3600
+                        minimum: 0
+                      active_connections:
+                        type: integer
+                        example: 1500
+                        minimum: 0
+                    description: 'BACKEND NOTE: Fields ordered for struct alignment
+                      (large → small). Expected memory savings: 30-50%.'
+                description: Health status for each requested service
+              total_time_ms:
+                type: integer
+                description: Total processing time in milliseconds
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API Key authentication
+    ServiceAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Service-to-service authentication token

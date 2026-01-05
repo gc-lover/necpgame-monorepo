@@ -89,10 +89,11 @@ security:
 components:
   securitySchemes:
     BearerAuth:
-      $ref: '../../common/security/security.yaml#/BearerAuth'
+      $ref: '../../common-service/security/security.yaml#/BearerAuth'
 ```
 
 **По умолчанию использует:**
+
 - `common/security/security.yaml` - Bearer JWT аутентификация
 
 ### 4. **Обязательные Health Endpoints**
@@ -105,12 +106,13 @@ components:
     operationId: [domain]HealthCheck
     responses:
       '200': # Обязательно
-        $ref: '../../common/responses/success.yaml#/HealthOK'
+        $ref: '../../common-service/responses/success.yaml#/HealthOK'
       '503': # Обязательно
-        $ref: '../../common/responses/error.yaml#/InternalServerError'
+        $ref: '../../common-service/responses/error.yaml#/InternalServerError'
 ```
 
 **Использует по умолчанию:**
+
 - `common/responses/success.yaml#/HealthOK` - Ответ здоровья
 - `common/schemas/health.yaml#/HealthResponse` - Схема здоровья
 - `common/responses/error.yaml#/InternalServerError` - Ошибка сервера

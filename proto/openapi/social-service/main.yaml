@@ -1,0 +1,431 @@
+openapi: 3.0.3
+info:
+  title: Social Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Social Interaction API for NECPGAME**
+
+    This API manages all social interactions, relationships, and community features
+    in the Night City universe, providing comprehensive social gameplay mechanics.
+
+    ## Key Features
+
+    - **Chat System**: Real-time messaging and moderation - **Guild Management**:
+    Guild creation, management, and warfare - **Party System**: Temporary player groups
+    and coordination - **Relationships**: NPC and player relationship dynamics - **Notifications**:
+    Event-driven notification system - **Voice Communication**: Voice chat integration
+    - **Reputation System**: Social standing and benefits
+
+    ## Domain Purpose
+
+    The Social domain handles all player-to-player and player-to-NPC interactions,
+    community building, and social gameplay mechanics in Night City.
+
+    ## Performance Targets
+
+    - P99 Latency: <30ms for social operations - Memory: <18KB per active social session
+    - Concurrent users: 60,000+ simultaneous social interactions - Message delivery:
+    <2ms response time
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necpgame.com
+  license:
+    name: MIT
+servers:
+- url: https://api.necpgame.com/v1/social
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/social
+  description: Staging server
+- url: http://localhost:8080/api/v1/social
+  description: Local development server
+tags:
+- name: Chat
+  description: Real-time messaging and communication
+- name: Guilds
+  description: Guild management and social groups
+- name: Parties
+  description: Temporary player groups
+- name: Relationships
+  description: NPC and player relationships
+- name: Notifications
+  description: Event notifications
+- name: Voice
+  description: Voice communication
+- name: Health Monitoring
+  description: System health and performance monitoring
+security:
+- BearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Social Service Health Check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the social service.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: socialServiceHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /social/chat/messages:
+    post:
+      summary: Send chat message
+      operationId: sendChatMessage
+      description: 'Send a real-time chat message with moderation and anti-spam filtering.
+
+        **Real-time:** WebSocket-based delivery for instant messaging.'
+      tags:
+      - Chat
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '200':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /social/guilds:
+    post:
+      summary: Create guild
+      operationId: createGuild
+      description: 'Create a new player guild with customizable settings and permissions.
+
+        **Community:** Foundation for social gameplay and cooperation.'
+      tags:
+      - Guilds
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildRequest'
+      responses:
+        '201':
+          description: Guild created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildResponse'
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /social/parties:
+    post:
+      summary: Create party
+      operationId: createParty
+      description: 'Create a temporary player party for cooperative gameplay.
+
+        **Dynamic:** Short-lived groups for specific missions or activities.'
+      tags:
+      - Parties
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePartyRequest'
+      responses:
+        '201':
+          description: Party created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyResponse'
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+components:
+  responses:
+    OK:
+      $ref: ../common-service/responses/success.yaml#/OK
+    Created:
+      $ref: ../common-service/responses/success.yaml#/Created
+    Updated:
+      $ref: ../common-service/responses/success.yaml#/Updated
+    Deleted:
+      $ref: ../common-service/responses/success.yaml#/Deleted
+    BadRequest:
+      $ref: ../common-service/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
+    NotFound:
+      $ref: ../common-service/responses/error.yaml#/NotFound
+    TooManyRequests:
+      $ref: ../common-service/responses/error.yaml#/TooManyRequests
+  schemas:
+    HealthResponse:
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
+    Error:
+      $ref: ../common-service/schemas/common.yaml#/Error
+    SendMessageRequest:
+      type: object
+      required:
+      - channel_id
+      - content
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+          description: Chat channel identifier
+        content:
+          type: string
+          maxLength: 500
+          description: Message content
+        message_type:
+          type: string
+          enum:
+          - text
+          - emoji
+          - system
+          default: text
+          description: Type of message
+      description: 'BACKEND NOTE: Chat message with anti-spam validation.'
+    MessageResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+          format: uuid
+          description: Unique message identifier
+        channel_id:
+          type: string
+          format: uuid
+          description: Channel where message was sent
+        sender_id:
+          type: string
+          format: uuid
+          description: Sender's player ID
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+        status:
+          type: string
+          enum:
+          - sent
+          - delivered
+          - moderated
+          description: Message delivery status
+      description: 'BACKEND NOTE: Message confirmation with delivery tracking.'
+    CreateGuildRequest:
+      type: object
+      required:
+      - name
+      - description
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Guild name
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+        emblem:
+          type: string
+          description: Guild emblem/crest data
+        settings:
+          type: object
+          properties:
+            is_public:
+              type: boolean
+              default: true
+              description: Whether guild is public
+            max_members:
+              type: integer
+              minimum: 5
+              maximum: 500
+              default: 50
+              description: Maximum guild members
+          description: Guild configuration settings
+      description: 'BACKEND NOTE: Guild creation with validation and limits.'
+    GuildResponse:
+      type: object
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+          description: Unique guild identifier
+        name:
+          type: string
+          description: Guild name
+        leader_id:
+          type: string
+          format: uuid
+          description: Guild leader's player ID
+        member_count:
+          type: integer
+          minimum: 1
+          description: Current member count
+        created_at:
+          type: string
+          format: date-time
+          description: Guild creation timestamp
+        level:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Guild level
+      description: 'BACKEND NOTE: Guild information with membership data.'
+    CreatePartyRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 30
+          description: Party name
+        description:
+          type: string
+          maxLength: 200
+          description: Party description
+        max_size:
+          type: integer
+          minimum: 2
+          maximum: 8
+          default: 4
+          description: Maximum party size
+        is_public:
+          type: boolean
+          default: true
+          description: Whether party accepts join requests
+      description: 'BACKEND NOTE: Party creation for cooperative gameplay.'
+    PartyResponse:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+          description: Unique party identifier
+        name:
+          type: string
+          description: Party name
+        leader_id:
+          type: string
+          format: uuid
+          description: Party leader's player ID
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: string
+                format: uuid
+              role:
+                type: string
+                enum:
+                - leader
+                - member
+              joined_at:
+                type: string
+                format: date-time
+            description: Party member information
+          description: Current party members
+        created_at:
+          type: string
+          format: date-time
+          description: Party creation timestamp
+      description: 'BACKEND NOTE: Party information with member management.'
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common-service/security/security.yaml#/BearerAuth
+

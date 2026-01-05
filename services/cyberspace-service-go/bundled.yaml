@@ -1,0 +1,4108 @@
+openapi: 3.0.3
+info:
+  title: Cyberspace Service API - Enterprise-Grade Digital Realm Navigation
+  description: '**Enterprise-Grade Cyberspace Navigation API for NECPGAME**
+
+    This API manages digital realm navigation, risk assessment, and interactive elements
+    in the cyberspace, providing neural implant integration, connection management,
+    and survival mechanics with enterprise-grade security and performance.
+
+    ## Key Features
+
+    - **Neural Navigation**: Real-time cyberspace exploration with implant integration
+    - **Risk Assessment**: Dynamic risk calculation for Blackwall interactions - **Connection
+    Management**: Strength and time management for digital presence - **Easter Eggs**:
+    Hidden content discovery with rewards and achievements - **Survival Mechanics**:
+    Stress management and consequence application - **Blackwall Breach**: Multi-layer
+    barrier penetration with mortality risks - **Performance Optimized**: MMOFPS-grade
+    performance with <50ms P99 latency
+
+    ## Domain Purpose
+
+    The Cyberspace domain handles all aspects of digital realm navigation in Night
+    City. Players explore networks, discover hidden content, assess risks, and manage
+    their digital survival through neural implants and cyberware.
+
+    ## Performance Targets
+
+    - P99 Latency: <50ms for navigation operations - Memory: <25KB per active cyberspace
+    session - Concurrent users: 50,000+ simultaneous explorations - Risk calculations:
+    <10ms response time
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/cyberspace
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/cyberspace
+  description: Staging server
+- url: http://localhost:8080/api/v1/cyberspace
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Navigation
+  description: Core cyberspace navigation operations
+- name: Blackwall Breach
+  description: Blackwall barrier penetration
+- name: Risk Assessment
+  description: Dynamic risk calculation and management
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Cyberspace domain health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the cyberspace domain microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: cyberspaceDomainHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"-api-v1-cyberspace-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                    maxLength: 255
+                  domain:
+                    type: string
+                    example: service-name
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-12-28T10:00:00Z'
+                    maxLength: 255
+                  version:
+                    type: string
+                    example: 1.0.0
+                    maxLength: 50
+                  uptime_seconds:
+                    type: integer
+                    example: 3600
+                    minimum: 0
+                  active_connections:
+                    type: integer
+                    example: 1500
+                    minimum: 0
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                  → small). Expected memory savings: 30-50%.'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                    maxLength: 255
+                  domain:
+                    type: string
+                    example: service-name
+                    maxLength: 255
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2025-12-28T10:00:00Z'
+                    maxLength: 255
+                  version:
+                    type: string
+                    example: 1.0.0
+                    maxLength: 50
+                  uptime_seconds:
+                    type: integer
+                    example: 3600
+                    minimum: 0
+                  active_connections:
+                    type: integer
+                    example: 1500
+                    minimum: 0
+                description: 'BACKEND NOTE: Fields ordered for struct alignment (large
+                  → small). Expected memory savings: 30-50%.'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/batch:
+    post:
+      summary: Batch health check for multiple domain services
+      description: '**Performance optimization:** Check multiple domain health in
+        single request
+
+        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+
+        Eliminates network overhead in health monitoring scenarios.
+
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+
+        '
+      operationId: cyberspaceDomainBatchHealthCheck
+      tags:
+      - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - cyberspace
+                    - hacking
+                    - neural-link
+                    - implant
+                    - cyberware
+                    maxItems: 10
+                  description: List of services to check
+      responses:
+        '200':
+          description: Batch health results retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-cache
+            X-Processing-Time:
+              schema:
+                type: integer
+                example: 15
+                description: Processing time in milliseconds
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - results
+                - total_time_ms
+                properties:
+                  results:
+                    type: array
+                    items:
+                      HealthResponse:
+                        type: object
+                        required:
+                        - status
+                        - timestamp
+                        properties:
+                          status:
+                            type: string
+                            enum:
+                            - healthy
+                            - degraded
+                            - unhealthy
+                            example: healthy
+                            maxLength: 255
+                          domain:
+                            type: string
+                            example: service-name
+                            maxLength: 255
+                          timestamp:
+                            type: string
+                            format: date-time
+                            example: '2025-12-28T10:00:00Z'
+                            maxLength: 255
+                          version:
+                            type: string
+                            example: 1.0.0
+                            maxLength: 50
+                          uptime_seconds:
+                            type: integer
+                            example: 3600
+                            minimum: 0
+                          active_connections:
+                            type: integer
+                            example: 1500
+                            minimum: 0
+                        description: 'BACKEND NOTE: Fields ordered for struct alignment
+                          (large → small). Expected memory savings: 30-50%.'
+                    description: Health status for each requested service
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time in milliseconds
+        '400':
+          description: Invalid request - malformed service list
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      description: '**Performance optimization:** Real-time health updates without
+        polling
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+
+        Perfect for dashboard monitoring and alerting systems.
+
+        **Protocol:** WebSocket with JSON payloads
+
+        **Heartbeat:** 30 second intervals
+
+        **Reconnection:** Automatic with exponential backoff
+
+        '
+      operationId: cyberspaceDomainHealthWebSocket
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - cyberspace
+            - neural
+            - hacking
+            example:
+            - cyberspace
+            - neural
+        description: Services to monitor (optional, monitors all if not specified)
+      responses:
+        '200':
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: ws://localhost:8080/api/v1/cyberspace/health/ws
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                    - health-monitoring-v1
+        '101':
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '401':
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /navigation/sessions:
+    post:
+      summary: Initialize cyberspace navigation session
+      description: '**Enterprise-grade navigation session initialization**
+
+        Creates secure cyberspace session with neural synchronization, risk assessment,
+        and connection management.
+
+        **Critical Operation:** Requires full neural link verification
+
+        '
+      operationId: initializeNavigationSession
+      tags:
+      - Navigation
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitializeNavigationRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/NavigationSessionCreated'
+        '400':
+          description: Invalid request - insufficient neural capacity or incompatible
+            implants
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '403':
+          description: Forbidden - neural link not synchronized or blacklisted
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Conflict - active navigation session already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - navigation session rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 300
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    get:
+      summary: List navigation sessions with filtering
+      description: '**Enterprise-grade session listing**
+
+        Lists active and historical navigation sessions with comprehensive filtering
+        by status, risk level, duration, and neural health metrics.
+
+        **Performance:** <10ms P95, supports complex queries
+
+        '
+      operationId: listNavigationSessions
+      tags:
+      - Navigation
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by player
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - INITIALIZING
+          - ACTIVE
+          - COMPLETED
+          - DISCONNECTED
+          - CRASHED
+        description: Filter by session status
+      - name: risk_level
+        in: query
+        schema:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - EXTREME
+        description: Filter by risk assessment
+      - name: duration_min
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+        description: Minimum session duration in seconds
+      - name: neural_health_min
+        in: query
+        schema:
+          type: number
+          minimum: 0
+          maximum: 100
+        description: Minimum neural health percentage
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      responses:
+        '200':
+          $ref: '#/components/responses/NavigationSessionListSuccess'
+        '400':
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /navigation/sessions/{session_id}:
+    get:
+      summary: Get navigation session details
+      description: '**Enterprise-grade session retrieval**
+
+        Returns comprehensive navigation session information including real-time status,
+        neural metrics, risk assessment, and connection quality.
+
+        **Performance:** <5ms P95 with Redis caching
+
+        '
+      operationId: getNavigationSession
+      tags:
+      - Navigation
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Navigation session unique identifier
+      - name: include_neural_data
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include detailed neural pathway data
+      - name: include_risk_assessment
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include real-time risk assessment
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+        description: Conditional request - return 304 if ETag matches
+      responses:
+        '200':
+          $ref: '#/components/responses/NavigationSessionRetrieved'
+        '304':
+          description: Not modified - session has not changed
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"session-123-v1"'
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, private
+        '404':
+          description: Navigation session not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    put:
+      summary: Update navigation session
+      description: '**Enterprise-grade session update**
+
+        Updates session parameters, risk tolerance, or neural optimization settings.
+        Supports optimistic locking for concurrent modifications.
+
+        **Performance:** <25ms P95, includes validation and conflict resolution
+
+        '
+      operationId: updateNavigationSession
+      tags:
+      - Navigation
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Navigation session unique identifier
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+        description: ETag for optimistic locking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNavigationSessionRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/NavigationSessionUpdated'
+        '400':
+          description: Invalid request - malformed data or session ID
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '404':
+          description: Navigation session not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Conflict - version conflict or concurrent modification
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"session-123-v1"'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    delete:
+      summary: Terminate navigation session
+      description: '**Emergency session termination**
+
+        Immediately terminates cyberspace session with emergency disconnection protocols.
+        Preserves neural integrity and generates incident report.
+
+        **High-Risk Operation:** May cause neural feedback
+
+        '
+      operationId: terminateNavigationSession
+      tags:
+      - Navigation
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Session to terminate
+      - name: emergency_disconnect
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Force emergency disconnect (may cause neural damage)
+      responses:
+        '200':
+          description: Session terminated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NavigationSessionTerminationResult'
+        '404':
+          description: Navigation session not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Cannot terminate - session in critical operation
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /navigation/sessions/{session_id}/navigate:
+    post:
+      summary: Execute navigation action
+      description: '**Core navigation operation**
+
+        Performs navigation action in cyberspace: movement, interaction, data access,
+        or barrier penetration with real-time risk monitoring.
+
+        **Critical Operation:** High neural load, risk of disconnection
+
+        '
+      operationId: executeNavigationAction
+      tags:
+      - Navigation
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Active navigation session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteNavigationRequest'
+      responses:
+        '200':
+          description: Navigation action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NavigationExecutionResult'
+        '400':
+          description: Invalid navigation action
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Action blocked - connection instability or barrier resistance
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many actions - neural overload protection
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 10
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /blackwall/breach:
+    post:
+      summary: Initiate Blackwall breach attempt
+      description: '**Enterprise-grade Blackwall breach initiation**
+
+        Begins multi-layer barrier penetration with mortality risk assessment, ICE
+        detection, and emergency abort protocols.
+
+        **Extreme-Risk Operation:** 10-90% mortality based on breach depth
+
+        '
+      operationId: initiateBlackwallBreach
+      tags:
+      - Blackwall Breach
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiateBreachRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/BreachSessionCreated'
+        '400':
+          description: Invalid breach parameters or insufficient preparation
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '403':
+          description: Forbidden - inadequate cyberware or neural capacity
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Conflict - active breach already in progress
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - breach attempt rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 3600
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    get:
+      summary: List Blackwall breach attempts
+      description: '**Enterprise-grade breach history**
+
+        Lists historical breach attempts with success rates, mortality statistics,
+        and reward analysis for strategic planning.
+
+        '
+      operationId: listBlackwallBreaches
+      tags:
+      - Blackwall Breach
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by player
+      - name: outcome
+        in: query
+        schema:
+          type: string
+          enum:
+          - SUCCESS
+          - PARTIAL_SUCCESS
+          - FAILURE
+          - ABORTED
+          - DEATH
+        description: Filter by breach outcome
+      - name: breach_depth
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+        description: Filter by breach depth (1-5 layers)
+      - name: mortality_risk_min
+        in: query
+        schema:
+          type: number
+          minimum: 0
+          maximum: 100
+        description: Minimum mortality risk percentage
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      responses:
+        '200':
+          $ref: '#/components/responses/BreachListSuccess'
+        '400':
+          description: Invalid request - malformed query parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /blackwall/breach/{breach_id}:
+    get:
+      summary: Get Blackwall breach status
+      description: '**Real-time breach monitoring**
+
+        Returns current breach status, layer progress, ICE encounters, and survival
+        probability calculations.
+
+        '
+      operationId: getBlackwallBreachStatus
+      tags:
+      - Blackwall Breach
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: breach_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Breach attempt unique identifier
+      - name: include_ice_details
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include detailed ICE encounter information
+      - name: include_layer_analysis
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include layer-by-layer risk analysis
+      responses:
+        '200':
+          $ref: '#/components/responses/BreachStatusRetrieved'
+        '404':
+          description: Breach attempt not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    delete:
+      summary: Abort Blackwall breach
+      description: '**Emergency breach abort**
+
+        Immediately aborts breach attempt with maximum survival priority. May result
+        in partial rewards but guarantees safe extraction.
+
+        **Critical Safety Operation:** Overrides all other priorities
+
+        '
+      operationId: abortBlackwallBreach
+      tags:
+      - Blackwall Breach
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: breach_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Breach attempt to abort
+      - name: force_abort
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Force abort regardless of current layer (higher risk)
+      responses:
+        '200':
+          description: Breach aborted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BreachAbortResult'
+        '404':
+          description: Breach attempt not found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Cannot abort - breach in irreversible state
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /blackwall/breach/{breach_id}/complete:
+    post:
+      summary: Complete Blackwall breach
+      description: '**Breach completion and extraction**
+
+        Finalizes successful breach, extracts all data and rewards, and safely returns
+        consciousness to physical body.
+
+        **Success Operation:** Grants access to hidden content and achievements
+
+        '
+      operationId: completeBlackwallBreach
+      tags:
+      - Blackwall Breach
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: breach_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Breach attempt to complete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteBreachRequest'
+      responses:
+        '200':
+          description: Breach completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BreachCompleteResult'
+        '400':
+          description: Completion failed - data corruption or incomplete breach
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        '409':
+          description: Cannot complete - breach compromised or unstable
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /risk/assessment:
+    post:
+      summary: Perform risk assessment
+      description: '**Dynamic risk calculation engine**
+
+        Analyzes current cyberspace conditions, neural state, cyberware status, and
+        environmental factors to provide comprehensive risk assessment.
+
+        **Real-time Analysis:** Updates every navigation action
+
+        '
+      operationId: performRiskAssessment
+      tags:
+      - Risk Assessment
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskAssessmentRequest'
+      responses:
+        '200':
+          description: Risk assessment completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAssessmentResult'
+        '400':
+          description: Invalid assessment parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /easter-eggs/discover:
+    post:
+      summary: Attempt easter egg discovery
+      description: '**Hidden content discovery**
+
+        Analyzes navigation patterns and neural responses to detect hidden easter
+        eggs and secret content in cyberspace.
+
+        **Intelligence Operation:** Requires pattern recognition
+
+        '
+      operationId: attemptEasterEggDiscovery
+      tags:
+      - Navigation
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: session_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Active navigation session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EasterEggDiscoveryRequest'
+      responses:
+        '200':
+          description: Discovery attempt completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EasterEggDiscoveryResult'
+        '400':
+          description: Invalid discovery parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+components:
+  responses:
+    OK:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: Operation completed
+    Created:
+      description: Resource created successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            format: uri
+          description: URI of the created resource
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of created resource
+              created_at:
+                type: string
+                format: date-time
+                description: Creation timestamp
+    Updated:
+      description: Resource updated successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of updated resource
+              updated_at:
+                type: string
+                format: date-time
+                description: Last modification timestamp
+    Deleted:
+      description: Resource deleted successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Unique identifier of deleted resource
+              deleted_at:
+                type: string
+                format: date-time
+                description: Deletion timestamp
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: integer
+                example: 500
+                format: int32
+                minimum: 100
+                maximum: 599
+              message:
+                type: string
+                example: Internal server error
+                maxLength: 1000
+              details:
+                type: object
+                description: Additional error details
+            description: Standard error response format
+    TooManyRequests:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            allOf:
+            - type: object
+              required:
+              - code
+              - message
+              properties:
+                code:
+                  type: integer
+                  example: 500
+                  format: int32
+                  minimum: 100
+                  maximum: 599
+                message:
+                  type: string
+                  example: Internal server error
+                  maxLength: 1000
+                details:
+                  type: object
+                  description: Additional error details
+              description: Standard error response format
+            - type: object
+              properties:
+                retry_after:
+                  type: integer
+                  example: 60
+                  description: Seconds to wait before retrying
+    HealthBatchSuccess:
+      description: Batch health results retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - results
+            - total_time_ms
+            properties:
+              results:
+                type: array
+                items:
+                  HealthResponse:
+                    type: object
+                    required:
+                    - status
+                    - timestamp
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                        - healthy
+                        - degraded
+                        - unhealthy
+                        example: healthy
+                        maxLength: 255
+                      domain:
+                        type: string
+                        example: service-name
+                        maxLength: 255
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: '2025-12-28T10:00:00Z'
+                        maxLength: 255
+                      version:
+                        type: string
+                        example: 1.0.0
+                        maxLength: 50
+                      uptime_seconds:
+                        type: integer
+                        example: 3600
+                        minimum: 0
+                      active_connections:
+                        type: integer
+                        example: 1500
+                        minimum: 0
+                    description: 'BACKEND NOTE: Fields ordered for struct alignment
+                      (large → small). Expected memory savings: 30-50%.'
+                description: Health status for each requested service
+              total_time_ms:
+                type: integer
+                description: Total processing time in milliseconds
+    NavigationSessionCreated:
+      description: Navigation session initiated successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            example: /api/v1/cyberspace/navigation/sessions/550e8400-e29b-41d4-a716-446655440000
+            description: URL of the created session
+        ETag:
+          schema:
+            type: string
+            example: '"session-123-v1"'
+            description: Entity tag for caching and optimistic locking
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NavigationSessionResponse'
+    NavigationSessionRetrieved:
+      description: Navigation session retrieved successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"session-123-v1"'
+            description: Entity tag for caching
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=30, private
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:00:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 5
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NavigationSessionResponse'
+    NavigationSessionUpdated:
+      description: Navigation session updated successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"session-123-v2"'
+            description: New entity tag after update
+        Last-Modified:
+          schema:
+            type: string
+            format: date-time
+            example: '2025-12-21T10:05:00Z'
+            description: Last modification timestamp
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 25
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NavigationSessionResponse'
+    NavigationSessionListSuccess:
+      description: Navigation sessions retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+        X-Total-Count:
+          schema:
+            type: integer
+            example: 150
+            description: Total number of sessions matching criteria
+        X-Page-Count:
+          schema:
+            type: integer
+            example: 8
+            description: Total number of pages
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NavigationSessionListResponse'
+    BreachSessionCreated:
+      description: Blackwall breach initiated successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            example: /api/v1/cyberspace/blackwall/breach/550e8400-e29b-41d4-a716-446655440000
+            description: URL of the created breach
+        ETag:
+          schema:
+            type: string
+            example: '"breach-123-v1"'
+            description: Entity tag for caching and optimistic locking
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+        Warning:
+          schema:
+            type: string
+            example: '199 - "Extreme Risk: 70-90% mortality probability"'
+            description: Risk warning header
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BreachSessionResponse'
+    BreachStatusRetrieved:
+      description: Breach status retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+        X-Mortality-Risk:
+          schema:
+            type: integer
+            example: 75
+            description: Current mortality risk percentage
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BreachStatusResponse'
+    BreachListSuccess:
+      description: Breach attempts retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+        X-Total-Count:
+          schema:
+            type: integer
+            example: 50
+            description: Total number of breach attempts matching criteria
+        X-Success-Rate:
+          schema:
+            type: number
+            example: 23.5
+            description: Average success rate percentage
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BreachListResponse'
+  schemas:
+    AuditableEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        properties:
+          created_by:
+            type: string
+            format: uuid
+            description: ID of user who created the entity
+            example: 123e4567-e89b-12d3-a456-426614174001
+            maxLength: 36
+          updated_by:
+            type: string
+            format: uuid
+            description: ID of user who last modified the entity
+            example: 123e4567-e89b-12d3-a456-426614174002
+            maxLength: 36
+      description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
+        entities.'
+    BaseEntity:
+      type: object
+      required:
+      - id
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier (UUID v4)
+          example: 123e4567-e89b-12d3-a456-426614174000
+          maxLength: 36
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (ISO 8601)
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 30
+        updated_at:
+          type: string
+          format: date-time
+          description: Last modification timestamp (ISO 8601)
+          example: '2025-12-28T10:30:00Z'
+          maxLength: 30
+      description: 'BACKEND NOTE: Base entity with ordered fields for struct alignment.
+        Memory savings: 30-50%. All domain entities should extend this.'
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+          example: health_update
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+          maxLength: 1000
+        health:
+          type: object
+          required:
+          - status
+          - timestamp
+          properties:
+            status:
+              type: string
+              enum:
+              - healthy
+              - degraded
+              - unhealthy
+              example: healthy
+              maxLength: 255
+            domain:
+              type: string
+              example: service-name
+              maxLength: 255
+            timestamp:
+              type: string
+              format: date-time
+              example: '2025-12-28T10:00:00Z'
+              maxLength: 255
+            version:
+              type: string
+              example: 1.0.0
+              maxLength: 50
+            uptime_seconds:
+              type: integer
+              example: 3600
+              minimum: 0
+            active_connections:
+              type: integer
+              example: 1500
+              minimum: 0
+          description: 'BACKEND NOTE: Fields ordered for struct alignment (large →
+            small). Expected memory savings: 30-50%.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
+    NavigationSessionEntity:
+      allOf:
+      - allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          properties:
+            created_by:
+              type: string
+              format: uuid
+              description: ID of user who created the entity
+              example: 123e4567-e89b-12d3-a456-426614174001
+              maxLength: 36
+            updated_by:
+              type: string
+              format: uuid
+              description: ID of user who last modified the entity
+              example: 123e4567-e89b-12d3-a456-426614174002
+              maxLength: 36
+        description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
+          entities.'
+      - type: object
+        required:
+        - player_id
+        - neural_link_id
+        - status
+        properties:
+          player_id:
+            type: string
+            format: uuid
+            description: Player navigating cyberspace
+          neural_link_id:
+            type: string
+            format: uuid
+            description: Neural link providing access
+          status:
+            type: string
+            enum:
+            - INITIALIZING
+            - ACTIVE
+            - COMPLETED
+            - DISCONNECTED
+            - CRASHED
+            description: Current session status
+            example: ACTIVE
+          connection_strength:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 100
+            description: Neural connection strength percentage
+            example: 94.7
+          neural_health:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 100
+            description: Neural pathway health
+            example: 87.3
+          stress_level:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 100
+            description: Mental stress accumulation
+            example: 45.2
+          data_extracted:
+            type: integer
+            description: Amount of data extracted (in arbitrary units)
+            example: 1250
+          areas_explored:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: Network areas successfully explored
+            maxItems: 100
+          risk_encounters:
+            type: array
+            items:
+              $ref: '#/components/schemas/RiskEncounter'
+            description: Risk events encountered
+            maxItems: 50
+          easter_eggs_found:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: Hidden content discovered
+            maxItems: 20
+          session_duration:
+            type: integer
+            description: Session duration in seconds
+            example: 1847
+          start_location:
+            type: object
+            description: Initial connection coordinates
+            additionalProperties: true
+          current_location:
+            type: object
+            description: Current position in cyberspace
+            additionalProperties: true
+          navigation_path:
+            type: array
+            items:
+              type: object
+              description: Navigation waypoints
+              additionalProperties: true
+            description: Complete navigation path
+            maxItems: 1000
+      description: 'BACKEND NOTE: Inherits from AuditableEntity. Complex navigation
+        tracking with neural monitoring. Memory savings: 30-50% via struct alignment.'
+    RiskEncounter:
+      type: object
+      required:
+      - risk_type
+      - severity
+      - encountered_at
+      properties:
+        risk_type:
+          type: string
+          enum:
+          - CONNECTION_INSTABILITY
+          - NEURAL_FEEDBACK
+          - ICE_DETECTION
+          - DATA_CORRUPTION
+          - SYSTEM_OVERLOAD
+          description: Type of risk encountered
+          example: NEURAL_FEEDBACK
+        severity:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - CRITICAL
+          description: Risk severity level
+          example: MEDIUM
+        encountered_at:
+          type: string
+          format: date-time
+          description: When the risk was encountered
+        mitigated:
+          type: boolean
+          description: Whether the risk was successfully mitigated
+          example: true
+        consequences:
+          type: array
+          items:
+            type: string
+            maxLength: 200
+          description: Consequences if not mitigated
+          maxItems: 5
+          example:
+          - neural_damage
+          - connection_loss
+          - data_loss
+      description: 'BACKEND NOTE: Risk event tracking for navigation safety.'
+    BlackwallBreachEntity:
+      allOf:
+      - allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          properties:
+            created_by:
+              type: string
+              format: uuid
+              description: ID of user who created the entity
+              example: 123e4567-e89b-12d3-a456-426614174001
+              maxLength: 36
+            updated_by:
+              type: string
+              format: uuid
+              description: ID of user who last modified the entity
+              example: 123e4567-e89b-12d3-a456-426614174002
+              maxLength: 36
+        description: 'BACKEND NOTE: Extends BaseEntity with audit trail. Use for admin-managed
+          entities.'
+      - type: object
+        required:
+        - player_id
+        - breach_depth
+        - status
+        properties:
+          player_id:
+            type: string
+            format: uuid
+            description: Player attempting breach
+          breach_depth:
+            type: integer
+            minimum: 1
+            maximum: 5
+            description: Number of Blackwall layers to penetrate (1-5)
+            example: 3
+          status:
+            type: string
+            enum:
+            - INITIATED
+            - BARRIER_INTERACTION
+            - PENETRATION
+            - DEEP_EXPEDITION
+            - COMPLETED
+            - FAILED
+            - ABORTED
+            - DEATH
+            description: Current breach status
+            example: PENETRATION
+          current_layer:
+            type: integer
+            minimum: 0
+            maximum: 5
+            description: Current layer being breached
+            example: 2
+          mortality_risk:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 100
+            description: Current mortality probability
+            example: 65.4
+          ice_encounters:
+            type: array
+            items:
+              $ref: '#/components/schemas/ICEEncounter'
+            description: ICE entities encountered
+            maxItems: 20
+          layer_progress:
+            type: array
+            items:
+              type: object
+              required:
+              - layer_number
+              - progress_percentage
+              - breach_method
+              properties:
+                layer_number:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                progress_percentage:
+                  type: number
+                  format: float
+                  minimum: 0
+                  maximum: 100
+                breach_method:
+                  type: string
+                  enum:
+                  - STEALTH
+                  - FORCE
+                  - EXPLOIT
+                  - BYPASS
+              description: Progress through each layer
+            maxItems: 5
+          preparation_level:
+            type: string
+            enum:
+            - NONE
+            - BASIC
+            - GOOD
+            - EXCELLENT
+            description: Pre-breach preparation quality
+            example: EXCELLENT
+          survival_probability:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 100
+            description: Real-time survival calculation
+            example: 34.6
+          abort_warnings:
+            type: array
+            items:
+              type: string
+              maxLength: 300
+            description: Warnings recommending abort
+            maxItems: 10
+          breach_rewards:
+            type: object
+            description: Potential rewards for successful breach
+            additionalProperties: true
+        description: 'BACKEND NOTE: Extreme-risk operation tracking with mortality
+          calculations. Memory savings: 30-50% via struct alignment.'
+    ICEEncounter:
+      type: object
+      required:
+      - ice_type
+      - threat_level
+      - layer
+      properties:
+        ice_type:
+          type: string
+          enum:
+          - SCORCHER
+          - ASP
+          - CERBERUS
+          - ANGEL
+          - JESTER
+          - BARGHEST
+          - RAVEN
+          description: Type of ICE encountered
+          example: SCORCHER
+        threat_level:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - EXTREME
+          description: ICE threat assessment
+          example: HIGH
+        layer:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Blackwall layer where encountered
+        damage_capability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Potential damage percentage
+          example: 85.3
+        defense_status:
+          type: string
+          enum:
+          - ACTIVE
+          - WEAKENED
+          - BYPASSED
+          - DESTROYED
+          description: Current ICE defensive status
+          example: ACTIVE
+        countermeasures_applied:
+          type: array
+          items:
+            type: string
+            maxLength: 100
+          description: Applied countermeasures
+          maxItems: 10
+          example:
+          - decoy
+          - overload
+          - neural_shield
+      description: 'BACKEND NOTE: ICE threat assessment and countermeasure tracking.'
+    NavigationSessionResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/NavigationSessionEntity'
+        meta:
+          type: object
+          properties:
+            version:
+              type: string
+              example: '1.0'
+            processing_time_ms:
+              type: integer
+              example: 15
+      description: Standard response wrapper for single navigation session
+    NavigationSessionListResponse:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/NavigationSessionEntity'
+        meta:
+          allOf:
+          - type: object
+            required:
+            - items
+            - total
+            - limit
+            - offset
+            properties:
+              items:
+                type: array
+                description: Array of items
+              total:
+                type: integer
+                minimum: 0
+                example: 100
+                description: Total number of items
+              limit:
+                type: integer
+                minimum: 1
+                maximum: 100
+                example: 20
+                description: Items per page
+              offset:
+                type: integer
+                minimum: 0
+                example: 0
+                description: Number of items to skip
+          - type: object
+            properties:
+              processing_time_ms:
+                type: integer
+                example: 45
+      description: Standard paginated response wrapper
+    BreachSessionResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/BlackwallBreachEntity'
+        meta:
+          type: object
+          properties:
+            version:
+              type: string
+              example: '1.0'
+            mortality_warning:
+              type: string
+              example: 'EXTREME RISK: 70-90% chance of death'
+            processing_time_ms:
+              type: integer
+              example: 25
+      description: High-risk response wrapper with mortality warnings
+    BreachStatusResponse:
+      type: object
+      required:
+      - data
+      properties:
+        data:
+          $ref: '#/components/schemas/BlackwallBreachEntity'
+        risk_assessment:
+          type: object
+          properties:
+            immediate_mortality_risk:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+            abort_recommended:
+              type: boolean
+            survival_strategies:
+              type: array
+              items:
+                type: string
+              maxItems: 5
+        meta:
+          type: object
+          properties:
+            processing_time_ms:
+              type: integer
+              example: 10
+      description: Real-time breach status with risk assessment
+    BreachListResponse:
+      type: object
+      required:
+      - data
+      - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlackwallBreachEntity'
+        meta:
+          allOf:
+          - type: object
+            required:
+            - items
+            - total
+            - limit
+            - offset
+            properties:
+              items:
+                type: array
+                description: Array of items
+              total:
+                type: integer
+                minimum: 0
+                example: 100
+                description: Total number of items
+              limit:
+                type: integer
+                minimum: 1
+                maximum: 100
+                example: 20
+                description: Items per page
+              offset:
+                type: integer
+                minimum: 0
+                example: 0
+                description: Number of items to skip
+          - type: object
+            properties:
+              processing_time_ms:
+                type: integer
+                example: 35
+              overall_success_rate:
+                type: number
+                format: float
+                example: 23.5
+              average_mortality:
+                type: number
+                format: float
+                example: 67.8
+      description: Breach history with statistical analysis
+    InitializeNavigationRequest:
+      type: object
+      required:
+      - player_id
+      - neural_link_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player entering cyberspace
+        neural_link_id:
+          type: string
+          format: uuid
+          description: Neural link for connection
+        entry_point:
+          type: string
+          enum:
+          - PUBLIC_TERMINAL
+          - PERSONAL_DECK
+          - CORPORATE_NETWORK
+          - UNDERGROUND_GRID
+          default: PUBLIC_TERMINAL
+          description: Cyberspace entry method
+        risk_tolerance:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - EXTREME
+          default: MEDIUM
+          description: Acceptable risk level
+        session_duration_limit:
+          type: integer
+          minimum: 300
+          maximum: 7200
+          default: 3600
+          description: Maximum session duration in seconds
+        enable_easter_egg_detection:
+          type: boolean
+          default: true
+          description: Attempt to detect hidden content
+        stealth_mode:
+          type: boolean
+          default: true
+          description: Prioritize stealth over speed
+      description: Cyberspace navigation session initialization with safety parameters
+    UpdateNavigationSessionRequest:
+      allOf:
+      - type: object
+        required:
+        - id
+        description: Base schema for update operations with optimistic locking support.
+        properties:
+          id:
+            $ref: '#/components/schemas/UUID'
+          version:
+            type: integer
+            minimum: 1
+            description: Current entity version for optimistic locking
+          metadata:
+            type: object
+            properties:
+              updated_by:
+                $ref: '#/components/schemas/UUID'
+              reason:
+                type: string
+                maxLength: 200
+                description: Update reason for audit trail
+      - type: object
+        properties:
+          risk_tolerance:
+            type: string
+            enum:
+            - LOW
+            - MEDIUM
+            - HIGH
+            - EXTREME
+            description: Update acceptable risk level
+          stealth_mode:
+            type: boolean
+            description: Toggle stealth priority
+          extend_duration_limit:
+            type: integer
+            minimum: 300
+            maximum: 3600
+            description: Extend session duration limit by seconds
+          enable_emergency_protocols:
+            type: boolean
+            default: false
+            description: Enable emergency disconnection protocols
+      description: Session update with optimistic locking (version field from UpdateRequest)
+    ExecuteNavigationRequest:
+      type: object
+      required:
+      - action_type
+      properties:
+        action_type:
+          type: string
+          enum:
+          - MOVE
+          - INTERACT
+          - SCAN
+          - EXTRACT
+          - HIDE
+          - ESCAPE
+          description: Type of navigation action
+        target_coordinates:
+          type: object
+          description: Target location in cyberspace
+          additionalProperties: true
+        interaction_parameters:
+          type: object
+          description: Parameters for interaction actions
+          additionalProperties: true
+        risk_override:
+          type: boolean
+          default: false
+          description: Override risk warnings for this action
+        priority:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - CRITICAL
+          default: MEDIUM
+          description: Action execution priority
+      description: Navigation action execution with risk management
+    InitiateBreachRequest:
+      type: object
+      required:
+      - player_id
+      - breach_depth
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player attempting breach
+        breach_depth:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Number of Blackwall layers to penetrate
+        preparation_level:
+          type: string
+          enum:
+          - NONE
+          - BASIC
+          - GOOD
+          - EXCELLENT
+          default: BASIC
+          description: Pre-breach preparation quality
+        breach_strategy:
+          type: string
+          enum:
+          - STEALTH
+          - AGGRESSIVE
+          - BALANCED
+          default: BALANCED
+          description: Overall breach approach
+        emergency_abort_enabled:
+          type: boolean
+          default: true
+          description: Allow automatic abort on critical risk
+        accept_mortality_risk:
+          type: boolean
+          default: false
+          description: Explicit acceptance of mortality risk
+        reward_prioritization:
+          type: array
+          items:
+            type: string
+            enum:
+            - DATA
+            - UNIQUE_ITEMS
+            - ACHIEVEMENTS
+            - REPUTATION
+          description: Priority order for potential rewards
+          default:
+          - DATA
+          - UNIQUE_ITEMS
+          - ACHIEVEMENTS
+          - REPUTATION
+      description: Blackwall breach initiation with extreme risk parameters
+    CompleteBreachRequest:
+      type: object
+      properties:
+        extract_maximum_data:
+          type: boolean
+          default: true
+          description: Attempt to extract all accessible data
+        preserve_connection:
+          type: boolean
+          default: false
+          description: Maintain connection for future access (risky)
+        generate_comprehensive_report:
+          type: boolean
+          default: true
+          description: Create detailed breach report
+        claim_achievements:
+          type: boolean
+          default: true
+          description: Automatically claim breach achievements
+      description: Breach completion with data extraction and reward claiming
+    RiskAssessmentRequest:
+      type: object
+      required:
+      - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player to assess risks for
+        current_location:
+          type: object
+          description: Current cyberspace coordinates
+          additionalProperties: true
+        planned_action:
+          type: string
+          enum:
+          - NAVIGATE
+          - INTERACT
+          - BREACH
+          - EXTRACT
+          - ESCAPE
+          description: Intended action for risk calculation
+        time_window:
+          type: integer
+          minimum: 60
+          maximum: 3600
+          default: 300
+          description: Time window for risk assessment (seconds)
+        include_historical_data:
+          type: boolean
+          default: true
+          description: Include historical risk patterns
+      description: Comprehensive risk assessment for cyberspace operations
+    EasterEggDiscoveryRequest:
+      type: object
+      properties:
+        discovery_method:
+          type: string
+          enum:
+          - PATTERN_ANALYSIS
+          - NEURAL_RESPONSE
+          - RANDOM_SCAN
+          - COORDINATE_HINT
+          default: PATTERN_ANALYSIS
+          description: Method to use for discovery
+        search_radius:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: Search radius in cyberspace units
+        neural_sensitivity:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 1.0
+          default: 0.7
+          description: Neural pattern detection sensitivity
+        time_limit:
+          type: integer
+          minimum: 30
+          maximum: 300
+          default: 120
+          description: Maximum time to spend searching (seconds)
+      description: Easter egg discovery with configurable detection parameters
+    NavigationExecutionResult:
+      type: object
+      required:
+      - action_id
+      - status
+      - execution_time_ms
+      properties:
+        action_id:
+          type: string
+          format: uuid
+          description: Unique action identifier
+        status:
+          type: string
+          enum:
+          - SUCCESS
+          - PARTIAL_SUCCESS
+          - BLOCKED
+          - INTERRUPTED
+          description: Action execution outcome
+        execution_time_ms:
+          type: integer
+          description: Time taken to execute action
+        new_location:
+          type: object
+          description: Updated cyberspace coordinates
+          additionalProperties: true
+        data_discovered:
+          type: object
+          description: Data extracted during action
+          additionalProperties: true
+        risk_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskEncounter'
+          description: New risk events triggered
+        neural_impact:
+          type: number
+          format: float
+          description: Neural processing impact
+        connection_stability_change:
+          type: number
+          format: float
+          description: Change in connection stability
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Action execution warnings
+      description: Navigation action outcome with position and risk updates
+    NavigationSessionTerminationResult:
+      type: object
+      required:
+      - session_id
+      - termination_reason
+      - data_preserved
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Terminated session ID
+        termination_reason:
+          type: string
+          enum:
+          - USER_REQUEST
+          - CONNECTION_LOSS
+          - NEURAL_OVERLOAD
+          - SYSTEM_CRASH
+          - EMERGENCY_PROTOCOL
+          description: Reason for termination
+        data_preserved:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Percentage of session data preserved
+        final_statistics:
+          type: object
+          properties:
+            total_duration:
+              type: integer
+            areas_explored:
+              type: integer
+            data_extracted:
+              type: integer
+            easter_eggs_found:
+              type: integer
+            risk_events_encountered:
+              type: integer
+          description: Session summary statistics
+        neural_recovery_time:
+          type: integer
+          description: Required neural recovery time (seconds)
+        disconnection_effects:
+          type: array
+          items:
+            type: string
+          description: Post-disconnection neural effects
+      description: Session termination outcome with data preservation status
+    BreachAbortResult:
+      type: object
+      required:
+      - breach_id
+      - abort_successful
+      - survival_status
+      properties:
+        breach_id:
+          type: string
+          format: uuid
+          description: Aborted breach ID
+        abort_successful:
+          type: boolean
+          description: Whether abort completed without additional damage
+        survival_status:
+          type: string
+          enum:
+          - ALIVE
+          - INJURED
+          - CRITICAL
+          - DEAD
+          description: Player survival status after abort
+        layers_penetrated:
+          type: integer
+          minimum: 0
+          maximum: 5
+          description: Number of layers successfully penetrated before abort
+        partial_rewards:
+          type: object
+          description: Any rewards earned before abort
+          additionalProperties: true
+        damage_assessment:
+          type: object
+          properties:
+            neural_damage:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+            cyberware_damage:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+            psychological_impact:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+          description: Damage assessment from abort procedure
+        recovery_requirements:
+          type: object
+          description: Required recovery actions and timeframes
+          additionalProperties: true
+      description: Breach abort outcome with survival and damage assessment
+    BreachCompleteResult:
+      type: object
+      required:
+      - breach_id
+      - completion_status
+      - survival_confirmed
+      properties:
+        breach_id:
+          type: string
+          format: uuid
+          description: Completed breach ID
+        completion_status:
+          type: string
+          enum:
+          - FULL_SUCCESS
+          - PARTIAL_SUCCESS
+          - MINIMAL_SUCCESS
+          description: Breach completion quality
+        survival_confirmed:
+          type: boolean
+          description: Player survival confirmation
+        layers_breached:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Total layers successfully breached
+        breach_duration:
+          type: integer
+          description: Total breach duration in seconds
+        ice_encounters_total:
+          type: integer
+          description: Total ICE entities encountered
+        ice_defeated:
+          type: integer
+          description: Number of ICE entities defeated
+        data_extracted:
+          type: object
+          properties:
+            raw_data_volume:
+              type: integer
+            classified_documents:
+              type: integer
+            access_credentials:
+              type: integer
+            system_vulnerabilities:
+              type: integer
+          description: Comprehensive data extraction summary
+        rewards_earned:
+          type: object
+          properties:
+            unique_items:
+              type: array
+              items:
+                type: string
+            achievements_unlocked:
+              type: array
+              items:
+                type: string
+            reputation_changes:
+              type: object
+              additionalProperties:
+                type: integer
+            access_granted:
+              type: array
+              items:
+                type: string
+          description: All rewards and benefits from successful breach
+        post_breach_effects:
+          type: object
+          properties:
+            neural_fatigue:
+              type: number
+              format: float
+            psychological_impact:
+              type: string
+              enum:
+              - MINIMAL
+              - MODERATE
+              - SEVERE
+              - TRAUMATIC
+            system_adaptation:
+              type: string
+              enum:
+              - NONE
+              - MINOR
+              - SIGNIFICANT
+              - MAJOR
+          description: Post-breach physiological and psychological effects
+        breach_report:
+          type: object
+          description: Detailed breach execution report
+          additionalProperties: true
+      description: Successful Blackwall breach completion with comprehensive results
+    RiskAssessmentResult:
+      type: object
+      required:
+      - assessment_id
+      - overall_risk_level
+      - confidence_score
+      properties:
+        assessment_id:
+          type: string
+          format: uuid
+          description: Unique assessment identifier
+        overall_risk_level:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+          - EXTREME
+          description: Overall risk assessment
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Assessment confidence percentage
+        risk_breakdown:
+          type: object
+          properties:
+            connection_instability_risk:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+            neural_feedback_risk:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+            ice_detection_risk:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+            data_corruption_risk:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+            system_overload_risk:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+          description: Detailed risk breakdown by category
+        recommended_actions:
+          type: array
+          items:
+            type: object
+            required:
+            - action
+            - priority
+            - risk_reduction
+            properties:
+              action:
+                type: string
+                enum:
+                - ABORT_SESSION
+                - CHANGE_LOCATION
+                - ACTIVATE_SHIELDS
+                - SLOW_DOWN
+                - ACCELERATE
+              priority:
+                type: string
+                enum:
+                - LOW
+                - MEDIUM
+                - HIGH
+                - CRITICAL
+              risk_reduction:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 100
+          description: Recommended risk mitigation actions
+          maxItems: 10
+        time_window_validity:
+          type: integer
+          description: How long this assessment remains valid (seconds)
+      description: Comprehensive risk assessment with mitigation recommendations
+    EasterEggDiscoveryResult:
+      type: object
+      required:
+      - discovery_attempt_id
+      - discoveries_made
+      properties:
+        discovery_attempt_id:
+          type: string
+          format: uuid
+          description: Unique discovery attempt identifier
+        discoveries_made:
+          type: integer
+          minimum: 0
+          description: Number of easter eggs discovered
+        easter_eggs:
+          type: array
+          items:
+            type: object
+            required:
+            - egg_id
+            - egg_type
+            - rarity
+            properties:
+              egg_id:
+                type: string
+                format: uuid
+              egg_type:
+                type: string
+                enum:
+                - LORE_FRAGMENT
+                - SECRET_DATA
+                - ACHIEVEMENT_UNLOCK
+                - UNIQUE_ITEM
+                - ACCESS_CODE
+              rarity:
+                type: string
+                enum:
+                - COMMON
+                - UNCOMMON
+                - RARE
+                - EPIC
+                - LEGENDARY
+              coordinates:
+                type: object
+                description: Cyberspace coordinates where found
+                additionalProperties: true
+              content:
+                type: object
+                description: Discovered content details
+                additionalProperties: true
+          description: Details of discovered easter eggs
+          maxItems: 20
+        search_statistics:
+          type: object
+          properties:
+            areas_scanned:
+              type: integer
+            neural_patterns_analyzed:
+              type: integer
+            time_spent_searching:
+              type: integer
+            detection_accuracy:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+          description: Search process statistics
+        neural_impact:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Neural processing impact from discovery attempt
+      description: Easter egg discovery results with content and statistics
+    VersionedEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        required:
+        - version
+        properties:
+          version:
+            type: integer
+            minimum: 1
+            description: Optimistic locking version
+            example: 1
+      description: 'BACKEND NOTE: Extends BaseEntity with version control. Use for
+        concurrent-safe updates.'
+    SoftDeletableEntity:
+      allOf:
+      - $ref: '#/components/schemas/BaseEntity'
+      - type: object
+        properties:
+          deleted_at:
+            type: string
+            format: date-time
+            nullable: true
+            description: Soft deletion timestamp (null if not deleted)
+            example: null
+            maxLength: 30
+      description: 'BACKEND NOTE: Extends BaseEntity with soft delete capability.
+        Use for recoverable deletions.'
+    UpdateRequest:
+      type: object
+      required:
+      - id
+      description: Base schema for update operations with optimistic locking support.
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        version:
+          type: integer
+          minimum: 1
+          description: Current entity version for optimistic locking
+        metadata:
+          type: object
+          properties:
+            updated_by:
+              $ref: '#/components/schemas/UUID'
+            reason:
+              type: string
+              maxLength: 200
+              description: Update reason for audit trail
+    PaginationParams:
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
+    PaginatedResponse:
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          description: Array of items
+        total:
+          type: integer
+          minimum: 0
+          example: 100
+          description: Total number of items
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          example: 0
+          description: Number of items to skip
+    UUID:
+      type: string
+      format: uuid
+      description: Universally Unique Identifier (UUID v4)
+      example: 123e4567-e89b-12d3-a456-426614174000
+      maxLength: 36
+    Email:
+      type: string
+      format: email
+      description: Email address
+      example: user@necpgame.com
+      maxLength: 255
+    Timestamp:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp
+      example: '2025-12-28T10:00:00Z'
+      maxLength: 30
+    Version:
+      type: string
+      pattern: ^\d+\.\d+\.\d+$
+      description: Semantic version (MAJOR.MINOR.PATCH)
+      example: 1.0.0
+      maxLength: 20
+    ValidationResult:
+      type: object
+      required:
+      - valid
+      properties:
+        valid:
+          type: boolean
+          description: Whether validation passed
+          example: true
+        errors:
+          type: array
+          items:
+            type: string
+          description: Validation error messages
+          example:
+          - Field is required
+          - Invalid format
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Validation warnings
+          example:
+          - Deprecated field usage
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API Key authentication
+    ServiceAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Service-to-service authentication token

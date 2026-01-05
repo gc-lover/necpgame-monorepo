@@ -1,18 +1,17 @@
 openapi: 3.0.3
 info:
   title: Movement Service API - Enterprise-Grade Movement System
-  description: "**Enterprise-grade API for Movement System**
+  description: '**Enterprise-grade API for Movement System**
 
-    Complete character movement and navigation system for NECPGAME.
-    Handles real-time position tracking, collision detection, pathfinding,
-    movement validation, and physics-based movement calculations.
+    Complete character movement and navigation system for NECPGAME. Handles real-time
+    position tracking, collision detection, pathfinding, movement validation, and
+    physics-based movement calculations.
 
     ## Key Features
 
-    - **Enterprise-grade architecture** with proper domain separation
-    - **Backend optimization hints** for struct alignment and performance
-    - **Complete validation** with redocly and ogen code generation
-    - **Security-first approach** with JWT authentication
+    - **Enterprise-grade architecture** with proper domain separation - **Backend
+    optimization hints** for struct alignment and performance - **Complete validation**
+    with redocly and ogen code generation - **Security-first approach** with JWT authentication
     - **Performance-optimized** response structures
 
     ## Domain Purpose
@@ -22,41 +21,40 @@ info:
 
     ## Performance Targets
 
-    - P99 Latency: <25ms for movement updates
-    - Memory: <30KB per active player movement state
-    - Concurrent users: 10,000+ simultaneous movement calculations
-    - Real-time sync: 60 FPS position updates
+    - P99 Latency: <25ms for movement updates - Memory: <30KB per active player movement
+    state - Concurrent users: 10,000+ simultaneous movement calculations - Real-time
+    sync: 60 FPS position updates
 
-    "
-  version: "1.0.0"
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necpgame.com
   license:
     name: MIT
 servers:
-  - url: https://api.necpgame.com/v1/movement
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/movement
-    description: Staging server
-  - url: http://localhost:8080/api/v1/movement
-    description: Local development server
+- url: https://api.necpgame.com/v1/movement
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/movement
+  description: Staging server
+- url: http://localhost:8080/api/v1/movement
+  description: Local development server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: Movement Tracking
-    description: Real-time movement tracking and position updates
-  - name: Collision Detection
-    description: Collision detection and resolution
-  - name: Navigation
-    description: Pathfinding and navigation systems
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: Movement Tracking
+  description: Real-time movement tracking and position updates
+- name: Collision Detection
+  description: Collision detection and resolution
+- name: Navigation
+  description: Pathfinding and navigation systems
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
   /health:
     get:
       summary: Movement service health check
-      description: "**Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
 
         Provides real-time health status of the movement microservice.
 
@@ -64,21 +62,21 @@ paths:
 
         **Performance:** <1ms response time, cached for 30 seconds
 
-        "
+        '
       operationId: movementServiceHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -93,35 +91,41 @@ paths:
               schema:
                 type: string
                 enum:
-                  - gzip
-                  - deflate
-                  - br
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "503":
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "429":
-          $ref: "../common/responses/error.yaml#/TooManyRequests"
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /health/batch:
     post:
       summary: Batch health check for multiple services
-      description:
-        "**Performance optimization:** Check multiple services health in single request
+      description: '**Performance optimization:** Check multiple services health in
+        single request
 
         Reduces N HTTP calls to 1 call. Critical for orchestration.
 
         **Use case:** Service mesh health checks, Kubernetes readiness probes
 
-        "
+        '
       operationId: movementServiceBatchHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       requestBody:
         required: true
         content:
@@ -129,34 +133,40 @@ paths:
             schema:
               type: object
               required:
-                - services
+              - services
               properties:
                 services:
                   type: array
                   items:
                     type: string
                     enum:
-                      - movement-service
-                      - combat-service
-                      - user-service
+                    - movement-service
+                    - combat-service
+                    - user-service
                   maxItems: 10
                   description: List of services to check
       responses:
-        "200":
-          $ref: "#/components/responses/HealthBatchSuccess"
-        "400":
+        '200':
+          $ref: '#/components/responses/HealthBatchSuccess'
+        '400':
           description: Invalid request - malformed service list
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          $ref: "../common/responses/error.yaml#/TooManyRequests"
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
-      description:
-        "**Performance optimization:** Real-time health updates without polling
+      description: '**Performance optimization:** Real-time health updates without
+        polling
 
         Eliminates periodic HTTP requests, reduces server load by ~90%.
 
@@ -168,24 +178,24 @@ paths:
 
         **Reconnection:** Automatic with exponential backoff
 
-        "
+        '
       operationId: movementServiceHealthWebSocket
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: services
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - movement-service
-                - combat-service
-                - user-service
-          description: Services to monitor (optional, monitors all if not specified)
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - movement-service
+            - combat-service
+            - user-service
+        description: Services to monitor (optional, monitors all if not specified)
       responses:
-        "200":
+        '200':
           description: WebSocket upgrade information returned
           content:
             application/json:
@@ -200,8 +210,8 @@ paths:
                     items:
                       type: string
                     example:
-                      - health-monitoring-v1
-        "101":
+                    - health-monitoring-v1
+        '101':
           description: WebSocket connection established successfully
           headers:
             Upgrade:
@@ -216,19 +226,19 @@ paths:
               schema:
                 type: string
                 description: WebSocket handshake acceptance key
-        "400":
+        '400':
           description: Invalid request - malformed service parameters
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: Unauthorized - authentication required for WebSocket
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: '#/components/schemas/Error'
+        '429':
           description: Too many requests - WebSocket connection limit exceeded
           headers:
             Retry-After:
@@ -238,160 +248,346 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /movement/position:
     post:
       summary: Update character position
-      description: "**Real-time position update endpoint**
+      description: '**Real-time position update endpoint**
 
         Updates character position with collision detection and validation.
 
         **Performance:** <15ms P95, real-time processing required
 
-        "
+        '
       operationId: movementServiceUpdatePosition
       tags:
-        - Movement Tracking
+      - Movement Tracking
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PositionUpdateRequest"
+              $ref: '#/components/schemas/PositionUpdateRequest'
       responses:
-        "200":
+        '200':
           description: Position updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PositionUpdateResponse"
-        "400":
-          $ref: "../common/responses/error.yaml#/BadRequest"
-        "401":
-          $ref: "../common/responses/error.yaml#/Unauthorized"
-        "409":
+                $ref: '#/components/schemas/PositionUpdateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
           description: Position conflict - invalid movement
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          $ref: "../common/responses/error.yaml#/TooManyRequests"
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /movement/position/{characterId}:
+    parameters:
+    - name: characterId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    get:
+      summary: Get character position
+      operationId: getCharacterPosition
+      tags:
+      - Movement Tracking
+      responses:
+        '200':
+          description: Character position retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterPosition'
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update character position
+      operationId: updateCharacterPosition
+      tags:
+      - Movement Tracking
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionUpdateRequest'
+      responses:
+        '200':
+          description: Position updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterPosition'
+        '400':
+          description: Invalid position data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Position conflict - invalid movement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /movement/history/{characterId}:
+    parameters:
+    - name: characterId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    get:
+      summary: Get character movement history
+      operationId: getMovementHistory
+      tags:
+      - Movement Tracking
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of history entries to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of entries to skip
+      responses:
+        '200':
+          description: Movement history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovementHistoryResponse'
+        '404':
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /movement/validate:
     post:
       summary: Validate movement path
-      description: "**Movement validation endpoint**
+      description: '**Movement validation endpoint**
 
         Validates movement path for collision detection and navigation.
 
         **Performance:** <10ms P95, pathfinding validation
 
-        "
+        '
       operationId: movementServiceValidatePath
       tags:
-        - Collision Detection
+      - Collision Detection
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PathValidationRequest"
+              $ref: '#/components/schemas/PathValidationRequest'
       responses:
-        "200":
+        '200':
           description: Path validation completed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PathValidationResponse"
-        "400":
-          $ref: "../common/responses/error.yaml#/BadRequest"
-        "401":
-          $ref: "../common/responses/error.yaml#/Unauthorized"
-        "429":
-          $ref: "../common/responses/error.yaml#/TooManyRequests"
+                $ref: '#/components/schemas/PathValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /movement/navigate:
     post:
       summary: Calculate navigation path
-      description: "**Pathfinding endpoint**
+      description: '**Pathfinding endpoint**
 
         Calculates optimal navigation path with obstacle avoidance.
 
         **Performance:** <50ms P95, A* pathfinding algorithm
 
-        "
+        '
       operationId: movementServiceCalculatePath
       tags:
-        - Navigation
+      - Navigation
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NavigationRequest"
+              $ref: '#/components/schemas/NavigationRequest'
       responses:
-        "200":
+        '200':
           description: Navigation path calculated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NavigationResponse"
-        "400":
-          $ref: "../common/responses/error.yaml#/BadRequest"
-        "401":
-          $ref: "../common/responses/error.yaml#/Unauthorized"
-        "422":
+                $ref: '#/components/schemas/NavigationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
           description: Unreachable destination
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          $ref: "../common/responses/error.yaml#/TooManyRequests"
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /movement/state/{characterId}:
     get:
       summary: Get character movement state
-      description: "**Movement state retrieval endpoint**
+      description: '**Movement state retrieval endpoint**
 
         Returns current movement state for a character.
 
         **Performance:** <5ms P95, cached state data
 
-        "
+        '
       operationId: movementServiceGetState
       tags:
-        - Movement Tracking
+      - Movement Tracking
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Movement state retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MovementState"
-        "404":
-          $ref: "../common/responses/error.yaml#/NotFound"
-        "401":
-          $ref: "../common/responses/error.yaml#/Unauthorized"
-        "429":
-          $ref: "../common/responses/error.yaml#/TooManyRequests"
+                $ref: '#/components/schemas/MovementState'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   responses:
     HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+      description: Health batch check completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              results:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    service:
+                      type: string
+                      example: movement-service
+                    status:
+                      type: string
+                      enum:
+                      - healthy
+                      - degraded
+                      - unhealthy
+                      example: healthy
+                    response_time:
+                      type: integer
+                      description: Response time in milliseconds
+                      example: 15
+                    timestamp:
+                      type: string
+                      format: date-time
+                      example: '2025-12-28T10:00:00Z'
     TooManyRequests:
       description: Too many requests - rate limit exceeded
       headers:
@@ -403,63 +599,152 @@ components:
       content:
         application/json:
           schema:
-            $ref: "../common/schemas/error.yaml#/Error"
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
     Error:
-      $ref: "../common/schemas/error.yaml#/Error"
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        details:
+          type: object
+          description: Additional error details
+      description: Standard error response format
     HealthResponse:
-      $ref: "../common/schemas/health.yaml#/HealthResponse"
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: service-name
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-28T10:00:00Z'
+        version:
+          type: string
+          example: 1.0.0
+        uptime:
+          type: integer
+          description: System uptime in seconds
     WebSocketHealthMessage:
       type: object
       required:
-        - type
-        - timestamp
-        - services
+      - type
+      - timestamp
+      - services
       properties:
         type:
           type: string
-          enum: [health_update, service_down, service_up]
+          enum:
+          - health_update
+          - service_down
+          - service_up
           example: health_update
         timestamp:
           type: string
           format: date-time
-          example: "2025-12-28T10:00:00Z"
+          example: '2025-12-28T10:00:00Z'
         services:
           type: object
           additionalProperties:
-            $ref: "../common/schemas/health.yaml#/HealthResponse"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [healthy, degraded, unhealthy]
+                example: healthy
+              timestamp:
+                type: string
+                format: date-time
+                example: '2025-12-28T10:00:00Z'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     PositionUpdateRequest:
       type: object
       required:
-        - character_id
-        - position
-        - movement_type
+      - character_id
+      - position
+      - movement_type
       properties:
         character_id:
           type: string
           format: uuid
           description: Character unique identifier
         position:
-          $ref: "#/components/schemas/Position"
+          $ref: '#/components/schemas/Position'
         velocity:
-          $ref: "#/components/schemas/Vector3"
+          $ref: '#/components/schemas/Vector3'
         movement_type:
           type: string
-          enum: [walk, run, sprint, jump, fall, teleport, dash]
+          enum:
+          - walk
+          - run
+          - sprint
+          - jump
+          - fall
+          - teleport
+          - dash
           description: Type of movement performed
           example: run
         timestamp:
           type: string
           format: date-time
           description: Movement timestamp
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     PositionUpdateResponse:
       type: object
       required:
-        - success
-        - character_id
-        - position
+      - success
+      - character_id
+      - position
       properties:
         success:
           type: boolean
@@ -468,44 +753,48 @@ components:
           type: string
           format: uuid
         position:
-          $ref: "#/components/schemas/Position"
-        corrected_position:
-          $ref: "#/components/schemas/Position"
-          description: Server-corrected position if collision detected
+          $ref: '#/components/schemas/Position'
+        corrected_position: null
         collision_detected:
           type: boolean
           example: false
         timestamp:
           type: string
           format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     PathValidationRequest:
       type: object
       required:
-        - character_id
-        - start_position
-        - end_position
+      - character_id
+      - start_position
+      - end_position
       properties:
         character_id:
           type: string
           format: uuid
         start_position:
-          $ref: "#/components/schemas/Position"
+          $ref: '#/components/schemas/Position'
         end_position:
-          $ref: "#/components/schemas/Position"
+          $ref: '#/components/schemas/Position'
         movement_type:
           type: string
-          enum: [walk, run, sprint, jump]
+          enum:
+          - walk
+          - run
+          - sprint
+          - jump
           default: walk
         check_collisions:
           type: boolean
           default: true
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     PathValidationResponse:
       type: object
       required:
-        - valid
-        - character_id
+      - valid
+      - character_id
       properties:
         valid:
           type: boolean
@@ -516,32 +805,36 @@ components:
         blocked_positions:
           type: array
           items:
-            $ref: "#/components/schemas/Position"
+            $ref: '#/components/schemas/Position'
         alternative_path:
           type: array
           items:
-            $ref: "#/components/schemas/Position"
+            $ref: '#/components/schemas/Position'
         validation_time_ms:
           type: integer
           description: Path validation processing time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     NavigationRequest:
       type: object
       required:
-        - character_id
-        - start_position
-        - target_position
+      - character_id
+      - start_position
+      - target_position
       properties:
         character_id:
           type: string
           format: uuid
         start_position:
-          $ref: "#/components/schemas/Position"
+          $ref: '#/components/schemas/Position'
         target_position:
-          $ref: "#/components/schemas/Position"
+          $ref: '#/components/schemas/Position'
         movement_type:
           type: string
-          enum: [walk, run, sprint]
+          enum:
+          - walk
+          - run
+          - sprint
           default: walk
         max_path_length:
           type: integer
@@ -551,12 +844,13 @@ components:
         avoid_hazards:
           type: boolean
           default: true
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     NavigationResponse:
       type: object
       required:
-        - success
-        - character_id
+      - success
+      - character_id
       properties:
         success:
           type: boolean
@@ -567,7 +861,7 @@ components:
         path:
           type: array
           items:
-            $ref: "#/components/schemas/Position"
+            $ref: '#/components/schemas/Position'
         total_distance:
           type: number
           format: float
@@ -578,25 +872,34 @@ components:
         pathfinding_time_ms:
           type: integer
           description: Pathfinding processing time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     MovementState:
       type: object
       required:
-        - character_id
-        - position
-        - velocity
-        - movement_type
+      - character_id
+      - position
+      - velocity
+      - movement_type
       properties:
         character_id:
           type: string
           format: uuid
         position:
-          $ref: "#/components/schemas/Position"
+          $ref: '#/components/schemas/Position'
         velocity:
-          $ref: "#/components/schemas/Vector3"
+          $ref: '#/components/schemas/Vector3'
         movement_type:
           type: string
-          enum: [idle, walk, run, sprint, jump, fall, teleport, dash]
+          enum:
+          - idle
+          - walk
+          - run
+          - sprint
+          - jump
+          - fall
+          - teleport
+          - dash
         is_grounded:
           type: boolean
           example: true
@@ -609,13 +912,14 @@ components:
         server_timestamp:
           type: string
           format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     Position:
       type: object
       required:
-        - x
-        - y
-        - z
+      - x
+      - y
+      - z
       properties:
         x:
           type: number
@@ -629,13 +933,14 @@ components:
           type: number
           format: float
           description: Z coordinate (height)
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     Vector3:
       type: object
       required:
-        - x
-        - y
-        - z
+      - x
+      - y
+      - z
       properties:
         x:
           type: number
@@ -649,11 +954,164 @@ components:
           type: number
           format: float
           description: Z velocity/component
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    MovementHistoryResponse:
+      type: object
+      required:
+        - character_id
+        - movements
+        - total_count
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character identifier
+        movements:
+          type: array
+          items:
+            $ref: '#/components/schemas/MovementRecord'
+          description: List of movement records
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of movement records
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          description: Number of items skipped
+      description: Response containing movement history for a character
+    MovementRecord:
+      type: object
+      required:
+        - id
+        - character_id
+        - from_position
+        - to_position
+        - movement_type
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Movement record identifier
+        character_id:
+          type: string
+          format: uuid
+          description: Character identifier
+        from_position:
+          $ref: '#/components/schemas/Position'
+        to_position:
+          $ref: '#/components/schemas/Position'
+        movement_type:
+          type: string
+          enum:
+            - walk
+            - run
+            - teleport
+            - jump
+          description: Type of movement
+        timestamp:
+          type: string
+          format: date-time
+          description: When the movement occurred
+        distance:
+          type: number
+          format: float
+          minimum: 0
+          description: Distance moved in units
+      description: Individual movement record
+    CharacterPosition:
+      type: object
+      required:
+        - character_id
+        - position
+        - last_updated
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character identifier
+        position:
+          $ref: '#/components/schemas/Position'
+        velocity:
+          $ref: '#/components/schemas/Velocity'
+        last_updated:
+          type: string
+          format: date-time
+          description: Last position update timestamp
+        zone:
+          type: string
+          description: Current zone/area
+      description: Character position and movement state
+    Velocity:
+      type: object
+      required:
+        - x
+        - y
+      properties:
+        x:
+          type: number
+          format: float
+          description: X-axis velocity
+        y:
+          type: number
+          format: float
+          description: Y-axis velocity
+        z:
+          type: number
+          format: float
+          default: 0
+          description: Z-axis velocity
+        speed:
+          type: number
+          format: float
+          minimum: 0
+          description: Total speed magnitude
+      description: Movement velocity vector
     PaginationParams:
-      $ref: "../common/schemas/pagination.yaml#/PaginationParams"
+      type: object
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          example: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+          example: 0
     PaginatedResponse:
-      $ref: "../common/schemas/pagination.yaml#/PaginatedResponse"
+      type: object
+      required:
+      - items
+      - total
+      - limit
+      - offset
+      properties:
+        items:
+          type: array
+          description: Array of items
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of items
+        limit:
+          type: integer
+          description: Items per page
+        offset:
+          type: integer
+          description: Number of items skipped
   securitySchemes:
     BearerAuth:
-      $ref: "../common/security/security.yaml#/BearerAuth"
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication

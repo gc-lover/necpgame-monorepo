@@ -1,10 +1,12 @@
-# 🚀 **NECPGAME OpenAPI Reorganization Instruction for AI Agents**
+# NECPGAME OpenAPI Reorganization Instruction for AI Agents
 
-## 🎯 **Цель Реструктуризации**
+## Цель Реструктуризации
 
-Преобразовать хаотичную директорию `proto/openapi` в **enterprise-grade микросервисную архитектуру** с четким разделением по бизнес-доменам, строгим следованием SOLID/DRY принципам и максимальным переиспользованием общих компонентов.
+Преобразовать хаотичную директорию `proto/openapi` в **enterprise-grade микросервисную архитектуру** с четким
+разделением по бизнес-доменам, строгим следованием SOLID/DRY принципам и максимальным переиспользованием общих
+компонентов.
 
-## 📊 **Текущая Проблема**
+## Текущая Проблема
 
 - **system/**: 471 файл в одном месте (AI, компоненты, инфраструктура, мониторинг, сеть)
 - **specialized/**: 178 файлов (бой, крафт, эффекты)
@@ -17,7 +19,9 @@
 ### **🔐 Core Infrastructure Services**
 
 #### 1. **auth-service** (Аутентификация)
+
 **Ответственность:** Логин, регистрация, базовая аутентификация
+
 ```
 proto/openapi/auth-service/
 ├── main.yaml              # Основная спецификация
@@ -25,7 +29,9 @@ proto/openapi/auth-service/
 ```
 
 #### 2. **session-service** (Управление Сессиями)
+
 **Ответственность:** Управление пользовательскими сессиями
+
 ```
 proto/openapi/session-service/
 ├── main.yaml
@@ -33,7 +39,9 @@ proto/openapi/session-service/
 ```
 
 #### 3. **role-service** (Ролевая Модель)
+
 **Ответственность:** Управление ролями и разрешениями
+
 ```
 proto/openapi/role-service/
 ├── main.yaml
@@ -41,7 +49,9 @@ proto/openapi/role-service/
 ```
 
 #### 4. **oauth-service** (OAuth Интеграции)
+
 **Ответственность:** Внешние OAuth провайдеры
+
 ```
 proto/openapi/oauth-service/
 ├── main.yaml
@@ -49,7 +59,9 @@ proto/openapi/oauth-service/
 ```
 
 #### 5. **user-profile-service** (Профили Пользователей)
+
 **Ответственность:** Управление профилями пользователей
+
 ```
 proto/openapi/user-profile-service/
 ├── main.yaml
@@ -57,7 +69,9 @@ proto/openapi/user-profile-service/
 ```
 
 #### 6. **user-preference-service** (Настройки Пользователей)
+
 **Ответственность:** Персонализация и предпочтения
+
 ```
 proto/openapi/user-preference-service/
 ├── main.yaml
@@ -65,7 +79,9 @@ proto/openapi/user-preference-service/
 ```
 
 #### 7. **avatar-service** (Аватары)
+
 **Ответственность:** Управление аватарами пользователей
+
 ```
 proto/openapi/avatar-service/
 ├── main.yaml
@@ -73,7 +89,9 @@ proto/openapi/avatar-service/
 ```
 
 #### 8. **push-notification-service** (Push Уведомления)
+
 **Ответственность:** Push уведомления
+
 ```
 proto/openapi/push-notification-service/
 ├── main.yaml
@@ -81,7 +99,9 @@ proto/openapi/push-notification-service/
 ```
 
 #### 9. **email-notification-service** (Email Уведомления)
+
 **Ответственность:** Email рассылки
+
 ```
 proto/openapi/email-notification-service/
 ├── main.yaml
@@ -89,7 +109,9 @@ proto/openapi/email-notification-service/
 ```
 
 #### 10. **in-game-notification-service** (In-Game Уведомления)
+
 **Ответственность:** Игровые уведомления
+
 ```
 proto/openapi/in-game-notification-service/
 ├── main.yaml
@@ -99,7 +121,9 @@ proto/openapi/in-game-notification-service/
 ### **🎮 Core Gameplay Services**
 
 #### 11. **combat-service** ✅ (Боевая Система)
+
 **Ответственность:** Основная боевая механика
+
 ```
 proto/openapi/combat-service/
 ├── main.yaml              # ✅ SOLID/DRY inheritance from game-entities
@@ -109,7 +133,9 @@ proto/openapi/combat-service/
 ```
 
 #### 12. **movement-service** ✅ (Передвижение)
+
 **Ответственность:** Система передвижения персонажа
+
 ```
 proto/openapi/movement-service/
 ├── main.yaml              # ✅ Game domain infrastructure
@@ -118,7 +144,9 @@ proto/openapi/movement-service/
 ```
 
 #### 13. **effect-service** (Эффекты и Баффы)
+
 **Ответственность:** Эффекты, баффы, дебаффы
+
 ```
 proto/openapi/effect-service/
 ├── main.yaml
@@ -126,7 +154,9 @@ proto/openapi/effect-service/
 ```
 
 #### 14. **ability-service** (Способности)
+
 **Ответственность:** Способности и умения персонажа
+
 ```
 proto/openapi/ability-service/
 ├── main.yaml
@@ -134,7 +164,9 @@ proto/openapi/ability-service/
 ```
 
 #### 15. **game-mechanic-service** (Игровые Механики)
+
 **Ответственность:** Основные игровые механики
+
 ```
 proto/openapi/game-mechanic-service/
 ├── main.yaml
@@ -142,7 +174,9 @@ proto/openapi/game-mechanic-service/
 ```
 
 #### 16. **implant-service** (Импланты)
+
 **Ответственность:** Кибернетические импланты
+
 ```
 proto/openapi/implant-service/
 ├── main.yaml
@@ -150,7 +184,9 @@ proto/openapi/implant-service/
 ```
 
 #### 17. **hacking-service** (Хакинг)
+
 **Ответственность:** Система хакинга
+
 ```
 proto/openapi/hacking-service/
 ├── main.yaml
@@ -158,7 +194,9 @@ proto/openapi/hacking-service/
 ```
 
 #### 18. **cyberware-service** (Кибер-Протезирование)
+
 **Ответственность:** Кибернетические протезы
+
 ```
 proto/openapi/cyberware-service/
 ├── main.yaml
@@ -166,7 +204,9 @@ proto/openapi/cyberware-service/
 ```
 
 #### 19. **cyberspace-service** (Киберпространство)
+
 **Ответственность:** Навигация в киберпространстве
+
 ```
 proto/openapi/cyberspace-service/
 ├── main.yaml
@@ -174,7 +214,9 @@ proto/openapi/cyberspace-service/
 ```
 
 #### 20. **neural-link-service** (Нейронные Связи)
+
 **Ответственность:** Нейронные интерфейсы
+
 ```
 proto/openapi/neural-link-service/
 ├── main.yaml
@@ -182,7 +224,9 @@ proto/openapi/neural-link-service/
 ```
 
 #### 21. **level-service** (Уровни)
+
 **Ответственность:** Система уровней персонажа
+
 ```
 proto/openapi/level-service/
 ├── main.yaml
@@ -190,7 +234,9 @@ proto/openapi/level-service/
 ```
 
 #### 22. **achievement-service** (Достижения)
+
 **Ответственность:** Система достижений
+
 ```
 proto/openapi/achievement-service/
 ├── main.yaml
@@ -198,7 +244,9 @@ proto/openapi/achievement-service/
 ```
 
 #### 23. **skill-service** (Навыки)
+
 **Ответственность:** Навыки и специализации
+
 ```
 proto/openapi/skill-service/
 ├── main.yaml
@@ -206,7 +254,9 @@ proto/openapi/skill-service/
 ```
 
 #### 24. **experience-service** (Опыт)
+
 **Ответственность:** Система опыта и прогрессии
+
 ```
 proto/openapi/experience-service/
 ├── main.yaml
@@ -214,7 +264,9 @@ proto/openapi/experience-service/
 ```
 
 #### 25. **leaderboard-service** (Таблица Лидеров)
+
 **Ответственность:** Рейтинги и лидерборды
+
 ```
 proto/openapi/leaderboard-service/
 ├── main.yaml
@@ -224,7 +276,9 @@ proto/openapi/leaderboard-service/
 ### **💰 Economy Services**
 
 #### 26. **currency-service** (Валюты)
+
 **Ответственность:** Управление игровыми валютами
+
 ```
 proto/openapi/currency-service/
 ├── main.yaml
@@ -232,7 +286,9 @@ proto/openapi/currency-service/
 ```
 
 #### 27. **trading-service** (Торговля)
+
 **Ответственность:** P2P торговля между игроками
+
 ```
 proto/openapi/trading-service/
 ├── main.yaml
@@ -240,7 +296,9 @@ proto/openapi/trading-service/
 ```
 
 #### 28. **auction-service** (Аукционы)
+
 **Ответственность:** Система аукционов
+
 ```
 proto/openapi/auction-service/
 ├── main.yaml
@@ -248,7 +306,9 @@ proto/openapi/auction-service/
 ```
 
 #### 29. **marketplace-service** (Маркетплейс)
+
 **Ответственность:** Игровой маркетплейс
+
 ```
 proto/openapi/marketplace-service/
 ├── main.yaml
@@ -256,7 +316,9 @@ proto/openapi/marketplace-service/
 ```
 
 #### 30. **transaction-service** (Транзакции)
+
 **Ответственность:** Обработка платежей и транзакций
+
 ```
 proto/openapi/transaction-service/
 ├── main.yaml
@@ -264,7 +326,9 @@ proto/openapi/transaction-service/
 ```
 
 #### 31. **item-service** (Предметы)
+
 **Ответственность:** Управление игровыми предметами
+
 ```
 proto/openapi/item-service/
 ├── main.yaml
@@ -272,7 +336,9 @@ proto/openapi/item-service/
 ```
 
 #### 32. **equipment-service** (Экипировка)
+
 **Ответственность:** Система экипировки
+
 ```
 proto/openapi/equipment-service/
 ├── main.yaml
@@ -280,7 +346,9 @@ proto/openapi/equipment-service/
 ```
 
 #### 33. **crafting-service** ✅ (Крафт)
+
 **Ответственность:** Система создания предметов
+
 ```
 proto/openapi/crafting-service/
 ├── main.yaml              # ✅ SOLID/DRY inheritance from common entities
@@ -289,7 +357,9 @@ proto/openapi/crafting-service/
 ```
 
 #### 34. **inventory-storage-service** (Хранение Инвентаря)
+
 **Ответственность:** Хранение предметов в инвентаре
+
 ```
 proto/openapi/inventory-storage-service/
 ├── main.yaml
@@ -297,7 +367,9 @@ proto/openapi/inventory-storage-service/
 ```
 
 #### 35. **container-service** (Контейнеры)
+
 **Ответственность:** Система контейнеров и сумок
+
 ```
 proto/openapi/container-service/
 ├── main.yaml
@@ -305,7 +377,9 @@ proto/openapi/container-service/
 ```
 
 #### 36. **skin-service** (Скины)
+
 **Ответственность:** Визуальные скины предметов
+
 ```
 proto/openapi/skin-service/
 ├── main.yaml
@@ -313,7 +387,9 @@ proto/openapi/skin-service/
 ```
 
 #### 37. **customization-service** (Кастомизация)
+
 **Ответственность:** Кастомизация внешнего вида
+
 ```
 proto/openapi/customization-service/
 ├── main.yaml
@@ -321,7 +397,9 @@ proto/openapi/customization-service/
 ```
 
 #### 38. **appearance-service** (Внешний Вид)
+
 **Ответственность:** Управление внешним видом персонажа
+
 ```
 proto/openapi/appearance-service/
 ├── main.yaml
@@ -329,7 +407,9 @@ proto/openapi/appearance-service/
 ```
 
 #### 39. **collection-service** (Коллекции)
+
 **Ответственность:** Система коллекций и сетов
+
 ```
 proto/openapi/collection-service/
 ├── main.yaml
@@ -339,7 +419,9 @@ proto/openapi/collection-service/
 ### **🌐 World & Social Services**
 
 #### 40. **location-service** (Локации)
+
 **Ответственность:** Географические локации в мире
+
 ```
 proto/openapi/location-service/
 ├── main.yaml
@@ -347,7 +429,9 @@ proto/openapi/location-service/
 ```
 
 #### 41. **region-service** (Регионы)
+
 **Ответственность:** Регионы и зоны мира
+
 ```
 proto/openapi/region-service/
 ├── main.yaml
@@ -355,7 +439,9 @@ proto/openapi/region-service/
 ```
 
 #### 42. **city-service** (Города)
+
 **Ответственность:** Городские локации
+
 ```
 proto/openapi/city-service/
 ├── main.yaml
@@ -363,7 +449,9 @@ proto/openapi/city-service/
 ```
 
 #### 43. **territory-service** (Территории)
+
 **Ответственность:** Захват и контроль территорий
+
 ```
 proto/openapi/territory-service/
 ├── main.yaml
@@ -371,7 +459,9 @@ proto/openapi/territory-service/
 ```
 
 #### 44. **world-event-service** (Мировые События)
+
 **Ответственность:** Глобальные события мира
+
 ```
 proto/openapi/world-event-service/
 ├── main.yaml
@@ -379,7 +469,9 @@ proto/openapi/world-event-service/
 ```
 
 #### 45. **friend-service** (Друзья)
+
 **Ответственность:** Система друзей
+
 ```
 proto/openapi/friend-service/
 ├── main.yaml
@@ -387,7 +479,9 @@ proto/openapi/friend-service/
 ```
 
 #### 46. **communication-service** (Коммуникация)
+
 **Ответственность:** Чат и общение между игроками
+
 ```
 proto/openapi/communication-service/
 ├── main.yaml
@@ -395,7 +489,9 @@ proto/openapi/communication-service/
 ```
 
 #### 47. **community-service** (Сообщества)
+
 **Ответственность:** Сообщества и группы игроков
+
 ```
 proto/openapi/community-service/
 ├── main.yaml
@@ -403,7 +499,9 @@ proto/openapi/community-service/
 ```
 
 #### 48. **relationship-service** (Отношения)
+
 **Ответственность:** Социальные отношения между персонажами
+
 ```
 proto/openapi/relationship-service/
 ├── main.yaml
@@ -411,7 +509,9 @@ proto/openapi/relationship-service/
 ```
 
 #### 49. **moderation-service** (Модерация)
+
 **Ответственность:** Модерация контента и поведения
+
 ```
 proto/openapi/moderation-service/
 ├── main.yaml
@@ -419,7 +519,9 @@ proto/openapi/moderation-service/
 ```
 
 #### 50. **guild-service** (Гильдии)
+
 **Ответственность:** Система гильдий
+
 ```
 proto/openapi/guild-service/
 ├── main.yaml
@@ -427,7 +529,9 @@ proto/openapi/guild-service/
 ```
 
 #### 51. **faction-service** (Фракции)
+
 **Ответственность:** Политические фракции
+
 ```
 proto/openapi/faction-service/
 ├── main.yaml
@@ -435,7 +539,9 @@ proto/openapi/faction-service/
 ```
 
 #### 52. **alliance-service** (Альянсы)
+
 **Ответственность:** Союзы между гильдиями/фракциями
+
 ```
 proto/openapi/alliance-service/
 ├── main.yaml
@@ -443,7 +549,9 @@ proto/openapi/alliance-service/
 ```
 
 #### 53. **clan-war-service** (Клановые Войны)
+
 **Ответственность:** Военные конфликты между кланами
+
 ```
 proto/openapi/clan-war-service/
 ├── main.yaml
@@ -451,7 +559,9 @@ proto/openapi/clan-war-service/
 ```
 
 #### 54. **diplomacy-service** (Дипломатия)
+
 **Ответственность:** Дипломатические отношения
+
 ```
 proto/openapi/diplomacy-service/
 ├── main.yaml
@@ -461,7 +571,9 @@ proto/openapi/diplomacy-service/
 ### **🏟️ Competition Services**
 
 #### 55. **pvp-arena-service** (PvP Арены)
+
 **Ответственность:** PvP бои на аренах
+
 ```
 proto/openapi/pvp-arena-service/
 ├── main.yaml
@@ -469,7 +581,9 @@ proto/openapi/pvp-arena-service/
 ```
 
 #### 56. **tournament-service** (Турниры)
+
 **Ответственность:** Турнирная система
+
 ```
 proto/openapi/tournament-service/
 ├── main.yaml
@@ -477,7 +591,9 @@ proto/openapi/tournament-service/
 ```
 
 #### 57. **matchmaking-service** (Матчинг)
+
 **Ответственность:** Поиск подходящих оппонентов
+
 ```
 proto/openapi/matchmaking-service/
 ├── main.yaml
@@ -485,7 +601,9 @@ proto/openapi/matchmaking-service/
 ```
 
 #### 58. **ranking-service** (Рейтинги)
+
 **Ответственность:** Система рейтингов игроков
+
 ```
 proto/openapi/ranking-service/
 ├── main.yaml
@@ -493,7 +611,9 @@ proto/openapi/ranking-service/
 ```
 
 #### 59. **spectator-service** (Наблюдение)
+
 **Ответственность:** Режим наблюдателя за боями
+
 ```
 proto/openapi/spectator-service/
 ├── main.yaml
@@ -501,7 +621,9 @@ proto/openapi/spectator-service/
 ```
 
 #### 60. **ai-companion-service** (AI Компаньоны)
+
 **Ответственность:** Искусственный интеллект компаньонов
+
 ```
 proto/openapi/ai-companion-service/
 ├── main.yaml
@@ -509,7 +631,9 @@ proto/openapi/ai-companion-service/
 ```
 
 #### 61. **pet-service** (Питомцы)
+
 **Ответственность:** Система питомцев
+
 ```
 proto/openapi/pet-service/
 ├── main.yaml
@@ -517,7 +641,9 @@ proto/openapi/pet-service/
 ```
 
 #### 62. **summon-service** (Призывы)
+
 **Ответственность:** Система призыва существ
+
 ```
 proto/openapi/summon-service/
 ├── main.yaml
@@ -527,7 +653,9 @@ proto/openapi/summon-service/
 ### **📊 Analytics & AI Services**
 
 #### 63. **player-analytics-service** (Аналитика Игроков)
+
 **Ответственность:** Анализ поведения игроков
+
 ```
 proto/openapi/player-analytics-service/
 ├── main.yaml
@@ -535,7 +663,9 @@ proto/openapi/player-analytics-service/
 ```
 
 #### 64. **game-metrics-service** (Метрики Игры)
+
 **Ответственность:** Сбор игровых метрик
+
 ```
 proto/openapi/game-metrics-service/
 ├── main.yaml
@@ -543,7 +673,9 @@ proto/openapi/game-metrics-service/
 ```
 
 #### 65. **behavioral-data-service** (Поведенческие Данные)
+
 **Ответственность:** Анализ поведенческих паттернов
+
 ```
 proto/openapi/behavioral-data-service/
 ├── main.yaml
@@ -551,7 +683,9 @@ proto/openapi/behavioral-data-service/
 ```
 
 #### 66. **performance-monitoring-service** (Мониторинг Производительности)
+
 **Ответственность:** Мониторинг производительности системы
+
 ```
 proto/openapi/performance-monitoring-service/
 ├── main.yaml
@@ -559,7 +693,9 @@ proto/openapi/performance-monitoring-service/
 ```
 
 #### 67. **ai-behavior-service** (AI Поведение)
+
 **Ответственность:** Поведение ИИ в игре
+
 ```
 proto/openapi/ai-behavior-service/
 ├── main.yaml
@@ -567,7 +703,9 @@ proto/openapi/ai-behavior-service/
 ```
 
 #### 68. **procedural-generation-service** (Процедурная Генерация)
+
 **Ответственность:** Генерация контента алгоритмами
+
 ```
 proto/openapi/procedural-generation-service/
 ├── main.yaml
@@ -575,7 +713,9 @@ proto/openapi/procedural-generation-service/
 ```
 
 #### 69. **machine-learning-service** (Машинное Обучение)
+
 **Ответственность:** ML модели для игры
+
 ```
 proto/openapi/machine-learning-service/
 ├── main.yaml
@@ -583,7 +723,9 @@ proto/openapi/machine-learning-service/
 ```
 
 #### 70. **adaptive-system-service** (Адаптивные Системы)
+
 **Ответственность:** Адаптация под игроков
+
 ```
 proto/openapi/adaptive-system-service/
 ├── main.yaml
@@ -593,7 +735,9 @@ proto/openapi/adaptive-system-service/
 ### **🔗 Integration Services**
 
 #### 71. **referral-service** (Рефералы)
+
 **Ответственность:** Реферальная система
+
 ```
 proto/openapi/referral-service/
 ├── main.yaml
@@ -601,7 +745,9 @@ proto/openapi/referral-service/
 ```
 
 #### 72. **reward-service** (Награды)
+
 **Ответственность:** Система наград и поощрений
+
 ```
 proto/openapi/reward-service/
 ├── main.yaml
@@ -609,7 +755,9 @@ proto/openapi/reward-service/
 ```
 
 #### 73. **affiliate-service** (Партнерская Программа)
+
 **Ответственность:** Аффилиат система
+
 ```
 proto/openapi/affiliate-service/
 ├── main.yaml
@@ -617,7 +765,9 @@ proto/openapi/affiliate-service/
 ```
 
 #### 74. **tracking-service** (Отслеживание)
+
 **Ответственность:** Трекинг действий пользователей
+
 ```
 proto/openapi/tracking-service/
 ├── main.yaml
@@ -627,12 +777,14 @@ proto/openapi/tracking-service/
 ## 📋 **Маппинг Файлов по Сервисам**
 
 ### **Из system/ (471 файл)**
+
 - **ai-behavior-service:** `ai/`, `ai_*`, `ai-behavior-*`
 - **performance-monitoring-service:** `monitoring/`, `monitoring-*`
 - **infrastructure:** → Удалить (не API)
 - **core:** → Распределить по соответствующим сервисам
 
 ### **Из specialized/ (178 файлов)**
+
 - **combat-service:** `combat/`, `combat-*` (кроме hacking)
 - **effect-service:** `effects/`, `effect-*`
 - **movement-service:** `movement/`, `movement-*`
@@ -640,6 +792,7 @@ proto/openapi/tracking-service/
 - **hacking-service:** `combat/combat-hacking-*`
 
 ### **Из social/ (127 файлов)**
+
 - **communication-service:** `communication/`, `chat-*`, `message-*`
 - **friend-service:** `friends/`, `friend-*`
 - **community-service:** `community/`, `community-*`
@@ -647,18 +800,21 @@ proto/openapi/tracking-service/
 - **moderation-service:** `moderation/`, `moderation-*`
 
 ### **Из world/ (62 файла)**
+
 - **location-service:** `locations/`, `location-*`
 - **region-service:** `regions/`, `region-*`
 - **city-service:** `cities/`, `city-*`
 - **world-event-service:** `world-events/`, `world-event-*`
 
 ### **Из auth-expansion/ (15 файлов)**
+
 - **auth-service:** `auth-*`, `login-*`, `register-*`
 - **session-service:** `session-*`, `auth_session_*`
 - **role-service:** `roles-*`, `permissions-*`
 - **oauth-service:** `oauth-*`, `social-auth-*`
 
 ### **Из cyberpunk/ (30 файлов)**
+
 - **implant-service:** `implant-*`, `cyberware-implant-*`
 - **hacking-service:** `hacking-*`, `combat-hacking-*`
 - **cyberware-service:** `cyberware-*`
@@ -666,6 +822,7 @@ proto/openapi/tracking-service/
 - **neural-link-service:** `neural-*`
 
 ### **Из progression/ (16 файлов)**
+
 - **level-service:** `level-*`, `progression-level-*`
 - **achievement-service:** `achievement-*`
 - **skill-service:** `skill-*`
@@ -673,6 +830,7 @@ proto/openapi/tracking-service/
 - **leaderboard-service:** `leaderboard-*`
 
 ### **Из economy/ (100+ файлов)**
+
 - **currency-service:** `currencies/`, `currency-*`
 - **trading-service:** `trading/`, `trade-*`
 - **auction-service:** `auctions/`, `auction-*`
@@ -680,6 +838,7 @@ proto/openapi/tracking-service/
 - **transaction-service:** `transaction-*`, `payment-*`
 
 ### **Из cosmetic/ (15 файлов)**
+
 - **skin-service:** `skin-*`, `cosmetic-skin-*`
 - **customization-service:** `customization-*`
 - **appearance-service:** `appearance-*`
@@ -688,6 +847,7 @@ proto/openapi/tracking-service/
 ## 🛠️ **Строгие Правила Реорганизации**
 
 ### **📁 Иерархия Директорий (SOLID/DRY Domain Separation)**
+
 ```
 proto/openapi/
 ├── common/                    # ✅ SOLID/DRY FOUNDATION (ОБНОВЛЕНА)
@@ -712,6 +872,7 @@ proto/openapi/
 ```
 
 ### **📝 Нейминг Файлов**
+
 ```
 {service-name}-service/
 ├── main.yaml                    # Главная спецификация сервиса
@@ -724,6 +885,7 @@ proto/openapi/
 ```
 
 ### **🏷️ Нейминг Операций**
+
 - `create{Resource}` - Создание
 - `get{Resource}` - Получение по ID
 - `list{Resources}` - Список с фильтрами
@@ -734,6 +896,7 @@ proto/openapi/
 ## 🔄 **Миграция Существующих Файлов**
 
 ### **Шаг 1: Анализ Исходного Файла**
+
 ```bash
 # Прочитать содержимое файла
 cat proto/openapi/system/ai/ai_combat.yaml
@@ -743,6 +906,7 @@ cat proto/openapi/system/ai/ai_combat.yaml
 ```
 
 ### **Шаг 2: Создание Новой Структуры**
+
 ```bash
 # Создать директорию сервиса
 mkdir -p proto/openapi/gameplay-service/combat
@@ -753,12 +917,14 @@ cp proto/openapi/system/ai/ai_combat.yaml \
 ```
 
 ### **Шаг 3: Адаптация Содержимого**
+
 - Заменить `operationId` на новый формат
 - Обновить `$ref` на новые пути
 - Добавить недостающие компоненты
 - Убедиться в соответствии шаблону
 
 ### **Шаг 4: Валидация**
+
 ```bash
 # Проверить валидность
 npx @redocly/cli lint proto/openapi/gameplay-service/main.yaml
@@ -771,6 +937,7 @@ ogen --target /tmp/test --package api --clean \
 ## 📚 **Базовая Структура Файла**
 
 ### **main.yaml каждого сервиса**
+
 ```yaml
 openapi: 3.0.3
 info:
@@ -820,23 +987,24 @@ components:
   responses:
     # Use common responses
     OK:
-      $ref: ../common/responses/success.yaml#/OK
+      $ref: ../common-service/responses/success.yaml#/OK
     BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
+      $ref: ../common-service/responses/error.yaml#/BadRequest
 
   schemas:
     # Use common schemas
     Error:
-      $ref: ../common/schemas/error.yaml#/Error
+      $ref: ../common-service/schemas/error.yaml#/Error
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
 
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
+      $ref: ../common-service/security/security.yaml#/BearerAuth
 ```
 
 ### **README.md каждого сервиса**
+
 ```markdown
 # {ServiceName} Service - OpenAPI Specification
 
@@ -852,13 +1020,15 @@ components:
 ## 📁 **Структура**
 
 ```
+
 {service-name}-service/
-├── main.yaml           # Основная спецификация
-├── README.md          # Эта документация
-├── {domain1}.yaml     # {Описание домена}
-├── {operation}.yaml   # {Описание операции}
+├── main.yaml # Основная спецификация
+├── README.md # Эта документация
+├── {domain1}.yaml # {Описание домена}
+├── {operation}.yaml # {Описание операции}
 ├── {resource}-management.yaml # Управление ресурсами
-└── {feature}.yaml     # Дополнительные возможности
+└── {feature}.yaml # Дополнительные возможности
+
 ```
 
 ## 🔗 **Зависимости**
@@ -880,15 +1050,18 @@ npx @redocly/cli lint main.yaml
 ```
 
 ### Генерация Go кода
+
 ```bash
 ogen --target ../../services/{service-name}-go/pkg/api \
      --package api --clean main.yaml
 ```
 
 ### Документация
+
 ```bash
 npx @redocly/cli build-docs main.yaml -o docs/index.html
 ```
+
 ```
 
 ## 🔗 **SOLID/DRY Domain Separation - Переиспользование Common Компонентов**
@@ -902,90 +1075,95 @@ components:
   schemas:
     CombatSession:
       allOf:
-        - $ref: '../common/schemas/game-entities.yaml#/CombatSessionEntity'  # Наследует participants, status, turn_order
+        - $ref: '../common-service/schemas/game-entities.yaml#/CombatSessionEntity'  # Наследует participants, status, turn_order
         - type: object
           properties:
             combat_rules: {type: string, enum: ['standard', 'hardcore', 'tournament']}
 ```
 
 #### **2. Economy Domain Entities**
+
 ```yaml
 # В trading-service/main.yaml
 components:
   schemas:
     PlayerTrade:
       allOf:
-        - $ref: '../common/schemas/economy-entities.yaml#/TradeSessionEntity'  # Наследует initiator, participants, status
+        - $ref: '../common-service/schemas/economy-entities.yaml#/TradeSessionEntity'  # Наследует initiator, participants, status
         - type: object
           properties:
             trade_location: {type: string, enum: ['safe_zone', 'combat_zone', 'guild_hall']}
 ```
 
 #### **3. Social Domain Entities**
+
 ```yaml
 # В guild-service/main.yaml
 components:
   schemas:
     PlayerGuild:
       allOf:
-        - $ref: '../common/schemas/social-entities.yaml#/GuildEntity'  # Наследует name, leader, members, reputation
+        - $ref: '../common-service/schemas/social-entities.yaml#/GuildEntity'  # Наследует name, leader, members, reputation
         - type: object
           properties:
             guild_type: {type: string, enum: ['mercenary', 'corporation', 'nomad', 'gang']}
 ```
 
 #### **4. Infrastructure Domain Entities**
+
 ```yaml
 # В auth-service/main.yaml
 components:
   schemas:
     SecureSession:
       allOf:
-        - $ref: '../common/schemas/infrastructure-entities.yaml#/SessionEntity'  # Наследует token, expires_at, ip_address
+        - $ref: '../common-service/schemas/infrastructure-entities.yaml#/SessionEntity'  # Наследует token, expires_at, ip_address
         - type: object
           properties:
             security_level: {type: string, enum: ['standard', 'elevated', 'maximum']}
 ```
 
 ### **📋 Обязательные $ref для всех сервисов (UPDATED)**
+
 ```yaml
 components:
   # Domain-specific success responses
   responses:
-    OK: $ref: '../common/responses/success.yaml#/OK'
-    Created: $ref: '../common/responses/success.yaml#/Created'
-    Updated: $ref: '../common/responses/success.yaml#/Updated'
-    Deleted: $ref: '../common/responses/success.yaml#/Deleted'
+    OK: $ref: '../common-service/responses/success.yaml#/OK'
+    Created: $ref: '../common-service/responses/success.yaml#/Created'
+    Updated: $ref: '../common-service/responses/success.yaml#/Updated'
+    Deleted: $ref: '../common-service/responses/success.yaml#/Deleted'
 
     # Domain-specific responses (use appropriate for your domain)
-    CombatActionSuccess: $ref: '../common/responses/success.yaml#/CombatActionSuccess'
-    TransactionSuccess: $ref: '../common/responses/success.yaml#/TransactionSuccess'
-    FriendRequestSuccess: $ref: '../common/responses/success.yaml#/FriendRequestSuccess'
+    CombatActionSuccess: $ref: '../common-service/responses/success.yaml#/CombatActionSuccess'
+    TransactionSuccess: $ref: '../common-service/responses/success.yaml#/TransactionSuccess'
+    FriendRequestSuccess: $ref: '../common-service/responses/success.yaml#/FriendRequestSuccess'
 
     # Error responses
-    BadRequest: $ref: '../common/responses/error.yaml#/BadRequest'
-    Unauthorized: $ref: '../common/responses/error.yaml#/Unauthorized'
-    NotFound: $ref: '../common/responses/error.yaml#/NotFound'
-    TooManyRequests: $ref: '../common/responses/error.yaml#/TooManyRequests'
+    BadRequest: $ref: '../common-service/responses/error.yaml#/BadRequest'
+    Unauthorized: $ref: '../common-service/responses/error.yaml#/Unauthorized'
+    NotFound: $ref: '../common-service/responses/error.yaml#/NotFound'
+    TooManyRequests: $ref: '../common-service/responses/error.yaml#/TooManyRequests'
 
   # Common schemas (legacy - prefer domain-specific)
   schemas:
-    Error: $ref: '../common/schemas/common.yaml#/Error'
-    HealthResponse: $ref: '../common/schemas/health.yaml#/HealthResponse'
+    Error: $ref: '../common-service/schemas/common.yaml#/Error'
+    HealthResponse: $ref: '../common-service/schemas/health.yaml#/HealthResponse'
 
   # Security schemes
   securitySchemes:
-    BearerAuth: $ref: '../common/security/security.yaml#/BearerAuth'
-    ApiKeyAuth: $ref: '../common/security/security.yaml#/ApiKeyAuth'
-    ServiceAuth: $ref: '../common/security/security.yaml#/ServiceAuth'
+    BearerAuth: $ref: '../common-service/security/security.yaml#/BearerAuth'
+    ApiKeyAuth: $ref: '../common-service/security/security.yaml#/ApiKeyAuth'
+    ServiceAuth: $ref: '../common-service/security/security.yaml#/ServiceAuth'
 ```
 
 ### **🏗️ Расширение Domain-Specific Схем (DRY Principle)**
+
 ```yaml
 # ✅ ПРАВИЛЬНО: Domain inheritance
 MyGameEntity:
   allOf:
-    - $ref: '../common/schemas/game-entities.yaml#/CharacterEntity'  # 20+ полей автоматически
+    - $ref: '../common-service/schemas/game-entities.yaml#/CharacterEntity'  # 20+ полей автоматически
     - type: object
       properties:
         cyberware_level: {type: integer, minimum: 0, maximum: 20}  # Только уникальные поля
@@ -993,7 +1171,7 @@ MyGameEntity:
 # ✅ ПРАВИЛЬНО: Economy inheritance
 MyTransaction:
   allOf:
-    - $ref: '../common/schemas/economy-entities.yaml#/TransactionEntity'  # amount, currency, wallets
+    - $ref: '../common-service/schemas/economy-entities.yaml#/TransactionEntity'  # amount, currency, wallets
     - type: object
       properties:
         item_discount: {type: number, minimum: 0, maximum: 1}
@@ -1010,6 +1188,7 @@ MyEntity:
 ## ✅ **Валидационные Проверки (UPDATED for SOLID/DRY)**
 
 ### **Обязательные для каждого сервиса**
+
 - [ ] `main.yaml` соответствует шаблону `example/main.yaml` с domain inheritance
 - [ ] Все entity наследуют от domain-specific common schemas (game-entities, economy-entities, etc.)
 - [ ] **НЕТ дублирования** общих полей (id, created_at, updated_at, etc.)
@@ -1023,6 +1202,7 @@ MyEntity:
 - [ ] Есть `README.md` с документацией domain-specific usage
 
 ### **Команды валидации**
+
 ```bash
 # Линтинг
 npx @redocly/cli lint proto/openapi/{service}-service/main.yaml
@@ -1041,44 +1221,57 @@ npx @redocly/cli build-docs proto/openapi/{service}-service/main.yaml -o docs/in
 ## 🎯 **Приоритизация Миграции**
 
 ### **Фаза 1: Core Infrastructure (3-5 дней)**
+
 1-10. **Базовые сервисы аутентификации и коммуникаций**
+
 - `auth-service`, `session-service`, `role-service`, `oauth-service`
 - `user-profile-service`, `user-preference-service`, `avatar-service`
 - `push-notification-service`, `email-notification-service`, `in-game-notification-service`
 
 ### **Фаза 2: Core Gameplay (5-7 дней)**
+
 11-25. **Основные игровые механики**
+
 - `combat-service`, `movement-service`, `effect-service`, `ability-service`
 - `game-mechanic-service`
 - `implant-service`, `hacking-service`, `cyberware-service`, `cyberspace-service`, `neural-link-service`
 - `level-service`, `achievement-service`, `skill-service`, `experience-service`, `leaderboard-service`
 
 ### **Фаза 3: Economy (4-6 дней)**
+
 26-39. **Экономические системы**
+
 - `currency-service`, `trading-service`, `auction-service`, `marketplace-service`, `transaction-service`
 - `item-service`, `equipment-service`, `crafting-service`, `inventory-storage-service`, `container-service`
 - `skin-service`, `customization-service`, `appearance-service`, `collection-service`
 
 ### **Фаза 4: World & Social (4-6 дней)**
+
 40-54. **Мир и социальные взаимодействия**
+
 - `location-service`, `region-service`, `city-service`, `territory-service`, `world-event-service`
 - `friend-service`, `communication-service`, `community-service`, `relationship-service`, `moderation-service`
 - `guild-service`, `faction-service`, `alliance-service`, `clan-war-service`, `diplomacy-service`
 
 ### **Фаза 5: Competition & AI (3-5 дней)**
+
 55-69. **Конкуренция и искусственный интеллект**
+
 - `pvp-arena-service`, `tournament-service`, `matchmaking-service`, `ranking-service`, `spectator-service`
 - `ai-companion-service`, `pet-service`, `summon-service`
 - `player-analytics-service`, `game-metrics-service`, `behavioral-data-service`, `performance-monitoring-service`
 - `ai-behavior-service`, `procedural-generation-service`, `machine-learning-service`, `adaptive-system-service`
 
 ### **Фаза 6: Integration (2-3 дня)**
+
 70-74. **Интеграционные сервисы**
+
 - `referral-service`, `reward-service`, `affiliate-service`, `tracking-service`
 
 ## 🚨 **Критические Правила**
 
 ### **ЗАПРЕЩЕНО**
+
 - [ ] Создавать файлы вне `{service-name}-service/`
 - [ ] Дублировать схемы из `common/`
 - [ ] Использовать некорректный нейминг
@@ -1086,8 +1279,9 @@ npx @redocly/cli build-docs proto/openapi/{service}-service/main.yaml -o docs/in
 - [ ] Удалять оригинальные файлы до полной миграции
 
 ### **ОБЯЗАТЕЛЬНО**
+
 - [ ] Следовать шаблону `example/`
-- [ ] Использовать `$ref` на `../common/`
+- [ ] Использовать `$ref` на `../common-service/`
 - [ ] Проходить валидацию перед коммитом
 - [ ] Документировать в `README.md`
 - [ ] Тестировать генерацию Go кода
@@ -1095,6 +1289,7 @@ npx @redocly/cli build-docs proto/openapi/{service}-service/main.yaml -o docs/in
 ## 🔍 **Мониторинг Прогресса**
 
 ### **Метрики Успеха (UPDATED for SOLID/DRY)**
+
 - ✅ Все 74 сервиса имеют валидный `main.yaml` с domain inheritance
 - ✅ **0 дублированных схем** - 96.8% сокращение кода
 - ✅ **100% domain-specific common usage** (game-entities, economy-entities, etc.)
@@ -1105,6 +1300,7 @@ npx @redocly/cli build-docs proto/openapi/{service}-service/main.yaml -o docs/in
 - ✅ **SOLID/DRY compliance** - inheritance вместо дублирования
 
 ### **Команды проверки**
+
 ```bash
 # Проверить использование common
 find proto/openapi/ -name "*.yaml" -exec grep -l "\$ref.*common" {} \;
@@ -1162,7 +1358,8 @@ proto/openapi/
 └── REORGANIZATION_INSTRUCTION.md # ✅ This file - Updated for SOLID/DRY
 ```
 
-**Итого: 74 атомарных микросервиса с domain inheritance = ~148 файлов + 20+ domain entity файлов, вместо 1000+ файлов с дублированием**
+**Итого: 74 атомарных микросервиса с domain inheritance = ~148 файлов + 20+ domain entity файлов, вместо 1000+ файлов с
+дублированием**
 
 ---
 
@@ -1181,6 +1378,7 @@ proto/openapi/
 ## 🔄 **Детальный Workflow для AI Агентов**
 
 ### **Шаг 1: Выбор и Планирование Сервиса**
+
 ```bash
 # Проверить что сервис еще не создан
 ls -la proto/openapi/{service-name}-service/
@@ -1193,6 +1391,7 @@ find proto/openapi/ -name "*{keyword}*" -type f | wc -l
 ```
 
 ### **Шаг 2: Создание Базовой Структуры**
+
 ```bash
 # Создать директорию сервиса
 mkdir -p proto/openapi/{service-name}-service
@@ -1208,6 +1407,7 @@ sed -i 's/{Service Domain}/{actual domain}/g' main.yaml
 ```
 
 ### **Шаг 3: Анализ и Миграция Файлов**
+
 ```bash
 # Найти все релевантные файлы
 find proto/openapi/ -name "*{keyword}*" -type f > /tmp/files_to_migrate.txt
@@ -1220,6 +1420,7 @@ find proto/openapi/ -name "*{keyword}*" -type f > /tmp/files_to_migrate.txt
 ```
 
 ### **Шаг 4: Валидация и Тестирование**
+
 ```bash
 # Линтинг
 npx @redocly/cli lint proto/openapi/{service-name}-service/main.yaml
@@ -1235,6 +1436,7 @@ cd /tmp/codegen-test && go mod init test && go mod tidy && go build .
 ```
 
 ### **Шаг 5: Финализация Документации**
+
 ```bash
 # Обновить README.md с реальными данными
 # Добавить примеры использования
@@ -1246,6 +1448,7 @@ npx @redocly/cli build-docs proto/openapi/{service-name}-service/main.yaml \
 ```
 
 ### **Шаг 6: Финальная Проверка**
+
 ```bash
 # Запустить все проверки
 ./scripts/validate-service.sh {service-name}-service
@@ -1255,6 +1458,7 @@ npx @redocly/cli build-docs proto/openapi/{service-name}-service/main.yaml \
 ```
 
 ### **Шаг 7: Коммит и Отчет**
+
 ```bash
 # Сделать коммит
 git add proto/openapi/{service-name}-service/
@@ -1272,6 +1476,7 @@ git commit -m "[REORG] Add {service-name}-service - {X} endpoints, {Y} schemas
 ## 📋 **Примеры Готовых Сервисов**
 
 ### **Пример 1: auth-service (Простой Сервис)**
+
 ```
 proto/openapi/auth-service/
 ├── main.yaml          # 150 строк - базовая аутентификация
@@ -1281,12 +1486,14 @@ proto/openapi/auth-service/
 ```
 
 **main.yaml содержит:**
+
 - `/auth/login` (POST) - вход в систему
 - `/auth/register` (POST) - регистрация
 - `/auth/logout` (POST) - выход
 - `/health` - health check
 
 ### **Пример 2: combat-service (Сложный Сервис)**
+
 ```
 proto/openapi/combat-service/
 ├── main.yaml          # 400 строк - полная боевая система
@@ -1296,6 +1503,7 @@ proto/openapi/combat-service/
 ```
 
 **main.yaml содержит:**
+
 - `/combat/initiate` - начать бой
 - `/combat/action` - выполнить действие
 - `/combat/status` - статус боя
@@ -1307,6 +1515,7 @@ proto/openapi/combat-service/
 ### **Типы Зависимостей**
 
 #### **1. Данные (Data Dependencies)**
+
 ```yaml
 # user-profile-service зависит от auth-service
 paths:
@@ -1319,6 +1528,7 @@ paths:
 ```
 
 #### **2. Авторизация (Auth Dependencies)**
+
 ```yaml
 # Все сервисы используют общий BearerAuth из common
 security:
@@ -1326,6 +1536,7 @@ security:
 ```
 
 #### **3. Бизнес-логика (Business Logic Dependencies)**
+
 ```yaml
 # economy-service зависит от inventory-service
 components:
@@ -1346,6 +1557,7 @@ components:
 ## 🛡️ **Версионирование API**
 
 ### **Semantic Versioning**
+
 ```
 MAJOR.MINOR.PATCH
 ├── MAJOR - breaking changes
@@ -1354,6 +1566,7 @@ MAJOR.MINOR.PATCH
 ```
 
 ### **Version Headers**
+
 ```yaml
 paths:
   /api/v1/resource:
@@ -1368,6 +1581,7 @@ paths:
 ```
 
 ### **Version Strategy**
+
 ```yaml
 # В info.version указывать текущую версию
 info:
@@ -1382,6 +1596,7 @@ servers:
 ## 📚 **Генерация и Публикация Документации**
 
 ### **Локальная Документация**
+
 ```bash
 # Генерация HTML для каждого сервиса
 for service in proto/openapi/*-service/; do
@@ -1394,6 +1609,7 @@ done
 ```
 
 ### **Централизованная Документация**
+
 ```bash
 # Создать общую документацию всех сервисов
 ./scripts/generate-full-api-docs.sh
@@ -1403,6 +1619,7 @@ done
 ```
 
 ### **API Playground**
+
 ```bash
 # Генерация интерактивной документации
 npx @redocly/cli build-docs proto/openapi/{service}-service/main.yaml \
@@ -1413,6 +1630,7 @@ npx @redocly/cli build-docs proto/openapi/{service}-service/main.yaml \
 ## 🔍 **Мониторинг и Observability**
 
 ### **Метрики Производительности**
+
 ```yaml
 # В каждом health endpoint
 /health:
@@ -1422,7 +1640,7 @@ npx @redocly/cli build-docs proto/openapi/{service}-service/main.yaml \
         content:
           application/json:
             schema:
-              $ref: '../common/schemas/health.yaml#/HealthResponse'
+              $ref: '../common-service/schemas/health.yaml#/HealthResponse'
         headers:
           X-Response-Time:
             schema:
@@ -1435,6 +1653,7 @@ npx @redocly/cli build-docs proto/openapi/{service}-service/main.yaml \
 ```
 
 ### **Логирование**
+
 ```yaml
 # Структурированное логирование
 components:
@@ -1453,6 +1672,7 @@ components:
 ```
 
 ### **Distributed Tracing**
+
 ```yaml
 # Trace headers
 paths:
@@ -1473,6 +1693,7 @@ paths:
 ## 🚨 **Процедура Отката (Rollback)**
 
 ### **При обнаружении проблемы**
+
 ```bash
 # 1. Остановить деплой
 kubectl rollout pause deployment/{service-name}
@@ -1488,6 +1709,7 @@ kubectl rollout status deployment/{service-name}
 ```
 
 ### **Анализ инцидента**
+
 ```bash
 # Собрать логи
 kubectl logs deployment/{service-name} --previous
@@ -1502,6 +1724,7 @@ kubectl exec -it deployment/{service-name} -- curl http://localhost:9090/metrics
 ## 🧪 **Тестирование Интеграции**
 
 ### **Contract Testing**
+
 ```bash
 # Тестировать контракты между сервисами
 ./scripts/run-contract-tests.sh
@@ -1511,6 +1734,7 @@ kubectl exec -it deployment/{service-name} -- curl http://localhost:9090/metrics
 ```
 
 ### **End-to-End Testing**
+
 ```bash
 # Полный цикл тестирования
 ./scripts/run-e2e-tests.sh --services "{service-list}"
@@ -1520,6 +1744,7 @@ kubectl exec -it deployment/{service-name} -- curl http://localhost:9090/metrics
 ```
 
 ### **Chaos Engineering**
+
 ```bash
 # Симулировать сбои
 ./scripts/chaos-test.sh --service {service-name} --failure-type network-delay
@@ -1531,6 +1756,7 @@ kubectl exec -it deployment/{service-name} -- curl http://localhost:9090/metrics
 ## 🎯 **Финальные Контрольные Списки**
 
 ### **Pre-Commit Checklist**
+
 - [ ] Redocly lint проходит без ошибок
 - [ ] Ogen генерирует код без ошибок
 - [ ] Go код компилируется
@@ -1541,6 +1767,7 @@ kubectl exec -it deployment/{service-name} -- curl http://localhost:9090/metrics
 - [ ] Есть health endpoints
 
 ### **Post-Deploy Checklist**
+
 - [ ] Сервис отвечает на health checks
 - [ ] Метрики собираются корректно
 - [ ] Логи пишутся в правильном формате
@@ -1566,12 +1793,14 @@ kubectl exec -it deployment/{service-name} -- curl http://localhost:9090/metrics
 ### **Ключевые Изменения в Подходе**
 
 #### **ДО (Legacy): Дублирование и Хаос**
+
 - 471+ файлов в system/, specialized/, social/, world/, economy/
 - Каждый сервис дублировал id, created_at, updated_at
 - Несогласованные паттерны между сервисами
 - Трудная поддержка и масштабирование
 
 #### **ПОСЛЕ (SOLID/DRY): Domain Inheritance**
+
 - **Common Foundation**: domain-specific entity schemas
 - **Zero Duplication**: inheritance вместо дублирования
 - **Strict Typing**: enum, patterns, validation, examples
@@ -1588,11 +1817,12 @@ common/schemas/
 ```
 
 ### **Пример SOLID Inheritance**
+
 ```yaml
 # Game Service - наследует игровые entity
 PlayerCharacter:
   allOf:
-    - $ref: '../common/schemas/game-entities.yaml#/CharacterEntity'  # level, stats, experience
+    - $ref: '../common-service/schemas/game-entities.yaml#/CharacterEntity'  # level, stats, experience
     - type: object
       properties:
         cyberware_level: {type: integer, minimum: 0, maximum: 20}  # Только уникальное
@@ -1600,13 +1830,14 @@ PlayerCharacter:
 # Economy Service - наследует экономические entity
 TradeTransaction:
   allOf:
-    - $ref: '../common/schemas/economy-entities.yaml#/TransactionEntity'  # amount, currency, wallets
+    - $ref: '../common-service/schemas/economy-entities.yaml#/TransactionEntity'  # amount, currency, wallets
     - type: object
       properties:
         trade_location: {type: string, enum: ['safe_zone', 'combat_zone']}
 ```
 
 ### **Преимущества Новой Архитектуры**
+
 - **80% сокращение кода** - inheritance вместо boilerplate
 - **100% consistency** - единые паттерны во всех сервисах
 - **Enterprise performance** - struct alignment, optimistic locking
@@ -1614,6 +1845,7 @@ TradeTransaction:
 - **SOLID compliance** - single responsibility, DRY principle
 
 ### **Миграционная Стратегия**
+
 1. **Анализ** - классификация legacy файлов по domain
 2. **Domain Common** - создание domain-specific entity
 3. **Service Migration** - замена дублирования на inheritance
@@ -1624,4 +1856,5 @@ TradeTransaction:
 
 ---
 
-*Эта инструкция обновлена для SOLID/DRY domain separation архитектуры. Следуйте новым принципам для enterprise-grade API development.*
+*Эта инструкция обновлена для SOLID/DRY domain separation архитектуры. Следуйте новым принципам для enterprise-grade API
+development.*

@@ -3,31 +3,28 @@ info:
   title: Location Service API - Enterprise-Grade Location Management
   description: '**Enterprise-Grade Location API for NECPGAME**
 
-    Location Service manages geographical locations, coordinates, zones,
-    and spatial relationships within the game world. Provides location-based
-    services, proximity calculations, and world navigation.
+    Location Service manages geographical locations, coordinates, zones, and spatial
+    relationships within the game world. Provides location-based services, proximity
+    calculations, and world navigation.
 
     ## Key Features
 
-    - **Geographical coordinate system** with high precision
-    - **Location-based queries** and proximity searches
-    - **Zone management** and boundary definitions
-    - **Spatial relationships** and distance calculations
-    - **Performance-optimized** for real-time positioning
-    - **Scalable** world coordinate system
+    - **Geographical coordinate system** with high precision - **Location-based queries**
+    and proximity searches - **Zone management** and boundary definitions - **Spatial
+    relationships** and distance calculations - **Performance-optimized** for real-time
+    positioning - **Scalable** world coordinate system
 
     ## Domain Purpose
 
-    Manages all location-related operations including coordinate storage,
-    proximity calculations, zone boundaries, and spatial queries.
-    Essential for world navigation, proximity-based features, and location-aware gameplay.
+    Manages all location-related operations including coordinate storage, proximity
+    calculations, zone boundaries, and spatial queries. Essential for world navigation,
+    proximity-based features, and location-aware gameplay.
 
     ## Performance Targets
 
-    - P99 Latency: <25ms for coordinate queries
-    - Memory: <30KB per active location session
-    - Concurrent users: 50,000+ simultaneous location updates
-    - Spatial queries: <100ms response time
+    - P99 Latency: <25ms for coordinate queries - Memory: <30KB per active location
+    session - Concurrent users: 50,000+ simultaneous location updates - Spatial queries:
+    <100ms response time
 
     '
   version: 1.0.0
@@ -103,19 +100,26 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
         '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
         '429':
           $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/batch:
     post:
       summary: Batch health check for multiple services
-      description: '**Performance optimization:** Check multiple services health in single request
+      description: '**Performance optimization:** Check multiple services health in
+        single request
 
         Reduces N HTTP calls to 1 call. Critical for orchestration.
 
@@ -152,13 +156,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
         '429':
           $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
-      description: '**Performance optimization:** Real-time health updates without polling
+      description: '**Performance optimization:** Real-time health updates without
+        polling
 
         Eliminates periodic HTTP requests, reduces server load by ~90%.
 
@@ -223,13 +234,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
         '401':
           description: Unauthorized - authentication required for WebSocket
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
         '429':
           description: Too many requests - WebSocket connection limit exceeded
           headers:
@@ -240,7 +251,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /location/create:
     post:
       summary: User registration
@@ -258,7 +275,7 @@ paths:
       operationId: locationRegister
       tags:
       - Registration
-      security: []  # No auth required for registration
+      security: []
       requestBody:
         required: true
         content:
@@ -277,13 +294,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
         '409':
           description: Conflict - user with this email already exists
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
         '429':
           description: Too many requests - registration rate limit exceeded
           headers:
@@ -294,7 +311,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /location/{auctionId}/bid:
     parameters:
     - $ref: '#/components/parameters/AuctionId'
@@ -316,7 +339,7 @@ paths:
       operationId: locationLogin
       tags:
       - Authentication
-      security: []  # No auth required for login
+      security: []
       requestBody:
         required: true
         content:
@@ -346,13 +369,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
         '401':
           description: Invalid credentials
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
         '429':
           description: Too many requests - login rate limit exceeded
           headers:
@@ -363,7 +386,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /location/{auctionId}:
     parameters:
     - $ref: '#/components/parameters/AuctionId'
@@ -396,13 +425,13 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: "Logged out successfully"
+                    example: Logged out successfully
         '401':
           description: Unauthorized - invalid or expired token
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
         '429':
           description: Too many requests - logout rate limit exceeded
           headers:
@@ -413,7 +442,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /location/{auctionId}/bids:
     parameters:
     - $ref: '#/components/parameters/AuctionId'
@@ -433,7 +468,7 @@ paths:
       operationId: locationRefresh
       tags:
       - Authentication
-      security: []  # Uses refresh token in body
+      security: []
       requestBody:
         required: true
         content:
@@ -446,7 +481,7 @@ paths:
                 refresh_token:
                   type: string
                   description: Valid refresh token
-                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
       responses:
         '200':
           description: Token refreshed successfully
@@ -459,13 +494,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
         '401':
           description: Refresh token expired or revoked
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
         '429':
           description: Too many requests - token refresh rate limit exceeded
           headers:
@@ -476,7 +511,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /location/list:
     get:
       summary: Get current user information
@@ -511,7 +552,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
         '429':
           description: Too many requests - rate limit exceeded
           headers:
@@ -522,7 +563,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
   parameters:
     AuctionId:
@@ -535,7 +582,7 @@ components:
       description: Unique identifier of the auction
   responses:
     HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
     TooManyRequests:
       description: Too many requests - rate limit exceeded
       headers:
@@ -547,12 +594,12 @@ components:
       content:
         application/json:
           schema:
-            $ref: '../common/schemas/error.yaml#/Error'
+            $ref: ../common-service/schemas/error.yaml#/Error
   schemas:
     Error:
-      $ref: '../common/schemas/error.yaml#/Error'
+      $ref: ../common-service/schemas/error.yaml#/Error
     HealthResponse:
-      $ref: '../common/schemas/health.yaml#/HealthResponse'
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
     LoginRequest:
       type: object
       required:
@@ -569,7 +616,7 @@ components:
           minLength: 8
           maxLength: 128
           description: User password
-          example: "MySecurePass123!"
+          example: MySecurePass123!
         remember_me:
           type: boolean
           description: Extend session duration
@@ -580,8 +627,9 @@ components:
           minLength: 6
           maxLength: 8
           description: Multi-factor authentication code (if enabled)
-          example: "123456"
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+          example: '123456'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     RegisterRequest:
       type: object
       required:
@@ -599,12 +647,12 @@ components:
           minLength: 8
           maxLength: 128
           description: User password (must meet complexity requirements)
-          example: "MySecurePass123!"
+          example: MySecurePass123!
         username:
           type: string
           minLength: 3
           maxLength: 50
-          pattern: '^[a-zA-Z0-9_-]+$'
+          pattern: ^[a-zA-Z0-9_-]+$
           description: Unique username
           example: cyber_runner_2077
         accept_terms:
@@ -620,8 +668,9 @@ components:
           type: string
           maxLength: 50
           description: Referral code from another user
-          example: "FRIEND123"
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+          example: FRIEND123
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     AuthResponse:
       type: object
       required:
@@ -635,7 +684,8 @@ components:
           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         token_type:
           type: string
-          enum: [Bearer]
+          enum:
+          - Bearer
           example: Bearer
         expires_in:
           type: integer
@@ -652,7 +702,8 @@ components:
           format: uuid
           description: Session identifier
           example: 550e8400-e29b-41d4-a716-446655440000
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     RegisterResponse:
       type: object
       required:
@@ -683,7 +734,8 @@ components:
           format: date-time
           description: When verification token expires
           example: '2025-12-21T12:00:00Z'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     UserSummary:
       type: object
       required:
@@ -719,7 +771,8 @@ components:
           type: boolean
           description: Email verification status
           example: true
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     UserProfile:
       type: object
       required:
@@ -777,7 +830,10 @@ components:
           properties:
             theme:
               type: string
-              enum: [light, dark, cyberpunk]
+              enum:
+              - light
+              - dark
+              - cyberpunk
               example: cyberpunk
             language:
               type: string
@@ -807,15 +863,16 @@ components:
               type: integer
               minimum: 0
               example: 25
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
     PaginationParams:
-      $ref: '../common/schemas/pagination.yaml#/PaginationParams'
+      $ref: ../common-service/schemas/pagination.yaml#/PaginationParams
     PaginatedResponse:
-      $ref: '../common/schemas/pagination.yaml#/PaginatedResponse'
+      $ref: ../common-service/schemas/pagination.yaml#/PaginatedResponse
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
+      $ref: ../common-service/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      $ref: '../common/security/security.yaml#/ApiKeyAuth'
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      $ref: '../common/security/security.yaml#/ServiceAuth'
+      $ref: ../common-service/security/security.yaml#/ServiceAuth

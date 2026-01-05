@@ -1,0 +1,516 @@
+openapi: 3.0.3
+info:
+  title: Example Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Example Domain API for NECPGAME**
+
+    This API manages example domain operations, providing comprehensive example functionality,
+    validation, and performance-optimized operations.
+
+    ## Key Features
+
+    - **Example Operations**: Full CRUD operations for example entities - **Validation**:
+    Real-time input validation and business rule enforcement - **Performance Optimized**:
+    MMOFPS-grade performance with <15ms P99 latency - **Struct Alignment**: 30-50%
+    memory savings for example structs
+
+    ## Domain Purpose
+
+    The Example domain provides comprehensive example operations and serves as a template
+    for other domain services in the Night City ecosystem.
+
+    ## Performance Targets
+
+    - P99 Latency: <15ms for example operations - Memory: <10KB per active example
+    session - Concurrent users: 40,000+ simultaneous operations - Response time: <5ms
+
+    '
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@example.necpgame.com
+servers:
+- url: https://api.necpgame.com/v1/example-domain
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/example-domain
+  description: Staging server
+- url: http://localhost:8080/api/v1/example-domain
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Example Domain
+  description: Core example domain operations
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Example domain health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Returns system health status and performance metrics.
+
+        **Performance:** <1ms response time'
+      operationId: healthCheck
+      tags:
+      - Health Monitoring
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - status
+                - timestamp
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: 1.0.0
+                  uptime:
+                    type: integer
+                    description: System uptime in seconds
+        '503':
+          description: System is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /examples:
+    get:
+      summary: List examples
+      description: '**Get paginated example list**
+
+        Returns examples with filtering and pagination support.
+
+        **Performance:** Indexed queries with efficient pagination'
+      operationId: listExamples
+      tags:
+      - Example Domain
+      parameters:
+      - name: limit
+        in: query
+        description: Maximum number of examples to return
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        description: Number of examples to skip
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '200':
+          description: Examples retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - examples
+                - pagination
+                properties:
+                  examples:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ExampleEntity'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    post:
+      summary: Create new example
+      description: '**Create a new example entity**
+
+        Creates a new example with validation and business rule enforcement.
+
+        **Performance:** <10ms creation time'
+      operationId: createExample
+      tags:
+      - Example Domain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExampleRequest'
+      responses:
+        '201':
+          description: Example created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExampleEntity'
+        '400':
+          description: Invalid example data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /examples/{example_id}:
+    get:
+      summary: Get example details
+      description: '**Get detailed example information**
+
+        Returns comprehensive example information.
+
+        **Performance:** Single example lookup with <1ms response time'
+      operationId: getExample
+      tags:
+      - Example Domain
+      parameters:
+      - name: example_id
+        in: path
+        required: true
+        description: Unique example identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Example details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExampleEntity'
+        '404':
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    put:
+      summary: Update example
+      description: '**Update existing example**
+
+        Updates example with optimistic locking and validation.
+
+        **Atomicity:** Optimistic locking for concurrent updates'
+      operationId: updateExample
+      tags:
+      - Example Domain
+      parameters:
+      - name: example_id
+        in: path
+        required: true
+        description: Unique example identifier
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExampleRequest'
+      responses:
+        '200':
+          description: Example updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExampleEntity'
+        '400':
+          description: Invalid example data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Optimistic locking conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    delete:
+      summary: Delete example
+      description: '**Delete example entity**
+
+        Soft deletes example with audit trail.
+
+        **Performance:** <5ms deletion time'
+      operationId: deleteExample
+      tags:
+      - Example Domain
+      parameters:
+      - name: example_id
+        in: path
+        required: true
+        description: Unique example identifier
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Example deleted successfully
+        '404':
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Created:
+      description: Resource created successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              created_at:
+                type: string
+                format: date-time
+    Deleted:
+      description: Resource deleted successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              deleted:
+                type: boolean
+                example: true
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    OK:
+      description: Operation completed successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Updated:
+      description: Resource updated successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              updated:
+                type: boolean
+                example: true
+  schemas:
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Invalid request parameters
+        details:
+          type: object
+          additionalProperties: true
+    PaginationMeta:
+      type: object
+      required:
+      - total
+      - limit
+      - offset
+      properties:
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of items
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          description: Number of items skipped
+    CreateExampleRequest:
+      type: object
+      required:
+      - name
+      - type
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Example name
+        type:
+          type: string
+          enum:
+          - basic
+          - advanced
+          - premium
+          description: Example type
+        description:
+          type: string
+          maxLength: 500
+          description: Optional example description
+    UpdateExampleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Example name
+        type:
+          type: string
+          enum:
+          - basic
+          - advanced
+          - premium
+          description: Example type
+        description:
+          type: string
+          maxLength: 500
+          description: Optional example description
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version
+    ExampleEntity:
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique example identifier
+        name:
+          type: string
+          maxLength: 100
+          description: Example name
+        type:
+          type: string
+          enum:
+          - basic
+          - advanced
+          - premium
+          description: Example type
+        description:
+          type: string
+          maxLength: 500
+          description: Example description
+        version:
+          type: integer
+          minimum: 1
+          description: Optimistic locking version
+        is_active:
+          type: boolean
+          default: true
+          description: Example active status
+        created_at:
+          type: string
+          format: date-time
+          description: Example creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Example last update timestamp

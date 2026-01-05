@@ -39,23 +39,23 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-- url: https://api.necpgame.com/v1/auth
-  description: Production server
-- url: https://staging-api.necpgame.com/v1/auth
-  description: Staging server
-- url: http://localhost:8080/api/v1/auth
-  description: Local development server
+  - url: https://api.necpgame.com/v1/auth
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/auth
+    description: Staging server
+  - url: http://localhost:8080/api/v1/auth
+    description: Local development server
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]
 tags:
-- name: Registration
-  description: User registration and email verification
-- name: Authentication
-  description: Login, logout, and session management
-- name: Password
-  description: Password management operations
-- name: OAuth
-  description: OAuth provider integrations
+  - name: Registration
+    description: User registration and email verification
+  - name: Authentication
+    description: Login, logout, and session management
+  - name: Password
+    description: Password management operations
+  - name: OAuth
+    description: OAuth provider integrations
 paths:
   /health:
     get:
@@ -71,16 +71,16 @@ paths:
         '
       operationId: authServiceHealthCheck
       tags:
-      - Health Monitoring
+        - Health Monitoring
       parameters:
-      - name: Accept-Encoding
-        in: header
-        schema:
-          type: string
-          enum:
-          - gzip
-          - deflate
-          - br
+        - name: Accept-Encoding
+          in: header
+          schema:
+            type: string
+            enum:
+              - gzip
+              - deflate
+              - br
       responses:
         '200':
           description: Service is healthy
@@ -97,19 +97,19 @@ paths:
               schema:
                 type: string
                 enum:
-                - gzip
-                - deflate
-                - br
+                  - gzip
+                  - deflate
+                  - br
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
+                $ref: '../common-service/schemas/health.yaml#/HealthResponse'
         '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/health.yaml#/HealthResponse'
+                $ref: '../common-service/schemas/health.yaml#/HealthResponse'
         '429':
           description: Too many requests - rate limit exceeded
           headers:
@@ -120,7 +120,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
   /health/batch:
     post:
       summary: Batch health check for multiple services
@@ -133,7 +133,7 @@ paths:
         '
       operationId: authServiceBatchHealthCheck
       tags:
-      - Health Monitoring
+        - Health Monitoring
       requestBody:
         required: true
         content:
@@ -141,16 +141,16 @@ paths:
             schema:
               type: object
               required:
-              - services
+                - services
               properties:
                 services:
                   type: array
                   items:
                     type: string
                     enum:
-                    - auth-service
-                    - user-service
-                    - session-service
+                      - auth-service
+                      - user-service
+                      - session-service
                   maxItems: 10
                   description: List of services to check
       responses:
@@ -161,7 +161,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
         '429':
           description: Too many requests - rate limit exceeded
           headers:
@@ -172,7 +172,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
@@ -191,19 +191,19 @@ paths:
         '
       operationId: authServiceHealthWebSocket
       tags:
-      - Health Monitoring
+        - Health Monitoring
       parameters:
-      - name: services
-        in: query
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - auth-service
-            - user-service
-            - session-service
-        description: Services to monitor (optional, monitors all if not specified)
+        - name: services
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - auth-service
+                - user-service
+                - session-service
+          description: Services to monitor (optional, monitors all if not specified)
       responses:
         '200':
           description: WebSocket upgrade information returned
@@ -220,7 +220,7 @@ paths:
                     items:
                       type: string
                     example:
-                    - health-monitoring-v1
+                      - health-monitoring-v1
         '101':
           description: WebSocket connection established successfully
           headers:
@@ -241,13 +241,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
         '401':
           description: Unauthorized - authentication required for WebSocket
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
         '429':
           description: Too many requests - WebSocket connection limit exceeded
           headers:
@@ -258,7 +258,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
   /auth/register:
     post:
       summary: User registration
@@ -275,8 +275,8 @@ paths:
         '
       operationId: authRegister
       tags:
-      - Registration
-      security: []  # No auth required for registration
+        - Registration
+      security: [ ]  # No auth required for registration
       requestBody:
         required: true
         content:
@@ -301,13 +301,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
         '409':
           description: Conflict - user with this email already exists
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
         '429':
           description: Too many requests - registration rate limit exceeded
           headers:
@@ -318,7 +318,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
   /auth/login:
     post:
       summary: User login with credentials
@@ -337,8 +337,8 @@ paths:
         '
       operationId: authLogin
       tags:
-      - Authentication
-      security: []  # No auth required for login
+        - Authentication
+      security: [ ]  # No auth required for login
       requestBody:
         required: true
         content:
@@ -368,13 +368,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
         '401':
           description: Invalid credentials
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
         '429':
           description: Too many requests - login rate limit exceeded
           headers:
@@ -385,7 +385,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
   /auth/logout:
     post:
       summary: User logout
@@ -400,9 +400,9 @@ paths:
         '
       operationId: authLogout
       tags:
-      - Authentication
+        - Authentication
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Logout successful
@@ -422,7 +422,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
         '429':
           description: Too many requests - logout rate limit exceeded
           headers:
@@ -433,7 +433,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
   /auth/refresh:
     post:
       summary: Refresh access token
@@ -450,8 +450,8 @@ paths:
         '
       operationId: authRefresh
       tags:
-      - Authentication
-      security: []  # Uses refresh token in body
+        - Authentication
+      security: [ ]  # Uses refresh token in body
       requestBody:
         required: true
         content:
@@ -459,7 +459,7 @@ paths:
             schema:
               type: object
               required:
-              - refresh_token
+                - refresh_token
               properties:
                 refresh_token:
                   type: string
@@ -477,13 +477,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
         '401':
           description: Refresh token expired or revoked
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
         '429':
           description: Too many requests - token refresh rate limit exceeded
           headers:
@@ -494,24 +494,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+                $ref: '../common-service/schemas/error.yaml#/Error'
   /auth/me:
     get:
       summary: Get current user information
       description: '**Current user profile endpoint**
 
         Returns authenticated user's profile information.
-
-        Used for client-side user data display and session validation.
+                     
+                     Used for client-side user data display and session validation.
 
         **Performance:** <5ms P95 with caching
-
-        '
+                     
+                     '
       operationId: authGetCurrentUser
       tags:
-      - User Management
+        - User Management
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: User information retrieved successfully
@@ -524,27 +524,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserProfile'
-        '401':
-          description: Unauthorized - invalid or expired token
-          content:
-            application/json:
-              schema:
-                $ref: '../common/schemas/error.yaml#/Error'
-        '429':
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: '../common/schemas/error.yaml#/Error'
+
+
 components:
   responses:
     HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
     LoginSuccess:
       description: Login successful
       headers:
@@ -573,14 +558,14 @@ components:
             $ref: '#/components/schemas/RegisterResponse'
   schemas:
     Error:
-      $ref: '../common/schemas/error.yaml#/Error'
+      $ref: '../common-service/schemas/error.yaml#/Error'
     HealthResponse:
-      $ref: '../common/schemas/health.yaml#/HealthResponse'
+      $ref: '../common-service/schemas/health.yaml#/HealthResponse'
     LoginRequest:
       type: object
       required:
-      - email
-      - password
+        - email
+        - password
       properties:
         email:
           type: string
@@ -608,9 +593,9 @@ components:
     RegisterRequest:
       type: object
       required:
-      - email
-      - password
-      - username
+        - email
+        - password
+        - username
       properties:
         email:
           type: string
@@ -648,9 +633,9 @@ components:
     AuthResponse:
       type: object
       required:
-      - access_token
-      - token_type
-      - expires_in
+        - access_token
+        - token_type
+        - expires_in
       properties:
         access_token:
           type: string
@@ -658,7 +643,7 @@ components:
           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         token_type:
           type: string
-          enum: [Bearer]
+          enum: [ Bearer ]
           example: Bearer
         expires_in:
           type: integer
@@ -679,9 +664,9 @@ components:
     RegisterResponse:
       type: object
       required:
-      - user_id
-      - email
-      - verification_required
+        - user_id
+        - email
+        - verification_required
       properties:
         user_id:
           type: string
@@ -710,9 +695,9 @@ components:
     UserSummary:
       type: object
       required:
-      - id
-      - email
-      - username
+        - id
+        - email
+        - username
       properties:
         id:
           type: string
@@ -746,10 +731,10 @@ components:
     UserProfile:
       type: object
       required:
-      - id
-      - email
-      - username
-      - created_at
+        - id
+        - email
+        - username
+        - created_at
       properties:
         id:
           type: string
@@ -800,7 +785,7 @@ components:
           properties:
             theme:
               type: string
-              enum: [light, dark, cyberpunk]
+              enum: [ light, dark, cyberpunk ]
               example: cyberpunk
             language:
               type: string
@@ -832,13 +817,13 @@ components:
               example: 25
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PaginationParams:
-      $ref: '../common/schemas/pagination.yaml#/PaginationParams'
+      $ref: '../common-service/schemas/pagination.yaml#/PaginationParams'
     PaginatedResponse:
-      $ref: '../common/schemas/pagination.yaml#/PaginatedResponse'
+      $ref: '../common-service/schemas/pagination.yaml#/PaginatedResponse'
   securitySchemes:
     BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
+      $ref: '../common-service/security/security.yaml#/BearerAuth'
     ApiKeyAuth:
-      $ref: '../common/security/security.yaml#/ApiKeyAuth'
+      $ref: '../common-service/security/security.yaml#/ApiKeyAuth'
     ServiceAuth:
-      $ref: '../common/security/security.yaml#/ServiceAuth'
+      $ref: '../common-service/security/security.yaml#/ServiceAuth'

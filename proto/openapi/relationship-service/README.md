@@ -2,379 +2,551 @@
 
 ## 📋 **Назначение**
 
-Relationship Service предоставляет **enterprise-grade API для управления отношениями между персонажами** в NECPGAME экосистеме. Сервис отвечает за романтические связи, репутацию и социальные взаимодействия.
+Relationship Service предоставляет комплексную систему управления социальными связями между персонажами в NECPGAME -
+enterprise-grade API для дружбы, романтики, соперничества, менторства и репутационной системы в киберпанк MMOFPS RPG.
+Сервис обеспечивает масштабируемую, приватную и высокопроизводительную систему социальных отношений.
 
 ## 🎯 **Функциональность**
 
-### 💕 **Романтические Механики**
-- Свидания и развитие отношений
-- Романтические квесты и события
-- Управление несколькими отношениями
+### **🤝 Relationship Management (Управление отношениями)**
 
-### 🏆 **Управление Репутацией**
-- Социальный статус и влияние
-- Репутация в разных фракциях
-- Последствия действий на отношения
+- **Многоуровневые отношения**: Дружба, романтика, соперничество, менторство, бизнес, вражда
+- **Динамическая интенсивность**: Уровни от -10 до +10 с эволюцией со временем
+- **Социальная история**: Отслеживание взаимодействий и развития отношений
+- **Приватность**: Контролируемая видимость отношений для других игроков
 
-### 🧠 **Динамика Отношений**
-- Моделирование сложных межличностных связей
-- Эмоциональные состояния и реакции
-- Развитие отношений со временем
+### **👥 Friendship System (Система дружбы)**
 
-### ⚖️ **Социальные Последствия**
-- Влияние действий на социальные связи
-- Последствия предательств и конфликтов
-- Восстановление разрушенных отношений
+- **Friend Requests**: Формальные запросы дружбы с персональными сообщениями
+- **Friendship Levels**: Уровни близости от 1 до 10
+- **Social Circles**: Группировка друзей по категориям
+- **Activity Tracking**: Отслеживание совместной активности
 
-### Backend Optimization Hints
+### **❤️ Romance System (Романтическая система)**
 
-- Struct alignment hints для оптимизации памяти
-- Performance targets и требования
-- Порядок полей: large -> small для экономии памяти
+- **Romantic Proposals**: Предложения свиданий, отношений, помолвок
+- **Relationship Status**: Статусы от dating до married
+- **Privacy Controls**: Уровни приватности отношений
+- **Anniversary Tracking**: Отслеживание важных дат
 
-### Complete Validation
+### **⚔️ Rivalry System (Система соперничества)**
 
-- Redocly lint: проходит валидацию
-- ogen: успешно генерирует Go код
-- Go compilation: код компилируется без ошибок
+- **Rivalry Declaration**: Публичное объявление соперничества
+- **Intensity Levels**: От minor до deadly
+- **Conflict Tracking**: Отслеживание активных конфликтов
+- **Resolution Mechanisms**: Пути разрешения соперничества
 
-### Security-First Approach
+### **🎓 Mentorship System (Система менторства)**
 
-- JWT Bearer authentication
-- Правильные HTTP статус коды
-- Error handling с дополнительным контекстом
+- **Mentorship Contracts**: Формальные соглашения с условиями
+- **Progress Tracking**: Отслеживание уроков и улучшений навыков
+- **Skill Development**: Передача навыков от ментора к ученику
+- **Payment Integration**: Монетизация менторства
 
-## Структура Шаблона
+### **🏆 Reputation System (Репутационная система)**
+
+- **Multi-Category Reputation**: Торговля, бой, социум, лидерство, ремесло
+- **Evidence-Based**: Репутация основана на задокументированных событиях
+- **Dynamic Scoring**: Автоматический расчет и обновление
+- **Social Influence**: Влияние на социальные взаимодействия
+
+### **🌐 Social Network Analysis (Анализ социальной сети)**
+
+- **Network Mapping**: Картирование социальных связей
+- **Influence Calculation**: Расчет социального влияния
+- **Connection Paths**: Поиск путей связи между персонажами
+- **Network Density**: Анализ плотности социальных связей
+
+## 📁 **Структура**
 
 ```
-proto/openapi/example-domain/
+relationship-service/
 ├── main.yaml           # Основная спецификация (этот файл)
-└── README.md          # Это руководство
-
-proto/openapi/common/                   # Общие компоненты (используются по умолчанию)
-├── responses/
-│   ├── error.yaml      # Общие ответы ошибок (400, 401, 403, 404, 409, 500, 429)
-│   └── success.yaml    # Общие успешные ответы (200, 201, health checks)
-├── schemas/
-│   ├── common.yaml     # Основные схемы (HealthResponse, Error, Pagination)
-│   ├── error.yaml      # Схема ошибки
-│   ├── health.yaml     # Схема здоровья сервиса
-│   └── pagination.yaml # Схемы пагинации
-└── security/
-    └── security.yaml   # Схемы аутентификации (BearerAuth, ApiKeyAuth)
+├── README.md          # Эта документация
+├── relationships/     # Управление отношениями
+├── friendships/       # Дружеские связи
+├── romance/          # Романтические отношения
+├── rivalries/        # Соперничество
+├── mentorship/       # Менторство
+├── reputation/       # Репутационная система
+└── social-network/   # Социальный граф
 ```
 
-## Обязательные Элементы
+## 🔗 **Зависимости**
 
-### 1. **OpenAPI Header**
+### **Common Architecture (SOLID/DRY)**
 
-```yaml
-openapi: 3.0.3
-info:
-  title: [Domain Name] API
-  description: Enterprise-grade API for [domain purpose]
-  version: "1.0.0"
-  contact:
-    name: NECPGAME API Support
-    email: api@necpgame.com
-  license:
-    name: MIT
+- **common/schemas/social-entities.yaml**: `RelationshipEntity`, `FriendshipEntity`, `ReputationEntity`
+- **common/schemas/common.yaml**: `BaseEntity`, `UUID`, `Timestamp`
+- **common/responses/**: Стандартизированные ответы успеха/ошибки
+- **common/security/**: JWT Bearer authentication
+
+### **External Services**
+
+- **user-profile-service**: Для профилей пользователей в отношениях
+- **notification-service**: Для уведомлений о изменениях в отношениях
+- **achievement-service**: Для достижений связанных с отношениями
+- **currency-service**: Для монетизации менторства
+
+## 📊 **Performance**
+
+### **Response Times (P99)**
+
+- **Health Check**: <1ms
+- **Get Relationships**: <60ms (с пагинацией)
+- **Create Relationship**: <80ms (с валидацией)
+- **Reputation Query**: <30ms (с кэшированием)
+- **Social Network Analysis**: <100ms (с ограничением глубины)
+- **Mentorship Update**: <50ms (с прогресс-трекингом)
+
+### **Throughput**
+
+- **Relationship Operations**: 8,000+ ops/sec peak
+- **Reputation Updates**: 15,000+ updates/sec peak
+- **Friendship Queries**: 12,000+ queries/sec peak
+- **Social Graph Traversals**: 3,000+ traversals/sec peak
+
+### **Scalability**
+
+- **Graph Database Sharding**: По user_id для социальных связей
+- **Redis Clustering**: Для кэширования репутации и отношений
+- **Event-Driven Updates**: Kafka для распространения изменений
+- **CDN Integration**: Для публичных профилей отношений
+
+### **Memory Usage**
+
+- **Per User Relationship Cache**: <5KB (активные отношения)
+- **Reputation Cache**: <2KB per user
+- **Social Graph Cache**: <10KB per user network
+- **Mentorship Progress**: <1KB per active mentorship
+
+## 🚀 **Использование**
+
+### **Валидация**
+
+```bash
+# Redocly linting
+npx @redocly/cli lint main.yaml
+
+# Bundle для проверки $ref
+npx @redocly/cli bundle main.yaml -o bundled.yaml
 ```
 
-### 2. **Servers Configuration**
+### **Генерация Go кода**
 
-```yaml
-servers:
-  - url: https://api.necpgame.com/v1/[domain]
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/[domain]
-    description: Staging server
-  - url: http://localhost:8080/api/v1/[domain]
-    description: Local development server
+```bash
+# Генерация из bundled спецификации
+ogen --target ../../services/relationship-service-go/pkg/api \
+     --package api --clean bundled.yaml
 ```
 
-### 3. **Security Schemes**
+### **Документация**
 
-```yaml
-security:
-  - BearerAuth: []
+```bash
+# HTML документация
+npx @redocly/cli build-docs main.yaml -o docs/index.html
 
-components:
-  securitySchemes:
-    BearerAuth:
-      $ref: '../common/security/security.yaml#/BearerAuth'
-    ApiKeyAuth:
-      $ref: '../common/security/security.yaml#/ApiKeyAuth'
-    ServiceAuth:
-      $ref: '../common/security/security.yaml#/ServiceAuth'
+# Swagger UI playground
+npx @redocly/cli build-docs main.yaml --template swagger-ui -o docs/playground.html
 ```
 
-**Использует по умолчанию:**
-- `../common/security/security.yaml` - Bearer JWT, API Key и Service аутентификация
+## 🔧 **Backend Implementation Notes**
 
-### 4. **Обязательные Health Endpoints**
+### **Database Design**
 
-#### Health Check
+```sql
+-- Relationships table (core social connections)
+CREATE TABLE relationships (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    character_id UUID NOT NULL,
+    target_id UUID NOT NULL,
+    type VARCHAR(20) NOT NULL,
+    level INTEGER NOT NULL CHECK (level >= -10 AND level <= 10),
+    description TEXT,
+    established_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_interaction_at TIMESTAMPTZ,
+    interaction_count INTEGER NOT NULL DEFAULT 0,
+    flags TEXT[] DEFAULT '{}',
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(character_id, target_id, type)
+) PARTITION BY HASH (character_id);
+
+-- Friendships table (specialized friendship tracking)
+CREATE TABLE friendships (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    friend_id UUID NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    friendship_level INTEGER NOT NULL DEFAULT 1 CHECK (friendship_level >= 1 AND friendship_level <= 10),
+    requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    accepted_at TIMESTAMPTZ,
+    blocked_at TIMESTAMPTZ,
+    UNIQUE(user_id, friend_id)
+) PARTITION BY HASH (user_id);
+
+-- Reputation table (evidence-based reputation)
+CREATE TABLE reputation_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    subject_id UUID NOT NULL,
+    target_id UUID NOT NULL,
+    category VARCHAR(30) NOT NULL,
+    score INTEGER NOT NULL CHECK (score >= -100 AND score <= 100),
+    evidence_count INTEGER NOT NULL DEFAULT 1,
+    last_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    is_public BOOLEAN NOT NULL DEFAULT true,
+    UNIQUE(subject_id, target_id, category)
+) PARTITION BY HASH (subject_id);
+
+-- Mentorship contracts
+CREATE TABLE mentorship_contracts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    mentor_id UUID NOT NULL,
+    mentee_id UUID NOT NULL,
+    contract_terms JSONB NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'active',
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ,
+    progress_data JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(mentor_id, mentee_id, status)
+) PARTITION BY HASH (mentor_id);
+```
+
+### **Graph Database Integration**
+
+```go
+// Social graph using Neo4j or similar
+type SocialGraphManager struct {
+    driver neo4j.Driver
+    redis  *redis.Client
+}
+
+func (sgm *SocialGraphManager) GetRelationshipNetwork(userID string, depth int) (*SocialNetwork, error) {
+    query := `
+        MATCH path = (u:User {id: $userId})-[r:RELATIONSHIP*1..%d]-(connected:User)
+        WHERE r.is_active = true
+        RETURN path, length(path) as depth
+        ORDER BY depth
+        LIMIT $limit
+    `
+
+    // Execute graph traversal
+    result, err := sgm.driver.NewSession().Run(query, map[string]interface{}{
+        "userId": userID,
+        "depth":  depth,
+        "limit":  100,
+    })
+
+    // Process results into social network structure
+    return sgm.buildSocialNetwork(result)
+}
+```
+
+### **Reputation Engine**
+
+```go
+type ReputationEngine struct {
+    redis *redis.Client
+    kafka *kafka.Producer
+    db    *sql.DB
+}
+
+func (re *ReputationEngine) CalculateReputation(userID string) (*ReputationScore, error) {
+    // Get all reputation events for user
+    events, err := re.getReputationEvents(userID)
+    if err != nil {
+        return nil, err
+    }
+
+    // Calculate category scores
+    scores := make(map[string]*ReputationCategory)
+    for _, event := range events {
+        if scores[event.Category] == nil {
+            scores[event.Category] = &ReputationCategory{}
+        }
+        scores[event.Category].Score += event.Score
+        scores[event.Category].EvidenceCount++
+    }
+
+    // Calculate overall score with weights
+    overallScore := re.calculateOverallScore(scores)
+
+    return &ReputationScore{
+        UserID:    userID,
+        Overall:   overallScore,
+        Categories: scores,
+    }, nil
+}
+```
+
+### **Relationship Evolution System**
+
+```go
+type RelationshipEvolver struct {
+    redis *redis.Client
+    rules map[string]*EvolutionRule
+}
+
+type EvolutionRule struct {
+    MinInteractions  int
+    MaxLevel        int
+    DecayRate       float64
+    BoostEvents     []string
+}
+
+func (re *RelationshipEvolver) EvolveRelationship(rel *Relationship, event string) error {
+    rule := re.rules[rel.Type]
+
+    // Apply evolution based on event type
+    switch event {
+    case "positive_interaction":
+        rel.Level = min(rel.Level+1, rule.MaxLevel)
+        rel.LastInteractionAt = time.Now()
+        rel.InteractionCount++
+    case "negative_interaction":
+        rel.Level = max(rel.Level-1, -10)
+    case "time_decay":
+        rel.Level = int(float64(rel.Level) * rule.DecayRate)
+    }
+
+    // Auto-terminate if level drops too low
+    if rel.Level <= -10 {
+        rel.IsActive = false
+    }
+
+    return re.saveRelationship(rel)
+}
+```
+
+### **Privacy & Consent Management**
+
+```go
+type PrivacyManager struct {
+    redis *redis.Client
+    db    *sql.DB
+}
+
+func (pm *PrivacyManager) CheckRelationshipVisibility(rel *Relationship, viewerID string) (bool, error) {
+    // Check relationship privacy settings
+    if rel.Flags.Contains("public") {
+        return true, nil
+    }
+
+    if rel.Flags.Contains("private") {
+        return rel.CharacterID == viewerID || rel.TargetID == viewerID, nil
+    }
+
+    if rel.Flags.Contains("friends") {
+        return pm.areFriends(rel.CharacterID, viewerID) || pm.areFriends(rel.TargetID, viewerID), nil
+    }
+
+    return false, nil
+}
+```
+
+### **Rate Limiting**
+
+```go
+// Relationship creation limits
+relationshipCreationLimiter := tollbooster.NewLimiter(50, time.Hour) // 50 relationships per hour
+
+// Friend request limits
+friendRequestLimiter := tollbooster.NewLimiter(20, time.Hour) // 20 friend requests per hour
+
+// Reputation event limits
+reputationEventLimiter := tollbooster.NewLimiter(100, time.Hour) // 100 reputation events per hour
+
+// Mentorship proposal limits
+mentorshipProposalLimiter := tollbooster.NewLimiter(5, time.Day) // 5 proposals per day
+```
+
+## 🔐 **Security Considerations**
+
+### **Relationship Privacy**
+
+- Granular privacy controls for each relationship type
+- Consent-based visibility settings
+- Social graph access restrictions
+- PII protection in relationship data
+
+### **Reputation Integrity**
+
+- Evidence-based reputation changes only
+- Fraud detection for artificial reputation inflation
+- Audit trails for all reputation modifications
+- Dispute resolution mechanisms
+
+### **Consent Management**
+
+- Explicit consent for romantic relationships
+- Opt-in/opt-out for social features
+- Harassment prevention through relationship blocking
+- Safe termination procedures
+
+### **Data Protection**
+
+- Encrypted storage of sensitive relationship data
+- GDPR compliance for personal relationship information
+- Data minimization principles
+- Secure deletion of terminated relationships
+
+## 📈 **Monitoring & Observability**
+
+### **Key Metrics**
+
+```prometheus
+# Relationship system metrics
+relationships_total{type="friendship"} 256000
+relationships_active_total 184000
+friendship_requests_pending 1250
+
+# Reputation system metrics
+reputation_events_total{category="trading"} 45000
+reputation_scores_average 127.5
+reputation_fraud_attempts_total 23
+
+# Social network metrics
+social_connections_average 47.2
+social_influence_top_percentile 892.5
+social_network_traversals_total 156000
+
+# Mentorship metrics
+mentorship_contracts_active 3200
+mentorship_completion_rate 0.78
+mentorship_skill_improvements_total 125000
+
+# Performance metrics
+relationship_query_duration_p95 65
+reputation_calculation_duration_p95 35
+social_graph_traversal_duration_p95 95
+```
+
+### **Distributed Tracing**
+
+```go
+// Relationship operation tracing
+func createRelationship(ctx context.Context, req CreateRelationshipRequest) (*Relationship, error) {
+    span, ctx := tracer.StartSpanFromContext(ctx, "relationship.create")
+    defer span.Finish()
+
+    span.SetTag("relationship.type", req.Type)
+    span.SetTag("character.id", req.CharacterID)
+    span.SetTag("target.id", req.TargetID)
+    span.SetTag("operation", "create")
+
+    // Validate privacy and consent
+    if err := pm.ValidateRelationshipConsent(ctx, req); err != nil {
+        span.SetTag("error", true)
+        span.LogFields(log.Error(err))
+        return nil, err
+    }
+
+    // Implementation with tracing
+    rel, err := s.relRepo.Create(ctx, req)
+    if err != nil {
+        span.SetTag("error", true)
+        span.LogFields(log.Error(err))
+        return nil, err
+    }
+
+    span.SetTag("relationship.id", rel.ID)
+    span.SetTag("relationship.level", rel.Level)
+
+    // Notify affected parties
+    if err := s.notifyRelationshipCreated(ctx, rel); err != nil {
+        span.LogFields(log.Error(err)) // Non-critical error
+    }
+
+    return rel, nil
+}
+```
+
+### **Health Checks**
 
 ```yaml
+# Relationship service health endpoints
 /health:
-  get:
-    operationId: [domain]HealthCheck
-    responses:
-      '200': # Обязательно
-        $ref: '../common/responses/success.yaml#/HealthOK'
-      '503': # Обязательно
-        $ref: '../common/responses/error.yaml#/InternalServerError'
+  status: "healthy"
+  relationships_active: 184000
+  friendships_pending: 1250
+  reputation_events_today: 5600
+
+/health/reputation:
+  status: "healthy"
+  reputation_calculations_today: 45600
+  fraud_detection_active: true
+  evidence_validation_rate: 0.99
+
+/health/social-network:
+  status: "healthy"
+  graph_nodes: 1250000
+  graph_edges: 8750000
+  traversal_cache_hit_rate: 0.89
+
+/health/mentorship:
+  status: "healthy"
+  active_contracts: 3200
+  completion_rate: 0.78
+  average_contract_duration_days: 67
 ```
 
-**Использует по умолчанию:**
-- `../common/responses/success.yaml#/HealthOK` - Ответ здоровья
-- `../common/schemas/health.yaml#/HealthResponse` - Схема здоровья
-- `../common/responses/error.yaml#/InternalServerError` - Ошибка сервера
+## 🎯 **API Design Principles**
 
-#### Batch Health Check
+### **SOLID/DRY Compliance**
 
-```yaml
-/health/batch:
-  post:
-    operationId: [domain]BatchHealthCheck
-    # Проверяет несколько доменов в одном запросе
-```
+- **Single Responsibility**: Каждый endpoint отвечает за конкретный аспект отношений
+- **Open/Closed**: Легкое расширение через common inheritance
+- **DRY**: Переиспользование RelationshipEntity и ReputationEntity
+- **SOLID Inheritance**: Domain-specific entity extension
 
-#### WebSocket Health Monitoring
+### **RESTful Design**
 
-```yaml
-/health/ws:
-  get:
-    operationId: [domain]HealthWebSocket
-    # Real-time monitoring без polling
-```
+- **Resource-Based URLs**: `/relationships/{relationshipId}/mentorship/{mentorshipId}`
+- **HTTP Methods**: GET, POST, PUT, DELETE appropriately
+- **Status Codes**: Корректное использование 200, 201, 204, 400, 403, 404, 409
+- **Content Negotiation**: JSON responses с правильными headers
 
-### 5. **Общие Схемы (Используются по умолчанию)**
+### **Privacy-First Architecture**
 
-#### Error Responses
-```yaml
-components:
-  responses:
-    BadRequest:
-      $ref: '../common/responses/error.yaml#/BadRequest'
-    Unauthorized:
-      $ref: '../common/responses/error.yaml#/Unauthorized'
-    Forbidden:
-      $ref: '../common/responses/error.yaml#/Forbidden'
-    NotFound:
-      $ref: '../common/responses/error.yaml#/NotFound'
-    Conflict:
-      $ref: '../common/responses/error.yaml#/Conflict'
-    InternalServerError:
-      $ref: '../common/responses/error.yaml#/InternalServerError'
-```
+- **Consent-Based**: Все отношения требуют явного согласия
+- **Granular Privacy**: Детальный контроль видимости
+- **Data Minimization**: Только необходимые данные хранятся
+- **Right to Deletion**: Полное удаление отношений по запросу
 
-#### Common Schemas
-```yaml
-components:
-  schemas:
-    Error:
-      $ref: '../common/schemas/error.yaml#/Error'
-    HealthResponse:
-      $ref: '../common/schemas/health.yaml#/HealthResponse'
-```
+### **Graph-Based Social Features**
 
-**Файлы по умолчанию:**
-- `../common/schemas/error.yaml` - Стандартная схема ошибки
-- `../common/schemas/health.yaml` - Схема здоровья сервиса
-- `../common/responses/error.yaml` - Стандартные HTTP ошибки
-- `../common/responses/success.yaml` - Успешные ответы
-
-### 6. **Backend Optimization Hints**
-
-#### Struct Alignment
-
-```yaml
-description: 'BACKEND NOTE: Fields ordered for struct alignment (large -> small). Expected memory savings: 30-50%.'
-```
-
-#### Performance Targets
-
-```yaml
-description: |
-  **Performance:** <50ms P95, supports 1000+ concurrent requests
-  **Memory:** <50KB per instance
-  **Concurrent users:** 10,000+
-```
-
-## Как Использовать Шаблон
-
-### 1. **Копирование Шаблона**
-
-```bash
-# Создайте новый домен
-mkdir proto/openapi/your-new-domain
-cp proto/openapi/example-domain/main.yaml proto/openapi/your-new-domain/main.yaml
-```
-
-### 2. **Замена Placeholder'ов**
-
-- `[Domain Name]` -> Название вашего домена
-- `[domain purpose]` -> Описание назначения домена
-- `[domain]` -> Кодовое имя домена (kebab-case)
-- Замените example operations на реальные
-
-### 3. **Добавление Реальных Операций**
-
-Замените примеры CRUD операций на реальные endpoints вашего домена:
-
-```yaml
-# Заменить /examples на ваши реальные ресурсы
-/examples:
-  get: # List
-  post: # Create
-/examples/{id}:
-  get: # Get by ID
-  put: # Update
-  delete: # Delete
-```
-
-### 4. **Оптимизация Схем**
-
-Для каждой схемы:
-
-- Упорядочite поля: large -> small
-- Добавьте `BACKEND NOTE` с оптимизациями
-- Добавьте примеры и валидацию
-
-## Валидация Шаблона
-
-### Redocly Lint
-
-```bash
-npx @redocly/cli lint proto/openapi/example-domain/main.yaml
-# Valid. 4 warnings (нормально)
-```
-
-### Go Code Generation
-
-```bash
-# Bundle
-npx @redocly/cli bundle proto/openapi/example-domain/main.yaml -o bundled.yaml
-
-# Generate Go code
-ogen --target temp --package api --clean bundled.yaml
-
-# Compile
-cd temp && go mod init test && go mod tidy && go build .
-# Success
-```
-
-## Performance Benchmarks
-
-Шаблон оптимизирован для:
-
-- **P99 Latency:** <50ms
-- **Memory per Instance:** <50KB
-- **Concurrent Users:** 10,000+
-
-## Связанные Документы
-
-- `.cursor/rules/agent-api-designer.mdc` - Правила API Designer агента
-- `.cursor/DOMAIN_REFERENCE.md` - Справочник enterprise-grade доменов
-- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - Чек-лист оптимизаций
-- `.cursor/PERFORMANCE_ENFORCEMENT.md` - Требования к производительности
-
-## Следующие Шаги
-
-1. Скопируйте этот шаблон для нового домена
-2. Замените placeholders на реальные значения
-3. Добавьте domain-specific операции
-4. Оптимизируйте схемы для struct alignment
-5. Проверьте валидацию и генерацию кода
-6. Зарегистрируйте домен в DOMAIN_REFERENCE.md
-
-## Важные Замечания
-
-- **НЕ** удаляйте обязательные health endpoints
-- **ВСЕГДА** добавляйте operationId для генерации Go кода
-- **ОПТИМИЗИРУЙТЕ** порядок полей в схемах
-- **ВАЛИДИРУЙТЕ** перед коммитом
-- **ДОКУМЕНТИРУЙТЕ** performance targets
+- **Relationship Graph**: Эффективное хранение и запросы связей
+- **Traversal Optimization**: Ограниченная глубина для производительности
+- **Real-time Updates**: Event-driven обновления социальной сети
+- **Caching Strategy**: Многоуровневое кэширование для быстрого доступа
 
 ---
 
-## Использование Общих Схем Между Домеами
+## 📞 **Контакты**
 
-Шаблон поддерживает использование общих схем между разными доменами:
+**Команда разработки Relationship Service:**
 
-### Общая Директория Схем
+- **Tech Lead**: @relationship-tech-lead
+- **Backend**: @relationship-backend
+- **Database**: @relationship-database
+- **DevOps**: @relationship-devops
 
-```bash
-proto/openapi/common-schemas.yaml  # Универсальные схемы для всех доменов
-```
+**Мониторинг и поддержка:**
 
-### Примеры Общих Схем
+- **SRE Team**: @platform-sre
+- **Security**: @platform-security
+- **Privacy**: @platform-privacy
 
-- `Error` - Универсальная схема ошибок
-- `HealthResponse` - Схема здоровья сервисов
-- `PaginationMeta` - Метаданные пагинации
-- `UUID`, `PlayerId`, `GuildId` - Общие типы ID
-- `Timestamp`, `CreatedAt`, `UpdatedAt` - Временные метки
-- `Status`, `Priority` - Перечисления
+**Бизнес-аналитика:**
 
-### Как Использовать Общие Схемы
-
-```yaml
-# В любом домене
-components:
-  schemas:
-    MyEntity:
-      type: object
-      properties:
-        id:
-          $ref: '../../common-schemas.yaml#/components/schemas/UUID'
-        error:
-          $ref: '../../common-schemas.yaml#/components/schemas/Error'
-        created_at:
-          $ref: '../../common-schemas.yaml#/components/schemas/CreatedAt'
-```
-
-### Преимущества
-
-- **Консистентность** - одинаковые схемы во всех доменах
-- **Удобство сопровождения** - изменения в одном месте
-- **Генерация Go кода** - работает без проблем
-- **Enterprise-grade** - профессиональный подход
-
-### Тестирование
-
-Общие схемы протестированы и работают с:
-
-- Redocly bundling
-- ogen code generation
-- Go compilation
-- Cross-domain references
+- **Product Manager**: @relationship-product
+- **Community Manager**: @relationship-community
+- **Psychology**: @relationship-psychology
 
 ---
 
-## Файлы Common, Используемые по умолчанию
-
-Шаблон автоматически использует следующие общие файлы из `../common/`:
-
-### Security
-- `../common/security/security.yaml` - JWT Bearer, API Key, Service аутентификация
-
-### Schemas
-- `../common/schemas/error.yaml` - Стандартная схема ошибки
-- `../common/schemas/health.yaml` - Детальная схема здоровья сервиса
-
-### Responses
-- `../common/responses/error.yaml` - HTTP ошибки (400, 401, 403, 404, 409, 500, 429)
-- `../common/responses/success.yaml` - Успешные ответы (200, 201) и health responses
-
-### Готовность к использованию
-Все эти файлы:
-- Оптимизированы для struct alignment
-- Проходят Redocly валидацию
-- Генерируют корректный Go код с ogen
-- Совместимы с enterprise-grade архитектурой
-
-**Этот шаблон гарантирует, что все новые OpenAPI спецификации будут enterprise-grade и совместимы со всей экосистемой
-NECPGAME AI агентов.**
+*Этот сервис является частью enterprise-grade микросервисной архитектуры NECPGAME с фокусом на глубокие социальные
+взаимодействия и репутационную систему.*

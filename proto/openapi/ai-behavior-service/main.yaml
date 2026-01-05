@@ -1,34 +1,34 @@
 openapi: 3.0.3
 info:
   title: AI Behavior Service API - Enterprise-Grade Domain Service
-  description: "**Enterprise-Grade AI Behavior Management API for NECPGAME**
+  description: '**Enterprise-Grade AI Behavior Management API for NECPGAME**
 
-    This API manages artificial intelligence behavior systems, NPC decision-making algorithms,
-    and adaptive AI mechanics for dynamic and responsive game world interactions.
+    This API manages artificial intelligence behavior systems, NPC decision-making
+    algorithms, and adaptive AI mechanics for dynamic and responsive game world interactions.
 
     ## Key Features
 
-    - **Behavior Trees**: Complex decision-making systems for NPC AI
-    - **Adaptive Learning**: AI systems that learn and adapt to player patterns
-    - **Dynamic Responses**: Real-time behavioral adjustments based on game state
-    - **Personality Systems**: Unique AI personalities and behavioral traits
-    - **Group Coordination**: Multi-agent coordination and swarm behaviors
-    - **Performance Optimized**: High-performance AI processing with <30ms P99 latency
+    - **Adaptive Difficulty Scaling**: Dynamic difficulty adjustment based on player
+    performance - **NPC Behavior Management**: Complex decision-making systems for
+    game entities - **Procedural Generation**: Dynamic content creation with AI-driven
+    algorithms - **Combat AI Optimization**: Strategic AI for tactical combat scenarios
+    - **Behavior Analytics**: Player pattern analysis and predictive modeling - **Anti-Cheat
+    Detection**: AI-powered suspicious behavior identification
 
     ## Domain Purpose
 
-    The AI Behavior domain provides sophisticated artificial intelligence systems for NECPGAME.
-    Game entities use these systems to make intelligent decisions, adapt to player actions,
-    and create dynamic, responsive gameplay experiences throughout Night City.
+    The AI Behavior domain provides sophisticated artificial intelligence systems
+    for NECPGAME. Game entities use these systems to make intelligent decisions, adapt
+    to player actions, and create dynamic, responsive gameplay experiences throughout
+    Night City.
 
     ## Performance Targets
 
-    - P99 Latency: <30ms for AI decision operations
-    - Memory: <35KB per active AI entity
-    - Concurrent users: 300,000+ simultaneous AI operations
-    - Decision calculations: <20ms response time
+    - P99 Latency: <30ms for AI decision operations - Memory: <35KB per active AI
+    entity - Concurrent users: 300,000+ simultaneous AI operations - Decision calculations:
+    <20ms response time
 
-    "
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -38,24 +38,34 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necpgame.com/v1/ai-behavior
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/ai-behavior
-    description: Staging server
-  - url: http://localhost:8080/api/v1/ai-behavior
-    description: Local development server
+- url: https://api.necpgame.com/v1/ai-behavior
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/ai-behavior
+  description: Staging server
+- url: http://localhost:8080/api/v1/ai-behavior
+  description: Local development server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: AI Behavior
-    description: Core AI behavior and decision-making operations
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: Adaptive Difficulty
+  description: Dynamic difficulty scaling and player adaptation
+- name: NPC Behavior
+  description: NPC AI behavior management and generation
+- name: Procedural Generation
+  description: Dynamic content generation algorithms
+- name: Combat AI
+  description: Combat AI optimization and strategy prediction
+- name: Behavior Analytics
+  description: Player behavior analysis and insights
+- name: Anti-Cheat
+  description: AI-powered suspicious behavior detection
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
   /health:
     get:
       summary: AI behavior service health check
-      description: "**Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
 
 
         Provides real-time health status of the AI behavior service microservice.
@@ -65,21 +75,21 @@ paths:
 
         **Performance:** <1ms response time, cached for 30 seconds
 
-        "
+        '
       operationId: aiBehaviorServiceHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -94,20 +104,20 @@ paths:
               schema:
                 type: string
                 enum:
-                  - gzip
-                  - deflate
-                  - br
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "503":
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/health.yaml#/HealthResponse"
-        "429":
+                $ref: ../common-service/schemas/health.yaml#/HealthResponse
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -117,12 +127,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/batch:
     post:
       summary: Batch health check for multiple domain services
-      description:
-        "**Performance optimization:** Check multiple domain health in
+      description: '**Performance optimization:** Check multiple domain health in
         single request
 
 
@@ -133,10 +148,10 @@ paths:
 
         **Use case:** Service mesh health checks, Kubernetes readiness probes
 
-        "
+        '
       operationId: exampleDomainBatchHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       requestBody:
         required: true
         content:
@@ -144,28 +159,28 @@ paths:
             schema:
               type: object
               required:
-                - services
+              - services
               properties:
                 services:
                   type: array
                   items:
                     type: string
                     enum:
-                      - example-domain
-                      - system-domain
-                      - specialized-domain
+                    - example-domain
+                    - system-domain
+                    - specialized-domain
                     maxItems: 10
                   description: List of services to check
       responses:
-        "200":
-          $ref: "../common/responses/success.yaml#/HealthBatchSuccess"
-        "400":
+        '200':
+          $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
+        '400':
           description: Invalid request - malformed service list
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -176,12 +191,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
-      description:
-        "**Performance optimization:** Real-time health updates without
+      description: '**Performance optimization:** Real-time health updates without
         polling
 
 
@@ -196,24 +216,24 @@ paths:
 
         **Reconnection:** Automatic with exponential backoff
 
-        "
+        '
       operationId: exampleDomainHealthWebSocket
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: services
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - example-domain
-                - system-domain
-                - specialized-domain
-          description: Services to monitor (optional, monitors all if not specified)
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - example-domain
+            - system-domain
+            - specialized-domain
+        description: Services to monitor (optional, monitors all if not specified)
       responses:
-        "200":
+        '200':
           description: WebSocket upgrade information returned
           content:
             application/json:
@@ -228,8 +248,8 @@ paths:
                     items:
                       type: string
                     example:
-                      - health-monitoring-v1
-        "101":
+                    - health-monitoring-v1
+        '101':
           description: WebSocket connection established successfully
           headers:
             Upgrade:
@@ -247,20 +267,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketHealthMessage"
-        "400":
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
           description: Invalid request - malformed service parameters
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "401":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '401':
           description: Unauthorized - authentication required for WebSocket
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
+                $ref: ../common-service/schemas/error.yaml#/Error
+        '429':
           description: Too many requests - WebSocket connection limit exceeded
           headers:
             Retry-After:
@@ -270,520 +290,551 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-  /examples:
+                $ref: ../common-service/schemas/error.yaml#/Error
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /adaptive-difficulty/player/{account_id}/assessment:
     get:
-      summary: List examples with filtering and pagination
-      description: "**Enterprise-grade listing endpoint**
-
-
-        Supports complex filtering, sorting, and pagination patterns.
-
-        Optimized for high-throughput scenarios with proper indexing.
-
-
-        **Performance:** <10ms P95, supports 1000+ concurrent requests
-
-        "
-      operationId: listExamples
+      summary: Get player skill assessment for adaptive difficulty
+      operationId: getPlayerSkillAssessment
       tags:
-        - Example Domain
+      - Adaptive Difficulty
+      security:
+      - BearerAuth: []
       parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number for pagination
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of items per page
-        - name: sort_by
-          in: query
-          schema:
-            type: string
-            enum:
-              - created_at
-              - name
-              - priority
-            default: created_at
-          description: Sort field
-        - name: sort_order
-          in: query
-          schema:
-            type: string
-            enum:
-              - asc
-              - desc
-            default: desc
-          description: Sort order
-        - name: filter_status
-          in: query
-          schema:
-            type: string
-            enum:
-              - active
-              - inactive
-              - pending
-          description: Filter by status
+      - name: account_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
-          $ref: "#/components/responses/ExampleListSuccess"
-        "400":
-          description: Invalid request - malformed query parameters
+        '200':
+          description: Player skill assessment retrieved
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "422":
-          description: Unprocessable entity - validation failed
+                $ref: '#/components/schemas/PlayerSkillAssessment'
+        '404':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
     post:
-      summary: Create new example
-      description: "**Enterprise-grade creation endpoint**
-
-
-        Validates business rules, applies security checks, and ensures data consistency.
-
-        Supports optimistic locking for concurrent operations.
-
-
-        **Performance:** <50ms P95, includes validation and business logic
-
-        "
-      operationId: createExample
+      summary: Update player skill assessment
+      operationId: updatePlayerSkillAssessment
       tags:
-        - Example Domain
+      - Adaptive Difficulty
       security:
-        - BearerAuth: []
+      - BearerAuth: []
+      parameters:
+      - name: account_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateExampleRequest"
+              $ref: '#/components/schemas/UpdateSkillAssessmentRequest'
       responses:
-        "201":
-          $ref: "#/components/responses/ExampleCreated"
-        "400":
-          description: Invalid request - malformed or missing data
+        '200':
+          description: Player skill assessment updated
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
-          description: Conflict - example with this identifier already exists
+                $ref: '#/components/schemas/PlayerSkillAssessment'
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '404':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "422":
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - creation rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-  /examples/{example_id}:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /npc-behavior/npcs/{npc_id}/behavior:
     get:
-      summary: Get specific example by ID
-      description: "**Enterprise-grade retrieval endpoint**
-
-
-        Optimized with proper caching strategies and database indexing.
-
-        Supports conditional requests with ETags.
-
-
-        **Performance:** <5ms P95 with Redis caching
-
-        "
-      operationId: getExample
+      summary: Get NPC behavior configuration
+      operationId: getNpcBehavior
       tags:
-        - Example Domain
-      parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
-        - name: include_related
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include related data in response
-        - name: If-None-Match
-          in: header
-          schema:
-            type: string
-          description: Conditional request - return 304 if ETag matches
-        - name: If-Modified-Since
-          in: header
-          schema:
-            type: string
-            format: date-time
-          description: Conditional request - return 304 if not modified since this time
-      responses:
-        "200":
-          $ref: "#/components/responses/ExampleRetrieved"
-        "304":
-          description: Not modified - resource has not changed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=300, private
-        "400":
-          description: Invalid request - malformed example ID
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
-          description: Example not found
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-    put:
-      summary: Update existing example
-      description: "**Enterprise-grade update endpoint**
-
-
-        Supports partial updates, optimistic locking, and audit trails.
-
-        Ensures data consistency with event sourcing patterns.
-
-
-        **Performance:** <25ms P95, includes validation and conflict resolution
-
-        "
-      operationId: updateExample
-      tags:
-        - Example Domain
+      - NPC Behavior
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
-        - name: If-Match
-          in: header
-          schema:
-            type: string
-          description: ETag for optimistic locking - prevents concurrent updates
-        - name: If-Unmodified-Since
-          in: header
-          schema:
-            type: string
-            format: date-time
-          description:
-            Conditional update - proceed only if not modified since this
-            time
+      - name: npc_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: NPC behavior retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NpcBehavior'
+        '404':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    put:
+      summary: Update NPC behavior configuration
+      operationId: updateNpcBehavior
+      tags:
+      - NPC Behavior
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: npc_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateExampleRequest"
+              $ref: '#/components/schemas/UpdateNpcBehaviorRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/ExampleUpdated"
-        "400":
-          description: Invalid request - malformed data or example ID
+        '200':
+          description: NPC behavior updated
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
-          description: Example not found
+                $ref: '#/components/schemas/NpcBehavior'
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '404':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
-          description:
-            Conflict - version conflict (optimistic locking) or precondition
-            failed
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "412":
-          description:
-            Precondition failed - If-Match or If-Unmodified-Since condition
-            not met
-          headers:
-            ETag:
-              schema:
-                type: string
-                example: '"example-123-v1"'
-                description: Current entity tag
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "422":
-          description: Unprocessable entity - business rule validation failed
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - update rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 30
-          content:
-            application/json:
-              schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-    delete:
-      summary: Delete example
-      description: "**Enterprise-grade deletion endpoint**
-
-
-        Supports soft deletes with audit trails and cleanup scheduling.
-
-        Ensures referential integrity and cascading deletes.
-
-
-        **Performance:** <15ms P95, includes cleanup operations
-
-        "
-      operationId: deleteExample
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /npc-behavior/generate:
+    post:
+      summary: Generate procedural NPC with AI behavior
+      operationId: generateProceduralNpc
       tags:
-        - Example Domain
+      - NPC Behavior
       security:
-        - BearerAuth: []
-      parameters:
-        - name: example_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Example unique identifier
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateNpcRequest'
       responses:
-        "204":
-          $ref: "#/components/responses/ExampleDeleted"
-        "400":
-          description: Invalid request - malformed example ID
+        '201':
+          description: NPC generated successfully
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "404":
-          description: Example not found
+                $ref: '#/components/schemas/GeneratedNpc'
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '500':
+          $ref: ../common-service/responses/error.yaml#/InternalServerError
+        default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "409":
-          description: Conflict - example cannot be deleted (referential integrity)
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /procedural/quest/generate:
+    post:
+      summary: Generate procedural quest with AI algorithms
+      operationId: generateProceduralQuest
+      tags:
+      - Procedural Generation
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateQuestRequest'
+      responses:
+        '201':
+          description: Quest generated successfully
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
-        "429":
-          description: Too many requests - deletion rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 60
+                $ref: '#/components/schemas/GeneratedQuest'
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '500':
+          $ref: ../common-service/responses/error.yaml#/InternalServerError
+        default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: "../common/schemas/error.yaml#/Error"
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /combat-ai/predict/{account_id}/strategy:
+    get:
+      summary: Get combat strategy prediction for player
+      operationId: getCombatStrategyPrediction
+      tags:
+      - Combat AI
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: account_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Combat strategy prediction retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatStrategyPrediction'
+        '404':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /analytics/player/{account_id}/behavior:
+    get:
+      summary: Get player behavior analytics for AI training
+      operationId: getPlayerBehaviorAnalytics
+      tags:
+      - Behavior Analytics
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: account_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: time_range
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+          - 90d
+          default: 7d
+      responses:
+        '200':
+          description: Player behavior analytics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBehaviorAnalytics'
+        '404':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common-service/responses/error.yaml#/Unauthorized
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /anti-cheat/analyze/{account_id}/suspicious:
+    post:
+      summary: Analyze player for suspicious behavior using AI
+      operationId: analyzeSuspiciousBehavior
+      tags:
+      - Anti-Cheat
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: account_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuspiciousBehaviorReport'
+      responses:
+        '200':
+          description: Behavior analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BehaviorAnalysisResult'
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '404':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /models/train:
+    post:
+      summary: Trigger AI model training for behavior prediction
+      operationId: triggerModelTraining
+      tags:
+      - Adaptive Difficulty
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelTrainingRequest'
+      responses:
+        '201':
+          description: Model training initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelTrainingJob'
+        '400':
+          $ref: ../common-service/responses/error.yaml#/BadRequest
+        '429':
+          $ref: ../common-service/responses/error.yaml#/TooManyRequests
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
   responses:
     HealthBatchSuccess:
-      $ref: ../common/responses/success.yaml#/HealthBatchSuccess
-    ExampleListSuccess:
-      description: Examples retrieved successfully
+      $ref: ../common-service/responses/success.yaml#/HealthBatchSuccess
+    PlayerSkillAssessmentRetrieved:
+      description: Player skill assessment retrieved successfully
       headers:
         Cache-Control:
           schema:
             type: string
             example: max-age=300, private
-        X-Total-Count:
-          schema:
-            type: integer
-            example: 150
-            description: Total number of examples matching criteria
-        X-Page-Count:
-          schema:
-            type: integer
-            example: 8
-            description: Total number of pages
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ExampleListResponse"
-    ExampleCreated:
-      description: Example created successfully
-      headers:
-        Location:
-          schema:
-            type: string
-            example: /api/v1/examples/550e8400-e29b-41d4-a716-446655440000
-            description: URL of the created example
         ETag:
           schema:
             type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching and optimistic locking
-        Cache-Control:
-          schema:
-            type: string
-            example: no-cache
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ExampleResponse"
-    ExampleRetrieved:
-      description: Example retrieved successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v1"'
-            description: Entity tag for caching
-        Cache-Control:
-          schema:
-            type: string
-            example: max-age=300, private
-            description: Cache control directives
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: "2025-12-21T10:00:00Z"
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 5
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ExampleResponse"
-    ExampleUpdated:
-      description: Example updated successfully
-      headers:
-        ETag:
-          schema:
-            type: string
-            example: '"example-123-v2"'
-            description: New entity tag after update
-        Last-Modified:
-          schema:
-            type: string
-            format: date-time
-            example: "2025-12-21T10:05:00Z"
-            description: Last modification timestamp
-        X-Processing-Time:
-          schema:
-            type: integer
-            example: 25
-            description: Processing time in milliseconds
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ExampleResponse"
-    ExampleDeleted:
-      description: Example deleted successfully
-      headers:
+            example: '"assessment-123-v1"'
         X-Processing-Time:
           schema:
             type: integer
             example: 15
-            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlayerSkillAssessment'
+    PlayerSkillAssessmentUpdated:
+      description: Player skill assessment updated successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"assessment-123-v2"'
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 25
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlayerSkillAssessment'
+    NpcBehaviorRetrieved:
+      description: NPC behavior configuration retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=300, private
+        ETag:
+          schema:
+            type: string
+            example: '"npc-behavior-123-v1"'
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 10
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NpcBehavior'
+    NpcBehaviorUpdated:
+      description: NPC behavior configuration updated successfully
+      headers:
+        ETag:
+          schema:
+            type: string
+            example: '"npc-behavior-123-v2"'
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 20
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NpcBehavior'
+    NpcGenerated:
+      description: NPC generated successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            example: /api/v1/ai-behavior/npc-behavior/npcs/550e8400-e29b-41d4-a716-446655440000
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 50
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GeneratedNpc'
+    QuestGenerated:
+      description: Quest generated successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            example: /api/v1/ai-behavior/procedural/quests/550e8400-e29b-41d4-a716-446655440000
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 75
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GeneratedQuest'
+    CombatStrategyRetrieved:
+      description: Combat strategy prediction retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=60, private
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 30
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CombatStrategyPrediction'
+    BehaviorAnalyticsRetrieved:
+      description: Player behavior analytics retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: max-age=600, private
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 100
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlayerBehaviorAnalytics'
+    BehaviorAnalysisCompleted:
+      description: Suspicious behavior analysis completed successfully
+      headers:
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 200
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BehaviorAnalysisResult'
+    ModelTrainingInitiated:
+      description: AI model training initiated successfully
+      headers:
+        Location:
+          schema:
+            type: string
+            example: /api/v1/ai-behavior/models/training/550e8400-e29b-41d4-a716-446655440000
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 10
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ModelTrainingJob'
     OK:
-      $ref: ../common/responses/success.yaml#/OK
+      $ref: ../common-service/responses/success.yaml#/OK
     Created:
-      $ref: ../common/responses/success.yaml#/Created
+      $ref: ../common-service/responses/success.yaml#/Created
     BadRequest:
-      $ref: ../common/responses/error.yaml#/BadRequest
+      $ref: ../common-service/responses/error.yaml#/BadRequest
     Unauthorized:
-      $ref: ../common/responses/error.yaml#/Unauthorized
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
     Forbidden:
-      $ref: ../common/responses/error.yaml#/Forbidden
+      $ref: ../common-service/responses/error.yaml#/Forbidden
     NotFound:
-      $ref: ../common/responses/error.yaml#/NotFound
+      $ref: ../common-service/responses/error.yaml#/NotFound
     Conflict:
-      $ref: ../common/responses/error.yaml#/Conflict
+      $ref: ../common-service/responses/error.yaml#/Conflict
     InternalServerError:
-      $ref: ../common/responses/error.yaml#/InternalServerError
+      $ref: ../common-service/responses/error.yaml#/InternalServerError
     HealthOK:
-      $ref: ../common/responses/success.yaml#/HealthOK
+      $ref: ../common-service/responses/success.yaml#/HealthOK
   schemas:
     HealthResponse:
-      $ref: ../common/schemas/health.yaml#/HealthResponse
+      $ref: ../common-service/schemas/health.yaml#/HealthResponse
+    Error:
+      $ref: ../common-service/schemas/error.yaml#/Error
     WebSocketHealthMessage:
       type: object
       required:
-        - type
-        - timestamp
-        - health
+      - type
+      - timestamp
+      - health
       properties:
         type:
           type: string
           enum:
-            - health_update
-            - health_alert
-            - service_down
+          - health_update
+          - health_alert
+          - service_down
           example: health_update
           maxLength: 255
         timestamp:
@@ -796,204 +847,687 @@ components:
           description: Timestamp of the health message
           maxLength: 1000
         health:
-          $ref: "../common/schemas/health.yaml#/HealthResponse"
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-    Error:
-      $ref: ../common/schemas/error.yaml#/Error
-    Example:
+          $ref: ../common-service/schemas/health.yaml#/HealthResponse
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+        Expected memory savings: 30-50%.'
+    PlayerSkillAssessment:
       type: object
       required:
-        - id
-        - name
-        - created_at
-        - status
-        - is_active
+      - account_id
+      - skill_level
+      - confidence_score
+      - assessed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        assessed_at:
+          type: string
+          format: date-time
+        play_style:
+          type: string
+          enum:
+          - aggressive
+          - defensive
+          - strategic
+          - casual
+        performance_metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        preferred_game_modes:
+          type: array
+          items:
+            type: string
+        skill_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Player skill level (0-10 scale)
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence in assessment (0-1)
+      description: 'BACKEND NOTE: Fields ordered for optimal memory alignment.'
+    PerformanceMetrics:
+      type: object
+      properties:
+        win_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        average_score:
+          type: number
+          format: float
+        average_kills_per_match:
+          type: number
+          format: float
+        average_deaths_per_match:
+          type: number
+          format: float
+        accuracy_percentage:
+          type: number
+          format: float
+        average_match_duration:
+          type: integer
+          description: Average match duration in seconds
+    UpdateSkillAssessmentRequest:
+      type: object
+      properties:
+        play_style:
+          type: string
+          enum:
+          - aggressive
+          - defensive
+          - strategic
+          - casual
+        performance_data:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        skill_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+    NpcBehavior:
+      type: object
+      required:
+      - npc_id
+      - behavior_type
+      - aggressiveness
+      - intelligence
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        behavior_type:
+          type: string
+          enum:
+          - passive
+          - aggressive
+          - defensive
+          - patrol
+          - guard
+          - merchant
+          - quest_giver
+        combat_style:
+          type: string
+          enum:
+          - melee
+          - ranged
+          - magic
+          - mixed
+        last_updated:
+          type: string
+          format: date-time
+        interaction_responses:
+          type: object
+          additionalProperties:
+            type: string
+        patrol_route:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vector3'
+        aggressiveness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        intelligence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    UpdateNpcBehaviorRequest:
+      type: object
+      properties:
+        behavior_type:
+          type: string
+          enum:
+          - passive
+          - aggressive
+          - defensive
+          - patrol
+          - guard
+          - merchant
+          - quest_giver
+        combat_style:
+          type: string
+          enum:
+          - melee
+          - ranged
+          - magic
+          - mixed
+        interaction_responses:
+          type: object
+          additionalProperties:
+            type: string
+        patrol_route:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vector3'
+        aggressiveness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        intelligence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    GenerateNpcRequest:
+      type: object
+      required:
+      - npc_type
+      - location
+      properties:
+        npc_type:
+          type: string
+          enum:
+          - enemy
+          - ally
+          - neutral
+          - merchant
+          - quest_giver
+        faction:
+          type: string
+        custom_properties:
+          type: object
+          additionalProperties: true
+        location:
+          $ref: '#/components/schemas/Vector3'
+        difficulty_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          default: 1
+    GeneratedNpc:
+      type: object
+      required:
+      - id
+      - npc_type
+      - location
+      - behavior
+      - generated_at
       properties:
         id:
           type: string
           format: uuid
-          description: Example unique identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
-        name:
+        npc_type:
           type: string
-          minLength: 1
-          maxLength: 100
-          description: Example display name
-          example: Sample Example
+          enum:
+          - enemy
+          - ally
+          - neutral
+          - merchant
+          - quest_giver
+        generated_at:
+          type: string
+          format: date-time
+        generation_seed:
+          type: string
+          description: Seed used for procedural generation
+        behavior:
+          $ref: '#/components/schemas/NpcBehavior'
+        stats:
+          $ref: '#/components/schemas/NpcStats'
+        location:
+          $ref: '#/components/schemas/Vector3'
+    NpcStats:
+      type: object
+      properties:
+        speed:
+          type: number
+          format: float
+          minimum: 0
+        health:
+          type: integer
+          minimum: 1
+        damage:
+          type: integer
+          minimum: 0
+        defense:
+          type: integer
+          minimum: 0
+        level:
+          type: integer
+          minimum: 1
+    Vector3:
+      type: object
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+    GenerateQuestRequest:
+      type: object
+      required:
+      - player_level
+      - quest_type
+      properties:
+        quest_type:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - collection
+          - escort
+          - puzzle
+          - assassination
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - epic
+          default: medium
+        theme:
+          type: string
+          enum:
+          - cyberpunk
+          - military
+          - supernatural
+          - mystery
+          - adventure
+        location:
+          type: string
+        custom_parameters:
+          type: object
+          additionalProperties: true
+        player_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        time_limit:
+          type: integer
+          description: Time limit in minutes
+    GeneratedQuest:
+      type: object
+      required:
+      - id
+      - title
+      - description
+      - objectives
+      - generated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
         description:
           type: string
-          maxLength: 1000
-          description: Detailed description
-          example: This is a comprehensive example demonstrating best practices.
+          maxLength: 2000
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - epic
+        generated_at:
+          type: string
+          format: date-time
+        generation_seed:
+          type: string
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjective'
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestReward'
+        estimated_duration:
+          type: integer
+          description: Estimated completion time in minutes
+    QuestObjective:
+      type: object
+      required:
+      - description
+      - objective_type
+      properties:
+        target_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+          maxLength: 500
+        objective_type:
+          type: string
+          enum:
+          - kill
+          - collect
+          - explore
+          - interact
+          - survive
+          - escort
+        location:
+          type: string
+        target_count:
+          type: integer
+          minimum: 1
+    QuestReward:
+      type: object
+      required:
+      - reward_type
+      - amount
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        reward_type:
+          type: string
+          enum:
+          - experience
+          - currency
+          - item
+          - reputation
+          - title
+        amount:
+          type: integer
+          minimum: 0
+    CombatStrategyPrediction:
+      type: object
+      required:
+      - account_id
+      - predicted_strategy
+      - confidence_score
+      - predicted_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        predicted_strategy:
+          type: string
+          enum:
+          - aggressive
+          - defensive
+          - flanking
+          - camping
+          - rushdown
+          - kite
+        predicted_at:
+          type: string
+          format: date-time
+        strategy_explanation:
+          type: string
+        counter_strategies:
+          type: array
+          items:
+            type: string
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    PlayerBehaviorAnalytics:
+      type: object
+      required:
+      - account_id
+      - time_range
+      - analyzed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        time_range:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+          - 90d
+        analyzed_at:
+          type: string
+          format: date-time
+        engagement_metrics:
+          $ref: '#/components/schemas/EngagementMetrics'
+        behavior_patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/BehaviorPattern'
+        risk_indicators:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskIndicator'
+    BehaviorPattern:
+      type: object
+      required:
+      - pattern_type
+      - frequency
+      - confidence
+      properties:
+        pattern_type:
+          type: string
+          enum:
+          - aggressive_play
+          - defensive_play
+          - team_player
+          - lone_wolf
+          - achievement_hunter
+          - casual_player
+        detected_at:
+          type: string
+          format: date-time
+        frequency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    RiskIndicator:
+      type: object
+      required:
+      - indicator_type
+      - severity
+      - description
+      properties:
+        indicator_type:
+          type: string
+          enum:
+          - aimbot_suspicion
+          - speed_hack_suspicion
+          - wall_hack_suspicion
+          - unusual_win_rate
+          - pattern_exploitation
+        description:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: string
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    EngagementMetrics:
+      type: object
+      properties:
+        sessions_per_day:
+          type: number
+          format: float
+        retention_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        progression_rate:
+          type: number
+          format: float
+        average_session_duration:
+          type: integer
+          description: Average session duration in minutes
+    SuspiciousBehaviorReport:
+      type: object
+      required:
+      - account_id
+      - behavior_type
+      - evidence
+      - severity
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        behavior_type:
+          type: string
+          enum:
+          - aimbot
+          - speed_hack
+          - wall_hack
+          - unusual_accuracy
+          - pattern_exploitation
+          - stat_manipulation
+        timestamp:
+          type: string
+          format: date-time
+        evidence:
+          type: array
+          items:
+            type: string
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+    BehaviorAnalysisResult:
+      type: object
+      required:
+      - account_id
+      - analysis_id
+      - risk_level
+      - analyzed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        analysis_id:
+          type: string
+          format: uuid
+        risk_level:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        analyzed_at:
+          type: string
+          format: date-time
+        recommendations:
+          type: array
+          items:
+            type: string
+        risk_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        requires_investigation:
+          type: boolean
+          default: false
+    ModelTrainingRequest:
+      type: object
+      required:
+      - model_type
+      - training_data
+      properties:
+        model_type:
+          type: string
+          enum:
+          - difficulty_scaling
+          - behavior_prediction
+          - content_recommendation
+          - anti_cheat
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          default: normal
+        training_data:
+          type: object
+          properties:
+            dataset_size:
+              type: integer
+              minimum: 1000
+            data_sources:
+              type: array
+              items:
+                type: string
+            time_range:
+              type: object
+              properties:
+                start_date:
+                  type: string
+                  format: date-time
+                end_date:
+                  type: string
+                  format: date-time
+        hyperparameters:
+          type: object
+          additionalProperties: true
+    ModelTrainingJob:
+      type: object
+      required:
+      - job_id
+      - model_type
+      - status
+      - created_at
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        model_type:
+          type: string
+        status:
+          type: string
+          enum:
+          - queued
+          - training
+          - validating
+          - completed
+          - failed
         created_at:
           type: string
           format: date-time
-          description: Creation timestamp
-          example: "2025-12-21T10:00:00Z"
-        updated_at:
+        estimated_completion:
           type: string
           format: date-time
-          description: Last update timestamp
-          example: "2025-12-21T10:00:00Z"
-        status:
-          type: string
-          enum:
-            - active
-            - inactive
-            - pending
-            - archived
-          default: active
-          description: Current status
-          example: active
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Associated tags
-          example:
-            - demo
-            - template
-            - best-practice
-        is_active:
-          type: boolean
-          description: Whether this example is active
-          example: true
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-          example: 7
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Hot path optimization required."
-    CreateExampleRequest:
-      type: object
-      required:
-        - name
-        - description
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: Desired example name
-          example: My New Example
-        description:
-          type: string
-          maxLength: 1000
-          description: Example description
-          example: A new example following enterprise-grade patterns.
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Initial tags
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-    UpdateExampleRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: New example name
-          example: Updated Example Name
-        description:
-          type: string
-          maxLength: 1000
-          description: New description
-        status:
-          type: string
-          enum:
-            - active
-            - inactive
-            - pending
-            - archived
-          description: New status
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Replace all tags
-        is_active:
-          type: boolean
-          description: Update active status
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: New priority
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-    ExampleResponse:
-      type: object
-      required:
-        - example
-      properties:
-        example:
-          $ref: "#/components/schemas/Example"
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%."
-    ExampleListResponse:
-      type: object
-      required:
-        - examples
-        - total_count
-        - has_more
-      properties:
-        examples:
-          type: array
-          items:
-            $ref: "#/components/schemas/Example"
-          description: List of examples
-        has_more:
-          type: boolean
-          description: Whether there are more results available
-          example: true
-        total_count:
-          type: integer
-          description: Total number of examples matching criteria
-          example: 150
-        page:
-          type: integer
-          description: Current page number
-          example: 1
-        limit:
-          type: integer
-          description: Items per page
-          example: 20
-      description:
-        "BACKEND NOTE: Fields ordered for struct alignment (large → small).
-        Expected memory savings: 30-50%. Paginated responses optimized for memory
-        efficiency."
-    PaginationParams:
-      $ref: ../common/schemas/pagination.yaml#/PaginationParams
-    PaginatedResponse:
-      $ref: ../common/schemas/pagination.yaml#/PaginatedResponse
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
   securitySchemes:
     BearerAuth:
-      $ref: ../common/security/security.yaml#/BearerAuth
+      $ref: ../common-service/security/security.yaml#/BearerAuth
     ApiKeyAuth:
-      $ref: ../common/security/security.yaml#/ApiKeyAuth
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
     ServiceAuth:
-      $ref: ../common/security/security.yaml#/ServiceAuth
+      $ref: ../common-service/security/security.yaml#/ServiceAuth

@@ -2,33 +2,29 @@ openapi: 3.0.3
 info:
   title: Corporation Service API
   description: Enterprise-grade API for Corporation Management
-  version: "1.0.0"
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necpgame.com
   license:
     name: MIT
-
 servers:
 - url: https://api.necpgame.com/v1/corporation
   description: Production server
 - url: http://localhost:8080/api/v1/corporation
   description: Local development server
-
 security:
 - BearerAuth: []
-
 tags:
 - name: Corporation Management
   description: Core corporation operations
-
 paths:
   /health:
     get:
       operationId: corporationServiceHealthCheck
       summary: Corporation Service Health Check
       tags:
-        - Health Monitoring
+      - Health Monitoring
       responses:
         '200':
           description: Service is healthy
@@ -36,15 +32,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /api/v1/corporations:
     post:
       operationId: createCorporation
       summary: Create a new corporation
       tags:
-        - Corporation Management
+      - Corporation Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -60,22 +61,27 @@ paths:
                 $ref: '#/components/schemas/Corporation'
         '400':
           description: Bad request
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     get:
       operationId: listCorporations
       summary: List corporations
       tags:
-        - Corporation Management
+      - Corporation Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
       responses:
         '200':
           description: List of corporations
@@ -83,22 +89,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CorporationList'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /api/v1/corporations/{corporationId}:
     get:
       operationId: getCorporation
       summary: Get corporation details
       tags:
-        - Corporation Management
+      - Corporation Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: corporationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: corporationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Corporation details
@@ -106,21 +117,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Corporation'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     put:
       operationId: updateCorporation
       summary: Update corporation
       tags:
-        - Corporation Management
+      - Corporation Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: corporationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: corporationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -134,25 +150,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Corporation'
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
     delete:
       operationId: deleteCorporation
       summary: Delete corporation
       tags:
-        - Corporation Management
+      - Corporation Management
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: corporationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: corporationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '204':
           description: Corporation deleted
-
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
 components:
   responses:
     OK:
@@ -167,24 +193,25 @@ components:
                 example: true
               message:
                 type: string
-                example: "Operation completed"
-
+                example: Operation completed
   schemas:
     HealthResponse:
       type: object
       properties:
         status:
           type: string
-          enum: [healthy, degraded, unhealthy]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
         timestamp:
           type: string
           format: date-time
         version:
           type: string
       required:
-        - status
-        - timestamp
-
+      - status
+      - timestamp
     Corporation:
       type: object
       properties:
@@ -200,7 +227,7 @@ components:
           maxLength: 255
         registration_number:
           type: string
-          pattern: '^[A-Z]{2}\d{8}$'
+          pattern: ^[A-Z]{2}\d{8}$
         official_activity:
           type: string
           maxLength: 100
@@ -221,16 +248,15 @@ components:
           type: string
           format: date-time
       required:
-        - id
-        - guild_id
-        - name
-        - registration_number
-        - official_activity
-        - status
-        - capital
-        - created_at
-        - updated_at
-
+      - id
+      - guild_id
+      - name
+      - registration_number
+      - official_activity
+      - status
+      - capital
+      - created_at
+      - updated_at
     CreateCorporationRequest:
       type: object
       properties:
@@ -241,7 +267,7 @@ components:
           type: string
           minLength: 3
           maxLength: 255
-          pattern: '^[a-zA-Z0-9\s\-_\.]+$'
+          pattern: ^[a-zA-Z0-9\s\-_\.]+$
         official_activity:
           type: string
           minLength: 10
@@ -251,10 +277,9 @@ components:
           format: decimal
           minimum: 0
       required:
-        - guild_id
-        - name
-        - official_activity
-
+      - guild_id
+      - name
+      - official_activity
     UpdateCorporationRequest:
       type: object
       properties:
@@ -262,7 +287,7 @@ components:
           type: string
           minLength: 3
           maxLength: 255
-          pattern: '^[a-zA-Z0-9\s\-_\.]+$'
+          pattern: ^[a-zA-Z0-9\s\-_\.]+$
         official_activity:
           type: string
           minLength: 10
@@ -274,10 +299,9 @@ components:
         status:
           $ref: '#/components/schemas/CorporationStatus'
       example:
-        name: "Updated Corporation Name"
-        official_activity: "Updated business activity"
-        status: "active"
-
+        name: Updated Corporation Name
+        official_activity: Updated business activity
+        status: active
     CorporationList:
       type: object
       properties:
@@ -301,18 +325,16 @@ components:
             total_pages:
               type: integer
               minimum: 0
-
     CorporationStatus:
       type: string
       enum:
-        - pending
-        - active
-        - suspended
-        - disbanded
-        - bankrupt
-        - merged
+      - pending
+      - active
+      - suspended
+      - disbanded
+      - bankrupt
+      - merged
       description: Current status of the corporation
-
   securitySchemes:
     BearerAuth:
       type: http

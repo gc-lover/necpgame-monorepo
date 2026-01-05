@@ -1,0 +1,417 @@
+# Common CRUD Operations
+# Standardized Create, Read, Update, Delete operations for all services
+# SOLID/DRY foundation for consistent API design
+
+components:
+  schemas:
+    # ============================================================================
+    # CRUD REQUEST SCHEMAS
+    # ============================================================================
+
+    # Create Request Base
+    CreateRequest:
+      type: object
+      description: "Base schema for create operations. Extend with domain-specific fields."
+      properties:
+        metadata:
+          type: object
+          description: "Optional creation metadata"
+          properties:
+            source:
+              type: string
+              description: "Creation source (api, game, admin)"
+              example: "api"
+            tags:
+              type: array
+              items:
+                type: string
+                maxLength: 50
+              description: "Entity tags for categorization"
+
+    # Update Request Base
+    UpdateRequest:
+      type: object
+      required:
+        - id
+      description: "Base schema for update operations with optimistic locking support."
+      properties:
+        id:
+          $ref: "../schemas/common.yaml#/UUID"
+        version:
+          type: integer
+          minimum: 1
+          description: "Current entity version for optimistic locking"
+        metadata:
+          type: object
+          properties:
+            updated_by:
+              $ref: "../schemas/common.yaml#/UUID"
+            reason:
+              type: string
+              maxLength: 200
+              description: "Update reason for audit trail"
+
+    # Bulk Operation Request
+    BulkOperationRequest:
+      type: object
+      required:
+        - operation
+        - items
+      properties:
+        operation:
+          type: string
+          enum: ["create", "update", "delete"]
+          description: "Bulk operation type"
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: "Items to process"
+        continue_on_error:
+          type: boolean
+          default: false
+          description: "Continue processing if individual items fail"
+        dry_run:
+          type: boolean
+          default: false
+          description: "Validate without executing"
+
+    # ============================================================================
+    # CRUD RESPONSE SCHEMAS
+    # ============================================================================
+
+    # Bulk Operation Response
+    BulkOperationResponse:
+      type: object
+      required:
+        - total_requested
+        - total_processed
+        - total_failed
+      properties:
+        total_requested:
+          type: integer
+          minimum: 0
+          description: "Total items requested for processing"
+        total_processed:
+          type: integer
+          minimum: 0
+          description: "Successfully processed items"
+        total_failed:
+          type: integer
+          minimum: 0
+          description: "Failed items"
+        results:
+          type: array
+          items:
+            type: object
+            required:
+              - index
+              - success
+            properties:
+              index:
+                type: integer
+                minimum: 0
+                description: "Original item index in request"
+              success:
+                type: boolean
+              id:
+                $ref: "../schemas/common.yaml#/UUID"
+              error:
+                $ref: "../schemas/common.yaml#/Error"
+        processing_time_ms:
+          type: integer
+          minimum: 0
+          description: "Total processing time"
+
+    # Search/Filter Request
+    SearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: "Full-text search query"
+          maxLength: 255
+        filters:
+          type: object
+          description: "Field-specific filters"
+          additionalProperties:
+            type: object
+            properties:
+              operator:
+                type: string
+                enum:
+                  [
+                    "eq",
+                    "ne",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "in",
+                    "nin",
+                    "contains",
+                    "starts_with",
+                    "ends_with",
+                  ]
+              value:
+                description: "Filter value"
+        sort:
+          type: array
+          items:
+            type: object
+            required:
+              - field
+              - direction
+            properties:
+              field:
+                type: string
+                description: "Field to sort by"
+              direction:
+                type: string
+                enum: ["asc", "desc"]
+          maxItems: 5
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 20
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+
+# ============================================================================
+# STANDARD CRUD PATHS TEMPLATES
+# ============================================================================
+
+# These are path templates that services should adapt for their entities
+# Replace {entity} with actual entity name (e.g., characters, items, users)
+
+paths:
+  # CREATE
+  /{entity}:
+    post:
+      summary: Create {Entity}
+      description: "Create a new {entity} entity."
+      operationId: create{Entity}
+      tags: ["{Entity} Management"]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/CreateRequest"
+                - type: object
+                  description: "Domain-specific create fields"
+      responses:
+        "201":
+          $ref: "../responses/success.yaml#/Created"
+        "400":
+          $ref: "../responses/error.yaml#/BadRequest"
+        "401":
+          $ref: "../responses/error.yaml#/Unauthorized"
+        "429":
+          $ref: "../responses/error.yaml#/TooManyRequests"
+    get:
+      summary: List {Entities}
+      description: "Retrieve a paginated list of {entities} with optional filtering."
+      operationId: list{Entities}
+      tags: ["{Entity} Management"]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: ["created_at", "updated_at", "name"] # Domain-specific
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: ["asc", "desc"]
+            default: "desc"
+      responses:
+        "200":
+          description: "Entities list retrieved successfully"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../schemas/pagination.yaml#/PaginatedResponse"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          description: "Domain-specific entity schema"
+
+  # READ SINGLE
+  /{entity}/{id}:
+    get:
+      summary: Get {Entity}
+      description: "Retrieve a single {entity} by ID."
+      operationId: get{Entity}
+      tags: ["{Entity} Management"]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common.yaml#/UUID"
+      responses:
+        "200":
+          description: Entity retrieved successfully
+          content:
+            application/json:
+              schema:
+                description: "Domain-specific entity schema"
+        "404":
+          $ref: "../responses/error.yaml#/NotFound"
+    put:
+      summary: Update {Entity}
+      description: "Update an existing {entity} entity."
+      operationId: update{Entity}
+      tags: ["{Entity} Management"]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common.yaml#/UUID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/UpdateRequest"
+                - type: object
+                  description: "Domain-specific update fields"
+      responses:
+        "200":
+          $ref: "../responses/success.yaml#/Updated"
+        "400":
+          $ref: "../responses/error.yaml#/BadRequest"
+        "404":
+          $ref: "../responses/error.yaml#/NotFound"
+        "409":
+          description: Version conflict - entity was modified by another request
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/common.yaml#/Error"
+    delete:
+      summary: Delete {Entity}
+      description: "Soft delete a {entity} entity (marks as deleted)."
+      operationId: delete{Entity}
+      tags: ["{Entity} Management"]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common.yaml#/UUID"
+        - name: permanent
+          in: query
+          schema:
+            type: boolean
+            default: false
+            description: "Permanently delete (hard delete)"
+      responses:
+        "200":
+          $ref: "../responses/success.yaml#/Deleted"
+        "404":
+          $ref: "../responses/error.yaml#/NotFound"
+
+  # READ LIST WITH PAGINATION
+
+  # UPDATE
+
+  # DELETE
+
+  # BULK OPERATIONS
+  /{entity}/bulk:
+    post:
+      summary: Bulk {Entity} Operations
+      description: "Perform bulk create, update, or delete operations on {entities}."
+      operationId: bulk{Entities}
+      tags: ["{Entity} Management"]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/BulkOperationRequest"
+      responses:
+        "200":
+          description: Bulk operation completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/BulkOperationResponse"
+        "400":
+          $ref: "../responses/error.yaml#/BadRequest"
+
+  # SEARCH
+  /{entity}/search:
+    post:
+      summary: Search {Entities}
+      description: "Advanced search with filtering and full-text search."
+      operationId: search{Entities}
+      tags: ["{Entity} Management"]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+          schema:
+            $ref: "#/SearchRequest"
+      responses:
+        "200":
+          description: Search results retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../schemas/pagination.yaml#/PaginatedResponse"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          description: "Domain-specific entity schema"
+                      search_metadata:
+                        type: object
+                        properties:
+                          query_time_ms:
+                            type: integer
+                            minimum: 0
+                          total_matches:
+                            type: integer
+                            minimum: 0

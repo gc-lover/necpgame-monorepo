@@ -1,0 +1,240 @@
+openapi: 3.0.3
+info:
+  title: Progression Skills Service API
+  description: API для навыков персонажей
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8087/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+tags:
+  - name: Skills
+    description: Управление навыками персонажей
+paths:
+  /progression/skills/{playerId}:
+    get:
+      tags:
+        - Skills
+      summary: Получить навыки персонажа
+      operationId: getPlayerSkills
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: ../../common-schemas.yaml#/components/parameters/Limit
+        - $ref: ../../common-schemas.yaml#/components/parameters/Offset
+      responses:
+        '200':
+          description: Навыки персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerSkillsResponse'
+        '404':
+          $ref: ../../common-schemas.yaml#/components/responses/NotFound
+        '401':
+          $ref: ../../common-schemas.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: ../../common-schemas.yaml#/components/responses/InternalServerError
+  /progression/skills/experience/add:
+    post:
+      tags:
+        - Skills
+      summary: Добавить опыт навыку
+      operationId: addSkillExperience
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddSkillExperienceRequest'
+      responses:
+        '200':
+          description: Опыт добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillExperienceResponse'
+        '400':
+          $ref: ../../common-schemas.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ../../common-schemas.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: ../../common-schemas.yaml#/components/responses/InternalServerError
+  /progression/skills/unlock:
+    post:
+      tags:
+        - Skills
+      summary: Разблокировать навык
+      operationId: unlockSkill
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockSkillRequest'
+      responses:
+        '200':
+          description: Навык разблокирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillProgress'
+        '400':
+          $ref: ../../common-schemas.yaml#/components/responses/BadRequest
+        '401':
+          $ref: ../../common-schemas.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: ../../common-schemas.yaml#/components/responses/InternalServerError
+  /progression/skills/tree/{playerId}:
+    get:
+      tags:
+        - Skills
+      summary: Получить дерево навыков
+      operationId: getSkillTree
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Дерево навыков
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillTreeResponse'
+        '404':
+          $ref: ../../common-schemas.yaml#/components/responses/NotFound
+        '401':
+          $ref: ../../common-schemas.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: ../../common-schemas.yaml#/components/responses/InternalServerError
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: ../../common-schemas.yaml#/components/securitySchemes/BearerAuth
+  schemas:
+    SkillProgress:
+      type: object
+      properties:
+        skill_id:
+          type: string
+          format: uuid
+        skill_name:
+          type: string
+        unlocked_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_unlocked:
+          type: boolean
+        level:
+          type: integer
+          minimum: 0
+        experience:
+          type: integer
+          minimum: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PlayerSkillsResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillProgress'
+        total:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AddSkillExperienceRequest:
+      type: object
+      required:
+        - playerId
+        - skill_id
+        - experience_amount
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum:
+            - skill_use
+            - quest_reward
+            - achievement
+        experience_amount:
+          type: integer
+          minimum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SkillExperienceResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+        level_up:
+          type: boolean
+        level:
+          type: integer
+        experience:
+          type: integer
+        experience_to_next_level:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UnlockSkillRequest:
+      type: object
+      required:
+        - playerId
+        - skill_id
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SkillTreeResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        tree:
+          type: object
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+security:
+  - BearerAuth: [ ]

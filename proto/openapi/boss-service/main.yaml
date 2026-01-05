@@ -10,25 +10,24 @@ info:
     ## Key Features
 
     - **World Boss Management**: Complete boss lifecycle from spawning to aftermath
-    - **League System**: Bronze to Mythic difficulty progression with scaling
-    - **Elite Champions**: Enhanced boss variants with unique mechanics
-    - **Real-time Coordination**: WebSocket telemetry and raid synchronization
-    - **Reward Systems**: Dynamic loot tables and achievement tracking
-    - **Performance Optimized**: High-throughput boss operations with <50ms P99 latency
+    - **League System**: Bronze to Mythic difficulty progression with scaling - **Elite
+    Champions**: Enhanced boss variants with unique mechanics - **Real-time Coordination**:
+    WebSocket telemetry and raid synchronization - **Reward Systems**: Dynamic loot
+    tables and achievement tracking - **Performance Optimized**: High-throughput boss
+    operations with <50ms P99 latency
 
     ## Domain Purpose
 
-    Manages all boss-related gameplay in Night City, from routine world bosses to epic
-    elite champion encounters. Creates memorable, challenging experiences that drive
-    community engagement and progression systems.
+    Manages all boss-related gameplay in Night City, from routine world bosses to
+    epic elite champion encounters. Creates memorable, challenging experiences that
+    drive community engagement and progression systems.
 
     ## Performance Targets
 
-    - P99 Latency: <50ms for boss operations during events
-    - Memory: <30KB per active boss session
-    - Concurrent users: 50,000+ simultaneous participants
-    - Telemetry throughput: 10,000+ events per second
-    - Event load: 5000+ RPS during active boss encounters
+    - P99 Latency: <50ms for boss operations during events - Memory: <30KB per active
+    boss session - Concurrent users: 50,000+ simultaneous participants - Telemetry
+    throughput: 10,000+ events per second - Event load: 5000+ RPS during active boss
+    encounters
 
     '
   version: 1.0.0
@@ -40,25 +39,25 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necpgame.com/v1/boss
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/boss
-    description: Staging server
-  - url: http://localhost:8080/api/v1/boss
-    description: Local development server
+- url: https://api.necpgame.com/v1/boss
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/boss
+  description: Staging server
+- url: http://localhost:8080/api/v1/boss
+  description: Local development server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: World Bosses
-    description: Core world boss management and lifecycle
-  - name: Elite Champions
-    description: Enhanced boss variants and champion raids
-  - name: Boss Telemetry
-    description: Real-time boss encounter monitoring
-  - name: League System
-    description: Difficulty progression and ranking
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: World Bosses
+  description: Core world boss management and lifecycle
+- name: Elite Champions
+  description: Enhanced boss variants and champion raids
+- name: Boss Telemetry
+  description: Real-time boss encounter monitoring
+- name: League System
+  description: Difficulty progression and ranking
+- name: Health Monitoring
+  description: System health and performance monitoring
 components:
   securitySchemes:
     BearerAuth:
@@ -67,19 +66,15 @@ components:
       bearerFormat: JWT
       description: '**JWT Bearer token authentication**
 
-        Required for all authenticated endpoints. Token must be obtained from
-        auth-service and included in Authorization header.
+        Required for all authenticated endpoints. Token must be obtained from auth-service
+        and included in Authorization header.
 
         **Format:** `Authorization: Bearer <token>`
 
-        **Token Expiry:** 15 minutes for access tokens, 7 days for refresh tokens
-        '
+        **Token Expiry:** 15 minutes for access tokens, 7 days for refresh tokens '
   schemas:
-    # Common schemas
     Error:
-      $ref: '../common/schemas/error.yaml#/Error'
-
-    # Boss-specific schemas
+      $ref: ../common-service/schemas/error.yaml#/Error
     WorldBoss:
       type: object
       description: World boss definition and configuration
@@ -100,7 +95,14 @@ components:
           description: Boss level requirement
         league:
           type: string
-          enum: [bronze, silver, gold, platinum, diamond, master, mythic]
+          enum:
+          - bronze
+          - silver
+          - gold
+          - platinum
+          - diamond
+          - master
+          - mythic
           description: Difficulty league
         health:
           type: integer
@@ -131,7 +133,10 @@ components:
           properties:
             type:
               type: string
-              enum: [timed, event, random]
+              enum:
+              - timed
+              - event
+              - random
             interval:
               type: integer
               description: Spawn interval in minutes
@@ -156,15 +161,14 @@ components:
           format: uuid
           description: Character ID of final blow
       required:
-        - id
-        - name
-        - level
-        - league
-        - health
-        - phases
-        - location
-        - schedule
-
+      - id
+      - name
+      - level
+      - league
+      - health
+      - phases
+      - location
+      - schedule
     BossPhase:
       type: object
       description: Individual boss encounter phase
@@ -193,25 +197,36 @@ components:
             $ref: '#/components/schemas/BossReward'
           description: Phase-specific rewards
       required:
-        - id
-        - name
-        - healthThreshold
-
+      - id
+      - name
+      - healthThreshold
     BossReward:
       type: object
       description: Boss encounter reward
       properties:
         type:
           type: string
-          enum: [currency, item, experience, achievement, title, cosmetic]
+          enum:
+          - currency
+          - item
+          - experience
+          - achievement
+          - title
+          - cosmetic
         value:
           oneOf:
-            - type: integer
-            - type: string
+          - type: integer
+          - type: string
           description: Reward value or identifier
         rarity:
           type: string
-          enum: [common, uncommon, rare, epic, legendary, mythic]
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          - mythic
         dropRate:
           type: number
           format: float
@@ -219,10 +234,9 @@ components:
           maximum: 1
           description: Drop probability
       required:
-        - type
-        - value
-        - rarity
-
+      - type
+      - value
+      - rarity
     EliteChampion:
       type: object
       description: Elite champion boss variant
@@ -268,11 +282,10 @@ components:
             $ref: '#/components/schemas/BossReward'
           description: Elite-exclusive rewards
       required:
-        - id
-        - baseBossId
-        - name
-        - modifiers
-
+      - id
+      - baseBossId
+      - name
+      - modifiers
     BossEncounter:
       type: object
       description: Active boss encounter state
@@ -326,20 +339,24 @@ components:
           description: Current boss health state
         status:
           type: string
-          enum: [spawning, active, defeated, escaped, terminated]
+          enum:
+          - spawning
+          - active
+          - defeated
+          - escaped
+          - terminated
         endTime:
           type: string
           format: date-time
           description: Encounter end timestamp (if completed)
       required:
-        - encounterId
-        - bossId
-        - startTime
-        - participants
-        - currentPhase
-        - bossHealth
-        - status
-
+      - encounterId
+      - bossId
+      - startTime
+      - participants
+      - currentPhase
+      - bossHealth
+      - status
 paths:
   /health:
     get:
@@ -356,18 +373,18 @@ paths:
         '
       operationId: bossHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -382,9 +399,9 @@ paths:
               schema:
                 type: string
                 enum:
-                  - gzip
-                  - deflate
-                  - br
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
@@ -392,15 +409,16 @@ paths:
                 properties:
                   status:
                     type: string
-                    enum: [healthy]
+                    enum:
+                    - healthy
                     example: healthy
                   timestamp:
                     type: string
                     format: date-time
-                    example: "2024-01-15T10:30:00Z"
+                    example: '2024-01-15T10:30:00Z'
                   version:
                     type: string
-                    example: "1.0.0"
+                    example: 1.0.0
                   uptime:
                     type: integer
                     description: Uptime in seconds
@@ -421,55 +439,66 @@ paths:
                         format: float
                         example: 25.0
                 required:
-                  - status
-                  - timestamp
-                  - version
-        "503":
-          $ref: '../common/responses/error.yaml#/InternalServerError'
-
+                - status
+                - timestamp
+                - version
+        '503':
+          $ref: ../common-service/responses/error.yaml#/InternalServerError
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /bosses/active:
     get:
       summary: Get active world bosses
       description: '**Get currently active world bosses**
 
-        Returns list of bosses currently available for encounters, including
-        elite champions and special variants.
+        Returns list of bosses currently available for encounters, including elite
+        champions and special variants.
 
-        **Performance:** <25ms response time, cached for 10 seconds
-        '
+        **Performance:** <25ms response time, cached for 10 seconds '
       operationId: getActiveBosses
       tags:
-        - World Bosses
+      - World Bosses
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Character identifier for availability filtering
-        - name: league
-          in: query
-          schema:
-            type: string
-            enum: [bronze, silver, gold, platinum, diamond, master, mythic]
-          description: Filter by difficulty league
-        - name: include_elite
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Include elite champion variants
-        - name: zone_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by specific zone
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character identifier for availability filtering
+      - name: league
+        in: query
+        schema:
+          type: string
+          enum:
+          - bronze
+          - silver
+          - gold
+          - platinum
+          - diamond
+          - master
+          - mythic
+        description: Filter by difficulty league
+      - name: include_elite
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include elite champion variants
+      - name: zone_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by specific zone
       responses:
-        "200":
+        '200':
           description: Active bosses retrieved successfully
           content:
             application/json:
@@ -483,45 +512,38 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/WorldBoss'
-                      total:
-                        type: integer
-                      filters:
-                        type: object
-                        properties:
-                          league:
-                            type: string
-                          includeElite:
-                            type: boolean
-                          zoneId:
-                            type: string
-        "400":
-          $ref: '../common/responses/error.yaml#/NotFound'
-        "401":
-          $ref: '../common/responses/error.yaml#/NotFound'
-
+        '400':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /bosses/{boss_id}/encounter:
     post:
       summary: Start boss encounter
       description: '**Initiate boss encounter**
 
-        Creates new boss encounter session and registers initial participants.
-        Handles both regular bosses and elite champions.
+        Creates new boss encounter session and registers initial participants. Handles
+        both regular bosses and elite champions.
 
-        **Performance:** <100ms response time for encounter creation
-        '
+        **Performance:** <100ms response time for encounter creation '
       operationId: startBossEncounter
       tags:
-        - World Bosses
+      - World Bosses
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: boss_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Boss identifier
+      - name: boss_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Boss identifier
       requestBody:
         required: true
         content:
@@ -544,9 +566,9 @@ paths:
                   default: false
                   description: Request elite champion variant
               required:
-                - characterId
+              - characterId
       responses:
-        "201":
+        '201':
           description: Boss encounter started successfully
           content:
             application/json:
@@ -558,13 +580,18 @@ paths:
                     example: true
                   data:
                     $ref: '#/components/schemas/BossEncounter'
-        "400":
-          $ref: '../common/responses/error.yaml#/NotFound'
-        "401":
-          $ref: '../common/responses/error.yaml#/NotFound'
-        "409":
-          $ref: '../common/responses/error.yaml#/Conflict'
-
+        '400':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '409':
+          $ref: ../common-service/responses/error.yaml#/Conflict
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /encounters/{encounter_id}:
     get:
       summary: Get boss encounter details
@@ -572,29 +599,28 @@ paths:
 
         Returns current encounter state, participants, and real-time telemetry.
 
-        **Performance:** <10ms response time for cached encounter data
-        '
+        **Performance:** <10ms response time for cached encounter data '
       operationId: getBossEncounter
       tags:
-        - World Bosses
+      - World Bosses
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: encounter_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Encounter identifier
-        - name: include_telemetry
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include detailed telemetry data
+      - name: encounter_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Encounter identifier
+      - name: include_telemetry
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include detailed telemetry data
       responses:
-        "200":
+        '200':
           description: Encounter details retrieved successfully
           content:
             application/json:
@@ -606,32 +632,37 @@ paths:
                     example: true
                   data:
                     allOf:
-                      - $ref: '#/components/schemas/BossEncounter'
-                      - type: object
-                        properties:
-                              telemetry:
-                                type: object
-                                description: Real-time encounter telemetry (if requested)
-                                properties:
-                                  damagePerSecond:
-                                    type: number
-                                    format: float
-                                  healingPerSecond:
-                                    type: number
-                                    format: float
-                                  participantCount:
-                                    type: integer
-                                  phaseProgress:
-                                    type: number
-                                    format: float
-                                    description: Current phase progress (0-1)
-        "404":
+                    - $ref: '#/components/schemas/BossEncounter'
+                    - type: object
+                      properties:
+                        telemetry:
+                          type: object
+                          description: Real-time encounter telemetry (if requested)
+                          properties:
+                            damagePerSecond:
+                              type: number
+                              format: float
+                            healingPerSecond:
+                              type: number
+                              format: float
+                            participantCount:
+                              type: integer
+                            phaseProgress:
+                              type: number
+                              format: float
+                              description: Current phase progress (0-1)
+        '404':
           description: Encounter not found
           content:
             application/json:
               schema:
-                $ref: '../common/responses/error.yaml#/NotFound'
-
+                $ref: ../common-service/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /encounters/{encounter_id}/join:
     post:
       summary: Join active boss encounter
@@ -639,21 +670,20 @@ paths:
 
         Adds character to active encounter as participant.
 
-        **Performance:** <50ms response time for participant registration
-        '
+        **Performance:** <50ms response time for participant registration '
       operationId: joinBossEncounter
       tags:
-        - World Bosses
+      - World Bosses
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: encounter_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Encounter identifier
+      - name: encounter_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Encounter identifier
       requestBody:
         required: true
         content:
@@ -666,9 +696,9 @@ paths:
                   format: uuid
                   description: Character joining encounter
               required:
-                - characterId
+              - characterId
       responses:
-        "200":
+        '200':
           description: Successfully joined encounter
           content:
             application/json:
@@ -690,53 +720,57 @@ paths:
                       joinTime:
                         type: string
                         format: date-time
-        "400":
-          $ref: '../common/responses/error.yaml#/NotFound'
-        "404":
+        '400':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '404':
           description: Encounter not found or not joinable
           content:
             application/json:
               schema:
-                $ref: '../common/responses/error.yaml#/NotFound'
-        "409":
+                $ref: ../common-service/responses/error.yaml#/NotFound
+        '409':
           description: Character already participating or encounter full
           content:
             application/json:
               schema:
-                $ref: '../common/responses/error.yaml#/NotFound'
-
+                $ref: ../common-service/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /encounters/{encounter_id}/rewards:
     get:
       summary: Get encounter rewards
       description: '**Get available rewards for completed encounter**
 
-        Returns loot table and achievements available based on participation
-        and performance in the boss encounter.
+        Returns loot table and achievements available based on participation and performance
+        in the boss encounter.
 
-        **Performance:** <25ms response time, cached for 5 minutes
-        '
+        **Performance:** <25ms response time, cached for 5 minutes '
       operationId: getEncounterRewards
       tags:
-        - World Bosses
+      - World Bosses
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: encounter_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Encounter identifier
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Character identifier for personalization
+      - name: encounter_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Encounter identifier
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character identifier for personalization
       responses:
-        "200":
+        '200':
           description: Encounter rewards retrieved successfully
           content:
             application/json:
@@ -754,35 +788,40 @@ paths:
                         items:
                           $ref: '#/components/schemas/BossReward'
                       claimedRewards:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                reward:
-                                  $ref: '#/components/schemas/BossReward'
-                                claimedAt:
-                                  type: string
-                                  format: date-time
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            reward:
+                              $ref: '#/components/schemas/BossReward'
+                            claimedAt:
+                              type: string
+                              format: date-time
                       participation:
-                            type: object
-                            properties:
-                              damageDealt:
-                                type: integer
-                              healingDone:
-                                type: integer
-                              timeParticipated:
-                                type: integer
-                                description: Time in seconds
-                              rank:
-                                type: integer
-                                description: Participation ranking
-        "404":
+                        type: object
+                        properties:
+                          damageDealt:
+                            type: integer
+                          healingDone:
+                            type: integer
+                          timeParticipated:
+                            type: integer
+                            description: Time in seconds
+                          rank:
+                            type: integer
+                            description: Participation ranking
+        '404':
           description: Encounter or character not found
           content:
             application/json:
               schema:
-                $ref: '../common/responses/error.yaml#/NotFound'
-
+                $ref: ../common-service/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /champions/elite/active:
     get:
       summary: Get active elite champions
@@ -790,29 +829,32 @@ paths:
 
         Returns list of elite boss variants currently available for epic encounters.
 
-        **Performance:** <30ms response time, cached for 15 seconds
-        '
+        **Performance:** <30ms response time, cached for 15 seconds '
       operationId: getActiveEliteChampions
       tags:
-        - Elite Champions
+      - Elite Champions
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Character identifier for availability check
-        - name: difficulty
-          in: query
-          schema:
-            type: string
-            enum: [normal, hard, nightmare, apocalyptic]
-          description: Filter by elite difficulty
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character identifier for availability check
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum:
+          - normal
+          - hard
+          - nightmare
+          - apocalyptic
+        description: Filter by elite difficulty
       responses:
-        "200":
+        '200':
           description: Active elite champions retrieved successfully
           content:
             application/json:
@@ -826,43 +868,47 @@ paths:
                     type: array
                     items:
                       allOf:
-                        - $ref: '#/components/schemas/WorldBoss'
-                        - type: object
-                          properties:
-                            eliteModifiers:
-                              $ref: '#/components/schemas/EliteChampion'
+                      - $ref: '#/components/schemas/WorldBoss'
+                      - type: object
+                        properties:
+                          eliteModifiers:
+                            $ref: '#/components/schemas/EliteChampion'
                   total:
                     type: integer
-        "400":
-          $ref: '../common/responses/error.yaml#/NotFound'
-        "401":
-          $ref: '../common/responses/error.yaml#/NotFound'
-
+        '400':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
   /telemetry/encounters/{encounter_id}/stream:
     get:
       summary: Stream boss encounter telemetry
       description: '**Real-time boss encounter telemetry stream**
 
-        WebSocket endpoint for real-time encounter updates, participant stats,
-        and boss health monitoring.
+        WebSocket endpoint for real-time encounter updates, participant stats, and
+        boss health monitoring.
 
-        **Performance:** Real-time streaming with <5ms latency
-        '
+        **Performance:** Real-time streaming with <5ms latency '
       operationId: streamEncounterTelemetry
       tags:
-        - Boss Telemetry
+      - Boss Telemetry
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: encounter_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Encounter identifier
+      - name: encounter_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Encounter identifier
       responses:
-        "101":
+        '101':
           description: WebSocket connection established
           headers:
             Upgrade:
@@ -876,13 +922,19 @@ paths:
             Sec-WebSocket-Accept:
               schema:
                 type: string
-        "400":
-          $ref: '../common/responses/error.yaml#/NotFound'
-        "401":
-          $ref: '../common/responses/error.yaml#/NotFound'
-        "404":
+        '400':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '401':
+          $ref: ../common-service/responses/error.yaml#/NotFound
+        '404':
           description: Encounter not found
           content:
             application/json:
               schema:
-                $ref: '../common/responses/error.yaml#/NotFound'
+                $ref: ../common-service/responses/error.yaml#/NotFound
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error

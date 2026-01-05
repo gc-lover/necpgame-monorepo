@@ -27,3 +27,12 @@ foreach ($service in $services) {
 }
 
 Write-Host "Standardization complete!"
+
+
+
+
+
+
+
+
+
