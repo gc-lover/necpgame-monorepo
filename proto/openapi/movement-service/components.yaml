@@ -1,129 +1,4 @@
-openapi: 3.0.3
-info:
-  title: Movement Service API
-  description: API для управления позициями и движением персонажей
-  version: 1.0.0
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
-  contact:
-    name: NECPGAME API Support
-    email: api@necp.game
-servers:
-- url: http://localhost:8086/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
-tags:
-- name: Movement
-  description: Управление позициями и движением
-paths:
-  /movement/{characterId}/position:
-    get:
-      tags:
-      - Movement
-      summary: Получить текущую позицию персонажа
-      operationId: getPosition
-      parameters:
-      - name: characterId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: Позиция персонажа
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CharacterPosition'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
-    post:
-      tags:
-      - Movement
-      summary: Сохранить позицию персонажа
-      operationId: savePosition
-      parameters:
-      - name: characterId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SavePositionRequest'
-      responses:
-        '200':
-          description: Позиция сохранена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CharacterPosition'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
-  /movement/{characterId}/history:
-    get:
-      tags:
-      - Movement
-      summary: Получить историю позиций персонажа
-      operationId: getPositionHistory
-      parameters:
-      - name: characterId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 50
-      responses:
-        '200':
-          description: История позиций
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PositionHistory'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-        default:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: null
+components:
   schemas:
     CharacterPosition:
       type: object
@@ -179,9 +54,9 @@ paths:
     SavePositionRequest:
       type: object
       required:
-      - position_x
-      - position_y
-      - position_z
+        - position_x
+        - position_y
+        - position_z
       properties:
         position_x:
           type: number
@@ -261,8 +136,8 @@ paths:
     Error:
       type: object
       required:
-      - code
-      - message
+        - code
+        - message
       properties:
         code:
           type: integer
@@ -272,42 +147,40 @@ paths:
           maximum: 599
         message:
           type: string
-          example: Internal server error
+          example: "Internal server error"
           maxLength: 1000
         details:
           type: object
-          description: Additional error details
-      description: Standard error response format
+          description: "Additional error details"
+      description: "Standard error response format"
   responses:
     BadRequest:
       description: Invalid request parameters
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     Unauthorized:
       description: Authentication required
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     InternalServerError:
       description: Internal server error
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
       description: JWT Bearer token authentication
-components:
-  schemas: {}

@@ -1,0 +1,60 @@
+openapi: 3.0.3
+info:
+  title: Adaptive System Service API - Minimal Test
+  description: Minimal version for debugging adaptive system service generation
+  version: 1.0.0
+servers:
+  - url: https://api.necpgame.com/v1/adaptive-system
+    description: Production server
+security:
+  - BearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Adaptive system service health check
+      operationId: adaptiveSystemServiceHealthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          example: 500
+        message:
+          type: string
+          example: Internal server error
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
