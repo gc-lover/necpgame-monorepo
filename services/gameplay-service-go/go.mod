@@ -9,6 +9,7 @@ require (
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/ogen-go/ogen v1.18.0
 	github.com/redis/go-redis/v9 v9.5.1
+	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/metric v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0

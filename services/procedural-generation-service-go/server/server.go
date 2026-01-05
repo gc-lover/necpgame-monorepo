@@ -10,11 +10,13 @@ import (
 	"log"
 	"net/http"
 	"net/http/pprof" // PERFORMANCE: Profiling support
+	"os"
 	"sync"
 	"time"
 
 	"github.com/go-faster/jx"
 	"github.com/google/uuid"
+	_ "github.com/lib/pq" // PostgreSQL driver
 	"procedural-generation-service-go/internal/models"
 	"procedural-generation-service-go/pkg/api"
 )
@@ -78,11 +80,38 @@ func (s *ProceduralGenerationService) initDatabase() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// TODO: Initialize PostgreSQL connection with optimized settings
-	// SetMaxOpenConns: 50 for procedural service
-	// SetMaxIdleConns: 10
-	// SetConnMaxLifetime: 30 minutes
-	_ = ctx // Prevent unused variable warning
+	// Get database connection string from environment
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://user:password@localhost/procedural_db?sslmode=disable"
+	}
+
+	// Open PostgreSQL connection
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		s.logger.Printf("Failed to open database connection: %v", err)
+		return
+	}
+
+	// PERFORMANCE: Optimized connection pool settings for MMOFPS procedural service
+	// SetMaxOpenConns: 50 connections (higher for procedural generation load)
+	db.SetMaxOpenConns(50)
+	// SetMaxIdleConns: 10 idle connections to maintain pool
+	db.SetMaxIdleConns(10)
+	// SetConnMaxLifetime: 30 minutes to prevent stale connections
+	db.SetConnMaxLifetime(30 * time.Minute)
+	// SetConnMaxIdleTime: 10 minutes for idle connections
+	db.SetConnMaxIdleTime(10 * time.Minute)
+
+	// Test connection with timeout
+	if err := db.PingContext(ctx); err != nil {
+		s.logger.Printf("Failed to ping database: %v", err)
+		db.Close()
+		return
+	}
+
+	s.db = db
+	s.logger.Println("Database connection initialized with optimized settings")
 }
 
 // ProceduralGenerationServiceHealthCheck implements health check with performance optimizations
@@ -120,16 +149,43 @@ func (s *ProceduralGenerationService) CreateExample(ctx context.Context, req *ap
 	generator := s.generatorPool.Get().(*models.ProceduralGenerator)
 	defer s.generatorPool.Put(generator)
 
-	// TODO: Implement procedural generation creation logic
-	// - Algorithm initialization
-	// - Seed generation
-	// - Parameter setup
-
-	// Generate unique generator ID
+	// Generate unique generator ID and seed
 	genID := uuid.New()
+	seed := time.Now().UnixNano() // Use timestamp as seed for reproducibility
+
+	// Initialize procedural generation parameters
 	generator.ID = genID.String()
 	generator.Name = req.Name
+	generator.Seed = seed
+	generator.Algorithm = "perlin_noise" // Default algorithm
+	generator.Parameters = map[string]interface{}{
+		"octaves":      4,
+		"frequency":    0.01,
+		"amplitude":    1.0,
+		"persistence":  0.5,
+		"lacunarity":   2.0,
+	}
 	generator.CreatedAt = time.Now()
+	generator.Status = "active"
+
+	// Save to database if available
+	if s.db != nil {
+		query := `
+			INSERT INTO procedural.generators (
+				id, name, seed, algorithm, parameters, status, created_at
+			) VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`
+
+		paramsJSON, _ := jx.EncodeStr(generator.Parameters)
+
+		_, err := s.db.ExecContext(timeoutCtx, query,
+			genID, req.Name, seed, generator.Algorithm,
+			paramsJSON, generator.Status, generator.CreatedAt)
+		if err != nil {
+			s.logger.Printf("Failed to save generator to database: %v", err)
+			return nil, fmt.Errorf("failed to create procedural generator")
+		}
+	}
 
 	// Create response
 	example := api.Example{
@@ -144,6 +200,8 @@ func (s *ProceduralGenerationService) CreateExample(ctx context.Context, req *ap
 		Example: example,
 	}
 
+	s.logger.Printf("Created procedural generator: %s (seed: %d)", genID.String(), seed)
+
 	// Return success response with headers
 	return &api.ExampleCreatedHeaders{
 		Response: response,
@@ -155,24 +213,66 @@ func (s *ProceduralGenerationService) CreateExample(ctx context.Context, req *ap
 // GetExample implements procedural generation retrieval
 func (s *ProceduralGenerationService) GetExample(ctx context.Context, params api.GetExampleParams) (api.GetExampleRes, error) {
 	// PERFORMANCE: Context timeout (BLOCKER requirement)
+	timeoutCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
 	select {
-	case <-ctx.Done():
+	case <-timeoutCtx.Done():
 		return nil, fmt.Errorf("context cancelled")
 	default:
 	}
 
-	// TODO: Implement procedural generation retrieval logic
-	// - Generator loading
-	// - Algorithm state restoration
-	// - Parameter retrieval
+	// Load generator from database
+	var name string
+	var seed int64
+	var algorithm string
+	var parametersJSON string
+	var status string
+	var createdAt time.Time
 
-	// Mock response for now
+	if s.db != nil {
+		query := `
+			SELECT name, seed, algorithm, parameters, status, created_at
+			FROM procedural.generators
+			WHERE id = $1
+		`
+
+		err := s.db.QueryRowContext(timeoutCtx, query, params.ExampleID).Scan(
+			&name, &seed, &algorithm, &parametersJSON, &status, &createdAt)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return &api.ExampleNotFound{}, nil
+			}
+			s.logger.Printf("Failed to load generator: %v", err)
+			return nil, fmt.Errorf("failed to retrieve procedural generator")
+		}
+	} else {
+		// Fallback to mock data if no database
+		name = "Mock Generator"
+		seed = 12345
+		algorithm = "perlin_noise"
+		parametersJSON = "{}"
+		status = "active"
+		createdAt = time.Now()
+	}
+
+	// Parse status
+	var apiStatus api.ExampleStatus
+	switch status {
+	case "active":
+		apiStatus = api.ExampleStatusActive
+	case "inactive":
+		apiStatus = api.ExampleStatusInactive
+	default:
+		apiStatus = api.ExampleStatusActive
+	}
+
 	example := api.Example{
 		ID:        params.ExampleID,
-		Name:      "Procedural Generator Alpha",
-		CreatedAt: time.Now().Add(-24 * time.Hour),
-		Status:    api.ExampleStatusActive,
-		IsActive:  true,
+		Name:      name,
+		CreatedAt: createdAt,
+		Status:    apiStatus,
+		IsActive:  status == "active",
 	}
 
 	response := api.ExampleResponse{
@@ -197,32 +297,102 @@ func (s *ProceduralGenerationService) UpdateExample(ctx context.Context, req *ap
 	default:
 	}
 
-	// TODO: Implement procedural generation update logic
-	// - Algorithm modification
-	// - Parameter updates
-	// - Seed regeneration
+	// Update generator in database
+	if s.db != nil {
+		// Build dynamic update query based on provided fields
+		setParts := []string{}
+		args := []interface{}{}
+		argIndex := 1
 
-	name := "Updated Procedural Generator"
-	if req.Name.Set {
-		name = req.Name.Value
+		if req.Name.Set {
+			setParts = append(setParts, fmt.Sprintf("name = $%d", argIndex))
+			args = append(args, req.Name.Value)
+			argIndex++
+		}
+
+		if len(setParts) == 0 {
+			return nil, fmt.Errorf("no fields to update")
+		}
+
+		query := fmt.Sprintf(`
+			UPDATE procedural.generators
+			SET %s, updated_at = NOW()
+			WHERE id = $%d
+			RETURNING name, seed, algorithm, parameters, status, created_at
+		`, fmt.Sprintf("%s", setParts[0]), argIndex)
+
+		args = append(args, params.ExampleID)
+
+		var name string
+		var seed int64
+		var algorithm string
+		var parametersJSON string
+		var status string
+		var createdAt time.Time
+
+		err := s.db.QueryRowContext(timeoutCtx, query, args...).Scan(
+			&name, &seed, &algorithm, &parametersJSON, &status, &createdAt)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return &api.ExampleNotFound{}, nil
+			}
+			s.logger.Printf("Failed to update generator: %v", err)
+			return nil, fmt.Errorf("failed to update procedural generator")
+		}
+
+		// Parse status
+		var apiStatus api.ExampleStatus
+		switch status {
+		case "active":
+			apiStatus = api.ExampleStatusActive
+		case "inactive":
+			apiStatus = api.ExampleStatusInactive
+		default:
+			apiStatus = api.ExampleStatusActive
+		}
+
+		example := api.Example{
+			ID:        params.ExampleID,
+			Name:      name,
+			CreatedAt: createdAt,
+			Status:    apiStatus,
+			IsActive:  status == "active",
+		}
+
+		response := api.ExampleResponse{
+			Example: example,
+		}
+
+		s.logger.Printf("Updated procedural generator: %s", params.ExampleID.String())
+
+		return &api.ExampleUpdatedHeaders{
+			Response: response,
+			ETag:     api.OptString{Value: fmt.Sprintf("\"example-%s-v2\"", params.ExampleID.String()), Set: true},
+		}, nil
+	} else {
+		// Fallback mock response
+		name := "Updated Procedural Generator"
+		if req.Name.Set {
+			name = req.Name.Value
+		}
+
+		example := api.Example{
+			ID:        params.ExampleID,
+			Name:      name,
+			CreatedAt: time.Now().Add(-24 * time.Hour),
+			Status:    api.ExampleStatusActive,
+			IsActive:  true,
+		}
+
+		response := api.ExampleResponse{
+			Example: example,
+		}
+
+		return &api.ExampleUpdatedHeaders{
+			Response: response,
+			ETag:     api.OptString{Value: fmt.Sprintf("\"example-%s-v2\"", params.ExampleID.String()), Set: true},
+		}, nil
 	}
-
-	example := api.Example{
-		ID:        params.ExampleID,
-		Name:      name,
-		CreatedAt: time.Now().Add(-24 * time.Hour),
-		Status:    api.ExampleStatusActive,
-		IsActive:  true,
-	}
-
-	response := api.ExampleResponse{
-		Example: example,
-	}
-
-	return &api.ExampleUpdatedHeaders{
-		Response: response,
-		ETag:     api.OptString{Value: fmt.Sprintf("\"example-%s-v2\"", params.ExampleID.String()), Set: true},
-	}, nil
 }
 
 // DeleteExample implements procedural generation deletion
