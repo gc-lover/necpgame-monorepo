@@ -1,0 +1,907 @@
+openapi: 3.0.3
+info:
+  title: NECP Game - Gameplay Service Master Modes API
+  description: |
+    Enterprise-grade API для системы мастер-режимов и Challenge modes.
+    Предоставляет фиксированные уровни повышенной сложности с уникальными
+    ограничениями и наградами для опытных игроков.
+
+    ## Архитектурные принципы
+
+    - **MMOFPS-оптимизации**: struct alignment, connection pooling, context timeouts
+    - **High-performance**: async processing, memory pooling, lazy loading
+    - **Scalable**: поддержка 1000+ concurrent игроков в мастер-режимах
+    - **Secure**: server-side validation, anti-cheat protection
+
+    ## Режимы сложности
+
+    ### Master Mode
+    - HP Modifier: +100% (враги имеют в 2 раза больше здоровья)
+    - Damage Modifier: +50% (враги наносят на 50% больше урона)
+    - Time Limit: стандартное время
+    - Respawn Limit: 3 респавна
+    - Checkpoint Limit: 2 чекпоинта
+
+    ### Grandmaster Mode
+    - HP Modifier: +200% (враги имеют в 3 раза больше здоровья)
+    - Damage Modifier: +100% (враги наносят в 2 раза больше урона)
+    - Time Limit: -25% времени
+    - Respawn Limit: 1 респавн
+    - Checkpoint Limit: 1 чекпоинт
+
+    ### Legendary Mode
+    - HP Modifier: +300% (враги имеют в 4 раза больше здоровья)
+    - Damage Modifier: +150% (враги наносят на 150% больше урона)
+    - Time Limit: -50% времени
+    - Respawn Limit: 0 респавнов (permadeath)
+    - Checkpoint Limit: 0 чекпоинтов
+  version: 1.0.0
+  contact:
+    name: NECP Game Team
+    email: api@necp.game
+  license:
+    name: Proprietary
+    url: https://necp.game/license
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: https://staging-api.necp.game/v1
+    description: Staging server
+  - url: http://localhost:8083/v1
+    description: Local development
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Difficulty Modes Management
+  /gameplay/difficulty-modes:
+    get:
+      summary: Получить список всех режимов сложности
+      description: Возвращает все доступные режимы сложности с их параметрами
+      operationId: getDifficultyModes
+      tags:
+        - Difficulty Modes
+      responses:
+        '200':
+          description: Список режимов сложности
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  modes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DifficultyMode'
+                  total:
+                    type: integer
+                    minimum: 0
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/difficulty-modes/{modeId}:
+    get:
+      summary: Получить детали режима сложности
+      description: Возвращает подробную информацию о конкретном режиме сложности
+      operationId: getDifficultyMode
+      tags:
+        - Difficulty Modes
+      parameters:
+        - name: modeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали режима сложности
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyMode'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/difficulty-modes/{modeId}/requirements:
+    get:
+      summary: Получить требования для доступа к режиму
+      description: Возвращает требования для разблокировки режима сложности
+      operationId: getDifficultyModeRequirements
+      tags:
+        - Difficulty Modes
+      parameters:
+        - name: modeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Требования режима
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyRequirements'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Content Difficulty Modes
+  /gameplay/content/{contentId}/difficulty-modes:
+    get:
+      summary: Получить доступные режимы для контента
+      description: Возвращает режимы сложности доступные для конкретного контента
+      operationId: getContentDifficultyModes
+      tags:
+        - Content Difficulty
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Доступные режимы для контента
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contentId:
+                    type: string
+                    format: uuid
+                  availableModes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentDifficultyMode'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Instance Difficulty Management
+  /gameplay/instances/{instanceId}/difficulty:
+    post:
+      summary: Выбрать режим сложности для инстанса
+      description: Применяет выбранный режим сложности к игровому инстансу
+      operationId: selectInstanceDifficulty
+      tags:
+        - Instance Difficulty
+      parameters:
+        - name: instanceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - modeId
+              properties:
+                modeId:
+                  type: string
+                  format: uuid
+                  description: ID режима сложности
+      responses:
+        '200':
+          description: Режим успешно применен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultySession'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          description: Требования режима не выполнены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      summary: Получить текущий режим сложности инстанса
+      description: Возвращает информацию о режиме сложности активного инстанса
+      operationId: getInstanceDifficulty
+      tags:
+        - Instance Difficulty
+      parameters:
+        - name: instanceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Текущий режим инстанса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultySession'
+        '404':
+          description: Инстанс не найден или режим не выбран
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Statistics and Analytics
+  /gameplay/difficulty-modes/stats:
+    get:
+      summary: Получить статистику режимов сложности
+      description: Возвращает агрегированную статистику по всем режимам сложности
+      operationId: getDifficultyModesStats
+      tags:
+        - Analytics
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+            default: week
+      responses:
+        '200':
+          description: Статистика режимов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyStats'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/difficulty-modes/{modeId}/stats:
+    get:
+      summary: Получить статистику конкретного режима
+      description: Возвращает детальную статистику по выбранному режиму сложности
+      operationId: getDifficultyModeStats
+      tags:
+        - Analytics
+      parameters:
+        - name: modeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+            default: week
+      responses:
+        '200':
+          description: Статистика режима
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyModeStats'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Admin endpoints
+  /admin/gameplay/difficulty-modes:
+    post:
+      summary: Создать новый режим сложности
+      description: Создает новый режим сложности (только для администраторов)
+      operationId: createDifficultyMode
+      tags:
+        - Admin Difficulty Modes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDifficultyModeRequest'
+      responses:
+        '201':
+          description: Режим создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyMode'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Обновить режим сложности
+      description: Обновляет параметры режима сложности (только для администраторов)
+      operationId: updateDifficultyMode
+      tags:
+        - Admin Difficulty Modes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDifficultyModeRequest'
+      responses:
+        '200':
+          description: Режим обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyMode'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Core entities
+    DifficultyMode:
+      type: object
+      description: Режим сложности с параметрами модификаторов
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор режима
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Название режима (Master, Grandmaster, Legendary)
+        level:
+          type: string
+          enum: [master, grandmaster, legendary]
+          description: Уровень сложности
+        description:
+          type: string
+          maxLength: 500
+          description: Описание режима
+        hpModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 10.0
+          description: Модификатор здоровья врагов (1.0 = 100% HP)
+        damageModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 10.0
+          description: Модификатор урона врагов (1.0 = 100% damage)
+        timeLimitMultiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          description: Модификатор лимита времени (1.0 = стандартное время)
+        respawnLimit:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Максимальное количество респавнов
+        checkpointLimit:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Максимальное количество чекпоинтов
+        rewardModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+          description: Модификатор наград (1.0 = стандартные награды)
+        permadeath:
+          type: boolean
+          description: Включает перманентную смерть (true для Legendary)
+        specialMechanics:
+          type: array
+          items:
+            type: string
+            enum:
+              - time_dilation
+              - enhanced_ai
+              - environmental_hazards
+              - resource_scarcity
+              - adaptive_difficulty
+          description: Специальные механики режима
+        createdAt:
+          type: string
+          format: date-time
+          description: Время создания режима
+        updatedAt:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+      required:
+        - id
+        - name
+        - level
+        - hpModifier
+        - damageModifier
+        - timeLimitMultiplier
+        - respawnLimit
+        - checkpointLimit
+        - rewardModifier
+        - permadeath
+
+    ContentDifficultyMode:
+      type: object
+      description: Доступность режима сложности для конкретного контента
+      properties:
+        contentId:
+          type: string
+          format: uuid
+          description: ID контента
+        modeId:
+          type: string
+          format: uuid
+          description: ID режима сложности
+        requirements:
+          $ref: '#/components/schemas/DifficultyRequirements'
+        isEnabled:
+          type: boolean
+          description: Доступен ли режим для этого контента
+        unlockDate:
+          type: string
+          format: date-time
+          description: Дата разблокировки режима (nullable)
+      required:
+        - contentId
+        - modeId
+        - requirements
+        - isEnabled
+
+    DifficultyRequirements:
+      type: object
+      description: Требования для доступа к режиму сложности
+      properties:
+        minLevel:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Минимальный уровень игрока
+        minSkillRating:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          description: Минимальный skill rating
+        completedMissions:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Список миссий которые нужно завершить
+        reputationLevel:
+          type: string
+          enum: [rookie, skilled, veteran, elite, legend]
+          description: Минимальный уровень репутации
+        prerequisiteModes:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Режимы которые нужно завершить
+      required:
+        - minLevel
+        - minSkillRating
+
+    DifficultySession:
+      type: object
+      description: Активная сессия с режимом сложности
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID сессии
+        instanceId:
+          type: string
+          format: uuid
+          description: ID игрового инстанса
+        modeId:
+          type: string
+          format: uuid
+          description: ID режима сложности
+        playerId:
+          type: string
+          format: uuid
+          description: ID игрока
+        timeRemaining:
+          type: integer
+          minimum: 0
+          description: Оставшееся время в секундах
+        respawnsRemaining:
+          type: integer
+          minimum: 0
+          description: Оставшиеся респавны
+        checkpointsUsed:
+          type: integer
+          minimum: 0
+          description: Использованные чекпоинты
+        status:
+          type: string
+          enum: [active, completed, failed, paused]
+          description: Статус сессии
+        startedAt:
+          type: string
+          format: date-time
+          description: Время начала сессии
+        completedAt:
+          type: string
+          format: date-time
+          description: Время завершения (nullable)
+        score:
+          type: integer
+          minimum: 0
+          description: Финальный счет сессии
+        restrictions:
+          type: object
+          properties:
+            timeLimit:
+              type: integer
+              minimum: 0
+              description: Ограничение времени в секундах
+            respawnLimit:
+              type: integer
+              minimum: 0
+              description: Лимит респавнов
+            checkpointLimit:
+              type: integer
+              minimum: 0
+              description: Лимит чекпоинтов
+      required:
+        - id
+        - instanceId
+        - modeId
+        - playerId
+        - status
+        - startedAt
+
+    DifficultyStats:
+      type: object
+      description: Агрегированная статистика по режимам сложности
+      properties:
+        totalSessions:
+          type: integer
+          minimum: 0
+          description: Общее количество сессий
+        completionRate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Процент завершенных сессий
+        averageScore:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Средний счет
+        popularModes:
+          type: array
+          items:
+            type: object
+            properties:
+              modeId:
+                type: string
+                format: uuid
+              modeName:
+                type: string
+              sessionCount:
+                type: integer
+                minimum: 0
+        modeStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/DifficultyModeStats'
+      required:
+        - totalSessions
+        - completionRate
+        - averageScore
+
+    DifficultyModeStats:
+      type: object
+      description: Статистика по конкретному режиму сложности
+      properties:
+        modeId:
+          type: string
+          format: uuid
+          description: ID режима
+        modeName:
+          type: string
+          description: Название режима
+        totalSessions:
+          type: integer
+          minimum: 0
+          description: Количество сессий в режиме
+        completedSessions:
+          type: integer
+          minimum: 0
+          description: Завершенные сессии
+        failedSessions:
+          type: integer
+          minimum: 0
+          description: Проваленные сессии
+        completionRate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Процент завершения
+        averageCompletionTime:
+          type: integer
+          minimum: 0
+          description: Среднее время завершения в секундах
+        bestScore:
+          type: integer
+          minimum: 0
+          description: Лучший счет
+        averageScore:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Средний счет
+        topPlayers:
+          type: array
+          maxItems: 10
+          items:
+            type: object
+            properties:
+              playerId:
+                type: string
+                format: uuid
+              playerName:
+                type: string
+              score:
+                type: integer
+                minimum: 0
+              completionTime:
+                type: integer
+                minimum: 0
+      required:
+        - modeId
+        - modeName
+        - totalSessions
+        - completedSessions
+        - failedSessions
+        - completionRate
+
+    # Request/Response models
+    CreateDifficultyModeRequest:
+      type: object
+      description: Запрос на создание режима сложности
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        level:
+          type: string
+          enum: [master, grandmaster, legendary]
+        description:
+          type: string
+          maxLength: 500
+        hpModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 10.0
+        damageModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 10.0
+        timeLimitMultiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+        respawnLimit:
+          type: integer
+          minimum: 0
+          maximum: 10
+        checkpointLimit:
+          type: integer
+          minimum: 0
+          maximum: 10
+        rewardModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+        permadeath:
+          type: boolean
+        specialMechanics:
+          type: array
+          items:
+            type: string
+            enum:
+              - time_dilation
+              - enhanced_ai
+              - environmental_hazards
+              - resource_scarcity
+              - adaptive_difficulty
+      required:
+        - name
+        - level
+        - hpModifier
+        - damageModifier
+        - timeLimitMultiplier
+        - respawnLimit
+        - checkpointLimit
+        - rewardModifier
+        - permadeath
+
+    UpdateDifficultyModeRequest:
+      type: object
+      description: Запрос на обновление режима сложности
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        hpModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 10.0
+        damageModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 10.0
+        timeLimitMultiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+        respawnLimit:
+          type: integer
+          minimum: 0
+          maximum: 10
+        checkpointLimit:
+          type: integer
+          minimum: 0
+          maximum: 10
+        rewardModifier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+        permadeath:
+          type: boolean
+        specialMechanics:
+          type: array
+          items:
+            type: string
+            enum:
+              - time_dilation
+              - enhanced_ai
+              - environmental_hazards
+              - resource_scarcity
+              - adaptive_difficulty
+      required:
+        - id
+
+    Error:
+      type: object
+      description: Стандартная ошибка API
+      properties:
+        code:
+          type: string
+          description: Код ошибки
+        message:
+          type: string
+          description: Человеко-читаемое сообщение об ошибке
+        details:
+          type: object
+          description: Дополнительные детали ошибки
+        timestamp:
+          type: string
+          format: date-time
+          description: Время возникновения ошибки
+        requestId:
+          type: string
+          description: ID запроса для трассировки
+      required:
+        - code
+        - message
+        - timestamp
+
+  responses:
+    BadRequestError:
+      description: Неверные параметры запроса
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: "VALIDATION_ERROR"
+            message: "Invalid request parameters"
+            details:
+              field: "modeId"
+              issue: "Must be a valid UUID"
+            timestamp: "2025-12-28T10:30:00Z"
+            requestId: "req-12345"
+
+    ForbiddenError:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: "FORBIDDEN"
+            message: "Insufficient permissions"
+            details:
+              requiredRole: "admin"
+            timestamp: "2025-12-28T10:30:00Z"
+            requestId: "req-12345"
+
+    NotFoundError:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: "NOT_FOUND"
+            message: "Difficulty mode not found"
+            details:
+              modeId: "550e8400-e29b-41d4-a716-446655440000"
+            timestamp: "2025-12-28T10:30:00Z"
+            requestId: "req-12345"
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: "INTERNAL_ERROR"
+            message: "Unexpected server error"
+            details:
+              errorId: "srv-err-789"
+            timestamp: "2025-12-28T10:30:00Z"
+            requestId: "req-12345"

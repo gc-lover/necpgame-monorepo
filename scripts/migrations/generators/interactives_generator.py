@@ -50,6 +50,23 @@ class InteractivesMigrationGenerator(BaseContentMigrationGenerator):
         metadata = spec.get('metadata', {})
         content = spec.get('content', {})
 
+        # Category mapping from YAML to DB allowed values
+        category_mapping = {
+            'information_access': 'terminal',
+            'data_storage': 'device',
+            'data_gateway': 'device',
+            'power_control': 'device',
+            'underground_trade': 'container',
+            'faction_control': 'device',
+            'container': 'container',
+            'door': 'door',
+            'terminal': 'terminal',
+            'vehicle': 'vehicle',
+            'device': 'device',
+            'furniture': 'furniture',
+            'decoration': 'decoration'
+        }
+
         # Handle different content structures
         if 'interactives' in content:
             # New structure: content.interactives
@@ -57,12 +74,15 @@ class InteractivesMigrationGenerator(BaseContentMigrationGenerator):
             if interactives_list:
                 # For now, process first interactive - can be extended for multiple
                 interactive_data = interactives_list[0] if isinstance(interactives_list, list) else interactives_list
+                yaml_category = interactive_data.get('category', 'container')
+                db_category = category_mapping.get(yaml_category, 'container')  # Default to container if unknown
+
                 return {
                     'id': str(uuid.uuid4()),
                     'interactive_id': f"{yaml_file.stem}-{interactive_data.get('name', 'unknown')}",
                     'name': interactive_data.get('display_name', interactive_data.get('name', yaml_file.stem)),
                     'description': interactive_data.get('description', ''),
-                    'category': interactive_data.get('category', 'container'),
+                    'category': db_category,
                     'location': None,  # Will be set from mechanics if available
                     'interactable': True,
                     'reusable': True,
@@ -75,30 +95,15 @@ class InteractivesMigrationGenerator(BaseContentMigrationGenerator):
 
         # Fallback for old structure or no data found
         interactive_def = spec.get('interactive_definition', {})
-        return {
-            'id': str(uuid.uuid4()),
-            'interactive_id': metadata.get('id', f"interactive-{yaml_file.stem}"),
-            'name': metadata.get('name', yaml_file.stem.replace('_', ' ').title()),
-            'description': spec.get('description', ''),
-            'category': interactive_def.get('category', 'container'),
-            'location': interactive_def.get('location'),
-            'interactable': interactive_def.get('interactable', True),
-            'reusable': interactive_def.get('reusable', True),
-            'requires_key': interactive_def.get('requires_key', False),
-            'interaction_type': interactive_def.get('interaction_type', 'examine'),
-            'properties': json.dumps(interactive_def.get('properties', {}), default=JsonSerializer.json_serializer, ensure_ascii=False),
-            'requirements': json.dumps(interactive_def.get('requirements', {}), default=JsonSerializer.json_serializer, ensure_ascii=False),
-            'rewards': json.dumps(interactive_def.get('rewards', {}), default=JsonSerializer.json_serializer, ensure_ascii=False)
-        }
+        yaml_category = interactive_def.get('category', 'container')
+        db_category = category_mapping.get(yaml_category, 'container')  # Default to container if unknown
 
-        # Fallback for old structure
-        interactive_def = spec.get('interactive_definition', {})
         return {
             'id': str(uuid.uuid4()),
             'interactive_id': metadata.get('id', f"interactive-{yaml_file.stem}"),
             'name': metadata.get('name', yaml_file.stem.replace('_', ' ').title()),
             'description': spec.get('description', ''),
-            'category': interactive_def.get('category', 'container'),
+            'category': db_category,
             'location': interactive_def.get('location'),
             'interactable': interactive_def.get('interactable', True),
             'reusable': interactive_def.get('reusable', True),
