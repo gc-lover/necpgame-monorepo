@@ -32,16 +32,16 @@ type Config struct {
 
 // Engine handles real-time affix effect processing
 type Engine struct {
-	db            *pgxpool.Pool
-	redis         *redis.Client
-	logger        *zap.Logger
-	tracer        trace.Tracer
-	meter         metric.Meter
-	eventBus      *eventbus.EventBus
+	db       *pgxpool.Pool
+	redis    *redis.Client
+	logger   *zap.Logger
+	tracer   trace.Tracer
+	meter    metric.Meter
+	eventBus *eventbus.EventBus
 
 	// PERFORMANCE: Memory pooling for frequent allocations
-	triggerPool   sync.Pool
-	periodicPool  sync.Pool
+	triggerPool  sync.Pool
+	periodicPool sync.Pool
 }
 
 // EffectTrigger represents an affix effect trigger
@@ -136,7 +136,31 @@ func (e *Engine) ProcessEffectTrigger(ctx context.Context, trigger *EffectTrigge
 		return errors.Wrap(err, "failed to process effect")
 	}
 
-	// TODO: Publish event gameplay.affixes.effect.triggered
+	// Publish event gameplay.affixes.effect.triggered
+	if e.eventBus != nil {
+		eventPayload := map[string]interface{}{
+			"affix_id":     trigger.AffixID,
+			"trigger_type": trigger.TriggerType,
+			"parameters":   trigger.Parameters,
+			"processed_at": time.Now(),
+		}
+
+		err = e.eventBus.PublishGameEvent(ctx, trigger.AffixID, eventbus.EventTypeAffixEffectTriggered, eventPayload, "gameplay-service")
+		if err != nil {
+			e.logger.Error("Failed to publish affix effect triggered event",
+				zap.String("affix_id", trigger.AffixID),
+				zap.Error(err))
+			// Don't return error - effect processing succeeded, just event publishing failed
+		} else {
+			e.logger.Info("Published affix effect triggered event",
+				zap.String("affix_id", trigger.AffixID),
+				zap.String("trigger_type", trigger.TriggerType))
+		}
+	} else {
+		e.logger.Info("Effect triggered successfully (no event bus)",
+			zap.String("affix_id", trigger.AffixID),
+			zap.String("trigger_type", trigger.TriggerType))
+	}
 
 	return nil
 }
