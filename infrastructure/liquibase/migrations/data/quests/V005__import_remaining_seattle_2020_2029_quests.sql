@@ -3,10 +3,9 @@
 
 -- Quest 001: Space Needle
 INSERT INTO gameplay.quest_definitions (
-    id, quest_id, title, description, category, difficulty, level_requirement,
-    rewards, objectives, location, is_active, created_at, updated_at
+    quest_id, title, description, category, difficulty, level_requirement,
+    rewards, objectives, location, is_active
 ) VALUES (
-    'canon-quest-seattle-space-needle',
     'quest-001-space-needle',
     'Сиэтл 2020-2029 — Space Needle',
     'Квест о посещении главной достопримечательности Сиэтла - Space Needle. Игрок поднимается на башню, испытывает стеклянный пол смотровой площадки и получает награду за успешное выполнение.',
@@ -16,9 +15,7 @@ INSERT INTO gameplay.quest_definitions (
     '{"experience": 1000, "currency": {"type": "eddies", "amount": 500}, "items": [{"id": "space_needle_souvenir", "name": "Сувенир Space Needle", "rarity": "common"}]}',
     '[{"id": "visit_space_needle", "text": "Посетить Space Needle и подняться на смотровую площадку", "type": "interact", "target": "space_needle_entrance", "count": 1}, {"id": "experience_glass_floor", "text": "Испытать стеклянный пол на высоте", "type": "interact", "target": "glass_floor_platform", "count": 1}, {"id": "take_photos", "text": "Сфотографировать панораму города", "type": "skill_check", "skill": "perception", "difficulty": 0.3, "count": 1}]',
     'Seattle - Downtown',
-    true,
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP
+    true
 );
 
 -- Quest 002: Pike Place Market

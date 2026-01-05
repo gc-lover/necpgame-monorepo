@@ -31,13 +31,6 @@ DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'gameplay' AND table_name = 'quests' AND column_name = 'quest_id') THEN
         ALTER TABLE gameplay.quests ADD COLUMN quest_id VARCHAR(255) GENERATED ALWAYS AS (metadata->>'id') STORED;
-    END IF;
-END $$;
-
--- Add unique constraint if it doesn't exist
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_schema = 'gameplay' AND table_name = 'quests' AND constraint_name = 'quests_quest_id_unique') THEN
         ALTER TABLE gameplay.quests ADD CONSTRAINT quests_quest_id_unique UNIQUE (quest_id);
     END IF;
 END $$;

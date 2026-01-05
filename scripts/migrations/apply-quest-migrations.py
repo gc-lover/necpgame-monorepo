@@ -71,6 +71,9 @@ def main():
     # Get migration file path
     migration_file = Path(__file__).parent.parent.parent / "infrastructure" / "liquibase" / "migrations" / "schema" / "V1_95__quest_definitions_tables.sql"
 
+    # Also apply Seine Romance quest migration if it exists
+    seine_migration = Path(__file__).parent.parent.parent / "infrastructure" / "liquibase" / "migrations" / "gameplay" / "quests" / "V006__import_seine_romance_quest.sql"
+
     if not migration_file.exists():
         print(f"[ERROR] Migration file not found: {migration_file}")
         sys.exit(1)
@@ -116,6 +119,19 @@ def main():
                     print(f"  - {col[0]}: {col[1]} ({'NOT NULL' if col[2] == 'NO' else 'NULL'})")
                 if len(columns) > 5:
                     print(f"  ... and {len(columns) - 5} more columns")
+
+                # Apply Seine Romance quest migration
+                if seine_migration.exists():
+                    print("[APPLYING] Applying Seine Romance quest migration...")
+                    apply_migration(conn, seine_migration)
+
+                    # Verify quest was imported
+                    cur.execute("SELECT COUNT(*) FROM gameplay.quest_definitions WHERE id = 'canon-quest-paris-seine-romance'")
+                    quest_count = cur.fetchone()[0]
+                    if quest_count > 0:
+                        print("[SUCCESS] Seine Romance quest imported successfully")
+                    else:
+                        print("[WARNING] Seine Romance quest was not imported")
 
             else:
                 print("[ERROR] quest_definitions table does not exist!")

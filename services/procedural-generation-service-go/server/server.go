@@ -398,16 +398,37 @@ func (s *ProceduralGenerationService) UpdateExample(ctx context.Context, req *ap
 // DeleteExample implements procedural generation deletion
 func (s *ProceduralGenerationService) DeleteExample(ctx context.Context, params api.DeleteExampleParams) (api.DeleteExampleRes, error) {
 	// PERFORMANCE: Context timeout (BLOCKER requirement)
+	timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	select {
-	case <-ctx.Done():
+	case <-timeoutCtx.Done():
 		return nil, fmt.Errorf("context cancelled")
 	default:
 	}
 
-	// TODO: Implement procedural generation deletion logic
-	// - Safe algorithm removal
-	// - Resource cleanup
-	// - Generated content cleanup
+	// Delete generator from database
+	if s.db != nil {
+		query := `DELETE FROM procedural.generators WHERE id = $1`
+
+		result, err := s.db.ExecContext(timeoutCtx, query, params.ExampleID)
+		if err != nil {
+			s.logger.Printf("Failed to delete generator: %v", err)
+			return nil, fmt.Errorf("failed to delete procedural generator")
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			s.logger.Printf("Failed to get rows affected: %v", err)
+			return nil, fmt.Errorf("failed to confirm deletion")
+		}
+
+		if rowsAffected == 0 {
+			return &api.ExampleNotFound{}, nil
+		}
+
+		s.logger.Printf("Deleted procedural generator: %s", params.ExampleID.String())
+	}
 
 	return &api.ExampleDeleted{}, nil
 }
@@ -415,31 +436,97 @@ func (s *ProceduralGenerationService) DeleteExample(ctx context.Context, params 
 // ListExamples implements procedural generation listing with pagination
 func (s *ProceduralGenerationService) ListExamples(ctx context.Context, params api.ListExamplesParams) (api.ListExamplesRes, error) {
 	// PERFORMANCE: Context timeout (BLOCKER requirement)
+	timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	select {
-	case <-ctx.Done():
+	case <-timeoutCtx.Done():
 		return nil, fmt.Errorf("context cancelled")
 	default:
 	}
 
-	// TODO: Implement procedural generation listing with pagination
-	// - Algorithm catalog queries
-	// - Performance filtering
-	// - Complexity sorting
-
-	examples := []api.Example{
-		{
-			ID:        uuid.New(),
-			Name:      "World Generator Alpha",
-			CreatedAt: time.Now().Add(-48 * time.Hour),
-			Status:    api.ExampleStatusActive,
-			IsActive:  true,
-		},
+	// Parse pagination parameters
+	limit := 20 // Default limit
+	if params.Limit.Set && params.Limit.Value > 0 && params.Limit.Value <= 100 {
+		limit = int(params.Limit.Value)
 	}
 
-	response := api.ExampleListResponse{
-		Examples:   examples,
-		TotalCount: len(examples),
-		HasMore:    false,
+	offset := 0
+	if params.Offset.Set && params.Offset.Value >= 0 {
+		offset = int(params.Offset.Value)
+	}
+
+	if s.db != nil {
+		// Query generators from database with pagination
+		query := `
+			SELECT id, name, seed, algorithm, parameters, status, created_at
+			FROM procedural.generators
+			ORDER BY created_at DESC
+			LIMIT $1 OFFSET $2
+		`
+
+		rows, err := s.db.QueryContext(timeoutCtx, query, limit+1, offset) // +1 to check if there are more
+		if err != nil {
+			s.logger.Printf("Failed to list generators: %v", err)
+			return nil, fmt.Errorf("failed to list procedural generators")
+		}
+		defer rows.Close()
+
+		var examples []api.Example
+		for rows.Next() {
+			var id uuid.UUID
+			var name string
+			var seed int64
+			var algorithm string
+			var parametersJSON string
+			var status string
+			var createdAt time.Time
+
+			err := rows.Scan(&id, &name, &seed, &algorithm, &parametersJSON, &status, &createdAt)
+			if err != nil {
+				s.logger.Printf("Failed to scan generator: %v", err)
+				continue
+			}
+
+			// Parse status
+			var apiStatus api.ExampleStatus
+			switch status {
+			case "active":
+				apiStatus = api.ExampleStatusActive
+			case "inactive":
+				apiStatus = api.ExampleStatusInactive
+			default:
+				apiStatus = api.ExampleStatusActive
+			}
+
+			examples = append(examples, api.Example{
+				ID:        id,
+				Name:      name,
+				CreatedAt: createdAt,
+				Status:    apiStatus,
+				IsActive:  status == "active",
+			})
+		}
+
+		// Check if there are more results
+		hasMore := len(examples) > limit
+		if hasMore {
+			examples = examples[:limit] // Remove the extra item used for hasMore check
+		}
+
+		// Get total count
+		countQuery := `SELECT COUNT(*) FROM procedural.generators`
+		var totalCount int
+		err = s.db.QueryRowContext(timeoutCtx, countQuery).Scan(&totalCount)
+		if err != nil {
+			s.logger.Printf("Failed to get total count: %v", err)
+			totalCount = len(examples) // Fallback to current result count
+		}
+
+		response := api.ExampleListResponse{
+			Examples:   examples,
+			TotalCount: totalCount,
+			HasMore:    hasMore,
 	}
 
 	return &api.ExampleListSuccessHeaders{
