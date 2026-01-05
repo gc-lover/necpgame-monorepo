@@ -121,6 +121,7 @@ const (
 	EventTypeSocialInteraction    = "social.interaction"
 	EventTypeSystemNotification   = "system.notification"
 	EventTypeAffixEffectTriggered = "gameplay.affixes.effect.triggered"
+	EventTypeAffixApplied         = "gameplay.affixes.applied"
 )
 
 // NewEventBus creates a new event bus instance
