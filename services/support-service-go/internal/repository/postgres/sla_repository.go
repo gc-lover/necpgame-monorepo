@@ -231,3 +231,4 @@ func (r *slaRepository) calculateResponseDeadline(createdAt time.Time, priority 
 		return createdAt.Add(time.Hour) // Default to normal
 	}
 }
+

@@ -121,3 +121,4 @@ type TicketListResponse struct {
 		TotalPages int `json:"total_pages"`
 	} `json:"pagination"`
 }
+

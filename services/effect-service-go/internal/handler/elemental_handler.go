@@ -349,3 +349,4 @@ type EnvironmentContext struct {
 	TerrainType   string  `json:"terrain_type"`
 	TimeOfDay     string  `json:"time_of_day"`
 }
+

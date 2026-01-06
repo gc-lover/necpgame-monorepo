@@ -60,3 +60,4 @@ type Transaction interface {
 	TicketResponseRepository
 	SLARepository
 }
+

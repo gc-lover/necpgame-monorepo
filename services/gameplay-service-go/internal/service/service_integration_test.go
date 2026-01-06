@@ -129,3 +129,4 @@ func BenchmarkService_Structure(b *testing.B) {
 		_, _ = NewGameplayService(cfg)
 	}
 }
+

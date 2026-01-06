@@ -122,3 +122,4 @@ func (r *simplePostgresRepository) GetOverdueTickets(ctx context.Context, curren
 func (r *simplePostgresRepository) BeginTx(ctx context.Context) (repository.Transaction, error) {
 	return NewSimpleRepository(r.db), nil // Simplified - no real transaction support
 }
+

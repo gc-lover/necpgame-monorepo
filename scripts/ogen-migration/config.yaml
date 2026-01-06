@@ -1,0 +1,266 @@
+# Ogen Migration Orchestrator Configuration
+
+# Migration phases configuration
+phases:
+  preparation:
+    duration_days: 14
+    description: "Подготовка инфраструктуры и инструментов"
+    activities:
+      - Настройка CI/CD pipeline для ogen
+      - Создание performance benchmark suite
+      - Разработка compatibility validator
+      - Подготовка rollback procedures
+      - Обучение команды
+
+  pilot:
+    duration_days: 21
+    description: "Пилотная миграция низкорисковых сервисов"
+    activities:
+      - Миграция 5-10 простых сервисов
+      - Валидация performance gains
+      - Тестирование rollback procedures
+      - Сбор метрик и обратной связи
+
+  accelerated:
+    duration_days: 84
+    description: "Ускоренная миграция основных сервисов"
+    activities:
+      - Параллельная миграция high-impact сервисов
+      - Постоянный мониторинг производительности
+      - Автоматизация повторяющихся задач
+      - Регулярные статус-митинги
+
+  validation:
+    duration_days: 28
+    description: "Валидация и финальная оптимизация"
+    activities:
+      - Полная валидация всех мигрированных сервисов
+      - Финальная оптимизация производительности
+      - Документирование лучших практик
+      - Подготовка maintenance procedures
+
+# Risk level configuration
+risk_levels:
+  low:
+    max_concurrent: 5
+    requires_review: false
+    priority: 3
+    estimated_complexity: "simple"
+
+  medium:
+    max_concurrent: 3
+    requires_review: true
+    priority: 2
+    estimated_complexity: "medium"
+
+  high:
+    max_concurrent: 1
+    requires_review: true
+    priority: 1
+    estimated_complexity: "complex"
+
+# Service risk assessment rules
+risk_assessment:
+  # Low risk indicators
+  low_risk_indicators:
+    - file_count: "< 10"
+    - openapi_endpoints: "<= 5"
+    - dependencies: "<= 2"
+    - has_database: false
+    - has_cache: false
+
+  # High risk indicators
+  high_risk_indicators:
+    - file_count: "> 100"
+    - openapi_endpoints: "> 20"
+    - dependencies: "> 5"
+    - has_complex_business_logic: true
+    - has_external_integrations: true
+
+# Complexity assessment rules
+complexity_assessment:
+  simple:
+    criteria:
+      - "Single OpenAPI endpoint"
+      - "No database operations"
+      - "No external dependencies"
+      - "Standard CRUD operations only"
+
+  medium:
+    criteria:
+      - "Multiple endpoints (< 10)"
+      - "Simple database operations"
+      - "1-2 external dependencies"
+      - "Basic business logic"
+
+  complex:
+    criteria:
+      - "Many endpoints (> 10)"
+      - "Complex database operations"
+      - "Multiple external dependencies"
+      - "Complex business logic"
+      - "Real-time requirements"
+
+# Ogen configuration
+ogen:
+  version: "latest"
+  generator_flags:
+    - "--target"
+    - "--clean"
+    - "--validate"
+  compatibility_mode: true
+  strict_validation: true
+
+# Migration execution settings
+execution:
+  parallel_migrations: 2
+  max_retry_attempts: 3
+  retry_delay_seconds: 30
+  timeout_seconds: 3600  # 1 hour per service
+  backup_before_migration: true
+  rollback_on_failure: true
+
+# Monitoring and reporting
+monitoring:
+  enable_metrics: true
+  metrics_interval_seconds: 60
+  report_generation: true
+  report_format: "json"
+  notify_on_completion: true
+  notify_on_failure: true
+
+# Benchmark settings
+benchmark:
+  iterations: 100
+  warmup_iterations: 10
+  concurrent_requests: 50
+  test_duration_seconds: 60
+  memory_sampling_interval: 0.1
+  cpu_sampling_interval: 0.1
+
+# Validation settings
+validation:
+  strict_mode: true
+  fail_on_warnings: false
+  max_issues_per_service: 100
+  coverage_threshold: 80.0
+  api_contract_validation: true
+  type_definition_validation: true
+  import_validation: true
+
+# Rollback configuration
+rollback:
+  keep_backups_days: 7
+  automatic_rollback: true
+  rollback_timeout_seconds: 1800
+  verification_after_rollback: true
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "json"
+  file_logging: true
+  console_logging: true
+  log_retention_days: 30
+
+# CI/CD integration
+ci_cd:
+  enabled: true
+  pipeline_name: "ogen-migration"
+  trigger_on_completion: true
+  create_pr_on_success: false
+  branch_name_prefix: "ogen-migration"
+
+# Service discovery
+service_discovery:
+  include_patterns:
+    - "services/*/go.mod"
+    - "services/*/main.go"
+  exclude_patterns:
+    - "services/*-test/"
+    - "services/*-benchmark/"
+  required_files:
+    - "go.mod"
+    - "main.go"
+
+# Performance targets
+performance_targets:
+  latency_improvement_percent: 10.0
+  memory_reduction_percent: 5.0
+  cpu_reduction_percent: 5.0
+  compilation_time_max_seconds: 60
+
+# Notification settings
+notifications:
+  enabled: true
+  channels:
+    - "slack"
+    - "email"
+  recipients:
+    - "backend-team@necp.game"
+    - "platform-team@necp.game"
+  notify_on:
+    - "migration_start"
+    - "migration_success"
+    - "migration_failure"
+    - "validation_failure"
+    - "performance_regression"
+
+# Emergency contacts
+emergency_contacts:
+  - name: "Backend Lead"
+    email: "backend-lead@necp.game"
+    phone: "+1-555-0100"
+  - name: "Platform Lead"
+    email: "platform-lead@necp.game"
+    phone: "+1-555-0101"
+
+# Documentation
+documentation:
+  auto_update: true
+  changelog_generation: true
+  api_docs_update: true
+  migration_guide_update: true
+
+# Security settings
+security:
+  require_code_review: true
+  require_security_audit: true
+  vulnerability_scanning: true
+  secrets_detection: true
+
+# Backup settings
+backup:
+  enabled: true
+  location: "/backups/ogen-migration"
+  compression: true
+  encryption: true
+  retention_policy: "7d"
+
+# Resource limits
+resource_limits:
+  max_memory_gb: 8
+  max_cpu_cores: 4
+  max_disk_gb: 50
+  timeout_global_seconds: 7200  # 2 hours total
+
+# Integration settings
+integrations:
+  github:
+    enabled: true
+    create_issues: true
+    create_prs: false
+    update_status: true
+
+  prometheus:
+    enabled: true
+    push_gateway_url: "http://localhost:9091"
+
+  grafana:
+    enabled: true
+    dashboard_update: true
+
+  slack:
+    enabled: true
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+    channel: "#backend-migration"

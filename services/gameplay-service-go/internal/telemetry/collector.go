@@ -330,6 +330,139 @@ func (c *Collector) GetDifficultyMetrics(ctx context.Context, period string) (ma
 	return result, nil
 }
 
+// GetAffixPopularityForAPI returns popularity analytics for API
+func (c *Collector) GetAffixPopularityForAPI(ctx context.Context, params interface{}) (*api.PopularityMetricsResponse, error) {
+	ctx, span := c.tracer.Start(ctx, "telemetry_collector.get_affix_popularity_api")
+	defer span.End()
+
+	// Get raw popularity data
+	rawData, err := c.GetAffixPopularity(ctx, "week") // Default to week
+	if err != nil {
+		return nil, errors.Wrap(err, "get popularity metrics")
+	}
+
+	// Convert to API format
+	var metrics []api.PopularityMetricsResponseMetricsItem
+	if rawMetrics, ok := rawData["metrics"].([]map[string]interface{}); ok {
+		for _, raw := range rawMetrics {
+			metric := api.PopularityMetricsResponseMetricsItem{
+				Name:            raw["name"].(string),
+				UsageCount:      int(raw["usage_count"].(float64)),
+				PopularityRank:  int(raw["popularity_rank"].(float64)),
+			}
+
+			if winRate, ok := raw["win_rate"].(float64); ok {
+				metric.WinRate = api.OptFloat32{Value: float32(winRate), Set: true}
+			}
+
+			metrics = append(metrics, metric)
+		}
+	}
+
+	return &api.PopularityMetricsResponse{
+		Period:  rawData["period"].(string),
+		Metrics: metrics,
+	}, nil
+}
+
+// GetAffixDifficulty returns difficulty analytics for API
+func (c *Collector) GetAffixDifficulty(ctx context.Context, params interface{}) (*api.DifficultyMetricsResponse, error) {
+	ctx, span := c.tracer.Start(ctx, "telemetry_collector.get_affix_difficulty")
+	defer span.End()
+
+	// Get raw difficulty data
+	rawData, err := c.GetDifficultyMetrics(ctx, "week") // Default to week
+	if err != nil {
+		return nil, errors.Wrap(err, "get difficulty metrics")
+	}
+
+	// Convert to API format
+	var metrics []api.DifficultyMetricsResponseMetricsItem
+	if rawMetrics, ok := rawData["metrics"].([]map[string]interface{}); ok {
+		for _, raw := range rawMetrics {
+			metric := api.DifficultyMetricsResponseMetricsItem{
+				AffixID:           uuid.MustParse(raw["affix_id"].(string)),
+				Name:              raw["name"].(string),
+				AvgCompletionTime: int(raw["avg_completion_time"].(float64)),
+				DifficultyScore:   float32(raw["difficulty_score"].(float64)),
+			}
+
+			if failureRate, ok := raw["failure_rate"].(float64); ok {
+				metric.FailureRate = api.OptFloat32{Value: float32(failureRate), Set: true}
+			}
+
+			metrics = append(metrics, metric)
+		}
+	}
+
+	return &api.DifficultyMetricsResponse{
+		Period:  rawData["period"].(string),
+		Metrics: metrics,
+	}, nil
+}
+
+// GetAffixCombinations returns combination analytics for API
+func (c *Collector) GetAffixCombinations(ctx context.Context, params interface{}) (*api.CombinationAnalysisResponse, error) {
+	ctx, span := c.tracer.Start(ctx, "telemetry_collector.get_affix_combinations")
+	defer span.End()
+
+	// Query for affix combinations
+	query := `
+		SELECT
+			ARRAY_AGG(DISTINCT a.id) as affix_ids,
+			ARRAY_AGG(DISTINCT a.name) as affix_names,
+			COUNT(*) as usage_count,
+			AVG(at.completion_time) as avg_completion_time,
+			SUM(CASE WHEN at.success THEN 1 ELSE 0 END)::float / COUNT(*) as success_rate
+		FROM gameplay.affix_telemetry at
+		JOIN gameplay.affixes a ON at.affix_id = a.id
+		WHERE at.timestamp >= NOW() - INTERVAL '7 days'
+		GROUP BY at.instance_id
+		HAVING COUNT(DISTINCT at.affix_id) > 1
+		ORDER BY usage_count DESC, success_rate DESC
+		LIMIT 20
+	`
+
+	rows, err := c.db.Query(ctx, query)
+	if err != nil {
+		return nil, errors.Wrap(err, "query affix combinations")
+	}
+	defer rows.Close()
+
+	var combinations []api.CombinationAnalysisResponseCombinationsItem
+	for rows.Next() {
+		var affixIDs []uuid.UUID
+		var affixNames []string
+		var usageCount int
+		var avgCompletionTime float64
+		var successRate float64
+
+		err := rows.Scan(&affixIDs, &affixNames, &usageCount, &avgCompletionTime, &successRate)
+		if err != nil {
+			c.logger.Error("Failed to scan combination row", zap.Error(err))
+			continue
+		}
+
+		combination := api.CombinationAnalysisResponseCombinationsItem{
+			AffixIds:          affixIDs,
+			AffixNames:        affixNames,
+			UsageCount:        usageCount,
+			AvgCompletionTime: int(avgCompletionTime),
+			SuccessRate:       float32(successRate),
+		}
+
+		combinations = append(combinations, combination)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "iterate combination rows")
+	}
+
+	return &api.CombinationAnalysisResponse{
+		Combinations: combinations,
+	}, nil
+}
+
 // StartAsyncProcessing starts async telemetry processing (should run in background)
 func (c *Collector) StartAsyncProcessing(ctx context.Context) {
 	c.logger.Info("Starting async telemetry processing")

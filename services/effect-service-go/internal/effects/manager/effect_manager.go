@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/necpgame/necpgame/services/effect-service-go/internal/effects/calculator"
-	"github.com/necpgame/necpgame/services/effect-service-go/internal/effects/processors"
-	"github.com/necpgame/necpgame/services/effect-service-go/internal/effects/types"
+	"necpgame/services/effect-service-go/internal/effects/calculator"
+	"necpgame/services/effect-service-go/internal/effects/processors"
+	"necpgame/services/effect-service-go/internal/effects/types"
 )
 
 // Issue: #143577551

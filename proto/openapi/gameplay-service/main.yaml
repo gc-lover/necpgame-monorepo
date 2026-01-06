@@ -1,18 +1,19 @@
 openapi: 3.0.3
 info:
-  title: Gameplay Affixes Service API - Enterprise-Grade Domain Service
-  description: "**Enterprise-Grade Gameplay Affixes API for NECPGAME**
+  title: Gameplay Service API - Enterprise-Grade Domain Service
+  description: "**Enterprise-Grade Gameplay API for NECPGAME**
 
-    This API manages gameplay affixes system, providing comprehensive affix management,
-    rotation control, and performance-optimized operations for MMOFPS RPG content.
+    This API manages gameplay systems including affixes and difficulty rating,
+    providing comprehensive game mechanics, player skill assessment, and dynamic content adaptation.
 
     ## Key Features
 
     - **Affix Management**: Full CRUD operations for affix entities with validation
     - **Rotation System**: Automated weekly affix rotation with manual triggers
     - **Instance Application**: Dynamic affix application to dungeon/raid instances
+    - **Difficulty Rating**: Player skill assessment, content difficulty rating, and automatic adjustments
     - **Analytics**: Comprehensive telemetry and performance metrics
-    - **Real-time Effects**: WebSocket integration for live affix effects
+    - **Real-time Effects**: WebSocket integration for live game effects
 
     ## Domain Purpose
 
@@ -35,11 +36,12 @@ info:
 
     ## Integration Points
 
-    - **Combat Service**: Real-time affix effect processing
-    - **World Service**: Instance creation and management
-    - **Analytics Service**: Telemetry data aggregation
-    - **Leaderboard Service**: Difficulty-based rankings
-    - **Realtime Gateway**: WebSocket synchronization
+    - **Combat Service**: Real-time affix effect processing and difficulty adjustments
+    - **World Service**: Instance creation and management with difficulty scaling
+    - **Analytics Service**: Telemetry data aggregation for rating calculations
+    - **Leaderboard Service**: Difficulty-based rankings and skill assessments
+    - **Matchmaking Service**: Player skill-based team composition
+    - **Realtime Gateway**: WebSocket synchronization for live difficulty updates
 
     ## Affix Categories
 
@@ -82,6 +84,10 @@ tags:
     description: Affix performance and popularity metrics
   - name: Health Monitoring
     description: System health and performance monitoring
+  - name: Difficulty Rating
+    description: Player skill rating, content difficulty assessment, and automatic adjustments
+  - name: Difficulty Rating
+    description: Player skill rating, content difficulty assessment, and automatic adjustments
 paths:
   /health:
     get:
@@ -573,6 +579,161 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  # Difficulty Rating System Endpoints
+  /api/v1/gameplay/difficulty-rating/player/{playerId}:
+    get:
+      summary: Get player skill rating
+      description: Returns the current skill rating for a specific player based on their gameplay history and performance
+      tags:
+        - Difficulty Rating
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player UUID
+      responses:
+        "200":
+          description: Player skill rating information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  player_id:
+                    type: string
+                    format: uuid
+                  skill_rating:
+                    type: number
+                    format: float
+        "404":
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/gameplay/difficulty-rating/content/{contentId}:
+    get:
+      summary: Get content difficulty rating
+      description: Returns the current difficulty rating for specific game content (dungeon, raid, mission)
+      tags:
+        - Difficulty Rating
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Content UUID
+      responses:
+        "200":
+          description: Content difficulty rating information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentDifficultyRatingResponse"
+        "404":
+          description: Content not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/gameplay/difficulty-rating/recommendations/{playerId}:
+    get:
+      summary: Get difficulty recommendations for player
+      description: Returns recommended difficulty levels and content suggestions based on player's skill rating
+      tags:
+        - Difficulty Rating
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player UUID
+        - name: contentType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [dungeon, raid, mission, pvp]
+          description: Filter recommendations by content type
+      responses:
+        "200":
+          description: Difficulty recommendations for the player
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DifficultyRecommendationsResponse"
+        "404":
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/gameplay/difficulty-rating/adjust:
+    post:
+      summary: Adjust difficulty for content instance
+      description: Automatically adjusts difficulty modifiers for a specific content instance based on player team composition
+      tags:
+        - Difficulty Rating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DifficultyAdjustmentRequest"
+      responses:
+        "200":
+          description: Difficulty adjustment applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DifficultyAdjustmentResponse"
+        "400":
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Content instance or players not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1026,3 +1187,46 @@ components:
               avg_completion_time:
                 type: integer
                 description: Average completion time in seconds
+
+    # Difficulty Rating System Schemas
+    PlayerSkillRatingResponse:
+      type: object
+      required:
+        - player_id
+        - skill_rating
+        - confidence_level
+        - last_updated
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player UUID
+        skill_rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Player skill rating (0-100)
+        confidence_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence in the rating calculation
+        completion_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Average content completion rate
+        average_time:
+          type: integer
+          description: Average completion time in seconds
+        average_deaths:
+          type: number
+          format: float
+          description: Average deaths per content
+        last_updated:
+          type: string
+          format: date-time
+          description: When the rating was last updated

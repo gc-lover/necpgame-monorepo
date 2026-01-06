@@ -1,0 +1,142 @@
+# Performance Targets Configuration
+# Issue: #143576311 - [QA] ogen Migration: Comprehensive Testing Strategy & Performance Validation Framework
+
+# Global performance targets
+global:
+  max_error_rate: 1.0  # 1% maximum error rate
+  max_p95_latency: 50   # 50ms P95 latency target
+  min_requests_per_second: 100  # Minimum throughput
+
+# Service-specific targets
+services:
+  support-sla-service:
+    base_url: "http://localhost:8080"
+    endpoints:
+      - endpoint: "/api/v1/sla/health"
+        method: "GET"
+        target_latency: 10    # Health checks should be very fast
+        description: "Health Check Endpoint"
+        critical: true        # Service health is critical
+
+      - endpoint: "/api/v1/sla/ticket/{ticketId}/status"
+        method: "GET"
+        target_latency: 50
+        description: "Ticket SLA Status Retrieval"
+        critical: true
+
+      - endpoint: "/api/v1/sla/policies"
+        method: "GET"
+        target_latency: 50
+        description: "SLA Policies Listing"
+        critical: true
+
+      - endpoint: "/api/v1/sla/analytics/summary"
+        method: "GET"
+        target_latency: 100   # Analytics can be slower due to aggregation
+        description: "SLA Analytics Summary"
+        critical: false
+
+      - endpoint: "/api/v1/sla/alerts/active"
+        method: "GET"
+        target_latency: 50
+        description: "Active SLA Alerts"
+        critical: true
+
+  gameplay-service:
+    base_url: "http://localhost:8081"
+    endpoints:
+      - endpoint: "/api/v1/gameplay/affixes"
+        method: "GET"
+        target_latency: 50
+        description: "List Available Affixes"
+        critical: true
+
+      - endpoint: "/api/v1/gameplay/affixes/{id}"
+        method: "GET"
+        target_latency: 30
+        description: "Get Specific Affix"
+        critical: true
+
+      - endpoint: "/api/v1/gameplay/affixes"
+        method: "POST"
+        target_latency: 100
+        description: "Create New Affix"
+        critical: false
+
+      - endpoint: "/api/v1/gameplay/instances/{instanceId}/affixes"
+        method: "POST"
+        target_latency: 200   # Complex calculation
+        description: "Apply Affixes to Instance"
+        critical: true
+
+# Load testing scenarios
+load_testing:
+  scenarios:
+    - name: "warm_up"
+      requests: 100
+      concurrency: 5
+      description: "Warm-up phase to initialize caches"
+
+    - name: "normal_load"
+      requests: 1000
+      concurrency: 20
+      description: "Normal production load simulation"
+
+    - name: "peak_load"
+      requests: 10000
+      concurrency: 50
+      description: "Peak load stress testing"
+
+    - name: "stress_test"
+      requests: 50000
+      concurrency: 100
+      description: "System stress testing"
+
+# Monitoring thresholds
+monitoring:
+  alerts:
+    - name: "high_latency"
+      condition: "p95_latency > target_latency * 1.5"
+      severity: "warning"
+      channels: ["slack", "email"]
+
+    - name: "very_high_latency"
+      condition: "p95_latency > target_latency * 2.0"
+      severity: "critical"
+      channels: ["slack", "pager-duty"]
+
+    - name: "high_error_rate"
+      condition: "error_rate > 5.0"
+      severity: "warning"
+      channels: ["slack"]
+
+    - name: "critical_error_rate"
+      condition: "error_rate > 10.0"
+      severity: "critical"
+      channels: ["slack", "pager-duty"]
+
+# Resource monitoring
+resources:
+  memory:
+    max_heap_usage: 512MB    # Maximum heap memory per service
+    max_growth_rate: 10MB/min  # Maximum memory growth rate
+
+  cpu:
+    max_usage: 70           # Maximum CPU usage percentage
+    max_spike_duration: 30   # Maximum duration of CPU spikes (seconds)
+
+  database:
+    max_connections: 50      # Maximum active database connections
+    max_query_time: 1000     # Maximum query execution time (ms)
+
+# Validation rules
+validation:
+  strict_mode: true          # Fail validation on any target violation
+  allow_regression: false     # Don't allow performance regressions
+  baseline_comparison: true  # Compare against baseline performance
+
+  # Grace periods for new deployments
+  grace_period:
+    duration: 300            # 5 minutes grace period after deployment
+    tolerance: 1.2           # 20% tolerance during grace period
+

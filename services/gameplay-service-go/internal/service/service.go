@@ -14,6 +14,8 @@ import (
 	"github.com/go-faster/errors"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
@@ -21,6 +23,7 @@ import (
 
 	"necpgame/services/gameplay-service-go/internal/affix"
 	"necpgame/services/gameplay-service-go/internal/applicator"
+	"necpgame/services/gameplay-service-go/internal/difficulty"
 	"necpgame/services/gameplay-service-go/internal/effect"
 	"necpgame/services/gameplay-service-go/internal/rotation"
 	"necpgame/services/gameplay-service-go/internal/telemetry"
@@ -44,12 +47,30 @@ type Service struct {
 	db         *pgxpool.Pool
 	redis      *redis.Client
 
+	// Service lifecycle tracking
+	startTime time.Time
+
+	// Prometheus metrics
+	gameplayOperations     *prometheus.CounterVec
+	affixApplicationTime   prometheus.Histogram
+	playerStatsRequests    prometheus.GaugeVec
+	effectProcessingTime   prometheus.Histogram
+	telemetryEventsCount   *prometheus.CounterVec
+	activeGameplaySessions prometheus.Gauge
+
 	// Business logic components
 	affixManager       *affix.Manager
 	rotationController *rotation.Controller
 	applicator         *applicator.Applicator
 	effectEngine       *effect.Engine
 	telemetryCollector *telemetry.Collector
+
+	// Difficulty Rating System components
+	playerSkillRater       *difficulty.PlayerSkillRater
+	contentDifficultyRater *difficulty.ContentDifficultyRater
+	difficultyAdjuster     *difficulty.Adjuster
+	recommendationEngine   *difficulty.RecommendationEngine
+	ratingTelemetryCollector *difficulty.RatingTelemetryCollector
 }
 
 // NewGameplayService creates a new gameplay service instance
@@ -59,9 +80,10 @@ func NewGameplayService(cfg Config) (*Service, error) {
 	}
 
 	svc := &Service{
-		logger: cfg.Logger,
-		tracer: cfg.Tracer,
-		meter:  cfg.Meter,
+		logger:   cfg.Logger,
+		tracer:   cfg.Tracer,
+		meter:    cfg.Meter,
+		startTime: time.Now(),
 	}
 
 	// Initialize database connection
@@ -210,17 +232,95 @@ func (s *Service) initComponents() error {
 	}
 	s.telemetryCollector = telemetryCollector
 
+	// Initialize Prometheus metrics
+	if err := s.initPrometheusMetrics(); err != nil {
+		return errors.Wrap(err, "failed to initialize prometheus metrics")
+	}
+
 	s.logger.Info("All components initialized successfully")
+	return nil
+}
+
+// initPrometheusMetrics initializes Prometheus metrics for gameplay operations
+func (s *Service) initPrometheusMetrics() error {
+	// Counter for gameplay operations by type and result
+	s.gameplayOperations = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "gameplay_operations_total",
+			Help: "Total number of gameplay operations by type and status",
+		},
+		[]string{"operation", "status"},
+	)
+
+	// Histogram for affix application timing
+	s.affixApplicationTime = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "gameplay_affix_application_duration_seconds",
+			Help:    "Time taken to apply affixes to gameplay instances",
+			Buckets: prometheus.DefBuckets,
+		},
+	)
+
+	// Gauge for player statistics requests
+	s.playerStatsRequests = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "gameplay_player_stats_active_requests",
+			Help: "Number of active player statistics requests",
+		},
+		[]string{"player_id"},
+	)
+
+	// Histogram for effect processing timing
+	s.effectProcessingTime = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "gameplay_effect_processing_duration_seconds",
+			Help:    "Time taken to process gameplay effects",
+			Buckets: prometheus.DefBuckets,
+		},
+	)
+
+	// Counter for telemetry events
+	s.telemetryEventsCount = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "gameplay_telemetry_events_total",
+			Help: "Total number of telemetry events collected by type",
+		},
+		[]string{"event_type"},
+	)
+
+	// Gauge for active gameplay sessions
+	s.activeGameplaySessions = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "gameplay_active_sessions",
+			Help: "Number of currently active gameplay sessions",
+		},
+	)
+
+	// Register metrics with Prometheus (handle already registered errors)
+	metrics := []prometheus.Collector{
+		s.gameplayOperations,
+		s.affixApplicationTime,
+		s.playerStatsRequests,
+		s.effectProcessingTime,
+		s.telemetryEventsCount,
+		s.activeGameplaySessions,
+	}
+
+	for _, metric := range metrics {
+		if err := prometheus.Register(metric); err != nil {
+			if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
+				return errors.Wrap(err, "failed to register prometheus metric")
+			}
+		}
+	}
+
+	s.logger.Info("Prometheus metrics initialized successfully")
 	return nil
 }
 
 // MetricsHandler returns Prometheus metrics handler
 func (s *Service) MetricsHandler() http.Handler {
-	// TODO: Implement Prometheus metrics handler
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Metrics endpoint - TODO"))
-	})
+	return promhttp.Handler()
 }
 
 // Close gracefully shuts down the service

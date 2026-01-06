@@ -185,3 +185,4 @@ type InteractionCalculator interface {
 	GetSynergyMultiplier(primary, secondary ElementalType) float64
 	GetConflictMultiplier(primary, secondary ElementalType) float64
 }
+

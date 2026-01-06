@@ -29,10 +29,13 @@ func NewHandler(svc *Service) *Handler {
 
 // HealthGet implements health check endpoint
 func (h *Handler) HealthGet(ctx context.Context) (api.HealthGetRes, error) {
+	// Calculate actual uptime since service start
+	uptimeSeconds := int(time.Since(h.service.startTime).Seconds())
+
 	return &api.HealthResponse{
 		Status:   "healthy",
 		Version:  "1.0.0",
-		Uptime:   3600, // TODO: Implement actual uptime tracking
+		Uptime:   uptimeSeconds,
 	}, nil
 }
 
@@ -51,6 +54,9 @@ func (h *Handler) APIV1GameplayAffixesActiveGet(ctx context.Context) (api.APIV1G
 			},
 		}, nil
 	}
+
+	// Record successful operation
+	h.service.gameplayOperations.WithLabelValues("get_active_affixes", "success").Inc()
 
 	return &api.ActiveAffixesResponse{
 		Affixes: affixes,
@@ -123,6 +129,9 @@ func (h *Handler) APIV1GameplayInstancesInstanceIdAffixesGet(ctx context.Context
 			},
 		}, nil
 	}
+
+	// Record successful operation
+	h.service.gameplayOperations.WithLabelValues("get_instance_affixes", "success").Inc()
 
 	return &api.InstanceAffixesResponse{
 		InstanceID: params.InstanceID,
@@ -230,6 +239,9 @@ func (h *Handler) APIV1GameplayAffixesPost(ctx context.Context, req *api.CreateA
 			},
 		}, nil
 	}
+
+	// Record successful operation
+	h.service.gameplayOperations.WithLabelValues("create_affix", "success").Inc()
 
 	return &api.AffixResponse{
 		Affix: affix,
@@ -365,6 +377,9 @@ func (h *Handler) APIV1GameplayAffixesRotationTriggerPost(ctx context.Context) (
 		}, nil
 	}
 
+	// Record successful operation
+	h.service.gameplayOperations.WithLabelValues("trigger_rotation", "success").Inc()
+
 	return &api.RotationTriggerResponse{
 		Success: true,
 		NewRotation: &api.RotationTriggerResponseNewRotation{
@@ -375,42 +390,77 @@ func (h *Handler) APIV1GameplayAffixesRotationTriggerPost(ctx context.Context) (
 	}, nil
 }
 
-// Analytics endpoints - TODO: Implement telemetry integration
+// Analytics endpoints - telemetry integration for gameplay insights
 func (h *Handler) APIV1AnalyticsAffixesPopularityGet(ctx context.Context, params api.APIV1AnalyticsAffixesPopularityGetParams) (api.APIV1AnalyticsAffixesPopularityGetRes, error) {
-	// TODO: Implement popularity analytics
-	return &api.APIV1AnalyticsAffixesPopularityGetResDefault{
-		StatusCode: http.StatusNotImplemented,
-		Data: api.ErrorResponse{
-			Error: api.ErrorResponseError{
-				Code:    "NOT_IMPLEMENTED",
-				Message: "Popularity analytics not yet implemented",
+	// Get popularity analytics from telemetry collector
+	popularityData, err := h.service.telemetryCollector.GetAffixPopularityForAPI(ctx, params)
+	if err != nil {
+		h.service.logger.Error("Failed to get affix popularity analytics", zap.Error(err))
+		return &api.APIV1AnalyticsAffixesPopularityGetResDefault{
+			StatusCode: http.StatusInternalServerError,
+			Data: api.ErrorResponse{
+				Error: api.ErrorResponseError{
+					Code:    "ANALYTICS_ERROR",
+					Message: "Failed to retrieve popularity analytics",
+				},
 			},
-		},
+		}, nil
+	}
+
+	// Record successful analytics operation
+	h.service.gameplayOperations.WithLabelValues("analytics_popularity", "success").Inc()
+
+	return &api.PopularityMetricsResponse{
+		Period:  popularityData.Period,
+		Metrics: popularityData.Metrics,
 	}, nil
 }
 
 func (h *Handler) APIV1AnalyticsAffixesDifficultyGet(ctx context.Context, params api.APIV1AnalyticsAffixesDifficultyGetParams) (api.APIV1AnalyticsAffixesDifficultyGetRes, error) {
-	// TODO: Implement difficulty analytics
-	return &api.APIV1AnalyticsAffixesDifficultyGetResDefault{
-		StatusCode: http.StatusNotImplemented,
-		Data: api.ErrorResponse{
-			Error: api.ErrorResponseError{
-				Code:    "NOT_IMPLEMENTED",
-				Message: "Difficulty analytics not yet implemented",
+	// Get difficulty analytics from telemetry collector
+	difficultyData, err := h.service.telemetryCollector.GetAffixDifficulty(ctx, params)
+	if err != nil {
+		h.service.logger.Error("Failed to get affix difficulty analytics", zap.Error(err))
+		return &api.APIV1AnalyticsAffixesDifficultyGetResDefault{
+			StatusCode: http.StatusInternalServerError,
+			Data: api.ErrorResponse{
+				Error: api.ErrorResponseError{
+					Code:    "ANALYTICS_ERROR",
+					Message: "Failed to retrieve difficulty analytics",
+				},
 			},
-		},
+		}, nil
+	}
+
+	// Record successful analytics operation
+	h.service.gameplayOperations.WithLabelValues("analytics_difficulty", "success").Inc()
+
+	return &api.DifficultyMetricsResponse{
+		Period:  difficultyData.Period,
+		Metrics: difficultyData.Metrics,
 	}, nil
 }
 
 func (h *Handler) APIV1AnalyticsAffixesCombinationsGet(ctx context.Context, params api.APIV1AnalyticsAffixesCombinationsGetParams) (api.APIV1AnalyticsAffixesCombinationsGetRes, error) {
-	// TODO: Implement combination analytics
-	return &api.APIV1AnalyticsAffixesCombinationsGetResDefault{
-		StatusCode: http.StatusNotImplemented,
-		Data: api.ErrorResponse{
-			Error: api.ErrorResponseError{
-				Code:    "NOT_IMPLEMENTED",
-				Message: "Combination analytics not yet implemented",
+	// Get combination analytics from telemetry collector
+	combinationData, err := h.service.telemetryCollector.GetAffixCombinations(ctx, params)
+	if err != nil {
+		h.service.logger.Error("Failed to get affix combination analytics", zap.Error(err))
+		return &api.APIV1AnalyticsAffixesCombinationsGetResDefault{
+			StatusCode: http.StatusInternalServerError,
+			Data: api.ErrorResponse{
+				Error: api.ErrorResponseError{
+					Code:    "ANALYTICS_ERROR",
+					Message: "Failed to retrieve combination analytics",
+				},
 			},
-		},
+		}, nil
+	}
+
+	// Record successful analytics operation
+	h.service.gameplayOperations.WithLabelValues("analytics_combinations", "success").Inc()
+
+	return &api.CombinationAnalysisResponse{
+		Combinations: combinationData.Combinations,
 	}, nil
 }

@@ -443,3 +443,4 @@ func (r *ticketRepository) queryTickets(ctx context.Context, query string, args 
 
 	return tickets, nil
 }
+

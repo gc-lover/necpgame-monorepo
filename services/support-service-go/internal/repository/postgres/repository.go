@@ -252,3 +252,4 @@ func NewSLARepositoryWithTx(tx *sql.Tx) repository.SLARepository {
 
 // Transaction repository implementations (similar to regular ones but using tx instead of db)
 // ... (implementing the same methods but using t.tx instead of r.db)
+

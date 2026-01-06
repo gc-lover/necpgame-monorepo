@@ -541,6 +541,80 @@ func (s *Service) performGuildDisband(ctx context.Context, guildID uuid.UUID) er
 	return nil
 }
 
+// ApplyForGuildMembership creates a new membership application
+func (s *Service) ApplyForGuildMembership(ctx context.Context, guildID, applicantID uuid.UUID, req *api.GuildApplicationRequest) (*api.GuildApplicationResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "Service.ApplyForGuildMembership")
+	defer span.End()
+
+	// Check if guild exists and is recruiting
+	guild, err := s.guildRepo.GetByID(ctx, guildID)
+	if err != nil {
+		return nil, errors.Wrap(err, "get guild")
+	}
+
+	if !guild.IsRecruiting.Value {
+		return nil, errors.New("guild is not currently recruiting")
+	}
+
+	// Check if user is already a member
+	isMember, err := s.memberRepo.IsUserInGuild(ctx, applicantID, guildID)
+	if err != nil {
+		return nil, errors.Wrap(err, "check existing membership")
+	}
+	if isMember {
+		return nil, errors.New("user is already a member of this guild")
+	}
+
+	// Check if user already has a pending application
+	hasPending, err := s.hasPendingApplication(ctx, applicantID, guildID)
+	if err != nil {
+		return nil, errors.Wrap(err, "check pending applications")
+	}
+	if hasPending {
+		return nil, errors.New("user already has a pending application for this guild")
+	}
+
+	// Create application
+	application := &api.GuildApplicationResponse{
+		ID:              uuid.New(),
+		GuildID:         guildID,
+		ApplicantID:     applicantID,
+		ApplicationText: req.ApplicationText,
+		Status:          api.GuildApplicationResponseStatusPending,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+
+	// Store in database
+	if err := s.createApplication(ctx, application); err != nil {
+		s.guildErrors.WithLabelValues("database", "create_application").Inc()
+		return nil, errors.Wrap(err, "create application")
+	}
+
+	s.guildOperations.WithLabelValues("apply_membership", "success").Inc()
+
+	s.logger.Info("Guild membership application created",
+		zap.String("application_id", application.ID.String()),
+		zap.String("guild_id", guildID.String()),
+		zap.String("applicant_id", applicantID.String()))
+
+	return application, nil
+}
+
+// hasPendingApplication checks if user has pending application for guild
+func (s *Service) hasPendingApplication(ctx context.Context, userID, guildID uuid.UUID) (bool, error) {
+	// TODO: Implement database check for pending applications
+	// For now, return false
+	return false, nil
+}
+
+// createApplication stores application in database
+func (s *Service) createApplication(ctx context.Context, application *api.GuildApplicationResponse) error {
+	// TODO: Implement database insertion
+	// For now, just simulate success
+	return nil
+}
+
 // Member management methods
 
 // InviteGuildMember sends guild membership invitation

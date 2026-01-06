@@ -1,0 +1,486 @@
+openapi: 3.0.3
+info:
+  title: Data Synchronization Service API
+  description: |
+    Service for real-time data synchronization between game layers and mechanics.
+    Provides event-driven synchronization, conflict resolution, and consistency management.
+  version: 1.0.0
+  contact:
+    name: Backend Team
+    email: backend@necp.game
+
+servers:
+  - url: https://api.necp.game/v1/data-sync
+    description: Production server
+  - url: http://localhost:8080/v1/data-sync
+    description: Local development
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Synchronization
+    description: Data synchronization operations
+  - name: Conflicts
+    description: Conflict detection and resolution
+  - name: State
+    description: State management operations
+  - name: Events
+    description: Event processing and streaming
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Service health check
+      description: Returns service health status with synchronization metrics
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/sync/state:
+    get:
+      tags: [State]
+      summary: Get synchronization state
+      description: Retrieve current synchronization state for a given key
+      operationId: getSyncState
+      parameters:
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Synchronization key
+        - name: category
+          in: query
+          required: true
+          schema:
+            type: string
+          description: State category
+      responses:
+        '200':
+          description: Synchronization state retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncStateResponse'
+        '404':
+          description: State not found
+        '500':
+          description: Internal server error
+
+    post:
+      tags: [State]
+      summary: Update synchronization state
+      description: Update synchronization state with conflict resolution
+      operationId: updateSyncState
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSyncStateRequest'
+      responses:
+        '200':
+          description: State updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncStateResponse'
+        '409':
+          description: Conflict detected - requires resolution
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictResponse'
+        '500':
+          description: Internal server error
+
+  /api/v1/sync/conflicts:
+    get:
+      tags: [Conflicts]
+      summary: Get unresolved conflicts
+      description: Retrieve list of unresolved synchronization conflicts
+      operationId: getConflicts
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of conflicts to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of conflicts to skip
+      responses:
+        '200':
+          description: Conflicts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictsListResponse'
+        '500':
+          description: Internal server error
+
+    post:
+      tags: [Conflicts]
+      summary: Resolve conflict
+      description: Manually resolve a synchronization conflict
+      operationId: resolveConflict
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveConflictRequest'
+      responses:
+        '200':
+          description: Conflict resolved successfully
+        '404':
+          description: Conflict not found
+        '400':
+          description: Invalid resolution data
+        '500':
+          description: Internal server error
+
+  /api/v1/sync/events/stream:
+    get:
+      tags: [Events]
+      summary: Stream synchronization events
+      description: |
+        WebSocket endpoint for real-time synchronization events.
+        Provides live updates of state changes and conflict detections.
+      operationId: streamSyncEvents
+      parameters:
+        - name: categories
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Event categories to subscribe to
+        - name: keys
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Specific keys to monitor
+      responses:
+        '101':
+          description: WebSocket connection established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventStreamMessage'
+
+  /api/v1/sync/saga:
+    post:
+      tags: [Synchronization]
+      summary: Start synchronization saga
+      description: Initiate a distributed synchronization saga across multiple services
+      operationId: startSyncSaga
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartSagaRequest'
+      responses:
+        '202':
+          description: Saga started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SagaResponse'
+        '400':
+          description: Invalid saga request
+        '500':
+          description: Internal server error
+
+  /api/v1/sync/saga/{sagaId}:
+    get:
+      tags: [Synchronization]
+      summary: Get saga status
+      description: Retrieve current status of a synchronization saga
+      operationId: getSagaStatus
+      parameters:
+        - name: sagaId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Saga ID
+      responses:
+        '200':
+          description: Saga status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SagaStatusResponse'
+        '404':
+          description: Saga not found
+        '500':
+          description: Internal server error
+
+    delete:
+      tags: [Synchronization]
+      summary: Cancel saga
+      description: Cancel a running synchronization saga
+      operationId: cancelSaga
+      parameters:
+        - name: sagaId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Saga ID
+      responses:
+        '200':
+          description: Saga cancelled successfully
+        '404':
+          description: Saga not found
+        '409':
+          description: Saga cannot be cancelled
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        uptime:
+          type: integer
+          description: Uptime in seconds
+        metrics:
+          type: object
+          properties:
+            active_connections:
+              type: integer
+            pending_events:
+              type: integer
+            unresolved_conflicts:
+              type: integer
+            sync_latency_ms:
+              type: number
+            throughput_events_per_sec:
+              type: number
+        services:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [up, down, degraded]
+
+    SyncStateResponse:
+      type: object
+      properties:
+        key:
+          type: string
+        category:
+          type: string
+        value:
+          type: object
+          additionalProperties: true
+        version:
+          type: integer
+        updated_at:
+          type: string
+          format: date-time
+        updated_by:
+          type: string
+          format: uuid
+
+    UpdateSyncStateRequest:
+      type: object
+      required: [key, category, value]
+      properties:
+        key:
+          type: string
+        category:
+          type: string
+        value:
+          type: object
+          additionalProperties: true
+        expected_version:
+          type: integer
+          description: Optimistic locking version
+
+    ConflictResponse:
+      type: object
+      properties:
+        conflict_id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        category:
+          type: string
+        conflict_type:
+          type: string
+          enum: [version_conflict, data_conflict, logical_conflict]
+        old_value:
+          type: object
+          additionalProperties: true
+        new_value:
+          type: object
+          additionalProperties: true
+        detected_at:
+          type: string
+          format: date-time
+        suggested_resolution:
+          type: object
+          additionalProperties: true
+
+    ConflictsListResponse:
+      type: object
+      properties:
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConflictResponse'
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+
+    ResolveConflictRequest:
+      type: object
+      required: [conflict_id, resolution_strategy]
+      properties:
+        conflict_id:
+          type: string
+          format: uuid
+        resolution_strategy:
+          type: string
+          enum: [accept_new, accept_old, merge, custom]
+        resolution_data:
+          type: object
+          additionalProperties: true
+
+    EventStreamMessage:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [state_update, conflict_detected, saga_update, health_check]
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: object
+          additionalProperties: true
+
+    StartSagaRequest:
+      type: object
+      required: [saga_type, steps]
+      properties:
+        saga_type:
+          type: string
+          enum: [player_transfer, guild_merge, world_event, data_migration]
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              service:
+                type: string
+              operation:
+                type: string
+              payload:
+                type: object
+                additionalProperties: true
+              timeout_ms:
+                type: integer
+                minimum: 1000
+                maximum: 300000
+        compensation_steps:
+          type: array
+          items:
+            type: object
+            properties:
+              service:
+                type: string
+              operation:
+                type: string
+              payload:
+                type: object
+                additionalProperties: true
+
+    SagaResponse:
+      type: object
+      properties:
+        saga_id:
+          type: string
+          format: uuid
+        saga_type:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, completed, failed, cancelled]
+        created_at:
+          type: string
+          format: date-time
+
+    SagaStatusResponse:
+      type: object
+      properties:
+        saga_id:
+          type: string
+          format: uuid
+        saga_type:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, completed, failed, cancelled]
+        current_step:
+          type: integer
+        total_steps:
+          type: integer
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        error_message:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []

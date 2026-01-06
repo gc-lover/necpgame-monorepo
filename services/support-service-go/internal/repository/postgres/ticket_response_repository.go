@@ -135,3 +135,4 @@ func (r *ticketResponseRepository) Delete(ctx context.Context, id uuid.UUID) err
 
 	return nil
 }
+

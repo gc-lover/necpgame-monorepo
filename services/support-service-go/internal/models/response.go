@@ -54,3 +54,4 @@ type TicketResponseListResponse struct {
 		TotalPages int `json:"total_pages"`
 	} `json:"pagination"`
 }
+

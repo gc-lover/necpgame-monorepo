@@ -1,0 +1,987 @@
+openapi: 3.0.3
+info:
+  title: Time Trials Service API - Enterprise-Grade Domain Service
+  description: "**Enterprise-Grade Time Trials API for NECPGAME**
+
+    This API manages competitive time-based challenges, speedrun mechanics, and leaderboard systems,
+    providing players with competitive gameplay experiences and achievement tracking.
+
+    ## Key Features
+
+    - **Trial Management**: Full CRUD operations for time trial configurations with validation
+    - **Timer Engine**: High-precision timing with server-side validation and anti-cheat protection
+    - **Leaderboard System**: Real-time rankings, personal records, and seasonal competitions
+    - **Reward Distribution**: Automated reward calculation and distribution based on performance
+    - **Analytics**: Comprehensive telemetry for competitive gameplay insights
+    - **Live Updates**: WebSocket integration for real-time leaderboard updates and live timing
+
+    ## Domain Purpose
+
+    The Time Trials domain provides competitive speedrunning mechanics for raids, dungeons, and special challenges,
+    creating engaging competitive gameplay with fair play validation and rewarding achievements.
+
+    ## Performance Targets
+
+    - P99 Latency: <30ms for timer operations, <10ms for leaderboard queries
+    - Memory: <5MB for trial configurations, <2KB per active trial session
+    - Concurrent trials: 5000+ simultaneous time trials with real-time tracking
+    - Response time: <50ms P95 for API endpoints, <5ms for timer queries
+
+    ## Security Features
+
+    - Server-side time validation (zero trust model for timing)
+    - Anti-cheat protection for speedrun manipulation
+    - Audit trails for all trial operations and rewards
+    - Rate limiting for leaderboard queries and trial starts
+
+    ## Integration Points
+
+    - **Gameplay Service**: Trial configuration and content integration
+    - **Leaderboard Service**: Rankings management and statistics aggregation
+    - **Achievement Service**: Trial completion achievements and rewards
+    - **Analytics Service**: Performance metrics and competitive insights
+    - **Realtime Gateway**: WebSocket synchronization for live timing and updates
+    - **Economy Service**: Reward distribution and currency management
+
+    ## Trial Types
+
+    - **Speedrun Raids**: Competitive raid completion with time tracking
+    - **Time Attack Dungeons**: Dungeon speed challenges with tiered rewards
+    - **Weekly Challenges**: Limited-time competitive events
+    - **Seasonal Trials**: Special event-based time challenges
+
+    ## Validation System
+
+    Server-side validation ensures fair play with comprehensive anti-cheat measures,
+    including route validation, timing verification, and community reporting systems.
+
+    "
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@time-trials.necpgame.com
+servers:
+  - url: https://api.necpgame.com/v1/time-trials
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/time-trials
+    description: Staging server
+  - url: http://localhost:8085/api/v1/time-trials
+    description: Local development server
+security:
+  - bearerAuth: []
+tags:
+  - name: Trial Management
+    description: Core time trial CRUD operations and configuration
+  - name: Timer Engine
+    description: High-precision timing operations and session management
+  - name: Leaderboard System
+    description: Rankings, personal records, and competitive statistics
+  - name: Reward System
+    description: Achievement tracking and reward distribution
+  - name: Analytics
+    description: Trial performance and competitive metrics
+  - name: Health Monitoring
+    description: System health and performance monitoring
+  - name: Validation System
+    description: Anti-cheat validation and fair play enforcement
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for API authentication
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          enum: [VALIDATION_ERROR, NOT_FOUND, UNAUTHORIZED, FORBIDDEN, INTERNAL_ERROR, TIMEOUT]
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+
+    SuccessResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          description: Response data
+        metadata:
+          type: object
+          description: Response metadata
+
+    TimeTrial:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - content_id
+        - difficulty
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique trial identifier
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Trial display name
+        description:
+          type: string
+          maxLength: 500
+          description: Trial description
+        type:
+          type: string
+          enum: [speedrun_raid, time_attack_dungeon, weekly_challenge, seasonal_trial]
+          description: Trial type
+        content_id:
+          type: string
+          description: Reference to game content (raid/dungeon ID)
+        difficulty:
+          type: string
+          enum: [normal, heroic, mythic, legendary]
+          description: Trial difficulty level
+        status:
+          type: string
+          enum: [active, inactive, deprecated]
+          description: Trial status
+        time_limit:
+          type: integer
+          minimum: 0
+          description: Time limit in seconds (0 = unlimited)
+        min_players:
+          type: integer
+          minimum: 1
+          maximum: 40
+          description: Minimum players required
+        max_players:
+          type: integer
+          minimum: 1
+          maximum: 40
+          description: Maximum players allowed
+        rewards:
+          $ref: '#/components/schemas/TrialRewards'
+        validation_rules:
+          $ref: '#/components/schemas/ValidationRules'
+        created_at:
+          type: string
+          format: date-time
+          description: Trial creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Trial last update timestamp
+
+    TrialRewards:
+      type: object
+      properties:
+        bronze_time:
+          type: integer
+          minimum: 0
+          description: Bronze tier completion time (seconds)
+        silver_time:
+          type: integer
+          minimum: 0
+          description: Silver tier completion time (seconds)
+        gold_time:
+          type: integer
+          minimum: 0
+          description: Gold tier completion time (seconds)
+        platinum_time:
+          type: integer
+          minimum: 0
+          description: Platinum tier completion time (seconds)
+        bronze_rewards:
+          $ref: '#/components/schemas/RewardTiers'
+        silver_rewards:
+          $ref: '#/components/schemas/RewardTiers'
+        gold_rewards:
+          $ref: '#/components/schemas/RewardTiers'
+        platinum_rewards:
+          $ref: '#/components/schemas/RewardTiers'
+
+    RewardTiers:
+      type: object
+      properties:
+        experience:
+          type: integer
+          minimum: 0
+          description: Experience points
+        currency:
+          type: object
+          description: Currency rewards
+          properties:
+            gold:
+              type: integer
+              minimum: 0
+            seasonal_tokens:
+              type: integer
+              minimum: 0
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+              quantity:
+                type: integer
+                minimum: 1
+          description: Item rewards
+        achievements:
+          type: array
+          items:
+            type: string
+          description: Achievement IDs to unlock
+
+    ValidationRules:
+      type: object
+      properties:
+        allow_cheats:
+          type: boolean
+          default: false
+          description: Whether cheats are allowed
+        validate_route:
+          type: boolean
+          default: true
+          description: Whether route validation is required
+        min_completion_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 100
+          description: Minimum completion percentage required
+        allowed_modifiers:
+          type: array
+          items:
+            type: string
+            enum: [speed_boost, damage_mod, health_mod, ability_mod]
+          description: Allowed game modifiers
+
+    TrialSession:
+      type: object
+      required:
+        - id
+        - trial_id
+        - player_id
+        - status
+        - start_time
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Session unique identifier
+        trial_id:
+          type: string
+          format: uuid
+          description: Reference to time trial
+        player_id:
+          type: string
+          description: Player identifier
+        party_id:
+          type: string
+          format: uuid
+          description: Party/group identifier
+        status:
+          type: string
+          enum: [starting, active, paused, completed, failed, invalidated]
+          description: Session status
+        start_time:
+          type: string
+          format: date-time
+          description: Session start timestamp
+        end_time:
+          type: string
+          format: date-time
+          description: Session end timestamp
+        completion_time:
+          type: integer
+          minimum: 0
+          description: Total completion time in seconds
+        progress_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Completion percentage
+        validation_status:
+          type: string
+          enum: [pending, valid, invalid, disputed]
+          description: Validation status
+        metadata:
+          type: object
+          description: Additional session data
+
+    LeaderboardEntry:
+      type: object
+      required:
+        - player_id
+        - completion_time
+        - rank
+      properties:
+        player_id:
+          type: string
+          description: Player identifier
+        player_name:
+          type: string
+          description: Player display name
+        completion_time:
+          type: integer
+          minimum: 0
+          description: Completion time in seconds
+        rank:
+          type: integer
+          minimum: 1
+          description: Current rank
+        rank_change:
+          type: integer
+          description: Rank change from previous period
+        completed_at:
+          type: string
+          format: date-time
+          description: Completion timestamp
+        party_size:
+          type: integer
+          minimum: 1
+          description: Party size
+        trial_difficulty:
+          type: string
+          enum: [normal, heroic, mythic, legendary]
+          description: Trial difficulty
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns service health status and basic metrics
+      tags:
+        - Health Monitoring
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - timestamp
+                  - version
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  metrics:
+                    type: object
+                    properties:
+                      active_sessions:
+                        type: integer
+                        minimum: 0
+                        description: Number of active trial sessions
+                      total_trials:
+                        type: integer
+                        minimum: 0
+                        description: Total configured trials
+                      avg_response_time:
+                        type: number
+                        minimum: 0
+                        description: Average response time in milliseconds
+
+  /trials:
+    get:
+      summary: List time trials
+      description: Retrieve paginated list of available time trials with filtering options
+      tags:
+        - Trial Management
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, deprecated]
+          description: Filter by trial status
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [speedrun_raid, time_attack_dungeon, weekly_challenge, seasonal_trial]
+          description: Filter by trial type
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum: [normal, heroic, mythic, legendary]
+          description: Filter by difficulty
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of results per page
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - trials
+                  - total
+                  - limit
+                  - offset
+                properties:
+                  trials:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TimeTrial'
+                  total:
+                    type: integer
+                    minimum: 0
+                    description: Total number of trials matching criteria
+                  limit:
+                    type: integer
+                    description: Results per page
+                  offset:
+                    type: integer
+                    description: Pagination offset
+
+    post:
+      summary: Create time trial
+      description: Create a new time trial configuration (admin only)
+      tags:
+        - Trial Management
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeTrial'
+      responses:
+        "201":
+          description: Trial created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeTrial'
+        "400":
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trials/{trialId}:
+    get:
+      summary: Get time trial details
+      description: Retrieve detailed information about a specific time trial
+      tags:
+        - Trial Management
+      parameters:
+        - name: trialId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Time trial identifier
+      responses:
+        "200":
+          description: Trial details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeTrial'
+        "404":
+          description: Trial not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update time trial
+      description: Update an existing time trial configuration (admin only)
+      tags:
+        - Trial Management
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: trialId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Time trial identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeTrial'
+      responses:
+        "200":
+          description: Trial updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeTrial'
+        "400":
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Trial not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trials/{trialId}/start:
+    post:
+      summary: Start time trial session
+      description: Initialize a new time trial session for the authenticated player
+      tags:
+        - Timer Engine
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: trialId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Time trial identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                party_id:
+                  type: string
+                  format: uuid
+                  description: Party identifier for group trials
+                custom_settings:
+                  type: object
+                  description: Custom trial settings
+      responses:
+        "201":
+          description: Trial session started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - session
+                  - server_time
+                properties:
+                  session:
+                    $ref: '#/components/schemas/TrialSession'
+                  server_time:
+                    type: string
+                    format: date-time
+                    description: Server timestamp for synchronization
+        "400":
+          description: Cannot start trial (already active, invalid party, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Trial not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trials/{trialId}/complete:
+    post:
+      summary: Complete time trial session
+      description: Submit completion data for an active time trial session
+      tags:
+        - Timer Engine
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: trialId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Time trial identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - completion_time
+                - progress_percentage
+              properties:
+                completion_time:
+                  type: integer
+                  minimum: 0
+                  description: Total completion time in seconds
+                progress_percentage:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                  description: Completion percentage
+                telemetry_data:
+                  type: object
+                  description: Additional telemetry and validation data
+                party_members:
+                  type: array
+                  items:
+                    type: string
+                  description: List of party member IDs
+      responses:
+        "200":
+          description: Trial completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - session
+                  - rewards
+                  - leaderboard_rank
+                properties:
+                  session:
+                    $ref: '#/components/schemas/TrialSession'
+                  rewards:
+                    $ref: '#/components/schemas/RewardTiers'
+                  leaderboard_rank:
+                    type: integer
+                    minimum: 0
+                    description: New leaderboard rank (0 = not ranked)
+                  validation_status:
+                    type: string
+                    enum: [pending, valid, invalid]
+                    description: Initial validation status
+        "400":
+          description: Invalid completion data or session state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /leaderboards/{trialId}:
+    get:
+      summary: Get trial leaderboard
+      description: Retrieve leaderboard rankings for a specific time trial
+      tags:
+        - Leaderboard System
+      parameters:
+        - name: trialId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Time trial identifier
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, all_time, seasonal]
+            default: all_time
+          description: Time period for rankings
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of top results to return
+        - name: player_id
+          in: query
+          schema:
+            type: string
+          description: Filter for specific player's ranking context
+      responses:
+        "200":
+          description: Leaderboard retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - trial_id
+                  - timeframe
+                  - entries
+                  - total_entries
+                properties:
+                  trial_id:
+                    type: string
+                    format: uuid
+                  timeframe:
+                    type: string
+                    enum: [daily, weekly, monthly, all_time, seasonal]
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+                  total_entries:
+                    type: integer
+                    minimum: 0
+                    description: Total number of valid completions
+                  last_updated:
+                    type: string
+                    format: date-time
+                    description: Last leaderboard update timestamp
+
+  /leaderboards/{trialId}/personal/{playerId}:
+    get:
+      summary: Get player's personal record
+      description: Retrieve a specific player's best time and ranking for a trial
+      tags:
+        - Leaderboard System
+      parameters:
+        - name: trialId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Time trial identifier
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Player identifier
+      responses:
+        "200":
+          description: Personal record retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - player_id
+                  - trial_id
+                  - personal_best
+                  - current_rank
+                  - rank_history
+                properties:
+                  player_id:
+                    type: string
+                  trial_id:
+                    type: string
+                    format: uuid
+                  personal_best:
+                    type: object
+                    properties:
+                      completion_time:
+                        type: integer
+                        minimum: 0
+                      achieved_at:
+                        type: string
+                        format: date-time
+                      difficulty:
+                        type: string
+                        enum: [normal, heroic, mythic, legendary]
+                  current_rank:
+                    type: integer
+                    minimum: 0
+                    description: Current global rank (0 = unranked)
+                  rank_history:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                        rank:
+                          type: integer
+                          minimum: 0
+                    description: Rank history for the last 30 days
+
+  /analytics/trials/{trialId}/performance:
+    get:
+      summary: Get trial performance analytics
+      description: Retrieve performance metrics and statistics for a time trial
+      tags:
+        - Analytics
+      parameters:
+        - name: trialId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Time trial identifier
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, seasonal]
+            default: weekly
+          description: Analytics timeframe
+      responses:
+        "200":
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - trial_id
+                  - timeframe
+                  - metrics
+                properties:
+                  trial_id:
+                    type: string
+                    format: uuid
+                  timeframe:
+                    type: string
+                  metrics:
+                    type: object
+                    properties:
+                      total_completions:
+                        type: integer
+                        minimum: 0
+                      average_completion_time:
+                        type: number
+                        minimum: 0
+                      fastest_time:
+                        type: integer
+                        minimum: 0
+                      slowest_time:
+                        type: integer
+                        minimum: 0
+                      completion_rate:
+                        type: number
+                        minimum: 0
+                        maximum: 1
+                        description: Percentage of started trials that were completed
+                      difficulty_distribution:
+                        type: object
+                        properties:
+                          normal:
+                            type: integer
+                            minimum: 0
+                          heroic:
+                            type: integer
+                            minimum: 0
+                          mythic:
+                            type: integer
+                            minimum: 0
+                          legendary:
+                            type: integer
+                            minimum: 0
+
+  /validation/sessions/{sessionId}/report:
+    post:
+      summary: Report suspicious trial session
+      description: Allow players to report potentially cheated trial sessions
+      tags:
+        - Validation System
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Trial session identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  enum: [speed_hack, route_exploit, invalid_completion, other]
+                  description: Reason for reporting
+                details:
+                  type: string
+                  maxLength: 500
+                  description: Additional details about the suspicion
+                evidence:
+                  type: array
+                  items:
+                    type: string
+                  description: Links to evidence (screenshots, videos)
+      responses:
+        "202":
+          description: Report submitted for review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        "400":
+          description: Invalid report data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

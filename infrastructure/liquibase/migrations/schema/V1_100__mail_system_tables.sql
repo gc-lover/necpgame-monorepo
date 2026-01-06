@@ -126,3 +126,4 @@ CREATE TRIGGER update_mail_reports_updated_at BEFORE UPDATE ON mail_reports
 
 
 
+

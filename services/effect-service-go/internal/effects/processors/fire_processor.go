@@ -7,7 +7,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/necpgame/necpgame/services/effect-service-go/internal/effects/types"
+	"necpgame/services/effect-service-go/internal/effects/types"
 )
 
 // Issue: #143577551

@@ -1,0 +1,759 @@
+openapi: 3.0.3
+info:
+  title: Inventory Service API - Enterprise-Grade Player Inventory Management
+  description: '**Enterprise-Grade Inventory Service API for NECPGAME**
+
+
+    Comprehensive player inventory management system with advanced item operations,
+
+    equipment management, and inventory optimization for the MMOFPS RPG ecosystem.
+
+
+    ## Key Features
+
+
+    - **Enterprise-grade architecture** with proper domain separation and CQRS patterns
+
+    - **Backend optimization hints** for struct alignment and performance (30-50%
+    memory savings)
+
+    - **Complete validation** with redocly and ogen code generation compatibility
+
+    - **Security-first approach** with JWT authentication and anti-cheat validation
+
+    - **Performance-optimized** response structures with field ordering for memory
+    efficiency
+
+
+    ## Domain Purpose
+
+
+    The Inventory Service provides comprehensive inventory operations for NECPGAME
+    players,
+
+    managing items, equipment, consumables, inventory capacity, item durability, and
+
+    integration with trading, crafting, and combat systems. Supports high-throughput
+
+    operations critical for MMOFPS gameplay.
+
+
+    ## Performance Targets
+
+
+    - P99 Latency: <25ms for hot inventory operations (equipment swaps, item usage)
+
+    - P99 Latency: <75ms for complex operations (inventory sorting, bulk operations)
+
+    - Memory: <15KB per active inventory session with pooling optimization
+
+    - Concurrent users: 50,000+ simultaneous inventory operations
+
+    - Item operations: 10,000+ operations/minute sustained throughput
+
+    - Data consistency: Event-sourced with CQRS patterns and optimistic locking
+
+    - Cache hit rate: 95%+ for frequently accessed items
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/inventory
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/inventory
+  description: Staging server
+- url: http://localhost:8129/api/v1/inventory
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Inventory Management
+  description: Core inventory operations
+- name: Equipment Management
+  description: Equipment and gear operations
+- name: Health Monitoring
+  description: Health check and monitoring endpoints
+paths:
+  /health:
+    get:
+      operationId: HealthCheck
+      summary: Health check endpoint
+      description: '**System Health Check**
+
+
+        Returns service health status and basic system information.
+
+        Used for load balancer health checks and monitoring systems.
+
+
+        **Performance:** Sub-millisecond response time
+
+        **Caching:** No caching required
+
+        '
+      tags:
+      - Health Monitoring
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /api/v1/inventory/{playerId}/items:
+    get:
+      operationId: GetPlayerInventory
+      summary: Get player inventory
+      description: '**Get Player Inventory**
+
+
+        Retrieves complete player inventory with items, equipment, and metadata.
+
+        Supports filtering and pagination for large inventories.
+
+
+        **BACKEND NOTE:** Use memory-pooled response structures for high-throughput
+        operations.
+
+        **Performance:** P99 <75ms for full inventory retrieval
+
+        **Caching:** Redis cache with 95%+ hit rate
+
+        '
+      tags:
+      - Inventory Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player UUID
+      - name: filter
+        in: query
+        schema:
+          type: string
+          enum:
+          - all
+          - equipped
+          - unequipped
+          - consumable
+          - weapon
+          - armor
+          default: all
+        description: Inventory filter
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Items per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
+      responses:
+        '200':
+          description: Inventory retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+    post:
+      operationId: AddItem
+      summary: Add item to inventory
+      description: '**Add Item to Inventory**
+
+
+        Adds a new item to player''s inventory with stack count validation.
+
+        Handles stack merging, capacity checks, and inventory overflow.
+
+
+        **BACKEND NOTE:** Use optimistic locking for concurrent inventory operations.
+
+        **Performance:** P99 <25ms for single item operations
+
+        **Validation:** Anti-cheat validation for item legitimacy
+
+        '
+      tags:
+      - Inventory Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddItemRequest'
+      responses:
+        '200':
+          description: Item added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddItemResponse'
+        '400':
+          description: Invalid item data or inventory full
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /api/v1/inventory/{playerId}/equipment:
+    get:
+      operationId: GetPlayerEquipment
+      summary: Get player equipment
+      description: '**Get Player Equipment**
+
+
+        Retrieves player''s equipped items and gear configuration.
+
+        Used for character display and combat calculations.
+
+
+        **BACKEND NOTE:** Cache equipment state for combat performance.
+
+        **Performance:** P99 <15ms for equipment retrieval
+
+        **Caching:** In-memory cache with equipment hash validation
+
+        '
+      tags:
+      - Equipment Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player UUID
+      responses:
+        '200':
+          description: Equipment retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentResponse'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+  /api/v1/inventory/{playerId}/equipment/{itemId}:
+    put:
+      operationId: EquipItem
+      summary: Equip item
+      description: '**Equip Item**
+
+
+        Equips an item from inventory to specified equipment slot.
+
+        Handles equipment conflicts and stat calculations.
+
+
+        **BACKEND NOTE:** Update equipment hash for cache invalidation.
+
+        **Performance:** P99 <25ms for equipment swaps
+
+        **Validation:** Equipment compatibility and level requirements
+
+        '
+      tags:
+      - Equipment Management
+      parameters:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player UUID
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Item UUID to equip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EquipItemRequest'
+      responses:
+        '200':
+          description: Item equipped successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipItemResponse'
+        '400':
+          description: Invalid equipment slot or item incompatible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Player or item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: integer
+                    example: 500
+                    format: int32
+                    minimum: 100
+                    maximum: 599
+                  message:
+                    type: string
+                    example: Internal server error
+                    maxLength: 1000
+                  details:
+                    type: object
+                    description: Additional error details
+                description: Standard error response format
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      - version
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+          - down
+          example: ok
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        version:
+          type: string
+          example: 1.0.0
+        uptime:
+          type: integer
+          description: Uptime in seconds
+          example: 3600
+    ErrorResponse:
+      type: object
+      required:
+      - error
+      - message
+      - timestamp
+      properties:
+        error:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Invalid request parameters
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        details:
+          type: object
+          description: Additional error details
+    ItemType:
+      type: string
+      enum:
+      - weapon
+      - armor
+      - consumable
+      - material
+      - quest
+      example: weapon
+    ItemRarity:
+      type: string
+      enum:
+      - common
+      - uncommon
+      - rare
+      - epic
+      - legendary
+      example: rare
+    InventoryItem:
+      type: object
+      required:
+      - id
+      - item_id
+      - quantity
+      - item_type
+      - item_rarity
+      - is_equipped
+      - created_at
+      - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Inventory item ID
+          example: 550e8400-e29b-41d4-a716-446655440000
+        player_id:
+          type: string
+          format: uuid
+          description: Player ID
+          example: 550e8400-e29b-41d4-a716-446655440001
+        item_id:
+          type: string
+          format: uuid
+          description: Item template ID
+          example: 550e8400-e29b-41d4-a716-446655440002
+        quantity:
+          type: integer
+          minimum: 1
+          description: Item quantity in stack
+          example: 1
+        stack_count:
+          type: integer
+          minimum: 1
+          description: Maximum stack size for this item type
+          example: 64
+        item_type:
+          $ref: '#/components/schemas/ItemType'
+        item_rarity:
+          $ref: '#/components/schemas/ItemRarity'
+        is_equipped:
+          type: boolean
+          description: Whether item is currently equipped
+          example: false
+        slot_id:
+          type: string
+          description: Equipment slot ID if equipped
+          example: weapon_primary
+          nullable: true
+        durability:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Item durability percentage
+          example: 85
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+      description: '**BACKEND NOTE:** Struct alignment optimized for memory efficiency.
+
+        Order fields by size descending: pointers, int64, int32, int16, byte.
+
+        Total struct size: ~120 bytes with proper alignment.
+
+        '
+    AddItemRequest:
+      type: object
+      required:
+      - item_id
+      - stack_count
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Item template ID to add
+          example: 550e8400-e29b-41d4-a716-446655440002
+        stack_count:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Quantity to add (fixed field name for ogen compatibility)
+          example: 1
+      description: '**BACKEND NOTE:** Uses stack_count instead of quantity for ogen
+        type compatibility.
+
+        Validates against inventory capacity and item legitimacy.
+
+        '
+    AddItemResponse:
+      type: object
+      required:
+      - success
+      - item_id
+      - quantity
+      - stack_count
+      properties:
+        success:
+          type: boolean
+          example: true
+        item_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        quantity:
+          type: integer
+          minimum: 0
+          example: 1
+        stack_count:
+          type: integer
+          minimum: 0
+          example: 64
+        message:
+          type: string
+          example: Item added successfully
+      description: '**BACKEND NOTE:** Implements AddItemRes interface required by
+        ogen.
+
+        Provides detailed response for inventory operations.
+
+        '
+    EquipmentSlot:
+      type: string
+      enum:
+      - weapon_primary
+      - weapon_secondary
+      - armor_head
+      - armor_chest
+      - armor_legs
+      - armor_feet
+      - implant_neural
+      - implant_cybernetic
+      example: weapon_primary
+    EquipItemRequest:
+      type: object
+      required:
+      - slot_id
+      properties:
+        slot_id:
+          $ref: '#/components/schemas/EquipmentSlot'
+      description: '**BACKEND NOTE:** ItemID comes from URL path parameter for ogen
+        compatibility.
+
+        Slot validation ensures equipment compatibility.
+
+        '
+    EquipItemResponse:
+      type: object
+      required:
+      - success
+      - item_id
+      - slot_id
+      properties:
+        success:
+          type: boolean
+          example: true
+        item_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+        slot_id:
+          $ref: '#/components/schemas/EquipmentSlot'
+        message:
+          type: string
+          example: Item equipped successfully
+    InventoryResponse:
+      type: object
+      required:
+      - items
+      - total_count
+      - page
+      - limit
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItem'
+        total_count:
+          type: integer
+          minimum: 0
+          example: 150
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 50
+        has_more:
+          type: boolean
+          example: true
+      description: '**BACKEND NOTE:** Paginated response with memory-efficient item
+        array.
+
+        Supports filtering and sorting for large inventories.
+
+        '
+    EquipmentResponse:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItem'
+          description: Currently equipped items
+      description: '**BACKEND NOTE:** Fixed structure mismatch - items field contains
+        equipped InventoryItem objects.
+
+        Used for character display and combat calculations.
+
+        '

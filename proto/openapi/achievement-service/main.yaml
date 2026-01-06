@@ -1,0 +1,1908 @@
+openapi: 3.0.3
+info:
+  title: Achievement Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Achievement Management API for NECPGAME**
+
+    This API manages character achievements, progress tracking, and reward systems
+    in the Night City universe, providing comprehensive achievement lifecycle management,
+    real-time progress updates, and performance-based reward distribution.
+
+    ## Key Features
+
+    - **Achievement Tracking**: Real-time progress monitoring with event-driven updates
+    - **Reward Distribution**: Automated reward claiming and inventory integration
+    - **Progress Synchronization**: Cross-platform progress sync with conflict resolution
+    - **Achievement Analytics**: Performance metrics and player engagement tracking
+    - **Performance Optimized**: MMOFPS-grade performance with <10ms P99 latency -
+    **Struct Alignment**: 40-60% memory savings for achievement structs
+
+    ## Domain Purpose
+
+    The Achievement domain handles all character achievements and accomplishments
+    in Night City. Players unlock achievements that represent their mastery and progression
+    through the game world, earning rewards that enhance their capabilities and status.
+
+    ## Performance Targets
+
+    - P99 Latency: <10ms for achievement operations - Memory: <8KB per active achievement
+    session - Concurrent users: 75,000+ simultaneous achievement checks - Update frequency:
+    1000+ progress updates per second
+
+    '
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@achievement-tracking.necpgame.com
+servers:
+- url: https://api.necpgame.com/v1/achievement
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/achievement
+  description: Staging server
+- url: http://localhost:8080/api/v1/achievement
+  description: Local development server
+tags:
+- name: Achievement Management
+  description: Achievement lifecycle operations
+- name: Achievement Progress
+  description: Real-time progress tracking and updates
+- name: Achievement Rewards
+  description: Reward claiming and distribution
+- name: Achievement Analytics
+  description: Achievement statistics and leaderboards
+- name: Achievement Events
+  description: Achievement event processing and notifications
+- name: Anti-Cheat
+  description: Achievement validation and cheat prevention
+- name: AI Training
+  description: AI-powered achievement learning and adaptation
+- name: AI Recommendations
+  description: Personalized achievement recommendations
+paths:
+  /health:
+    get:
+      summary: Service health check
+      operationId: achievementHealthCheck
+      tags:
+      - Health
+      responses:
+        '200':
+          $ref: '#/components/responses/OK'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /achievements:
+    post:
+      summary: Create new achievement
+      operationId: achievementCreateAchievement
+      description: 'Create a new achievement with validation and metadata.
+
+        **BACKEND NOTE:** Admin-only operation, cached for performance. '
+      tags:
+      - Achievement Management
+      security:
+      - BearerAuth: []
+      - AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAchievementRequest'
+      responses:
+        '201':
+          description: Achievement created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    get:
+      summary: List achievements
+      operationId: achievementListAchievements
+      description: Get list of available achievements for a character or globally.
+      tags:
+      - Achievement Management
+      parameters:
+      - name: character_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Character ID (optional, returns unlocked achievements)
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - social
+          - progression
+          - collection
+          - challenge
+        description: Achievement category filter
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - locked
+          - unlocked
+          - completed
+        description: Achievement status filter
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Maximum number of achievements to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of achievements to skip
+      responses:
+        '200':
+          description: List of achievements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAchievementsResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /achievements/{achievement_id}:
+    get:
+      summary: Get achievement details
+      operationId: achievementGetAchievement
+      description: Get detailed information about a specific achievement.
+      tags:
+      - Achievement Management
+      parameters:
+      - name: achievement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement ID
+      - name: character_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Character ID for progress context
+      responses:
+        '200':
+          description: Achievement details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementResponse'
+        '404':
+          description: Achievement not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    put:
+      summary: Update achievement
+      operationId: achievementUpdateAchievement
+      description: 'Update achievement metadata and requirements.
+
+        **BACKEND NOTE:** Admin-only, cached invalidation required. '
+      tags:
+      - Achievement Management
+      security:
+      - BearerAuth: []
+      - AdminAuth: []
+      parameters:
+      - name: achievement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAchievementRequest'
+      responses:
+        '200':
+          description: Achievement updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Achievement not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    delete:
+      summary: Delete achievement
+      operationId: achievementDeleteAchievement
+      description: 'Delete an achievement and all associated progress.
+
+        **BACKEND NOTE:** Admin-only, cascade deletion with audit logging. '
+      tags:
+      - Achievement Management
+      security:
+      - BearerAuth: []
+      - AdminAuth: []
+      parameters:
+      - name: achievement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement ID
+      responses:
+        '204':
+          description: Achievement deleted successfully
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Achievement not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /achievements/{achievement_id}/progress:
+    get:
+      summary: Get achievement progress
+      operationId: achievementGetProgress
+      description: Get current progress for a specific achievement.
+      tags:
+      - Achievement Progress
+      parameters:
+      - name: achievement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement ID
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character ID
+      responses:
+        '200':
+          description: Achievement progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementProgressResponse'
+        '404':
+          description: Achievement or progress not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+    post:
+      summary: Update achievement progress
+      operationId: achievementUpdateProgress
+      description: 'Update progress for an achievement based on game events.
+
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations. '
+      tags:
+      - Achievement Progress
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProgressRequest'
+      responses:
+        '200':
+          description: Progress updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateProgressResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /achievements/{achievement_id}/unlock:
+    post:
+      summary: Unlock achievement
+      operationId: achievementUnlockAchievement
+      description: 'Manually unlock an achievement (admin/debug only).
+
+        **BACKEND NOTE:** Admin-only, used for testing and support. '
+      tags:
+      - Achievement Management
+      security:
+      - BearerAuth: []
+      - AdminAuth: []
+      parameters:
+      - name: achievement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockAchievementRequest'
+      responses:
+        '200':
+          description: Achievement unlocked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Achievement not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /achievements/{achievement_id}/rewards/claim:
+    post:
+      summary: Claim achievement rewards
+      operationId: achievementClaimRewards
+      description: 'Claim rewards for a completed achievement.
+
+        **BACKEND NOTE:** Transactional operation with inventory integration. '
+      tags:
+      - Achievement Rewards
+      parameters:
+      - name: achievement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimRewardsRequest'
+      responses:
+        '200':
+          description: Rewards claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimRewardsResponse'
+        '400':
+          description: Achievement not completed or rewards already claimed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Achievement not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Reward claiming conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /achievements/progress/batch:
+    post:
+      summary: Batch update progress
+      operationId: achievementBatchUpdateProgress
+      description: 'Update progress for multiple achievements in a single request.
+
+        **BACKEND NOTE:** Hot path for event-driven progress updates, batched processing. '
+      tags:
+      - Achievement Progress
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchUpdateProgressRequest'
+      responses:
+        '200':
+          description: Batch progress updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchUpdateProgressResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /achievements/analytics/summary:
+    get:
+      summary: Get achievement analytics
+      operationId: achievementGetAnalyticsSummary
+      description: Get aggregated achievement statistics and analytics.
+      tags:
+      - Achievement Analytics
+      parameters:
+      - name: character_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Character ID for personal analytics
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - day
+          - week
+          - month
+          - all
+          default: week
+        description: Time period for analytics
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - social
+          - progression
+          - collection
+          - challenge
+        description: Achievement category filter
+      responses:
+        '200':
+          description: Achievement analytics summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsSummaryResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /achievements/leaderboard:
+    get:
+      summary: Get achievement leaderboard
+      operationId: achievementGetLeaderboard
+      description: Get leaderboard rankings based on achievement completion.
+      tags:
+      - Achievement Analytics
+      parameters:
+      - name: achievement_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Specific achievement ID for leaderboard
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - social
+          - progression
+          - collection
+          - challenge
+        description: Achievement category for leaderboard
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - week
+          - month
+          - all
+          default: month
+        description: Time period for leaderboard
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of leaderboard entries
+      responses:
+        '200':
+          description: Achievement leaderboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /achievements/events/process:
+    post:
+      summary: Process achievement events
+      operationId: achievementProcessEvents
+      description: 'Process game events that may trigger achievement progress updates.
+
+        **BACKEND NOTE:** Event-driven hot path, optimized for high throughput. '
+      tags:
+      - Achievement Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessEventsRequest'
+      responses:
+        '200':
+          description: Events processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessEventsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /achievements/validate:
+    post:
+      summary: Validate achievement progress
+      operationId: achievementValidateProgress
+      description: 'Validate achievement progress for anti-cheat purposes.
+
+        **BACKEND NOTE:** Used for cheat detection and prevention. '
+      tags:
+      - Anti-Cheat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateProgressRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateProgressResponse'
+        '400':
+          description: Invalid validation request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /achievements/adaptive/train:
+    post:
+      summary: Submit achievement data for AI training
+      operationId: trainAchievementAI
+      description: 'Submit achievement completion patterns for adaptive AI learning.
+
+        **AI Integration:** Trains models for personalized achievement recommendations
+        and difficulty balancing.
+
+        **BACKEND NOTE:** Hot path for AI training data, batched processing.'
+      tags:
+      - AI Training
+      security:
+      - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json: null
+          schema:
+            $ref: '#/components/schemas/AchievementTrainingData'
+      responses:
+        '200':
+          description: Training data accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingResponse'
+        '400':
+          description: Invalid training data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /achievements/adaptive/recommend:
+    get:
+      summary: Get AI-powered achievement recommendations
+      operationId: getAchievementRecommendations
+      description: 'Get personalized achievement recommendations based on player style
+        and progress patterns.
+
+        **AI Integration:** Uses trained models for tactical suggestions and progression
+        guidance.'
+      tags:
+      - AI Recommendations
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character ID for personalization
+      - name: current_focus
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - social
+          - progression
+          - collection
+          - challenge
+        description: Current gameplay focus area
+      responses:
+        '200':
+          description: Achievement recommendations
+          content:
+            application/json: null
+            schema:
+              $ref: '#/components/schemas/AchievementRecommendations'
+        '404':
+          description: Character not found
+          content:
+            application/json: null
+            schema:
+              $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+components:
+  responses:
+    OK:
+      $ref: ../common-service/responses/success.yaml#/OK
+    Created:
+      $ref: ../common-service/responses/success.yaml#/Created
+    Updated:
+      $ref: ../common-service/responses/success.yaml#/Updated
+    Deleted:
+      $ref: ../common-service/responses/success.yaml#/Deleted
+    BadRequest:
+      $ref: ../common-service/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
+    NotFound:
+      $ref: ../common-service/responses/error.yaml#/NotFound
+    TooManyRequests:
+      $ref: ../common-service/responses/error.yaml#/TooManyRequests
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
+    AdminAuth:
+      type: http
+      scheme: bearer
+      description: Admin JWT Bearer token authentication
+  schemas:
+    Error:
+      $ref: ../common-service/schemas/error.yaml#/Error
+    Achievement:
+      allOf:
+      - $ref: ../common-service/schemas/common.yaml#/BaseEntity
+      - type: object
+        required:
+        - name
+        - category
+        - requirements
+        properties:
+          name:
+            type: string
+            description: Achievement display name
+            example: Cyberpsycho Hunter
+            maxLength: 100
+          description:
+            type: string
+            description: Achievement description
+            example: Defeat 100 cyberpsychos in Night City
+          category:
+            type: string
+            enum:
+            - combat
+            - exploration
+            - social
+            - progression
+            - collection
+            - challenge
+            description: Achievement category
+            example: combat
+          icon_url:
+            type: string
+            format: uri
+            description: Achievement icon URL
+          requirements:
+            type: array
+            items:
+              $ref: '#/components/schemas/AchievementRequirement'
+            description: 'BACKEND NOTE: Requirements array, optimized for validation'
+            minItems: 1
+          rewards:
+            type: array
+            items:
+              $ref: '#/components/schemas/AchievementReward'
+            description: Achievement rewards upon completion
+          is_hidden:
+            type: boolean
+            description: Whether achievement is hidden until unlocked
+          is_repeatable:
+            type: boolean
+            description: Whether achievement can be completed multiple times
+          max_completions:
+            type: integer
+            minimum: 1
+            description: Maximum number of times achievement can be completed
+          difficulty:
+            type: string
+            enum:
+            - easy
+            - medium
+            - hard
+            - legendary
+            description: Achievement difficulty level
+          points_value:
+            type: integer
+            minimum: 0
+            description: Achievement point value for leaderboards
+      - type: object
+        properties:
+          unlock_requirements:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: Prerequisite achievements that must be unlocked first
+            example:
+            - 123e4567-e89b-12d3-a456-426614174000
+          anti_cheat_token:
+            type: string
+            description: Token for anti-cheat validation
+          is_active:
+            type: boolean
+            description: Whether achievement is currently active
+      description: 'BACKEND NOTE: Achievement entity with domain inheritance (SOLID/DRY).'
+    AchievementRequirement:
+      type: object
+      required:
+      - type
+      - target_value
+      properties:
+        type:
+          type: string
+          enum:
+          - kill_count
+          - item_collect
+          - distance_traveled
+          - time_played
+          - level_reached
+          - quest_completed
+          - social_interaction
+          - combat_streak
+          - exploration_discovery
+          - currency_earned
+          description: Type of requirement
+        target_value:
+          type: integer
+          minimum: 0
+          description: Target value to reach
+          example: 100
+        target_entity:
+          type: string
+          format: uuid
+          description: Specific entity ID (enemy type, item, etc.)
+        condition:
+          type: string
+          description: Additional condition for requirement
+        description:
+          type: string
+          description: Human-readable requirement description
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (enums → integers
+        → strings).'
+    AchievementReward:
+      type: object
+      required:
+      - type
+      properties:
+        type:
+          type: string
+          enum:
+          - item
+          - currency
+          - experience
+          - title
+          - cosmetic
+          - ability
+          - reputation
+          description: Type of reward
+        item_id:
+          type: string
+          format: uuid
+          description: Item ID for item rewards
+        currency_type:
+          type: string
+          enum:
+          - eurodollars
+          - street_cred
+          - premium_currency
+          description: Currency type for currency rewards
+        amount:
+          type: integer
+          minimum: 0
+          description: Amount of currency/experience
+        title_name:
+          type: string
+          description: Title name for title rewards
+        cosmetic_id:
+          type: string
+          format: uuid
+          description: Cosmetic item ID
+        ability_id:
+          type: string
+          format: uuid
+          description: Ability ID to unlock
+      description: 'BACKEND NOTE: Union-like structure optimized for memory efficiency.'
+    CreateAchievementRequest:
+      type: object
+      required:
+      - name
+      - category
+      - requirements
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        category:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - social
+          - progression
+          - collection
+          - challenge
+        icon_url:
+          type: string
+          format: uri
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementRequirement'
+          minItems: 1
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementReward'
+        is_hidden:
+          type: boolean
+          default: false
+        is_repeatable:
+          type: boolean
+          default: false
+        max_completions:
+          type: integer
+          minimum: 1
+          default: 1
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - legendary
+          default: medium
+        points_value:
+          type: integer
+          minimum: 0
+          default: 10
+        unlock_requirements:
+          type: array
+          items:
+            type: string
+            format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (strings → arrays).'
+    UpdateAchievementRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        category:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - social
+          - progression
+          - collection
+          - challenge
+        icon_url:
+          type: string
+          format: uri
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementRequirement'
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementReward'
+        is_hidden:
+          type: boolean
+        is_repeatable:
+          type: boolean
+        max_completions:
+          type: integer
+          minimum: 1
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - legendary
+        points_value:
+          type: integer
+          minimum: 0
+        unlock_requirements:
+          type: array
+          items:
+            type: string
+            format: uuid
+        is_active:
+          type: boolean
+      description: 'BACKEND NOTE: Partial update request with optional fields.'
+    AchievementResponse:
+      type: object
+      required:
+      - achievement
+      properties:
+        achievement:
+          $ref: '#/components/schemas/Achievement'
+        progress:
+          $ref: '#/components/schemas/AchievementProgress'
+      description: 'BACKEND NOTE: Response with achievement and current progress.'
+    ListAchievementsResponse:
+      type: object
+      required:
+      - achievements
+      - total_count
+      properties:
+        pagination:
+          type: object
+          properties:
+            offset:
+              type: integer
+              format: int32
+            limit:
+              type: integer
+              format: int32
+            has_more:
+              type: boolean
+          description: Pagination information
+        achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementResponse'
+          description: 'BACKEND NOTE: Array of achievement responses, ordered for
+            optimal struct layout'
+        total_count:
+          type: integer
+          format: int32
+          description: Total number of achievements available
+        filters_applied:
+          type: object
+          properties:
+            category:
+              type: string
+            status:
+              type: string
+          description: Applied filters for this request
+      description: 'BACKEND NOTE: Response optimized for struct alignment with large
+        arrays first.'
+    AchievementProgress:
+      type: object
+      required:
+      - achievement_id
+      - character_id
+      - current_value
+      - target_value
+      - is_completed
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        current_value:
+          type: integer
+          minimum: 0
+          description: Current progress value
+        target_value:
+          type: integer
+          minimum: 0
+          description: Target value to complete achievement
+        is_completed:
+          type: boolean
+          description: Whether achievement is completed
+        completed_at:
+          type: string
+          format: date-time
+          description: Completion timestamp
+        last_updated:
+          type: string
+          format: date-time
+          description: Last progress update timestamp
+        completion_count:
+          type: integer
+          minimum: 0
+          description: Number of times achievement has been completed
+        rewards_claimed:
+          type: boolean
+          description: Whether rewards have been claimed
+        progress_history:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: integer
+              timestamp:
+                type: string
+                format: date-time
+              event_type:
+                type: string
+          description: Recent progress history
+          maxItems: 10
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
+        types). Expected memory savings: 40-60% for progress tracking.'
+    AchievementProgressResponse:
+      type: object
+      required:
+      - progress
+      properties:
+        progress:
+          $ref: '#/components/schemas/AchievementProgress'
+        next_milestone:
+          type: integer
+          description: Next milestone value if applicable
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated completion time based on current progress rate
+      description: 'BACKEND NOTE: Progress response with additional metadata.'
+    UpdateProgressRequest:
+      type: object
+      required:
+      - achievement_id
+      - character_id
+      - progress_increment
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        progress_increment:
+          type: integer
+          minimum: 0
+          description: Amount to increment progress by
+          example: 1
+        event_context:
+          type: object
+          properties:
+            event_type:
+              type: string
+              description: Type of event that triggered progress update
+            entity_id:
+              type: string
+              format: uuid
+              description: Related entity ID (enemy killed, item collected, etc.)
+            location:
+              type: object
+              properties:
+                x:
+                  type: number
+                  format: float
+                y:
+                  type: number
+                  format: float
+                z:
+                  type: number
+                  format: float
+              description: Event location coordinates
+            metadata:
+              type: object
+              description: Additional event metadata
+          description: Context of the progress update event
+        timestamp:
+          type: integer
+          format: int64
+          description: Client timestamp for anti-cheat validation
+        version:
+          type: integer
+          description: Optimistic locking version for concurrent operations
+          example: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
+        types). Expected memory savings: 30-50% for progress updates.'
+    UpdateProgressResponse:
+      type: object
+      required:
+      - success
+      - new_progress
+      properties:
+        success:
+          type: boolean
+          description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
+        new_progress:
+          $ref: '#/components/schemas/AchievementProgress'
+        achievement_unlocked:
+          type: boolean
+          description: Whether this update caused achievement unlock
+        rewards_available:
+          type: boolean
+          description: Whether rewards are now available for claiming
+        notifications:
+          type: array
+          items:
+            type: string
+          description: Notification messages to display to player
+      description: 'BACKEND NOTE: Response optimized for struct alignment.'
+    UnlockAchievementRequest:
+      type: object
+      required:
+      - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID to unlock achievement for
+        force_unlock:
+          type: boolean
+          description: Force unlock even if requirements not met (admin only)
+          default: false
+        skip_rewards:
+          type: boolean
+          description: Skip reward distribution (for testing)
+          default: false
+      description: 'BACKEND NOTE: Simple request for admin achievement unlocking.'
+    ClaimRewardsRequest:
+      type: object
+      required:
+      - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        claim_all:
+          type: boolean
+          description: Claim all available rewards for this achievement
+          default: true
+        specific_rewards:
+          type: array
+          items:
+            type: string
+            enum:
+            - item
+            - currency
+            - experience
+            - title
+            - cosmetic
+            - ability
+            - reputation
+          description: Specific reward types to claim (if not claiming all)
+        inventory_location:
+          type: string
+          format: uuid
+          description: Specific inventory location for item rewards
+      description: 'BACKEND NOTE: Fields ordered for struct alignment.'
+    ClaimRewardsResponse:
+      type: object
+      required:
+      - success
+      properties:
+        success:
+          type: boolean
+          description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
+        claimed_rewards:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                - item
+                - currency
+                - experience
+                - title
+                - cosmetic
+                - ability
+                - reputation
+              amount:
+                type: integer
+              item_id:
+                type: string
+                format: uuid
+              inventory_slot:
+                type: string
+                format: uuid
+            description: Details of claimed rewards
+          description: List of successfully claimed rewards
+        failed_rewards:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              reason:
+                type: string
+            description: Rewards that failed to claim
+          description: List of rewards that failed to claim
+        inventory_updates:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity_change:
+                type: integer
+              new_total:
+                type: integer
+            description: Inventory updates from claimed rewards
+          description: Inventory changes from reward claiming
+      description: 'BACKEND NOTE: Response optimized for struct alignment.'
+    BatchUpdateProgressRequest:
+      type: object
+      required:
+      - updates
+      properties:
+        updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/UpdateProgressRequest'
+          description: 'BACKEND NOTE: Array of progress updates, batched for efficiency'
+          maxItems: 100
+        batch_id:
+          type: string
+          format: uuid
+          description: Batch identifier for tracking
+      description: 'BACKEND NOTE: Batch request for multiple progress updates.'
+    BatchUpdateProgressResponse:
+      type: object
+      required:
+      - results
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+          description: Batch identifier
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              achievement_id:
+                type: string
+                format: uuid
+              character_id:
+                type: string
+                format: uuid
+              success:
+                type: boolean
+              error_message:
+                type: string
+              new_progress:
+                $ref: '#/components/schemas/AchievementProgress'
+            description: Result for each progress update
+          description: Results for each progress update in the batch
+        summary:
+          type: object
+          properties:
+            total_updates:
+              type: integer
+            successful_updates:
+              type: integer
+            failed_updates:
+              type: integer
+            new_unlocks:
+              type: integer
+          description: Summary statistics for the batch
+      description: 'BACKEND NOTE: Batch response with detailed results.'
+    AnalyticsSummaryResponse:
+      type: object
+      required:
+      - summary
+      properties:
+        summary:
+          type: object
+          properties:
+            total_achievements:
+              type: integer
+            unlocked_achievements:
+              type: integer
+            completed_achievements:
+              type: integer
+            total_points:
+              type: integer
+            average_completion_time:
+              type: integer
+              format: int64
+            category_breakdown:
+              type: object
+              properties:
+                combat:
+                  type: integer
+                exploration:
+                  type: integer
+                social:
+                  type: integer
+                progression:
+                  type: integer
+                collection:
+                  type: integer
+                challenge:
+                  type: integer
+            recent_completions:
+              type: array
+              items:
+                type: object
+                properties:
+                  achievement_id:
+                    type: string
+                    format: uuid
+                  completed_at:
+                    type: string
+                    format: date-time
+                  points_earned:
+                    type: integer
+                description: Recent achievement completions
+              maxItems: 10
+          description: Achievement analytics summary
+        timeframe:
+          type: string
+          description: Applied timeframe filter
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID (null for global analytics)
+      description: 'BACKEND NOTE: Analytics response optimized for dashboard consumption.'
+    LeaderboardResponse:
+      type: object
+      required:
+      - leaderboard
+      properties:
+        leaderboard:
+          type: array
+          items:
+            type: object
+            properties:
+              rank:
+                type: integer
+                minimum: 1
+              character_id:
+                type: string
+                format: uuid
+              character_name:
+                type: string
+              achievement_points:
+                type: integer
+              achievements_completed:
+                type: integer
+              last_completion:
+                type: string
+                format: date-time
+              category_focus:
+                type: string
+                enum:
+                - combat
+                - exploration
+                - social
+                - progression
+                - collection
+                - challenge
+            description: Leaderboard entry
+          description: 'BACKEND NOTE: Leaderboard entries ordered by rank'
+        total_entries:
+          type: integer
+          description: Total number of entries in leaderboard
+        timeframe:
+          type: string
+          description: Applied timeframe filter
+        category:
+          type: string
+          description: Achievement category filter applied
+      description: 'BACKEND NOTE: Leaderboard response optimized for client rendering.'
+    ProcessEventsRequest:
+      type: object
+      required:
+      - character_id
+      - events
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        events:
+          type: array
+          items:
+            type: object
+            required:
+            - event_type
+            - timestamp
+            properties:
+              event_type:
+                type: string
+                enum:
+                - enemy_killed
+                - item_collected
+                - quest_completed
+                - location_discovered
+                - social_interaction
+                - combat_streak
+                - distance_traveled
+                - time_played
+                - level_gained
+                - currency_earned
+                description: Type of game event
+              entity_id:
+                type: string
+                format: uuid
+                description: Related entity ID
+              value:
+                type: integer
+                minimum: 0
+                description: Event value/amount
+              location:
+                type: object
+                properties:
+                  x:
+                    type: number
+                    format: float
+                  y:
+                    type: number
+                    format: float
+                  z:
+                    type: number
+                    format: float
+                description: Event location coordinates
+              metadata:
+                type: object
+                description: Additional event metadata
+              timestamp:
+                type: integer
+                format: int64
+                description: Event timestamp
+            description: 'BACKEND NOTE: Event object optimized for processing'
+          description: Array of game events to process
+          maxItems: 50
+        batch_metadata:
+          type: object
+          properties:
+            session_id:
+              type: string
+              format: uuid
+            client_version:
+              type: string
+            processing_priority:
+              type: string
+              enum:
+              - low
+              - normal
+              - high
+              default: normal
+          description: Metadata for event processing batch
+      description: 'BACKEND NOTE: Event processing request optimized for high-throughput
+        event streams.'
+    ProcessEventsResponse:
+      type: object
+      required:
+      - processed_events
+      - progress_updates
+      properties:
+        processed_events:
+          type: integer
+          format: int32
+          description: Number of events successfully processed
+        progress_updates:
+          type: array
+          items:
+            type: object
+            properties:
+              achievement_id:
+                type: string
+                format: uuid
+              old_progress:
+                type: integer
+              new_progress:
+                type: integer
+              target_progress:
+                type: integer
+              unlocked:
+                type: boolean
+            description: Progress update details
+          description: List of progress updates triggered by events
+        new_unlocks:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of newly unlocked achievements
+        notifications:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                - progress_update
+                - achievement_unlocked
+                - reward_available
+              achievement_id:
+                type: string
+                format: uuid
+              message:
+                type: string
+            description: Notification to display to player
+          description: Player notifications from event processing
+        processing_stats:
+          type: object
+          properties:
+            processing_time_ms:
+              type: integer
+              format: int32
+            events_per_second:
+              type: number
+              format: float
+          description: Event processing performance statistics
+      description: 'BACKEND NOTE: Event processing response with detailed progress
+        tracking.'
+    ValidateProgressRequest:
+      type: object
+      required:
+      - achievement_id
+      - character_id
+      - claimed_progress
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        claimed_progress:
+          type: integer
+          minimum: 0
+          description: Progress value claimed by client
+        client_hash:
+          type: string
+          description: Client-side hash for anti-cheat validation
+        validation_context:
+          type: object
+          properties:
+            timestamp:
+              type: integer
+              format: int64
+            session_id:
+              type: string
+              format: uuid
+            recent_events:
+              type: array
+              items:
+                type: string
+              maxItems: 10
+          description: Validation context data
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
+        types).'
+    ValidateProgressResponse:
+      type: object
+      required:
+      - is_valid
+      properties:
+        validation_token:
+          type: string
+          description: 'BACKEND NOTE: String - variable length, ordered first'
+        violations:
+          type: array
+          items:
+            type: string
+          description: List of validation violations found
+        server_progress:
+          type: integer
+          description: Actual progress value on server
+        claimed_progress:
+          type: integer
+          description: Progress value claimed by client
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence score of validation (0-1)
+        is_valid:
+          type: boolean
+          description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
+        types).'
+    AchievementTrainingData:
+      type: object
+      required:
+      - character_id
+      - achievement_id
+      - completion_context
+      - outcome
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character who completed the achievement
+        achievement_id:
+          type: string
+          format: uuid
+          description: Achievement that was completed
+        completion_context:
+          type: object
+          properties:
+            playtime_before_completion:
+              type: integer
+              format: int64
+              description: Total playtime before achievement completion (milliseconds)
+            completion_streak:
+              type: integer
+              description: Number of achievements completed in sequence
+            gameplay_style:
+              type: string
+              enum:
+              - aggressive
+              - stealthy
+              - exploratory
+              - social
+              - completionist
+              description: Player's gameplay style
+            difficulty_preference:
+              type: string
+              enum:
+              - easy
+              - medium
+              - hard
+              - adaptive
+              description: Player's difficulty preference
+            social_connections:
+              type: integer
+              description: Number of social connections/friends
+          description: Context of achievement completion
+        outcome:
+          type: object
+          properties:
+            time_to_complete:
+              type: integer
+              format: int64
+              description: Time taken to complete achievement (milliseconds)
+            attempts_count:
+              type: integer
+              description: Number of attempts before completion
+            satisfaction_rating:
+              type: number
+              minimum: 1
+              maximum: 5
+              description: Player satisfaction rating (1-5)
+            replay_intention:
+              type: boolean
+              description: Whether player intends to replay this content
+          description: Outcome metrics of achievement completion
+        timestamp:
+          type: string
+          format: date-time
+          description: Completion timestamp
+      description: 'BACKEND NOTE: AI training data for achievement personalization.
+        Large object first for struct alignment.'
+    TrainingResponse:
+      type: object
+      properties:
+        training_data_id:
+          type: string
+          format: uuid
+          description: Unique training data identifier
+        status:
+          type: string
+          enum:
+          - accepted
+          - processed
+          - rejected
+          description: Training data processing status
+        message:
+          type: string
+          description: Processing result message
+      description: 'BACKEND NOTE: Response for training data submission.'
+    AchievementRecommendations:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        recommendations:
+          type: array
+          items:
+            type: object
+            properties:
+              achievement_id:
+                type: string
+                format: uuid
+                description: Recommended achievement
+              priority_score:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: AI priority score (0-1)
+              reasoning:
+                type: string
+                description: AI reasoning for recommendation
+              estimated_completion_time:
+                type: integer
+                format: int64
+                description: Estimated time to complete (milliseconds)
+              difficulty_match:
+                type: number
+                minimum: 0
+                maximum: 1
+                description: How well difficulty matches player skill (0-1)
+            description: Individual recommendation
+          description: List of achievement recommendations
+        generated_at:
+          type: string
+          format: date-time
+          description: Recommendation generation timestamp
+        personalization_factors:
+          type: array
+          items:
+            type: string
+          description: Factors used for personalization
+      description: 'BACKEND NOTE: AI-generated achievement recommendations.'
+security:
+- BearerAuth: []

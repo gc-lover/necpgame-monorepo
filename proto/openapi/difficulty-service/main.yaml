@@ -1,0 +1,205 @@
+openapi: 3.0.3
+info:
+  title: Difficulty Rating Service API - Enterprise-Grade Domain Service
+  description: "**Enterprise-Grade Difficulty Rating API for NECPGAME**
+
+    This API manages player skill rating, content difficulty assessment, and automatic
+    difficulty adjustments for optimal gameplay experience.
+
+    ## Key Features
+
+    - **Player Skill Rating**: Automatic calculation of player skill levels
+    - **Content Difficulty Rating**: Assessment of game content difficulty
+    - **Recommendation Engine**: Personalized difficulty recommendations
+    - **Automatic Adjustments**: Dynamic difficulty scaling based on team composition
+
+    ## Domain Purpose
+
+    The Difficulty Rating domain provides intelligent difficulty management to ensure
+    players have optimal challenge levels matching their skill and preferences.
+
+    ## Performance Targets
+
+    - P99 Latency: <50ms for rating calculations
+    - Memory: <5MB for rating data and algorithms
+    - Concurrent requests: 1000+ simultaneous rating operations
+    - Accuracy: >90% recommendation accuracy
+
+    ## Integration Points
+
+    - **Gameplay Service**: Real-time difficulty adjustments
+    - **Matchmaking Service**: Skill-based team balancing
+    - **Analytics Service**: Performance data aggregation
+    - **Player Profile Service**: Historical gameplay data
+  "
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@difficulty.necpgame.com
+servers:
+- url: https://api.necpgame.com/v1/difficulty
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/difficulty
+  description: Staging server
+- url: http://localhost:8085/api/v1/difficulty
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Player Rating
+  description: Player skill assessment and rating operations
+- name: Content Rating
+  description: Game content difficulty evaluation
+- name: Recommendations
+  description: Difficulty recommendations and suggestions
+- name: Adjustments
+  description: Automatic difficulty modifications
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns service health status and basic metrics
+      tags:
+        - Health Monitoring
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/difficulty/player/{playerId}:
+    get:
+      summary: Get player skill rating
+      description: Returns the current skill rating for a specific player
+      tags:
+        - Player Rating
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player UUID
+      responses:
+        "200":
+          description: Player skill rating
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerSkillRatingResponse"
+        "404":
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              example: "INTERNAL_ERROR"
+            message:
+              type: string
+              example: "An internal error occurred"
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-05T10:00:00Z"
+        version:
+          type: string
+          example: "1.0.0"
+        uptime:
+          type: integer
+          description: Uptime in seconds
+
+    PlayerSkillRatingResponse:
+      type: object
+      required:
+        - player_id
+        - skill_rating
+        - confidence_level
+        - last_updated
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player UUID
+        skill_rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Player skill rating (0-100)
+        confidence_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence in the rating calculation
+        completion_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Average content completion rate
+        average_time:
+          type: integer
+          description: Average completion time in seconds
+        average_deaths:
+          type: number
+          format: float
+          description: Average deaths per content
+        last_updated:
+          type: string
+          format: date-time
+          description: When the rating was last updated

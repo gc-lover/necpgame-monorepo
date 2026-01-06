@@ -5,26 +5,36 @@ info:
 
     This API provides comprehensive analytics, metrics, and monitoring capabilities
     for all game systems in the Night City universe, enabling data-driven insights
-    and performance optimization.
+    and performance optimization through SOLID/DRY domain separation.
 
     ## Key Features
 
-    - **Real-time Analytics**: Live metrics and performance data - **Combat Analytics**:
-    Battle statistics, effectiveness tracking - **Economy Analytics**: Market trends,
-    portfolio analysis - **Player Behavior**: Usage patterns and engagement metrics
-    - **Anti-cheat Monitoring**: Fraud detection and prevention - **Performance Optimized**:
-    MMOFPS-grade performance with <25ms P99 latency
+    - **Real-time Analytics**: Live metrics and performance data with <25ms P99 latency
+    - **Combat Analytics**: Battle statistics, effectiveness tracking, AI behavior patterns
+    - **Economy Analytics**: Market trends, portfolio analysis, stock protection systems
+    - **Player Behavior**: Usage patterns, engagement metrics, anti-cheat monitoring
+    - **System Monitoring**: Infrastructure health, performance metrics, alerting
+    - **Anti-cheat Monitoring**: Fraud detection, suspicious behavior identification
 
     ## Domain Purpose
 
     The Analytics domain provides comprehensive monitoring and analytics for all NECPGAME
-    systems, enabling data-driven decisions and continuous improvement.
+    systems, enabling data-driven decisions and continuous improvement through
+    enterprise-grade observability and performance optimization.
 
     ## Performance Targets
 
-    - P99 Latency: <25ms for analytics queries - Memory: <20KB per active analytics
-    session - Concurrent users: 50,000+ simultaneous analytics operations - Data processing:
-    <10ms response time
+    - P99 Latency: <25ms for analytics queries
+    - Memory: <20KB per active analytics session
+    - Concurrent users: 50,000+ simultaneous analytics operations
+    - Data processing: <10ms response time
+
+    ## SOLID/DRY Architecture
+
+    This service follows domain separation principles:
+    - **Infrastructure Domain**: System monitoring, health checks, metrics collection
+    - **Economy Domain**: Stock analytics, market protection, trading metrics
+    - **Game Domain**: Combat analytics, player behavior, performance tracking
 
     '
   version: 1.0.0
@@ -44,7 +54,7 @@ tags:
 - name: Combat Analytics
   description: Battle and combat performance metrics
 - name: Economy Analytics
-  description: Market trends and economic indicators
+  description: Market trends, stock protection, and economic indicators
 - name: Player Analytics
   description: Player behavior and engagement metrics
 - name: System Monitoring
@@ -53,6 +63,10 @@ tags:
   description: Fraud detection and prevention monitoring
 - name: Health Monitoring
   description: System health and performance monitoring
+- name: Stock Protection
+  description: Market integrity and protection systems
+- name: Stock Analytics
+  description: Stock market analysis and tools
 security:
 - BearerAuth: []
 paths:
@@ -316,6 +330,224 @@ paths:
             application/json:
               schema:
                 $ref: ../common-service/schemas/error.yaml#/Error
+  /analytics/economy/health:
+    get:
+      summary: Economy analytics service health check
+      description: '**Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the economy analytics microservice.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+        '
+      operationId: economyAnalyticsHealthCheck
+      tags:
+        - Economy Analytics
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../common-service/schemas/health.yaml#/HealthResponse'
+        '429':
+          $ref: '../common-service/responses/error.yaml#/TooManyRequests'
+        '503':
+          $ref: '../common-service/responses/error.yaml#/InternalServerError'
+  /analytics/economy/market/trends:
+    get:
+      summary: Get market trends analysis
+      description: 'Analyzes current market trends including price movements, volume changes,
+        and market sentiment across all economic sectors.
+
+        '
+      operationId: getMarketTrends
+      tags:
+        - Economy Analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sector
+          in: query
+          schema:
+            type: string
+            enum: [technology, real_estate, commodities, services, all]
+            default: all
+          description: Economic sector to analyze
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1h, 4h, 24h, 7d, 30d]
+            default: 24h
+          description: Analysis timeframe
+        - name: include_predictions
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include AI-powered market predictions
+      responses:
+        '200':
+          description: Market trends analysis
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketTrendsAnalysis'
+        '400':
+          $ref: '../common-service/responses/error.yaml#/BadRequest'
+        '401':
+          $ref: '../common-service/responses/error.yaml#/Unauthorized'
+  /analytics/economy/trade/volume:
+    get:
+      summary: Get trade volume statistics
+      description: 'Provides detailed trade volume statistics and analysis for economic
+        transactions across all game markets.
+
+        '
+      operationId: getTradeVolumeStatistics
+      tags:
+        - Economy Analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: asset_type
+          in: query
+          schema:
+            type: string
+            enum: [currency, item, stock, real_estate, service]
+          description: Type of traded asset
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [hour, day, week, month]
+            default: day
+          description: Time period for statistics
+      responses:
+        '200':
+          description: Trade volume statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeVolumeStatistics'
+        '400':
+          $ref: '../common-service/responses/error.yaml#/BadRequest'
+        '401':
+          $ref: '../common-service/responses/error.yaml#/Unauthorized'
+  /analytics/stock/protection/market-integrity:
+    get:
+      summary: Monitor market integrity
+      description: '**Comprehensive market integrity monitoring**
+
+        Analyzes market state to detect potential integrity threats.
+        Includes trade pattern analysis, manipulation detection, and risk assessment.
+
+        **AI Integration:** Uses advanced algorithms for anomaly detection.'
+      operationId: monitorMarketIntegrity
+      tags:
+        - Stock Protection
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: time_window
+          in: query
+          schema:
+            type: string
+            enum: [1h, 4h, 24h, 7d]
+            default: 24h
+          description: Analysis time window
+        - name: risk_threshold
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+            default: 0.7
+          description: Risk threshold for alerts (0-1)
+        - name: include_historical
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include historical data
+      responses:
+        '200':
+          description: Market integrity status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketIntegrityStatus'
+        '400':
+          $ref: '../common-service/responses/error.yaml#/BadRequest'
+        '401':
+          $ref: '../common-service/responses/error.yaml#/Unauthorized'
+  /analytics/stock/fundamental/{symbol}:
+    get:
+      summary: Get fundamental analysis for a stock
+      operationId: getFundamentalAnalysis
+      tags:
+        - Stock Analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "AAPL"
+          description: Stock symbol
+      responses:
+        '200':
+          description: Fundamental analysis data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FundamentalAnalysis'
+        '400':
+          $ref: '../common-service/responses/error.yaml#/BadRequest'
+        '401':
+          $ref: '../common-service/responses/error.yaml#/Unauthorized'
+        '404':
+          $ref: '../common-service/responses/error.yaml#/NotFound'
+  /analytics/stock/technical/{symbol}:
+    get:
+      summary: Get comprehensive technical analysis
+      operationId: getTechnicalAnalysis
+      tags:
+        - Stock Analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "AAPL"
+          description: Stock symbol
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1d, 1w, 1M, 3M, 6M, 1y]
+            default: "1M"
+          description: Analysis timeframe
+      responses:
+        '200':
+          description: Technical analysis report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TechnicalAnalysis'
+        '400':
+          $ref: '../common-service/responses/error.yaml#/BadRequest'
+        '401':
+          $ref: '../common-service/responses/error.yaml#/Unauthorized'
+        '404':
+          $ref: '../common-service/responses/error.yaml#/NotFound'
 components:
   responses:
     OK:
@@ -338,7 +570,7 @@ components:
     HealthResponse:
       $ref: ../common-service/schemas/health.yaml#/HealthResponse
     Error:
-      $ref: ../common-service/schemas/common.yaml#/Error
+      $ref: ../common-service/schemas/error.yaml#/Error
     CombatAnalyticsOverview:
       type: object
       properties:
@@ -441,6 +673,299 @@ components:
           maximum: 100
           description: Composite engagement score
       description: 'BACKEND NOTE: Player behavior metrics for game optimization.'
+    MarketTrendsAnalysis:
+      type: object
+      properties:
+        sector:
+          type: string
+          enum: [technology, real_estate, commodities, services, all]
+        timeframe:
+          type: string
+        trends:
+          type: array
+          items:
+            type: object
+            properties:
+              asset:
+                type: string
+              price_movement:
+                type: number
+                description: Price change percentage
+              volume_change:
+                type: number
+                description: Volume change percentage
+              sentiment:
+                type: string
+                enum: [bullish, bearish, neutral]
+            description: Individual asset trends
+        predictions:
+          type: object
+          properties:
+            confidence_score:
+              type: number
+              minimum: 0
+              maximum: 1
+            predicted_trend:
+              type: string
+              enum: [up, down, sideways]
+            time_horizon:
+              type: string
+          description: AI-powered market predictions
+      description: 'BACKEND NOTE: Market trends analysis with AI predictions.'
+    TradeVolumeStatistics:
+      type: object
+      properties:
+        asset_type:
+          type: string
+          enum: [currency, item, stock, real_estate, service]
+        period:
+          type: string
+          enum: [hour, day, week, month]
+        total_volume:
+          type: number
+          minimum: 0
+          description: Total trading volume
+        transaction_count:
+          type: integer
+          minimum: 0
+        average_transaction_size:
+          type: number
+          minimum: 0
+        top_traders:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: string
+                format: uuid
+              volume:
+                type: number
+                minimum: 0
+              transaction_count:
+                type: integer
+                minimum: 0
+            description: Top traders by volume
+        hourly_breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              hour:
+                type: integer
+                minimum: 0
+                maximum: 23
+              volume:
+                type: number
+                minimum: 0
+            description: Volume breakdown by hour
+      description: 'BACKEND NOTE: Trade volume statistics with memory-aligned structure.'
+    MarketIntegrityStatus:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        overall_integrity_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Overall market integrity score (0-1)
+        risk_level:
+          type: string
+          enum: [low, medium, high, critical]
+        detected_anomalies:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [manipulation, insider_trading, pump_dump, spoofing]
+              severity:
+                type: string
+                enum: [low, medium, high]
+              confidence:
+                type: number
+                minimum: 0
+                maximum: 1
+              description:
+                type: string
+            description: Detected market anomalies
+        market_health_indicators:
+          type: object
+          properties:
+            volume_anomaly_score:
+              type: number
+              minimum: 0
+              maximum: 1
+            price_volatility_score:
+              type: number
+              minimum: 0
+              maximum: 1
+            order_book_imbalance:
+              type: number
+              minimum: 0
+              maximum: 1
+          description: Market health indicators
+        recommendations:
+          type: array
+          items:
+            type: string
+          description: Automated recommendations for risk mitigation
+      description: 'BACKEND NOTE: Market integrity monitoring with AI-powered anomaly detection.'
+    FundamentalAnalysis:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "AAPL"
+        company_info:
+          type: object
+          properties:
+            name:
+              type: string
+            sector:
+              type: string
+            industry:
+              type: string
+            market_cap:
+              type: number
+              minimum: 0
+          description: Basic company information
+        financial_ratios:
+          type: object
+          properties:
+            pe_ratio:
+              type: number
+            pb_ratio:
+              type: number
+            debt_to_equity:
+              type: number
+            roe:
+              type: number
+          description: Key financial ratios
+        valuation_metrics:
+          type: object
+          properties:
+            intrinsic_value:
+              type: number
+            fair_value_range:
+              type: object
+              properties:
+                low:
+                  type: number
+                high:
+                  type: number
+          description: Valuation analysis
+        analyst_ratings:
+          type: object
+          properties:
+            average_rating:
+              type: number
+              minimum: 1
+              maximum: 5
+            recommendation:
+              type: string
+              enum: [strong_buy, buy, hold, sell, strong_sell]
+            number_of_analysts:
+              type: integer
+              minimum: 0
+          description: Analyst consensus
+        last_updated:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fundamental stock analysis with financial metrics.'
+    TechnicalAnalysis:
+      type: object
+      properties:
+        symbol:
+          type: string
+          example: "AAPL"
+        trend_analysis:
+          type: object
+          properties:
+            primary_trend:
+              type: string
+              enum: [bullish, bearish, sideways]
+            secondary_trend:
+              type: string
+              enum: [bullish, bearish, sideways]
+            trend_strength:
+              type: number
+              minimum: 0
+              maximum: 100
+          description: Trend direction and strength analysis
+        momentum_indicators:
+          type: object
+          properties:
+            rsi:
+              type: number
+              minimum: 0
+              maximum: 100
+            macd:
+              type: object
+              properties:
+                value:
+                  type: number
+                signal:
+                  type: number
+                histogram:
+                  type: number
+            stochastic:
+              type: object
+              properties:
+                k:
+                  type: number
+                d:
+                  type: number
+          description: Momentum and oscillator indicators
+        volatility_indicators:
+          type: object
+          properties:
+            bollinger_bands:
+              type: object
+              properties:
+                upper:
+                  type: number
+                middle:
+                  type: number
+                lower:
+                  type: number
+            atr:
+              type: number
+              minimum: 0
+          description: Volatility and range indicators
+        volume_analysis:
+          type: object
+          properties:
+            volume_trend:
+              type: string
+              enum: [increasing, decreasing, stable]
+            obv:
+              type: number
+            volume_price_trend:
+              type: number
+          description: Volume-based analysis
+        support_resistance:
+          type: object
+          properties:
+            support_levels:
+              type: array
+              items:
+                type: number
+            resistance_levels:
+              type: array
+              items:
+                type: number
+          description: Key price levels
+        pattern_recognition:
+          type: array
+          items:
+            type: string
+          example: ["ascending_triangle", "bullish_engulfing"]
+          description: Recognized chart patterns
+      description: 'BACKEND NOTE: Comprehensive technical analysis with indicators and patterns.'
     SystemPerformanceMetrics:
       type: object
       properties:

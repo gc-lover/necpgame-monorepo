@@ -64,3 +64,4 @@ type TicketQueueResponse struct {
 		LowCount     int `json:"low_count"`
 	} `json:"queue_stats"`
 }
+

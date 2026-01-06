@@ -57,19 +57,21 @@ def apply_migration():
 
             # Check Seattle quests specifically
             try:
-                cur.execute("SELECT COUNT(*) FROM gameplay.quest_definitions WHERE id LIKE 'canon-quest-seattle-%'")
+                cur.execute("SELECT COUNT(*) FROM gameplay.quest_definitions WHERE quest_id LIKE 'quest-%-seattle%' OR quest_id LIKE 'quest-%-mount%' OR quest_id LIKE 'quest-%-rain%' OR quest_id LIKE 'quest-%-boeing%' OR quest_id LIKE 'quest-%-seafood%' OR quest_id LIKE 'quest-%-tech%'")
                 seattle_count = cur.fetchone()[0]
-                print(f"[RESULT] Found {seattle_count} Seattle quests in quest_definitions table")
+                print(f"[RESULT] Found {seattle_count} Seattle-related quests in quest_definitions table")
 
                 # Show quest details
-                cur.execute("SELECT id, quest_id, title FROM gameplay.quest_definitions WHERE id LIKE 'canon-quest-seattle-%' ORDER BY quest_id")
+                cur.execute("SELECT quest_id, title FROM gameplay.quest_definitions WHERE quest_id LIKE 'quest-%' ORDER BY quest_id DESC LIMIT 10")
                 quests = cur.fetchall()
-                print("[IMPORTED QUESTS]:")
+                print("[RECENT QUESTS]:")
                 for quest in quests:
-                    print(f"  - {quest[1]}: {quest[2]}")
+                    print(f"  - {quest[0]}: {quest[1][:50]}...")
 
             except Exception as query_error:
                 print(f"[QUERY ERROR] {query_error}")
+                # Fallback: show total count
+                print(f"[RESULT] Migration completed. Total quests in database: {total_count}")
 
     except Exception as e:
         print(f"[ERROR] Migration failed: {e}")
