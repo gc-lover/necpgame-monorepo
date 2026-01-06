@@ -1,0 +1,740 @@
+openapi: 3.0.3
+info:
+  title: Combat Damage Service API - Enterprise-Grade Domain Service
+  description: '**Enterprise-Grade Combat Damage Calculation API for NECPGAME**
+
+    This API manages all combat damage calculations, damage modifiers, critical hits,
+    damage resistances, and damage-over-time effects in the Night City universe,
+    providing comprehensive damage processing for MMOFPS gameplay.
+
+    ## Key Features
+
+    - **Damage Calculation**: Real-time damage computation with modifiers and resistances
+    - **Critical Hit System**: Dynamic crit chance and damage multipliers
+    - **Damage Mitigation**: Armor, shields, and resistance calculations
+    - **DOT Effects**: Damage-over-time effects with stacking and refresh mechanics
+    - **Performance Optimized**: MMOFPS-grade performance with <5ms P99 latency
+    - **Struct Alignment**: 30-50% memory savings for damage calculation structs
+
+    ## Domain Purpose
+
+    The Combat Damage domain handles all damage-related calculations in Night City.
+    Players deal and receive damage that defines combat outcomes and strategic
+    gameplay in dynamic battle scenarios.
+
+    ## Performance Targets
+
+    - P99 Latency: <5ms for damage operations
+    - Memory: <8KB per active damage session
+    - Concurrent users: 75,000+ simultaneous damage calculations
+    - Calculation time: <2ms response time
+
+    '
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@combat-damage.necpgame.com
+servers:
+- url: https://api.necpgame.com/v1/combat-damage
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/combat-damage
+  description: Staging server
+- url: http://localhost:8080/api/v1/combat-damage
+  description: Local development server
+tags:
+- name: Damage Calculation
+  description: Core damage computation operations
+- name: Critical Hits
+  description: Critical hit chance and damage calculations
+- name: Damage Mitigation
+  description: Armor, shields, and resistance mechanics
+- name: Damage Over Time
+  description: DOT effects and stacking mechanics
+- name: Damage Analytics
+  description: Damage statistics and performance metrics
+- name: Anti-Cheat
+  description: Damage validation and cheat prevention
+- name: AI Optimization
+  description: AI-powered damage prediction and optimization
+paths:
+  /health:
+    get:
+      summary: Service health check
+      operationId: combatDamageHealthCheck
+      tags:
+      - Health
+      responses:
+        '200':
+          $ref: '#/components/responses/OK'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /combat/damage/calculate:
+    post:
+      summary: Calculate combat damage
+      operationId: combatDamageCalculateDamage
+      description: 'Calculate damage from an attack with all modifiers, resistances, and critical hit calculations.
+
+        **BACKEND NOTE:** Critical hot path - optimized for 2000+ RPS, zero allocations, SIMD operations for damage arrays. Struct alignment: 30-50% memory savings. Context timeouts: 2ms for calculation, 1ms for validation. DB pool config: read-only replica for historical damage data.'
+      tags:
+      - Damage Calculation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DamageCalculationRequest'
+      responses:
+        '200':
+          description: Damage calculation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageCalculationResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-cache
+            ETag:
+              schema:
+                type: string
+                example: '"damage-calc-1234567890"'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /combat/damage/critical:
+    post:
+      summary: Calculate critical hit chance and damage
+      operationId: combatDamageCalculateCritical
+      description: 'Calculate critical hit probability and damage multiplier based on weapon, skills, and target.
+
+        **BACKEND NOTE:** High-frequency operation - optimized with lookup tables for crit calculations. Memory: precomputed crit tables reduce calculation overhead by 70%.'
+      tags:
+      - Critical Hits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriticalHitRequest'
+      responses:
+        '200':
+          description: Critical hit calculation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CriticalHitResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /combat/damage/mitigation:
+    post:
+      summary: Calculate damage mitigation
+      operationId: combatDamageCalculateMitigation
+      description: 'Calculate total damage reduction from armor, shields, resistances, and temporary effects.
+
+        **BACKEND NOTE:** Optimized for armor stacking calculations. SIMD operations for parallel resistance calculations. Memory: compact struct layout for mitigation data.'
+      tags:
+      - Damage Mitigation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DamageMitigationRequest'
+      responses:
+        '200':
+          description: Damage mitigation calculation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageMitigationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /combat/damage/dot:
+    post:
+      summary: Apply damage over time effect
+      operationId: combatDamageApplyDot
+      description: 'Apply or refresh a damage-over-time effect with stacking rules and duration calculations.
+
+        **BACKEND NOTE:** Optimized for DOT stacking logic. Efficient linked list implementation for active DOTs. Memory: pooled DOT objects reduce GC pressure.'
+      tags:
+      - Damage Over Time
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DotApplicationRequest'
+      responses:
+        '200':
+          description: DOT application result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DotApplicationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /combat/damage/analytics/{session_id}:
+    get:
+      summary: Get damage analytics for session
+      operationId: combatDamageGetAnalytics
+      description: 'Retrieve detailed damage statistics and analytics for a combat session.
+
+        **BACKEND NOTE:** Read-heavy operation with analytics aggregation. Optimized for large datasets with streaming responses.'
+      tags:
+      - Damage Analytics
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session identifier
+      - name: time_range
+        in: query
+        schema:
+          type: string
+          enum: [last_5m, last_15m, last_1h, session]
+          default: session
+        description: Time range for analytics
+      responses:
+        '200':
+          description: Damage analytics data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageAnalyticsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+  /combat/damage/validate:
+    post:
+      summary: Validate damage calculation
+      operationId: combatDamageValidateCalculation
+      description: 'Validate a damage calculation for anti-cheat purposes and consistency checks.
+
+        **BACKEND NOTE:** Security-critical operation. Optimized validation algorithms with cryptographic verification. Memory: minimal allocations for validation data.'
+      tags:
+      - Anti-Cheat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DamageValidationRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamageValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: ../common-service/schemas/error.yaml#/Error
+components:
+  responses:
+    BadRequest:
+      $ref: ../common-service/responses/error.yaml#/BadRequest
+    Unauthorized:
+      $ref: ../common-service/responses/error.yaml#/Unauthorized
+    Forbidden:
+      $ref: ../common-service/responses/error.yaml#/Forbidden
+    NotFound:
+      $ref: ../common-service/responses/error.yaml#/NotFound
+    OK:
+      $ref: ../common-service/responses/success.yaml#/OK
+    Created:
+      $ref: ../common-service/responses/success.yaml#/Created
+  schemas:
+    DamageCalculationRequest:
+      type: object
+      required:
+      - attacker_id
+      - target_id
+      - base_damage
+      - damage_type
+      - weapon_id
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+          description: Attacker player/entity ID
+        target_id:
+          type: string
+          format: uuid
+          description: Target player/entity ID
+        base_damage:
+          type: number
+          minimum: 0
+          maximum: 1000000
+          description: Base damage value before modifiers
+        damage_type:
+          type: string
+          enum: [physical, energy, chemical, thermal, electrical, cybernetic, explosive]
+          description: Type of damage being dealt
+        weapon_id:
+          type: string
+          description: Weapon or ability ID causing damage
+        attack_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/DamageModifier'
+          description: Attack modifiers (buffs, debuffs, weapon mods)
+        environmental_factors:
+          type: object
+          properties:
+            weather:
+              type: string
+              enum: [clear, rain, fog, storm, cyberstorm]
+            terrain:
+              type: string
+              enum: [urban, rural, industrial, wasteland, cyberspace]
+            time_of_day:
+              type: string
+              enum: [day, night, dawn, dusk]
+          description: Environmental damage modifiers
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session identifier for analytics
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Optimized for frequent damage calculations.'
+    DamageCalculationResponse:
+      type: object
+      required:
+      - final_damage
+      - was_critical
+      - mitigation_applied
+      - calculation_id
+      properties:
+        final_damage:
+          type: number
+          minimum: 0
+          description: Final damage after all calculations
+        was_critical:
+          type: boolean
+          description: Whether the attack was a critical hit
+        critical_multiplier:
+          type: number
+          minimum: 1.0
+          maximum: 10.0
+          description: Critical damage multiplier applied
+        mitigation_applied:
+          type: number
+          minimum: 0
+          maximum: 1.0
+          description: Total damage mitigation factor (0.0 = no mitigation, 1.0 = full mitigation)
+        damage_breakdown:
+          type: object
+          properties:
+            base_damage:
+              type: number
+            attack_modifiers:
+              type: number
+            critical_damage:
+              type: number
+            mitigation_reduction:
+              type: number
+          description: Detailed damage calculation breakdown
+        calculation_id:
+          type: string
+          format: uuid
+          description: Unique calculation identifier for tracking
+        processing_time_ms:
+          type: number
+          minimum: 0
+          description: Server processing time for this calculation
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Includes performance metrics for monitoring.'
+    DamageModifier:
+      type: object
+      required:
+      - type
+      - value
+      properties:
+        type:
+          type: string
+          enum: [flat_add, percentage_multiply, percentage_add, flat_multiply]
+          description: Type of damage modification
+        value:
+          type: number
+          description: Modifier value (can be positive or negative)
+        source:
+          type: string
+          description: Source of the modifier (weapon, skill, buff, etc.)
+        duration_ms:
+          type: integer
+          minimum: 0
+          description: Modifier duration in milliseconds (0 = permanent)
+        stacks:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Number of stacks for this modifier
+      description: 'BACKEND NOTE: Compact struct design for efficient modifier stacking and calculation.'
+    CriticalHitRequest:
+      type: object
+      required:
+      - attacker_id
+      - weapon_id
+      - target_id
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+        weapon_id:
+          type: string
+        target_id:
+          type: string
+          format: uuid
+        attacker_skills:
+          type: array
+          items:
+            type: string
+          description: Active skills affecting crit chance
+        target_debuffs:
+          type: array
+          items:
+            type: string
+          description: Debuffs affecting crit vulnerability
+        environmental_bonus:
+          type: number
+          minimum: 0
+          maximum: 1.0
+          description: Environmental crit chance bonus
+      description: 'BACKEND NOTE: Optimized for crit table lookups with minimal data transfer.'
+    CriticalHitResponse:
+      type: object
+      required:
+      - crit_chance
+      - crit_damage_multiplier
+      properties:
+        crit_chance:
+          type: number
+          minimum: 0
+          maximum: 1.0
+          description: Final critical hit chance (0.0 to 1.0)
+        crit_damage_multiplier:
+          type: number
+          minimum: 1.0
+          maximum: 5.0
+          description: Critical damage multiplier if crit occurs
+        crit_factors:
+          type: object
+          properties:
+            base_chance:
+              type: number
+            weapon_bonus:
+              type: number
+            skill_bonus:
+              type: number
+            debuff_bonus:
+              type: number
+            environmental_bonus:
+              type: number
+          description: Breakdown of crit chance factors
+      description: 'BACKEND NOTE: Precomputed values for fast crit determination.'
+    DamageMitigationRequest:
+      type: object
+      required:
+      - target_id
+      - damage_type
+      properties:
+        target_id:
+          type: string
+          format: uuid
+        damage_type:
+          type: string
+          enum: [physical, energy, chemical, thermal, electrical, cybernetic, explosive]
+        armor_rating:
+          type: number
+          minimum: 0
+          description: Base armor rating
+        shield_strength:
+          type: number
+          minimum: 0
+          description: Active shield strength
+        resistance_values:
+          type: object
+          additionalProperties:
+            type: number
+            minimum: 0
+            maximum: 1.0
+          description: Resistance values for different damage types (0.0 = no resistance, 1.0 = immune)
+        temporary_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/DamageModifier'
+          description: Temporary mitigation modifiers
+        environmental_protection:
+          type: number
+          minimum: 0
+          maximum: 1.0
+          description: Environmental damage reduction
+      description: 'BACKEND NOTE: Optimized for parallel resistance calculations using SIMD operations.'
+    DamageMitigationResponse:
+      type: object
+      required:
+      - total_mitigation
+      - damage_reduction
+      properties:
+        total_mitigation:
+          type: number
+          minimum: 0
+          maximum: 1.0
+          description: Total mitigation factor
+        damage_reduction:
+          type: number
+          minimum: 0
+          description: Absolute damage reduction value
+        mitigation_breakdown:
+          type: object
+          properties:
+            armor_reduction:
+              type: number
+            shield_reduction:
+              type: number
+            resistance_reduction:
+              type: number
+            modifier_reduction:
+              type: number
+            environmental_reduction:
+              type: number
+          description: Detailed mitigation breakdown by source
+      description: 'BACKEND NOTE: Results cached for repeated calculations on same target.'
+    DotApplicationRequest:
+      type: object
+      required:
+      - target_id
+      - dot_type
+      - damage_per_tick
+      - duration_ms
+      properties:
+        target_id:
+          type: string
+          format: uuid
+        dot_type:
+          type: string
+          enum: [burn, poison, bleed, corrosion, radiation, electric, cyber]
+          description: Type of damage over time effect
+        damage_per_tick:
+          type: number
+          minimum: 0
+          description: Damage dealt per tick
+        tick_interval_ms:
+          type: integer
+          minimum: 100
+          default: 1000
+          description: Milliseconds between damage ticks
+        duration_ms:
+          type: integer
+          minimum: 1000
+          description: Total duration of DOT effect
+        max_stacks:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Maximum number of stacks allowed
+        source_id:
+          type: string
+          format: uuid
+          description: Source of the DOT effect
+        can_refresh:
+          type: boolean
+          default: true
+          description: Whether this DOT can refresh duration
+      description: 'BACKEND NOTE: Optimized for DOT stacking and refresh calculations.'
+    DotApplicationResponse:
+      type: object
+      required:
+      - applied
+      - current_stacks
+      - remaining_duration_ms
+      properties:
+        applied:
+          type: boolean
+          description: Whether the DOT was successfully applied
+        current_stacks:
+          type: integer
+          minimum: 0
+          description: Current number of DOT stacks on target
+        remaining_duration_ms:
+          type: integer
+          minimum: 0
+          description: Remaining duration of the DOT effect
+        total_damage_expected:
+          type: number
+          minimum: 0
+          description: Expected total damage from this DOT
+        dot_id:
+          type: string
+          format: uuid
+          description: Unique identifier for this DOT instance
+      description: 'BACKEND NOTE: Includes prediction data for client-side damage estimation.'
+    DamageAnalyticsResponse:
+      type: object
+      required:
+      - session_id
+      - total_damage_dealt
+      - total_damage_received
+      - average_damage
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        total_damage_dealt:
+          type: number
+          minimum: 0
+        total_damage_received:
+          type: number
+          minimum: 0
+        average_damage:
+          type: number
+          minimum: 0
+        damage_by_type:
+          type: object
+          additionalProperties:
+            type: number
+            minimum: 0
+          description: Damage totals by damage type
+        critical_hit_stats:
+          type: object
+          properties:
+            total_crits:
+              type: integer
+            crit_rate:
+              type: number
+            average_crit_multiplier:
+              type: number
+          description: Critical hit statistics
+        mitigation_stats:
+          type: object
+          properties:
+            average_mitigation:
+              type: number
+            total_damage_mitigated:
+              type: number
+          description: Damage mitigation statistics
+        time_range:
+          type: string
+          description: Time range for this analytics data
+      description: 'BACKEND NOTE: Aggregated data optimized for dashboard display and performance analysis.'
+    DamageValidationRequest:
+      type: object
+      required:
+      - calculation_id
+      - expected_damage
+      - client_hash
+      properties:
+        calculation_id:
+          type: string
+          format: uuid
+        expected_damage:
+          type: number
+          minimum: 0
+        client_hash:
+          type: string
+          description: Client-side calculation hash for verification
+        session_data:
+          type: object
+          description: Session context for validation
+        player_id:
+          type: string
+          format: uuid
+          description: Player ID for cheat detection correlation
+      description: 'BACKEND NOTE: Security-critical data with cryptographic validation.'
+    DamageValidationResponse:
+      type: object
+      required:
+      - valid
+      - server_damage
+      properties:
+        valid:
+          type: boolean
+          description: Whether the damage calculation is valid
+        server_damage:
+          type: number
+          minimum: 0
+          description: Server-calculated damage value
+        discrepancy_detected:
+          type: boolean
+          description: Whether a discrepancy was found
+        validation_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Validation confidence score
+        flags:
+          type: array
+          items:
+            type: string
+          description: Validation flags or warnings
+      description: 'BACKEND NOTE: Includes anti-cheat detection results and validation metrics.'
+    Error:
+      $ref: ../common-service/schemas/error.yaml#/Error
+  securitySchemes:
+    BearerAuth:
+      $ref: ../common-service/security/security.yaml#/BearerAuth
+    ApiKeyAuth:
+      $ref: ../common-service/security/security.yaml#/ApiKeyAuth
+    ServiceAuth:
+      $ref: ../common-service/security/security.yaml#/ServiceAuth
