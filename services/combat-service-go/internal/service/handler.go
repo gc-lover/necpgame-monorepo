@@ -44,20 +44,46 @@ func (h *Handler) CombatServiceCreateSession(ctx context.Context, req *api.Creat
 	// Generate session ID
 	sessionID := uuid.New()
 
-	h.service.logger.Info("Combat session created",
+	// Create session in database
+	query := `
+		INSERT INTO combat.sessions (
+			session_id, game_mode, status, max_participants,
+			created_at, last_activity, metadata
+		) VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id
+	`
+
+	var dbID uuid.UUID
+	now := time.Now()
+	err := h.service.db.QueryRow(ctx, query,
+		sessionID.String(),
+		req.GameMode,
+		"active",
+		req.MaxParticipants,
+		now,
+		now,
+		"{}", // Empty metadata for now
+	).Scan(&dbID)
+
+	if err != nil {
+		h.service.logger.Error("Failed to create combat session in database",
+			zap.String("session_id", sessionID.String()),
+			zap.Error(err))
+		return nil, errors.Wrap(err, "failed to create combat session")
+	}
+
+	h.service.logger.Info("Combat session created in database",
 		zap.String("session_id", sessionID.String()),
-		zap.String("game_mode", req.GameMode))
+		zap.String("db_id", dbID.String()),
+		zap.String("game_mode", req.GameMode),
+		zap.Int("max_participants", req.MaxParticipants))
 
-	// TODO: Implement actual session creation in database
-	// This would include storing session metadata, participants, rules, etc.
-
-	// Placeholder response - replace with actual implementation
 	return &api.CombatServiceCreateSessionOK{
 		Data: &api.CombatSessionResponse{
 			SessionID: sessionID.String(),
 			Status:    "active",
 			GameMode:  req.GameMode,
-			CreatedAt: time.Now().Format(time.RFC3339),
+			CreatedAt: now.Format(time.RFC3339),
 		},
 	}, nil
 }
