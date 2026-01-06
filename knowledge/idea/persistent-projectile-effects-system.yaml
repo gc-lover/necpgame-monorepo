@@ -1,0 +1,351 @@
+# Issue: #1550
+metadata:
+  id: persistent-projectile-effects-system
+  title: "Система персистентных эффектов для снарядов (болты, стрелы, сюрикены)"
+  document_type: idea
+  category: gameplay
+  status: approved
+  version: '1.0.0'
+  last_updated: 2026-01-06T14:36:00.000000
+  concept_approved: true
+  concept_reviewed_at: '2026-01-06T14:36:00.000000'
+  owners:
+    - role: game_designer
+      contact: gamedesign@necp.game
+    - role: backend_developer
+      contact: backend@necp.game
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - persistent-effects
+    - projectile-mechanics
+    - dot-damage
+    - tactical-combat
+    - weapon-specialization
+    - visual-feedback
+    - extraction-mechanics
+    - critical-hits
+    - combo-systems
+    - environmental-interaction
+  topics:
+    - projectile-persistence
+    - damage-over-time
+    - extraction-mechanics
+    - visual-stuck-projectiles
+    - tactical-projectile-use
+    - critical-multipliers
+    - weapon-specialization
+    - combo-potential
+    - environmental-tactics
+  related_systems:
+    - combat-system
+    - damage-system
+    - projectile-tracking-system
+    - visual-effects-system
+    - extraction-mechanics
+    - critical-hit-system
+    - combo-system
+    - inventory-system
+  related_documents:
+    - id: weapon-special-mechanics-working
+      type: mechanics
+      path: knowledge/mechanics/combat/WEAPON-SPECIAL-MECHANICS-WORKING.md
+    - id: combat-shooting-architecture
+      type: architecture
+      path: knowledge/implementation/architecture/combat-shooting-architecture.yaml
+    - id: weapon-special-mechanics-architecture
+      type: architecture
+      path: knowledge/implementation/architecture/weapon-special-mechanics-architecture.yaml
+    - id: gameplay-weapon-special-mechanics-api
+      type: api
+      path: proto/openapi/gameplay-weapon-special-mechanics-core-service.yaml
+    - id: weapon-persistent-projectile-effects-concept
+      type: analysis
+      path: knowledge/analysis/tasks/ideas/weapon-persistent-projectile-effects-concept.md
+
+problem_statement:
+  description: "Отсутствует система, где снаряды физически остаются в теле цели, создавая уникальные механики взаимодействия, DoT урон и тактические возможности"
+  impact: "Бой с использованием снарядов становится слишком абстрактным, без долгосрочных последствий попаданий"
+  affected_areas:
+    - "Ranged combat depth"
+    - "Tactical projectile usage"
+    - "Visual combat feedback"
+    - "Long-term damage mechanics"
+
+goals:
+  primary: "Создать систему персистентных эффектов для снарядов, где болты, стрелы и сюрикены остаются в теле цели, нанося DoT урон и предоставляя тактические возможности"
+  secondary:
+    - "Визуализировать застрявшие снаряды на моделях персонажей"
+    - "Добавить механику извлечения снарядов"
+    - "Создать комбо-механики с множественными попаданиями"
+    - "Интегрировать с системой критических ударов"
+  success_criteria:
+    - "Игроки видят визуальные эффекты застрявших снарядов"
+    - "DoT урон ощущается значимым в продолжительных боях"
+    - "Извлечение снарядов становится тактическим выбором"
+    - "Множественные попадания создают интересные комбо"
+
+core_concept:
+  overview: "Снаряды (болты, стрелы, сюрикены) физически остаются в теле цели после попадания, продолжая наносить урон и предоставляя возможности для тактического взаимодействия"
+  key_mechanics:
+    - projectile_persistence: "Снаряды остаются в теле после попадания"
+    - dot_damage_system: "Постоянный урон от застрявших снарядов"
+    - extraction_mechanics: "Возможность извлечения снарядов"
+    - visual_representation: "Показ застрявших снарядов на моделях"
+    - critical_multipliers: "Увеличенный урон при попадании в область с снарядом"
+    - combo_systems: "Механики взаимодействия множественных снарядов"
+
+projectile_types_system:
+  crossbow_bolts:
+    description: "Тяжелые болты арбалета, остающиеся в теле цели"
+    persistence_mechanics:
+      - stay_embedded_after_hit: true
+      - dot_damage_while_embedded: "5-15_damage_per_second"
+      - extraction_possible: true
+      - critical_hit_bonus: "double_damage_in_embedded_area"
+    tactical_uses:
+      - hanging_suspension: "подвешивание целей"
+      - movement_impairment: "замедление при множественных попаданиях"
+      - combo_criticals: "критический урон при повторных попаданиях"
+    visual_effects:
+      - embedded_bolt_model: "физическая модель болта в теле"
+      - blood_trail: "кровотечение из раны"
+      - movement_restriction: "анимации хромоты"
+
+  throwing_stars_shuriken:
+    description: "Легкие сюрикены, множественно застревающие в теле"
+    persistence_mechanics:
+      - multiple_embedded_possible: true
+      - individual_dot_per_shuriken: "2-8_damage_per_second"
+      - mass_extraction_ability: "выдернуть все сразу"
+      - detonation_combo: "взрыв при множественных попаданиях"
+    tactical_uses:
+      - area_denial: "множественные раны замедляют цель"
+      - explosive_finish: "детонация для финального урона"
+      - stealth_marking: "оставляют метки для отслеживания"
+    visual_effects:
+      - multiple_wounds: "несколько ран на теле"
+      - glowing_markers: "светящиеся метки для союзников"
+      - detonation_effects: "взрывные частицы при активации"
+
+  arrows_bolts:
+    description: "Стрелы с различными наконечниками и эффектами"
+    persistence_mechanics:
+      - varied_effect_types: true
+      - specialized_dot_effects: "яд, огонь, электричество, EMP"
+      - extraction_risk: "риск дополнительного урона"
+      - environmental_interaction: "могут гореть или взрываться"
+    tactical_uses:
+      - elemental_debuffs: "огонь, яд, электричество"
+      - area_control: "огненные стрелы создают зоны"
+      - trap_creation: "стрелы могут активировать ловушки"
+    visual_effects:
+      - elemental_particles: "частицы соответствующие эффекту"
+      - environmental_reaction: "взаимодействие с окружением"
+      - status_indicators: "иконки эффектов над головой"
+
+damage_over_time_mechanics:
+  dot_damage_types:
+    physical_bleeding:
+      damage_range: "3-10_per_second"
+      duration: "until_extracted_or_healed"
+      stacking: "multiple_wounds_increase_bleed"
+      visual_feedback: "blood_pools_blood_trails"
+    elemental_effects:
+      fire_damage: "burning_dot_with_spread_risk"
+      poison_damage: "toxin_dot_with_debuffs"
+      electric_damage: "shock_dot_with_stun_chance"
+      emp_damage: "system_corruption_dot"
+    special_effects:
+      infection_dot: "spreads_to_nearby_allies"
+      corrosive_dot: "damages_armor_over_time"
+      necrotic_dot: "reduces_healing_efficiency"
+
+  dot_progression:
+    initial_damage: "high_initial_burst"
+    sustained_damage: "reduced_over_time"
+    critical_thresholds: "damage_spikes_at_certain_times"
+    environmental_modifiers: "weather_affects_dot_strength"
+
+  dot_interaction:
+    multiple_wounds: "stacking_damage_multipliers"
+    wound_proximity: "nearby_wounds_amplify_effects"
+    critical_combinations: "specific_wound_patterns_trigger_bonuses"
+
+extraction_mechanics:
+  manual_extraction:
+    method: "close_range_interaction"
+    requirements: "free_hand_medical_skill"
+    risks: "additional_damage_chance"
+    benefits: "immediate_dot_stop_full_loot_recovery"
+    animation: "detailed_extraction_sequence"
+
+  ability_extraction:
+    method: "special_ability_or_implant"
+    requirements: "cybernetic_enhancement"
+    risks: "lower_success_chance"
+    benefits: "ranged_extraction_possible"
+    animation: "tech_extraction_effects"
+
+  mass_extraction:
+    method: "area_effect_ability"
+    requirements: "high_level_skill"
+    risks: "reduced_individual_loot"
+    benefits: "extract_all_projectiles_at_once"
+    animation: "sweeping_extraction_wave"
+
+  extraction_consequences:
+    successful_extraction:
+      - dot_immediate_stop: true
+      - loot_recovery: "partial_or_full"
+      - target_weakness: "temporary_debuff"
+      - player_benefits: "experience_or_materials"
+    failed_extraction:
+      - additional_damage: "critical_wound"
+      - dot_increase: "temporary_boost"
+      - infection_risk: "disease_chance"
+      - equipment_damage: "tool_breakage"
+
+visual_representation_system:
+  embedded_projectile_models:
+    bolt_models: "detailed_3d_models_with_physics"
+    arrow_models: "varied_by_arrow_type"
+    shuriken_models: "multiple_instances_tracking"
+    scale_adjustment: "size_based_on_target"
+
+  wound_visualization:
+    bleeding_effects: "particle_systems_blood_flow"
+    elemental_particles: "type_specific_vfx"
+    status_indicators: "floating_icons_above_target"
+    wound_glow: "highlighting_for_identification"
+
+  animation_integration:
+    movement_impairment: "limping_hobbled_animations"
+    pain_expressions: "facial_animations_grimacing"
+    extraction_sequences: "detailed_removal_animations"
+    critical_reactions: "impact_animations_at_hit"
+
+  environmental_interaction:
+    blood_trails: "ground_stains_following_movement"
+    projectile_dropping: "physics_when_target_dies"
+    fire_spread: "burning_arrows_ignite_surroundings"
+    emp_disruption: "electronic_interference_effects"
+
+tactical_combat_mechanics:
+  critical_hit_system:
+    embedded_area_bonus: "2x_damage_multiplier"
+    multiple_wound_combo: "damage_scaling_with_wound_count"
+    critical_chain_reaction: "nearby_wounds_trigger_secondary_effects"
+    precision_requirement: "skill_based_accuracy_bonus"
+
+  combo_systems:
+    wound_pattern_bonuses: "specific_arrangements_give_advantages"
+    extraction_timing: "perfect_extraction_windows"
+    multi_projectile_synergy: "different_types_combine_effects"
+    environmental_combo: "projectiles_interact_with_environment"
+
+  strategic_considerations:
+    resource_management: "limited_ammunition_means_careful_shots"
+    risk_reward_balance: "leave_projectiles_vs_extract_safely"
+    team_coordination: "allies_can_extract_each_others_projectiles"
+    positioning_tactics: "use_projectiles_to_control_movement"
+
+  counter_play_mechanics:
+    armor_penetration: "some_armor_resists_persistence"
+    healing_interaction: "healing_can_reduce_dot_strength"
+    movement_advantages: "high_mobility_reduces_hit_chance"
+    defensive_abilities: "shields_can_block_projectile_persistence"
+
+technical_implementation:
+  core_systems:
+    projectile_tracking:
+      database_schema: "embedded_projectiles_table"
+      real_time_updates: "position_rotation_tracking"
+      persistence_across_sessions: "save_load_functionality"
+    damage_calculation:
+      dot_engine: "continuous_damage_application"
+      critical_multipliers: "dynamic_damage_modifiers"
+      environmental_factors: "weather_biome_influences"
+    visual_system:
+      model_attachment: "skeleton_bone_binding"
+      particle_effects: "gpu_accelerated_particles"
+      animation_blending: "seamless_wound_integration"
+
+  performance_considerations:
+    projectile_limits: "maximum_embedded_per_target"
+    update_frequency: "efficient_dot_calculation"
+    rendering_optimization: "lod_systems_for_distance"
+    network_synchronization: "client_server_consistency"
+
+  integration_points:
+    combat_system: "hit_detection_persistence_logic"
+    inventory_system: "projectile_loot_recovery"
+    ability_system: "extraction_abilities_integration"
+    ui_system: "wound_status_display"
+
+system_balance_considerations:
+  projectile_rarity:
+    common_bolts: "standard_persistence_mechanics"
+    rare_arrows: "enhanced_effects_special_properties"
+    legendary_projectiles: "unique_mechanics_custom_effects"
+
+  class_specialization:
+    ranged_specialists: "enhanced_persistence_benefits"
+    close_combat: "extraction_specialization"
+    support_classes: "team_extraction_bonuses"
+    stealth_classes: "silent_projectile_options"
+
+  difficulty_scaling:
+    enemy_level_influence: "resistance_to_persistence"
+    player_skill_scaling: "extraction_success_rates"
+    environmental_modifiers: "weather_affects_projectile_behavior"
+
+  game_mode_considerations:
+    pvp_balance: "projectile_removal_mechanics"
+    co_op_synergy: "team_extraction_coordination"
+    solo_play: "self_extraction_mechanics"
+    hardcore_mode: "permanent_consequences"
+
+usage_examples:
+  sniper_engagement:
+    scenario: "Sniper embeds bolt in target from distance"
+    progression: "Target slowed by wound, sniper extracts remotely"
+    outcome: "Target weakened for follow-up attacks"
+    tactical_depth: "Positioning for safe extraction becomes key"
+
+  shuriken_assassin:
+    scenario: "Assassin throws multiple shuriken at target"
+    progression: "Target accumulates wounds, assassin detonates for finish"
+    outcome: "High damage burst with setup time"
+    tactical_depth: "Risk of target escaping before detonation"
+
+  archer_elementalist:
+    scenario: "Archer fires poison arrows into group"
+    progression: "Targets suffer ongoing damage, archer repositions"
+    outcome: "Area denial through persistent effects"
+    tactical_depth: "Arrow placement affects group movement patterns"
+
+readiness_criteria:
+  - "Projectile persistence mechanics detailed"
+  - "DoT damage system specified"
+  - "Extraction mechanics implemented"
+  - "Visual representation system designed"
+  - "Critical hit integration mapped"
+  - "Combo systems defined"
+  - "Technical implementation planned"
+  - "Balance considerations addressed"
+  - "Usage examples provided"
+
+next_steps:
+  - "Architectural design review and validation"
+  - "3D model and animation asset planning"
+  - "Backend implementation for tracking system"
+  - "UI design for wound status indicators"
+  - "Balance testing and iteration"
+
+design_philosophy:
+  physical_consequences: "Every projectile hit should have lasting physical impact"
+  tactical_depth: "Persistence creates meaningful decision points"
+  visual_impact: "Wounds should be immediately apparent and impactful"
+  risk_reward_focus: "Extraction decisions create tension and strategy"
+  accessibility: "System should enhance rather than complicate ranged combat"

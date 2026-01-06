@@ -6,6 +6,8 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -102,17 +104,92 @@ func (h *Handler) CombatServiceGetSession(ctx context.Context, params api.Combat
 	h.service.logger.Info("Processing GetCombatSession request",
 		zap.String("session_id", sessionID.String()))
 
-	// TODO: Implement session retrieval from database/cache
-	// This would include session metadata, participants, current state
+	// Retrieve session from database
+	query := `
+		SELECT session_id, game_mode, status, max_participants, current_participants,
+			   created_at, started_at, completed_at, participants, spectators,
+			   current_round, max_rounds, score, game_state
+		FROM combat.sessions
+		WHERE session_id = $1
+	`
 
-	// Placeholder response - replace with actual implementation
+	var session api.CombatSessionResponse
+	var participants, spectators, score, gameState []byte
+	var startedAt, completedAt sql.NullTime
+
+	err := h.service.db.QueryRow(ctx, query, sessionID.String()).Scan(
+		&session.SessionID,
+		&session.GameMode,
+		&session.Status,
+		&session.MaxParticipants,
+		&session.CurrentParticipants,
+		&session.CreatedAt,
+		&startedAt,
+		&completedAt,
+		&participants,
+		&spectators,
+		&session.CurrentRound,
+		&session.MaxRounds,
+		&score,
+		&gameState,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			h.service.logger.Info("Combat session not found",
+				zap.String("session_id", sessionID.String()))
+			return &api.CombatServiceGetSessionNotFound{}, nil
+		}
+		h.service.logger.Error("Failed to retrieve combat session",
+			zap.String("session_id", sessionID.String()),
+			zap.Error(err))
+		return nil, errors.Wrap(err, "failed to retrieve combat session")
+	}
+
+	// Parse JSON fields
+	if len(participants) > 0 {
+		if err := json.Unmarshal(participants, &session.Participants); err != nil {
+			h.service.logger.Warn("Failed to unmarshal participants",
+				zap.Error(err))
+		}
+	}
+
+	if len(spectators) > 0 {
+		if err := json.Unmarshal(spectators, &session.Spectators); err != nil {
+			h.service.logger.Warn("Failed to unmarshal spectators",
+				zap.Error(err))
+		}
+	}
+
+	if len(score) > 0 {
+		if err := json.Unmarshal(score, &session.Score); err != nil {
+			h.service.logger.Warn("Failed to unmarshal score",
+				zap.Error(err))
+		}
+	}
+
+	if len(gameState) > 0 {
+		if err := json.Unmarshal(gameState, &session.GameState); err != nil {
+			h.service.logger.Warn("Failed to unmarshal game state",
+				zap.Error(err))
+		}
+	}
+
+	// Set timestamps
+	if startedAt.Valid {
+		session.StartedAt = &startedAt.Time
+	}
+	if completedAt.Valid {
+		session.CompletedAt = &completedAt.Time
+	}
+
+	h.service.logger.Info("Combat session retrieved successfully",
+		zap.String("session_id", sessionID.String()),
+		zap.String("status", string(session.Status)),
+		zap.String("game_mode", string(session.GameMode)))
+
 	return &api.CombatServiceGetSessionOK{
-		Data: &api.CombatSessionResponse{
-			SessionID: sessionID.String(),
-			Status:    "active",
-			GameMode:  "standard",
-			CreatedAt: time.Now().Add(-time.Hour).Format(time.RFC3339),
-		},
+		Data: &session,
 	}, nil
 }
 
