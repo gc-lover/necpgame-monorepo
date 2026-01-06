@@ -441,9 +441,34 @@ func (s *Service) SpectateTournament(ctx context.Context, tournamentID uuid.UUID
 
 // isUserRegistered checks if a user is already registered for a tournament
 func (s *Service) isUserRegistered(ctx context.Context, tournamentID, userID uuid.UUID) (bool, error) {
-	// TODO: Implement database check
-	// For now, return false
-	return false, nil
+	s.logger.Info("Checking user registration for tournament",
+		zap.String("tournament_id", tournamentID.String()),
+		zap.String("user_id", userID.String()))
+
+	// PERFORMANCE: Use EXISTS query for optimal performance
+	query := `
+		SELECT EXISTS(
+			SELECT 1 FROM tournament.registrations
+			WHERE tournament_id = $1 AND player_id = $2
+		)
+	`
+
+	var exists bool
+	err := s.db.QueryRow(ctx, query, tournamentID, userID).Scan(&exists)
+	if err != nil {
+		s.logger.Error("Failed to check user registration in database",
+			zap.String("tournament_id", tournamentID.String()),
+			zap.String("user_id", userID.String()),
+			zap.Error(err))
+		return false, errors.Wrap(err, "failed to check user registration")
+	}
+
+	s.logger.Debug("User registration check completed",
+		zap.String("tournament_id", tournamentID.String()),
+		zap.String("user_id", userID.String()),
+		zap.Bool("is_registered", exists))
+
+	return exists, nil
 }
 
 // validateTournamentRequest validates tournament creation parameters
