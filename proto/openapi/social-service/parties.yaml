@@ -1,0 +1,806 @@
+openapi: 3.0.3
+info:
+  title: Social Service - Parties Module
+  description: 'Party system for temporary player groups and cooperative gameplay'
+  version: 1.0.0
+
+tags:
+  - name: Parties
+    description: Temporary player groups
+
+paths:
+  /social/parties:
+    get:
+      summary: List available parties
+      operationId: listParties
+      description: 'Retrieve a list of available parties that can be joined.
+
+        ## BACKEND NOTE
+        - Optimized party discovery with geolocation filtering
+        - Memory efficient for large numbers of active parties'
+      tags:
+        - Parties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: activity_type
+          in: query
+          schema:
+            type: string
+            enum: [raid, dungeon, pvp, exploration, quest]
+          description: Filter by activity type
+        - name: min_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Minimum party size
+        - name: max_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Maximum party size
+        - name: region
+          in: query
+          schema:
+            type: string
+          description: Geographic region filter
+        - name: language
+          in: query
+          schema:
+            type: string
+          description: Preferred language
+        - name: skill_level
+          in: query
+          schema:
+            type: string
+            enum: [beginner, intermediate, advanced, expert]
+          description: Required skill level
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 10
+          description: Number of parties to return
+      responses:
+        '200':
+          description: Parties retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  parties:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PartySummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create party
+      operationId: createParty
+      description: 'Create a temporary player party for cooperative gameplay.
+
+        **Dynamic:** Short-lived groups for specific missions or activities.
+
+        ## BACKEND NOTE
+        - Party creation with automatic cleanup timers
+        - Struct alignment hints: 30-50% memory savings for party operations
+        - Context timeouts: 2s for party validation, 3s for creation
+        - Optimized for quick party formation in high-tempo gameplay'
+      tags:
+        - Parties
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePartyRequest'
+      responses:
+        '201':
+          description: Party created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyResponse'
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /social/parties/{partyId}:
+    get:
+      summary: Get party details
+      operationId: getParty
+      description: 'Retrieve detailed information about a specific party.'
+      tags:
+        - Parties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+      responses:
+        '200':
+          description: Party details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyDetails'
+        '404':
+          description: Party not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update party
+      operationId: updateParty
+      description: 'Update party settings (leader only).'
+      tags:
+        - Parties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePartyRequest'
+      responses:
+        '200':
+          description: Party updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Party not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Disband party
+      operationId: disbandParty
+      description: 'Disband the party (leader only).'
+      tags:
+        - Parties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+      responses:
+        '204':
+          description: Party disbanded successfully
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Party not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /social/parties/{partyId}/members:
+    post:
+      summary: Join party
+      operationId: joinParty
+      description: 'Request to join or directly join a party.'
+      tags:
+        - Parties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  maxLength: 100
+                  description: Optional join message
+      responses:
+        '200':
+          description: Successfully joined party
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartyResponse'
+        '202':
+          description: Join request sent (pending approval)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [pending]
+        '403':
+          description: Party is full or join not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Party not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /social/parties/{partyId}/members/{playerId}:
+    delete:
+      summary: Leave party or kick member
+      operationId: leaveParty
+      description: 'Leave the party (any member) or kick a member (leader/officer only).'
+      tags:
+        - Parties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player to remove (can be self)
+        - name: reason
+          in: query
+          schema:
+            type: string
+            enum: [voluntary, kicked, inactive, afk]
+            default: voluntary
+          description: Reason for leaving/kicking
+      responses:
+        '204':
+          description: Member removed successfully
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Party or member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /social/parties/{partyId}/invite:
+    post:
+      summary: Invite player to party
+      operationId: inviteToParty
+      description: 'Invite a specific player to join the party.'
+      tags:
+        - Parties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                  description: Player to invite
+                message:
+                  type: string
+                  maxLength: 100
+                  description: Optional invitation message
+      responses:
+        '200':
+          description: Invitation sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invitation_id:
+                    type: string
+                    format: uuid
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Party or player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /social/parties/{partyId}/requests:
+    get:
+      summary: Get join requests
+      operationId: getJoinRequests
+      description: 'Get pending join requests for the party (leader/officers only).'
+      tags:
+        - Parties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+      responses:
+        '200':
+          description: Join requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JoinRequest'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Party not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Respond to join request
+      operationId: respondToJoinRequest
+      description: 'Accept or reject a join request (leader/officers only).'
+      tags:
+        - Parties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: partyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Party identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - request_id
+                - action
+              properties:
+                request_id:
+                  type: string
+                  format: uuid
+                  description: Join request ID
+                action:
+                  type: string
+                  enum: [accept, reject]
+                  description: Response action
+                message:
+                  type: string
+                  maxLength: 200
+                  description: Optional response message
+      responses:
+        '200':
+          description: Request processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [accepted, rejected]
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    CreatePartyRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 30
+          description: Party name
+        description:
+          type: string
+          maxLength: 200
+          description: Party description
+        activity_type:
+          type: string
+          enum: [raid, dungeon, pvp, exploration, quest, casual]
+          default: casual
+          description: Primary activity type
+        max_size:
+          type: integer
+          minimum: 2
+          maximum: 8
+          default: 4
+          description: Maximum party size
+        min_level:
+          type: integer
+          minimum: 1
+          description: Minimum player level requirement
+        max_level:
+          type: integer
+          minimum: 1
+          description: Maximum player level requirement
+        skill_level:
+          type: string
+          enum: [beginner, intermediate, advanced, expert]
+          description: Required skill proficiency
+        region:
+          type: string
+          description: Geographic region preference
+        language:
+          type: string
+          description: Preferred language
+        is_public:
+          type: boolean
+          default: true
+          description: Whether party appears in public listings
+        auto_approve:
+          type: boolean
+          default: true
+          description: Whether to auto-approve join requests
+        voice_required:
+          type: boolean
+          default: false
+          description: Whether voice communication is required
+      description: 'Party creation request with comprehensive configuration'
+
+    UpdatePartyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 30
+          description: New party name
+        description:
+          type: string
+          maxLength: 200
+          description: New party description
+        activity_type:
+          $ref: '#/components/schemas/CreatePartyRequest/properties/activity_type'
+        max_size:
+          type: integer
+          minimum: 2
+          maximum: 8
+          description: New maximum party size
+        min_level:
+          type: integer
+          minimum: 1
+          description: New minimum level requirement
+        max_level:
+          type: integer
+          minimum: 1
+          description: New maximum level requirement
+        skill_level:
+          $ref: '#/components/schemas/CreatePartyRequest/properties/skill_level'
+        is_public:
+          type: boolean
+          description: New public visibility setting
+        auto_approve:
+          type: boolean
+          description: New auto-approval setting
+      description: 'Party update request (partial updates allowed)'
+
+    PartyResponse:
+      type: object
+      properties:
+        party_id:
+          type: string
+          format: uuid
+          description: Unique party identifier
+        name:
+          type: string
+          description: Party name
+        description:
+          type: string
+          description: Party description
+        activity_type:
+          type: string
+          enum: [raid, dungeon, pvp, exploration, quest, casual]
+          description: Primary activity type
+        leader_id:
+          type: string
+          format: uuid
+          description: Party leader's player ID
+        leader_name:
+          type: string
+          description: Party leader's display name
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: string
+                format: uuid
+              player_name:
+                type: string
+              role:
+                type: string
+                enum: [leader, officer, member]
+              joined_at:
+                type: string
+                format: date-time
+            description: Party member information
+          description: Current party members
+        current_size:
+          type: integer
+          description: Current number of members
+        max_size:
+          type: integer
+          description: Maximum party size
+        min_level:
+          type: integer
+          description: Minimum level requirement
+        max_level:
+          type: integer
+          description: Maximum level requirement
+        skill_level:
+          type: string
+          enum: [beginner, intermediate, advanced, expert]
+          description: Required skill level
+        region:
+          type: string
+          description: Geographic region
+        language:
+          type: string
+          description: Preferred language
+        is_public:
+          type: boolean
+          description: Public visibility
+        voice_required:
+          type: boolean
+          description: Voice communication requirement
+        created_at:
+          type: string
+          format: date-time
+          description: Party creation timestamp
+        expires_at:
+          type: string
+          format: date-time
+          description: Party expiration timestamp
+      description: 'Complete party information response'
+
+    PartySummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Party ID
+        name:
+          type: string
+          description: Party name
+        activity_type:
+          type: string
+          enum: [raid, dungeon, pvp, exploration, quest, casual]
+          description: Activity type
+        leader_name:
+          type: string
+          description: Leader's display name
+        current_size:
+          type: integer
+          description: Current member count
+        max_size:
+          type: integer
+          description: Maximum size
+        min_level:
+          type: integer
+          description: Minimum level
+        max_level:
+          type: integer
+          description: Maximum level
+        skill_level:
+          type: string
+          enum: [beginner, intermediate, advanced, expert]
+          description: Skill level requirement
+        region:
+          type: string
+          description: Geographic region
+        language:
+          type: string
+          description: Language
+        voice_required:
+          type: boolean
+          description: Voice chat required
+      description: 'Condensed party information for listings'
+
+    PartyDetails:
+      allOf:
+        - $ref: '#/components/schemas/PartyResponse'
+        - type: object
+          properties:
+            pending_requests:
+              type: array
+              items:
+                $ref: '#/components/schemas/JoinRequest'
+              description: Pending join requests
+            recent_activity:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [member_joined, member_left, activity_started, activity_completed]
+                  player_name:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+                  details:
+                    type: object
+                    additionalProperties: true
+              description: Recent party activity log
+      description: 'Detailed party information including pending requests and activity'
+
+    JoinRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Request unique identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Requesting player ID
+        player_name:
+          type: string
+          description: Requesting player name
+        player_level:
+          type: integer
+          description: Player level
+        message:
+          type: string
+          description: Optional request message
+        requested_at:
+          type: string
+          format: date-time
+          description: Request timestamp
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+          description: Request status
+      description: 'Party join request information'
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: "PARTY_FULL"
+        message:
+          type: string
+          example: "Party has reached maximum capacity"

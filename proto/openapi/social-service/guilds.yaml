@@ -1,0 +1,654 @@
+openapi: 3.0.3
+info:
+  title: Social Service - Guilds Module
+  description: 'Guild management system for player communities and social groups'
+  version: 1.0.0
+
+tags:
+  - name: Guilds
+    description: Guild management and social groups
+
+paths:
+  /social/guilds:
+    get:
+      summary: List guilds
+      operationId: listGuilds
+      description: 'Retrieve a list of available guilds with filtering and pagination.
+
+        ## BACKEND NOTE
+        - Optimized guild listing with search indexes
+        - Memory efficient pagination for large guild directories'
+      tags:
+        - Guilds
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search guilds by name or description
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [casual, competitive, roleplay, trading, pvp]
+          description: Filter by guild category
+        - name: min_level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Minimum guild level
+        - name: max_members
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Maximum member count filter
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Number of guilds to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Guilds retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  guilds:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GuildSummary'
+                  total_count:
+                    type: integer
+                    description: Total number of guilds matching criteria
+                  has_more:
+                    type: boolean
+                    description: Whether there are more results
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create guild
+      operationId: createGuild
+      description: 'Create a new player guild with customizable settings and permissions.
+
+        **Community:** Foundation for social gameplay and cooperation.
+
+        ## BACKEND NOTE
+        - Guild creation with validation and anti-spam measures
+        - Struct alignment hints: 30-50% memory savings for guild operations
+        - Context timeouts: 3s for guild validation, 5s for creation
+        - DB pool config: dedicated connection for guild metadata'
+      tags:
+        - Guilds
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildRequest'
+      responses:
+        '201':
+          description: Guild created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildResponse'
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded (guild creation limit)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /social/guilds/{guildId}:
+    get:
+      summary: Get guild details
+      operationId: getGuild
+      description: 'Retrieve detailed information about a specific guild.'
+      tags:
+        - Guilds
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+      responses:
+        '200':
+          description: Guild details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildDetails'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied (private guild)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update guild
+      operationId: updateGuild
+      description: 'Update guild information and settings (leader only).'
+      tags:
+        - Guilds
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuildRequest'
+      responses:
+        '200':
+          description: Guild updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete guild
+      operationId: deleteGuild
+      description: 'Delete a guild (leader only, with confirmation).'
+      tags:
+        - Guilds
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+        - name: confirmation
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Confirmation token for deletion
+      responses:
+        '204':
+          description: Guild deleted successfully
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /social/guilds/{guildId}/members:
+    get:
+      summary: Get guild members
+      operationId: getGuildMembers
+      description: 'Retrieve list of guild members with roles and activity.'
+      tags:
+        - Guilds
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of members to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Guild members retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GuildMember'
+                  total_count:
+                    type: integer
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Invite player to guild
+      operationId: inviteToGuild
+      description: 'Invite a player to join the guild (officer+ permissions).'
+      tags:
+        - Guilds
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - player_id
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                  description: Player to invite
+                message:
+                  type: string
+                  maxLength: 200
+                  description: Optional invitation message
+      responses:
+        '200':
+          description: Invitation sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invitation_id:
+                    type: string
+                    format: uuid
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Guild or player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /social/guilds/{guildId}/members/{playerId}:
+    delete:
+      summary: Remove member from guild
+      operationId: removeGuildMember
+      description: 'Remove a member from the guild (appropriate permissions required).'
+      tags:
+        - Guilds
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player to remove
+        - name: reason
+          in: query
+          schema:
+            type: string
+            enum: [voluntary, kicked, inactive]
+            default: voluntary
+          description: Reason for removal
+      responses:
+        '204':
+          description: Member removed successfully
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Guild or member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    CreateGuildRequest:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9\\s\\-_]+$'
+          description: Guild name (alphanumeric, spaces, hyphens, underscores)
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+        category:
+          type: string
+          enum: [casual, competitive, roleplay, trading, pvp]
+          default: casual
+          description: Guild category
+        emblem:
+          type: string
+          format: uri
+          description: Guild emblem image URL
+        settings:
+          type: object
+          properties:
+            is_public:
+              type: boolean
+              default: true
+              description: Whether guild is public
+            max_members:
+              type: integer
+              minimum: 5
+              maximum: 500
+              default: 50
+              description: Maximum guild members
+            join_approval_required:
+              type: boolean
+              default: false
+              description: Whether join requests need approval
+            min_level_required:
+              type: integer
+              minimum: 1
+              default: 1
+              description: Minimum player level to join
+          description: Guild configuration settings
+      description: 'Guild creation request with comprehensive validation'
+
+    UpdateGuildRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: New guild name
+        description:
+          type: string
+          maxLength: 500
+          description: New guild description
+        emblem:
+          type: string
+          format: uri
+          description: New guild emblem
+        settings:
+          $ref: '#/components/schemas/CreateGuildRequest/properties/settings'
+      description: 'Guild update request (partial update allowed)'
+
+    GuildResponse:
+      type: object
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+          description: Unique guild identifier
+        name:
+          type: string
+          description: Guild name
+        description:
+          type: string
+          description: Guild description
+        category:
+          type: string
+          enum: [casual, competitive, roleplay, trading, pvp]
+          description: Guild category
+        leader_id:
+          type: string
+          format: uuid
+          description: Guild leader's player ID
+        member_count:
+          type: integer
+          minimum: 1
+          description: Current member count
+        level:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Guild level
+        experience:
+          type: integer
+          minimum: 0
+          description: Guild experience points
+        emblem:
+          type: string
+          format: uri
+          description: Guild emblem URL
+        settings:
+          $ref: '#/components/schemas/CreateGuildRequest/properties/settings'
+        created_at:
+          type: string
+          format: date-time
+          description: Guild creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      description: 'Complete guild information response'
+
+    GuildSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Guild ID
+        name:
+          type: string
+          description: Guild name
+        description:
+          type: string
+          description: Guild description
+        category:
+          type: string
+          enum: [casual, competitive, roleplay, trading, pvp]
+          description: Guild category
+        member_count:
+          type: integer
+          description: Current member count
+        level:
+          type: integer
+          description: Guild level
+        emblem:
+          type: string
+          format: uri
+          description: Guild emblem
+        is_public:
+          type: boolean
+          description: Whether guild is public
+        leader_name:
+          type: string
+          description: Guild leader's display name
+      description: 'Condensed guild information for listings'
+
+    GuildDetails:
+      allOf:
+        - $ref: '#/components/schemas/GuildResponse'
+        - type: object
+          properties:
+            members:
+              type: array
+              items:
+                $ref: '#/components/schemas/GuildMember'
+              description: Guild members (if requester is member)
+            achievements:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  unlocked_at:
+                    type: string
+                    format: date-time
+              description: Guild achievements
+            stats:
+              type: object
+              properties:
+                total_playtime:
+                  type: integer
+                  description: Total guild playtime in minutes
+                raids_completed:
+                  type: integer
+                  description: Number of raids completed
+                pvp_wins:
+                  type: integer
+                  description: PvP victories
+              description: Guild statistics
+      description: 'Detailed guild information including members and stats'
+
+    GuildMember:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player ID
+        player_name:
+          type: string
+          description: Player display name
+        role:
+          type: string
+          enum: [leader, officer, veteran, member, recruit]
+          description: Member role in guild
+        joined_at:
+          type: string
+          format: date-time
+          description: When player joined guild
+        last_active:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        contribution_score:
+          type: integer
+          minimum: 0
+          description: Player's contribution to guild
+      description: 'Guild member information'
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: "GUILD_NOT_FOUND"
+        message:
+          type: string
+          example: "Guild with specified ID does not exist"
