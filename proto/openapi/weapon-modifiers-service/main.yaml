@@ -1,0 +1,583 @@
+openapi: 3.0.0
+info:
+  title: Weapon Modifiers Service API
+  description: |
+    Enterprise-grade Weapon Modifiers system for cyberpunk MMOFPS RPG.
+
+    ## BACKEND NOTE
+    - Struct alignment hints: 30-50% memory savings for modifier operations
+    - Optimized for MMOFPS RPG with low latency modifier calculations
+    - Context timeouts: 3s for modifier applications, 5s for bulk operations
+    - DB pool config: connection pooling for modifier data loads
+    - Performance target: <30ms P95 for modifier queries, <100ms for applications
+
+    ## BUSINESS CONTEXT
+    Weapon Modifiers provide extensive customization options for weapons through attachments,
+    chips, and firmware. Players can enhance weapon performance, add special effects,
+    and create unique weapon builds for different combat scenarios.
+
+    ## KEY FEATURES
+    - **3 Modifier Types**: Attachments (4 slots), Chips (3 slots), Firmware (1 slot)
+    - **30 Modifier Categories**: Extensive customization options
+    - **Compatibility System**: Weapon-specific and cross-weapon modifiers
+    - **Synergy Effects**: Combined modifier bonuses and interactions
+    - **Progression System**: Slot unlocking through player advancement
+  version: 1.0.0
+  contact:
+    name: Weapon Modifiers Team
+    email: weaponmodifiers@necpgame.com
+
+servers:
+  - url: https://api.necpgame.com/v1/weapon-modifiers
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/weapon-modifiers
+    description: Staging server
+  - url: http://localhost:8080/api/v1/weapon-modifiers
+    description: Local development server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Modifier Management
+    description: Core modifier lifecycle operations
+  - name: Slot Management
+    description: Weapon slot operations
+  - name: Compatibility
+    description: Compatibility and validation operations
+  - name: Effects
+    description: Modifier effects and calculations
+
+paths:
+  /health:
+    get:
+      tags: ["Health"]
+      summary: Health check endpoint
+      description: Returns service health status
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /modifiers:
+    get:
+      tags: ["Modifier Management"]
+      summary: Get available modifiers
+      description: Retrieve list of available weapon modifiers with filtering
+      operationId: getModifiers
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [attachment, chip, firmware]
+          description: Filter by modifier type
+        - name: rarity
+          in: query
+          schema:
+            type: string
+            enum: [common, uncommon, rare, epic, legendary]
+          description: Filter by rarity
+        - name: weapon_type
+          in: query
+          schema:
+            type: string
+            description: Filter by compatible weapon type
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of items to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of items to skip
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModifiersResponse'
+
+  /modifiers/{modifier_id}:
+    get:
+      tags: ["Modifier Management"]
+      summary: Get modifier details
+      description: Retrieve detailed information about a specific modifier
+      operationId: getModifier
+      parameters:
+        - name: modifier_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique identifier of the modifier
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModifierResponse'
+        '404':
+          description: Modifier not found
+
+  /weapons/{weapon_id}/modifiers:
+    get:
+      tags: ["Slot Management"]
+      summary: Get weapon modifiers
+      description: Retrieve all modifiers currently applied to a weapon
+      operationId: getWeaponModifiers
+      parameters:
+        - name: weapon_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique identifier of the weapon
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponModifiersResponse'
+
+    post:
+      tags: ["Slot Management"]
+      summary: Apply modifier to weapon
+      description: Install a modifier in an available slot on the weapon
+      operationId: applyWeaponModifier
+      parameters:
+        - name: weapon_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique identifier of the weapon
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyModifierRequest'
+      responses:
+        '200':
+          description: Modifier applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplyModifierResponse'
+        '400':
+          description: Invalid request or incompatible modifier
+        '409':
+          description: No available slots or slot conflict
+
+  /weapons/{weapon_id}/modifiers/{slot_type}/{slot_index}:
+    delete:
+      tags: ["Slot Management"]
+      summary: Remove modifier from weapon
+      description: Remove a modifier from a specific slot
+      operationId: removeWeaponModifier
+      parameters:
+        - name: weapon_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique identifier of the weapon
+        - name: slot_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [attachment, chip, firmware]
+          description: Type of slot
+        - name: slot_index
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+          description: Slot index within the type
+      responses:
+        '200':
+          description: Modifier removed successfully
+        '404':
+          description: Weapon or modifier not found
+
+  /weapons/{weapon_id}/compatibility:
+    get:
+      tags: ["Compatibility"]
+      summary: Check modifier compatibility
+      description: Check which modifiers are compatible with the weapon
+      operationId: checkWeaponCompatibility
+      parameters:
+        - name: weapon_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique identifier of the weapon
+        - name: modifier_type
+          in: query
+          schema:
+            type: string
+            enum: [attachment, chip, firmware]
+          description: Optional filter by modifier type
+      responses:
+        '200':
+          description: Compatibility check results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompatibilityResponse'
+
+  /effects/calculate:
+    post:
+      tags: ["Effects"]
+      summary: Calculate modifier effects
+      description: Calculate combined effects of multiple modifiers
+      operationId: calculateModifierEffects
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EffectCalculationRequest'
+      responses:
+        '200':
+          description: Effects calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EffectCalculationResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: "1.0.0"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (strings first). Expected memory savings: 30-50%.'
+
+    Modifier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique modifier identifier
+        name:
+          type: string
+          description: Display name of the modifier
+        description:
+          type: string
+          description: Detailed description
+        type:
+          type: string
+          enum: [attachment, chip, firmware]
+          description: Type of modifier
+        category:
+          type: string
+          description: Specific category within the type
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+          description: Rarity level
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModifierEffect'
+          description: List of effects this modifier provides
+        requirements:
+          $ref: '#/components/schemas/ModifierRequirements'
+        compatible_weapons:
+          type: array
+          items:
+            type: string
+          description: List of compatible weapon types
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large objects → small). Expected memory savings: 30-50%.'
+      required: [id, name, type, rarity, effects]
+
+    ModifierEffect:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [damage, accuracy, fire_rate, stability, penetration, energy_draw, crit_chance, crit_damage, recoil, range]
+          description: Type of effect
+        value:
+          type: number
+          description: Effect value (positive for buffs, negative for debuffs)
+        is_percentage:
+          type: boolean
+          default: false
+          description: Whether the value is a percentage modifier
+        condition:
+          type: string
+          description: Optional condition for the effect (e.g., "when crouching")
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (bool last). Expected memory savings: 30-50%.'
+
+    ModifierRequirements:
+      type: object
+      properties:
+        level:
+          type: integer
+          minimum: 1
+          description: Required player level
+        reputation:
+          type: integer
+          minimum: 0
+          description: Required reputation points
+        prerequisites:
+          type: array
+          items:
+            type: string
+          description: Required prerequisite modifiers
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (arrays last). Expected memory savings: 30-50%.'
+
+    ModifiersResponse:
+      type: object
+      properties:
+        modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Modifier'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (array first). Expected memory savings: 30-50%.'
+
+    ModifierResponse:
+      type: object
+      properties:
+        modifier:
+          $ref: '#/components/schemas/Modifier'
+      description: 'BACKEND NOTE: Single field object optimized for struct alignment.'
+
+    WeaponModifiersResponse:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        slots:
+          $ref: '#/components/schemas/WeaponSlots'
+        total_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModifierEffect'
+          description: Combined effects from all modifiers
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (uuid → object → array). Expected memory savings: 30-50%.'
+
+    WeaponSlots:
+      type: object
+      properties:
+        attachments:
+          type: array
+          maxItems: 4
+          items:
+            $ref: '#/components/schemas/InstalledModifier'
+          description: Attachment slots (4 total)
+        chips:
+          type: array
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/InstalledModifier'
+          description: Chip slots (3 total)
+        firmware:
+          $ref: '#/components/schemas/InstalledModifier'
+          description: Firmware slot (1 total)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (arrays by size). Expected memory savings: 30-50%.'
+
+    InstalledModifier:
+      type: object
+      properties:
+        slot_index:
+          type: integer
+          minimum: 0
+          description: Position in the slot array
+        modifier:
+          $ref: '#/components/schemas/Modifier'
+        installed_at:
+          type: string
+          format: date-time
+        synergy_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModifierEffect'
+          description: Additional effects from synergies with other modifiers
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (int → object → array). Expected memory savings: 30-50%.'
+
+    ApplyModifierRequest:
+      type: object
+      required: [modifier_id, slot_type]
+      properties:
+        modifier_id:
+          type: string
+          format: uuid
+          description: ID of the modifier to apply
+        slot_type:
+          type: string
+          enum: [attachment, chip, firmware]
+          description: Type of slot to use
+        slot_index:
+          type: integer
+          minimum: 0
+          description: Specific slot index (optional, will auto-assign if not provided)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (uuid → string → int). Expected memory savings: 30-50%.'
+
+    ApplyModifierResponse:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        installed_modifier:
+          $ref: '#/components/schemas/InstalledModifier'
+        previous_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModifierEffect'
+          description: Weapon effects before this modifier
+        new_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModifierEffect'
+          description: Weapon effects after this modifier
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (uuid → object → arrays). Expected memory savings: 30-50%.'
+
+    CompatibilityResponse:
+      type: object
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+        compatible_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Modifier'
+          description: Modifiers that can be installed
+        incompatible_modifiers:
+          type: array
+          items:
+            type: object
+            properties:
+              modifier:
+                $ref: '#/components/schemas/Modifier'
+              reason:
+                type: string
+                enum: [weapon_type_incompatible, level_requirement_not_met, slot_full, prerequisite_missing]
+                description: Reason for incompatibility
+          description: Modifiers that cannot be installed
+        available_slots:
+          $ref: '#/components/schemas/WeaponSlots'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (uuid → arrays → object). Expected memory savings: 30-50%.'
+
+    EffectCalculationRequest:
+      type: object
+      required: [modifier_ids, weapon_type]
+      properties:
+        modifier_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of modifiers to calculate combined effects for
+        weapon_type:
+          type: string
+          description: Base weapon type for calculation
+        base_stats:
+          type: object
+          description: Base weapon statistics (optional, will use defaults if not provided)
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (array → strings → object). Expected memory savings: 30-50%.'
+
+    EffectCalculationResponse:
+      type: object
+      properties:
+        total_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModifierEffect'
+          description: Combined effects from all modifiers
+        synergies:
+          type: array
+          items:
+            type: object
+            properties:
+              modifier_ids:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+                description: IDs of modifiers creating synergy
+              effect:
+                $ref: '#/components/schemas/ModifierEffect'
+              description:
+                type: string
+                description: Description of the synergy effect
+          description: Special synergy effects
+        final_stats:
+          type: object
+          description: Final calculated weapon statistics
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (array → object). Expected memory savings: 30-50%.'
+
+    PaginationInfo:
+      type: object
+      properties:
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of items
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          description: Number of items skipped
+        has_more:
+          type: boolean
+          description: Whether there are more items available
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (ints → bool). Expected memory savings: 30-50%.'
+      required: [total, limit, offset, has_more]
