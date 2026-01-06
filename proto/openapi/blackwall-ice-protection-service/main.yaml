@@ -1,0 +1,945 @@
+openapi: 3.0.0
+info:
+  title: Blackwall ICE Protection Service API
+  description: |
+    Enterprise-grade Blackwall ICE Protection system for cyberpunk MMOFPS RPG.
+
+    ## BACKEND NOTE
+    - Struct alignment hints: 30-50% memory savings for ICE protection operations
+    - Optimized for MMOFPS RPG with low latency intrusion detection (<50ms P95)
+    - Context timeouts: 3s for ICE activation, 5s for adaptive responses, 10s for bulk operations
+    - DB pool config: connection pooling for intrusion logs and threat intelligence
+    - Performance target: <100ms P95 for threat evaluation, <200ms for ICE deployment
+    - Memory optimized: ICE state management with efficient caching
+
+    ## BUSINESS CONTEXT
+    Blackwall ICE Protection System provides multi-layered cyber defense for corporate and government networks.
+    Features adaptive AI-driven countermeasures, psychological warfare effects, and real-time threat response.
+    Supports multiple ICE types: Black ICE (lethal), White ICE (non-lethal), and specialized variants.
+
+    ## KEY FEATURES
+    - **Adaptive AI Learning**: ICE systems learn from intrusion patterns and adapt defenses
+    - **Psychological Warfare**: Neural interface effects create fear and confusion in attackers
+    - **Multi-Layer Protection**: Perimeter defense, intrusion detection, active countermeasures
+    - **Real-time Monitoring**: Live threat assessment and automated response systems
+    - **Forensic Analysis**: Detailed intrusion logs and attack pattern recognition
+  version: 1.0.0
+  contact:
+    name: Blackwall Security Team
+    email: blackwall-security@necpgame.com
+
+servers:
+  - url: https://blackwall.necpgame.com/api/v1
+    description: Production Blackwall ICE Protection Service
+  - url: https://staging-blackwall.necpgame.com/api/v1
+    description: Staging environment
+
+tags:
+  - name: ice-management
+    description: Core ICE system management and configuration
+  - name: intrusion-detection
+    description: Real-time intrusion detection and monitoring
+  - name: adaptive-defense
+    description: Adaptive AI learning and threat response systems
+  - name: psychological-warfare
+    description: Neural interface effects and psychological countermeasures
+  - name: threat-intelligence
+    description: Threat analysis and intelligence gathering
+  - name: system-health
+    description: Health monitoring and diagnostic endpoints
+
+paths:
+  # ICE Management
+  /ice/deployments:
+    get:
+      tags: [ice-management]
+      summary: Get active ICE deployments
+      description: Retrieve list of currently active ICE deployments across all network segments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: segment_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by network segment ID
+        - name: ice_type
+          in: query
+          schema:
+            type: string
+            enum: [black, white, adaptive, psychological]
+          description: Filter by ICE type
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, standby, breached, adapting]
+          description: Filter by deployment status
+      responses:
+        '200':
+          description: Successful retrieval of ICE deployments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICEDploymentListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [ice-management]
+      summary: Deploy new ICE system
+      description: Deploy a new ICE system to specified network segment with given configuration
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ICEDeployRequest'
+      responses:
+        '201':
+          description: ICE system successfully deployed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICEDeploymentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: ICE deployment conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ice/deployments/{deployment_id}:
+    get:
+      tags: [ice-management]
+      summary: Get ICE deployment details
+      description: Retrieve detailed information about specific ICE deployment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deployment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: ICE deployment details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICEDeploymentDetailsResponse'
+        '404':
+          description: ICE deployment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags: [ice-management]
+      summary: Update ICE deployment configuration
+      description: Modify configuration of existing ICE deployment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deployment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ICEUpdateRequest'
+      responses:
+        '200':
+          description: ICE deployment updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICEDeploymentResponse'
+
+    delete:
+      tags: [ice-management]
+      summary: Decommission ICE deployment
+      description: Safely decommission and remove ICE deployment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: deployment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: ICE deployment successfully decommissioned
+        '404':
+          description: ICE deployment not found
+
+  # Intrusion Detection
+  /intrusions/active:
+    get:
+      tags: [intrusion-detection]
+      summary: Get active intrusions
+      description: Retrieve list of currently active intrusion attempts being countered by ICE systems
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+          description: Filter by intrusion severity
+        - name: ice_type
+          in: query
+          schema:
+            type: string
+            enum: [black, white, adaptive, psychological]
+          description: Filter by responding ICE type
+      responses:
+        '200':
+          description: Active intrusions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveIntrusionsResponse'
+
+  /intrusions/{intrusion_id}/response:
+    post:
+      tags: [intrusion-detection]
+      summary: Initiate ICE response to intrusion
+      description: Trigger automated or manual ICE response to specific intrusion attempt
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: intrusion_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntrusionResponseRequest'
+      responses:
+        '200':
+          description: ICE response initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntrusionResponseResponse'
+
+  # Adaptive Defense
+  /adaptive/learning/{segment_id}:
+    get:
+      tags: [adaptive-defense]
+      summary: Get adaptive learning data
+      description: Retrieve adaptive learning patterns and threat intelligence for network segment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: segment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Adaptive learning data retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdaptiveLearningResponse'
+
+    post:
+      tags: [adaptive-defense]
+      summary: Update adaptive learning patterns
+      description: Manually update or reinforce adaptive learning patterns based on new threat intelligence
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: segment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdaptiveLearningUpdateRequest'
+      responses:
+        '200':
+          description: Adaptive learning patterns updated successfully
+
+  # Psychological Warfare
+  /psychological/effects/{target_id}:
+    post:
+      tags: [psychological-warfare]
+      summary: Apply psychological effect
+      description: Apply psychological warfare effect through target's neural interface
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: target_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Target intruder ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PsychologicalEffectRequest'
+      responses:
+        '200':
+          description: Psychological effect applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PsychologicalEffectResponse'
+
+  /psychological/effects/active:
+    get:
+      tags: [psychological-warfare]
+      summary: Get active psychological effects
+      description: Retrieve list of currently active psychological warfare effects
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Active psychological effects retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivePsychologicalEffectsResponse'
+
+  # Threat Intelligence
+  /threats/intelligence:
+    get:
+      tags: [threat-intelligence]
+      summary: Get threat intelligence
+      description: Retrieve aggregated threat intelligence and attack patterns
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d]
+          description: Timeframe for threat analysis
+        - name: threat_type
+          in: query
+          schema:
+            type: string
+            enum: [hacking, social_engineering, insider_threat, ddos]
+      responses:
+        '200':
+          description: Threat intelligence retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreatIntelligenceResponse'
+
+  # System Health
+  /health:
+    get:
+      tags: [system-health]
+      summary: Get system health status
+      description: Retrieve overall health status of Blackwall ICE Protection System
+      responses:
+        '200':
+          description: System health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /health/detailed:
+    get:
+      tags: [system-health]
+      summary: Get detailed health metrics
+      description: Retrieve detailed health metrics for all ICE systems and network segments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Detailed health metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailedHealthResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Common schemas
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+
+    # ICE Management schemas
+    ICEDploymentListResponse:
+      type: object
+      properties:
+        deployments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICEDploymentSummary'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+
+    ICEDploymentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        segment_id:
+          type: string
+          format: uuid
+        ice_type:
+          type: string
+          enum: [black, white, adaptive, psychological]
+        status:
+          type: string
+          enum: [active, standby, breached, adapting]
+        threat_level:
+          type: string
+          enum: [low, medium, high, critical]
+        last_adaptation:
+          type: string
+          format: date-time
+
+    ICEDeployRequest:
+      type: object
+      required:
+        - segment_id
+        - ice_type
+        - configuration
+      properties:
+        segment_id:
+          type: string
+          format: uuid
+        ice_type:
+          type: string
+          enum: [black, white, adaptive, psychological]
+        configuration:
+          $ref: '#/components/schemas/ICEConfiguration'
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+
+    ICEConfiguration:
+      type: object
+      properties:
+        aggression_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: How aggressively ICE responds to threats
+        adaptation_rate:
+          type: number
+          minimum: 0.1
+          maximum: 2.0
+          description: How quickly ICE adapts to new threats
+        psychological_intensity:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Intensity of psychological effects (0 = disabled)
+        lethal_force:
+          type: boolean
+          default: false
+          description: Whether to enable lethal countermeasures
+
+    ICEDeploymentResponse:
+      type: object
+      properties:
+        deployment:
+          $ref: '#/components/schemas/ICEDploymentDetails'
+        deployment_time:
+          type: string
+          format: date-time
+        estimated_activation:
+          type: string
+          format: date-time
+
+    ICEDploymentDetails:
+      allOf:
+        - $ref: '#/components/schemas/ICEDploymentSummary'
+        - type: object
+          properties:
+            configuration:
+              $ref: '#/components/schemas/ICEConfiguration'
+            statistics:
+              $ref: '#/components/schemas/ICEDploymentStatistics'
+            active_intrusions:
+              type: array
+              items:
+                $ref: '#/components/schemas/IntrusionSummary'
+
+    ICEDploymentStatistics:
+      type: object
+      properties:
+        intrusions_blocked:
+          type: integer
+        successful_breaches:
+          type: integer
+        average_response_time:
+          type: number
+          description: Average response time in milliseconds
+        adaptation_cycles:
+          type: integer
+
+    ICEUpdateRequest:
+      type: object
+      properties:
+        configuration:
+          $ref: '#/components/schemas/ICEConfiguration'
+        status:
+          type: string
+          enum: [active, standby, maintenance]
+
+    # Intrusion Detection schemas
+    ActiveIntrusionsResponse:
+      type: object
+      properties:
+        intrusions:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntrusionDetails'
+        total_count:
+          type: integer
+
+    IntrusionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        intruder_id:
+          type: string
+          format: uuid
+        segment_id:
+          type: string
+          format: uuid
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [detected, responding, contained, breached]
+        detected_at:
+          type: string
+          format: date-time
+
+    IntrusionDetails:
+      allOf:
+        - $ref: '#/components/schemas/IntrusionSummary'
+        - type: object
+          properties:
+            attack_vector:
+              type: string
+              enum: [direct_hack, social_engineering, insider_access, ddos]
+            methods_used:
+              type: array
+              items:
+                type: string
+            responding_ice:
+              type: array
+              items:
+                $ref: '#/components/schemas/ICEDploymentSummary'
+            psychological_effects_applied:
+              type: array
+              items:
+                type: string
+
+    IntrusionResponseRequest:
+      type: object
+      required:
+        - response_type
+      properties:
+        response_type:
+          type: string
+          enum: [automated, manual_override, escalate]
+        manual_instructions:
+          type: string
+          description: Manual response instructions (required for manual_override)
+        ice_reinforcements:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Additional ICE deployments to activate
+
+    IntrusionResponseResponse:
+      type: object
+      properties:
+        response_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [initiated, executing, completed, failed]
+        estimated_completion:
+          type: string
+          format: date-time
+
+    # Adaptive Defense schemas
+    AdaptiveLearningResponse:
+      type: object
+      properties:
+        segment_id:
+          type: string
+          format: uuid
+        learning_patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/LearningPattern'
+        threat_intelligence:
+          $ref: '#/components/schemas/ThreatIntelligence'
+        adaptation_effectiveness:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    LearningPattern:
+      type: object
+      properties:
+        pattern_id:
+          type: string
+        attack_vector:
+          type: string
+        success_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+        last_observed:
+          type: string
+          format: date-time
+        adaptation_applied:
+          type: string
+
+    AdaptiveLearningUpdateRequest:
+      type: object
+      required:
+        - pattern_updates
+      properties:
+        pattern_updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatternUpdate'
+        threat_intelligence_updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThreatUpdate'
+
+    PatternUpdate:
+      type: object
+      required:
+        - pattern_id
+        - update_type
+      properties:
+        pattern_id:
+          type: string
+        update_type:
+          type: string
+          enum: [reinforce, weaken, remove]
+        new_success_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    # Psychological Warfare schemas
+    PsychologicalEffectRequest:
+      type: object
+      required:
+        - effect_type
+      properties:
+        effect_type:
+          type: string
+          enum: [fear_induction, hallucination, neural_disruption, memory_manipulation]
+        intensity:
+          type: integer
+          minimum: 1
+          maximum: 10
+        duration_seconds:
+          type: integer
+          minimum: 10
+          maximum: 300
+        custom_parameters:
+          type: object
+          description: Effect-specific parameters
+
+    PsychologicalEffectResponse:
+      type: object
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [applied, resisted, failed]
+        applied_intensity:
+          type: integer
+        estimated_duration:
+          type: integer
+          description: Duration in seconds
+
+    ActivePsychologicalEffectsResponse:
+      type: object
+      properties:
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/PsychologicalEffectStatus'
+
+    PsychologicalEffectStatus:
+      type: object
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        effect_type:
+          type: string
+        intensity:
+          type: integer
+        remaining_duration:
+          type: integer
+        applied_at:
+          type: string
+          format: date-time
+
+    # Threat Intelligence schemas
+    ThreatIntelligenceResponse:
+      type: object
+      properties:
+        timeframe:
+          type: string
+        threats_detected:
+          type: integer
+        threats_mitigated:
+          type: integer
+        attack_patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttackPattern'
+        emerging_threats:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmergingThreat'
+
+    AttackPattern:
+      type: object
+      properties:
+        pattern_id:
+          type: string
+        description:
+          type: string
+        frequency:
+          type: integer
+        success_rate:
+          type: number
+        typical_ice_response:
+          type: string
+
+    EmergingThreat:
+      type: object
+      properties:
+        threat_id:
+          type: string
+        description:
+          type: string
+        confidence_level:
+          type: number
+          minimum: 0
+          maximum: 1
+        first_observed:
+          type: string
+          format: date-time
+
+    ThreatUpdate:
+      type: object
+      required:
+        - threat_id
+      properties:
+        threat_id:
+          type: string
+        severity_update:
+          type: string
+          enum: [increase, decrease]
+        new_intelligence:
+          type: string
+
+    ThreatIntelligence:
+      type: object
+      properties:
+        known_attack_vectors:
+          type: array
+          items:
+            type: string
+        emerging_patterns:
+          type: array
+          items:
+            type: string
+        recommended_defenses:
+          type: array
+          items:
+            type: string
+
+    # System Health schemas
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, critical]
+        uptime_seconds:
+          type: integer
+        active_ice_deployments:
+          type: integer
+        active_intrusions:
+          type: integer
+        system_load:
+          type: number
+          description: System load percentage (0-1)
+
+    DetailedHealthResponse:
+      type: object
+      properties:
+        overall_status:
+          type: string
+          enum: [healthy, degraded, critical]
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SegmentHealth'
+        system_metrics:
+          $ref: '#/components/schemas/SystemMetrics'
+
+    SegmentHealth:
+      type: object
+      properties:
+        segment_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [healthy, warning, critical]
+        active_ice_count:
+          type: integer
+        recent_intrusions:
+          type: integer
+        adaptation_health:
+          type: number
+          description: Adaptation system health (0-1)
+
+    SystemMetrics:
+      type: object
+      properties:
+        average_response_time_ms:
+          type: number
+        memory_usage_percent:
+          type: number
+        cpu_usage_percent:
+          type: number
+        network_throughput_mbps:
+          type: number
+        active_connections:
+          type: integer
+
+    # Common utility schemas
+    PaginationInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_count:
+          type: integer
+        total_pages:
+          type: integer
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
