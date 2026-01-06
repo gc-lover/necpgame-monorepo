@@ -46,7 +46,7 @@ const (
 // Ticket represents a support ticket
 type Ticket struct {
 	ID           uuid.UUID      `json:"id" db:"id"`
-	CharacterID  uuid.UUID      `json:"character_id" db:"character_id"`
+	PlayerID     uuid.UUID      `json:"player_id" db:"player_id"`
 	Title        string         `json:"title" db:"title"`
 	Description  string         `json:"description" db:"description"`
 	Category     TicketCategory `json:"category" db:"category"`
@@ -55,15 +55,16 @@ type Ticket struct {
 	AgentID      *uuid.UUID     `json:"agent_id,omitempty" db:"agent_id"`
 	CreatedAt    time.Time      `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at" db:"updated_at"`
-	ResolvedAt   *time.Time     `json:"resolved_at,omitempty" db:"resolved_at"`
+	ClosedAt     *time.Time     `json:"closed_at,omitempty" db:"closed_at"`
 	Tags         []string       `json:"tags" db:"tags"`
 	SLADueDate   *time.Time     `json:"sla_due_date,omitempty" db:"sla_due_date"`
+	SLAStatus    SLAStatus      `json:"sla_status" db:"sla_status"`
 	ResponseCount int           `json:"response_count" db:"response_count"`
 }
 
 // CreateTicketRequest represents a request to create a new ticket
 type CreateTicketRequest struct {
-	CharacterID uuid.UUID      `json:"character_id"`
+	PlayerID    uuid.UUID      `json:"player_id"`
 	Title       string         `json:"title"`
 	Description string         `json:"description"`
 	Category    TicketCategory `json:"category"`
@@ -121,4 +122,5 @@ type TicketListResponse struct {
 		TotalPages int `json:"total_pages"`
 	} `json:"pagination"`
 }
+
 

@@ -674,3 +674,4 @@ done
 
 # Run main function
 main "$@"
+

@@ -188,3 +188,4 @@ func (p *ElectricEffectProcessor) calculateEnvironmentalModifier(env types.Envir
 	return math.Max(0.1, modifier)
 }
 
+

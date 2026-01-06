@@ -115,3 +115,4 @@ npx @redocly/cli build-docs main.yaml -o docs/index.html
 - **cosmetic**: Косметические предметы
 - **ability**: Новые способности
 - **reputation**: Репутация и статус
+

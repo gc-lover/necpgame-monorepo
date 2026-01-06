@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/gc-lover/necpgame/services/support-service-go/internal/models"
 	"github.com/google/uuid"
-	"necpgame/services/support-service-go/internal/models"
 )
 
 // TicketRepository defines interface for ticket operations
@@ -29,11 +29,11 @@ type TicketRepository interface {
 
 // TicketResponseRepository defines interface for ticket response operations
 type TicketResponseRepository interface {
-	Create(ctx context.Context, response *models.TicketResponse) error
+	CreateResponse(ctx context.Context, response *models.TicketResponse) error
 	GetByTicketID(ctx context.Context, ticketID uuid.UUID) ([]*models.TicketResponse, error)
-	GetByID(ctx context.Context, id uuid.UUID) (*models.TicketResponse, error)
-	Update(ctx context.Context, response *models.TicketResponse) error
-	Delete(ctx context.Context, id uuid.UUID) error
+	GetResponseByID(ctx context.Context, id uuid.UUID) (*models.TicketResponse, error)
+	UpdateResponse(ctx context.Context, response *models.TicketResponse) error
+	DeleteResponse(ctx context.Context, id uuid.UUID) error
 }
 
 // SLARepository defines interface for SLA operations
@@ -60,4 +60,5 @@ type Transaction interface {
 	TicketResponseRepository
 	SLARepository
 }
+
 

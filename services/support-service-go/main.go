@@ -6,6 +6,7 @@ import (
 
 	"github.com/gc-lover/necpgame/services/support-service-go/internal/config"
 	"github.com/gc-lover/necpgame/services/support-service-go/internal/database"
+
 	"go.uber.org/zap"
 )
 

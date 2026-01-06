@@ -197,3 +197,4 @@ npx @redocly/cli build-docs main.yaml -o docs/index.html
 - Live timer synchronization
 - Leaderboard updates
 - Real-time notifications
+

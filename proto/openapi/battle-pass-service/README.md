@@ -223,3 +223,4 @@ kubectl apply -f k8s/battle-pass-deployment.yaml
 - **Batch Operations**: Bulk XP grants for team activities
 - **Predictive Loading**: Pre-load upcoming season data
 - **Compression**: Efficient reward metadata transmission
+

@@ -533,3 +533,4 @@ class TestQuestAPI:
                 pytest.fail(f"Request failed with error: {data}")
 
         assert successful_requests == 10  # All requests should succeed
+

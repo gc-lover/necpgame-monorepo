@@ -349,3 +349,4 @@ func (bp *BatchProcessor) calculateBatchesPerSecond() float64 {
 	// TODO: Implement time-based calculation
 	return 0.0
 }
+

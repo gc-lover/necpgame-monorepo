@@ -128,3 +128,4 @@ function run_additional_benchmarks() {
     awk '{sum+=$2; count++} END {print "Average:", sum/count, "ms"}' "$db_output"
 }
 
+

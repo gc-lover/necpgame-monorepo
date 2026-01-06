@@ -441,3 +441,4 @@ def spike_load_shape(stage_users, stage_time):
         return stage_users * 5  # 5x normal load during spikes
     else:
         return stage_users // 2  # Reduced load between spikes
+

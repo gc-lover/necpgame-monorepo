@@ -7,7 +7,6 @@ import (
 
 	"github.com/gc-lover/necpgame/services/support-service-go/internal/config"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"go.uber.org/zap"
 )
 
 // DB represents database connection
@@ -58,4 +57,5 @@ func (db *DB) Close() {
 func (db *DB) Ping(ctx context.Context) error {
 	return db.Pool.Ping(ctx)
 }
+
 

@@ -270,3 +270,4 @@ type ValidationResult struct {
 	Violations []string        `json:"violations,omitempty"`
 	IsValid    bool            `json:"is_valid"`
 }
+

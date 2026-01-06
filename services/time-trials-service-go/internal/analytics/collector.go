@@ -220,3 +220,4 @@ type EngagementMetrics struct {
 	CompletionRateTrend  []float64 `json:"completion_rate_trend"`
 	PopularTimeSlots     []string  `json:"popular_time_slots"`
 }
+

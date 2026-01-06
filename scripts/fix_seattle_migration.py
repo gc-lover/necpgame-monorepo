@@ -54,3 +54,4 @@ def fix_migration():
 if __name__ == "__main__":
     fix_migration()
 
+

@@ -84,3 +84,4 @@ type InventoryFilter struct {
 	IsEquipped *bool       `json:"is_equipped,omitempty"`
 }
 
+

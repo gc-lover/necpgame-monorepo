@@ -245,3 +245,4 @@ echo ""
 echo "To view logs:"
 echo "  docker-compose -f docker-compose.monitoring.yml logs -f"
 
+

@@ -143,3 +143,4 @@ func (p *VoidEffectProcessor) calculateEnvironmentalModifier(env types.Environme
 	return math.Max(0.1, modifier)
 }
 
+

@@ -4,21 +4,20 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 	"time"
 
+	"github.com/gc-lover/necpgame/services/support-service-go/internal/models"
+	"github.com/gc-lover/necpgame/services/support-service-go/internal/repository"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
-	"necpgame/services/support-service-go/internal/models"
-	"necpgame/services/support-service-go/internal/repository"
 )
 
 type ticketRepository struct {
-	db *sql.DB
+	db DBTX
 }
 
 // NewTicketRepository creates a new PostgreSQL ticket repository
-func NewTicketRepository(db *sql.DB) repository.TicketRepository {
+func NewTicketRepository(db DBTX) repository.TicketRepository {
 	return &ticketRepository{db: db}
 }
 
@@ -176,16 +175,17 @@ func (r *ticketRepository) Close(ctx context.Context, id uuid.UUID, resolution s
 
 	// Add resolution as a response
 	response := &models.TicketResponse{
-		ID:        uuid.New(),
-		TicketID:  id.String(),
-		AuthorID:  "system", // System-generated resolution
-		Content:   fmt.Sprintf("Ticket closed with resolution: %s", resolution),
-		IsPublic:  true,
-		CreatedAt: now,
+		ID:         uuid.New(),
+		TicketID:   id,
+		AuthorID:   uuid.Nil,
+		AuthorType: models.AuthorTypeSystem,
+		Content:    fmt.Sprintf("Ticket closed with resolution: %s", resolution),
+		IsPublic:   true,
+		CreatedAt:  now,
 	}
 
 	responseRepo := NewTicketResponseRepository(r.db)
-	return responseRepo.Create(ctx, response)
+	return responseRepo.CreateResponse(ctx, response)
 }
 
 func (r *ticketRepository) GetByPlayerID(ctx context.Context, playerID uuid.UUID, limit, offset int) ([]*models.Ticket, error) {
@@ -443,4 +443,5 @@ func (r *ticketRepository) queryTickets(ctx context.Context, query string, args 
 
 	return tickets, nil
 }
+
 

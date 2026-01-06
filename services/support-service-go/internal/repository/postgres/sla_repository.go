@@ -6,18 +6,18 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gc-lover/necpgame/services/support-service-go/internal/models"
+	"github.com/gc-lover/necpgame/services/support-service-go/internal/repository"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
-	"necpgame/services/support-service-go/internal/models"
-	"necpgame/services/support-service-go/internal/repository"
 )
 
 type slaRepository struct {
-	db *sql.DB
+	db DBTX
 }
 
 // NewSLARepository creates a new PostgreSQL SLA repository
-func NewSLARepository(db *sql.DB) repository.SLARepository {
+func NewSLARepository(db DBTX) repository.SLARepository {
 	return &slaRepository{db: db}
 }
 
@@ -231,4 +231,5 @@ func (r *slaRepository) calculateResponseDeadline(createdAt time.Time, priority 
 		return createdAt.Add(time.Hour) // Default to normal
 	}
 }
+
 

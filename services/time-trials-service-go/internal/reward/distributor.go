@@ -241,3 +241,4 @@ type TrialConfig struct {
 	GoldRewards     RewardTiers `json:"gold_rewards"`
 	PlatinumRewards RewardTiers `json:"platinum_rewards"`
 }
+

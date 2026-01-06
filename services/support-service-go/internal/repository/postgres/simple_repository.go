@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/gc-lover/necpgame/services/support-service-go/internal/models"
+	"github.com/gc-lover/necpgame/services/support-service-go/internal/repository"
 	"github.com/google/uuid"
-	"necpgame/services/support-service-go/internal/models"
-	"necpgame/services/support-service-go/internal/repository"
 )
 
 type simplePostgresRepository struct {
@@ -81,24 +81,24 @@ func (r *simplePostgresRepository) GetStatistics(ctx context.Context, periodStar
 }
 
 // TicketResponseRepository methods
-func (r *simplePostgresRepository) Create(ctx context.Context, response *models.TicketResponse) error {
-	return NewTicketResponseRepository(r.db).Create(ctx, response)
+func (r *simplePostgresRepository) CreateResponse(ctx context.Context, response *models.TicketResponse) error {
+	return NewTicketResponseRepository(r.db).CreateResponse(ctx, response)
 }
 
-func (r *simplePostgresRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.TicketResponse, error) {
-	return NewTicketResponseRepository(r.db).GetByID(ctx, id)
+func (r *simplePostgresRepository) GetResponseByID(ctx context.Context, id uuid.UUID) (*models.TicketResponse, error) {
+	return NewTicketResponseRepository(r.db).GetResponseByID(ctx, id)
 }
 
 func (r *simplePostgresRepository) GetByTicketID(ctx context.Context, ticketID uuid.UUID) ([]*models.TicketResponse, error) {
 	return NewTicketResponseRepository(r.db).GetByTicketID(ctx, ticketID)
 }
 
-func (r *simplePostgresRepository) Update(ctx context.Context, response *models.TicketResponse) error {
-	return NewTicketResponseRepository(r.db).Update(ctx, response)
+func (r *simplePostgresRepository) UpdateResponse(ctx context.Context, response *models.TicketResponse) error {
+	return NewTicketResponseRepository(r.db).UpdateResponse(ctx, response)
 }
 
-func (r *simplePostgresRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	return NewTicketResponseRepository(r.db).Delete(ctx, id)
+func (r *simplePostgresRepository) DeleteResponse(ctx context.Context, id uuid.UUID) error {
+	return NewTicketResponseRepository(r.db).DeleteResponse(ctx, id)
 }
 
 // SLARepository methods
@@ -118,8 +118,18 @@ func (r *simplePostgresRepository) GetOverdueTickets(ctx context.Context, curren
 	return NewSLARepository(r.db).GetOverdueTickets(ctx, currentTime)
 }
 
+func (r *simplePostgresRepository) Commit() error {
+	return nil
+}
+
+func (r *simplePostgresRepository) Rollback() error {
+	return nil
+}
+
 // Transaction methods
 func (r *simplePostgresRepository) BeginTx(ctx context.Context) (repository.Transaction, error) {
-	return NewSimpleRepository(r.db), nil // Simplified - no real transaction support
+	// For simple repository, we return itself as the transaction (simplified)
+	return r, nil
 }
+
 

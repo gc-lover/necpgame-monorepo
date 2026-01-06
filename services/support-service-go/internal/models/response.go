@@ -12,6 +12,7 @@ type AuthorType string
 const (
 	AuthorTypeCustomer AuthorType = "customer"
 	AuthorTypeAgent    AuthorType = "agent"
+	AuthorTypeSystem   AuthorType = "system"
 )
 
 // TicketResponse represents a response to a support ticket
@@ -21,7 +22,7 @@ type TicketResponse struct {
 	AuthorID   uuid.UUID  `json:"author_id" db:"author_id"`
 	AuthorType AuthorType `json:"author_type" db:"author_type"`
 	Content    string     `json:"content" db:"content"`
-	IsInternal bool       `json:"is_internal" db:"is_internal"`
+	IsPublic   bool       `json:"is_public" db:"is_public"`
 	CreatedAt  time.Time  `json:"created_at" db:"created_at"`
 }
 
@@ -54,4 +55,5 @@ type TicketResponseListResponse struct {
 		TotalPages int `json:"total_pages"`
 	} `json:"pagination"`
 }
+
 

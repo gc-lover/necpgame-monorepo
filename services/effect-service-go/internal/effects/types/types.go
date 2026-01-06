@@ -186,3 +186,4 @@ type InteractionCalculator interface {
 	GetConflictMultiplier(primary, secondary ElementalType) float64
 }
 
+

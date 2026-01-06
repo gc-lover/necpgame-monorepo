@@ -275,3 +275,4 @@ func (h *ElementalHandler) EffectServiceHealthWebSocket(ctx context.Context, req
 	return r, ht.ErrNotImplemented
 }
 
+

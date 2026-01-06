@@ -483,3 +483,4 @@ func (t *Transport) CleanupInactiveClients(maxAge time.Duration) {
 		t.logger.Info("cleaned up inactive clients", zap.Int("removed", len(toRemove)))
 	}
 }
+

@@ -6,22 +6,22 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gc-lover/necpgame/services/support-service-go/internal/models"
+	"github.com/gc-lover/necpgame/services/support-service-go/internal/repository"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
-	"necpgame/services/support-service-go/internal/models"
-	"necpgame/services/support-service-go/internal/repository"
 )
 
 type ticketResponseRepository struct {
-	db *sql.DB
+	db DBTX
 }
 
 // NewTicketResponseRepository creates a new PostgreSQL ticket response repository
-func NewTicketResponseRepository(db *sql.DB) repository.TicketResponseRepository {
+func NewTicketResponseRepository(db DBTX) repository.TicketResponseRepository {
 	return &ticketResponseRepository{db: db}
 }
 
-func (r *ticketResponseRepository) Create(ctx context.Context, response *models.TicketResponse) error {
+func (r *ticketResponseRepository) CreateResponse(ctx context.Context, response *models.TicketResponse) error {
 	query := `
 		INSERT INTO ticket_responses (
 			id, ticket_id, author_id, content, is_public, created_at
@@ -42,7 +42,7 @@ func (r *ticketResponseRepository) Create(ctx context.Context, response *models.
 	return nil
 }
 
-func (r *ticketResponseRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.TicketResponse, error) {
+func (r *ticketResponseRepository) GetResponseByID(ctx context.Context, id uuid.UUID) (*models.TicketResponse, error) {
 	query := `
 		SELECT id, ticket_id, author_id, content, is_public, created_at
 		FROM ticket_responses WHERE id = $1
@@ -98,7 +98,7 @@ func (r *ticketResponseRepository) GetByTicketID(ctx context.Context, ticketID u
 	return responses, nil
 }
 
-func (r *ticketResponseRepository) Update(ctx context.Context, response *models.TicketResponse) error {
+func (r *ticketResponseRepository) UpdateResponse(ctx context.Context, response *models.TicketResponse) error {
 	query := `
 		UPDATE ticket_responses SET
 			content = $1, is_public = $2
@@ -116,7 +116,7 @@ func (r *ticketResponseRepository) Update(ctx context.Context, response *models.
 	return nil
 }
 
-func (r *ticketResponseRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *ticketResponseRepository) DeleteResponse(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM ticket_responses WHERE id = $1`
 
 	result, err := r.db.ExecContext(ctx, query, id)
@@ -135,4 +135,5 @@ func (r *ticketResponseRepository) Delete(ctx context.Context, id uuid.UUID) err
 
 	return nil
 }
+
 
