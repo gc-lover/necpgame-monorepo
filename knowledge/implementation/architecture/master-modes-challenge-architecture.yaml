@@ -1,0 +1,460 @@
+# Issue: #1496 - [Gameplay] Мастер-режимы и Challenge modes
+metadata:
+  id: master-modes-challenge-architecture
+  title: Архитектура системы Мастер-режимов и Challenge modes
+  document_type: architecture
+  category: backend
+  status: draft
+  version: '1.0.0'
+  last_updated: 2026-01-06T14:40:00Z
+  concept_approved: false
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - master-modes
+    - challenge-modes
+    - backend-architecture
+    - difficulty-scaling
+    - gameplay-systems
+  github_issue: 1496
+  sources:
+    - knowledge/idea/master-modes-challenge-system.yaml
+
+summary:
+  problem: Отсутствует техническая архитектура для реализации системы мастер-режимов и challenge modes с интеграцией achievement и leaderboard сервисов.
+  goal: Спроектировать масштабируемую, производительную архитектуру backend систем для поддержки мастер-режимов, challenge modes, и интеграции с существующими сервисами.
+  key_points:
+    - Три уровня сложности с фиксированными модификаторами
+    - Интеграция с achievement и leaderboard сервисами
+    - Адаптивная сложность и процедурная генерация челленджей
+    - Анти-чит система и валидация результатов
+    - Масштабируемость для большого количества одновременных сессий
+
+content:
+  system_overview:
+    description: Обзор архитектуры системы мастер-режимов
+    components:
+      - master_mode_service: Основной сервис управления мастер-режимами
+      - challenge_engine: Движок генерации и управления челленджами
+      - difficulty_scaler: Система адаптивного масштабирования сложности
+      - validation_service: Сервис валидации результатов и анти-чит
+      - integration_layer: Слой интеграции с achievement и leaderboard сервисами
+
+    data_flow:
+      player_request: "Игрок запрашивает мастер-режим"
+      mode_initialization: "Инициализация режима с модификаторами"
+      challenge_generation: "Генерация челленджей и целей"
+      session_tracking: "Отслеживание прогресса сессии"
+      result_validation: "Валидация результатов"
+      reward_distribution: "Распределение наград"
+
+  core_components:
+
+    master_mode_service:
+      description: Основной сервис управления мастер-режимами
+      responsibilities:
+        - Управление конфигурациями режимов
+        - Инициализация сессий мастер-режимов
+        - Применение модификаторов сложности
+        - Отслеживание состояния сессии
+
+      api_endpoints:
+        - POST /api/v1/master-modes/{modeId}/start
+        - GET /api/v1/master-modes/{modeId}/status
+        - POST /api/v1/master-modes/{modeId}/complete
+        - GET /api/v1/master-modes/player/{playerId}/history
+
+      data_structures:
+        MasterModeSession:
+          session_id: string (UUID)
+          player_id: string (UUID)
+          mode_type: enum (Apprentice, Journeyman, Master, Grandmaster, Nightmare)
+          difficulty_modifiers: DifficultyModifiers
+          start_time: timestamp
+          current_state: enum (Active, Paused, Completed, Failed)
+          progress_metrics: ProgressMetrics
+          achievements_unlocked: []string
+
+        DifficultyModifiers:
+          enemy_health_multiplier: float (default: 1.0)
+          enemy_damage_multiplier: float (default: 1.0)
+          player_resource_multiplier: float (default: 1.0)
+          time_limit_seconds: int (optional)
+          permadeath_enabled: bool (default: false)
+          checkpoint_disabled: bool (default: false)
+
+    challenge_engine:
+      description: Движок генерации и управления челленджами
+      responsibilities:
+        - Процедурная генерация челленджей
+        - Управление состоянием челленджей
+        - Валидация выполнения условий
+        - Генерация наград
+
+      challenge_types:
+        time_attack:
+          generation_algorithm: TimeAttackGenerator
+          validation_rules: TimeBasedValidation
+          scoring_formula: "(base_score / completion_time) * difficulty_multiplier"
+
+        survival:
+          generation_algorithm: SurvivalWaveGenerator
+          validation_rules: SurvivalValidation
+          scoring_formula: "wave_count * enemy_difficulty_sum * time_survived"
+
+        puzzle_master:
+          generation_algorithm: PuzzleGenerator
+          validation_rules: LogicValidation
+          scoring_formula: "(optimal_steps / actual_steps) * complexity_multiplier"
+
+        roleplay:
+          generation_algorithm: NarrativeGenerator
+          validation_rules: StoryValidation
+          scoring_formula: "narrative_completeness * player_choice_quality"
+
+      procedural_generation:
+        constraint_based:
+          description: Генерация на основе ограничений
+          parameters:
+            - time_limit: int (минуты)
+            - resource_limit: float (процент от максимума)
+            - enemy_count: int
+            - area_size: int (квадратные метры)
+
+        pattern_matching:
+          description: Подбор паттернов под стиль игрока
+          player_modeling:
+            - combat_style: enum (Aggressive, Defensive, Stealth, Technical)
+            - preferred_difficulty: float (0.0-1.0)
+            - completion_history: []ChallengeResult
+            - performance_metrics: PerformanceMetrics
+
+    difficulty_scaler:
+      description: Система адаптивного масштабирования сложности
+      scaling_mechanisms:
+
+        static_scaling:
+          description: Фиксированные уровни сложности
+          tiers:
+            apprentice:
+              enemy_health: 1.5
+              enemy_damage: 1.25
+              player_resources: 0.8
+              time_limit: null
+
+            journeyman:
+              enemy_health: 2.0
+              enemy_damage: 1.5
+              player_resources: 0.7
+              time_limit: 1800  # 30 минут
+
+            master:
+              enemy_health: 3.0
+              enemy_damage: 2.0
+              player_resources: 0.6
+              time_limit: 1200  # 20 минут
+
+            grandmaster:
+              enemy_health: 4.0
+              enemy_damage: 2.5
+              player_resources: 0.5
+              time_limit: 900   # 15 минут
+              permadeath: true
+
+            nightmare:
+              enemy_health: 5.0
+              enemy_damage: 3.0
+              player_resources: 0.4
+              time_limit: 600   # 10 минут
+              permadeath: true
+              checkpoints_disabled: true
+
+        adaptive_scaling:
+          description: Динамическая адаптация под игрока
+          algorithms:
+            performance_based:
+              metrics:
+                - completion_time: float
+                - damage_taken: float
+                - resources_used: float
+                - accuracy: float
+
+              scaling_formula: |
+                difficulty_multiplier = 1.0
+                if completion_time < optimal_time * 0.8:
+                  difficulty_multiplier *= 1.2
+                if damage_taken < average_damage * 0.7:
+                  difficulty_multiplier *= 1.1
+
+            historical_analysis:
+              data_sources:
+                - previous_sessions: []SessionData
+                - community_benchmarks: []BenchmarkData
+                - personal_bests: []PersonalRecord
+
+              prediction_model: |
+                expected_performance = ml_model.predict(player_history)
+                optimal_difficulty = calculate_optimal_difficulty(expected_performance)
+
+    validation_service:
+      description: Сервис валидации результатов и анти-чит
+      validation_layers:
+
+        client_side_validation:
+          description: Базовая валидация на клиенте
+          checks:
+            - input_sanity: проверка корректности входных данных
+            - timing_validation: проверка временных интервалов
+            - resource_bounds: проверка границ ресурсов
+
+        server_side_validation:
+          description: Серверная валидация результатов
+          mechanisms:
+            - state_reconstruction: реконструкция состояния игры
+            - physics_simulation: симуляция физики на сервере
+            - action_replay: воспроизведение действий игрока
+
+        anti_cheat_measures:
+          description: Меры против читерства
+          detection_methods:
+            - statistical_anomaly: обнаружение статистических аномалий
+            - pattern_analysis: анализ паттернов поведения
+            - cross_validation: перекрестная проверка данных
+
+          prevention_measures:
+            - server_authoritative: авторитативная симуляция на сервере
+            - encrypted_communication: шифрование сетевых сообщений
+            - integrity_checks: проверки целостности данных
+
+    integration_layer:
+      description: Слой интеграции с внешними сервисами
+      service_integrations:
+
+        achievement_service:
+          description: Интеграция с системой достижений
+          integration_points:
+            - mode_completion: достижение за завершение режима
+            - challenge_mastery: достижение за мастерство в челленджах
+            - personal_records: достижения за личные рекорды
+
+          api_contracts:
+            - POST /achievements/unlock
+            - GET /achievements/player/{playerId}/master-mode
+
+        leaderboard_service:
+          description: Интеграция с системой рейтингов
+          leaderboard_types:
+            - global_time_attack: глобальный рейтинг по времени
+            - regional_survival: региональный рейтинг по выживанию
+            - guild_challenge: гильдейский рейтинг по челленджам
+
+          api_contracts:
+            - POST /leaderboards/submit-score
+            - GET /leaderboards/{type}/top-players
+            - GET /leaderboards/player/{playerId}/rank
+
+  database_design:
+
+    tables:
+
+      master_mode_sessions:
+        description: Сессии мастер-режимов
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID NOT NULL REFERENCES players(id)
+          - mode_type: VARCHAR(20) NOT NULL
+          - difficulty_level: VARCHAR(20) NOT NULL
+          - start_time: TIMESTAMP NOT NULL
+          - end_time: TIMESTAMP
+          - completion_status: VARCHAR(20)
+          - final_score: INTEGER
+          - modifiers_applied: JSONB
+          - created_at: TIMESTAMP DEFAULT NOW()
+          - updated_at: TIMESTAMP DEFAULT NOW()
+
+      challenge_instances:
+        description: Экземпляры челленджей
+        columns:
+          - id: UUID PRIMARY KEY
+          - session_id: UUID NOT NULL REFERENCES master_mode_sessions(id)
+          - challenge_type: VARCHAR(50) NOT NULL
+          - challenge_config: JSONB NOT NULL
+          - start_time: TIMESTAMP NOT NULL
+          - completion_time: TIMESTAMP
+          - success_criteria: JSONB
+          - actual_results: JSONB
+          - validation_status: VARCHAR(20)
+          - created_at: TIMESTAMP DEFAULT NOW()
+
+      difficulty_profiles:
+        description: Профили сложности для игроков
+        columns:
+          - id: UUID PRIMARY KEY
+          - player_id: UUID NOT NULL REFERENCES players(id) UNIQUE
+          - preferred_difficulty: FLOAT DEFAULT 1.0
+          - adaptation_enabled: BOOLEAN DEFAULT true
+          - performance_history: JSONB
+          - unlocked_modes: VARCHAR[] DEFAULT '{}'
+          - created_at: TIMESTAMP DEFAULT NOW()
+          - updated_at: TIMESTAMP DEFAULT NOW()
+
+      challenge_templates:
+        description: Шаблоны челленджей
+        columns:
+          - id: UUID PRIMARY KEY
+          - name: VARCHAR(100) NOT NULL
+          - type: VARCHAR(50) NOT NULL
+          - base_difficulty: FLOAT NOT NULL
+          - config_schema: JSONB NOT NULL
+          - generation_rules: JSONB NOT NULL
+          - reward_multipliers: JSONB
+          - is_active: BOOLEAN DEFAULT true
+          - created_at: TIMESTAMP DEFAULT NOW()
+
+  performance_considerations:
+
+    scalability_requirements:
+      description: Требования к масштабируемости
+      concurrent_sessions: 10000+ одновременных сессий
+      challenge_generation: <100ms время генерации
+      validation_latency: <50ms время валидации
+      database_queries: оптимизированные индексы для частых запросов
+
+    caching_strategy:
+      description: Стратегия кеширования
+      session_cache: Redis кеш активных сессий (TTL: 24h)
+      challenge_templates: In-memory кеш шаблонов челленджей
+      player_profiles: Кеш профилей сложности с инвалидацией
+
+    monitoring_metrics:
+      description: Метрики мониторинга
+      business_metrics:
+        - active_master_sessions: gauge
+        - challenge_completion_rate: histogram
+        - average_session_duration: histogram
+
+      technical_metrics:
+        - validation_latency: histogram
+        - generation_time: histogram
+        - database_query_time: histogram
+
+  security_considerations:
+
+    data_integrity:
+      description: Защита целостности данных
+      measures:
+        - transaction_boundaries: атомарные транзакции для сессий
+        - data_validation: строгая валидация входных данных
+        - audit_logging: логирование всех изменений состояния
+
+    anti_cheat_protection:
+      description: Защита от читерства
+      server_authoritative_simulation: все расчеты на сервере
+      statistical_analysis: обнаружение аномалий в статистике
+      behavior_pattern_matching: анализ паттернов поведения
+
+  deployment_architecture:
+
+    microservices:
+      description: Микросервисная архитектура
+      services:
+        - master-mode-service: управление сессиями
+        - challenge-generation-service: генерация челленджей
+        - validation-orchestrator: оркестрация валидации
+        - leaderboard-aggregator: агрегация рейтингов
+
+    database_sharding:
+      description: Разделение базы данных
+      strategies:
+        - player_based_sharding: по player_id
+        - temporal_sharding: по времени создания
+        - geographical_sharding: по регионам
+
+  migration_strategy:
+
+    phased_rollout:
+      description: Поэтапное развертывание
+      phases:
+        phase_1: "Базовые мастер-режимы (Apprentice, Journeyman)"
+        phase_2: "Расширенные режимы (Master, Grandmaster)"
+        phase_3: "Экспериментальные режимы (Nightmare) и challenge modes"
+        phase_4: "Полная интеграция с achievement/leaderboard"
+
+    backwards_compatibility:
+      description: Обратная совместимость
+      existing_content: поддержка существующих режимов сложности
+      data_migration: миграция профилей игроков
+      api_versioning: версионирование API
+
+  testing_strategy:
+
+    unit_tests:
+      description: Модульное тестирование
+      coverage_targets:
+        - challenge_generation: >90%
+        - difficulty_scaling: >85%
+        - validation_logic: >95%
+
+    integration_tests:
+      description: Интеграционное тестирование
+      scenarios:
+        - end_to_end_session: полная сессия мастер-режима
+        - multi_player_challenges: челленджи для нескольких игроков
+        - failure_recovery: восстановление после сбоев
+
+    load_testing:
+      description: Тестирование производительности
+      scenarios:
+        - concurrent_sessions: 10000+ одновременных сессий
+        - challenge_generation: высокая нагрузка на генерацию
+        - validation_throughput: высокая пропускная способность валидации
+
+  monitoring_and_observability:
+
+    logging_strategy:
+      description: Стратегия логирования
+      log_levels:
+        - ERROR: критические ошибки
+        - WARN: предупреждения о потенциальных проблемах
+        - INFO: важные события (старт/завершение сессий)
+        - DEBUG: детальная отладочная информация
+
+    alerting_rules:
+      description: Правила алертинга
+      critical_alerts:
+        - validation_failure_rate > 5%
+        - session_creation_errors > 1%
+        - database_connection_failures
+
+      performance_alerts:
+        - average_response_time > 200ms
+        - challenge_generation_time > 150ms
+        - memory_usage > 85%
+
+  future_extensions:
+
+    planned_features:
+      description: Планируемые расширения
+      features:
+        - ai_adaptive_difficulty: ИИ-адаптивная сложность
+        - cross_game_challenges: челленджи между играми
+        - vr_integration: интеграция с VR
+        - blockchain_achievements: блокчейн-достижения
+
+    scalability_improvements:
+      description: Улучшения масштабируемости
+      improvements:
+        - global_leaderboards: глобальные рейтинги
+        - tournament_system: система турниров
+        - content_creator_tools: инструменты для создателей контента
+
+history:
+  - version: '1.0.0'
+    date: 2026-01-06
+    author: architect
+    changes: Создан первоначальный архитектурный документ для системы мастер-режимов и challenge modes
+
+validation:
+  checksum: ''
+  schema_version: '1.0'

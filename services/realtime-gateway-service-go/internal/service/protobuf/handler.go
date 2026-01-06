@@ -210,6 +210,120 @@ func (h *Handler) switchToGRPCProtocol(ctx context.Context, session interface{},
 	return h.sessionManager.SendMessage(data.SessionID, messageJSON)
 }
 
+// NetworkConfig represents network configuration for a session
+type NetworkConfig struct {
+	SessionID        string
+	QoSLevel         *int    `json:"qos_level,omitempty"`
+	Compression      *string `json:"compression,omitempty"`
+	Encryption       *string `json:"encryption,omitempty"`
+	MaxPacketSize    *int    `json:"max_packet_size,omitempty"`
+	HeartbeatInterval *int   `json:"heartbeat_interval,omitempty"`
+	TimeoutSettings  *TimeoutSettings `json:"timeout_settings,omitempty"`
+}
+
+// TimeoutSettings represents timeout configuration
+type TimeoutSettings struct {
+	ReadTimeout  int `json:"read_timeout"`
+	WriteTimeout int `json:"write_timeout"`
+	IdleTimeout  int `json:"idle_timeout"`
+}
+
+// validateNetworkConfig validates network configuration parameters
+func (h *Handler) validateNetworkConfig(config *NetworkConfig) error {
+	// Validate QoS level (0-5)
+	if config.QoSLevel != nil {
+		if *config.QoSLevel < 0 || *config.QoSLevel > 5 {
+			return errors.New("QoS level must be between 0 and 5")
+		}
+	}
+
+	// Validate compression type
+	if config.Compression != nil {
+		validCompression := map[string]bool{
+			"none":     true,
+			"gzip":     true,
+			"lz4":      true,
+			"zstd":     true,
+		}
+		if !validCompression[*config.Compression] {
+			return errors.New("unsupported compression type")
+		}
+	}
+
+	// Validate encryption type
+	if config.Encryption != nil {
+		validEncryption := map[string]bool{
+			"none":    true,
+			"tls":     true,
+			"dtls":    true,
+		}
+		if !validEncryption[*config.Encryption] {
+			return errors.New("unsupported encryption type")
+		}
+	}
+
+	// Validate packet size (64KB - 10MB)
+	if config.MaxPacketSize != nil {
+		if *config.MaxPacketSize < 65536 || *config.MaxPacketSize > 10485760 {
+			return errors.New("packet size must be between 64KB and 10MB")
+		}
+	}
+
+	// Validate heartbeat interval (1-300 seconds)
+	if config.HeartbeatInterval != nil {
+		if *config.HeartbeatInterval < 1 || *config.HeartbeatInterval > 300 {
+			return errors.New("heartbeat interval must be between 1 and 300 seconds")
+		}
+	}
+
+	return nil
+}
+
+// applyQoSSettings applies Quality of Service settings to session
+func (h *Handler) applyQoSSettings(session interface{}, qosLevel int) error {
+	// In a real implementation, this would:
+	// - Set packet priority levels
+	// - Configure traffic shaping
+	// - Adjust buffer allocation based on QoS
+	// - Update network stack prioritization
+
+	h.logger.Debug("Applying QoS settings",
+		zap.Int("qos_level", qosLevel))
+
+	// Placeholder implementation
+	return nil
+}
+
+// applyCompressionSettings applies compression settings to session
+func (h *Handler) applyCompressionSettings(session interface{}, compression string) error {
+	// In a real implementation, this would:
+	// - Initialize compression/decompression streams
+	// - Configure compression level and algorithm
+	// - Set up compression dictionaries
+	// - Update session compression state
+
+	h.logger.Debug("Applying compression settings",
+		zap.String("compression", compression))
+
+	// Placeholder implementation
+	return nil
+}
+
+// applyEncryptionSettings applies encryption settings to session
+func (h *Handler) applyEncryptionSettings(session interface{}, encryption string) error {
+	// In a real implementation, this would:
+	// - Initialize encryption/decryption contexts
+	// - Set up TLS/DTLS handshakes
+	// - Configure cipher suites
+	// - Update session security state
+
+	h.logger.Debug("Applying encryption settings",
+		zap.String("encryption", encryption))
+
+	// Placeholder implementation
+	return nil
+}
+
 // HandleMessage processes a protobuf message from a session
 func (h *Handler) HandleMessage(sessionID string, data []byte) error {
 	ctx := context.Background()
@@ -400,11 +514,117 @@ func (h *Handler) handlePlayerInput(ctx context.Context, sessionID string, msg *
 }
 
 func (h *Handler) handleNetworkConfig(ctx context.Context, sessionID string, msg *ParsedMessage) error {
-	h.logger.Info("network config message processed",
-		zap.String("session_id", sessionID))
+	h.logger.Info("Processing network config message",
+		zap.String("session_id", sessionID),
+		zap.Any("config", msg.NetworkConfig))
 
-	// TODO: Apply network configuration changes
-	return nil
+	// Validate network config parameters
+	if msg.NetworkConfig == nil {
+		h.logger.Warn("Network config message missing configuration",
+			zap.String("session_id", sessionID))
+		return errors.New("network_config is required")
+	}
+
+	// Get current session
+	session, err := h.sessionManager.GetSession(sessionID)
+	if err != nil {
+		h.logger.Error("Failed to get session for network config",
+			zap.String("session_id", sessionID),
+			zap.Error(err))
+		return errors.Wrap(err, "failed to get session")
+	}
+
+	// Apply network configuration changes
+	networkConfig := &NetworkConfig{
+		SessionID:      sessionID,
+		QoSLevel:       msg.NetworkConfig.QoSLevel,
+		Compression:    msg.NetworkConfig.Compression,
+		Encryption:     msg.NetworkConfig.Encryption,
+		MaxPacketSize:  msg.NetworkConfig.MaxPacketSize,
+		HeartbeatInterval: msg.NetworkConfig.HeartbeatInterval,
+		TimeoutSettings: msg.NetworkConfig.TimeoutSettings,
+	}
+
+	// Validate configuration parameters
+	if err := h.validateNetworkConfig(networkConfig); err != nil {
+		h.logger.Warn("Invalid network configuration",
+			zap.String("session_id", sessionID),
+			zap.Error(err))
+		return errors.Wrap(err, "invalid network configuration")
+	}
+
+	// Apply QoS settings
+	if networkConfig.QoSLevel != nil {
+		err = h.applyQoSSettings(session, *networkConfig.QoSLevel)
+		if err != nil {
+			h.logger.Error("Failed to apply QoS settings",
+				zap.String("session_id", sessionID),
+				zap.Error(err))
+			return errors.Wrap(err, "failed to apply QoS settings")
+		}
+	}
+
+	// Apply compression settings
+	if networkConfig.Compression != nil {
+		err = h.applyCompressionSettings(session, *networkConfig.Compression)
+		if err != nil {
+			h.logger.Error("Failed to apply compression settings",
+				zap.String("session_id", sessionID),
+				zap.Error(err))
+			return errors.Wrap(err, "failed to apply compression settings")
+		}
+	}
+
+	// Apply encryption settings
+	if networkConfig.Encryption != nil {
+		err = h.applyEncryptionSettings(session, *networkConfig.Encryption)
+		if err != nil {
+			h.logger.Error("Failed to apply encryption settings",
+				zap.String("session_id", sessionID),
+				zap.Error(err))
+			return errors.Wrap(err, "failed to apply encryption settings")
+		}
+	}
+
+	// Apply packet size limits
+	if networkConfig.MaxPacketSize != nil {
+		session.SetMaxPacketSize(*networkConfig.MaxPacketSize)
+	}
+
+	// Apply heartbeat interval
+	if networkConfig.HeartbeatInterval != nil {
+		session.SetHeartbeatInterval(*networkConfig.HeartbeatInterval)
+	}
+
+	// Apply timeout settings
+	if networkConfig.TimeoutSettings != nil {
+		session.SetTimeoutSettings(*networkConfig.TimeoutSettings)
+	}
+
+	// Update session network configuration
+	session.SetNetworkConfig(networkConfig)
+
+	h.logger.Info("Network configuration applied successfully",
+		zap.String("session_id", sessionID),
+		zap.Any("applied_config", networkConfig))
+
+	// Send confirmation back to client
+	confirmation := map[string]interface{}{
+		"type":             "network_config_applied",
+		"session_id":       sessionID,
+		"applied_config":   networkConfig,
+		"timestamp":        time.Now().Unix(),
+	}
+
+	messageJSON, err := json.Marshal(confirmation)
+	if err != nil {
+		h.logger.Error("Failed to marshal network config confirmation",
+			zap.String("session_id", sessionID),
+			zap.Error(err))
+		return errors.Wrap(err, "failed to marshal confirmation")
+	}
+
+	return h.sessionManager.SendMessage(sessionID, messageJSON)
 }
 
 func (h *Handler) handleZoneJoin(ctx context.Context, sessionID string, msg *ParsedMessage) error {

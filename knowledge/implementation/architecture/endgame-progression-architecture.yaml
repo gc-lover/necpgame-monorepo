@@ -1,0 +1,452 @@
+# Issue: #1497 - [Progression] Система эндгейм-прогрессии (Paragon/Prestige)
+metadata:
+  id: endgame-progression-architecture
+  title: Архитектура системы эндгейм-прогрессии (Paragon/Prestige/Mastery)
+  document_type: architecture
+  category: backend
+  status: draft
+  version: '1.0.0'
+  last_updated: 2026-01-06T14:50:00Z
+  concept_approved: false
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - endgame-progression
+    - paragon
+    - prestige
+    - mastery
+    - backend-architecture
+    - progression-system
+    - character-service
+  github_issue: 1497
+  sources:
+    - proto/openapi/progression-service/progression_paragon.yaml
+    - proto/openapi/progression-service/progression_prestige.yaml
+    - proto/openapi/progression-service/progression_mastery.yaml
+
+summary:
+  problem: Отсутствует техническая архитектура для реализации системы бесконечной прогрессии после уровня 50, включающей Paragon Levels, Prestige System и Mastery System с интеграцией существующих сервисов.
+  goal: Спроектировать масштабируемую, производительную архитектуру backend систем для поддержки бесконечной прогрессии, включающую Paragon уровни, Prestige сбросы и Mastery специализации с полным покрытием API, базы данных и интеграций.
+  key_points:
+    - Три подсистемы: Paragon (бесконечные уровни), Prestige (сброс за бонусы), Mastery (специализация)
+    - Интеграция с Character Service, Achievement Service, Leaderboard Service
+    - Масштабируемая архитектура для миллионов активных игроков
+    - Валидация и анти-чит механизмы
+    - Производительность: <50ms на запросы, >1000 RPS
+
+content:
+  system_overview:
+    description: Обзор архитектуры системы эндгейм-прогрессии
+    components:
+      - progression_service: Основной сервис управления прогрессией
+      - paragon_system: Подсистема бесконечных уровней
+      - prestige_system: Подсистема сброса прогресса
+      - mastery_system: Подсистема специализации по контенту
+      - progression_cache: Кеш для оптимизации производительности
+      - progression_validator: Валидация действий и анти-чит
+
+    data_flow:
+      player_action: "Игрок выполняет действия в игре"
+      experience_gain: "Накопление опыта и прогресса"
+      progression_calculation: "Расчет уровней Paragon/Mastery"
+      validation_checks: "Валидация и анти-чит проверки"
+      rewards_distribution: "Распределение наград и обновление статуса"
+      state_persistence: "Сохранение состояния в базу данных"
+
+  core_components:
+
+    progression_service:
+      description: Основной сервис управления эндгейм-прогрессией
+      responsibilities:
+        - Оркестрация всех подсистем прогрессии
+        - Управление состоянием прогрессии игрока
+        - Расчет и распределение опыта
+        - Интеграция с внешними сервисами
+        - API endpoints для клиентских запросов
+
+      api_endpoints:
+        - Paragon: GET /paragon/levels, POST /paragon/distribute, GET /paragon/stats
+        - Prestige: GET /prestige/info, POST /prestige/reset, GET /prestige/bonuses
+        - Mastery: GET /mastery/levels, GET /mastery/{type}/progress, GET /mastery/rewards
+
+      service_layers:
+        handlers: "HTTP handlers для API endpoints"
+        business_logic: "Бизнес-логика прогрессии"
+        data_access: "Доступ к данным прогрессии"
+        external_integrations: "Интеграции с другими сервисами"
+
+    paragon_system:
+      description: Подсистема бесконечных Paragon уровней
+      mechanics:
+        - infinite_levels: Бесконечная прогрессия после уровня 50
+        - attribute_points: Распределение очков характеристик
+        - milestone_rewards: Награды за достижение уровней
+        - stat_scaling: Масштабирование характеристик
+
+      progression_formula: |
+        paragon_xp_required = base_xp * (level ^ 1.5)
+        attribute_points_per_level = floor(level / 10) + 1
+        total_attribute_points = sum(attribute_points_per_level for level in 51..current)
+
+      validation_rules:
+        - max_level: Нет ограничения на уровень
+        - attribute_distribution: Очки можно тратить только на повышение
+        - experience_gain: Только через игровые действия
+        - anti_cheat: Валидация на стороне сервера
+
+    prestige_system:
+      description: Подсистема Prestige - сброс прогресса за постоянные бонусы
+      mechanics:
+        - prestige_reset: Сброс Paragon уровня до 1
+        - permanent_bonuses: Постоянные бонусы за Prestige
+        - prestige_currency: Специальная валюта для улучшений
+        - unlock_requirements: Требования для разблокировки Prestige
+
+      prestige_tiers:
+        tier_1:
+          requirements: "Paragon Level 100"
+          bonuses: "2% experience bonus, +1 attribute point"
+          currency: "100 prestige points"
+
+        tier_2:
+          requirements: "Paragon Level 200"
+          bonuses: "5% experience bonus, +2 attribute points"
+          currency: "250 prestige points"
+
+        tier_3:
+          requirements: "Paragon Level 500"
+          bonuses: "10% experience bonus, +3 attribute points"
+          currency: "500 prestige points"
+
+      reset_mechanics: |
+        on_prestige_reset():
+          paragon_level = 1
+          attribute_points = base_points + prestige_bonuses
+          experience = 0
+          prestige_tier += 1
+          prestige_points += tier_bonus
+
+    mastery_system:
+      description: Подсистема Mastery - специализация по типам контента
+      content_types:
+        - combat_mastery: Боевые действия
+        - exploration_mastery: Исследование мира
+        - social_mastery: Социальные взаимодействия
+        - crafting_mastery: Создание предметов
+        - trading_mastery: Торговля и экономика
+
+      mastery_progression:
+        levels: 1-100
+        experience_sources: "Типизированные действия в соответствующей категории"
+        rewards: "Уникальные способности, бонусы, косметика"
+
+      mastery_mechanics: |
+        mastery_xp[type] += action_xp_value
+        if mastery_xp[type] >= required_xp_for_level(type, current_level + 1):
+          mastery_level[type] += 1
+          unlock_rewards(type, mastery_level[type])
+
+  database_design:
+
+    tables:
+
+      player_endgame_progression:
+        description: Основная таблица эндгейм-прогрессии игрока
+        columns:
+          - player_id: UUID PRIMARY KEY REFERENCES players(id)
+          - paragon_level: INTEGER DEFAULT 0
+          - paragon_experience: BIGINT DEFAULT 0
+          - prestige_tier: INTEGER DEFAULT 0
+          - prestige_points: INTEGER DEFAULT 0
+          - total_experience_earned: BIGINT DEFAULT 0
+          - last_progression_update: TIMESTAMP DEFAULT NOW()
+          - created_at: TIMESTAMP DEFAULT NOW()
+          - updated_at: TIMESTAMP DEFAULT NOW()
+
+      paragon_attribute_distribution:
+        description: Распределение очков характеристик в Paragon системе
+        columns:
+          - id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+          - player_id: UUID NOT NULL REFERENCES player_endgame_progression(player_id)
+          - strength: INTEGER DEFAULT 0
+          - dexterity: INTEGER DEFAULT 0
+          - constitution: INTEGER DEFAULT 0
+          - intelligence: INTEGER DEFAULT 0
+          - wisdom: INTEGER DEFAULT 0
+          - charisma: INTEGER DEFAULT 0
+          - total_points_spent: INTEGER DEFAULT 0
+          - last_distribution: TIMESTAMP DEFAULT NOW()
+          - UNIQUE(player_id)
+
+      prestige_bonuses:
+        description: Постоянные бонусы от Prestige системы
+        columns:
+          - id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+          - player_id: UUID NOT NULL REFERENCES player_endgame_progression(player_id)
+          - prestige_tier: INTEGER NOT NULL
+          - experience_multiplier: DECIMAL(3,2) DEFAULT 1.0
+          - attribute_point_bonus: INTEGER DEFAULT 0
+          - currency_bonus_multiplier: DECIMAL(3,2) DEFAULT 1.0
+          - unlocked_at: TIMESTAMP DEFAULT NOW()
+          - UNIQUE(player_id, prestige_tier)
+
+      mastery_progress:
+        description: Прогресс специализации по типам контента
+        columns:
+          - id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+          - player_id: UUID NOT NULL REFERENCES player_endgame_progression(player_id)
+          - mastery_type: VARCHAR(50) NOT NULL
+          - current_level: INTEGER DEFAULT 1
+          - current_experience: BIGINT DEFAULT 0
+          - total_experience_earned: BIGINT DEFAULT 0
+          - last_level_up: TIMESTAMP DEFAULT NOW()
+          - created_at: TIMESTAMP DEFAULT NOW()
+          - updated_at: TIMESTAMP DEFAULT NOW()
+          - UNIQUE(player_id, mastery_type)
+
+      mastery_rewards:
+        description: Разблокированные награды за Mastery уровни
+        columns:
+          - id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+          - player_id: UUID NOT NULL REFERENCES mastery_progress(player_id)
+          - mastery_type: VARCHAR(50) NOT NULL
+          - reward_type: VARCHAR(50) NOT NULL
+          - reward_id: VARCHAR(100) NOT NULL
+          - unlocked_at_level: INTEGER NOT NULL
+          - unlocked_at: TIMESTAMP DEFAULT NOW()
+          - UNIQUE(player_id, mastery_type, reward_type, reward_id)
+
+      progression_events:
+        description: История событий прогрессии для аналитики
+        columns:
+          - id: UUID PRIMARY KEY DEFAULT gen_random_uuid()
+          - player_id: UUID NOT NULL REFERENCES player_endgame_progression(player_id)
+          - event_type: VARCHAR(50) NOT NULL
+          - event_data: JSONB
+          - experience_gained: BIGINT DEFAULT 0
+          - timestamp: TIMESTAMP DEFAULT NOW()
+          - INDEX(player_id, timestamp)
+          - INDEX(event_type, timestamp)
+
+  service_integrations:
+
+    character_service_integration:
+      description: Интеграция с Character Service
+      integration_points:
+        - character_level_check: Проверка достижения уровня 50
+        - attribute_updates: Синхронизация характеристик Paragon
+        - experience_forwarding: Пересылка опыта для прогрессии
+
+      api_contracts:
+        - GET /characters/{id}/level - получение уровня персонажа
+        - POST /characters/{id}/attributes - обновление характеристик
+        - POST /characters/{id}/experience - добавление опыта
+
+    achievement_service_integration:
+      description: Интеграция с Achievement Service
+      integration_points:
+        - paragon_milestones: Достижения за Paragon уровни
+        - prestige_unlocks: Достижения за Prestige tiers
+        - mastery_completions: Достижения за Mastery специализации
+
+      api_contracts:
+        - POST /achievements/unlock - разблокировка достижений
+        - GET /achievements/player/{id}/progress - прогресс достижений
+
+    leaderboard_service_integration:
+      description: Интеграция с Leaderboard Service
+      integration_points:
+        - paragon_rankings: Рейтинги по Paragon уровням
+        - mastery_leaderboards: Специализированные рейтинги
+        - prestige_showcase: Демонстрация Prestige достижений
+
+      api_contracts:
+        - POST /leaderboards/update-score - обновление рейтинга
+        - GET /leaderboards/{type}/ranking - получение рейтинга
+
+  caching_strategy:
+
+    multi_level_caching:
+      description: Многоуровневая система кеширования
+      levels:
+        - l1_cache: In-memory cache в сервисе (Redis)
+        - l2_cache: Application-level cache
+        - database_cache: Query result caching
+
+    cache_keys:
+      paragon_data: "paragon:{player_id}"
+      prestige_data: "prestige:{player_id}"
+      mastery_data: "mastery:{player_id}:{type}"
+      leaderboard_data: "leaderboard:{type}:{period}"
+
+    cache_invalidation:
+      strategies:
+        - write_through: Обновление кеша при изменениях
+        - time_based: TTL для различных типов данных
+        - event_based: Инвалидация по событиям
+
+  performance_optimization:
+
+    database_optimization:
+      description: Оптимизация базы данных
+      techniques:
+        - table_partitioning: Партиционирование по player_id
+        - index_optimization: Составные индексы для частых запросов
+        - query_optimization: Использование prepared statements
+        - connection_pooling: Пул соединений к БД
+
+    service_optimization:
+      description: Оптимизация сервиса
+      techniques:
+        - async_processing: Асинхронная обработка тяжелых операций
+        - request_batching: Группировка запросов к внешним сервисам
+        - response_compression: Сжатие ответов API
+        - rate_limiting: Ограничение частоты запросов
+
+    monitoring_metrics:
+      description: Метрики производительности
+      business_metrics:
+        - active_endgame_players: gauge
+        - paragon_level_distribution: histogram
+        - prestige_reset_rate: counter
+
+      technical_metrics:
+        - api_response_time: histogram
+        - database_query_time: histogram
+        - cache_hit_rate: gauge
+        - error_rate: counter
+
+  security_considerations:
+
+    data_integrity:
+      description: Защита целостности данных
+      measures:
+        - transaction_boundaries: ACID транзакции для обновлений
+        - data_validation: Строгая валидация входных данных
+        - audit_logging: Логирование всех изменений прогрессии
+
+    anti_cheat_system:
+      description: Система предотвращения читерства
+      detection_methods:
+        - statistical_analysis: Анализ паттернов прогрессии
+        - rate_limiting: Ограничение скорости получения опыта
+        - cross_validation: Проверка с другими системами
+
+      prevention_measures:
+        - server_authoritative: Все расчеты на сервере
+        - encrypted_communication: Шифрование сетевых сообщений
+        - integrity_checks: Проверки целостности данных
+
+  deployment_architecture:
+
+    microservices_deployment:
+      description: Развертывание микросервисов
+      services:
+        - progression-service: Основной сервис прогрессии
+        - progression-worker: Фоновый обработчик событий
+        - progression-cache: Redis для кеширования
+        - progression-db: PostgreSQL база данных
+
+    scalability_patterns:
+      description: Паттерны масштабирования
+      horizontal_scaling: Горизонтальное масштабирование сервисов
+      database_sharding: Шардирование по player_id
+      load_balancing: Балансировка нагрузки между инстансами
+
+  implementation_plan:
+
+    phase_1_core_systems:
+      description: Базовая реализация систем
+      tasks:
+        - Создание основных таблиц базы данных
+        - Реализация Paragon системы уровней
+        - Базовые API endpoints
+        - Интеграция с Character Service
+
+    phase_2_advanced_features:
+      description: Расширенные возможности
+      tasks:
+        - Prestige система сбросов
+        - Mastery специализации
+        - Интеграция с Achievement и Leaderboard
+        - Кеширование и оптимизация
+
+    phase_3_polish_and_balance:
+      description: Доработка и баланс
+      tasks:
+        - Баланс прогрессии и наград
+        - Анти-чит система
+        - Мониторинг и аналитика
+        - Производительность и масштабируемость
+
+  testing_strategy:
+
+    unit_tests:
+      description: Модульное тестирование
+      coverage:
+        - progression_calculations: >95%
+        - data_validation: >90%
+        - api_endpoints: >85%
+
+    integration_tests:
+      description: Интеграционное тестирование
+      scenarios:
+        - end_to_end_progression: Полный цикл прогрессии
+        - service_integrations: Тестирование интеграций
+        - load_testing: Тестирование производительности
+
+    anti_cheat_testing:
+      description: Тестирование анти-чит систем
+      test_cases:
+        - experience_flooding: Массовое получение опыта
+        - invalid_distributions: Некорректное распределение очков
+        - timing_manipulation: Манипуляция таймингами
+
+  monitoring_and_alerts:
+
+    key_metrics:
+      description: Ключевые метрики для мониторинга
+      progression_health:
+        - paragon_level_distribution: Распределение уровней
+        - prestige_reset_frequency: Частота сбросов
+        - mastery_completion_rates: Уровень завершения специализаций
+
+      system_health:
+        - api_error_rates: Уровень ошибок API
+        - database_performance: Производительность БД
+        - cache_effectiveness: Эффективность кеширования
+
+    alerting_rules:
+      description: Правила алертинга
+      critical_alerts:
+        - progression_calculation_errors > 1%
+        - database_connection_failures > 5%
+        - invalid_progression_data_detected
+
+  future_extensions:
+
+    planned_features:
+      description: Планируемые расширения
+      features:
+        - guild_progression: Прогрессия гильдий
+        - cross_character_sync: Синхронизация между персонажами
+        - seasonal_events: Сезонные события прогрессии
+        - blockchain_integration: Блокчейн для достижений
+
+    scalability_improvements:
+      description: Улучшения масштабируемости
+      improvements:
+        - global_leaderboards: Глобальные рейтинги
+        - real_time_progression: Реальное время прогрессии
+        - ai_powered_balance: ИИ для баланса
+
+history:
+  - version: '1.0.0'
+    date: 2026-01-06
+    author: architect
+    changes: Создан первоначальный архитектурный документ для системы эндгейм-прогрессии
+
+validation:
+  checksum: ''
+  schema_version: '1.0'

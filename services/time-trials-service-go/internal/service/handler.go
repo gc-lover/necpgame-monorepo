@@ -6,6 +6,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -308,15 +309,86 @@ func (h *Handler) APIV1TimeTrialsTrialsTrialIdGet(ctx context.Context, params ap
 		}, nil
 	}
 
-	// TODO: Implement actual trial retrieval
-	trial := api.TimeTrial{
-		Id:   trialID.String(),
-		Name: "Sample Trial",
+	// Retrieve trial data from database
+	query := `
+		SELECT id, name, description, type, content_id, difficulty, status, time_limit, min_players, max_players, rewards, validation_rules, created_at, updated_at
+		FROM time_trials.trials
+		WHERE id = $1
+	`
+
+	var (
+		dbID, dbName, dbDescription, dbType, dbContentID, dbDifficulty, dbStatus string
+		dbTimeLimit, dbMinPlayers, dbMaxPlayers                                   sql.NullInt32
+		dbRewards, dbValidationRules                                             []byte
+		dbCreatedAt, dbUpdatedAt                                                 sql.NullTime
+	)
+
+	err = h.service.db.QueryRow(ctx, query, trialID).Scan(
+		&dbID, &dbName, &dbDescription, &dbType, &dbContentID, &dbDifficulty, &dbStatus,
+		&dbTimeLimit, &dbMinPlayers, &dbMaxPlayers, &dbRewards, &dbValidationRules,
+		&dbCreatedAt, &dbUpdatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			h.service.logger.Warn("Trial not found", zap.String("trial_id", trialID.String()))
+			return &api.APIV1TimeTrialsTrialsTrialIdGetResDefault{
+				StatusCode: http.StatusNotFound,
+				Data: api.Error{
+					Code:    "TRIAL_NOT_FOUND",
+					Message: "Trial not found",
+				},
+			}, nil
+		}
+		h.service.logger.Error("Failed to retrieve trial", zap.Error(err), zap.String("trial_id", trialID.String()))
+		return &api.APIV1TimeTrialsTrialsTrialIdGetResDefault{
+			StatusCode: http.StatusInternalServerError,
+			Data: api.Error{
+				Code:    "DB_ERROR",
+				Message: "Failed to retrieve trial data",
+			},
+		}, nil
 	}
 
+	// Parse JSONB fields
+	var rewards api.TrialRewards
+	if len(dbRewards) > 0 {
+		if err := json.Unmarshal(dbRewards, &rewards); err != nil {
+			h.service.logger.Warn("Failed to parse rewards JSONB", zap.Error(err))
+		}
+	}
+
+	var validationRules api.ValidationRules
+	if len(dbValidationRules) > 0 {
+		if err := json.Unmarshal(dbValidationRules, &validationRules); err != nil {
+			h.service.logger.Warn("Failed to parse validation rules JSONB", zap.Error(err))
+		}
+	}
+
+	// Get current player count (active sessions for this trial)
+	playerCount := h.getActivePlayerCount(ctx, trialID)
+
+	h.service.logger.Info("Trial retrieved successfully",
+		zap.String("trial_id", trialID.String()),
+		zap.String("trial_name", dbName),
+		zap.Int("active_players", playerCount))
+
 	return &api.APIV1TimeTrialsTrialsTrialIdGetRes200{
-		Id:   trial.Id,
-		Name: trial.Name,
+		Id:              dbID,
+		Name:            dbName,
+		Description:     api.OptString{Value: dbDescription, Set: dbDescription != ""},
+		Type:            api.TimeTrialType(dbType),
+		ContentID:       dbContentID,
+		Difficulty:      api.TimeTrialDifficulty(dbDifficulty),
+		Status:          api.TimeTrialStatus(dbStatus),
+		TimeLimit:       api.OptInt{Value: int(dbTimeLimit.Int32), Set: dbTimeLimit.Valid},
+		MinPlayers:      api.OptInt{Value: int(dbMinPlayers.Int32), Set: dbMinPlayers.Valid},
+		MaxPlayers:      api.OptInt{Value: int(dbMaxPlayers.Int32), Set: dbMaxPlayers.Valid},
+		Rewards:         api.OptTrialRewards{Value: rewards, Set: len(dbRewards) > 0},
+		ValidationRules: api.OptValidationRules{Value: validationRules, Set: len(dbValidationRules) > 0},
+		CreatedAt:       dbCreatedAt.Time,
+		UpdatedAt:       api.OptDateTime{Value: dbUpdatedAt.Time, Set: dbUpdatedAt.Valid},
+		ActivePlayers:   playerCount,
 	}, nil
 }
 
@@ -558,4 +630,37 @@ func (h *Handler) APIV1TimeTrialsAnalyticsTrialsTrialIdPerformanceGet(ctx contex
 		SlowestTime:           performance.SlowestTime,
 		CompletionRate:        performance.CompletionRate,
 	}, nil
+}
+
+// getActivePlayerCount returns the number of currently active players for a trial
+func (h *Handler) getActivePlayerCount(ctx context.Context, trialID uuid.UUID) int {
+	// PERFORMANCE: Try cache first for frequently accessed data
+	cacheKey := fmt.Sprintf("trial:active_players:%s", trialID.String())
+	cachedCount, err := h.service.redis.Get(ctx, cacheKey).Result()
+	if err == nil {
+		if count, parseErr := strconv.Atoi(cachedCount); parseErr == nil {
+			return count
+		}
+	}
+
+	// Query database for active sessions
+	query := `
+		SELECT COUNT(DISTINCT player_id)
+		FROM timer.active_sessions
+		WHERE trial_id = $1 AND status = 'active'
+	`
+
+	var count int
+	err = h.service.db.QueryRow(ctx, query, trialID).Scan(&count)
+	if err != nil {
+		h.service.logger.Warn("Failed to get active player count",
+			zap.String("trial_id", trialID.String()),
+			zap.Error(err))
+		return 0
+	}
+
+	// Cache for 30 seconds (trial activity changes frequently)
+	h.service.redis.Set(ctx, cacheKey, strconv.Itoa(count), 30*time.Second)
+
+	return count
 }

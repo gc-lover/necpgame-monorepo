@@ -1,0 +1,446 @@
+# Combat Balance System Configuration
+# Issue: #2219 - Game Balance configuration for weapon/armor/skill balancing in combat system
+# Agent: GameBalance - Creates comprehensive combat balancing system for MMOFPS gameplay
+
+metadata:
+  id: combat-balance-system
+  title: "Combat Balance System - NECPGAME"
+  version: "1.0.0"
+  description: "Comprehensive combat balancing with weapon stats, armor effectiveness, skill progression, and TTK calculations"
+  last_updated: "2026-01-06"
+  author: "GameBalance Agent"
+  applicable_to: "combat system, weapon mechanics, armor systems"
+
+# Core Combat Constants
+combat_constants:
+  # Time to Kill (TTK) Targets
+  ttk_targets:
+    optimal_ttk: 8.0     # 8 seconds average TTK
+    min_ttk: 3.0         # Minimum 3 seconds (too fast)
+    max_ttk: 15.0        # Maximum 15 seconds (too slow)
+    burst_damage_window: 2.0  # 2 second burst window
+
+  # Damage Model Constants
+  damage_model:
+    base_damage_falloff_start: 10.0   # meters
+    base_damage_falloff_end: 50.0     # meters
+    headshot_multiplier: 2.0          # 2x damage to head
+    critical_hit_chance: 0.05         # 5% base crit chance
+    armor_penetration_base: 0.1       # 10% base armor penetration
+
+  # Movement and Positioning
+  movement:
+    base_walk_speed: 4.0      # m/s
+    base_sprint_speed: 6.0    # m/s
+    crouch_speed_multiplier: 0.6
+    prone_speed_multiplier: 0.3
+    jump_height: 2.0          # meters
+
+# Weapon Balance Categories
+weapon_categories:
+  assault_rifles:
+    ttk_range: [6.0, 10.0]
+    optimal_range: 25
+    description: "Versatile mid-range weapons"
+
+  submachine_guns:
+    ttk_range: [4.0, 7.0]
+    optimal_range: 15
+    description: "High rate of fire, close quarters"
+
+  sniper_rifles:
+    ttk_range: [8.0, 15.0]
+    optimal_range: 80
+    description: "Long range, high damage single shots"
+
+  shotguns:
+    ttk_range: [3.0, 6.0]
+    optimal_range: 8
+    description: "Devastating close range, poor long range"
+
+  pistols:
+    ttk_range: [5.0, 12.0]
+    optimal_range: 20
+    description: "Sidearm, backup weapons"
+
+# Weapon Statistics Balance
+weapon_balance:
+  # Assault Rifles
+  m4a1:
+    damage: 36
+    fire_rate: 800  # RPM
+    magazine_size: 30
+    reload_time: 2.5
+    recoil_pattern: "controlled_burst"
+    ttk_at_25m: 7.2
+    description: "Balanced assault rifle, good for mid-range"
+
+  ak74:
+    damage: 38
+    fire_rate: 600
+    magazine_size: 30
+    reload_time: 2.8
+    recoil_pattern: "high_spread"
+    ttk_at_25m: 8.5
+    description: "High damage, harder to control"
+
+  # Submachine Guns
+  mp5:
+    damage: 26
+    fire_rate: 900
+    magazine_size: 30
+    reload_time: 2.0
+    recoil_pattern: "low_recoil"
+    ttk_at_15m: 4.8
+    description: "High fire rate, close quarters specialist"
+
+  vector:
+    damage: 22
+    fire_rate: 1200
+    magazine_size: 25
+    reload_time: 1.8
+    recoil_pattern: "minimal_recoil"
+    ttk_at_15m: 4.2
+    description: "Extreme fire rate, low damage per shot"
+
+  # Sniper Rifles
+  awp:
+    damage: 150
+    fire_rate: 45
+    magazine_size: 5
+    reload_time: 4.5
+    recoil_pattern: "single_shot_precision"
+    ttk_at_50m: 12.0
+    description: "One-shot kill potential at range"
+
+  m24:
+    damage: 95
+    fire_rate: 60
+    magazine_size: 5
+    reload_time: 4.0
+    recoil_pattern: "bolt_action"
+    ttk_at_50m: 10.8
+    description: "Semi-automatic precision rifle"
+
+  # Shotguns
+  remington_870:
+    damage: 120  # per pellet
+    pellets: 8
+    fire_rate: 80
+    magazine_size: 8
+    reload_time: 0.5  # per shell
+    recoil_pattern: "high_recoil_single"
+    ttk_at_5m: 3.2
+    description: "Classic pump shotgun, devastating up close"
+
+  spas12:
+    damage: 100
+    pellets: 8
+    fire_rate: 240
+    magazine_size: 8
+    reload_time: 0.4
+    recoil_pattern: "semi_auto_spread"
+    ttk_at_5m: 2.8
+    description: "Semi-automatic shotgun, higher fire rate"
+
+# Armor Balance System
+armor_balance:
+  # Armor Types
+  light_armor:
+    damage_reduction: 0.15    # 15% damage reduction
+    movement_penalty: 0.0     # No movement penalty
+    weight: 5
+    durability: 100
+    description: "Minimal protection, maximum mobility"
+
+  medium_armor:
+    damage_reduction: 0.30
+    movement_penalty: 0.05    # 5% slower movement
+    weight: 15
+    durability: 150
+    description: "Balanced protection and mobility"
+
+  heavy_armor:
+    damage_reduction: 0.50
+    movement_penalty: 0.15    # 15% slower movement
+    weight: 30
+    durability: 200
+    description: "Maximum protection, minimum mobility"
+
+  # Armor Degradation
+  degradation:
+    damage_per_hit: 5
+    repair_cost_multiplier: 0.1  # 10% of armor value
+    degradation_speed: 0.02      # 2% durability loss per second in combat
+
+# Skill Progression Balance
+skill_progression:
+  # Combat Skills
+  marksmanship:
+    max_level: 50
+    levels:
+      - level: 1
+        accuracy_bonus: 0.0
+        recoil_reduction: 0.0
+        description: "Basic firearm handling"
+      - level: 10
+        accuracy_bonus: 0.05
+        recoil_reduction: 0.10
+        description: "Improved accuracy and control"
+      - level: 25
+        accuracy_bonus: 0.10
+        recoil_reduction: 0.20
+        description: "Expert marksman"
+      - level: 50
+        accuracy_bonus: 0.15
+        recoil_reduction: 0.30
+        description: "Master marksman, minimal recoil"
+
+  close_quarters_combat:
+    max_level: 50
+    levels:
+      - level: 1
+        damage_bonus: 0.0
+        movement_speed: 0.0
+        description: "Basic melee combat"
+      - level: 10
+        damage_bonus: 0.08
+        movement_speed: 0.05
+        description: "Improved close combat"
+      - level: 25
+        damage_bonus: 0.15
+        movement_speed: 0.10
+        description: "Expert CQC specialist"
+      - level: 50
+        damage_bonus: 0.25
+        movement_speed: 0.15
+        description: "Master CQC, devastating in close range"
+
+  tactical_training:
+    max_level: 50
+    levels:
+      - level: 1
+        grenade_damage: 0.0
+        flash_effectiveness: 0.0
+        description: "Basic tactical awareness"
+      - level: 10
+        grenade_damage: 0.10
+        flash_effectiveness: 0.15
+        description: "Improved grenade handling"
+      - level: 25
+        grenade_damage: 0.20
+        flash_effectiveness: 0.30
+        description: "Tactical expert"
+      - level: 50
+        grenade_damage: 0.35
+        flash_effectiveness: 0.50
+        description: "Tactical master, devastating area control"
+
+# Damage Calculation Formulas
+damage_formulas:
+  # Base Damage Calculation
+  base_damage: "weapon_damage * skill_multiplier * armor_penetration"
+
+  # Armor Penetration
+  armor_penetration: |
+    base_penetration = weapon_armor_penetration
+    armor_effectiveness = armor_damage_reduction * (1 - degradation_factor)
+    final_damage = base_damage * (1 - armor_effectiveness + base_penetration)
+
+  # Critical Hit System
+  critical_hit: |
+    base_crit_chance = weapon_crit_chance + skill_crit_bonus
+    final_crit_chance = min(base_crit_chance, 0.5)  # Max 50% crit chance
+    crit_multiplier = 1.5 + (skill_level * 0.01)  # 1.5x to 2.0x crit damage
+
+  # Headshot Damage
+  headshot_damage: "base_damage * headshot_multiplier * critical_multiplier"
+
+  # Damage Falloff
+  range_damage_falloff: |
+    if range <= falloff_start:
+      damage = base_damage
+    elif range >= falloff_end:
+      damage = base_damage * 0.3  # Minimum 30% damage
+    else:
+      falloff_factor = (range - falloff_start) / (falloff_end - falloff_start)
+      damage = base_damage * (1 - falloff_factor * 0.7)
+
+# Movement and Positioning Balance
+movement_balance:
+  # Speed Modifications
+  speed_modifiers:
+    walking: 1.0
+    sprinting: 1.5
+    crouching: 0.6
+    prone: 0.3
+    injured: 0.7    # 30% speed reduction when injured
+
+  # Positioning Advantages
+  positional_bonuses:
+    high_ground: 1.15    # 15% damage bonus from higher elevation
+    cover_bonus: 0.85    # 15% damage reduction behind cover
+    flanking_bonus: 1.10 # 10% damage bonus when flanking
+
+  # Environmental Effects
+  environmental_modifiers:
+    low_light: 0.9       # 10% accuracy reduction in low light
+    heavy_rain: 0.85     # 15% accuracy reduction in rain
+    fog: 0.8             # 20% accuracy reduction in fog
+
+# TTK Balance Validation
+ttk_validation:
+  # Acceptable TTK Ranges by Weapon Class
+  validation_ranges:
+    assault_rifles: [6.0, 10.0]
+    smgs: [4.0, 7.0]
+    snipers: [8.0, 15.0]
+    shotguns: [3.0, 6.0]
+    pistols: [5.0, 12.0]
+
+  # Balance Validation Rules
+  validation_rules:
+    - "No weapon should have TTK < 3 seconds (too fast)"
+    - "No weapon should have TTK > 15 seconds (too slow)"
+    - "Weapon classes should have distinct TTK profiles"
+    - "Armor should extend TTK by 20-40% without making it unbeatable"
+    - "Skill progression should improve TTK by max 30%"
+
+# Anti-Cheat Protection
+anti_cheat_protection:
+  # Detection Thresholds
+  detection_thresholds:
+    aimbot_suspicion: 0.85    # 85% accuracy triggers investigation
+    speed_hack_velocity: 8.0  # m/s maximum allowed speed
+    wall_hack_tolerance: 0.1  # 10cm wall penetration tolerance
+
+  # Balance Impact on Cheating
+  cheating_penalties:
+    aimbot_detected: "permanent_ban"
+    speed_hack_detected: "temporary_ban_24h"
+    wall_hack_detected: "warning_then_ban"
+
+# Progression Balance
+character_progression:
+  # Level Scaling
+  level_scaling:
+    health_per_level: 10
+    damage_per_level: 0.5     # 0.5 damage per level
+    accuracy_per_level: 0.002 # 0.2% accuracy per level
+
+  # Experience Requirements
+  experience_curve:
+    formula: "1000 * (level ^ 1.8)"  # Exponential growth
+    description: "Experience required follows power law curve"
+
+  # Reward Distribution
+  reward_distribution:
+    combat_experience: 0.6    # 60% from combat
+    quest_experience: 0.3     # 30% from quests
+    exploration_experience: 0.1 # 10% from exploration
+
+# Game Mode Balance
+game_mode_balance:
+  # Deathmatch
+  deathmatch:
+    starting_health: 100
+    respawn_time: 5
+    score_per_kill: 100
+    description: "Pure combat, no objectives"
+
+  # Team Deathmatch
+  team_deathmatch:
+    team_size: 5
+    starting_health: 100
+    respawn_time: 5
+    score_per_kill: 50
+    team_bonus: 1.1  # 10% damage bonus vs enemy team
+    description: "5v5 team combat"
+
+  # Capture the Flag
+  capture_the_flag:
+    flag_capture_score: 1000
+    kill_score: 50
+    flag_return_score: 100
+    overtime_duration: 300  # 5 minutes
+    description: "Objective-based gameplay with combat"
+
+  # Domination
+  domination:
+    point_capture_score: 10   # per second
+    kill_score: 25
+    point_contest_bonus: 1.5  # 50% score bonus when contesting
+    description: "Control point domination"
+
+# Weapon Meta Analysis
+weapon_meta_analysis:
+  # Current Meta Weapons (as of v1.0.0)
+  current_meta:
+    assault_rifles: "m4a1"    # Balanced, reliable
+    smgs: "mp5"               # High DPS, controllable
+    snipers: "awp"            # One-shot potential
+    shotguns: "spas12"        # High fire rate
+    pistols: "deagle"         # High damage backup
+
+  # Balance Adjustment Triggers
+  adjustment_triggers:
+    pick_rate_threshold: 0.6  # If weapon picked >60% of time
+    win_rate_threshold: 0.55  # If weapon has >55% win rate
+    ttk_deviation: 0.2        # If TTK deviates by >20% from optimal
+
+# Testing Scenarios
+testing_scenarios:
+  balance_testing:
+    - "1v1 combat scenarios with each weapon class"
+    - "TTK validation across different ranges"
+    - "Armor effectiveness testing"
+    - "Skill progression impact measurement"
+
+  edge_cases:
+    - "Maximum range combat (100m+)"
+    - "Close quarters (5m) combat"
+    - "Mixed weapon class encounters"
+    - "High-level vs low-level player combat"
+
+# Monitoring Metrics
+monitoring_metrics:
+  combat_telemetry:
+    - "weapon_pick_rates"
+    - "average_ttk_per_weapon"
+    - "kill_death_ratios"
+    - "accuracy_percentages"
+
+  balance_health:
+    - "ttk_distribution_histogram"
+    - "win_rates_by_weapon_class"
+    - "player_skill_distribution"
+    - "combat_duration_trends"
+
+# Emergency Balance Patches
+emergency_patches:
+  weapon_nerfs:
+    - condition: "pick_rate > 0.7 AND win_rate > 0.6"
+      action: "reduce_damage_by_10%"
+      cooldown: "24_hours"
+
+  weapon_buffs:
+    - condition: "pick_rate < 0.1 AND win_rate < 0.3"
+      action: "increase_damage_by_15%"
+      cooldown: "24_hours"
+
+  meta_breaking_changes:
+    - condition: "single_weapon_dominance > 0.8"
+      action: "rebalance_entire_class"
+      cooldown: "72_hours"
+
+# Version History
+version_history:
+  - version: "1.0.0"
+    date: "2026-01-06"
+    changes:
+      - "Initial comprehensive combat balance system"
+      - "Weapon statistics and TTK calculations"
+      - "Armor effectiveness and degradation"
+      - "Skill progression curves"
+      - "Anti-cheat protection measures"
+    author: "GameBalance Agent"
