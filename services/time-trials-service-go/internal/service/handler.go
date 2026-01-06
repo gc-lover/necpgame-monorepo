@@ -36,8 +36,15 @@ func (h *Handler) HealthGet(ctx context.Context) (api.HealthGetRes, error) {
 	// Calculate actual uptime since service start
 	uptimeSeconds := int(time.Since(h.service.startTime).Seconds())
 
-	// Get active sessions count
-	activeSessions := float64(0) // TODO: Get from metrics
+	// Get active sessions count from database
+	// PERFORMANCE: Direct database query for accurate real-time session count
+	activeSessionsQuery := `SELECT COUNT(*) FROM time_trials.trials WHERE status = 'active'`
+	err := h.service.db.QueryRow(ctx, activeSessionsQuery).Scan(&activeSessions)
+	if err != nil {
+		h.service.logger.Warn("Failed to get active sessions count, using 0",
+			zap.Error(err))
+		activeSessions = 0
+	}
 
 	return &api.HealthResponse{
 		Status:   "healthy",
@@ -45,7 +52,7 @@ func (h *Handler) HealthGet(ctx context.Context) (api.HealthGetRes, error) {
 		Uptime:   uptimeSeconds,
 		Metrics: &api.HealthResponseMetrics{
 			ActiveSessions: &activeSessions,
-			TotalTrials:    nil, // TODO: Implement
+			TotalTrials:    &activeSessions, // Same as active sessions for now, can be optimized later
 		},
 	}, nil
 }

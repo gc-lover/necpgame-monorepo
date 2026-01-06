@@ -283,3 +283,22 @@ func (m *Manager) GetChannelSubscriberCount(channel string) int {
 	}
 	return 0
 }
+
+// JoinZone adds a session to a zone (implemented as channel subscription)
+func (m *Manager) JoinZone(sessionID, zoneID string) error {
+	m.sessionsMu.RLock()
+	session, exists := m.sessions[sessionID]
+	m.sessionsMu.RUnlock()
+
+	if !exists {
+		return errors.New("session not found")
+	}
+
+	// Zone joining is implemented as channel subscription
+	return m.SubscribeToChannel(sessionID, "zone:"+zoneID)
+}
+
+// LeaveZone removes a session from a zone
+func (m *Manager) LeaveZone(sessionID, zoneID string) error {
+	return m.UnsubscribeFromChannel(sessionID, "zone:"+zoneID)
+}

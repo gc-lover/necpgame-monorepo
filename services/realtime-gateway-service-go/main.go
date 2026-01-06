@@ -46,6 +46,11 @@ func main() {
 		wsAddr = ":8087"
 	}
 
+	udpAddr := os.Getenv("UDP_ADDR")
+	if udpAddr == "" {
+		udpAddr = ":7777" // NEW: UDP port for real-time game state
+	}
+
 	// Initialize OpenTelemetry metrics
 	otel.SetMeterProvider(initMeterProvider())
 
@@ -53,11 +58,13 @@ func main() {
 	svc, err := service.NewService(service.Config{
 		HTTPAddr:       addr,
 		WebSocketAddr:  wsAddr,
+		UDPAddr:        udpAddr, // NEW: UDP transport for game state
 		DatabaseURL:    os.Getenv("DATABASE_URL"),
 		RedisURL:       os.Getenv("REDIS_URL"),
 		KafkaBrokers:   os.Getenv("KAFKA_BROKERS"),
 		EventStoreURL:  os.Getenv("EVENT_STORE_URL"),
 		Logger:         logger,
+		Meter:          otel.Meter("realtime-gateway"),
 	})
 	if err != nil {
 		logger.Fatal("failed to initialize service", zap.Error(err))

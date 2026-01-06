@@ -246,20 +246,56 @@ func (h *Handler) handleNetworkConfig(ctx context.Context, sessionID string, msg
 }
 
 func (h *Handler) handleZoneJoin(ctx context.Context, sessionID string, msg *ParsedMessage) error {
-	h.logger.Info("zone join request processed",
-		zap.String("session_id", sessionID),
-		zap.Stringp("zone_id", msg.ZoneID))
+	if msg.ZoneID == nil {
+		h.logger.Warn("Zone join request missing zone_id",
+			zap.String("session_id", sessionID))
+		return errors.New("zone_id is required for zone join")
+	}
 
-	// TODO: Handle zone joining logic through session manager
+	zoneID := *msg.ZoneID
+	h.logger.Info("Processing zone join request",
+		zap.String("session_id", sessionID),
+		zap.String("zone_id", zoneID))
+
+	// Join zone through session manager
+	if err := h.sessionManager.JoinZone(sessionID, zoneID); err != nil {
+		h.logger.Error("Failed to join zone",
+			zap.String("session_id", sessionID),
+			zap.String("zone_id", zoneID),
+			zap.Error(err))
+		return errors.Wrap(err, "failed to join zone")
+	}
+
+	h.logger.Info("Successfully joined zone",
+		zap.String("session_id", sessionID),
+		zap.String("zone_id", zoneID))
 	return nil
 }
 
 func (h *Handler) handleZoneLeave(ctx context.Context, sessionID string, msg *ParsedMessage) error {
-	h.logger.Info("zone leave request processed",
-		zap.String("session_id", sessionID),
-		zap.Stringp("zone_id", msg.ZoneID))
+	if msg.ZoneID == nil {
+		h.logger.Warn("Zone leave request missing zone_id",
+			zap.String("session_id", sessionID))
+		return errors.New("zone_id is required for zone leave")
+	}
 
-	// TODO: Handle zone leaving logic through session manager
+	zoneID := *msg.ZoneID
+	h.logger.Info("Processing zone leave request",
+		zap.String("session_id", sessionID),
+		zap.String("zone_id", zoneID))
+
+	// Leave zone through session manager
+	if err := h.sessionManager.LeaveZone(sessionID, zoneID); err != nil {
+		h.logger.Error("Failed to leave zone",
+			zap.String("session_id", sessionID),
+			zap.String("zone_id", zoneID),
+			zap.Error(err))
+		return errors.Wrap(err, "failed to leave zone")
+	}
+
+	h.logger.Info("Successfully left zone",
+		zap.String("session_id", sessionID),
+		zap.String("zone_id", zoneID))
 	return nil
 }
 

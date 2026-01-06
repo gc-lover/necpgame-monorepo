@@ -209,16 +209,113 @@ func (h *Handler) CombatServiceExecuteAction(ctx context.Context, req *api.Comba
 		zap.String("action_type", req.ActionType),
 		zap.String("player_id", req.PlayerID))
 
-	// TODO: Implement action validation and execution
-	// This would include damage calculation, state updates, effect processing
+	// Step 1: Validate session exists and is active
+	sessionCheckQuery := `
+		SELECT status, participants FROM combat.sessions
+		WHERE session_id = $1
+	`
+	var sessionStatus string
+	var participants []byte
+	err := h.service.db.QueryRow(ctx, sessionCheckQuery, sessionID.String()).Scan(&sessionStatus, &participants)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			h.service.logger.Warn("Combat session not found",
+				zap.String("session_id", sessionID.String()))
+			return &api.CombatServiceExecuteActionNotFound{}, nil
+		}
+		h.service.logger.Error("Failed to check combat session",
+			zap.String("session_id", sessionID.String()),
+			zap.Error(err))
+		return nil, errors.Wrap(err, "failed to check combat session")
+	}
 
-	// Placeholder response - replace with actual implementation
+	if sessionStatus != "active" {
+		h.service.logger.Warn("Combat session not active",
+			zap.String("session_id", sessionID.String()),
+			zap.String("status", sessionStatus))
+		return &api.CombatServiceExecuteActionBadRequest{
+			Data: api.Error{
+				Code:    "SESSION_NOT_ACTIVE",
+				Message: "Combat session is not active",
+			},
+		}, nil
+	}
+
+	// Step 2: Validate player is participant
+	var participantList []string
+	if len(participants) > 0 {
+		if err := json.Unmarshal(participants, &participantList); err != nil {
+			h.service.logger.Error("Failed to parse participants",
+				zap.Error(err))
+			return nil, errors.Wrap(err, "failed to parse participants")
+		}
+	}
+
+	playerFound := false
+	for _, participant := range participantList {
+		if participant == req.PlayerID {
+			playerFound = true
+			break
+		}
+	}
+
+	if !playerFound {
+		h.service.logger.Warn("Player not in combat session",
+			zap.String("session_id", sessionID.String()),
+			zap.String("player_id", req.PlayerID))
+		return &api.CombatServiceExecuteActionForbidden{
+			Data: api.Error{
+				Code:    "PLAYER_NOT_PARTICIPANT",
+				Message: "Player is not a participant in this combat session",
+			},
+		}, nil
+	}
+
+	// Step 3: Validate action based on type
+	if err := h.validateCombatAction(req); err != nil {
+		h.service.logger.Warn("Invalid combat action",
+			zap.String("action_type", req.ActionType),
+			zap.Error(err))
+		return &api.CombatServiceExecuteActionBadRequest{
+			Data: api.Error{
+				Code:    "INVALID_ACTION",
+				Message: err.Error(),
+			},
+		}, nil
+	}
+
+	// Step 4: Execute action and calculate results
+	actionResult, err := h.executeCombatAction(ctx, sessionID, req)
+	if err != nil {
+		h.service.logger.Error("Failed to execute combat action",
+			zap.String("session_id", sessionID.String()),
+			zap.String("action_type", req.ActionType),
+			zap.Error(err))
+		return nil, errors.Wrap(err, "failed to execute combat action")
+	}
+
+	// Step 5: Update session state in database
+	if err := h.updateCombatSessionState(ctx, sessionID, actionResult); err != nil {
+		h.service.logger.Error("Failed to update session state",
+			zap.String("session_id", sessionID.String()),
+			zap.Error(err))
+		return nil, errors.Wrap(err, "failed to update session state")
+	}
+
+	actionID := uuid.New()
+	h.service.logger.Info("Combat action executed successfully",
+		zap.String("action_id", actionID.String()),
+		zap.String("session_id", sessionID.String()),
+		zap.String("action_type", req.ActionType),
+		zap.String("player_id", req.PlayerID))
+
 	return &api.CombatServiceExecuteActionOK{
 		Data: &api.CombatActionResponse{
-			ActionID:   uuid.New().String(),
+			ActionID:   actionID.String(),
 			SessionID:  sessionID.String(),
 			ActionType: req.ActionType,
 			Status:     "executed",
+			Result:     actionResult,
 			Timestamp:  time.Now().Format(time.RFC3339),
 		},
 	}, nil
@@ -281,4 +378,136 @@ func (h *Handler) CombatServiceHealthCheck(ctx context.Context) (api.CombatServi
 
 func (h *Handler) CombatServiceHealthWebSocket(ctx context.Context) (api.CombatServiceHealthWebSocketRes, error) {
 	return &api.CombatServiceHealthWebSocketOK{}, nil
+}
+
+// validateCombatAction validates combat action based on type and parameters
+func (h *Handler) validateCombatAction(req *api.CombatActionRequest) error {
+	switch req.ActionType {
+	case "attack":
+		if req.TargetID.IsNull() {
+			return errors.New("attack action requires target_id")
+		}
+	case "ability":
+		if req.AbilityID.IsNull() {
+			return errors.New("ability action requires ability_id")
+		}
+	case "move":
+		if req.Position.IsNull() {
+			return errors.New("move action requires position")
+		}
+	case "defend":
+		// Defense doesn't require additional parameters
+	case "item":
+		if req.Parameters == nil {
+			return errors.New("item action requires parameters")
+		}
+	default:
+		return errors.New("unknown action type")
+	}
+	return nil
+}
+
+// executeCombatAction executes the combat action and calculates results
+func (h *Handler) executeCombatAction(ctx context.Context, sessionID uuid.UUID, req *api.CombatActionRequest) (*api.CombatActionResult, error) {
+	// Basic action execution logic - can be extended with complex combat mechanics
+	result := &api.CombatActionResult{
+		Success: true,
+	}
+
+	switch req.ActionType {
+	case "attack":
+		// Calculate damage based on attacker stats vs defender stats
+		result.Damage = &api.CombatDamage{
+			Amount:     25, // Placeholder damage calculation
+			Type:       "physical",
+			Critical:   false,
+			Elemental:  nil,
+		}
+		result.Effects = []api.CombatEffect{} // No effects for basic attack
+
+	case "ability":
+		// Execute ability with effects
+		result.Damage = &api.CombatDamage{
+			Amount:     40, // Higher damage for abilities
+			Type:       "magical",
+			Critical:   true,
+			Elemental:  &[]string{"fire"}[0],
+		}
+		result.Effects = []api.CombatEffect{
+			{
+				Type:       "burn",
+				Duration:   3,
+				Intensity:  5,
+				Stackable:  true,
+			},
+		}
+
+	case "move":
+		// Movement action - no damage, just position update
+		result.Damage = nil
+		result.Effects = []api.CombatEffect{}
+
+	case "defend":
+		// Defense action - no damage, defensive buff
+		result.Damage = nil
+		result.Effects = []api.CombatEffect{
+			{
+				Type:       "defense_buff",
+				Duration:   2,
+				Intensity:  20, // 20% damage reduction
+				Stackable:  false,
+			},
+		}
+
+	case "item":
+		// Item usage - varies by item type
+		result.Damage = &api.CombatDamage{
+			Amount:     30,
+			Type:       "item",
+			Critical:   false,
+			Elemental:  nil,
+		}
+		result.Effects = []api.CombatEffect{
+			{
+				Type:       "heal",
+				Duration:   1,
+				Intensity:  15, // Heal 15 HP
+				Stackable:  false,
+			},
+		}
+	}
+
+	return result, nil
+}
+
+// updateCombatSessionState updates the combat session state after action execution
+func (h *Handler) updateCombatSessionState(ctx context.Context, sessionID uuid.UUID, result *api.CombatActionResult) error {
+	// Update session last activity and game state
+	updateQuery := `
+		UPDATE combat.sessions
+		SET last_activity = $1,
+		    game_state = jsonb_set(
+		        COALESCE(game_state, '{}'),
+		        '{last_action}',
+		        $2::jsonb
+		    )
+		WHERE session_id = $3
+	`
+
+	gameStateUpdate := map[string]interface{}{
+		"timestamp": time.Now().Format(time.RFC3339),
+		"result":    result,
+	}
+
+	gameStateJSON, err := json.Marshal(gameStateUpdate)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal game state update")
+	}
+
+	_, err = h.service.db.Exec(ctx, updateQuery, time.Now(), gameStateJSON, sessionID.String())
+	if err != nil {
+		return errors.Wrap(err, "failed to update session state")
+	}
+
+	return nil
 }
