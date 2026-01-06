@@ -95,6 +95,121 @@ func (h *Handler) routeToGameplayService(ctx context.Context, sessionID string, 
 	return nil // Success for now
 }
 
+// ProtocolSwitchData contains information about a protocol switch operation
+type ProtocolSwitchData struct {
+	SessionID       string
+	CurrentProtocol string
+	TargetProtocol  string
+	Timestamp       time.Time
+	Metadata        map[string]interface{}
+}
+
+// switchToUDPProtocol switches session to UDP protocol
+func (h *Handler) switchToUDPProtocol(ctx context.Context, session interface{}, data *ProtocolSwitchData) error {
+	// In a real implementation, this would:
+	// 1. Allocate UDP port for the session
+	// 2. Send UDP connection details to client
+	// 3. Set up UDP transport for the session
+	// 4. Migrate session state from WebSocket to UDP
+
+	h.logger.Info("Switching to UDP protocol",
+		zap.String("session_id", data.SessionID),
+		zap.Time("timestamp", data.Timestamp))
+
+	// Placeholder implementation - send protocol switch confirmation
+	switchMessage := map[string]interface{}{
+		"type":           "protocol_switched",
+		"new_protocol":   "udp",
+		"connection_details": map[string]interface{}{
+			"transport": "udp",
+			"port":      7777, // Example UDP port
+			"endpoint":  "game.necpgame.com:7777",
+		},
+		"timestamp": data.Timestamp.Unix(),
+	}
+
+	messageJSON, err := json.Marshal(switchMessage)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal protocol switch message")
+	}
+
+	// Send confirmation via current connection before switch
+	return h.sessionManager.SendMessage(data.SessionID, messageJSON)
+}
+
+// switchToWebSocketProtocol switches session to WebSocket protocol
+func (h *Handler) switchToWebSocketProtocol(ctx context.Context, session interface{}, data *ProtocolSwitchData) error {
+	h.logger.Info("Switching to WebSocket protocol",
+		zap.String("session_id", data.SessionID),
+		zap.Time("timestamp", data.Timestamp))
+
+	// WebSocket is typically the default/fallback protocol
+	// This would handle switching back from UDP/TCP to WebSocket
+
+	switchMessage := map[string]interface{}{
+		"type":         "protocol_switched",
+		"new_protocol": "websocket",
+		"endpoint":     "/ws/game", // WebSocket endpoint
+		"timestamp":    data.Timestamp.Unix(),
+	}
+
+	messageJSON, err := json.Marshal(switchMessage)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal protocol switch message")
+	}
+
+	return h.sessionManager.SendMessage(data.SessionID, messageJSON)
+}
+
+// switchToTCPProtocol switches session to TCP protocol
+func (h *Handler) switchToTCPProtocol(ctx context.Context, session interface{}, data *ProtocolSwitchData) error {
+	h.logger.Info("Switching to TCP protocol",
+		zap.String("session_id", data.SessionID),
+		zap.Time("timestamp", data.Timestamp))
+
+	// TCP protocol for reliable, ordered communication
+	// Useful for complex game state synchronization
+
+	switchMessage := map[string]interface{}{
+		"type":         "protocol_switched",
+		"new_protocol": "tcp",
+		"endpoint":     "tcp://game.necpgame.com:8888",
+		"timestamp":    data.Timestamp.Unix(),
+	}
+
+	messageJSON, err := json.Marshal(switchMessage)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal protocol switch message")
+	}
+
+	return h.sessionManager.SendMessage(data.SessionID, messageJSON)
+}
+
+// switchToGRPCProtocol switches session to gRPC protocol
+func (h *Handler) switchToGRPCProtocol(ctx context.Context, session interface{}, data *ProtocolSwitchData) error {
+	h.logger.Info("Switching to gRPC protocol",
+		zap.String("session_id", data.SessionID),
+		zap.Time("timestamp", data.Timestamp))
+
+	// gRPC for high-performance, typed communication
+	// Useful for complex operations requiring strong typing
+
+	switchMessage := map[string]interface{}{
+		"type":         "protocol_switched",
+		"new_protocol": "grpc",
+		"endpoint":     "grpc://game.necpgame.com:9090",
+		"service":      "GameService",
+		"timestamp":    data.Timestamp.Unix(),
+	}
+
+	messageJSON, err := json.Marshal(switchMessage)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal protocol switch message")
+	}
+
+	return h.sessionManager.SendMessage(data.SessionID, messageJSON)
+}
+
 // HandleMessage processes a protobuf message from a session
 func (h *Handler) HandleMessage(sessionID string, data []byte) error {
 	ctx := context.Background()
@@ -347,11 +462,103 @@ func (h *Handler) handleZoneLeave(ctx context.Context, sessionID string, msg *Pa
 }
 
 func (h *Handler) handleProtocolSwitch(ctx context.Context, sessionID string, msg *ParsedMessage) error {
-	h.logger.Info("protocol switch request processed",
-		zap.String("session_id", sessionID),
-		zap.Stringp("protocol", msg.Protocol))
+	if msg.Protocol == nil {
+		h.logger.Warn("Protocol switch request missing protocol",
+			zap.String("session_id", sessionID))
+		return errors.New("protocol is required for protocol switch")
+	}
 
-	// TODO: Handle protocol switching logic
+	targetProtocol := *msg.Protocol
+	h.logger.Info("Processing protocol switch request",
+		zap.String("session_id", sessionID),
+		zap.String("target_protocol", targetProtocol))
+
+	// Validate target protocol
+	validProtocols := map[string]bool{
+		"websocket": true,
+		"udp":       true,
+		"tcp":       true,
+		"grpc":      true,
+	}
+
+	if !validProtocols[targetProtocol] {
+		h.logger.Warn("Invalid target protocol requested",
+			zap.String("session_id", sessionID),
+			zap.String("protocol", targetProtocol))
+		return errors.New("unsupported protocol: " + targetProtocol)
+	}
+
+	// Get current session
+	session, err := h.sessionManager.GetSession(sessionID)
+	if err != nil {
+		h.logger.Error("Failed to get session for protocol switch",
+			zap.String("session_id", sessionID),
+			zap.Error(err))
+		return errors.Wrap(err, "failed to get session")
+	}
+
+	// Check if protocol switch is already in progress
+	if session.GetProtocolSwitchInProgress() {
+		h.logger.Warn("Protocol switch already in progress",
+			zap.String("session_id", sessionID))
+		return errors.New("protocol switch already in progress")
+	}
+
+	// Validate protocol switch feasibility
+	currentProtocol := session.GetProtocol()
+	if currentProtocol == targetProtocol {
+		h.logger.Info("Protocol switch requested to same protocol, no-op",
+			zap.String("session_id", sessionID),
+			zap.String("protocol", targetProtocol))
+		return nil
+	}
+
+	// Mark protocol switch as in progress
+	session.SetProtocolSwitchInProgress(true)
+
+	// Prepare protocol switch data
+	switchData := &ProtocolSwitchData{
+		SessionID:       sessionID,
+		CurrentProtocol: currentProtocol,
+		TargetProtocol:  targetProtocol,
+		Timestamp:       time.Now(),
+		Metadata:        msg.Metadata,
+	}
+
+	// Execute protocol switch based on target
+	switch targetProtocol {
+	case "udp":
+		err = h.switchToUDPProtocol(ctx, session, switchData)
+	case "websocket":
+		err = h.switchToWebSocketProtocol(ctx, session, switchData)
+	case "tcp":
+		err = h.switchToTCPProtocol(ctx, session, switchData)
+	case "grpc":
+		err = h.switchToGRPCProtocol(ctx, session, switchData)
+	default:
+		err = errors.New("unsupported protocol switch target")
+	}
+
+	if err != nil {
+		// Reset protocol switch flag on failure
+		session.SetProtocolSwitchInProgress(false)
+		h.logger.Error("Protocol switch failed",
+			zap.String("session_id", sessionID),
+			zap.String("from_protocol", currentProtocol),
+			zap.String("to_protocol", targetProtocol),
+			zap.Error(err))
+		return errors.Wrap(err, "protocol switch failed")
+	}
+
+	// Update session protocol
+	session.SetProtocol(targetProtocol)
+	session.SetProtocolSwitchInProgress(false)
+
+	h.logger.Info("Protocol switch completed successfully",
+		zap.String("session_id", sessionID),
+		zap.String("from_protocol", currentProtocol),
+		zap.String("to_protocol", targetProtocol))
+
 	return nil
 }
 

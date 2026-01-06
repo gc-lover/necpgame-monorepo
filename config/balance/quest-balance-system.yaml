@@ -1,0 +1,341 @@
+# Quest Balance System Configuration
+# Issue: #2227 - Game Balance configuration for quest difficulty, rewards, and progression
+# Agent: GameBalance - Creates comprehensive quest balancing system based on quest_definitions table
+
+metadata:
+  id: quest-balance-system
+  title: "Quest Balance System - NECPGAME"
+  version: "1.0.0"
+  description: "Comprehensive quest balancing configuration with difficulty scaling, reward curves, and progression mechanics"
+  last_updated: "2026-01-06"
+  author: "GameBalance Agent"
+  applicable_to: "quest_definitions table, dynamic quest system"
+
+# Core Balance Constants
+balance_constants:
+  # Experience Multipliers
+  experience:
+    base_multiplier: 1.0
+    level_penalty_reduction: 0.02  # 2% reduction per level difference
+    max_level_penalty: 0.5         # Maximum 50% penalty
+    group_bonus_multiplier: 0.1    # 10% bonus per additional player
+    max_group_size: 4
+    speedrun_bonus: 0.25           # 25% bonus for completing in <50% time
+
+  # Economic Constants
+  economy:
+    base_eddies_multiplier: 1.0
+    inflation_adjustment: 0.001    # 0.1% adjustment per economy tick
+    scarcity_multiplier: 1.5       # Scarce items worth 1.5x
+    reputation_bonus_cap: 2.0      # Max 2x multiplier from reputation
+
+  # Difficulty Scaling
+  difficulty:
+    base_difficulty: 1.0
+    level_scaling_factor: 0.1      # 10% increase per 2 levels
+    time_pressure_multiplier: 1.2  # 20% harder with time limits
+    environmental_penalty: 1.15    # 15% harder in hazardous areas
+
+# Quest Difficulty Tiers
+quest_difficulty_tiers:
+  trivial:
+    level_range: [1, 5]
+    base_experience: 50
+    base_eddies: 100
+    completion_time_minutes: 5
+    failure_penalty_multiplier: 0.1
+    description: "Simple fetch quests, basic tutorials"
+
+  easy:
+    level_range: [1, 10]
+    base_experience: 100
+    base_eddies: 250
+    completion_time_minutes: 10
+    failure_penalty_multiplier: 0.2
+    description: "Straightforward objectives, minimal combat"
+
+  normal:
+    level_range: [5, 15]
+    base_experience: 200
+    base_eddies: 500
+    completion_time_minutes: 20
+    failure_penalty_multiplier: 0.3
+    description: "Balanced challenges with some complexity"
+
+  hard:
+    level_range: [10, 25]
+    base_experience: 400
+    base_eddies: 1000
+    completion_time_minutes: 45
+    failure_penalty_multiplier: 0.4
+    description: "Complex objectives, significant combat"
+
+  nightmare:
+    level_range: [20, 35]
+    base_experience: 800
+    base_eddies: 2500
+    completion_time_minutes: 90
+    failure_penalty_multiplier: 0.5
+    description: "Extreme challenges, high risk/reward"
+
+  impossible:
+    level_range: [30, 50]
+    base_experience: 1600
+    base_eddies: 5000
+    completion_time_minutes: 180
+    failure_penalty_multiplier: 0.6
+    description: "Near-impossible challenges for endgame players"
+
+# Dynamic Quest Balance Formulas
+dynamic_quest_balance:
+  # Experience Calculation Formula
+  experience_formula:
+    base: "tier_base_experience"
+    level_penalty: "max(0.5, 1.0 - (abs(player_level - quest_level) * 0.02))"
+    group_bonus: "1.0 + ((group_size - 1) * 0.1)"
+    speedrun_bonus: "if(completion_time < (expected_time * 0.5), 1.25, 1.0)"
+    reputation_modifier: "clamp(reputation_score / 100.0, 0.8, 1.2)"
+    final: "base * level_penalty * group_bonus * speedrun_bonus * reputation_modifier"
+
+  # Economic Reward Formula
+  economic_formula:
+    base: "tier_base_eddies"
+    scarcity_modifier: "if(item_rarity == 'legendary', 3.0, if(item_rarity == 'epic', 2.0, if(item_rarity == 'rare', 1.5, 1.0)))"
+    market_demand: "1.0 + (market_demand_percentage / 100.0)"
+    player_economy: "clamp(1.0 - (player_wealth_percentile / 100.0), 0.5, 1.5)"
+    faction_bonus: "1.0 + (faction_reputation / 200.0)"
+    final: "base * scarcity_modifier * market_demand * player_economy * faction_bonus"
+
+  # Difficulty Scaling Formula
+  difficulty_formula:
+    base: "tier_difficulty"
+    level_scaling: "1.0 + ((quest_level - player_level) * 0.05)"
+    time_pressure: "if(has_time_limit, 1.2, 1.0)"
+    environmental_hazard: "if(in_hazardous_area, 1.15, 1.0)"
+    player_skill: "clamp(1.0 - (player_skill_rating / 100.0), 0.7, 1.3)"
+    final: "base * level_scaling * time_pressure * environmental_hazard * player_skill"
+
+# Reputation System Balance
+reputation_system:
+  factions:
+    corporate:
+      max_reputation: 100
+      min_reputation: -100
+      quest_modifier_range: [-0.3, 0.3]  # -30% to +30% on rewards
+      description: "Arasaka, Militech, Trauma Team"
+
+    street:
+      max_reputation: 100
+      min_reputation: -100
+      quest_modifier_range: [-0.3, 0.3]
+      description: "Panam, Rogue, Maelstrom"
+
+    humanity:
+      max_reputation: 100
+      min_reputation: -100
+      quest_modifier_range: [-0.2, 0.2]
+      description: "Personal humanity score"
+
+  reputation_impacts:
+    quest_completion:
+      positive: 5
+      negative: -10
+
+    betrayal:
+      impact: -25
+      description: "Major reputation loss for betrayal"
+
+    alliance_formation:
+      impact: 15
+      description: "Reputation gain for forming alliances"
+
+    economic_transaction:
+      positive: 2
+      negative: -5
+
+# Choice Consequence Balance
+choice_consequence_balance:
+  reputation_changes:
+    minor_choice:
+      range: [-5, 5]
+      probability_weights: [0.3, 0.5, 0.2]  # negative, neutral, positive
+
+    major_choice:
+      range: [-15, 15]
+      probability_weights: [0.25, 0.3, 0.45]
+
+    critical_choice:
+      range: [-30, 30]
+      probability_weights: [0.2, 0.2, 0.6]
+
+  economic_impacts:
+    market_fluctuation:
+      range: [-0.2, 0.2]  # -20% to +20% price change
+      duration_hours: 24
+
+    resource_availability:
+      range: [-0.3, 0.3]  # -30% to +30% availability
+      duration_hours: 168  # 1 week
+
+  relationship_changes:
+    npc_loyalty:
+      range: [-20, 20]
+      permanent: false
+      decay_rate: 0.1  # 10% decay per day
+
+    faction_standing:
+      range: [-10, 10]
+      permanent: true
+      description: "Long-term faction reputation changes"
+
+# Economic Balance Curves
+economic_balance_curves:
+  # Experience to Eddies Ratio (should maintain game economy)
+  exp_to_eddies_ratio:
+    trivial: 2.0    # 2 eddies per exp
+    easy: 2.5
+    normal: 2.5
+    hard: 2.5
+    nightmare: 3.125
+    impossible: 3.125
+
+  # Level-based Reward Scaling
+  level_scaling_curves:
+    experience:
+      formula: "base_exp * (1 + (level / 10) ^ 1.2)"
+      description: "Exponential growth with diminishing returns"
+
+    eddies:
+      formula: "base_eddies * (1 + (level / 8) ^ 1.1)"
+      description: "Slightly faster growth for economic progression"
+
+  # Item Drop Rates by Rarity
+  item_drop_rates:
+    common: 0.45    # 45% chance
+    uncommon: 0.30  # 30% chance
+    rare: 0.15      # 15% chance
+    epic: 0.08      # 8% chance
+    legendary: 0.02 # 2% chance
+
+# Anti-Grind Protection
+anti_grind_protection:
+  quest_cooldowns:
+    same_tier_cooldown: 300     # 5 minutes between same-tier quests
+    difficulty_reset_timer: 3600 # 1 hour before difficulty penalties reset
+
+  reward_diminishing_returns:
+    consecutive_quest_penalty: 0.05  # 5% reduction per consecutive quest
+    max_penalty: 0.5               # Maximum 50% reduction
+    reset_timer: 7200              # 2 hours to reset penalty
+
+  experience_caps:
+    daily_exp_cap: 50000         # Max 50k exp per day
+    weekly_exp_cap: 250000       # Max 250k exp per week
+    level_cap_buffer: 5          # Can earn exp 5 levels above current
+
+# Progression Balance
+progression_balance:
+  level_requirements:
+    quest_access:
+      formula: "max(1, player_level - 2)"  # Can do quests 2 levels below
+      description: "Minimum level to access quests"
+
+    optimal_difficulty:
+      formula: "player_level"  # Best rewards at player level
+      description: "Level where quests give optimal rewards"
+
+    maximum_difficulty:
+      formula: "player_level + 5"  # Can do quests 5 levels above
+      description: "Maximum level for quest access"
+
+  skill_progression:
+    combat_skills:
+      damage_per_level: 1.5
+      accuracy_per_level: 0.01
+      critical_chance_per_level: 0.005
+
+    social_skills:
+      persuasion_per_level: 2.0
+      intimidation_per_level: 1.8
+      negotiation_per_level: 2.2
+
+    technical_skills:
+      hacking_per_level: 1.2
+      engineering_per_level: 1.3
+      stealth_per_level: 1.0
+
+# Validation Rules
+validation_rules:
+  economic_balance:
+    - "exp_to_eddies_ratio should maintain 2.0-3.0 range"
+    - "inflation should not exceed 5% per month"
+    - "player wealth distribution should follow power law"
+
+  difficulty_balance:
+    - "quest completion rate should be 70-85% for intended level"
+    - "failure rate should not exceed 20% for fair quests"
+    - "time to complete should scale linearly with difficulty"
+
+  reward_balance:
+    - "rewards should provide meaningful progression"
+    - "grind protection should prevent exploitation"
+    - "reputation system should influence 10-30% of rewards"
+
+# Monitoring Metrics
+monitoring_metrics:
+  quest_completion_rates:
+    - "completion_rate_by_difficulty"
+    - "average_completion_time"
+    - "failure_rate_by_reason"
+
+  economic_health:
+    - "average_eddies_earned_per_hour"
+    - "player_wealth_distribution"
+    - "market_price_stability"
+
+  player_engagement:
+    - "quest_acceptance_rate"
+    - "choice_branching_usage"
+    - "reputation_system_impact"
+
+# Emergency Balance Adjustments
+emergency_adjustments:
+  overpowered_quests:
+    auto_detection: "completion_rate > 95% with time_bonus"
+    response: "increase_difficulty_by_15%"
+    cooldown: "24_hours"
+
+  underpowered_rewards:
+    auto_detection: "acceptance_rate < 20% for tier"
+    response: "increase_rewards_by_20%"
+    cooldown: "24_hours"
+
+  economic_imbalance:
+    auto_detection: "wealth_gini_coefficient > 0.8"
+    response: "adjust_drop_rates_and_quest_rewards"
+    cooldown: "72_hours"
+
+# Version History
+version_history:
+  - version: "1.0.0"
+    date: "2026-01-06"
+    changes:
+      - "Initial comprehensive quest balance system"
+      - "Dynamic quest integration with reputation system"
+      - "Economic balance curves implementation"
+      - "Anti-grind protection mechanisms"
+    author: "GameBalance Agent"
+
+# Testing Scenarios
+testing_scenarios:
+  balance_validation:
+    - "Level 1-10 progression curve validation"
+    - "Economic stability under high load"
+    - "Reputation system impact on rewards"
+    - "Choice consequence balance testing"
+
+  edge_cases:
+    - "Max level player doing low-level quests"
+    - "Large group (4+ players) quest completion"
+    - "Speedrun bonuses and penalties"
+    - "Economic scarcity and abundance scenarios"

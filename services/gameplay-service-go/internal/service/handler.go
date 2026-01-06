@@ -61,8 +61,8 @@ func (h *Handler) APIV1GameplayAffixesActiveGet(ctx context.Context) (api.APIV1G
 	return &api.ActiveAffixesResponse{
 		Affixes: affixes,
 		Rotation: &api.ActiveAffixesResponseRotation{
-			WeekStart: nil, // TODO: Implement rotation info
-			WeekEnd:   nil,
+			WeekStart: h.getCurrentWeekStart(),
+			WeekEnd:   h.getCurrentWeekEnd(),
 		},
 	}, nil
 }
@@ -207,7 +207,7 @@ func (h *Handler) APIV1GameplayAffixesRotationHistoryGet(ctx context.Context, pa
 			ID:         rot.ID.String(),
 			WeekStart:  &rot.WeekStart,
 			WeekEnd:    &rot.WeekEnd,
-			SeasonalAffix: nil, // TODO: Implement seasonal affixes
+			SeasonalAffix: h.getSeasonalAffixForWeek(rot.WeekStart),
 			Affixes:    affixes,
 		}
 	}
@@ -463,4 +463,137 @@ func (h *Handler) APIV1AnalyticsAffixesCombinationsGet(ctx context.Context, para
 	return &api.CombinationAnalysisResponse{
 		Combinations: combinationData.Combinations,
 	}, nil
+}
+
+// getCurrentWeekStart returns the start of the current week (Monday)
+func (h *Handler) getCurrentWeekStart() *time.Time {
+	now := time.Now()
+	// Find Monday of current week
+	daysSinceMonday := int(now.Weekday() - time.Monday)
+	if daysSinceMonday < 0 {
+		daysSinceMonday += 7
+	}
+	weekStart := now.AddDate(0, 0, -daysSinceMonday).Truncate(24 * time.Hour)
+	return &weekStart
+}
+
+// getCurrentWeekEnd returns the end of the current week (Sunday)
+func (h *Handler) getCurrentWeekEnd() *time.Time {
+	weekStart := h.getCurrentWeekStart()
+	weekEnd := weekStart.AddDate(0, 0, 6).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+	return &weekEnd
+}
+
+// getSeasonalAffixForWeek returns the seasonal affix for the given week
+func (h *Handler) getSeasonalAffixForWeek(weekStart time.Time) *api.Affix {
+	// Define seasonal affixes based on season
+	// This is a simplified implementation - in production this would be configurable
+
+	// Calculate season (1-4 quarters per year)
+	month := weekStart.Month()
+	var seasonAffix *api.Affix
+
+	switch {
+	case month >= 12 || month <= 2: // Winter (Dec-Feb)
+		seasonAffix = &api.Affix{
+			ID:          "winter-frost",
+			Name:        "Winter Frost",
+			Description: "Enemies take increased damage from ice attacks but reduced damage from fire attacks",
+			Type:        "seasonal",
+			Tier:        1,
+			Effects: []*api.AffixEffect{
+				{
+					Type:     "damage_modifier",
+					Target:   "enemy",
+					Element:  "ice",
+					Value:    1.25, // 25% bonus
+					Duration: -1,   // Permanent for season
+				},
+				{
+					Type:     "damage_modifier",
+					Target:   "enemy",
+					Element:  "fire",
+					Value:    0.75, // 25% penalty
+					Duration: -1,
+				},
+			},
+		}
+	case month >= 3 && month <= 5: // Spring (Mar-May)
+		seasonAffix = &api.Affix{
+			ID:          "spring-bloom",
+			Name:        "Spring Bloom",
+			Description: "Increased healing and regeneration effects, poison damage reduced",
+			Type:        "seasonal",
+			Tier:        1,
+			Effects: []*api.AffixEffect{
+				{
+					Type:     "healing_modifier",
+					Target:   "player",
+					Value:    1.3, // 30% bonus healing
+					Duration: -1,
+				},
+				{
+					Type:     "damage_modifier",
+					Target:   "enemy",
+					Element:  "poison",
+					Value:    0.8, // 20% reduced poison damage
+					Duration: -1,
+				},
+			},
+		}
+	case month >= 6 && month <= 8: // Summer (Jun-Aug)
+		seasonAffix = &api.Affix{
+			ID:          "summer-heat",
+			Name:        "Summer Heat",
+			Description: "Fire damage increased, ice damage decreased, stamina drain accelerated",
+			Type:        "seasonal",
+			Tier:        1,
+			Effects: []*api.AffixEffect{
+				{
+					Type:     "damage_modifier",
+					Target:   "player",
+					Element:  "fire",
+					Value:    1.2, // 20% bonus fire damage
+					Duration: -1,
+				},
+				{
+					Type:     "damage_modifier",
+					Target:   "player",
+					Element:  "ice",
+					Value:    0.85, // 15% reduced ice damage
+					Duration: -1,
+				},
+			},
+		}
+	case month >= 9 && month <= 11: // Fall (Sep-Nov)
+		seasonAffix = &api.Affix{
+			ID:          "fall-harvest",
+			Name:        "Fall Harvest",
+			Description: "Increased item drops and gold rewards, but reduced experience gains",
+			Type:        "seasonal",
+			Tier:        1,
+			Effects: []*api.AffixEffect{
+				{
+					Type:   "item_drop_rate",
+					Target: "player",
+					Value:  1.5, // 50% more item drops
+					Duration: -1,
+				},
+				{
+					Type:   "gold_modifier",
+					Target: "player",
+					Value:  1.25, // 25% more gold
+					Duration: -1,
+				},
+				{
+					Type:   "experience_modifier",
+					Target: "player",
+					Value:  0.9, // 10% less experience
+					Duration: -1,
+				},
+			},
+		}
+	}
+
+	return seasonAffix
 }
