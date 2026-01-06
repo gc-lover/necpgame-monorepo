@@ -6,7 +6,9 @@ package leaderboard
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -20,20 +22,23 @@ import (
 
 // Config holds leaderboard manager configuration
 type Config struct {
-	DB     *pgxpool.Pool
-	Redis  *redis.Client
-	Logger *zap.Logger
-	Tracer trace.Tracer
-	Meter  metric.Meter
+	DB           *pgxpool.Pool
+	Redis        *redis.Client
+	Logger       *zap.Logger
+	Tracer       trace.Tracer
+	Meter        metric.Meter
+	UserServiceURL string // URL of the user service for name lookups
 }
 
 // Manager manages leaderboard rankings and statistics
 type Manager struct {
-	db     *pgxpool.Pool
-	redis  *redis.Client
-	logger *zap.Logger
-	tracer trace.Tracer
-	meter  metric.Meter
+	db             *pgxpool.Pool
+	redis          *redis.Client
+	logger         *zap.Logger
+	tracer         trace.Tracer
+	meter          metric.Meter
+	userServiceURL string
+	httpClient     *http.Client
 }
 
 // NewManager creates a new leaderboard manager instance
@@ -42,12 +47,19 @@ func NewManager(cfg Config) (*Manager, error) {
 		return nil, errors.New("database, redis, and logger are required")
 	}
 
+	// Initialize HTTP client for user service calls
+	httpClient := &http.Client{
+		Timeout: 5 * time.Second, // PERFORMANCE: 5 second timeout for external service calls
+	}
+
 	return &Manager{
-		db:     cfg.DB,
-		redis:  cfg.Redis,
-		logger: cfg.Logger,
-		tracer: cfg.Tracer,
-		meter:  cfg.Meter,
+		db:             cfg.DB,
+		redis:          cfg.Redis,
+		logger:         cfg.Logger,
+		tracer:         cfg.Tracer,
+		meter:          cfg.Meter,
+		userServiceURL: cfg.UserServiceURL,
+		httpClient:     httpClient,
 	}, nil
 }
 
@@ -220,11 +232,103 @@ func (m *Manager) GetPlayerRank(ctx context.Context, trialID uuid.UUID, playerID
 	return 0, errors.New("player not found in leaderboard")
 }
 
-// getPlayerName retrieves player display name (placeholder implementation)
+// getPlayerName retrieves player display name from user service
+// PERFORMANCE: Cached user service calls with 5-second timeout for external API calls
 func (m *Manager) getPlayerName(ctx context.Context, playerID string) string {
-	// TODO: Implement player name lookup from user service
-	// For now, return player ID as name
-	return playerID
+	// PERFORMANCE: Early return for invalid input
+	if playerID == "" {
+		m.logger.Warn("Empty player ID provided for name lookup")
+		return "Unknown Player"
+	}
+
+	// PERFORMANCE: Check Redis cache first for frequently accessed names
+	cacheKey := fmt.Sprintf("player:name:%s", playerID)
+	cachedName, err := m.redis.Get(ctx, cacheKey).Result()
+	if err == nil && cachedName != "" {
+		m.logger.Debug("Player name retrieved from cache",
+			zap.String("player_id", playerID),
+			zap.String("cached_name", cachedName))
+		return cachedName
+	}
+
+	// PERFORMANCE: Fallback to user service API call
+	if m.userServiceURL == "" {
+		m.logger.Warn("User service URL not configured, using player ID as fallback",
+			zap.String("player_id", playerID))
+		return playerID
+	}
+
+	// Prepare user service request
+	userServiceURL := fmt.Sprintf("%s/api/v1/users/%s/profile", m.userServiceURL, playerID)
+	req, err := http.NewRequestWithContext(ctx, "GET", userServiceURL, nil)
+	if err != nil {
+		m.logger.Error("Failed to create user service request",
+			zap.String("player_id", playerID),
+			zap.String("url", userServiceURL),
+			zap.Error(err))
+		return playerID
+	}
+
+	// Add authentication headers (placeholder - should use service-to-service auth)
+	req.Header.Set("Authorization", "Bearer internal-service-token")
+	req.Header.Set("X-Service-Name", "time-trials-service")
+
+	// Execute request with timeout
+	resp, err := m.httpClient.Do(req)
+	if err != nil {
+		m.logger.Error("Failed to call user service",
+			zap.String("player_id", playerID),
+			zap.String("url", userServiceURL),
+			zap.Error(err))
+		return playerID
+	}
+	defer resp.Body.Close()
+
+	// Handle response
+	if resp.StatusCode != http.StatusOK {
+		m.logger.Warn("User service returned non-200 status",
+			zap.String("player_id", playerID),
+			zap.Int("status_code", resp.StatusCode))
+		return playerID
+	}
+
+	// Parse response
+	var userResponse struct {
+		Data struct {
+			DisplayName string `json:"display_name"`
+			Username    string `json:"username"`
+		} `json:"data"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&userResponse); err != nil {
+		m.logger.Error("Failed to parse user service response",
+			zap.String("player_id", playerID),
+			zap.Error(err))
+		return playerID
+	}
+
+	// Determine display name (prefer display_name, fallback to username)
+	displayName := userResponse.Data.DisplayName
+	if displayName == "" {
+		displayName = userResponse.Data.Username
+	}
+	if displayName == "" {
+		displayName = playerID // Final fallback
+	}
+
+	// PERFORMANCE: Cache the result for 15 minutes
+	if err := m.redis.Set(ctx, cacheKey, displayName, 15*time.Minute).Err(); err != nil {
+		m.logger.Warn("Failed to cache player name",
+			zap.String("player_id", playerID),
+			zap.String("display_name", displayName),
+			zap.Error(err))
+	}
+
+	m.logger.Debug("Player name retrieved from user service",
+		zap.String("player_id", playerID),
+		zap.String("display_name", displayName))
+
+	return displayName
 }
 
 // getWeekNumber returns ISO week number

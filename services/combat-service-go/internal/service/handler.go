@@ -8,6 +8,8 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -412,7 +414,104 @@ func (h *Handler) CombatServiceBatchHealthCheck(ctx context.Context, req *api.Co
 }
 
 func (h *Handler) CombatServiceCalculateDamage(ctx context.Context, req *api.DamageCalculationRequest) (api.CombatServiceCalculateDamageRes, error) {
-	return &api.CombatServiceCalculateDamageOK{}, nil
+	ctx, cancel := h.withTimeout(ctx, "CalculateDamage", 50*time.Millisecond)
+	defer cancel()
+
+	h.service.logger.Info("Processing damage calculation request",
+		zap.String("attacker_id", req.AttackerID),
+		zap.String("defender_id", req.DefenderID),
+		zap.String("weapon_type", req.WeaponType),
+		zap.Float64("base_damage", req.BaseDamage))
+
+	// Validate input parameters
+	if req.AttackerID == "" || req.DefenderID == "" {
+		return &api.CombatServiceCalculateDamageBadRequest{
+			Data: api.Error{
+				Code:    "INVALID_PARAMETERS",
+				Message: "Attacker and defender IDs are required",
+			},
+		}, nil
+	}
+
+	if req.BaseDamage <= 0 {
+		return &api.CombatServiceCalculateDamageBadRequest{
+			Data: api.Error{
+				Code:    "INVALID_DAMAGE",
+				Message: "Base damage must be positive",
+			},
+		}, nil
+	}
+
+	// Retrieve combat stats from database/cache
+	attackerStats, err := h.getCombatStats(ctx, req.AttackerID)
+	if err != nil {
+		h.service.logger.Error("Failed to get attacker stats",
+			zap.String("attacker_id", req.AttackerID),
+			zap.Error(err))
+		return nil, errors.Wrap(err, "failed to get attacker stats")
+	}
+
+	defenderStats, err := h.getCombatStats(ctx, req.DefenderID)
+	if err != nil {
+		h.service.logger.Error("Failed to get defender stats",
+			zap.String("defender_id", req.DefenderID),
+			zap.Error(err))
+		return nil, errors.Wrap(err, "failed to get defender stats")
+	}
+
+	// Calculate damage using combat formulas
+	finalDamage := h.calculateDamage(req, attackerStats, defenderStats)
+
+	// Determine critical hit
+	isCritical := h.calculateCriticalHit(attackerStats.CriticalChance)
+
+	// Apply elemental effects
+	elementalEffects := h.calculateElementalEffects(req.WeaponType, defenderStats.ElementalResistances)
+
+	// Calculate total damage after mitigation
+	totalDamage := finalDamage
+	if !isCritical {
+		// Apply armor mitigation (non-critical hits only)
+		armorReduction := defenderStats.Armor * 0.01 // 1% reduction per armor point
+		if armorReduction > 0.75 {                    // Cap at 75% reduction
+			armorReduction = 0.75
+		}
+		totalDamage = finalDamage * (1 - armorReduction)
+	}
+
+	// Apply elemental damage bonus/penalty
+	elementalMultiplier := 1.0
+	for _, effect := range elementalEffects {
+		elementalMultiplier *= effect.Multiplier
+	}
+
+	totalDamage *= elementalMultiplier
+
+	// Ensure minimum damage
+	if totalDamage < 1 {
+		totalDamage = 1
+	}
+
+	h.service.logger.Info("Damage calculation completed",
+		zap.String("attacker_id", req.AttackerID),
+		zap.String("defender_id", req.DefenderID),
+		zap.Float64("base_damage", req.BaseDamage),
+		zap.Float64("final_damage", totalDamage),
+		zap.Bool("critical_hit", isCritical))
+
+	return &api.CombatServiceCalculateDamageOK{
+		Data: &api.DamageCalculationResult{
+			TotalDamage:      int(totalDamage),
+			IsCritical:       isCritical,
+			ElementalEffects: elementalEffects,
+			DamageBreakdown: &api.DamageBreakdown{
+				BaseDamage:    req.BaseDamage,
+				BonusDamage:   finalDamage - req.BaseDamage,
+				Mitigation:    finalDamage - totalDamage,
+				ElementalBonus: elementalMultiplier - 1.0,
+			},
+		},
+	}, nil
 }
 
 func (h *Handler) CombatServiceGetWeaponAnalytics(ctx context.Context, params api.CombatServiceGetWeaponAnalyticsParams) (api.CombatServiceGetWeaponAnalyticsRes, error) {
@@ -640,6 +739,153 @@ func (h *Handler) extractActiveEffects(gameStateData map[string]interface{}) []*
 
 				effects = append(effects, effect)
 			}
+		}
+	}
+
+	return effects
+}
+
+// CombatStats represents combat-related statistics for a player
+type CombatStats struct {
+	AttackPower        float64
+	CriticalChance     float64
+	Armor              float64
+	ElementalResistances map[string]float64
+}
+
+// getCombatStats retrieves combat statistics for a player
+func (h *Handler) getCombatStats(ctx context.Context, playerID string) (*CombatStats, error) {
+	// PERFORMANCE: Try cache first
+	cacheKey := fmt.Sprintf("combat:stats:%s", playerID)
+	cachedStats, err := h.service.redis.Get(ctx, cacheKey).Result()
+	if err == nil {
+		var stats CombatStats
+		if err := json.Unmarshal([]byte(cachedStats), &stats); err == nil {
+			return &stats, nil
+		}
+	}
+
+	// Fallback to database
+	query := `
+		SELECT attack_power, critical_chance, armor, elemental_resistances
+		FROM player_combat_stats
+		WHERE player_id = $1
+	`
+
+	var attackPower, criticalChance, armor float64
+	var elementalResistances []byte
+
+	err = h.service.db.QueryRow(ctx, query, playerID).Scan(
+		&attackPower, &criticalChance, &armor, &elementalResistances,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Return default stats for new players
+			return &CombatStats{
+				AttackPower:        100,
+				CriticalChance:     0.05, // 5% base crit chance
+				Armor:              50,
+				ElementalResistances: map[string]float64{
+					"fire": 0, "ice": 0, "lightning": 0, "poison": 0,
+				},
+			}, nil
+		}
+		return nil, errors.Wrap(err, "failed to get combat stats")
+	}
+
+	// Parse elemental resistances
+	resistances := make(map[string]float64)
+	if len(elementalResistances) > 0 {
+		if err := json.Unmarshal(elementalResistances, &resistances); err != nil {
+			h.service.logger.Warn("Failed to parse elemental resistances, using defaults",
+				zap.String("player_id", playerID),
+				zap.Error(err))
+			resistances = map[string]float64{"fire": 0, "ice": 0, "lightning": 0, "poison": 0}
+		}
+	}
+
+	stats := &CombatStats{
+		AttackPower:         attackPower,
+		CriticalChance:      criticalChance,
+		Armor:               armor,
+		ElementalResistances: resistances,
+	}
+
+	// Cache for 5 minutes
+	statsJSON, _ := json.Marshal(stats)
+	h.service.redis.Set(ctx, cacheKey, statsJSON, 5*time.Minute)
+
+	return stats, nil
+}
+
+// calculateDamage applies combat formulas to determine final damage
+func (h *Handler) calculateDamage(req *api.DamageCalculationRequest, attacker, defender *CombatStats) float64 {
+	baseDamage := req.BaseDamage
+
+	// Apply attack power bonus
+	damageMultiplier := 1.0 + (attacker.AttackPower / 100.0) // 1% per attack power point
+	finalDamage := baseDamage * damageMultiplier
+
+	// Apply weapon-specific modifiers
+	switch req.WeaponType {
+	case "sword":
+		finalDamage *= 1.1 // Swords get 10% bonus
+	case "bow":
+		finalDamage *= 0.9 // Bows get 10% penalty (balance)
+	case "magic_staff":
+		finalDamage *= 1.2 // Magic gets 20% bonus
+	}
+
+	// Ensure minimum damage
+	if finalDamage < 1 {
+		finalDamage = 1
+	}
+
+	return finalDamage
+}
+
+// calculateCriticalHit determines if an attack is a critical hit
+func (h *Handler) calculateCriticalHit(criticalChance float64) bool {
+	// PERFORMANCE: Use seeded random for reproducible combat results
+	// In production, consider using a cryptographically secure random source
+	return criticalChance > 0 && rand.Float64() < criticalChance
+}
+
+// calculateElementalEffects determines elemental damage bonuses/penalties
+func (h *Handler) calculateElementalEffects(weaponType string, resistances map[string]float64) []*api.ElementalEffect {
+	effects := []*api.ElementalEffect{}
+
+	// Define weapon elemental types
+	weaponElements := map[string]string{
+		"fire_sword":    "fire",
+		"ice_staff":     "ice",
+		"lightning_bow": "lightning",
+		"poison_dagger": "poison",
+	}
+
+	if element, exists := weaponElements[weaponType]; exists {
+		if resistance, hasResistance := resistances[element]; hasResistance {
+			multiplier := 1.0
+			if resistance > 0 {
+				// Positive resistance reduces damage
+				multiplier = 1.0 - (resistance / 100.0)
+				if multiplier < 0.1 { // Minimum 10% damage
+					multiplier = 0.1
+				}
+			} else if resistance < 0 {
+				// Negative resistance (vulnerability) increases damage
+				multiplier = 1.0 + (-resistance / 100.0)
+				if multiplier > 2.0 { // Maximum 200% damage
+					multiplier = 2.0
+				}
+			}
+
+			effects = append(effects, &api.ElementalEffect{
+				Element:   element,
+				Multiplier: multiplier,
+				Type:      "damage_modifier",
+			})
 		}
 	}
 

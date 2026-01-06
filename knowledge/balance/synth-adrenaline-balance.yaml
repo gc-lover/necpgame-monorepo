@@ -1,0 +1,307 @@
+# Issue: #1657
+metadata:
+  id: synth-adrenaline-balance-system
+  title: "Баланс: Синт-адреналин с долгом усталости"
+  document_type: balance
+  category: combat-mechanics
+  status: approved
+  version: '1.0.0'
+  last_updated: 2026-01-06T15:00:00.000000
+  concept_approved: true
+  concept_reviewed_at: '2026-01-06T15:00:00.000000'
+  owners:
+    - role: game_balance_designer
+      contact: balance@necp.game
+  tags:
+    - combat-balance
+    - stamina-system
+    - risk-reward-mechanics
+    - temporary-buffs
+    - fatigue-debuffs
+    - melee-combat
+    - sprint-mechanics
+    - adrenaline-mechanics
+  topics:
+    - combat-balancing
+    - stamina-management
+    - risk-reward-systems
+    - temporary-enhancements
+    - fatigue-mechanics
+    - close-quarters-combat
+    - mobility-systems
+  related_systems:
+    - combat-service
+    - progression-service
+    - inventory-service
+    - analytics-service
+  related_documents:
+    - id: combat-balance
+      relation: implements
+    - id: stamina-system-design
+      relation: extends
+  source: balance-team-analysis
+  visibility: internal
+  audience:
+    - game-designers
+    - balance-team
+    - developers
+    - qa-testers
+  risk_level: medium
+
+summary:
+  problem: |
+    Игроки нуждаются в механике краткосрочного усиления для интенсивных боев,
+    но без риска создания доминирующих билдов или бесконтрольного усиления.
+    Необходимо сбалансировать мощный бафф с долгосрочными последствиями.
+  goal: |
+    Создать систему "Синт-адреналина" как рискованный инструмент интенсивного боя,
+    который дает значительное преимущество в ближнем бою и спринте,
+    но накапливает "долг усталости" с серьезными дебаффами после активации.
+  essence: |
+    "Сила без цены - это слабость. Настоящая мощь требует жертв."
+  key_mechanics:
+    - Adrenaline Surge: Временное усиление урона и скорости в ближнем бою
+    - Fatigue Debt: Накопление долгов усталости с конвертацией в дебаффы
+    - Risk-Reward Balance: Высокий риск перегрузки для максимального усиления
+
+problem_analysis:
+  current_state:
+    - Отсутствие механик краткосрочного усиления в интенсивных боях
+    - Игроки избегают ближнего боя из-за риска быстрой смерти
+    - Недостаточная глубина систем стамины и восстановления
+    - Отсутствие рискованных механик с долгосрочными последствиями
+  pain_points:
+    - Игроки предпочитают ranged combat из-за безопасности
+    - Недостаток инструментов для comeback механик
+    - Отсутствие тактической глубины в управлении ресурсами
+    - Недостаток контента для hardcore игроков
+  user_impact:
+    - Снижение разнообразия боевых стилей
+    - Отсутствие напряжения в decision making
+    - Недостаток replayability в combat scenarios
+    - Снижение вовлеченности в melee-focused content
+
+solution_approach:
+  core_concept: |
+    Синт-адреналин - это инъекционный препарат, который дает мощное усиление
+    в ближнем бою и спринте, но накапливает "долг усталости". Долг конвертируется
+    в тяжелые дебаффы после окончания эффекта, требуя тщательного планирования использования.
+  design_philosophy:
+    - High Risk, High Reward: Мощное усиление требует значительного риска
+    - Resource Management: Стратегическое использование ограниченного ресурса
+    - Tactical Depth: Принятие решений под давлением боя
+    - Comeback Mechanics: Возможность перелома ситуации в невыгодных боях
+
+detailed_balance:
+  adrenaline_mechanics:
+    activation_system:
+      injection_method: "Быстрая инъекция через neural link или auto-injector"
+      activation_time: "0.5 секунды задержки активации"
+      visual_feedback: "Эффект красного свечения глаз, ускоренное дыхание, пульсирующие вены"
+      audio_feedback: "Ускоренное сердцебиение, тяжелое дыхание, низкий гул"
+
+    buff_parameters:
+      duration: "15 секунд базовой длительности"
+      cooldown: "120 секунд между инъекциями"
+      stacking_limit: "Максимум 3 стака одновременно"
+      resource_cost: "25% от максимальной стамины за инъекцию"
+
+    combat_enhancements:
+      melee_damage_multiplier: "2.0x бонус к урону в ближнем бою (дистанция < 3 метра)"
+      sprint_speed_multiplier: "1.5x бонус к скорости бега"
+      stamina_regeneration: "3.0x ускоренная регенерация стамины во время действия"
+      critical_hit_chance: "+25% шанс критического удара в ближнем бою"
+      knockback_resistance: "+50% сопротивление отбрасыванию"
+
+    fatigue_debt_system:
+      debt_accumulation:
+        base_debt_per_injection: "100 единиц долга усталости"
+        stacking_multiplier: "1.5x множитель за каждый стак (1.5x, 2.25x, 3.375x)"
+        time_decay: "Долг уменьшается на 10 единиц в секунду вне боя"
+        combat_decay: "Долг уменьшается на 5 единиц в секунду в бою"
+
+      debt_conversion:
+        conversion_trigger: "Автоматическая конвертация при достижении 300+ единиц долга"
+        conversion_timer: "5 секунд задержки после окончания боя"
+        conversion_rate: "1 единица долга = 0.1% дебаффа (максимум -50%)"
+
+      fatigue_debuffs:
+        stamina_regeneration_penalty: "Линейное снижение скорости восстановления стамины"
+        movement_speed_penalty: "Линейное снижение скорости передвижения"
+        melee_damage_penalty: "Линейное снижение урона в ближнем бою"
+        critical_hit_penalty: "Линейное снижение шанса критического удара"
+        duration: "Длительность дебаффа = (долг / 10) секунд (максимум 300 секунд)"
+
+  balance_formulas:
+    ttk_calculations:
+      base_melee_ttk: "Time To Kill = (Enemy HP) / (DPS × Damage Multiplier)"
+      adrenaline_melee_ttk: "TTK_Adrenaline = TTK_Base / 2.0 (при 2.0x множителе урона)"
+      fatigue_penalty_ttk: "TTK_Fatigue = TTK_Base × (1 + Fatigue_Penalty_Percent)"
+
+    stamina_management:
+      adrenaline_stamina_cost: "Stamina_Cost = Max_Stamina × 0.25"
+      fatigue_stamina_penalty: "Stamina_Regen_Rate = Base_Rate × (1 - Fatigue_Penalty)"
+      recovery_time_calculation: "Recovery_Time = Fatigue_Debt / (Decay_Rate × 60)"
+
+    damage_formulas:
+      adrenaline_damage: "Final_Damage = Base_Damage × 2.0 × Crit_Multiplier"
+      fatigue_damage: "Final_Damage = Base_Damage × (1 - Fatigue_Penalty)"
+      effective_damage_ratio: "ADR = Adrenaline_DPS / Fatigue_DPS"
+
+  equipment_class_thresholds:
+    light_armor_build:
+      description: "Мобильный билд с низкой защитой, высокой скоростью"
+      base_stats:
+        max_stamina: 150
+        melee_damage: 85
+        movement_speed: 120
+        armor_rating: 25
+      adrenaline_synergy:
+        damage_amplification: "+35% от базового усиления"
+        fatigue_resistance: "-20% накопление долга"
+        recovery_speed: "+15% скорость восстановления"
+      optimal_usage: "Burst damage и repositioning тактики"
+      risk_assessment: "Высокий риск из-за низкой защиты"
+
+    medium_armor_build:
+      description: "Баланс между защитой и мобильностью"
+      base_stats:
+        max_stamina: 120
+        melee_damage: 70
+        movement_speed: 100
+        armor_rating: 50
+      adrenaline_synergy:
+        damage_amplification: "+25% от базового усиления"
+        fatigue_resistance: "+0% модификатор долга"
+        recovery_speed: "+0% модификатор восстановления"
+      optimal_usage: "Sustained combat с tactical retreats"
+      risk_assessment: "Средний риск, сбалансированный подход"
+
+    heavy_armor_build:
+      description: "Танковый билд с высокой защитой, низкой мобильностью"
+      base_stats:
+        max_stamina: 100
+        melee_damage: 55
+        movement_speed: 80
+        armor_rating: 75
+      adrenaline_synergy:
+        damage_amplification: "+15% от базового усиления"
+        fatigue_resistance: "+25% накопление долга (медленнее)"
+        recovery_speed: "-10% скорость восстановления"
+      optimal_usage: "Defensive stands и counter-attacks"
+      risk_assessment: "Низкий риск из-за высокой защиты"
+
+  anti_abuse_mechanisms:
+    usage_limits:
+      max_injections_per_minute: "Максимум 2 инъекции в минуту"
+      global_cooldown: "30 секунд между любыми инъекциями"
+      combat_restriction: "Запрет активации при стамине < 50%"
+      health_requirement: "Запрет активации при HP < 25%"
+
+    fatigue_safety_valves:
+      emergency_shutdown: "Автоматическое отключение при долге > 500 единиц"
+      health_protection: "Отключение при HP < 10% для предотвращения смерти"
+      overcharge_protection: "Предупреждение при долге > 400 единиц"
+
+    detection_systems:
+      injection_tracking: "Серверная валидация всех инъекций"
+      fatigue_manipulation: "Проверка целостности значений долга"
+      timing_validation: "Валидация таймингов активации/деактивации"
+
+  risk_reward_analysis:
+    high_risk_scenarios:
+      scenario_1v3_comeback:
+        setup: "Игрок с 20% HP против 3 врагов"
+        adrenaline_usage: "Burst damage для убийства одного врага"
+        expected_outcome: "50% шанс успешного comeback"
+        fatigue_consequence: "-40% стамины на 180 секунд"
+      scenario_close_quarters_escape:
+        setup: "Игрок окружен в узком коридоре"
+        adrenaline_usage: "Sprint speed для прорыва"
+        expected_outcome: "75% шанс успешного побега"
+        fatigue_consequence: "-25% скорости на 120 секунд"
+
+    reward_scaling:
+      perfect_execution_bonus: "+25% XP за идеальное использование"
+      comeback_achievement: "Специальные достижения за успешные comeback'ы"
+      fatigue_management_skill: "Навык снижающий накопление долга"
+      adrenaline_efficiency_perk: "Улучшения снижающие стоимость инъекций"
+
+  telemetry_requirements:
+    usage_metrics:
+      - injection_frequency: "Количество инъекций в минуту/час/сессию"
+      - timing_patterns: "Время суток и продолжительность сессий с активным использованием"
+      - combat_context: "Типы боев где используется (1v1, team fights, ambushes)"
+      - success_rates: "Процент успешных активаций и comeback'ов"
+
+    fatigue_impact_metrics:
+      - debt_accumulation_patterns: "Среднее накопление долга по билдам"
+      - debuff_duration_distribution: "Распределение длительности дебаффов"
+      - recovery_time_analysis: "Время восстановления по классам экипировки"
+      - overcharge_incidents: "Количество случаев перегрузки и их последствия"
+
+    balance_effectiveness_metrics:
+      - ttk_changes: "Изменения Time To Kill под влиянием адреналина"
+      - win_rate_correlation: "Связь между использованием и победными боями"
+      - player_retention: "Вовлеченность игроков использующих систему"
+      - skill_ceiling_impact: "Влияние на skill ceiling и competitive balance"
+
+    risk_assessment_metrics:
+      - frustration_indicators: "Количество жалоб на систему в feedback"
+      - abuse_detection: "Количество случаев подозрительного использования"
+      - health_impact: "Влияние на player satisfaction и session length"
+      - balance_iterations: "Необходимость корректировок на основе данных"
+
+  implementation_considerations:
+    technical_requirements:
+      server_authority: "Все расчеты долга и дебаффов на сервере"
+      prediction_system: "Client-side prediction для responsive feel"
+      synchronization: "Надежная синхронизация между игроками в PvP"
+      performance_impact: "Минимальный overhead на игровую логику"
+
+    integration_points:
+      combat_system: "Взаимодействие с damage calculation и critical hits"
+      stamina_system: "Интеграция с существующей системой стамины"
+      progression_system: "Unlock через skill trees и achievements"
+      inventory_system: "Ограниченное количество инъекций в inventory"
+
+    testing_strategy:
+      unit_tests: "Формулы расчетов и edge cases"
+      integration_tests: "Взаимодействие с combat и stamina системами"
+      balance_testing: "Playtesting с различными билдами"
+      stress_testing: "Проверка при высокой нагрузке и spam usage"
+
+  iteration_guidelines:
+    initial_balance_target: "15-20% игроков используют систему активно"
+    success_metrics: "Увеличение melee combat engagement на 25%"
+    adjustment_triggers: "Корректировка при <10% или >30% adoption rate"
+    major_changes: "Переработка только при доказанных проблемах balance"
+
+readiness_criteria:
+  balance_maturity:
+    - "Определены все формулы и параметры"
+    - "Созданы пороги для 3 классов экипировки"
+    - "Реализованы механизмы предотвращения абуза"
+    - "Определены метрики телеметрии"
+  gameplay_balance:
+    - "Проверен баланс risk-reward для разных билдов"
+    - "Подтверждена tactical depth механики"
+    - "Оценено влияние на skill ceiling"
+  technical_feasibility:
+    - "Определены точки интеграции"
+    - "Оценена производительность"
+    - "Спроектирована система валидации"
+
+implementation_roadmap:
+  phase_1_proof_of_concept:
+    - "Базовая реализация механики адреналина"
+    - "Простая система долга усталости"
+    - "Тестирование core loop"
+  phase_2_balance_iteration:
+    - "Настройка параметров по классам экипировки"
+    - "Добавление anti-abuse механизмов"
+    - "Balance testing с игроками"
+  phase_3_polish_and_optimization:
+    - "Оптимизация производительности"
+    - "Добавление визуальных эффектов"
+    - "Финальные баланс корректировки"

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/metric"
@@ -641,12 +642,32 @@ func (s *Service) setupTournamentSchedule(ctx context.Context, tournamentID uuid
 }
 
 // isUserRegistered checks if a user is already registered for a tournament
+// PERFORMANCE: Optimized with context timeout for MMOFPS tournament operations
 func (s *Service) isUserRegistered(ctx context.Context, tournamentID, userID uuid.UUID) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM tournaments.participants WHERE tournament_id = $1 AND user_id = $2)`
+	// PERFORMANCE: Add timeout for database operations to prevent hanging
+	ctx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+	defer cancel()
+
+	query := `
+		SELECT EXISTS(
+			SELECT 1 FROM tournament.registrations
+			WHERE tournament_id = $1::text
+			AND player_id = $2::text
+			AND status IN ('pending', 'confirmed')
+		)
+	`
 
 	var exists bool
-	err := s.db.QueryRow(ctx, query, tournamentID, userID).Scan(&exists)
-	return exists, errors.Wrap(err, "failed to check user registration")
+	err := s.db.QueryRow(ctx, query, tournamentID.String(), userID.String()).Scan(&exists)
+	if err != nil {
+		s.logger.Error("Failed to check user registration",
+			zap.String("tournament_id", tournamentID.String()),
+			zap.String("user_id", userID.String()),
+			zap.Error(err))
+		return false, errors.Wrap(err, "failed to check user registration")
+	}
+
+	return exists, nil
 }
 
 // processEntryFeePayment handles tournament entry fee payment

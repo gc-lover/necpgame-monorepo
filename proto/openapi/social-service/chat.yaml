@@ -1,0 +1,259 @@
+openapi: 3.0.3
+info:
+  title: Social Service - Chat Module
+  description: 'Chat system module for real-time messaging and communication'
+  version: 1.0.0
+
+tags:
+  - name: Chat
+    description: Real-time messaging and communication
+
+paths:
+  /social/chat/messages:
+    post:
+      summary: Send chat message
+      operationId: sendChatMessage
+      description: 'Send a real-time chat message with moderation and anti-spam filtering.
+
+        **Real-time:** WebSocket-based delivery for instant messaging.
+
+        ## BACKEND NOTE
+        - Struct alignment hints: 30-50% memory savings for message processing
+        - Optimized for MMOFPS RPG with low latency message delivery
+        - Context timeouts: 1s for message validation, 2s for spam filtering
+        - DB pool config: connection pooling for message history
+        - Performance target: <2ms for message delivery, <50ms P95 for spam checks'
+      tags:
+        - Chat
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '200':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /social/chat/channels/{channelId}/messages:
+    get:
+      summary: Get channel messages
+      operationId: getChannelMessages
+      description: 'Retrieve message history for a specific chat channel.
+
+        **Pagination:** Supports cursor-based pagination for efficient message loading.
+
+        ## BACKEND NOTE
+        - Optimized message retrieval with cursor pagination
+        - Memory efficient for large message histories'
+      tags:
+        - Chat
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Chat channel identifier
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of messages to retrieve
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Get messages before this timestamp
+        - name: after
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Get messages after this timestamp
+      responses:
+        '200':
+          description: Channel messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                  has_more:
+                    type: boolean
+                    description: Whether there are more messages available
+                  next_cursor:
+                    type: string
+                    description: Cursor for next page of results
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    SendMessageRequest:
+      type: object
+      required:
+        - channel_id
+        - content
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+          description: Chat channel identifier
+        content:
+          type: string
+          maxLength: 500
+          description: Message content
+        message_type:
+          type: string
+          enum:
+            - text
+            - emoji
+            - system
+          default: text
+          description: Type of message
+        reply_to:
+          type: string
+          format: uuid
+          description: ID of message being replied to
+      description: 'Chat message request with validation'
+
+    MessageResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+          format: uuid
+          description: Unique message identifier
+        channel_id:
+          type: string
+          format: uuid
+          description: Channel where message was sent
+        sender_id:
+          type: string
+          format: uuid
+          description: Sender's player ID
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+        status:
+          type: string
+          enum:
+            - sent
+            - delivered
+            - moderated
+          description: Message delivery status
+      description: 'Message confirmation response'
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Message unique identifier
+        channel_id:
+          type: string
+          format: uuid
+          description: Channel identifier
+        sender_id:
+          type: string
+          format: uuid
+          description: Sender player ID
+        sender_name:
+          type: string
+          description: Sender display name
+        content:
+          type: string
+          description: Message content
+        message_type:
+          type: string
+          enum: [text, emoji, system]
+          description: Message type
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+        edited_at:
+          type: string
+          format: date-time
+          description: Last edit timestamp
+        reply_to:
+          type: string
+          format: uuid
+          description: Replied message ID
+        reactions:
+          type: array
+          items:
+            type: object
+            properties:
+              emoji:
+                type: string
+              count:
+                type: integer
+              users:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+          description: Message reactions
+      description: 'Complete message object with all metadata'
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: "INVALID_ARGUMENT"
+        message:
+          type: string
+          example: "Invalid message content"
