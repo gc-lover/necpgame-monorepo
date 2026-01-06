@@ -203,6 +203,23 @@ func (m *Manager) GetRankHistory(ctx context.Context, trialID uuid.UUID, playerI
 	return history, nil
 }
 
+// GetPlayerRank retrieves current rank for a player in a trial
+func (m *Manager) GetPlayerRank(ctx context.Context, trialID uuid.UUID, playerID string) (int, error) {
+	// Get leaderboard and find player position
+	entries, err := m.GetLeaderboard(ctx, trialID, Weekly, 1000) // Get top 1000 for rank calculation
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to get leaderboard for rank calculation")
+	}
+
+	for i, entry := range entries {
+		if entry.PlayerID == playerID {
+			return i + 1, nil // Rank is 1-indexed
+		}
+	}
+
+	return 0, errors.New("player not found in leaderboard")
+}
+
 // getPlayerName retrieves player display name (placeholder implementation)
 func (m *Manager) getPlayerName(ctx context.Context, playerID string) string {
 	// TODO: Implement player name lookup from user service

@@ -24,6 +24,14 @@ type Handler struct {
 	service *Service
 }
 
+// getPlayerIDFromContext extracts player ID from request context
+// TODO: Implement proper JWT token parsing and player ID extraction
+func (h *Handler) getPlayerIDFromContext(ctx context.Context) string {
+	// Placeholder implementation - should extract from JWT token in auth middleware
+	// For now, return a default player ID for testing
+	return "player-123"
+}
+
 // NewHandler creates a new API handler
 func NewHandler(svc *Service) *Handler {
 	return &Handler{
@@ -325,8 +333,22 @@ func (h *Handler) APIV1TimeTrialsTrialsTrialIdStartPost(ctx context.Context, par
 		}, nil
 	}
 
+	// Get player ID from auth context
+	playerID := h.getPlayerIDFromContext(ctx)
+
 	// Start trial session
-	session, err := h.service.timerEngine.StartSession(ctx, trialID, uuid.New()) // TODO: Get player ID from auth
+	playerUUID, err := uuid.Parse(playerID)
+	if err != nil {
+		return &api.APIV1TimeTrialsTrialsTrialIdStartPostResDefault{
+			StatusCode: http.StatusBadRequest,
+			Data: api.Error{
+				Code:    "INVALID_PLAYER_ID",
+				Message: "Invalid player ID format",
+			},
+		}, nil
+	}
+
+	session, err := h.service.timerEngine.StartSession(ctx, trialID, playerUUID)
 	if err != nil {
 		h.service.logger.Error("Failed to start trial session", zap.Error(err))
 		return &api.APIV1TimeTrialsTrialsTrialIdStartPostResDefault{
@@ -386,10 +408,20 @@ func (h *Handler) APIV1TimeTrialsTrialsTrialIdCompletePost(ctx context.Context, 
 		h.service.logger.Error("Failed to calculate rewards", zap.Error(err))
 	}
 
+	// Get player ID from auth context
+	playerID := h.getPlayerIDFromContext(ctx)
+
 	// Update leaderboard
-	err = h.service.leaderboardManager.UpdateLeaderboard(ctx, trialID, "player_id", result.CompletionTime)
+	err = h.service.leaderboardManager.UpdateLeaderboard(ctx, trialID, playerID, result.CompletionTime)
 	if err != nil {
 		h.service.logger.Error("Failed to update leaderboard", zap.Error(err))
+	}
+
+	// Get player rank
+	rank, err := h.service.leaderboardManager.GetPlayerRank(ctx, trialID, playerID)
+	if err != nil {
+		h.service.logger.Warn("Failed to get player rank, using 0", zap.Error(err))
+		rank = 0
 	}
 
 	h.service.trialOperations.WithLabelValues("complete_trial", "success").Inc()
@@ -403,7 +435,7 @@ func (h *Handler) APIV1TimeTrialsTrialsTrialIdCompletePost(ctx context.Context, 
 		Rewards: &api.RewardTiers{
 			Experience: rewards.Rewards.Experience,
 		},
-		LeaderboardRank: 0, // TODO: Get actual rank
+		LeaderboardRank: rank,
 	}, nil
 }
 

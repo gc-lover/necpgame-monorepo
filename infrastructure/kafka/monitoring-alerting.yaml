@@ -1,0 +1,426 @@
+# Kafka Security Monitoring and Alerting
+# Issue: #2237 - Implements comprehensive security monitoring for Kafka Event-Driven Architecture
+# Agent: DevOps - Addresses Security audit issues: no audit logging, no monitoring, compliance requirements
+
+---
+# Kafka Security Dashboard ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-security-dashboard
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka
+    component: security-dashboard
+    security-level: high
+    managed-by: devops-agent
+  annotations:
+    description: "Grafana dashboard configuration for Kafka security monitoring"
+spec:
+  data:
+    dashboard.json: |
+      {
+        "dashboard": {
+          "title": "Kafka Security Monitoring",
+          "tags": ["kafka", "security", "monitoring"],
+          "timezone": "UTC",
+          "panels": [
+            {
+              "title": "Authentication Failures",
+              "type": "graph",
+              "targets": [
+                {
+                  "expr": "rate(kafka_server_sasl_authentication_failures_total[5m])",
+                  "legendFormat": "SASL Auth Failures"
+                },
+                {
+                  "expr": "rate(kafka_server_tls_authentication_failures_total[5m])",
+                  "legendFormat": "TLS Auth Failures"
+                }
+              ]
+            },
+            {
+              "title": "ACL Denials",
+              "type": "graph",
+              "targets": [
+                {
+                  "expr": "rate(kafka_authorizer_acl_denials_total[5m])",
+                  "legendFormat": "ACL Denials by Principal",
+                  "labels": ["principal"]
+                }
+              ]
+            },
+            {
+              "title": "Rate Limit Hits",
+              "type": "graph",
+              "targets": [
+                {
+                  "expr": "rate(kafka_producer_rate_limit_hits_total[5m])",
+                  "legendFormat": "Producer Rate Limits",
+                  "labels": ["producer", "topic"]
+                },
+                {
+                  "expr": "rate(kafka_consumer_rate_limit_hits_total[5m])",
+                  "legendFormat": "Consumer Rate Limits",
+                  "labels": ["consumer_group", "topic"]
+                }
+              ]
+            },
+            {
+              "title": "Schema Validation Failures",
+              "type": "graph",
+              "targets": [
+                {
+                  "expr": "rate(kafka_schema_validation_failures_total[5m])",
+                  "legendFormat": "Schema Validation Errors",
+                  "labels": ["topic", "error_type"]
+                }
+              ]
+            },
+            {
+              "title": "Encryption Status",
+              "type": "table",
+              "targets": [
+                {
+                  "expr": "kafka_server_ssl_connections_active",
+                  "legendFormat": "Active SSL Connections"
+                },
+                {
+                  "expr": "kafka_server_sasl_connections_active",
+                  "legendFormat": "Active SASL Connections"
+                }
+              ]
+            },
+            {
+              "title": "Audit Log Volume",
+              "type": "graph",
+              "targets": [
+                {
+                  "expr": "rate(kafka_audit_log_events_total[5m])",
+                  "legendFormat": "Audit Events per Second"
+                }
+              ]
+            }
+          ]
+        }
+      }
+
+---
+# Comprehensive Security Alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: kafka-security-alerts
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka
+    component: security-alerts
+    security-level: critical
+    managed-by: devops-agent
+    compliance: "soc2,gdpr,iso27001"
+  annotations:
+    description: "Critical security alerts for Kafka infrastructure"
+spec:
+  groups:
+  - name: kafka.security.critical
+    rules:
+    # Authentication Security
+    - alert: KafkaAuthenticationFailuresSpike
+      expr: rate(kafka_server_sasl_authentication_failures_total[5m]) > 10
+      for: 2m
+      labels:
+        severity: critical
+        category: authentication
+        security-incident: potential-brute-force
+      annotations:
+        summary: "Kafka SASL authentication failures spike"
+        description: "High rate of SASL authentication failures detected ({{ $value }} failures/min). Possible brute force attack."
+        runbook: "https://wiki.necpgame.com/kafka/security/auth-failures"
+        security-team: "@security-team"
+
+    - alert: KafkaTLSAuthenticationFailures
+      expr: rate(kafka_server_tls_authentication_failures_total[5m]) > 5
+      for: 1m
+      labels:
+        severity: high
+        category: authentication
+        security-incident: certificate-issues
+      annotations:
+        summary: "Kafka mTLS authentication failures"
+        description: "mTLS authentication failures detected. Check client certificates and CA chain."
+        security-team: "@security-team"
+
+    # Authorization Security
+    - alert: KafkaACLDenialsSpike
+      expr: rate(kafka_authorizer_acl_denials_total[5m]) > 50
+      for: 2m
+      labels:
+        severity: high
+        category: authorization
+        security-incident: unauthorized-access
+      annotations:
+        summary: "Kafka ACL denials spike"
+        description: "High rate of ACL denials ({{ $value }} denials/min). Possible unauthorized access attempts."
+        security-team: "@security-team"
+
+    - alert: KafkaSuperUserAccess
+      expr: kafka_authorizer_superuser_access_total > 0
+      for: 1m
+      labels:
+        severity: medium
+        category: authorization
+        security-incident: privilege-escalation
+      annotations:
+        summary: "Kafka superuser access detected"
+        description: "Superuser access used. Review if legitimate administrative action."
+        security-team: "@security-admin"
+
+    # Data Protection
+    - alert: KafkaUnencryptedConnections
+      expr: kafka_server_plaintext_connections_active > 0
+      for: 5m
+      labels:
+        severity: critical
+        category: encryption
+        security-incident: data-exposure
+      annotations:
+        summary: "Unencrypted Kafka connections detected"
+        description: "Active unencrypted connections to Kafka cluster. Immediate security breach."
+        security-team: "@security-emergency"
+
+    - alert: KafkaSchemaValidationFailures
+      expr: rate(kafka_schema_validation_failures_total[5m]) > 100
+      for: 2m
+      labels:
+        severity: medium
+        category: data-validation
+        security-incident: malformed-data
+      annotations:
+        summary: "High rate of Kafka schema validation failures"
+        description: "Schema validation failures may indicate malicious data injection attempts."
+
+    # Availability Attacks
+    - alert: KafkaRateLimitFlood
+      expr: rate(kafka_producer_rate_limit_hits_total[1m]) > 1000
+      for: 1m
+      labels:
+        severity: high
+        category: availability
+        security-incident: ddos-attack
+      annotations:
+        summary: "Kafka rate limit flood detected"
+        description: "Massive rate limit violations. Possible DDoS attack on Kafka infrastructure."
+        security-team: "@security-emergency"
+
+    - alert: KafkaConsumerLagSpike
+      expr: kafka_consumer_lag > 100000
+      for: 5m
+      labels:
+        severity: medium
+        category: availability
+        security-incident: processing-overload
+      annotations:
+        summary: "Critical Kafka consumer lag"
+        description: "Consumer lag indicates processing overload or malicious event flooding."
+
+    # Audit and Compliance
+    - alert: KafkaAuditLogFailure
+      expr: kafka_audit_log_write_failures_total > 0
+      for: 1m
+      labels:
+        severity: high
+        category: audit
+        security-incident: audit-failure
+        compliance: "soc2,gdpr"
+      annotations:
+        summary: "Kafka audit logging failure"
+        description: "Audit log writes are failing. Security events may not be recorded."
+        compliance-officer: "@compliance"
+
+    - alert: KafkaCertificateExpiry
+      expr: kafka_ssl_certificate_expiry_days < 30
+      for: 1h
+      labels:
+        severity: high
+        category: certificates
+        security-incident: certificate-expiry
+      annotations:
+        summary: "Kafka certificates expiring soon"
+        description: "SSL/TLS certificates expire in {{ $value }} days. Rotate immediately."
+
+  - name: kafka.security.medium
+    rules:
+    - alert: KafkaConnectionAnomalies
+      expr: rate(kafka_server_connections_total[5m]) > 1000
+      for: 2m
+      labels:
+        severity: medium
+        category: network
+        security-incident: connection-spike
+      annotations:
+        summary: "Unusual Kafka connection spike"
+        description: "Abnormal increase in connections. Monitor for attack patterns."
+
+    - alert: KafkaTopicAccessAnomalies
+      expr: rate(kafka_topic_access_total[5m]) > 10000
+      for: 3m
+      labels:
+        severity: medium
+        category: access
+        security-incident: access-anomaly
+      annotations:
+        summary: "Kafka topic access anomalies"
+        description: "Unusual topic access patterns detected."
+
+---
+# Security Event Collector (fluent-bit)
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kafka-security-collector
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka-security-collector
+    component: security-logging
+    security-level: high
+    managed-by: devops-agent
+spec:
+  selector:
+    matchLabels:
+      app: kafka-security-collector
+  template:
+    metadata:
+      labels:
+        app: kafka-security-collector
+    spec:
+      serviceAccountName: kafka-security-collector-sa
+      containers:
+      - name: fluent-bit
+        image: fluent/fluent-bit:2.2
+        env:
+        - name: FLUENTBIT_CONFIG
+          value: "/fluent-bit/etc/fluent-bit.conf"
+        volumeMounts:
+        - name: config
+          mountPath: /fluent-bit/etc/
+          readOnly: true
+        - name: kafka-logs
+          mountPath: /var/log/kafka
+          readOnly: true
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 50m
+          limits:
+            memory: 256Mi
+            cpu: 100m
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: config
+        configMap:
+          name: kafka-security-collector-config
+      - name: kafka-logs
+        hostPath:
+          path: /var/log/kafka
+          type: DirectoryOrCreate
+
+---
+# Security Collector ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-security-collector-config
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka-security-collector
+    managed-by: devops-agent
+spec:
+  data:
+    fluent-bit.conf: |
+      [SERVICE]
+          Flush         5
+          Log_Level     info
+          Daemon        off
+
+      [INPUT]
+          Name              tail
+          Path              /var/log/kafka/server.log
+          Parser            kafka_log
+          Tag               kafka.security.*
+
+      [FILTER]
+          Name              grep
+          Match             kafka.security.*
+          Regex             (SASL|SSL|ACL|authentication|authorization)
+
+      [OUTPUT]
+          Name              kafka
+          Match             kafka.security.*
+          Brokers           necpgame-kafka-cluster-kafka-bootstrap:9093
+          Topics            game.system.audit
+          Timestamp_Key     @timestamp
+          Format            json
+          tls               on
+          tls.ca_file       /etc/ssl/certs/ca-certificates.crt
+
+    parsers.conf: |
+      [PARSER]
+          Name        kafka_log
+          Format      regex
+          Regex       ^(?<timestamp>\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2},\d{3})\s(?<level>\w+)\s(?<logger>[\w\.]+)\s(?<message>.+)$
+          Time_Key    timestamp
+          Time_Format %Y-%m-%d %H:%M:%S,%L
+
+---
+# Security Collector ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kafka-security-collector-sa
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka-security-collector
+    managed-by: devops-agent
+
+---
+# Security Collector ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kafka-security-collector-role
+  labels:
+    app: kafka-security-collector
+    managed-by: devops-agent
+spec:
+  rules:
+  - apiGroups: [""]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+
+---
+# Security Collector ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kafka-security-collector-binding
+  labels:
+    app: kafka-security-collector
+    managed-by: devops-agent
+spec:
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: kafka-security-collector-role
+  subjects:
+  - kind: ServiceAccount
+    name: kafka-security-collector-sa
+    namespace: necpgame-infrastructure

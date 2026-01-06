@@ -1,0 +1,299 @@
+# Kafka Rate Limiting Configuration
+# Issue: #2237 - Implements rate limiting for Kafka producers/consumers to prevent event flooding attacks
+# Agent: DevOps - Addresses Security audit HIGH priority issue: No rate limiting
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-rate-limit-config
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka
+    component: rate-limiting
+    security-level: high
+    managed-by: devops-agent
+  annotations:
+    description: "Rate limiting configuration for Kafka producers and consumers"
+spec:
+  data:
+    # Producer Rate Limits (events per second)
+    producer-limits.yaml: |
+      topics:
+        game.combat.events:
+          max_rate_per_second: 20000  # 20k EPS for combat (HOT PATH)
+          burst_limit: 10000          # Allow bursts
+          backoff_strategy: exponential
+          window_seconds: 1
+
+        game.combat.damage.validation:
+          max_rate_per_second: 10000  # 10k EPS for damage validation
+          burst_limit: 5000
+          backoff_strategy: exponential
+          window_seconds: 1
+
+        game.economy.events:
+          max_rate_per_second: 5000   # 5k EPS for economy
+          burst_limit: 2500
+          backoff_strategy: linear
+          window_seconds: 5
+
+        game.economy.market.data:
+          max_rate_per_second: 1000   # 1k EPS for market data
+          burst_limit: 500
+          backoff_strategy: linear
+          window_seconds: 10
+
+        game.social.events:
+          max_rate_per_second: 1000   # 1k EPS for social
+          burst_limit: 500
+          backoff_strategy: fixed
+          window_seconds: 10
+
+        game.system.events:
+          max_rate_per_second: 500    # 500 EPS for system events
+          burst_limit: 250
+          backoff_strategy: fixed
+          window_seconds: 30
+
+      # Global limits per service account
+      service_limits:
+        combat-service:
+          total_max_rate_per_second: 25000
+          total_burst_limit: 15000
+
+        economy-service:
+          total_max_rate_per_second: 6000
+          total_burst_limit: 3000
+
+        social-service:
+          total_max_rate_per_second: 1500
+          total_burst_limit: 750
+
+        system-service:
+          total_max_rate_per_second: 1000
+          total_burst_limit: 500
+
+    # Consumer Rate Limits
+    consumer-limits.yaml: |
+      consumer_groups:
+        combat_processor:
+          max_poll_records: 500
+          max_poll_interval_ms: 300000  # 5 minutes
+          session_timeout_ms: 30000
+          heartbeat_interval_ms: 3000
+          rate_limit_per_second: 25000  # Match producer limits
+
+        damage_validator:
+          max_poll_records: 250
+          max_poll_interval_ms: 300000
+          session_timeout_ms: 30000
+          heartbeat_interval_ms: 3000
+          rate_limit_per_second: 12000
+
+        economy_processor:
+          max_poll_records: 100
+          max_poll_interval_ms: 300000
+          session_timeout_ms: 30000
+          heartbeat_interval_ms: 3000
+          rate_limit_per_second: 6000
+
+        social_processor:
+          max_poll_records: 50
+          max_poll_interval_ms: 300000
+          session_timeout_ms: 30000
+          heartbeat_interval_ms: 3000
+          rate_limit_per_second: 1500
+
+        analytics_processor:
+          max_poll_records: 200
+          max_poll_interval_ms: 600000  # 10 minutes for analytics
+          session_timeout_ms: 45000
+          heartbeat_interval_ms: 3000
+          rate_limit_per_second: 5000
+
+      # Circuit breaker configuration
+      circuit_breakers:
+        - name: combat_events_circuit
+          failure_threshold: 0.5  # 50% failure rate
+          recovery_timeout: 60000  # 1 minute recovery
+          monitoring_window: 300000  # 5 minutes
+
+        - name: economy_events_circuit
+          failure_threshold: 0.3  # 30% failure rate
+          recovery_timeout: 120000  # 2 minutes recovery
+          monitoring_window: 600000  # 10 minutes
+
+---
+# Rate Limiting Service (sidecar pattern)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-rate-limiter
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka-rate-limiter
+    component: rate-limiting
+    security-level: high
+    managed-by: devops-agent
+spec:
+  replicas: 3  # High availability
+  selector:
+    matchLabels:
+      app: kafka-rate-limiter
+  template:
+    metadata:
+      labels:
+        app: kafka-rate-limiter
+    spec:
+      serviceAccountName: kafka-rate-limiter-sa
+      containers:
+      - name: rate-limiter
+        image: necpgame/kafka-rate-limiter:v1.0.0
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: metrics
+        env:
+        - name: CONFIG_FILE
+          value: "/config/rate-limits.yaml"
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: kafka-monitoring-credentials
+              key: redis-url
+        volumeMounts:
+        - name: config
+          mountPath: /config
+          readOnly: true
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 200m
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: kafka-rate-limit-config
+
+---
+# Rate Limiting ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kafka-rate-limiter-sa
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka-rate-limiter
+    managed-by: devops-agent
+  annotations:
+    description: "Service account for Kafka rate limiting service"
+
+---
+# Rate Limiting ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kafka-rate-limiter-role
+  labels:
+    app: kafka-rate-limiter
+    managed-by: devops-agent
+spec:
+  rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list", "watch"]
+    resourceNames: ["kafka-rate-limit-config", "kafka-service-accounts"]
+  - apiGroups: ["kafka.strimzi.io"]
+    resources: ["kafkas", "kafkatopics", "kafkausers"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+
+---
+# Rate Limiting ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kafka-rate-limiter-binding
+  labels:
+    app: kafka-rate-limiter
+    managed-by: devops-agent
+spec:
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: kafka-rate-limiter-role
+  subjects:
+  - kind: ServiceAccount
+    name: kafka-rate-limiter-sa
+    namespace: necpgame-infrastructure
+
+---
+# PrometheusRule for rate limiting alerts
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: kafka-rate-limiting-alerts
+  namespace: necpgame-infrastructure
+  labels:
+    app: kafka
+    component: rate-limiting
+    prometheus: kafka-alerts
+    managed-by: devops-agent
+spec:
+  groups:
+  - name: kafka.rate.limiting
+    rules:
+    - alert: KafkaProducerRateLimitExceeded
+      expr: rate(kafka_producer_rate_limit_hits_total[5m]) > 10
+      for: 2m
+      labels:
+        severity: warning
+        service: kafka
+        component: producer
+      annotations:
+        summary: "Kafka producer rate limit exceeded"
+        description: "Producer {{ $labels.producer }} exceeded rate limit on topic {{ $labels.topic }}"
+
+    - alert: KafkaConsumerRateLimitExceeded
+      expr: rate(kafka_consumer_rate_limit_hits_total[5m]) > 5
+      for: 2m
+      labels:
+        severity: warning
+        service: kafka
+        component: consumer
+      annotations:
+        summary: "Kafka consumer rate limit exceeded"
+        description: "Consumer group {{ $labels.consumer_group }} exceeded rate limit on topic {{ $labels.topic }}"
+
+    - alert: KafkaCircuitBreakerOpen
+      expr: kafka_circuit_breaker_state{state="open"} == 1
+      for: 1m
+      labels:
+        severity: critical
+        service: kafka
+        component: circuit-breaker
+      annotations:
+        summary: "Kafka circuit breaker opened"
+        description: "Circuit breaker {{ $labels.circuit }} is open - failing fast to prevent cascade failures"

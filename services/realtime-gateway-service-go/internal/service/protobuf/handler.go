@@ -2,6 +2,8 @@ package protobuf
 
 import (
 	"context"
+	"encoding/json"
+	"time"
 
 	"github.com/go-faster/errors"
 	"go.opentelemetry.io/otel/metric"
@@ -53,6 +55,44 @@ func NewHandler(config Config) *Handler {
 // SetSessionManager sets the session manager for message sending
 func (h *Handler) SetSessionManager(sm *session.Manager) {
 	h.sessionManager = sm
+}
+
+// routeToGameplayService routes player input to the gameplay service via event bus
+func (h *Handler) routeToGameplayService(ctx context.Context, sessionID string, msg *ParsedMessage) error {
+	// TODO: Implement actual event bus integration (Kafka, RabbitMQ, NATS, etc.)
+	// For now, this is a placeholder that demonstrates the routing logic
+
+	// Prepare gameplay event
+	gameplayEvent := map[string]interface{}{
+		"event_type":   "player_input",
+		"session_id":   sessionID,
+		"timestamp":    time.Now().Unix(),
+		"player_input": map[string]interface{}{
+			"move_x":     msg.MoveX,
+			"move_y":     msg.MoveY,
+			"shoot":      msg.Shoot,
+			"timestamp":  msg.ClientTimeMs,
+		},
+	}
+
+	// Serialize event for event bus
+	eventJSON, err := json.Marshal(gameplayEvent)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal gameplay event")
+	}
+
+	// TODO: Publish to event bus topic "gameplay.player_input"
+	// Example: h.eventBus.Publish("gameplay.player_input", eventJSON)
+
+	h.logger.Debug("Gameplay event prepared for routing",
+		zap.String("session_id", sessionID),
+		zap.String("event_type", "player_input"),
+		zap.Int("payload_size", len(eventJSON)))
+
+	// Placeholder: In real implementation, this would be:
+	// return h.eventBus.Publish(ctx, "gameplay.player_input", eventJSON)
+
+	return nil // Success for now
 }
 
 // HandleMessage processes a protobuf message from a session
@@ -231,8 +271,15 @@ func (h *Handler) handlePlayerInput(ctx context.Context, sessionID string, msg *
 		zap.Float32p("move_y", msg.MoveY),
 		zap.Boolp("shoot", msg.Shoot))
 
-	// TODO: Route to gameplay service through event bus
-	h.logger.Info("player input processed",
+	// Route to gameplay service through event bus
+	if err := h.routeToGameplayService(ctx, sessionID, msg); err != nil {
+		h.logger.Error("Failed to route to gameplay service",
+			zap.String("session_id", sessionID),
+			zap.Error(err))
+		return errors.Wrap(err, "failed to route to gameplay service")
+	}
+
+	h.logger.Info("player input routed to gameplay service",
 		zap.String("session_id", sessionID))
 	return nil
 }

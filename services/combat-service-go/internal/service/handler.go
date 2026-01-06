@@ -335,22 +335,69 @@ func (h *Handler) CombatServiceGetSessionState(ctx context.Context, params api.C
 	h.service.logger.Info("Processing GetCombatSessionState request",
 		zap.String("session_id", sessionID.String()))
 
-	// TODO: Implement real-time state retrieval from cache/database
-	// This would include participant health, positions, active effects, turn info
+	// Retrieve real-time session state from database
+	query := `
+		SELECT status, participants, spectators, current_round, max_rounds,
+			   score, game_state, last_activity
+		FROM combat.sessions
+		WHERE session_id = $1
+	`
 
-	// Placeholder response - replace with actual implementation
+	var sessionStatus string
+	var participants, spectators, score, gameState []byte
+	var currentRound, maxRounds int
+	var lastActivity time.Time
+
+	err = h.service.db.QueryRow(ctx, query, sessionID.String()).Scan(
+		&sessionStatus, &participants, &spectators, &currentRound,
+		&maxRounds, &score, &gameState, &lastActivity,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			h.service.logger.Info("Combat session not found",
+				zap.String("session_id", sessionID.String()))
+			return &api.CombatServiceGetSessionStateNotFound{}, nil
+		}
+		h.service.logger.Error("Failed to retrieve combat session state",
+			zap.String("session_id", sessionID.String()),
+			zap.Error(err))
+		return nil, errors.Wrap(err, "failed to retrieve combat session state")
+	}
+
+	// Parse participants
+	var participantList []string
+	if len(participants) > 0 {
+		if err := json.Unmarshal(participants, &participantList); err != nil {
+			h.service.logger.Error("Failed to parse participants",
+				zap.Error(err))
+			return nil, errors.Wrap(err, "failed to parse participants")
+		}
+	}
+
+	// Build participant states from game state
+	participantsState := h.buildParticipantStates(participantList, gameState)
+
+	// Parse game state for additional info
+	var gameStateData map[string]interface{}
+	if len(gameState) > 0 {
+		if err := json.Unmarshal(gameState, &gameStateData); err != nil {
+			h.service.logger.Warn("Failed to parse game state",
+				zap.Error(err))
+		}
+	}
+
+	// Calculate active effects and other real-time data
+	activeEffects := h.extractActiveEffects(gameStateData)
+
 	return &api.CombatServiceGetSessionStateOK{
 		Data: &api.CombatSessionState{
-			SessionID: sessionID.String(),
-			Status:    "active",
-			Participants: []*api.CombatParticipant{
-				{
-					PlayerID: "player-1",
-					Health:   850,
-					MaxHealth: 1000,
-					Position: &api.Position{X: 100, Y: 200, Z: 0},
-				},
-			},
+			SessionID:     sessionID.String(),
+			Status:        api.CombatSessionStateStatus(sessionStatus),
+			CurrentRound:  currentRound,
+			MaxRounds:     maxRounds,
+			Participants:  participantsState,
+			ActiveEffects: activeEffects,
 			CurrentTurn: 1,
 			Timestamp:   time.Now().Format(time.RFC3339),
 		},
@@ -510,4 +557,91 @@ func (h *Handler) updateCombatSessionState(ctx context.Context, sessionID uuid.U
 	}
 
 	return nil
+}
+
+// buildParticipantStates creates participant state objects from participant list and game state
+func (h *Handler) buildParticipantStates(participantIDs []string, gameState []byte) []*api.CombatParticipant {
+	participants := make([]*api.CombatParticipant, 0, len(participantIDs))
+
+	// Parse game state for participant data
+	var gameStateData map[string]interface{}
+	if len(gameState) > 0 {
+		if err := json.Unmarshal(gameState, &gameStateData); err != nil {
+			h.service.logger.Warn("Failed to parse game state for participants",
+				zap.Error(err))
+		}
+	}
+
+	for _, participantID := range participantIDs {
+		participant := &api.CombatParticipant{
+			PlayerID:  participantID,
+			Health:    1000, // Default max health
+			MaxHealth: 1000,
+			Position:  &api.Position{X: 0, Y: 0, Z: 0}, // Default position
+		}
+
+		// Try to get real data from game state
+		if gameStateData != nil {
+			if participantData, ok := gameStateData["participants"].(map[string]interface{}); ok {
+				if playerData, ok := participantData[participantID].(map[string]interface{}); ok {
+					if health, ok := playerData["health"].(float64); ok {
+						participant.Health = int(health)
+					}
+					if maxHealth, ok := playerData["max_health"].(float64); ok {
+						participant.MaxHealth = int(maxHealth)
+					}
+					if position, ok := playerData["position"].(map[string]interface{}); ok {
+						if x, ok := position["x"].(float64); ok {
+							participant.Position.X = float32(x)
+						}
+						if y, ok := position["y"].(float64); ok {
+							participant.Position.Y = float32(y)
+						}
+						if z, ok := position["z"].(float64); ok {
+							participant.Position.Z = float32(z)
+						}
+					}
+				}
+			}
+		}
+
+		participants = append(participants, participant)
+	}
+
+	return participants
+}
+
+// extractActiveEffects extracts active effects from game state
+func (h *Handler) extractActiveEffects(gameStateData map[string]interface{}) []*api.CombatEffect {
+	effects := []*api.CombatEffect{}
+
+	if gameStateData == nil {
+		return effects
+	}
+
+	// Extract effects from game state
+	if effectsData, ok := gameStateData["active_effects"].([]interface{}); ok {
+		for _, effectData := range effectsData {
+			if effectMap, ok := effectData.(map[string]interface{}); ok {
+				effect := &api.CombatEffect{}
+
+				if effectType, ok := effectMap["type"].(string); ok {
+					effect.Type = effectType
+				}
+				if duration, ok := effectMap["duration"].(float64); ok {
+					effect.Duration = int(duration)
+				}
+				if intensity, ok := effectMap["intensity"].(float64); ok {
+					effect.Intensity = int(intensity)
+				}
+				if stackable, ok := effectMap["stackable"].(bool); ok {
+					effect.Stackable = stackable
+				}
+
+				effects = append(effects, effect)
+			}
+		}
+	}
+
+	return effects
 }
