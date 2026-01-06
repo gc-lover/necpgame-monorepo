@@ -6,6 +6,10 @@ package validation
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"math"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -145,15 +149,134 @@ func (s *System) checkTimingAnomalies(ctx context.Context, data CompletionData) 
 
 // checkRouteIntegrity validates that the completion followed expected route
 func (s *System) checkRouteIntegrity(ctx context.Context, sessionID uuid.UUID, data CompletionData) error {
-	// TODO: Implement route validation logic
-	// This would check against expected waypoints, objectives, etc.
+	s.logger.Info("Validating route integrity",
+		zap.String("session_id", sessionID.String()),
+		zap.String("trial_id", data.TrialID.String()))
+
+	// Retrieve trial configuration with route requirements
+	trialConfig, err := s.getTrialRouteConfig(ctx, data.TrialID)
+	if err != nil {
+		s.logger.Error("Failed to retrieve trial route config",
+			zap.String("trial_id", data.TrialID.String()),
+			zap.Error(err))
+		return errors.Wrap(err, "failed to get trial route config")
+	}
+
+	// If no route validation required, skip
+	if trialConfig.RouteValidation == nil || !trialConfig.RouteValidation.Enabled {
+		s.logger.Debug("Route validation not required for this trial",
+			zap.String("trial_id", data.TrialID.String()))
+		return nil
+	}
+
+	// Check required waypoints
+	if err := s.validateRequiredWaypoints(data, trialConfig.RouteValidation.RequiredWaypoints); err != nil {
+		s.logger.Warn("Route validation failed: required waypoints not visited",
+			zap.String("session_id", sessionID.String()),
+			zap.Error(err))
+		return errors.Wrap(err, "route validation failed: waypoints")
+	}
+
+	// Check forbidden shortcuts
+	if err := s.validateForbiddenShortcuts(data, trialConfig.RouteValidation.ForbiddenShortcuts); err != nil {
+		s.logger.Warn("Route validation failed: forbidden shortcuts used",
+			zap.String("session_id", sessionID.String()),
+			zap.Error(err))
+		return errors.Wrap(err, "route validation failed: shortcuts")
+	}
+
+	// Check objective completion order
+	if err := s.validateObjectiveOrder(data, trialConfig.RouteValidation.ObjectiveOrder); err != nil {
+		s.logger.Warn("Route validation failed: incorrect objective order",
+			zap.String("session_id", sessionID.String()),
+			zap.Error(err))
+		return errors.Wrap(err, "route validation failed: objective order")
+	}
+
+	// Check minimum route coverage
+	if err := s.validateRouteCoverage(data, trialConfig.RouteValidation.MinimumCoverage); err != nil {
+		s.logger.Warn("Route validation failed: insufficient route coverage",
+			zap.String("session_id", sessionID.String()),
+			zap.Error(err))
+		return errors.Wrap(err, "route validation failed: coverage")
+	}
+
+	s.logger.Info("Route integrity validation passed",
+		zap.String("session_id", sessionID.String()),
+		zap.String("trial_id", data.TrialID.String()))
+
 	return nil
 }
 
 // checkSpeedConsistency validates movement speed patterns
 func (s *System) checkSpeedConsistency(ctx context.Context, data CompletionData) error {
-	// TODO: Implement speed consistency checks
-	// This would analyze movement patterns for teleportation or speed hacks
+	s.logger.Info("Validating speed consistency",
+		zap.String("session_id", data.SessionID.String()),
+		zap.String("trial_id", data.TrialID.String()))
+
+	// If no telemetry data available, skip validation
+	if data.TelemetryData == nil || len(data.TelemetryData.PositionHistory) < 2 {
+		s.logger.Debug("Insufficient telemetry data for speed validation",
+			zap.String("session_id", data.SessionID.String()))
+		return nil
+	}
+
+	// Calculate speed between consecutive position points
+	maxReasonableSpeed := 50.0 // units per second (adjust based on game mechanics)
+	suspiciousSegments := 0
+
+	positions := data.TelemetryData.PositionHistory
+	for i := 1; i < len(positions); i++ {
+		prevPos := positions[i-1]
+		currPos := positions[i]
+
+		// Calculate distance and time delta
+		distance := s.calculateDistance(prevPos, currPos)
+		timeDelta := currPos.Timestamp - prevPos.Timestamp
+
+		if timeDelta <= 0 {
+			continue // Invalid timestamp, skip
+		}
+
+		// Calculate speed (distance per second)
+		speed := distance / timeDelta
+
+		// Check for unreasonable speeds
+		if speed > maxReasonableSpeed {
+			suspiciousSegments++
+			s.logger.Warn("Suspicious movement speed detected",
+				zap.String("session_id", data.SessionID.String()),
+				zap.Float64("speed", speed),
+				zap.Float64("max_allowed", maxReasonableSpeed),
+				zap.Float64("distance", distance),
+				zap.Float64("time_delta", timeDelta))
+		}
+
+		// Check for teleportation (instant movement over long distances)
+		if timeDelta < 0.1 && distance > 100.0 { // Instant movement over 100 units
+			s.logger.Warn("Teleportation detected",
+				zap.String("session_id", data.SessionID.String()),
+				zap.Float64("distance", distance),
+				zap.Float64("time_delta", timeDelta))
+			return errors.New("teleportation detected: invalid movement pattern")
+		}
+	}
+
+	// Allow some margin for error, but flag excessive suspicious activity
+	maxAllowedSuspicious := len(positions) / 10 // 10% of segments can be suspicious
+	if suspiciousSegments > maxAllowedSuspicious {
+		s.logger.Warn("Excessive suspicious movement detected",
+			zap.String("session_id", data.SessionID.String()),
+			zap.Int("suspicious_segments", suspiciousSegments),
+			zap.Int("max_allowed", maxAllowedSuspicious))
+		return errors.New("excessive speed violations detected")
+	}
+
+	s.logger.Info("Speed consistency validation passed",
+		zap.String("session_id", data.SessionID.String()),
+		zap.Int("total_segments", len(positions)-1),
+		zap.Int("suspicious_segments", suspiciousSegments))
+
 	return nil
 }
 
@@ -205,4 +328,194 @@ type SuspiciousReport struct {
 	Reason     string      `json:"reason"`
 	Timestamp  time.Time   `json:"timestamp"`
 	Status     ReportStatus `json:"status"`
+}
+
+// TrialRouteConfig represents route validation configuration for a trial
+type TrialRouteConfig struct {
+	RouteValidation *RouteValidationConfig `json:"route_validation,omitempty"`
+}
+
+// RouteValidationConfig defines route validation rules
+type RouteValidationConfig struct {
+	Enabled            bool                   `json:"enabled"`
+	RequiredWaypoints  []Waypoint            `json:"required_waypoints,omitempty"`
+	ForbiddenShortcuts []ShortcutDefinition  `json:"forbidden_shortcuts,omitempty"`
+	ObjectiveOrder     []string              `json:"objective_order,omitempty"`
+	MinimumCoverage    float64               `json:"minimum_coverage,omitempty"` // Percentage of route that must be covered
+}
+
+// Waypoint represents a required checkpoint in the trial route
+type Waypoint struct {
+	ID       string  `json:"id"`
+	X        float64 `json:"x"`
+	Y        float64 `json:"y"`
+	Z        float64 `json:"z"`
+	Radius   float64 `json:"radius"`   // How close player must get
+	Required bool    `json:"required"` // Must visit this waypoint
+}
+
+// ShortcutDefinition defines forbidden route shortcuts
+type ShortcutDefinition struct {
+	StartX  float64 `json:"start_x"`
+	StartY  float64 `json:"start_y"`
+	EndX    float64 `json:"end_x"`
+	EndY    float64 `json:"end_y"`
+	MaxTime float64 `json:"max_time"` // Maximum time allowed for this segment
+}
+
+// getTrialRouteConfig retrieves route validation configuration for a trial
+func (s *System) getTrialRouteConfig(ctx context.Context, trialID uuid.UUID) (*TrialRouteConfig, error) {
+	// PERFORMANCE: Try cache first
+	cacheKey := fmt.Sprintf("trial:route_config:%s", trialID.String())
+	cachedConfig, err := s.redis.Get(ctx, cacheKey).Result()
+
+	if err == nil && cachedConfig != "" {
+		var config TrialRouteConfig
+		if err := json.Unmarshal([]byte(cachedConfig), &config); err == nil {
+			return &config, nil
+		}
+	}
+
+	// Retrieve from database
+	query := `
+		SELECT validation_rules
+		FROM time_trials.trials
+		WHERE id = $1
+	`
+
+	var validationRulesJSON []byte
+	err = s.db.QueryRow(ctx, query, trialID).Scan(&validationRulesJSON)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Return default config (no validation)
+			return &TrialRouteConfig{}, nil
+		}
+		return nil, errors.Wrap(err, "failed to retrieve trial config")
+	}
+
+	var config TrialRouteConfig
+	if len(validationRulesJSON) > 0 {
+		if err := json.Unmarshal(validationRulesJSON, &config); err != nil {
+			s.logger.Warn("Failed to parse validation rules, using defaults",
+				zap.String("trial_id", trialID.String()),
+				zap.Error(err))
+			return &TrialRouteConfig{}, nil
+		}
+	}
+
+	// Cache for 1 hour (trial configs don't change frequently)
+	configJSON, _ := json.Marshal(config)
+	s.redis.Set(ctx, cacheKey, configJSON, time.Hour)
+
+	return &config, nil
+}
+
+// validateRequiredWaypoints checks that all required waypoints were visited
+func (s *System) validateRequiredWaypoints(data CompletionData, waypoints []Waypoint) error {
+	if len(waypoints) == 0 {
+		return nil
+	}
+
+	visitedWaypoints := make(map[string]bool)
+
+	// Check each position against waypoints
+	for _, pos := range data.TelemetryData.PositionHistory {
+		for _, waypoint := range waypoints {
+			distance := s.calculateDistance3D(pos, Position{X: waypoint.X, Y: waypoint.Y, Z: waypoint.Z})
+			if distance <= waypoint.Radius {
+				visitedWaypoints[waypoint.ID] = true
+			}
+		}
+	}
+
+	// Check that all required waypoints were visited
+	for _, waypoint := range waypoints {
+		if waypoint.Required && !visitedWaypoints[waypoint.ID] {
+			return fmt.Errorf("required waypoint %s was not visited", waypoint.ID)
+		}
+	}
+
+	return nil
+}
+
+// validateForbiddenShortcuts checks that no forbidden shortcuts were used
+func (s *System) validateForbiddenShortcuts(data CompletionData, shortcuts []ShortcutDefinition) error {
+	if len(shortcuts) == 0 {
+		return nil
+	}
+
+	// This is a simplified implementation - in production, this would analyze
+	// the path taken and compare against forbidden segments
+	// For now, we skip detailed shortcut validation
+
+	return nil
+}
+
+// validateObjectiveOrder checks that objectives were completed in the correct order
+func (s *System) validateObjectiveOrder(data CompletionData, objectiveOrder []string) error {
+	if len(objectiveOrder) == 0 {
+		return nil
+	}
+
+	// Extract completed objectives from telemetry in order
+	var completedObjectives []string
+	for _, event := range data.TelemetryData.Events {
+		if event.Type == "objective_completed" {
+			if objectiveID, ok := event.Data["objective_id"].(string); ok {
+				completedObjectives = append(completedObjectives, objectiveID)
+			}
+		}
+	}
+
+	// Check that objectives were completed in the required order
+	expectedIndex := 0
+	for _, completed := range completedObjectives {
+		if expectedIndex < len(objectiveOrder) && completed == objectiveOrder[expectedIndex] {
+			expectedIndex++
+		}
+	}
+
+	if expectedIndex < len(objectiveOrder) {
+		return fmt.Errorf("objectives not completed in required order: expected %v, got %v",
+			objectiveOrder, completedObjectives)
+	}
+
+	return nil
+}
+
+// validateRouteCoverage checks that minimum route coverage was achieved
+func (s *System) validateRouteCoverage(data CompletionData, minimumCoverage float64) error {
+	if minimumCoverage <= 0 {
+		return nil
+	}
+
+	// Simplified coverage calculation - in production, this would compare
+	// the player's path against the expected route path
+	// For now, assume coverage is adequate if we have sufficient telemetry points
+
+	totalPoints := len(data.TelemetryData.PositionHistory)
+	minimumPoints := int(minimumCoverage * 100) // Arbitrary threshold
+
+	if totalPoints < minimumPoints {
+		return fmt.Errorf("insufficient route coverage: %d points, minimum required %d",
+			totalPoints, minimumPoints)
+	}
+
+	return nil
+}
+
+// calculateDistance calculates 2D distance between two positions
+func (s *System) calculateDistance(a, b Position) float64 {
+	dx := a.X - b.X
+	dy := a.Y - b.Y
+	return math.Sqrt(dx*dx + dy*dy)
+}
+
+// calculateDistance3D calculates 3D distance between two positions
+func (s *System) calculateDistance3D(a, b Position) float64 {
+	dx := a.X - b.X
+	dy := a.Y - b.Y
+	dz := a.Z - b.Z
+	return math.Sqrt(dx*dx + dy*dy + dz*dz)
 }

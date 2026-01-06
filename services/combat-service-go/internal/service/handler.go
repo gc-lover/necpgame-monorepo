@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/go-faster/errors"
@@ -410,7 +411,135 @@ func (h *Handler) CombatServiceGetSessionState(ctx context.Context, params api.C
 // TODO: Implement all combat operations with proper business logic
 
 func (h *Handler) CombatServiceBatchHealthCheck(ctx context.Context, req *api.CombatServiceBatchHealthCheckReq) (api.CombatServiceBatchHealthCheckRes, error) {
-	return &api.CombatServiceBatchHealthCheckOK{}, nil
+	ctx, cancel := h.withTimeout(ctx, "BatchHealthCheck", 2*time.Second)
+	defer cancel()
+
+	h.service.logger.Info("Processing batch health check request",
+		zap.Int("session_count", len(req.SessionIDs)))
+
+	if len(req.SessionIDs) == 0 {
+		return &api.CombatServiceBatchHealthCheckBadRequest{
+			Data: api.Error{
+				Code:    "INVALID_REQUEST",
+				Message: "At least one session ID is required",
+			},
+		}, nil
+	}
+
+	if len(req.SessionIDs) > 50 {
+		return &api.CombatServiceBatchHealthCheckBadRequest{
+			Data: api.Error{
+				Code:    "TOO_MANY_SESSIONS",
+				Message: "Maximum 50 sessions can be checked in a single request",
+			},
+		}, nil
+	}
+
+	// Build query for batch session status check
+	placeholders := make([]string, len(req.SessionIDs))
+	args := make([]interface{}, len(req.SessionIDs))
+
+	for i, sessionIDStr := range req.SessionIDs {
+		sessionID, err := uuid.Parse(sessionIDStr)
+		if err != nil {
+			return &api.CombatServiceBatchHealthCheckBadRequest{
+				Data: api.Error{
+					Code:    "INVALID_SESSION_ID",
+					Message: fmt.Sprintf("Invalid session ID format: %s", sessionIDStr),
+				},
+			}, nil
+		}
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = sessionID
+	}
+
+	query := fmt.Sprintf(`
+		SELECT session_id, status, current_participants, max_participants,
+			   start_time, end_time, last_activity
+		FROM combat.sessions
+		WHERE session_id IN (%s)
+	`, strings.Join(placeholders, ","))
+
+	rows, err := h.service.db.Query(ctx, query, args...)
+	if err != nil {
+		h.service.logger.Error("Failed to query combat sessions for health check",
+			zap.Error(err))
+		return &api.CombatServiceBatchHealthCheckInternalServerError{
+			Data: api.Error{
+				Code:    "DB_ERROR",
+				Message: "Failed to retrieve session health data",
+			},
+		}, nil
+	}
+	defer rows.Close()
+
+	// Process results
+	sessionHealthMap := make(map[string]*api.CombatSessionHealth)
+	for rows.Next() {
+		var (
+			sessionIDStr       string
+			status             string
+			currentParticipants int
+			maxParticipants    int
+			startTime, endTime sql.NullTime
+			lastActivity       sql.NullTime
+		)
+
+		err := rows.Scan(&sessionIDStr, &status, &currentParticipants, &maxParticipants,
+			&startTime, &endTime, &lastActivity)
+		if err != nil {
+			h.service.logger.Error("Failed to scan session health data",
+				zap.Error(err))
+			continue
+		}
+
+		// Determine health status
+		healthStatus := h.determineSessionHealth(status, lastActivity, startTime, endTime)
+
+		sessionHealthMap[sessionIDStr] = &api.CombatSessionHealth{
+			SessionID:           sessionIDStr,
+			Status:              status,
+			HealthStatus:        healthStatus,
+			CurrentParticipants: currentParticipants,
+			MaxParticipants:     maxParticipants,
+			LastActivity:        lastActivity.Time.Format(time.RFC3339),
+			UptimeSeconds:       h.calculateUptimeSeconds(startTime, endTime),
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		h.service.logger.Error("Error iterating through session health data",
+			zap.Error(err))
+		return &api.CombatServiceBatchHealthCheckInternalServerError{
+			Data: api.Error{
+				Code:    "DB_ERROR",
+				Message: "Error processing session health data",
+			},
+		}, nil
+	}
+
+	// Build response for all requested sessions
+	var results []*api.CombatSessionHealth
+	for _, sessionIDStr := range req.SessionIDs {
+		if health, exists := sessionHealthMap[sessionIDStr]; exists {
+			results = append(results, health)
+		} else {
+			// Session not found
+			results = append(results, &api.CombatSessionHealth{
+				SessionID:    sessionIDStr,
+				Status:       "not_found",
+				HealthStatus: "not_found",
+			})
+		}
+	}
+
+	h.service.logger.Info("Batch health check completed",
+		zap.Int("requested_sessions", len(req.SessionIDs)),
+		zap.Int("found_sessions", len(sessionHealthMap)))
+
+	return &api.CombatServiceBatchHealthCheckOK{
+		Data: results,
+	}, nil
 }
 
 func (h *Handler) CombatServiceCalculateDamage(ctx context.Context, req *api.DamageCalculationRequest) (api.CombatServiceCalculateDamageRes, error) {
@@ -890,4 +1019,53 @@ func (h *Handler) calculateElementalEffects(weaponType string, resistances map[s
 	}
 
 	return effects
+}
+
+// determineSessionHealth evaluates the health status of a combat session
+func (h *Handler) determineSessionHealth(status string, lastActivity, startTime, endTime sql.NullTime) string {
+	now := time.Now()
+
+	// Check if session is completed or cancelled
+	if status == "completed" || status == "cancelled" {
+		return "completed"
+	}
+
+	// Check if session has ended
+	if endTime.Valid && now.After(endTime.Time) {
+		return "expired"
+	}
+
+	// Check last activity for active sessions
+	if status == "active" && lastActivity.Valid {
+		// Consider session unhealthy if no activity for 5 minutes
+		if now.Sub(lastActivity.Time) > 5*time.Minute {
+			return "stale"
+		}
+	}
+
+	// Check if session should have started but hasn't
+	if status == "pending" && startTime.Valid && now.After(startTime.Time.Add(5*time.Minute)) {
+		return "delayed_start"
+	}
+
+	// Session appears healthy
+	return "healthy"
+}
+
+// calculateUptimeSeconds calculates session uptime in seconds
+func (h *Handler) calculateUptimeSeconds(startTime, endTime sql.NullTime) int {
+	if !startTime.Valid {
+		return 0
+	}
+
+	end := time.Now()
+	if endTime.Valid && endTime.Time.Before(end) {
+		end = endTime.Time
+	}
+
+	if end.Before(startTime.Time) {
+		return 0
+	}
+
+	return int(end.Sub(startTime.Time).Seconds())
 }

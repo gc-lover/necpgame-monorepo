@@ -6,9 +6,14 @@ package service
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/go-faster/errors"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
@@ -1098,25 +1103,277 @@ func (h *Handler) CreateGuildAnnouncement(ctx context.Context, req *api.CreateAn
 
 // GetGuildEvents implements event listing
 func (h *Handler) GetGuildEvents(ctx context.Context, params api.GetGuildEventsParams) (api.GetGuildEventsRes, error) {
-	// TODO: Implement events
-	return &api.GetGuildEventsResDefault{
-		StatusCode: http.StatusNotImplemented,
-		Data: api.Error{
-			Code:    "NOT_IMPLEMENTED",
-			Message: "Events not yet implemented",
-		},
+	h.service.logger.Info("Processing GetGuildEvents request",
+		zap.String("guild_id", params.GuildID))
+
+	guildID, err := uuid.Parse(params.GuildID)
+	if err != nil {
+		return &api.GetGuildEventsResDefault{
+			StatusCode: http.StatusBadRequest,
+			Data: api.Error{
+				Code:    "INVALID_GUILD_ID",
+				Message: "Invalid guild ID format",
+			},
+		}, nil
+	}
+
+	// Check if user has permission to view guild events
+	if err := h.checkGuildMembership(ctx, guildID); err != nil {
+		return &api.GetGuildEventsResForbidden{
+			Details: api.GetGuildEventsForbiddenDetails{
+				Error: api.Error{
+					Code:    "FORBIDDEN",
+					Message: "Access denied: not a guild member",
+				},
+			},
+		}, nil
+	}
+
+	// Build query with filters
+	query := `
+		SELECT id, guild_id, title, description, type, scheduled_at, duration_minutes,
+			   location, max_participants, created_at, updated_at,
+			   COALESCE(rsvp_count, 0) as rsvp_count,
+			   status
+		FROM guild.events
+		WHERE guild_id = $1
+	`
+	args := []interface{}{guildID}
+	argCount := 1
+
+	// Add status filter if provided
+	if params.Status.IsSet() {
+		argCount++
+		query += fmt.Sprintf(" AND status = $%d", argCount)
+		args = append(args, string(params.Status.Value))
+	}
+
+	// Add type filter if provided
+	if params.Type.IsSet() {
+		argCount++
+		query += fmt.Sprintf(" AND type = $%d", argCount)
+		args = append(args, string(params.Type.Value))
+	}
+
+	// Add date range filter
+	if params.StartDate.IsSet() {
+		argCount++
+		query += fmt.Sprintf(" AND scheduled_at >= $%d", argCount)
+		args = append(args, params.StartDate.Value)
+	}
+
+	if params.EndDate.IsSet() {
+		argCount++
+		query += fmt.Sprintf(" AND scheduled_at <= $%d", argCount)
+		args = append(args, params.EndDate.Value)
+	}
+
+	// Add ordering and pagination
+	query += " ORDER BY scheduled_at ASC"
+
+	if params.Limit.IsSet() && params.Limit.Value > 0 {
+		argCount++
+		query += fmt.Sprintf(" LIMIT $%d", argCount)
+		args = append(args, params.Limit.Value)
+	} else {
+		query += " LIMIT 50" // Default limit
+	}
+
+	if params.Offset.IsSet() && params.Offset.Value > 0 {
+		argCount++
+		query += fmt.Sprintf(" OFFSET $%d", argCount)
+		args = append(args, params.Offset.Value)
+	}
+
+	rows, err := h.service.db.Query(ctx, query, args...)
+	if err != nil {
+		h.service.logger.Error("Failed to query guild events",
+			zap.String("guild_id", params.GuildID),
+			zap.Error(err))
+		return &api.GetGuildEventsResDefault{
+			StatusCode: http.StatusInternalServerError,
+			Data: api.Error{
+				Code:    "DB_ERROR",
+				Message: "Failed to retrieve guild events",
+			},
+		}, nil
+	}
+	defer rows.Close()
+
+	var events []api.GuildEventResponse
+	for rows.Next() {
+		var (
+			event    api.GuildEventResponse
+			rsvpCount int
+			status    sql.NullString
+		)
+
+		err := rows.Scan(
+			&event.ID, &event.GuildID, &event.Title, &event.Description,
+			&event.Type, &event.ScheduledAt, &event.DurationMinutes,
+			&event.Location, &event.MaxParticipants, &event.CreatedAt, &event.UpdatedAt,
+			&rsvpCount, &status,
+		)
+		if err != nil {
+			h.service.logger.Error("Failed to scan event row",
+				zap.Error(err))
+			continue
+		}
+
+		event.RsvpCount = api.OptInt{Value: rsvpCount, Set: true}
+		if status.Valid {
+			event.Status = api.OptGuildEventResponseStatus{
+				Value: api.GuildEventResponseStatus(status.String),
+				Set:   true,
+			}
+		}
+
+		events = append(events, event)
+	}
+
+	if err = rows.Err(); err != nil {
+		h.service.logger.Error("Error iterating through event rows",
+			zap.Error(err))
+		return &api.GetGuildEventsResDefault{
+			StatusCode: http.StatusInternalServerError,
+			Data: api.Error{
+				Code:    "DB_ERROR",
+				Message: "Error processing guild events",
+			},
+		}, nil
+	}
+
+	h.service.logger.Info("Guild events retrieved successfully",
+		zap.String("guild_id", params.GuildID),
+		zap.Int("event_count", len(events)))
+
+	return &api.GetGuildEventsOK{
+		Data: events,
 	}, nil
 }
 
 // CreateGuildEvent implements event creation
 func (h *Handler) CreateGuildEvent(ctx context.Context, req *api.CreateEventRequest, params api.CreateGuildEventParams) (api.CreateGuildEventRes, error) {
-	// TODO: Implement event creation
-	return &api.CreateGuildEventResDefault{
-		StatusCode: http.StatusNotImplemented,
-		Data: api.Error{
-			Code:    "NOT_IMPLEMENTED",
-			Message: "Event creation not yet implemented",
-		},
+	h.service.logger.Info("Processing CreateGuildEvent request",
+		zap.String("guild_id", params.GuildID),
+		zap.String("event_title", req.Title))
+
+	guildID, err := uuid.Parse(params.GuildID)
+	if err != nil {
+		return &api.CreateGuildEventResDefault{
+			StatusCode: http.StatusBadRequest,
+			Data: api.Error{
+				Code:    "INVALID_GUILD_ID",
+				Message: "Invalid guild ID format",
+			},
+		}, nil
+	}
+
+	// Check if user has permission to create events (guild officer or leader)
+	if err := h.checkGuildEventCreationPermission(ctx, guildID); err != nil {
+		return &api.CreateGuildEventForbidden{
+			Details: api.CreateGuildEventForbiddenDetails{
+				Error: api.Error{
+					Code:    "FORBIDDEN",
+					Message: "Access denied: insufficient permissions to create events",
+				},
+			},
+		}, nil
+	}
+
+	// Validate event data
+	if err := h.validateEventRequest(req); err != nil {
+		return &api.CreateGuildEventResDefault{
+			StatusCode: http.StatusBadRequest,
+			Data: api.Error{
+				Code:    "VALIDATION_ERROR",
+				Message: err.Error(),
+			},
+		}, nil
+	}
+
+	// Generate event ID
+	eventID := uuid.New()
+	now := time.Now()
+
+	// Insert event into database
+	query := `
+		INSERT INTO guild.events (
+			id, guild_id, title, description, type, scheduled_at, duration_minutes,
+			location, max_participants, requires_rsvp, created_at, updated_at, status
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		RETURNING id, guild_id, title, description, type, scheduled_at, duration_minutes,
+		          location, max_participants, created_at, updated_at
+	`
+
+	var (
+		dbID, dbGuildID                  uuid.UUID
+		dbTitle, dbType                  string
+		dbDescription, dbLocation        sql.NullString
+		dbScheduledAt, dbCreatedAt, dbUpdatedAt time.Time
+		dbDurationMinutes, dbMaxParticipants    sql.NullInt32
+	)
+
+	err = h.service.db.QueryRow(ctx, query,
+		eventID, guildID, req.Title, req.Description.Value, string(req.Type),
+		req.ScheduledAt, req.DurationMinutes.Value, req.Location.Value,
+		req.MaxParticipants.Value, req.RequiresRsvp.Value, now, now, "scheduled",
+	).Scan(
+		&dbID, &dbGuildID, &dbTitle, &dbDescription, &dbType, &dbScheduledAt,
+		&dbDurationMinutes, &dbLocation, &dbMaxParticipants, &dbCreatedAt, &dbUpdatedAt,
+	)
+
+	if err != nil {
+		h.service.logger.Error("Failed to create guild event",
+			zap.String("guild_id", params.GuildID),
+			zap.String("event_title", req.Title),
+			zap.Error(err))
+		return &api.CreateGuildEventResDefault{
+			StatusCode: http.StatusInternalServerError,
+			Data: api.Error{
+				Code:    "DB_ERROR",
+				Message: "Failed to create guild event",
+			},
+		}, nil
+	}
+
+	// Create response
+	response := api.GuildEventResponse{
+		ID:              dbID,
+		GuildID:         dbGuildID,
+		Title:           dbTitle,
+		Type:            api.GuildEventResponseType(dbType),
+		ScheduledAt:     dbScheduledAt,
+		CreatedAt:       dbCreatedAt,
+		UpdatedAt:       dbUpdatedAt,
+		RsvpCount:       api.OptInt{Value: 0, Set: true},
+		Status:          api.OptGuildEventResponseStatus{Value: api.GuildEventResponseStatusScheduled, Set: true},
+	}
+
+	// Set optional fields
+	if dbDescription.Valid {
+		response.Description = api.OptString{Value: dbDescription.String, Set: true}
+	}
+	if dbDurationMinutes.Valid {
+		response.DurationMinutes = api.OptInt{Value: int(dbDurationMinutes.Int32), Set: true}
+	}
+	if dbLocation.Valid {
+		response.Location = api.OptString{Value: dbLocation.String, Set: true}
+	}
+	if dbMaxParticipants.Valid {
+		response.MaxParticipants = api.OptInt{Value: int(dbMaxParticipants.Int32), Set: true}
+	}
+
+	h.service.logger.Info("Guild event created successfully",
+		zap.String("event_id", eventID.String()),
+		zap.String("guild_id", params.GuildID),
+		zap.String("event_title", req.Title))
+
+	// Record metrics
+	h.service.guildOperations.WithLabelValues("create_event", "success").Inc()
+
+	return &api.CreateGuildEventRes201{
+		Data: response,
 	}, nil
 }
 
@@ -1124,25 +1381,270 @@ func (h *Handler) CreateGuildEvent(ctx context.Context, req *api.CreateEventRequ
 
 // GetGuildSettings implements settings retrieval
 func (h *Handler) GetGuildSettings(ctx context.Context, params api.GetGuildSettingsParams) (api.GetGuildSettingsRes, error) {
-	// TODO: Implement settings retrieval
-	return &api.GetGuildSettingsResDefault{
-		StatusCode: http.StatusNotImplemented,
-		Data: api.Error{
-			Code:    "NOT_IMPLEMENTED",
-			Message: "Settings retrieval not yet implemented",
-		},
+	h.service.logger.Info("Processing GetGuildSettings request",
+		zap.String("guild_id", params.GuildID))
+
+	guildID, err := uuid.Parse(params.GuildID)
+	if err != nil {
+		return &api.GetGuildSettingsResDefault{
+			StatusCode: http.StatusBadRequest,
+			Data: api.Error{
+				Code:    "INVALID_GUILD_ID",
+				Message: "Invalid guild ID format",
+			},
+		}, nil
+	}
+
+	// Check if user has permission to view guild settings
+	if err := h.checkGuildMembership(ctx, guildID); err != nil {
+		return &api.GetGuildSettingsForbidden{
+			Details: api.GetGuildSettingsForbiddenDetails{
+				Error: api.Error{
+					Code:    "FORBIDDEN",
+					Message: "Access denied: not a guild member",
+				},
+			},
+		}, nil
+	}
+
+	// Retrieve settings from database
+	query := `
+		SELECT privacy_settings, recruitment_settings, gameplay_settings
+		FROM guild.settings
+		WHERE guild_id = $1
+	`
+
+	var (
+		privacyJSON, recruitmentJSON, gameplayJSON []byte
+	)
+
+	err = h.service.db.QueryRow(ctx, query, guildID).Scan(
+		&privacyJSON, &recruitmentJSON, &gameplayJSON,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// Return default settings if none exist
+			h.service.logger.Info("No settings found for guild, returning defaults",
+				zap.String("guild_id", params.GuildID))
+			return &api.GetGuildSettingsOK{
+				Data: api.GuildSettingsResponse{
+					Privacy: api.OptGuildSettingsResponsePrivacy{
+						Value: api.GuildSettingsResponsePrivacy{
+							AnnouncementVisibility: api.GuildSettingsResponsePrivacyAnnouncementVisibilityPublic,
+							MemberListVisibility:   api.GuildSettingsResponsePrivacyMemberListVisibilityMembers,
+						},
+						Set: true,
+					},
+					Recruitment: api.OptGuildSettingsResponseRecruitment{
+						Value: api.GuildSettingsResponseRecruitment{
+							IsOpen:     true,
+							MinLevel:   api.OptInt{Value: 1, Set: true},
+							Requirements: api.OptString{Value: "No special requirements", Set: true},
+						},
+						Set: true,
+					},
+					Gameplay: api.OptGuildSettingsResponseGameplay{
+						Value: api.GuildSettingsResponseGameplay{
+							WeeklyRaidDays: []string{"friday", "saturday"},
+							TimeZone:       "UTC",
+						},
+						Set: true,
+					},
+				},
+			}, nil
+		}
+		h.service.logger.Error("Failed to retrieve guild settings",
+			zap.String("guild_id", params.GuildID),
+			zap.Error(err))
+		return &api.GetGuildSettingsResDefault{
+			StatusCode: http.StatusInternalServerError,
+			Data: api.Error{
+				Code:    "DB_ERROR",
+				Message: "Failed to retrieve guild settings",
+			},
+		}, nil
+	}
+
+	// Parse JSON settings
+	var settings api.GuildSettingsResponse
+
+	if len(privacyJSON) > 0 {
+		var privacy api.GuildSettingsResponsePrivacy
+		if err := json.Unmarshal(privacyJSON, &privacy); err == nil {
+			settings.Privacy = api.OptGuildSettingsResponsePrivacy{Value: privacy, Set: true}
+		}
+	}
+
+	if len(recruitmentJSON) > 0 {
+		var recruitment api.GuildSettingsResponseRecruitment
+		if err := json.Unmarshal(recruitmentJSON, &recruitment); err == nil {
+			settings.Recruitment = api.OptGuildSettingsResponseRecruitment{Value: recruitment, Set: true}
+		}
+	}
+
+	if len(gameplayJSON) > 0 {
+		var gameplay api.GuildSettingsResponseGameplay
+		if err := json.Unmarshal(gameplayJSON, &gameplay); err == nil {
+			settings.Gameplay = api.OptGuildSettingsResponseGameplay{Value: gameplay, Set: true}
+		}
+	}
+
+	h.service.logger.Info("Guild settings retrieved successfully",
+		zap.String("guild_id", params.GuildID))
+
+	return &api.GetGuildSettingsOK{
+		Data: settings,
 	}, nil
 }
 
 // UpdateGuildSettings implements settings update
 func (h *Handler) UpdateGuildSettings(ctx context.Context, req *api.UpdateGuildSettingsRequest, params api.UpdateGuildSettingsParams) (api.UpdateGuildSettingsRes, error) {
-	// TODO: Implement settings update
-	return &api.UpdateGuildSettingsResDefault{
-		StatusCode: http.StatusNotImplemented,
-		Data: api.Error{
-			Code:    "NOT_IMPLEMENTED",
-			Message: "Settings update not yet implemented",
-		},
+	h.service.logger.Info("Processing UpdateGuildSettings request",
+		zap.String("guild_id", params.GuildID))
+
+	guildID, err := uuid.Parse(params.GuildID)
+	if err != nil {
+		return &api.UpdateGuildSettingsResDefault{
+			StatusCode: http.StatusBadRequest,
+			Data: api.Error{
+				Code:    "INVALID_GUILD_ID",
+				Message: "Invalid guild ID format",
+			},
+		}, nil
+	}
+
+	// Check if user has permission to update guild settings (guild leader only)
+	if err := h.checkGuildLeadership(ctx, guildID); err != nil {
+		return &api.UpdateGuildSettingsForbidden{
+			Details: api.UpdateGuildSettingsForbiddenDetails{
+				Error: api.Error{
+					Code:    "FORBIDDEN",
+					Message: "Access denied: guild leadership required",
+				},
+			},
+		}, nil
+	}
+
+	// Validate settings
+	if err := h.validateGuildSettings(req); err != nil {
+		return &api.UpdateGuildSettingsResDefault{
+			StatusCode: http.StatusBadRequest,
+			Data: api.Error{
+				Code:    "VALIDATION_ERROR",
+				Message: err.Error(),
+			},
+		}, nil
+	}
+
+	// Serialize settings to JSON
+	var privacyJSON, recruitmentJSON, gameplayJSON []byte
+
+	if req.Privacy.IsSet() {
+		privacyJSON, err = json.Marshal(req.Privacy.Value)
+		if err != nil {
+			return &api.UpdateGuildSettingsResDefault{
+				StatusCode: http.StatusInternalServerError,
+				Data: api.Error{
+					Code:    "SERIALIZATION_ERROR",
+					Message: "Failed to serialize privacy settings",
+				},
+			}, nil
+		}
+	}
+
+	if req.Recruitment.IsSet() {
+		recruitmentJSON, err = json.Marshal(req.Recruitment.Value)
+		if err != nil {
+			return &api.UpdateGuildSettingsResDefault{
+				StatusCode: http.StatusInternalServerError,
+				Data: api.Error{
+					Code:    "SERIALIZATION_ERROR",
+					Message: "Failed to serialize recruitment settings",
+				},
+			}, nil
+		}
+	}
+
+	if req.Gameplay.IsSet() {
+		gameplayJSON, err = json.Marshal(req.Gameplay.Value)
+		if err != nil {
+			return &api.UpdateGuildSettingsResDefault{
+				StatusCode: http.StatusInternalServerError,
+				Data: api.Error{
+					Code:    "SERIALIZATION_ERROR",
+					Message: "Failed to serialize gameplay settings",
+				},
+			}, nil
+		}
+	}
+
+	// Update settings in database with upsert
+	query := `
+		INSERT INTO guild.settings (guild_id, privacy_settings, recruitment_settings, gameplay_settings, updated_at)
+		VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (guild_id)
+		DO UPDATE SET
+			privacy_settings = COALESCE(EXCLUDED.privacy_settings, guild.settings.privacy_settings),
+			recruitment_settings = COALESCE(EXCLUDED.recruitment_settings, guild.settings.recruitment_settings),
+			gameplay_settings = COALESCE(EXCLUDED.gameplay_settings, guild.settings.gameplay_settings),
+			updated_at = EXCLUDED.updated_at
+		RETURNING privacy_settings, recruitment_settings, gameplay_settings
+	`
+
+	var (
+		resultPrivacyJSON, resultRecruitmentJSON, resultGameplayJSON []byte
+	)
+
+	err = h.service.db.QueryRow(ctx, query, guildID, privacyJSON, recruitmentJSON, gameplayJSON, time.Now()).Scan(
+		&resultPrivacyJSON, &resultRecruitmentJSON, &resultGameplayJSON,
+	)
+
+	if err != nil {
+		h.service.logger.Error("Failed to update guild settings",
+			zap.String("guild_id", params.GuildID),
+			zap.Error(err))
+		return &api.UpdateGuildSettingsResDefault{
+			StatusCode: http.StatusInternalServerError,
+			Data: api.Error{
+				Code:    "DB_ERROR",
+				Message: "Failed to update guild settings",
+			},
+		}, nil
+	}
+
+	// Build response with updated settings
+	var response api.GuildSettingsResponse
+
+	if len(resultPrivacyJSON) > 0 {
+		var privacy api.GuildSettingsResponsePrivacy
+		if err := json.Unmarshal(resultPrivacyJSON, &privacy); err == nil {
+			response.Privacy = api.OptGuildSettingsResponsePrivacy{Value: privacy, Set: true}
+		}
+	}
+
+	if len(resultRecruitmentJSON) > 0 {
+		var recruitment api.GuildSettingsResponseRecruitment
+		if err := json.Unmarshal(resultRecruitmentJSON, &recruitment); err == nil {
+			response.Recruitment = api.OptGuildSettingsResponseRecruitment{Value: recruitment, Set: true}
+		}
+	}
+
+	if len(resultGameplayJSON) > 0 {
+		var gameplay api.GuildSettingsResponseGameplay
+		if err := json.Unmarshal(resultGameplayJSON, &gameplay); err == nil {
+			response.Gameplay = api.OptGuildSettingsResponseGameplay{Value: gameplay, Set: true}
+		}
+	}
+
+	h.service.logger.Info("Guild settings updated successfully",
+		zap.String("guild_id", params.GuildID))
+
+	// Record metrics
+	h.service.guildOperations.WithLabelValues("update_settings", "success").Inc()
+
+	return &api.UpdateGuildSettingsOK{
+		Data: response,
 	}, nil
 }
 
