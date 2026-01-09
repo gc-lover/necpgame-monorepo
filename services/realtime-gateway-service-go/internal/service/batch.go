@@ -350,3 +350,6 @@ func (bp *BatchProcessor) calculateBatchesPerSecond() float64 {
 	return 0.0
 }
 
+
+
+

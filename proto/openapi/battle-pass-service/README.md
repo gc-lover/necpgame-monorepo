@@ -224,3 +224,6 @@ kubectl apply -f k8s/battle-pass-deployment.yaml
 - **Predictive Loading**: Pre-load upcoming season data
 - **Compression**: Efficient reward metadata transmission
 
+
+
+

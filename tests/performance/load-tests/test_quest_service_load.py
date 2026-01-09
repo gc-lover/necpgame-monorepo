@@ -442,3 +442,6 @@ def spike_load_shape(stage_users, stage_time):
     else:
         return stage_users // 2  # Reduced load between spikes
 
+
+
+

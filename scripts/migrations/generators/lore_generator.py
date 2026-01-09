@@ -18,6 +18,10 @@ class LoreMigrationGenerator(BaseContentMigrationGenerator):
     """
 
     def __init__(self):
+        # Load config first to get output directory
+        from core.config import ConfigManager
+        config = ConfigManager()
+
         super().__init__(
             name="generate-lore-migrations",
             description="Generate Liquibase YAML migrations for lore from knowledge base",
@@ -26,7 +30,7 @@ class LoreMigrationGenerator(BaseContentMigrationGenerator):
                 "knowledge/canon/lore",
                 "knowledge/canon/culture"
             ],
-            output_dir=str(Path(self.project_config.get('paths', 'migrations_output_dir')) / "knowledge" / "lore"),
+            output_dir=str(Path(config.get('paths', 'migrations_output_dir')) / "knowledge" / "lore"),
             table_name="knowledge.lore_entries"
         )
 

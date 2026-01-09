@@ -33,6 +33,7 @@ func (h *Handler) ExampleDomainBatchHealthCheck(ctx context.Context, req *api.Ex
 	return &api.ExampleDomainBatchHealthCheckOKHeaders{
 		Response: api.ExampleDomainBatchHealthCheckOK{
 			TotalTimeMs: 10,
+			Results:     nil,
 		},
 	}, nil
 }
@@ -88,6 +89,8 @@ func (h *Handler) WorldEventServiceHealthCheck(ctx context.Context, params api.W
 		Response: api.WorldEventServiceHealthCheckOK{
 			Status:    api.WorldEventServiceHealthCheckOKStatusHealthy,
 			Timestamp: time.Now(),
+			Domain:    api.NewOptString("world-event"),
+			Version:   api.NewOptString("1.0.0"),
 		},
 	}, nil
 }

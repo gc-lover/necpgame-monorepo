@@ -238,3 +238,6 @@ npx @redocly/cli build-docs main.yaml -o docs/index.html
 3. Настроить параметры баланса
 4. Интегрировать с системой синергий
 
+
+
+
