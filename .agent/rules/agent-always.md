@@ -84,13 +84,13 @@ Issue: #{number}
 **AGENTS ARE STRICTLY FORBIDDEN from using the following commands:**
 
 ### FORBIDDEN COMMANDS (CAUSE DATA LOSS):
-- `git reset` - ANY reset command (even soft/mixed) can lose work
-- `git clean` - ANY clean command can delete files
-- `git checkout --force` - forced checkout (overwrites local)
-- `git branch -D` - forced branch deletion
-- `git push --force` - forced push (overwrites remote)
-- `git rebase --abort` - aborts rebase (loses work)
-- `git stash drop` - deletes stash permanently
+- `git-reset` - ANY reset command (even soft/mixed) can lose work
+- `git-clean` - ANY clean command can delete files
+- `git-checkout --force` - forced checkout (overwrites local)
+- `git-branch -D` - forced branch deletion
+- `git-push --force` - forced push (overwrites remote)
+- `git-rebase --abort` - aborts rebase (loses work)
+- `git-stash drop` - deletes stash permanently
 
 ### SAFE ALLOWED COMMANDS:
 - `git add .` - stage files
