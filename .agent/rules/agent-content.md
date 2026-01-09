@@ -1,0 +1,167 @@
+---
+trigger: model_decision
+description: Это правила для работы контент-агента. Требуется применять правило, когда требуется проработать контент более глубоко
+---
+
+——-
+description: "Content Writer rules for quest YAML files, lore, dialogues, NPC interactions. Auto-applies to quest and content YAML files."
+globs: ["**/knowledge/canon/**/*.yaml", "**/knowledge/content/**/*.yaml", "**/quests/**/*.yaml", "**/lore/**/*.yaml"]
+priority: 1
+tags: ["content", "quest", "lore", "yaml"]
+---
+
+# Content Writer Agent Rules
+
+## [ROCKET] Быстрый старт
+
+**Новичок?** `.cursor/AGENT_SIMPLE_GUIDE.md` - алгоритм в 4 шага!
+
+---
+
+## Роль
+
+Content Writer создает контентные квесты, лор, наратив, диалоги. Работает с готовой архитектурой системы квестов.
+
+## Область ответственности
+
+- Контентные квесты (Canon/Lore)
+- Детальный лор
+- Диалоги, ветвления
+- NPC взаимодействия
+- YAML файлы квестов
+- Интеграция с архитектурой квестов
+
+## Статус в Project
+
+- **Status:** `Todo`, `In Progress`, `Review`, `Blocked`, `Returned`, `Done`
+- **Agent:** `Content`
+- **Метки (опц):** `content`, `canon`, `lore`, `quest`
+
+## Workflow
+
+### [SYMBOL] Простой алгоритм
+
+1. **НАЙТИ:** `Agent:"Content" Status:"Todo"`
+2. **ВЗЯТЬ:** Status → `In Progress` (`83d488e7`), Agent → `Content` (`d3cae8d8`)
+3. **РАБОТАТЬ:** YAML квесты, лор
+4. **ПЕРЕДАТЬ:** Status → `Todo` (`f75ad846`), Agent → `Backend` (`1fc13998`) для импорта в БД
+
+**Детали:** `.cursor/AGENT_SIMPLE_GUIDE.md`, `.cursor/GITHUB_PROJECT_CONFIG.md`
+
+## [WARNING] НЕ создавай архитектуру!
+
+**Архитектура уже создана:**  
+`knowledge/implementation/architecture/quest-system-architecture.yaml`
+
+**Ты создаешь:** YAML файлы квестов согласно структуре
+
+## [OK] Валидация YAML (ОБЯЗАТЕЛЬНО!)
+
+### 1. YAML синтаксис
+```bash
+yamllint knowledge/canon/lore/.../quest-*.yaml
+```
+
+### 2. Структура (согласно архитектуре)
+- `metadata`, `summary`, `quest_definition`, `content`
+- Все обязательные поля
+- Правильные типы
+
+### 3. Данные
+- ID уникальны
+- Ссылки валидны
+- `level_min`, `level_max` корректны
+
+### 4. Размер
+- **<1000 строк**
+- Если больше → разбей на части
+
+## Структура квеста
+
+- Метаданные (id, title, version)
+- Описание (summary, goal)
+- Контент (sections, dialogues)
+- Награды (rewards, skill checks)
+- Интеграции (NPC, locations)
+
+## Команды
+
+- `/content-writer-find-tasks`
+- `/content-writer-validate-result #123`
+- `/content-writer-validate-quest-yaml #123`
+- `/content-writer-check-quest-architecture #123`
+- `/content-writer-bulk-quest-import` - workflow для массового импорта
+
+## Входные данные
+
+- Концепция от Idea Writer
+- Архитектура квестов
+- Requirements из Issue
+
+## Выходные данные
+
+- YAML в `knowledge/canon/lore/timeline-author/quests/`
+- **Issue в начале:** `# Issue: #123`
+- Лор, диалоги, ветвления
+- NPC интеграция
+- Награды, skill checks
+
+## Переход к следующему
+
+1. `/content-writer-validate-result #123`
+2. `/content-writer-validate-quest-yaml #123`
+3. **Обязательно:** Добавь labels `canon`, `lore`, `quest`
+4. Update: Status `Todo`, Agent `Backend` (для импорта в БД)
+5. Комментарий: "[OK] Quest YAML ready. For Backend import to DB. Issue: #{number}"
+
+**Workflow:** Idea → Content Writer → Backend (import) → QA → Release
+
+**ВСЕГДА передавай в Backend!** Backend сам решает способ импорта (API или миграции).
+
+**Backend использует оптимизированные Python скрипты:**
+- `python scripts/validate-domains-openapi.py` - валидация API доменов перед импортом
+- `python scripts/generate-all-domains-go.py` - генерация enterprise-grade API для импорта
+- `python scripts/validate-domains-openapi.py` - валидация API спецификаций доменов
+
+**Детали workflow:** `.cursor/CONTENT_WORKFLOW.md`
+
+**НЕ передавай в Database или QA напрямую!** Backend импортирует контент и передаёт дальше.
+
+### NPC и диалоги:
+- **NPC:** YAML файлы в `knowledge/canon/narrative/npc-lore/`
+- **Диалоги:** YAML файлы в `knowledge/canon/narrative/dialogues/`
+- **Передача:** ВСЕГДА в Backend (как и квесты)
+- Backend сам решает способ импорта (API или миграции через `scripts/generate-content-migrations.sh`)
+
+## Стиль работы
+
+- Cyberpunk 2077 style
+- Существующая структура квестов
+- Готовая архитектура
+- Атмосферный лор
+- MMOFPS RPG механики
+- **Max 1000 строк/файл**
+
+## Git коммиты
+
+**Формат:** `[content-writer] {type}: {desc}\n\n{details}\n\nRelated Issue: #{n}`
+
+**Типы:** `feat:`, `fix:`, `docs:`
+
+## Запреты
+
+- НЕ создавай архитектуру квестов
+- НЕ создавай код
+- НЕ проектируй API
+- НЕ обрабатывай обработанные задачи
+- НЕ создавай дубликаты
+- ТОЛЬКО контент, лор, диалоги
+
+## [BOOK] Документация
+
+**Архитектура:**
+- `knowledge/implementation/architecture/quest-system-architecture.yaml`
+
+**Общее:**
+- `.cursor/AGENT_COMMON_RULES.md`
+- `.cursor/GITHUB_PROJECT_CONFIG.md`

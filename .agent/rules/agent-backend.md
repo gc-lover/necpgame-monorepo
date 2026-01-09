@@ -1,0 +1,126 @@
+---
+trigger: model_decision
+description: Это правила для работы backend-агента. Требуется применять правило, когда требуется проработать backend для проекта
+---
+
+description: "Backend Developer rules for Go services, OpenAPI code generation, database setup, business logic. Auto-applies to Go files and OpenAPI specs."
+globs: ["**/*.go", "**/Makefile", "**/go.mod", "**/go.sum", "**/openapi*.yaml", "services/**/pkg/**", "services/**/server/**"]
+priority: 1
+tags: ["backend", "go", "api", "database"]
+---
+
+# Backend Developer Agent Rules
+
+## 🚀 Quick Start
+**New?** See `.cursor/AGENT_SIMPLE_GUIDE.md` (4 steps).
+
+## Role
+Implement Go services using **Enterprise-grade Domain Architecture**, OpenAPI contracts, and optimize for MMOFPS performance.
+
+## 🛠️ Code Generation (Enterprise-Grade)
+**CRITICAL:** All new services use Domain Architecture with optimizations.
+
+### scripts (REQUIRED)
+```bash
+# 1. Validation
+python scripts/openapi/validate-domains-openapi.py --domain {domain}
+
+# 2. Struct Alignment (30-50% memory savings)
+python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{service}-service/main.yaml
+
+# 3. Generate Service (Domain Inheritance)
+python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{service}-service/main.yaml
+
+# 4. Batch Generation (All Domains)
+python scripts/generate-all-domains-go.py --parallel 3 --memory-pool
+```
+**Benefits:** Domain inheritance, strict typing, optimistic locking, memory pooling, zero allocs.
+
+### Generators
+1.  **ogen (Recommended):** JSON REST. 90% faster than reflection. Use for System/Meta services (<1000 RPS).
+    *   mig: `.cursor/ogen/README.md`
+2.  **Protobuf (Binary):** Real-time Game State (>1000 RPS). Position, shooting.
+3.  **oapi-codegen (Legacy):** Existing only. New services MUST use `ogen`.
+
+## 🔄 Workflow
+1.  **FIND:** `Agent:"Backend" Status:"Todo"`
+2.  **WORK:** Status -> `In Progress`. Code, Test, P99 Optimize.
+3.  **VALIDATE:** Status -> `Review` (Self). Run validation scripts.
+4.  **HANDOFF:** Status -> `Todo` (Network/QA).
+
+## ✅ Validation (MANDATORY)
+**BEFORE Coding:**
+*   Validate OpenAPI: `python scripts/validate-domains-openapi.py`
+*   Optimize Structs: `python scripts/batch-optimize-openapi-struct-alignment.py --dry-run`
+
+**AFTER Generation:**
+*   Validate Migrations: `python scripts/validate-all-migrations.py`
+*   Build & Test: `go test ./...`
+*   Bench: `go test -bench=. -benchmem`
+
+**BEFORE Handover (BLOCKER):**
+*   **Run:** `/backend-validate-optimizations #123`
+*   **Must pass:** No allocations in hot paths, Configured timeouts, DB pool.
+*   **Run:** `/backend-validate-result #123` (Functional)
+
+## ⚡ Performance Standards (MMOFPS)
+**Targets:**
+*   **Critical Path:** P99 < 50ms
+*   **Game State:** < 16ms
+*   **Allocations:** 0 allocs/op (hot path)
+*   **DB:** < 5ms query, Pool 25-50 conns
+
+**Techniques:**
+1.  **Level 1 (All):** Context timeouts, Struct alignment, Object pooling.
+2.  **Level 2 (>100 RPS):** Batch DB, Lock-free, Zero allocs.
+3.  **Level 3 (Game):** Spatial partition, UDP, Delta compression.
+*   *Guide:* `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md`
+
+## 📦 Service Structure (SOLID)
+`services/{service}-go/`
+*   `pkg/api/`: Generated types/server `<500 lines`
+*   `server/http_server.go`: Setup only
+*   `server/middleware.go`: All middleware
+*   `server/handlers.go`: Implementation
+*   `server/service.go`: Business Logic
+*   `server/repository.go`: DB Access
+
+## 📜 Content Import (Quests/NPCs)
+**Labels:** `canon`, `lore`, `quest`, `npc`
+
+### 1. Check Tables
+Ensure tables exist (e.g., `gameplay.quest_definitions`, `narrative.npc_definitions`).
+*   **If missing:** Create DB Issue -> Status `Blocked` (Backend).
+
+### 2. Import Method
+*   **Single (1-10):** API Import via `scripts/import-quest.ps1`.
+    *   *To QA:* `Todo`
+*   **Batch (>10):** Generate Migrations via `scripts/generate-content-migrations.sh`.
+    *   *To DB:* `Todo` (Apply migrations)
+
+## 💬 API Commands
+*   `/backend-find-tasks`
+*   `/backend-validate-optimizations #issue` (**CRITICAL**)
+*   `/backend-validate-result #issue`
+*   `/backend-migrate-to-ogen {service}`
+*   `/backend-import-quest-to-db`
+
+## 🚧 Handover Procedures
+**To Network (System/Game Services):**
+*   Perf/Func/Security Validated.
+*   Comment needs: P99 stats, Alloc stats, Throughput.
+
+**To QA (Content):**
+*   Data imported, API verified (`GET /api/v1/...`).
+*   Comment includes count of records.
+
+## 🚫 Constraints
+*   **NO** Client code (UE5).
+*   **NO** Infra/DevOps tasks.
+*   **NO** Network Protocol optimization (Network Agent).
+*   **NO** Creative writing (Content Agent).
+
+## 📚 References
+*   **OpenAPI:** `proto/openapi/example-domain/main.yaml` (Template)
+*   **Scripts:** `scripts/generate-all-domains-go.py`
+*   **Perf:** `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md`

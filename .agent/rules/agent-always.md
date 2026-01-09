@@ -1,0 +1,178 @@
+---
+trigger: always_on
+---
+
+——-
+description: "Critical global rules: no reports/summaries, code-focused communication, backend performance requirements. Always applies to all files."
+alwaysApply: true
+priority: 0
+tags: ["global", "communication", "performance"]
+---
+
+## [WARNING] КРИТИЧЕСКИ ВАЖНО: Коммуникация и отчеты
+
+**НИКОГДА НЕ ДЕЛАЙ:**
+- [ERROR] НЕ создавай отчеты, summary, анализы, обзоры
+- [ERROR] НЕ пиши длинные объяснения - только краткие факты
+- [ERROR] НЕ создавай markdown файлы с отчетами/анализом
+- [ERROR] НЕ делай "summary of changes" - просто делай изменения
+- [ERROR] НЕ пиши "Overview", "Analysis", "Report" документы
+- [ERROR] НЕ создавай таблицы статистики без запроса
+- [ERROR] НЕ делай verbose комментарии - только необходимое
+
+**ВСЕГДА ДЕЛАЙ:**
+- [OK] Работай с кодом напрямую
+- [OK] Краткие ответы (1-2 предложения максимум)
+- [OK] Показывай только код и изменения
+- [OK] Минимум текста, максимум действий
+- [OK] Фокус на реализации, не на описании
+
+**Формат комментариев при передаче задачи:**
+```markdown
+[OK] Ready. Handed off to {NextAgent}
+Issue: #{number}
+```
+
+**НЕ пиши:**
+- "Summary of work completed..."
+- "Analysis shows..."
+- "Overview of changes..."
+- "Report on progress..."
+- Длинные списки что сделано
+
+**Пиши:**
+- "[OK] Done. Issue: #123"
+- "[OK] Ready. Issue: #123"
+
+НИКОГДА НЕ ДЕЛАЙ ЭТО МУСОРНЫЕ РАЗНЫЕ MD ЕСЛИ ТЕБЯ НЕ ПРОСЯТ! ОБЩАЙСЯ ПРОСТО В ЧАТЕ!
+
+## [SYMBOL] КРИТИЧЕСКИ ВАЖНО: Размещение файлов
+
+**СТРОГО ЗАПРЕЩЕНО в корне проекта:**
+- [ERROR] Промежуточные/тестовые файлы (`.py`, `.sh`, `.tmp`)
+- [ERROR] Одноразовые скрипты для отладки
+- [ERROR] Временные конфигурации
+- [ERROR] Личные заметки/черновики
+- [ERROR] Дубликаты файлов из других папок
+
+**ОБЯЗАТЕЛЬНОЕ размещение файлов:**
+
+### Backend код
+- `services/{service-name}-go/` - Go микросервисы
+- `proto/openapi/` - API спецификации
+
+### Контент
+- `knowledge/canon/` - YAML файлы квестов, NPC, лора
+
+### Скрипты и автоматизация
+- `scripts/` - валидация, импорт, генерация, развертывание
+
+### Database
+- `infrastructure/liquibase/migrations/` - SQL миграции
+
+### Клиент
+- `client/UE5/` - Unreal Engine код
+
+### Документация
+- `.cursor/` - правила агентов, гайды
+- Корень: только `README.md`, `CHANGELOG*.md`, основные конфиги
+
+**ПРАВИЛО:** Каждый файл должен быть в правильной папке по типу. Корень - только для высокоуровневой документации и основных конфигов.
+
+## КРИТИЧНО: FORBIDDEN DANGEROUS GIT COMMANDS
+
+**AGENTS ARE STRICTLY FORBIDDEN from using the following commands:**
+
+### FORBIDDEN COMMANDS (CAUSE DATA LOSS):
+- `git reset` - ANY reset command (even soft/mixed) can lose work
+- `git clean` - ANY clean command can delete files
+- `git checkout --force` - forced checkout (overwrites local)
+- `git branch -D` - forced branch deletion
+- `git push --force` - forced push (overwrites remote)
+- `git rebase --abort` - aborts rebase (loses work)
+- `git stash drop` - deletes stash permanently
+
+### SAFE ALLOWED COMMANDS:
+- `git add .` - stage files
+- `git commit -m "message"` - commit changes
+- `git push` - push safely
+- `git pull` - pull safely
+- `git checkout branch` - switch branch (no --force)
+- `git merge branch` - merge branch
+- `git stash` - save changes
+- `git stash pop` - restore changes
+
+### GIT USAGE RULES:
+
+1. **NEVER** use `--force`, `--hard`, `-D` flags
+2. **NEVER** delete commits, stashes, or branches without explicit request
+3. **ONLY** safe operations: add, commit, push, pull, checkout
+4. **If unsure** - DO NOT use command, ask in chat
+
+### VIOLATION = AUTOMATIC TASK RETURN
+
+**Using forbidden command → task returned with security violation comment!**
+
+### TERMINAL PROTECTION ACTIVATION:
+
+For maximum protection, agents must activate terminal-level interception:
+
+**Linux/Mac:**
+```bash
+source .githooks/activate-terminal-safety.sh
+```
+
+**Windows:**
+```cmd
+call .githooks\activate-terminal-safety.bat
+```
+
+This creates a function that intercepts ALL git commands in current terminal session.
+
+## Task Analysis
+
+Always analyze task CONTENT (body, description, requirements), not just title or labels. Title and labels may be outdated or inaccurate from previous agents. If task content matches your responsibilities, work on it regardless of title/labels. Example: Backend agent should implement quest DB import even if title says "QUEST" - check if task requires database work.
+
+## Issue Numbers in Files
+
+**КРИТИЧНО:** Если в файле уже есть номер Issue, НЕ заменяй его - дописывай через запятую: `// Issue: #123, #234, #345` (в одну строку). Формат зависит от типа файла: `// Issue: #123` (Go), `# Issue: #123` (YAML/Python), `-- Issue: #123` (SQL), `<!-- Issue: #123 -->` (HTML/Markdown).
+
+## Backend Performance Requirements
+
+**Backend Agent ОБЯЗАН применять оптимизации для MMOFPS RPG:**
+
+### BLOCKER (без этого задачу НЕЛЬЗЯ передавать):
+- [ERROR] НЕТ context timeouts → FIX before handoff
+- [ERROR] НЕТ DB pool config → FIX before handoff
+- [ERROR] Goroutine leaks → FIX before handoff
+
+### Validation ОБЯЗАТЕЛЬНА:
+- Запускай `/backend-validate-optimizations #123` перед передачей
+- Если BLOCKER → исправь и повтори
+- Если OK → передавай кратко
+
+**Детали:** `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md`
+
+## OpenAPI Specification Requirements
+
+**КРИТИЧНО:** Все OpenAPI спецификации ДОЛЖНЫ использовать enterprise-grade шаблон!
+
+### 📋 **Обязательный Шаблон**
+```
+proto/openapi/example-domain/main.yaml     - Enterprise-grade шаблон
+proto/openapi/TEMPLATE_USAGE_GUIDE.md      - Полное руководство
+proto/openapi/example-domain/README.md     - Детальное объяснение
+```
+
+### OK **Шаблон Гарантирует**
+- Struct alignment hints (30-50% memory savings)
+- Backend optimization notes
+- Production-ready спецификации
+- Code generation compatibility
+- Security-first approach
+
+### 🚀 **Для всех агентов**
+- **API Designer:** Используй шаблон для создания спецификаций
+- **Backend:** Проверяй что спецификации соответствуют шаблону
+- **Architect:** Проектируй API с учетом шаблона
+- **Все агенты:** Ссылайся на шаблон в документации

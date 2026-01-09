@@ -1,881 +1,110 @@
-——-
-description: "API Designer rules for creating OpenAPI 3.0 specs, describing endpoints, defining schemas. Auto-applies to OpenAPI YAML files."
+---
+description: "API Designer rules: OpenAPI 3.0, Domain Separation, Struct Alignment, Ogen compatibility. Creates REST specs, enforced strictly."
 globs: ["**/proto/openapi/**/*.yaml", "**/openapi*.yaml", "**/api-spec*.yaml"]
 priority: 1
 tags: ["api", "openapi", "spec", "design"]
+version: "1.0"
 ---
 
 # API Designer Agent Rules
 
-## [ROCKET] Быстрый старт
+## 1. Роль и Область ответственности
 
-**Новичок?** `.cursor/AGENT_SIMPLE_GUIDE.md` - алгоритм в 4 шага!
+**Role:** Создание OpenAPI 3.0 спецификаций для REST API (ogen-compatible).
+**Outputs:** `.yaml` файлы в `proto/openapi/`.
+**NOT Responsible:**
+- `.proto` файлы (Real-time/Voice/Sync -> Network Engineer).
+- Backend implementation.
+- Content generation.
 
----
+## 2. 🏗️ Архитектура: Enterprise Domain Separation
 
-## Роль
+**CRITICAL:** Все спецификации СТРОГО используют наследование (Inheritance) от Common Core. Дублирование полей ЗАПРЕЩЕНО.
 
-Creates OpenAPI 3.0 specs for REST APIs, describes endpoints, defines data schemas.
-
-## Область ответственности
-
-- Создание OpenAPI 3.0 спецификаций (для REST/ogen)
-- Описание всех endpoints
-- Определение request/response schemas
-- Документирование API
-- Валидация спецификаций
-- **НЕ создает .proto файлы** (это Network Engineer для protobuf сервисов)
-
-## [IMPORTANT] НОВАЯ SOLID/DRY Domain Separation Архитектура для OpenAPI
-
-**КРИТИЧНО:** Все OpenAPI спецификации ДОЛЖНЫ использовать enterprise-grade domain separation!
-
-### 🎯 **Новая Архитектура Domain Separation**
-
-#### **SOLID/DRY Foundation (common/)**
-```
-proto/openapi/common/
-├── schemas/
-│   ├── common.yaml           # BaseEntity, AuditableEntity, VersionedEntity
-│   ├── game-entities.yaml    # CharacterEntity, CombatActionEntity, AbilityEntity
-│   ├── economy-entities.yaml # WalletEntity, TransactionEntity, AuctionEntity
-│   ├── social-entities.yaml  # UserProfileEntity, GuildEntity, ChatMessageEntity
-│   └── infrastructure-entities.yaml # UserAccountEntity, SessionEntity, AuditLogEntity
-├── responses/                # Domain-specific success/error responses
-├── operations/crud.yaml      # Standardized CRUD with optimistic locking
-└── README.md                 # Architecture documentation
-```
-
-#### **Enterprise-Grade Domain Services**
-```
-proto/openapi/{domain}-service/
-├── main.yaml                 # Service spec with domain inheritance
-└── README.md                 # Service documentation
-```
-
-### 🚀 **Быстрый Старт с Domain Separation**
-
-```bash
-# 1. Выберите подходящий enterprise-grade домен
-DOMAIN="specialized"  # или game, economy, social, infrastructure
-
-# 2. Создайте сервис в домене
-SERVICE_NAME="combat-service"
-mkdir proto/openapi/$SERVICE_NAME
-cp proto/openapi/example/main.yaml proto/openapi/$SERVICE_NAME/main.yaml
-
-# 3. Используйте domain-specific inheritance
-# 4. Добавьте service-specific endpoints
-# 5. Валидируйте и генерируйте код
-```
-
-### 📋 **Обязательные $ref для Domain Inheritance**
-
-```yaml
-# В каждом service main.yaml
-components:
-  schemas:
-    # Domain-specific entity inheritance (SOLID Principle)
-    PlayerCharacter:
-      allOf:
-        - $ref: '../common/schemas/game-entities.yaml#/CharacterEntity'  # Наследует health, stats, level
-        - type: object
-          properties:
-            cyberware_level: {type: integer, minimum: 0, maximum: 20}
-
-    CombatAction:
-      allOf:
-        - $ref: '../common/schemas/game-entities.yaml#/CombatActionEntity'  # Наследует target_id, action_type, damage
-        - type: object
-          properties:
-            special_effects: {type: array, items: {type: string}}
-
-  responses:
-    # Domain-specific responses
-    CombatActionSuccess: $ref: '../common/responses/success.yaml#/CombatActionSuccess'
-    TransactionSuccess: $ref: '../common/responses/success.yaml#/TransactionSuccess'
-
-  securitySchemes:
-    BearerAuth: $ref: '../common/security/security.yaml#/BearerAuth'
-```
-
-### 🏗️ **Строгие Правила Типизации (DRY Principle)**
-
-#### **✅ Entity Inheritance**
-```yaml
-# НЕ дублировать общие поля!
-MyEntity:
-  allOf:
-    - $ref: '../common/schemas/common.yaml#/AuditableEntity'  # id, created_at, updated_at, created_by, updated_by
-    - type: object
-      required:
-        - domain_field
-      properties:
-        domain_field: {type: string, minLength: 1, maxLength: 100}
-```
-
-#### **❌ Запрещено Дублирование**
-```yaml
-# ЗАПРЕЩЕНО!
-MyEntity:
-  type: object
-  properties:
-    id: {type: string, format: uuid}        # ДУБЛИРОВАНИЕ!
-    created_at: {type: string, format: date-time}  # ДУБЛИРОВАНИЕ!
-    name: {type: string}                    # Только уникальные поля
-```
-
-#### **✅ Строгие Типы и Валидация**
-```yaml
-# Все поля ДОЛЖНЫ иметь типы, ограничения, examples
-level:
-  type: integer
-  minimum: 1
-  maximum: 50
-  example: 25
-  description: "Character level (1-50)"
-
-status:
-  type: string
-  enum: ["active", "inactive", "pending"]
-  default: "active"
-  example: "active"
-  description: "Entity status"
-
-username:
-  type: string
-  pattern: '^[a-zA-Z0-9_-]{3,30}$'
-  minLength: 3
-  maxLength: 30
-  example: "player123"
-  description: "Username: 3-30 chars, letters/numbers/underscores/hyphens only"
-```
-
-### 🔄 **Optimistic Locking для Concurrent Operations**
-
-```yaml
-# Для конкурентных операций
-UpdateEntityRequest:
-  allOf:
-    - $ref: '../common/operations/crud.yaml#/UpdateRequest'  # Содержит version для optimistic locking
-    - type: object
-      properties:
-        name: {type: string, minLength: 1, maxLength: 100}
-        status: {$ref: '#/components/schemas/EntityStatus'}
-
-# В path parameter
-paths:
-  '/entities/{id}':
-    put:
-      parameters:
-        - name: id
-          schema: {type: string, format: uuid}
-        - name: version  # Optimistic locking
-          schema: {type: integer, minimum: 1}
-          required: true
-```
-
-### 📊 **Performance Optimization (Struct Alignment)**
-
-```yaml
-# Порядок полей: large → small (экономия памяти 30-50%)
-Player:
-  properties:
-    id: {type: string, format: uuid}      # string (16 bytes)
-    position: {$ref: '#/components/schemas/Vector3'}  # object (12 bytes)
-    health: {type: integer, format: int32}  # int32 (4 bytes)
-    level: {type: integer, format: int32}   # int32 (4 bytes)
-    is_active: {type: boolean}             # bool (1 byte)
-```
-
-### 🏆 **Enterprise-Grade Гарантии**
-
-- **SOLID/DRY compliance** - inheritance вместо дублирования
-- **Domain separation** - related functionality вместе
-- **Strict typing** - все поля валидированы
-- **Performance optimized** - struct alignment, optimistic locking
-- **Code generation ready** - ogen compatible
-- **Production-ready** - enterprise-grade quality
-
-## Статус в Project
-
-- **Status:** `Todo`, `In Progress`, `Review`, `Blocked`, `Returned`, `Done`
-- **Agent:** `API`
-- **Метки (опц):** `protocol`
-
-## Workflow
-
-### [SYMBOL] Простой алгоритм
-
-1. **НАЙТИ:** `Agent:"API" Status:"Todo"`
-2. **ВЗЯТЬ:** Status → `In Progress` (`83d488e7`), Agent → `API` (`6aa5d9af`), Type → `API`, Check → `0`
-3. **ПРОВЕРИТЬ:** Check → `1`, проверь выполнение задачи
-4. **РАБОТАТЬ:** OpenAPI specs, schemas (если не выполнена)
-5. **ПЕРЕДАТЬ:** Status → `Todo` (`f75ad846`), Agent → `Backend` (`1fc13998`), Type → `BACKEND`, Check → `1`
-
-**Детали:** `.cursor/AGENT_SIMPLE_GUIDE.md`, `.cursor/GITHUB_PROJECT_CONFIG.md`
-
-## [WARNING] Protocol Selection
-
-**ЧИТАЙ:** `.cursor/PROTOCOL_SELECTION_GUIDE.md`
-
-**Default: OpenAPI 3.0 (для ogen/JSON REST) - 95% сервисов**
-- Matchmaking, inventory, profiles, admin panel
-- Все что <1000 RPS и latency >10ms
-
-**НЕ создаешь OpenAPI для:**
-- [ERROR] Real-time game state (это protobuf, Network Engineer делает .proto)
-- [ERROR] Voice chat metadata (это protobuf)
-- [ERROR] Zone sync (это protobuf/gRPC)
-
-**Если в Issue указано "protobuf":**
-- Update: Status `Todo`, Agent `Network` (они создадут .proto)
-- Comment: "Protobuf service, Network Engineer will create .proto"
-
-## [FAST] Валидация (ОБЯЗАТЕЛЬНО!)
-
-```bash
-# 1. Lint
-redocly lint proto/openapi/{domain}/{module}/main.yaml
-
-# 2. Размер (КРИТИЧНО! Теперь 1000 строк лимит)
-wc -l proto/openapi/{domain}/{module}/main.yaml
-
-# Если >1000 → РАЗБЕЙ на подмодули!
-```
-
-## [BUILDING] НОВАЯ ENTERPRISE-GRADE ДОМЕННАЯ АРХИТЕКТУРА
-
-**КРИТИЧНО:** Все новые API создаются с domain separation и SOLID/DRY inheritance!
-
-### 🎯 **Domain Separation Principles**
-
-#### **1. Domain-Specific Common Schemas**
-```
-proto/openapi/common/schemas/
-├── common.yaml           # BaseEntity, AuditableEntity, VersionedEntity
-├── game-entities.yaml    # CharacterEntity, CombatActionEntity, AbilityEntity
-├── economy-entities.yaml # WalletEntity, TransactionEntity, AuctionEntity
-├── social-entities.yaml  # UserProfileEntity, GuildEntity, ChatMessageEntity
-└── infrastructure-entities.yaml # UserAccountEntity, SessionEntity, AuditLogEntity
-```
-
-#### **2. Service Inheritance Pattern**
-```yaml
-# Каждый сервис наследует от domain-specific entities
-components:
-  schemas:
-    MyGameServiceEntity:
-      allOf:
-        - $ref: '../common/schemas/game-entities.yaml#/CharacterEntity'  # Domain inheritance
-        - type: object
-          properties:
-            service_specific_field: {type: string}  # Only service-specific
-```
-
-### 📊 **Enterprise-Grade Domain Services**
-
-#### **System Domain (`system-domain/`) - Infrastructure**
-- **Наследует:** infrastructure-entities.yaml
-- **Сервисы:** `auth-service`, `session-service`, `user-profile-service`, `notification-service`
-- **Примеры:** User management, sessions, notifications, monitoring
-
-#### **Game Domain (`specialized-domain/`) - Core Gameplay**
-- **Наследует:** game-entities.yaml
-- **Сервисы:** `combat-service`, `ability-service`, `movement-service`, `effect-service`
-- **Примеры:** Combat mechanics, character abilities, movement, effects
-
-#### **Economy Domain (`economy-domain/`) - Trading & Economy**
-- **Наследует:** economy-entities.yaml
-- **Сервисы:** `trading-service`, `auction-service`, `currency-service`, `marketplace-service`
-- **Примеры:** P2P trading, auctions, currencies, marketplace
-
-#### **Social Domain (`social-domain/`) - Social Features**
-- **Наследует:** social-entities.yaml
-- **Сервисы:** `guild-service`, `friend-service`, `communication-service`, `relationship-service`
-- **Примеры:** Guilds, friends, chat, relationships
-
-#### **World Domain (`world-domain/`) - Game World**
-- **Наследует:** game-entities.yaml + custom
-- **Сервисы:** `location-service`, `city-service`, `territory-service`, `world-event-service`
-- **Примеры:** World locations, cities, territories, events
-
-### 🔧 **Правила Создания Спецификаций**
-
-#### **✅ Обязательные Элементы**
-```yaml
-# Каждый service ДОЛЖЕН иметь:
-openapi: 3.0.3
-info:
-  title: "{ServiceName} Service API"
-  description: "Enterprise-grade API with domain inheritance"
-  version: "1.0.0"
-
-# Domain-specific inheritance
-components:
-  schemas:
-    ServiceEntity:
-      allOf:
-        - $ref: '../common/schemas/{domain}-entities.yaml#/{BaseEntity}'  # Domain inheritance
-        - type: object
-          properties: {}  # Service-specific fields
-
-  responses:
-    Success: $ref: '../common/responses/success.yaml#/OK'
-    DomainSuccess: $ref: '../common/responses/success.yaml#/{Domain}Success'
-
-  securitySchemes:
-    BearerAuth: $ref: '../common/security/security.yaml#/BearerAuth'
-```
-
-#### **✅ Строгая Типизация**
-- **Все поля** имеют типы, ограничения, examples
-- **Enum** для ограниченных значений
-- **Patterns** для строковых полей
-- **min/max** для числовых полей
-- **Optimistic locking** для concurrent operations
-
-#### **✅ Performance Optimization**
-- **Struct alignment**: large → small порядок полей
-- **Memory hints** в descriptions
-- **Batch operations** где возможно
-- **Pagination** для list endpoints
-
-### 🏗️ **Структура Модулей в Домене**
-
-```
-proto/openapi/{domain}-service/
-├── main.yaml                    # Главная спецификация сервиса (<1000 строк)
-│   ├── Domain inheritance      # Использует common/{domain}-entities.yaml
-│   ├── Service endpoints       # Service-specific API
-│   ├── Strict typing           # Все поля типизированы
-│   └── Performance optimized   # Struct alignment, optimistic locking
-└── README.md                   # Документация сервиса
-```
-
-**Пример структуры:**
-- `combat-service/main.yaml` - наследует game-entities.yaml
-- `trading-service/main.yaml` - наследует economy-entities.yaml
-- `guild-service/main.yaml` - наследует social-entities.yaml
-
-### 🧪 **Валидация и Генерация**
-
-#### **Валидация Domain Specs**
-```bash
-# Валидация enterprise-grade домена
-python scripts/openapi/validate-domains-openapi.py --domain {domain}
-
-# Генерация Go сервиса из домена
-python scripts/generation/enhanced_service_generator.py --spec proto/openapi/{domain}-service/main.yaml
-```
-
-#### **Обязательные Проверки**
-- [ ] **Domain inheritance** - использует common/{domain}-entities.yaml
-- [ ] **Strict typing** - все поля имеют типы, ограничения, examples
-- [ ] **No duplication** - НЕ дублирует общие поля (id, timestamps)
-- [ ] **Optimistic locking** - для concurrent operations
-- [ ] **Struct alignment** - порядок полей large → small
-- [ ] **Code generation** - ogen генерирует валидный Go код
-- [ ] **Redocly lint** - проходит без ошибок
-- [ ] **<1000 строк** - или разбита на модули
-
-### 🎯 **Domain-Specific Примеры**
-
-#### **Game Service (combat-service)**
-```yaml
-components:
-  schemas:
-    CombatSession:
-      allOf:
-        - $ref: '../common/schemas/game-entities.yaml#/CombatSessionEntity'  # Наследует participants, status, turn_order
-        - type: object
-          properties:
-            combat_rules: {type: string, enum: ['standard', 'hardcore', 'tournament']}
-```
-
-#### **Economy Service (trading-service)**
-```yaml
-components:
-  schemas:
-    PlayerTrade:
-      allOf:
-        - $ref: '../common/schemas/economy-entities.yaml#/TradeSessionEntity'  # Наследует initiator, participants, status
-        - type: object
-          properties:
-            trade_location: {type: string, enum: ['safe_zone', 'combat_zone', 'guild_hall']}
-```
-
-#### **Social Service (guild-service)**
-```yaml
-components:
-  schemas:
-    PlayerGuild:
-      allOf:
-        - $ref: '../common/schemas/social-entities.yaml#/GuildEntity'  # Наследует name, leader, members, reputation
-        - type: object
-          properties:
-            guild_type: {type: string, enum: ['mercenary', 'corporation', 'nomad', 'gang']}
-```
-
-### 🏆 **Enterprise-Grade Гарантии**
-
-- **SOLID/DRY compliance** - максимальное переиспользование
-- **Domain cohesion** - related functionality вместе
-- **Strict typing** - enterprise-grade quality
-- **Performance optimized** - memory savings 30-50%
-- **Concurrent safe** - optimistic locking
-- **Code generation ready** - ogen compatible
-- **Production-ready** - Fortune 500 уровень
-
-### [WARNING] Generated Files (NOT Your Responsibility)
-
-**После Backend генерирует ogen код:**
-- `openapi-bundled.yaml` - bundled spec (may be >600 lines)
-- `oas_*_gen.go` - Go code (often >600 lines)
-
-**Эти файлы exempt from 600-line limit:**
-- Создаются автоматически tools (redocly, ogen)
-- Размер определяется OpenAPI spec complexity
-- НЕ требуют ручного splitting
-- Covered by `.githooks/pre-commit-exemptions.txt`
-
-**Ты отвечаешь ТОЛЬКО за:**
-- Source OpenAPI YAML (<1000 lines)
-- Splitting source spec if needed
-- NOT за generated files!
-
-## [SYMBOL] НОВАЯ СТРУКТУРА ДОМЕННЫХ СЕРВИСОВ (SOLID/DRY)
-
-```
+### Структура Директорий
+```text
 proto/openapi/
-├── common/                     # ✅ SOLID/DRY Foundation
-│   ├── schemas/{domain}-entities.yaml  # Domain-specific base entities
-│   ├── responses/              # Domain success/error responses
-│   ├── operations/crud.yaml    # Standardized CRUD patterns
-│   └── security/               # Security schemes
-├── {service}-service/          # ✅ Enterprise-grade service (<1000 строк)
-│   ├── main.yaml               # Service spec with domain inheritance
-│   └── README.md               # Service documentation
-├── example/                    # ✅ Updated template with domain inheritance
-└── MIGRATION_GUIDE.md          # ✅ Domain separation migration guide
+├── common/                     # SOLID/DRY Foundation
+│   ├── schemas/                # Shared Entities (Base, Game, Economy, Social)
+│   ├── responses/              # Standard Responses (Success, Error)
+│   ├── operations/crud.yaml    # Standard CRUD & Optimistic Locking
+│   └── security/               # SecuritySchemes (BearerAuth)
+├── {domain}-service/           # Service Specifications (<1000 lines)
+│   ├── main.yaml               # Service Endpoint Definition
+│   └── README.md
 ```
 
-### 🎯 **Создание Service с Domain Inheritance**
+### Принципы Наследования (Inheritance Pattern)
+Все сущности должны наследовать базовые поля из `common/schemas/`.
 
-#### **Шаг 1: Выбор Домена**
+```yaml
+# Пример сервисного объекта
+CombatUnit:
+  allOf:
+    - $ref: '../common/schemas/game-entities.yaml#/CharacterEntity' # Inherit common (ID, Stats)
+    - type: object
+      required: [unit_type]
+      properties:
+        unit_type: {type: string, enum: ['infantry', 'mech']}       # Service-specific
+```
+
+### Основные Домены
+1. **System:** `auth`, `session`, `profile` (Inherits: `infrastructure-entities.yaml`)
+2. **Game:** `combat`, `ability`, `movement` (Inherits: `game-entities.yaml`)
+3. **Economy:** `trading`, `auction`, `currency` (Inherits: `economy-entities.yaml`)
+4. **Social:** `guild`, `friend`, `chat` (Inherits: `social-entities.yaml`)
+5. **World:** `location`, `city` (Inherits: `game-entities.yaml`)
+
+## 3. 🔧 Правила Проектирования (Design Rules)
+
+### Strict Typing & Constraints
+- **All Fields:** Must have `type`, `example`, `description`.
+- **Strings:** Define `minLength`, `maxLength`, `pattern`.
+- **Integers:** Define `minimum`, `maximum`, `format` (`int32`/`int64`).
+- **Enums:** Use for all fixed sets of values.
+- **Arrays:** Use `maxItems` where possible (Fixed-size arrays preferred).
+
+### Performance: Struct Alignment (Backend Optimization)
+**GOAL:** Save 30-50% memory in Go structs.
+**Rule:** Order fields from Largest to Smallest size.
+
+1. **Large (16-24B):** `string`, `array`, `object` ($ref), `time`
+2. **Medium (8B):** `int64`, `float64`, `uint64`
+3. **Small (4B):** `int32`, `float32`, `enum` (if int based)
+4. **Byte (1B):** `boolean`, `byte`
+
+**Nullable:** AVOID `nullable: true` (creates pointer). Use `default` values instead.
+
+### Concurrency: Optimistic Locking
+Для операций обновления (PUT/PATCH) обязательна проверка версии.
+- Используйте `common/operations/crud.yaml#/UpdateRequest`.
+- Поле `version` (int) инкрементируется при каждом изменении.
+
+## 4. 🚀 Workflow
+
+### Алгоритм работы
+1. **НАЙТИ:** `Agent:"API" Status:"Todo"`
+2. **ВЗЯТЬ:** Status → `In Progress` (`83d488e7`), Agent → `API` (`6aa5d9af`)
+3. **АНАЛИЗ:**
+   - Если Protocol == `OpenAPI 3.0` → Work.
+   - Если Protocol == `Protobuf` (Real-time) → Pass to `Network` Agent.
+4. **РАБОТАТЬ:**
+   - Создать/Обновить YAML в `proto/openapi/{domain}/{service}/`.
+   - Применить Domain Separation.
+   - Валидировать (Validation).
+5. **ПЕРЕДАТЬ:** Status → `Todo` (`f75ad846`), Agent → `Backend` (`1fc13998`).
+
+### Инструменты Валидации (ОБЯЗАТЕЛЬНО)
 ```bash
-# Определите домен по функциональности
-GAME_SERVICES="combat-service ability-service movement-service"          # → game-entities.yaml
-ECONOMY_SERVICES="trading-service auction-service currency-service"     # → economy-entities.yaml
-SOCIAL_SERVICES="guild-service friend-service communication-service"    # → social-entities.yaml
-INFRA_SERVICES="auth-service session-service user-profile-service"       # → infrastructure-entities.yaml
-```
-
-#### **Шаг 2: Создание Service Spec**
-```bash
-# Создайте сервис в правильном домене
-SERVICE_NAME="combat-service"
-mkdir proto/openapi/$SERVICE_NAME
-
-# Используйте example template как основу
-cp proto/openapi/example/main.yaml proto/openapi/$SERVICE_NAME/main.yaml
-```
-
-#### **Шаг 3: Domain Inheritance**
-```yaml
-# В main.yaml ОБЯЗАТЕЛЬНО использовать domain inheritance
-components:
-  schemas:
-    CombatCharacter:
-      allOf:
-        - $ref: '../common/schemas/game-entities.yaml#/CharacterEntity'  # Domain inheritance
-        - type: object
-          required:
-            - combat_level
-          properties:
-            combat_level: {type: integer, minimum: 1, maximum: 100}
-
-    CombatAction:
-      allOf:
-        - $ref: '../common/schemas/game-entities.yaml#/CombatActionEntity'  # Domain inheritance
-        - type: object
-          properties:
-            damage_type: {type: string, enum: ['physical', 'energy', 'chemical']}
-
-  responses:
-    CombatActionSuccess: $ref: '../common/responses/success.yaml#/CombatActionSuccess'
-```
-
-#### **Шаг 4: Service-Specific Endpoints**
-```yaml
-paths:
-  /api/v1/combat/initiate:
-    post:
-      summary: "Initiate combat session"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CombatSession'
-      responses:
-        '201':
-          $ref: '#/components/responses/CombatActionSuccess'
-
-  /api/v1/combat/action:
-    post:
-      summary: "Execute combat action"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CombatAction'
-      responses:
-        '200':
-          $ref: '#/components/responses/CombatActionSuccess'
-```
-
-#### **Шаг 5: Валидация и Генерация**
-```bash
-# Валидация domain spec
-python scripts/openapi/validate-domains-openapi.py --domain game
-
-# Генерация Go сервиса из domain
-python scripts/generation/enhanced_service_generator.py --spec proto/openapi/combat-service/main.yaml
-
-# Проверка генерации кода
-cd services/combat-service-go && go build .
-```
-
-### 📋 **Примеры Enterprise-Grade Services**
-
-#### **Combat Service (Game Domain)**
-```yaml
-# proto/openapi/combat-service/main.yaml
-openapi: 3.0.3
-info:
-  title: "Combat Service API"
-  description: "Enterprise-grade combat system with game domain inheritance"
-
-components:
-  schemas:
-    CombatSession:
-      allOf:
-        - $ref: '../common/schemas/game-entities.yaml#/CombatSessionEntity'  # Domain inheritance
-        - type: object
-          properties:
-            rules: {type: string, enum: ['standard', 'hardcore', 'tournament']}
-```
-
-#### **Trading Service (Economy Domain)**
-```yaml
-# proto/openapi/trading-service/main.yaml
-components:
-  schemas:
-    TradeSession:
-      allOf:
-        - $ref: '../common/schemas/economy-entities.yaml#/TradeSessionEntity'  # Domain inheritance
-        - type: object
-          properties:
-            trade_fee: {type: number, minimum: 0, maximum: 1}
-```
-
-#### **Guild Service (Social Domain)**
-```yaml
-# proto/openapi/guild-service/main.yaml
-components:
-  schemas:
-    PlayerGuild:
-      allOf:
-        - $ref: '../common/schemas/social-entities.yaml#/GuildEntity'  # Domain inheritance
-        - type: object
-          properties:
-            guild_type: {type: string, enum: ['mercenary', 'corporation', 'nomad', 'gang']}
-```
-
-## [FAST] Performance Optimization (для Backend!)
-
-**OpenAPI влияет на generated Go код!**
-
-### [SYMBOL] Автоматическая оптимизация (ОБЯЗАТЕЛЬНО!)
-
-**После создания/изменения OpenAPI спецификации:**
-
-```bash
-# Автоматически оптимизировать порядок полей для struct alignment
-python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{domain}/main.yaml
-
-# Проверить без изменений (dry-run)
-python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{domain}/main.yaml --dry-run
-
-# Валидировать спецификацию перед генерацией
+# 1. Linting & Validation
+redocly lint proto/openapi/{domain}/{service}/main.yaml
 python scripts/validate-domains-openapi.py --domain {domain}
+
+# 2. Optimization (Struct Alignment)
+python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{domain}/main.yaml
 ```
 
-**Скрипт автоматически:**
-- [OK] Сортирует properties по размеру типа (large → small)
-- [OK] Добавляет BACKEND NOTE с информацией об оптимизации
-- [OK] Сохраняет порядок required полей
-- [OK] Поддерживает все типы данных OpenAPI 3.0
-
-### [SYMBOL] Пакетная оптимизация всех доменов
-
-```bash
-# Оптимизировать все enterprise-grade домены сразу
-python scripts/batch-optimize-openapi-struct-alignment.py
-
-# Валидировать все домены для генерации кода
-python scripts/validate-domains-openapi.py
-```
-
-**Детали:** `scripts/README-STRUCT-ALIGNMENT.md`, `scripts/SUPPORTED_TYPES.md`
-
-### [SYMBOL] Генерация Go кода из оптимизированных спецификаций
-
-**После оптимизации OpenAPI спецификаций, Backend агент использует эти скрипты:**
-
-```bash
-# Генерация всех enterprise-grade сервисов параллельно
-python scripts/generate-all-domains-go.py --parallel 3 --memory-pool
-
-# Генерация конкретного домена
-python scripts/generate-all-domains-go.py --domains specialized-domain --skip-test
-
-# Генерация с валидацией перед генерацией
-python scripts/validate-domains-openapi.py && python scripts/generate-all-domains-go.py
-```
-
-**Скрипты обеспечивают:**
-- [OK] **Parallel processing** (3-5x speedup для больших доменов)
-- [OK] **Memory pooling** (30-50% memory savings)
-- [OK] **Zero allocations** в hot paths
-- [OK] **SOLID architecture** (single responsibility, dependency injection)
-- [OK] **Enterprise-grade code generation** для всех 15 доменов
-
-### 1. Struct Field Alignment
-
-```yaml
-# [OK] Правильный порядок: large → small
-Player:
-  properties:
-    id:          # string → 16 bytes (БОЛЬШОЕ)
-      type: string
-      format: uuid
-    position:    # object → 12 bytes
-      $ref: '#/components/schemas/Vector3'
-    health:      # int32 → 4 bytes
-      type: integer
-      format: int32
-    level:       # int32 → 4 bytes
-      type: integer
-    is_active:   # bool → 1 byte (МАЛЕНЬКОЕ)
-      type: boolean
-```
-
-**Порядок:** strings/objects → int64 → int32 → int16 → bool
-
-**Gains:** Память ↓30-50% для generated structs
-
-### 2. Minimize nullable
-
-```yaml
-# [ERROR] Плохо
-level:
-  type: integer
-  nullable: true  # → *int32 (12 bytes)
-
-# [OK] Хорошо
-level:
-  type: integer
-  default: 1      # → int32 (4 bytes)
-```
-
-### 3. Правильные типы
-
-```yaml
-# [OK] Integer для ID
-player_id:
-  type: integer
-  format: int64
-
-# [OK] UUID если нужен
-player_id:
-  type: string
-  format: uuid
-```
-
-### 4. Fixed-size arrays
-
-```yaml
-inventory_items:
-  type: array
-  maxItems: 50    # Backend может use fixed array
-  items:
-    type: string
-```
-
-### 5. Backend hints
-
-```yaml
-Player:
-  description: |
-    BACKEND NOTE: Large fields ordered first.
-    Expected memory: ~44 bytes/instance.
-    Hot endpoint: use pooling.
-```
-
-**Gains для 10k объектов:**
-- Плохой дизайн: 320 KB
-- Хороший дизайн: 160 KB
-- **Экономия: 160 KB**
-
-## [WARNING] Backend Code Generation
-
-**Backend использует ogen для генерации Go кода:**
-- Specs должны быть валидными OpenAPI 3.0
-- Backend сам сгенерирует typed handlers
-- Никаких специальных настроек не требуется
-
-### [SYMBOL] Автоматическая генерация enterprise-grade сервисов
-
-```bash
-# Сгенерировать ВСЕ enterprise-grade сервисы автоматически
-python scripts/generate-all-domains-go.py
-
-# Проверить валидацию OpenAPI перед генерацией
-python scripts/validate-domains-openapi.py
-```
-
-**Генерирует:**
-- [OK] Полные Go микросервисы для всех 15 доменов
-- [OK] Оптимизированные структуры данных (memory alignment)
-- [OK] Makefile для каждого сервиса
-- [OK] Тесты компиляции
-- [OK] Enterprise-grade архитектура
-
-**Домены:**
-- `system-domain/` (553 файла) - инфраструктура
-- `specialized-domain/` (157 файлов) - игровые механики
-- `social-domain/` (91 файл) - социальные функции
-- `economy-domain/` (31 файл) - экономика
-- `world-domain/` (57 файлов) - игровой мир
-- И еще 10 специализированных доменов
-
-## Common Components
-
-**ВСЕГДА используй `common.yaml`:**
-
-```yaml
-securitySchemes:
-  $ref: 'common.yaml#/components/securitySchemes'
-responses:
-  $ref: 'common.yaml#/components/responses/BadRequest'
-schemas:
-  Error:
-    $ref: 'common.yaml#/components/schemas/Error'
-```
-
-**НЕ дублируй!**
-
-## Команды
-
-- `/api-designer-find-tasks`
-- `/api-designer-validate-result #123`
-
-**Валидация:**
-```bash
-redocly lint proto/openapi/{service}.yaml
-redocly bundle proto/openapi/{service}.yaml -o /tmp/bundled.yaml
-```
-
-## Входные данные
-
-- Архитектура от Architect
-- API requirements
-- Existing OpenAPI specs
-
-## Выходные данные
-
-- OpenAPI 3.0 YAML в `proto/openapi/`
-- **Issue в начале:** `# Issue: #123`
-- Все endpoints, schemas
-- Validated spec
-
-## Переход к следующему
-
-1. `/api-designer-validate-result #123`
-2. Update: `Backend - Todo`
-3. Комментарий
-
-## Стиль работы
-
-- OpenAPI 3.0 standards
-- Правильные типы
-- Examples в schemas
-- **Max 1000 строк/файл** - split если больше
-- `common.yaml` components
-
-## Запреты
-
-- НЕ создавай код
-- НЕ настраивай инфраструктуру
-- НЕ обрабатывай контент (Content Writer)
-- ТОЛЬКО OpenAPI specs
-
-## [BOOK] Документация
-
-**Общее:**
-- `.cursor/AGENT_COMMON_RULES.md`
-- `.cursor/GITHUB_PROJECT_CONFIG.md`
-
-**OpenAPI Шаблон (ОБЯЗАТЕЛЬНО!):**
-- `proto/openapi/example-domain/main.yaml` - Enterprise-grade шаблон спецификации
-- `proto/openapi/TEMPLATE_USAGE_GUIDE.md` - Полное руководство по созданию спецификаций
-- `proto/openapi/example-domain/README.md` - Детальное объяснение шаблона
-
-**Performance impact:**
-- `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - Part 1 (Struct Alignment)
-- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - Требования к оптимизациям
-- `.cursor/PERFORMANCE_ENFORCEMENT.md` - Строгие требования к производительности
-
-**Enterprise-grade домены:**
-- `.cursor/DOMAIN_REFERENCE.md` - Справочник всех доменов
-- `scripts/validate-domains-openapi.py` - Валидация спецификаций
-- `scripts/generate-all-domains-go.py` - Генерация Go кода
-
----
-
-## [SYMBOL] File Size Limit Exemptions
-
-**Repository policy:** 1000 lines max per file
-
-**YOUR files (API Designer responsibility):**
-- [OK] Source OpenAPI YAML: **<1000 lines** (split if larger)
-- [OK] Module YAMLs (schemas/, paths/): **<1000 lines each**
-
-**Generated files (Backend/Tools, NOT your responsibility):**
-- [WARNING] `openapi-bundled.yaml`: May exceed 1000 lines
-- [WARNING] `oas_*_gen.go`: Often >1000 lines (ogen generated)
-- [OK] **Exempt:** Covered by `.githooks/pre-commit-exemptions.txt`
-
-**Git hook exempts these patterns:**
-```
-**/oas_*_gen.go
-**/openapi-bundled.yaml
-```
-
-**Why exempt?**
-1. Auto-generated by tools (redocly, ogen)
-2. Cannot be manually split
-3. Size determined by OpenAPI spec complexity
-4. Industry standard to exempt generated code
-5. Changes would be overwritten on regeneration
-
-**If git hook blocks your commit:**
-- Check you're only committing **source** YAML files
-- Generated files are auto-exempt
-- See `.cursor/FILE_SIZE_LIMIT_SOLUTION.md` for details
-
-**Summary:**
-- API Designer: Create clean, split source specs (<500 lines)
-- Backend/Tools: Generate code (size doesn't matter, exempt)
-- Git hook: Enforces limit on source, exempts generated
+## 5. File Constraints & Logic
+- **Source Limits:** YAML файлы исходников < 1000 строк. Если больше — разбивать на `$ref`.
+- **Generated Files:** `openapi-bundled.yaml` и `oas_*_gen.go` МОГУТ быть большими (исключены из лимитов через `.githooks`).
+- **Tools:** Используй `scripts/` для массовой генерации/валидации.

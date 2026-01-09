@@ -62,3 +62,4 @@ COMMENT ON COLUMN notifications.priority IS 'Notification priority level';
 
 
 
+
