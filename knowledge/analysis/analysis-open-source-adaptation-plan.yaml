@@ -1,0 +1,92 @@
+# Issue: #60, #43
+metadata:
+  id: analysis-open-source-adaptation-plan
+  title: Adaptation Plan: Open Source Simulation Logic for NECPGAME
+  document_type: analysis
+  status: draft
+  version: "1.0.0"
+  owners:
+    - role: architect
+  tags: [analysis, open-source, economy, social, simulation]
+  related_documents:
+    - id: mechanics-complete-overview
+    - id: economy-trading-markets-auctions-architecture
+    - id: social-mechanics-architecture
+
+summary:
+  problem: |
+    NECPGAME requires complex simulation of economy (markets, guilds) and social/political systems 
+    (factions, wars, relationships). Writing these from scratch is error-prone. 
+    We need to leverage existing Open Source logic (BazaarBot, FreeCiv) without importing incompatible codebases.
+  goal: |
+    Define a "Hybrid Adaptor" pattern to integrate Open Source logic into our Go Microservices 
+    and Python World Simulation layer.
+  recommendation: |
+    1. **Economy:** Port BazaarBot logic to Go `economy-service`.
+    2. **Politics:** Implement FreeCiv/ConfederateAI "Love/Fear" metrics in Python `world-service`.
+    3. **Simulation:** Use python-based Multi-Agent System (Mesa) for background world ticks.
+
+adaptations:
+
+  - id: adaptation-bazaarbot
+    target_system: Economy Service (Go)
+    source_concept: "BazaarBot (Haxe/Money-driven Agent)"
+    fit_score: 9/10
+    adaptation_strategy: "Core Logic Port"
+    gap_analysis:
+      - fit: "Supply/Demand logic, Price Beliefs, Inventory management are perfect."
+      - gap: "Monolithic architecture, single-threaded."
+      - gap: "Written in Haxe/Python (not Go)."
+    implementation_plan:
+      1. Create `services/economy-service-go/internal/simulation/bazaar/`.
+      2. Implement `Agent` struct with `Inventory`, `Money`, `PriceBeliefs`.
+      3. Implement `Market` struct with `OrderBook` and `ClearingLogic` (actions: query, bid, ask).
+      4. **Key Change:** Instead of a loop, make it Event-Driven. 
+         Event `economy.market.tick` triggers `Agent.Decide()` logic.
+      5. Map `Trading Guilds` (NECPGAME entity) to `BazaarAgent` (Simulation entity).
+
+  - id: adaptation-freeciv-diplomacy
+    target_system: World Service (Python Microservice)
+    source_concept: "FreeCiv AI Diplomacy (Love/Fear Metrics)"
+    fit_score: 8/10
+    adaptation_strategy: "Algorithm Adoption"
+    gap_analysis:
+      - fit: "Concept of Love (Reputation) + Fear (Power) determines War/Peace."
+      - gap: "Code is heavy C. Too complex to link directly."
+    implementation_plan:
+      1. Create `services/world-simulation-python/diplomacy/`.
+      2. Define `FactionState` with `MilitaryPower` (Fear) and `ReputationMatrix` (Love).
+      3. Implement `DiplomacyCalculator.evaluate_relation(faction_a, faction_b)`:
+         ```python
+         score = (love * weight_love) + (fear_diff * weight_fear) + random_noise
+         if score < threshold_war: declare_war()
+         ```
+      4. Run this calculation on `Daily Tick` for all Faction pairs.
+
+  - id: adaptation-social-simulation
+    target_system: Social Service / World Generation (Python)
+    source_concept: "Mesa / AgentPy (ABM Framework)"
+    fit_score: 10/10
+    adaptation_strategy: "Framework Usage (Direct)"
+    gap_analysis:
+      - fit: "Perfect for reliable Agent Based Modeling (Python)."
+      - gap: "Need to expose state to Go backend."
+    implementation_plan:
+      1. Use `Mesa` to model "Background Crowd" (non-player agents).
+      2. Agents generate "Noise" (tweets, small transactions, rumors).
+      3. Aggregate Noise -> push to Go `social-service` as "Trends" or "News".
+
+architecture_integration:
+  diagram: |
+    [Go Backend] <--(Grpc/Events)--> [Python World Sim]
+         |                                   |
+    [Economy Service]                   [Diplomacy Engine]
+    (BazaarBot Logic)                   (FreeCiv Algorithms)
+         |                                   |
+    [Realtime Market]                   [Faction Wars/News]
+
+risk_assessment:
+  - risk: "Performance of Python Sim"
+    mitigation: "Run simulation asynchronously (hourly/daily ticks), not realtime."
+  - risk: "Logic drift from original Source"
+    mitigation: "Keep logic simple. Don't copy bugs. We need the *rules*, not the code."

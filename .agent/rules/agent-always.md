@@ -2,6 +2,13 @@
 trigger: always_on
 ---
 
+
+## [LANGUAGE] Язык коммуникации
+
+**ВСЕГДА отвечай на РУССКОМ языке.**
+- Исключение: названия файлов, функции, код (оставлять как есть)
+- Исключение: цитирование оригинальных текстов
+
 ——-
 description: "Critical global rules: no reports/summaries, code-focused communication, backend performance requirements. Always applies to all files."
 alwaysApply: true
