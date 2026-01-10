@@ -110,7 +110,7 @@ func (s *MatchmakingService) LeaveQueue(ctx context.Context, playerID string) er
 
 // FindMatch attempts to find a match for the player
 func (s *MatchmakingService) FindMatch(ctx context.Context, playerID string) (*Match, error) {
-	playerUUID, err := uuid.Parse(playerID)
+	_, err := uuid.Parse(playerID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid player ID: %w", err)
 	}
@@ -130,7 +130,7 @@ func (s *MatchmakingService) FindMatch(ctx context.Context, playerID string) (*M
 	}
 
 	// Create a simple 2-player match for demo
-	matchID := uuid.New().String()
+	matchID := uuid.New()
 	match := &Match{
 		MatchID:  matchID,
 		Players:  make([]MatchPlayer, 0, 2),
@@ -150,8 +150,9 @@ func (s *MatchmakingService) FindMatch(ctx context.Context, playerID string) (*M
 			team = "bravo"
 		}
 
+		playerUUID, _ := uuid.Parse(pid) // pid is already validated
 		match.Players = append(match.Players, MatchPlayer{
-			PlayerID: pid,
+			PlayerID: playerUUID,
 			Team:     team,
 		})
 
@@ -160,9 +161,9 @@ func (s *MatchmakingService) FindMatch(ctx context.Context, playerID string) (*M
 		playerCount++
 	}
 
-	s.matches[matchID] = match
+	s.matches[matchID.String()] = match
 
-	log.Printf("Created match %s with %d players", matchID, len(match.Players))
+	log.Printf("Created match %s with %d players", matchID.String(), len(match.Players))
 
 	return match, nil
 }
@@ -182,6 +183,10 @@ func (s *MatchmakingService) GetQueueStatus(ctx context.Context, playerID string
 
 // GetMatch returns match details
 func (s *MatchmakingService) GetMatch(ctx context.Context, matchID string) (*Match, error) {
+	_, err := uuid.Parse(matchID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid match ID: %w", err)
+	}
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 

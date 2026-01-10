@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/segmentio/kafka-go"
 	"necpgame/services/economy-service-go/internal/simulation/bazaar"
 )

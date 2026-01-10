@@ -26,6 +26,34 @@ func NewProgressService(db *sql.DB, redis *redis.Client, logger *zap.Logger) *Pr
 	}
 }
 
+// GetCurrentSeason returns the currently active season
+func (p *ProgressService) GetCurrentSeason() (*models.Season, error) {
+	var season models.Season
+	query := `
+		SELECT id, name, description, start_date, end_date, max_level, status, created_at, updated_at
+		FROM seasons
+		WHERE status = 'active'
+		ORDER BY start_date DESC
+		LIMIT 1
+	`
+
+	err := p.db.QueryRow(query).Scan(
+		&season.ID, &season.Name, &season.Description,
+		&season.StartDate, &season.EndDate, &season.MaxLevel,
+		&season.Status, &season.CreatedAt, &season.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no active season found")
+		}
+		p.logger.Error("Failed to get current season", zap.Error(err))
+		return nil, fmt.Errorf("failed to get current season: %w", err)
+	}
+
+	return &season, nil
+}
+
 // GetPlayerProgress returns player progress for a season
 func (p *ProgressService) GetPlayerProgress(playerID, seasonID string) (*models.PlayerProgress, error) {
 	// Try to get from cache first

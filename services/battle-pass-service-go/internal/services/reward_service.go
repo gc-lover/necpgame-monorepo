@@ -103,6 +103,34 @@ func (r *RewardService) ClaimReward(playerID string, request models.ClaimRequest
 	return result, nil
 }
 
+// GetCurrentSeason returns the currently active season
+func (r *RewardService) GetCurrentSeason() (*models.Season, error) {
+	var season models.Season
+	query := `
+		SELECT id, name, description, start_date, end_date, max_level, status, created_at, updated_at
+		FROM seasons
+		WHERE status = 'active'
+		ORDER BY start_date DESC
+		LIMIT 1
+	`
+
+	err := r.db.QueryRow(query).Scan(
+		&season.ID, &season.Name, &season.Description,
+		&season.StartDate, &season.EndDate, &season.MaxLevel,
+		&season.Status, &season.CreatedAt, &season.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no active season found")
+		}
+		r.logger.Error("Failed to get current season", zap.Error(err))
+		return nil, fmt.Errorf("failed to get current season: %w", err)
+	}
+
+	return &season, nil
+}
+
 // GetAvailableRewards returns all rewards available for claiming by a player
 func (r *RewardService) GetAvailableRewards(playerID, seasonID string) ([]models.AvailableReward, error) {
 	// Get player progress
