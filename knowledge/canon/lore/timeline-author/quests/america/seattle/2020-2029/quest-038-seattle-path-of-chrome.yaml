@@ -1,0 +1,976 @@
+# Issue: #2244
+# Dynamic Quest System Implementation - Personal Growth Quest Example
+# Content Writer Agent
+metadata:
+  id: canon-quest-seattle-038-path-of-chrome
+  title: Seattle 2020-2029 — Путь Хрома
+  document_type: canon
+  category: quest
+  status: draft
+  version: 1.0.0
+  last_updated: '2026-01-10T18:30:00Z'
+  concept_approved: true
+  concept_reviewed_at: '2026-01-10T18:30:00Z'
+  owners:
+  - role: narrative_lead
+    contact: narrative@necp.game
+  tags:
+  - seattle
+  - cyberpunk
+  - dynamic-quest
+  - player-choice
+  - branching-narrative
+  - personal-growth
+  - cyberware
+  - cyberpsychosis
+  - humanity-loss
+  - moral-choices
+  topics:
+  - cybernetic-enhancement
+  - humanity-and-machine
+  - cyberpsychosis-risk
+  - moral-choices
+  - personal-growth
+  - faction-reactions
+  related_systems:
+  - narrative-service
+  - quest-system
+  - cyberware-system
+  - cyberpsychosis-system
+  - humanity-system
+  - dynamic-quest-engine
+  - faction-system
+  related_documents:
+  - id: dynamic-quest-system-architecture
+    relation: implements
+    title: Dynamic Quest System Architecture
+  - id: dynamic-quest-system-player-choice-driven
+    relation: references
+    title: Dynamic Quest System Player Choice Driven
+  source: knowledge/idea/dynamic-quest-system-player-choice-driven.yaml
+  visibility: internal
+  audience:
+  - narrative
+  - vision
+  - content
+  risk_level: high
+
+review:
+  chain:
+  - role: concept_director
+    reviewer: ''
+    reviewed_at: ''
+    status: pending
+  next_actions: []
+
+summary:
+  problem: Вы стоите перед выбором - установить экспериментальные кибернетические импланты для повышения способностей или остаться "чистым" человеком. Каждый выбор в этом квесте влияет на риск киберпсихоза, потерю человечности, доступные импланты и реакции фракций на ваш уровень кибернизации.
+  goal: Пройти через серию моральных выборов, связанных с кибернетическими имплантами, где каждый выбор влияет на риск киберпсихоза, потерю человечности, доступность способностей и реакции фракций на ваш уровень модификации.
+  essence: |
+    Динамический квест с 6 ключевыми точками выбора, демонстрирующий систему ветвления на основе 
+    моральных выборов и личного роста персонажа.
+    
+    Квест развивается в зависимости от того, как игрок балансирует между человечностью и мощью:
+    - Первый выбор: Установить первый имплант или остаться без модификаций (да/нет/отложить) - 
+      определяет начальный путь
+    - Второй выбор: Выбор типа импланта (боевой/сенсорный/нейронный) - влияет на доступные способности 
+      и риск психоза
+    - Третий выбор: Риск киберпсихоза - принять риск для большей мощи или ограничиться безопасными 
+      имплантами (риск/безопасность/баланс) - влияет на доступные импланты и человечность
+    - Четвертый выбор: Потеря человечности - пожертвовать человечностью ради способностей или сохранить 
+      ее (пожертвовать/сохранить/баланс) - влияет на доступные способности и реакции NPC
+    - Пятый выбор: Реакция фракции на кибернизацию - как реагировать на мнение фракций о вашем уровне 
+      модификации (игнорировать/адаптироваться/скрывать) - влияет на репутацию и доступность квестов
+    - Шестой выбор: Личный путь - полностью отдаться кибернетике, сохранить баланс или вернуться к 
+      человечности (полный борг/баланс/декибернизация) - влияет на финальный исход
+    
+    Каждый выбор влияет на:
+    - Риск киберпсихоза (0-100%)
+    - Уровень человечности (0-100)
+    - Доступные импланты и способности
+    - Репутацию с фракциями (корпорации/улица/нормады)
+    - Реакции NPC на ваш внешний вид
+    - Доступность будущих квестов и диалогов
+    - Финальный исход квеста (6 возможных концовок)
+    
+    Квест демонстрирует долгосрочные последствия выборов: решение об установке импланта может 
+    открыть или закрыть пути в финале, а баланс между человечностью и мощью определяет доступность 
+    различных игровых стилей.
+
+quest_definition:
+  quest_type: main
+  level_min: 12
+  level_max: 22
+  dynamic_quest: true
+  choice_points: 6
+  branching_factor: 3
+  requirements:
+    required_quests: []
+    required_flags: []
+    required_reputation:
+      corporate: 0
+      street: 0
+    required_items: []
+  objectives:
+  - id: meet_ripperdoc
+    text: Встретиться с подпольным ripperdoc в Сиэтле
+    type: interact
+    target: underground_ripperdoc_clinic
+    count: 1
+    optional: false
+    choice_point: 0
+  - id: first_implant_choice
+    text: Решить, устанавливать ли первый кибернетический имплант
+    type: choice
+    target: choice_point_1
+    options:
+    - Install first cybernetic implant
+    - Refuse and remain baseline human
+    - Postpone decision
+    count: 1
+    optional: false
+    choice_point: 1
+  - id: implant_type_selection
+    text: Выбрать тип первого импланта
+    type: choice
+    target: choice_point_2
+    options:
+    - Combat enhancement implant (high power, high risk)
+    - Sensory enhancement implant (balanced, medium risk)
+    - Neural interface implant (low power, low risk, high utility)
+    count: 1
+    optional: false
+    conditional: choice_point_1 == "install_implant"
+    choice_point: 2
+  - id: cyberpsychosis_risk_choice
+    text: Принять риск киберпсихоза ради большей мощи или ограничиться безопасными имплантами
+    type: choice
+    target: choice_point_3
+    options:
+    - Accept high risk for maximum power
+    - Limit to safe implants only
+    - Balance risk and power carefully
+    count: 1
+    optional: false
+    conditional: choice_point_1 == "install_implant"
+    choice_point: 3
+  - id: humanity_loss_choice
+    text: Пожертвовать человечностью ради способностей или сохранить ее
+    type: choice
+    target: choice_point_4
+    options:
+    - Sacrifice humanity for abilities
+    - Preserve humanity at all costs
+    - Find balance between human and machine
+    count: 1
+    optional: false
+    conditional: choice_point_2 != null AND choice_point_3 != null
+    choice_point: 4
+  - id: faction_reaction_choice
+    text: Как реагировать на мнение фракций о вашем уровне кибернизации
+    type: choice
+    target: choice_point_5
+    options:
+    - Ignore faction opinions completely
+    - Adapt to faction preferences
+    - Hide cybernetic modifications
+    count: 1
+    optional: false
+    conditional: choice_point_4 != null
+    choice_point: 5
+  - id: final_path_choice
+    text: Определить финальный путь - полностью отдаться кибернетике, сохранить баланс или вернуться к человечности
+    type: choice
+    target: choice_point_6
+    options:
+    - Full borg conversion (maximum power, minimum humanity)
+    - Maintain balance between human and machine
+    - De-cyberneticization and return to baseline
+    count: 1
+    optional: false
+    conditional: choice_point_5 != null
+    choice_point: 6
+  rewards:
+    experience: 4500
+    money:
+      base: 0
+      conditional_modifier:
+        if: choice_point_1 == "install_implant"
+        then: -2000
+        elif: choice_point_6 == "full_borg"
+        then: -5000
+        else: 0
+    cybernetic_implants:
+      base: []
+      conditional_additions:
+        if: choice_point_1 == "install_implant" AND choice_point_2 == "combat_enhancement"
+        then:
+          - id: combat_enhancement_implant
+            name: Боевой имплант
+            type: combat
+            rarity: rare
+            power_boost: 30
+            cyberpsychosis_risk: 25
+            humanity_cost: 15
+        if: choice_point_1 == "install_implant" AND choice_point_2 == "sensory_enhancement"
+        then:
+          - id: sensory_enhancement_implant
+            name: Сенсорный имплант
+            type: sensory
+            rarity: uncommon
+            power_boost: 15
+            cyberpsychosis_risk: 10
+            humanity_cost: 8
+        if: choice_point_1 == "install_implant" AND choice_point_2 == "neural_interface"
+        then:
+          - id: neural_interface_implant
+            name: Нейронный интерфейс
+            type: neural
+            rarity: rare
+            power_boost: 20
+            cyberpsychosis_risk: 5
+            humanity_cost: 5
+    reputation:
+      corporate:
+        base: 0
+        conditional_modifier:
+          if: choice_point_6 == "full_borg"
+          then: 300
+          elif: choice_point_3 == "accept_high_risk"
+          then: 150
+          elif: choice_point_1 == "refuse_implant"
+          then: -100
+          else: 0
+      street:
+        base: 0
+        conditional_modifier:
+          if: choice_point_6 == "balance" AND choice_point_4 == "preserve_humanity"
+          then: 200
+          elif: choice_point_6 == "full_borg"
+          then: -200
+          elif: choice_point_1 == "refuse_implant"
+          then: 100
+          else: 50
+      nomads:
+        base: 0
+        conditional_modifier:
+          if: choice_point_1 == "refuse_implant" OR choice_point_6 == "de_cyberneticization"
+          then: 300
+          elif: choice_point_6 == "full_borg"
+          then: -300
+          elif: choice_point_6 == "balance"
+          then: 100
+          else: 0
+    unlocks:
+    - quest: canon-quest-seattle-full-borg-path
+      conditional: choice_point_6 == "full_borg" AND cyberpsychosis_risk > 50
+    - quest: canon-quest-seattle-humanity-preservation
+      conditional: choice_point_6 == "de_cyberneticization" OR choice_point_4 == "preserve_humanity"
+    - quest: canon-quest-seattle-balanced-cybernetics
+      conditional: choice_point_6 == "balance" AND humanity_level > 50 AND cyberpsychosis_risk < 30
+    - faction: corporate_cybernetics_program
+      conditional: choice_point_6 == "full_borg" AND reputation.corporate > 200
+    - faction: nomad_clean_human_alliance
+      conditional: choice_point_6 == "de_cyberneticization" AND reputation.nomads > 200
+    - location: advanced_ripperdoc_clinic
+      conditional: choice_point_3 == "accept_high_risk" OR choice_point_6 == "full_borg"
+    - ability: high_risk_implant_access
+      conditional: choice_point_3 == "accept_high_risk" AND cyberpsychosis_risk > 40
+    - ability: safe_implant_specialization
+      conditional: choice_point_3 == "limit_safe" AND humanity_level > 70
+
+content:
+  introduction: |
+    Подпольная клиника в промышленном районе Сиэтла. Запах стерилизаторов смешивается с запахом 
+    крови и металла. Доктор Алекс "Риппер" Морено смотрит на вас оценивающим взглядом, изучая 
+    ваше тело.
+    
+    "Вижу, ты еще чистый," - говорит он, указывая на ваше тело без модификаций. "В этом городе 
+    это редкость. Но редкость не значит преимущество."
+    
+    Он протягивает вам каталог имплантов - страницы заполнены возможностями: боевые усиления, 
+    сенсорные модификации, нейронные интерфейсы. Каждый имплант обещает силу, но цена может быть 
+    высока.
+    
+    "Первый имплант - это выбор пути," - объясняет доктор. "Боевой имплант даст тебе силу, но 
+    риск киберпсихоза высок. Сенсорный - баланс мощи и безопасности. Нейронный - минимальный риск, 
+    но максимальная утилитарность. Или... можешь остаться чистым. Но в этом городе чистые не 
+    живут долго."
+
+  plot_points:
+  - id: first_implant_decision
+    title: Решение об первом импланте
+    description: |
+      Первый ключевой выбор квеста: устанавливать ли первый кибернетический имплант? Да, нет или 
+      отложить решение?
+      
+      Этот выбор определяет начальный путь персонажа и влияет на все последующие взаимодействия 
+      в квесте. Установка импланта открывает путь к усилению, но создает риск киберпсихоза и потери 
+      человечности. Отказ сохраняет человечность, но ограничивает способности. Отсрочка сохраняет 
+      гибкость, но может закрыть некоторые пути.
+    choice_point: 1
+    consequences:
+      install_implant:
+        narrative_path: cybernetics_path
+        unlocks: implant_selection_path
+        humanity_modifier: -10
+        cyberpsychosis_risk_modifier: 5
+        reputation:
+          corporate: 50
+          street: -20
+          nomads: -50
+        narrative_response: |
+          Вы решаете установить первый имплант. Доктор Морено улыбается одобрительно. "Хорошо. 
+          Первый шаг на пути к совершенству. Выбери свой путь - сила, баланс или утилитарность. 
+          Каждый путь ведет в разные места."
+      refuse_implant:
+        narrative_path: baseline_human_path
+        unlocks: humanity_preservation_path
+        humanity_modifier: 0
+        cyberpsychosis_risk_modifier: 0
+        reputation:
+          corporate: -100
+          street: 100
+          nomads: 300
+        narrative_response: |
+          Вы решаете остаться чистым человеком. Доктор Морено смотрит на вас с уважением, но 
+          сожалением. "Редкий выбор. Храбрый. Но помни - в этом городе сила - это выживание. 
+          Без модификаций ты ограничен."
+      postpone_decision:
+        narrative_path: flexible_path
+        unlocks: delayed_choice_path
+        humanity_modifier: 0
+        cyberpsychosis_risk_modifier: 0
+        reputation:
+          corporate: 0
+          street: 50
+          nomads: 100
+        narrative_response: |
+          Вы решаете отложить решение. Доктор Морено кивает. "Разумный подход. Обдумай. Но помни 
+          - возможности не ждут. Когда будешь готов, найдешь меня здесь."
+
+  - id: implant_type_selection
+    title: Выбор типа импланта
+    description: |
+      Второй ключевой выбор: какой тип импланта установить? Боевой, сенсорный или нейронный?
+      
+      Выбор определяет доступные способности, риск киберпсихоза и потерю человечности. Боевой 
+      имплант дает максимум силы, но высокий риск и потерю человечности. Сенсорный дает баланс. 
+      Нейронный дает утилитарность с минимальным риском.
+    choice_point: 2
+    consequences:
+      combat_enhancement:
+        narrative_path: power_path
+        unlocks: combat_cybernetics_path
+        power_boost: 30
+        humanity_cost: 15
+        cyberpsychosis_risk: 25
+        reputation:
+          corporate: 100
+          street: -50
+        narrative_response: |
+          Вы выбираете боевой имплант. Доктор Морено предупреждает: "Сила велика, но цена высока. 
+          Риск киберпсихоза увеличивается. Потеря человечности неизбежна. Но... ты станешь 
+          сильнее, чем большинство людей могут себе представить."
+      sensory_enhancement:
+        narrative_path: balanced_path
+        unlocks: balanced_cybernetics_path
+        power_boost: 15
+        humanity_cost: 8
+        cyberpsychosis_risk: 10
+        reputation:
+          corporate: 50
+          street: 50
+        narrative_response: |
+          Вы выбираете сенсорный имплант. Доктор Морено одобрительно кивает. "Хороший выбор. 
+          Баланс между силой и безопасностью. Риск минимален, потеря человечности умеренна. Ты 
+          получишь способности, но останешься собой."
+      neural_interface:
+        narrative_path: utility_path
+        unlocks: neural_cybernetics_path
+        power_boost: 20
+        humanity_cost: 5
+        cyberpsychosis_risk: 5
+        reputation:
+          corporate: 30
+          street: 80
+        narrative_response: |
+          Вы выбираете нейронный интерфейс. Доктор Морено улыбается. "Утилитарный выбор. Минимальный 
+          риск, минимальная потеря человечности, но максимальная функциональность. Ты получишь 
+          новые способности, оставаясь практически полностью человеком."
+
+  - id: cyberpsychosis_risk_assessment
+    title: Оценка риска киберпсихоза
+    description: |
+      Третий ключевой выбор: принять высокий риск киберпсихоза ради максимальной мощи, ограничиться 
+      безопасными имплантами или найти баланс?
+      
+      Выбор влияет на доступные импланты, риск психоза и потерю человечности. Высокий риск дает 
+      доступ к мощным имплантам, но увеличивает опасность психоза. Безопасность ограничивает мощь, 
+      но сохраняет рассудок. Баланс находит компромисс.
+    choice_point: 3
+    consequences:
+      accept_high_risk:
+        narrative_path: high_risk_path
+        unlocks: maximum_power_implants
+        power_boost: 40
+        humanity_cost: 25
+        cyberpsychosis_risk: 50
+        reputation:
+          corporate: 200
+          street: -150
+          nomads: -200
+        narrative_response: |
+          Вы решаете принять высокий риск ради максимальной мощи. Доктор Морено предупреждает: 
+          "Этот путь опасен. Риск киберпсихоза высок. Потеря человечности значительна. Но... 
+          доступные импланты сделают тебя почти непобедимым. Почти. Потому что есть цена."
+        warning_message: |
+          Риск киберпсихоза: ВЫСОКИЙ (50%)
+          Потеря человечности: ЗНАЧИТЕЛЬНАЯ (25%)
+          Доступные импланты: МАКСИМАЛЬНАЯ МОЩЬ
+      limit_safe:
+        narrative_path: safety_path
+        unlocks: safe_implants_only
+        power_boost: 10
+        humanity_cost: 3
+        cyberpsychosis_risk: 5
+        reputation:
+          corporate: -50
+          street: 150
+          nomads: 250
+        narrative_response: |
+          Вы решаете ограничиться только безопасными имплантами. Доктор Морено уважительно кивает. 
+          "Безопасный путь. Риск минимален, человечность сохраняется. Но и мощь ограничена. Ты 
+          получишь способности, но останешься в безопасности."
+        info_message: |
+          Риск киберпсихоза: МИНИМАЛЬНЫЙ (5%)
+          Потеря человечности: НЕЗНАЧИТЕЛЬНАЯ (3%)
+          Доступные импланты: БЕЗОПАСНЫЕ ТОЛЬКО
+      balance_risk:
+        narrative_path: balanced_risk_path
+        unlocks: balanced_implants
+        power_boost: 20
+        humanity_cost: 10
+        cyberpsychosis_risk: 20
+        reputation:
+          corporate: 100
+          street: 100
+          nomads: 50
+        narrative_response: |
+          Вы решаете найти баланс между риском и мощью. Доктор Морено одобрительно улыбается. 
+          "Разумный выбор. Умеренный риск, умеренная потеря человечности, умеренная мощь. Ты 
+          получишь способности, сохраняя баланс между человеком и машиной."
+        info_message: |
+          Риск киберпсихоза: УМЕРЕННЫЙ (20%)
+          Потеря человечности: УМЕРЕННАЯ (10%)
+          Доступные импланты: СБАЛАНСИРОВАННЫЕ
+
+  - id: humanity_loss_decision
+    title: Решение о потере человечности
+    description: |
+      Четвертый ключевой выбор: пожертвовать человечностью ради способностей, сохранить ее любой 
+      ценой или найти баланс между человеком и машиной?
+      
+      Выбор влияет на доступные способности, реакции NPC и доступность будущих квестов. Жертвование 
+      человечностью открывает мощные способности, но закрывает многие социальные пути. Сохранение 
+      человечности ограничивает способности, но открывает социальные пути. Баланс находит компромисс.
+    choice_point: 4
+    consequences:
+      sacrifice_humanity:
+        narrative_path: machine_path
+        unlocks: high_power_abilities
+        humanity_modifier: -30
+        power_boost: 50
+        cyberpsychosis_risk_modifier: 15
+        reputation:
+          corporate: 300
+          street: -200
+          nomads: -300
+        npc_reaction_modifier:
+          corporate_contacts: 50
+          street_contacts: -50
+          nomad_contacts: -80
+        narrative_response: |
+          Вы решаете пожертвовать человечностью ради способностей. Доктор Морено смотрит на вас 
+          с одобрением, но с сожалением. "Путь машин. Ты получишь силу, но потеряешь себя. Многие 
+          выбирают этот путь. Немногие возвращаются. Но... ты станешь могущественным."
+      preserve_humanity:
+        narrative_path: human_path
+        unlocks: human_preservation_abilities
+        humanity_modifier: 0
+        power_boost: 10
+        cyberpsychosis_risk_modifier: -10
+        reputation:
+          corporate: -100
+          street: 200
+          nomads: 400
+        npc_reaction_modifier:
+          corporate_contacts: -30
+          street_contacts: 50
+          nomad_contacts: 80
+        narrative_response: |
+          Вы решаете сохранить человечность любой ценой. Доктор Морено уважительно кивает. "Путь 
+          человека. Ты ограничишь свои способности, но сохранишь себя. В этом городе это редкость. 
+          Но редкость не значит слабость. Иногда человечность - это и есть сила."
+      find_balance:
+        narrative_path: harmony_path
+        unlocks: balanced_abilities
+        humanity_modifier: -5
+        power_boost: 25
+        cyberpsychosis_risk_modifier: 0
+        reputation:
+          corporate: 150
+          street: 150
+          nomads: 100
+        npc_reaction_modifier:
+          corporate_contacts: 20
+          street_contacts: 30
+          nomad_contacts: 20
+        narrative_response: |
+          Вы решаете найти баланс между человеком и машиной. Доктор Морено улыбается. "Путь гармонии. 
+          Ты получишь способности, сохраняя человечность. Это нелегкий путь, но самый устойчивый. 
+          Баланс между силой и собой. Это и есть истинная мощь."
+
+  - id: faction_reaction_handling
+    title: Реакция на мнение фракций
+    description: |
+      Пятый ключевой выбор: как реагировать на мнение фракций о вашем уровне кибернизации? 
+      Игнорировать, адаптироваться или скрывать модификации?
+      
+      Выбор влияет на репутацию с фракциями и доступность будущих квестов. Игнорирование сохраняет 
+      независимость, но может закрыть пути. Адаптация к предпочтениям открывает пути, но требует 
+      компромиссов. Сокрытие сохраняет гибкость, но требует усилий.
+    choice_point: 5
+    consequences:
+      ignore_factions:
+        narrative_path: independent_path
+        unlocks: independent_reputation_path
+        reputation_modifier:
+          corporate: 0
+          street: 0
+          nomads: 0
+        narrative_response: |
+          Вы решаете игнорировать мнение фракций о ваших модификациях. "Мое тело - мой выбор," - 
+          говорите вы. Фракции уважают вашу независимость, но некоторые возможности остаются 
+          закрытыми. "Ты независим," - говорит представитель корпорации. "Но независимость имеет 
+          свою цену."
+      adapt_to_factions:
+        narrative_path: adaptive_path
+        unlocks: faction_adaptive_path
+        reputation_modifier:
+          corporate: 100
+          street: 100
+          nomads: -100
+        conditional_impact:
+          if: cyberpsychosis_risk > 40
+          then:
+            reputation:
+              corporate: 200
+              street: -100
+              nomads: -200
+        narrative_response: |
+          Вы решаете адаптироваться к предпочтениям фракций, выбирая импланты, которые соответствуют 
+          их ожиданиям. Фракции оценивают вашу гибкость, открывая новые возможности. "Ты понимаешь, 
+          как работает система," - говорит представитель корпорации. "Это ценится."
+      hide_modifications:
+        narrative_path: hidden_path
+        unlocks: stealth_modifications_path
+        reputation_modifier:
+          corporate: 0
+          street: 50
+          nomads: 150
+        narrative_response: |
+          Вы решаете скрывать свои кибернетические модификации, сохраняя видимость чистого человека. 
+          Это требует усилий, но сохраняет гибкость в отношениях с фракциями. "Ты выглядишь чистым," 
+          - говорит представитель номадов. "Это хорошо. Чистота ценится."
+
+  - id: final_path_determination
+    title: Определение финального пути
+    description: |
+      Шестой и финальный ключевой выбор: каков ваш финальный путь? Полностью отдаться кибернетике 
+      (полный борг), сохранить баланс между человеком и машиной или вернуться к человечности 
+      (декибернизация)?
+      
+      Финальный выбор определяет доступные способности, риск киберпсихоза, уровень человечности и 
+      доступность целой ветки квестов. Полный борг дает максимум мощи, но минимум человечности. 
+      Баланс сохраняет гибкость. Декибернизация возвращает человечность, но теряет способности.
+    choice_point: 6
+    consequences:
+      full_borg:
+        narrative_path: full_borg_conversion_path
+        unlocks: full_borg_questline
+        power_boost: 100
+        humanity_modifier: -80
+        cyberpsychosis_risk: 90
+        reputation:
+          corporate: 500
+          street: -400
+          nomads: -500
+        long_term_benefits:
+          maximum_power: true
+          access_to_advanced_implants: true
+          corporate_support: true
+          immunity_to_some_threats: true
+        long_term_consequences:
+          humanity_level: 20
+          cyberpsychosis_risk_permanent: 90
+          npc_reactions_permanent: hostile_from_humans
+          social_quests_blocked: most
+        narrative_response: |
+          Вы решаете полностью отдаться кибернетике, пройдя полную борг-конверсию. Доктор Морено 
+          смотрит на вас с восторгом и страхом. "Полный борг. Максимальная мощь. Минимальная 
+          человечность. Риск киберпсихоза критический. Но... ты станешь почти богом. Почти. 
+          Потому что есть цена. И эта цена - ты сам."
+        ending_type: full_borg_ending
+      maintain_balance:
+        narrative_path: balanced_path_final
+        unlocks: balanced_cybernetics_questline
+        power_boost: 30
+        humanity_modifier: -10
+        cyberpsychosis_risk: 20
+        reputation:
+          corporate: 200
+          street: 200
+          nomads: 150
+        long_term_benefits:
+          balanced_power: true
+          access_to_balanced_implants: true
+          flexible_faction_support: true
+          social_quests_available: most
+        long_term_consequences:
+          humanity_level: 70
+          cyberpsychosis_risk_permanent: 20
+          npc_reactions_permanent: mixed
+          social_quests_available: most
+        narrative_response: |
+          Вы решаете сохранить баланс между человеком и машиной. Доктор Морено улыбается с 
+          одобрением. "Баланс. Гармония между силой и человечностью. Умеренный риск, умеренная 
+          мощь, умеренная потеря человечности. Это нелегкий путь, но самый устойчивый. Ты получишь 
+          способности, оставаясь собой."
+        ending_type: balanced_ending
+      de_cyberneticization:
+        narrative_path: return_to_humanity_path
+        unlocks: humanity_preservation_questline
+        power_boost: 0
+        humanity_modifier: 50
+        cyberpsychosis_risk: 0
+        reputation:
+          corporate: -300
+          street: 300
+          nomads: 500
+        long_term_benefits:
+          full_humanity: true
+          nomad_support: true
+          social_quests_unlocked: all
+          humanity_bonuses: true
+        long_term_consequences:
+          humanity_level: 100
+          cyberpsychosis_risk_permanent: 0
+          npc_reactions_permanent: positive_from_humans
+          combat_abilities_limited: yes
+        narrative_response: |
+          Вы решаете вернуться к человечности, пройдя декибернизацию. Доктор Морено смотрит на вас 
+          с уважением и сожалением. "Возвращение к человечности. Редкий выбор. Отважный. Ты потеряешь 
+          способности, но обретешь себя. В этом городе это редкость. Но редкость не значит слабость."
+        ending_type: human_ending
+
+  endings:
+  - id: ending_full_borg
+    title: Полный борг
+    description: |
+      Вы полностью отдались кибернетике, пройдя полную борг-конверсию. Максимальная мощь, минимальная 
+      человечность, критический риск киберпсихоза. Корпорации видят в вас идеального солдата, но 
+      улица и номады отворачиваются от вас. Вы почти бог, но почти уже не человек.
+    requirements:
+      choice_point_1: install_implant
+      choice_point_3: accept_high_risk
+      choice_point_4: sacrifice_humanity
+      choice_point_6: full_borg
+    rewards_modifier:
+      power_boost: 100
+      humanity_level: 20
+      cyberpsychosis_risk: 90
+      reputation:
+        corporate: 600
+        street: -500
+        nomads: -600
+      unlocks:
+        - full_borg_questline
+        - maximum_power_abilities
+        - corporate_exclusive_quests
+
+  - id: ending_balanced_harmony
+    title: Гармония человека и машины
+    description: |
+      Вы нашли баланс между человеком и машиной, сохраняя способности при умеренной потере 
+      человечности. Умеренный риск киберпсихоза, умеренная мощь, умеренная человечность. Большинство 
+      фракций уважают ваш выбор, и вы сохраняете доступ к большинству путей развития.
+    requirements:
+      choice_point_1: install_implant
+      choice_point_3: balance_risk
+      choice_point_4: find_balance
+      choice_point_6: maintain_balance
+    rewards_modifier:
+      power_boost: 30
+      humanity_level: 70
+      cyberpsychosis_risk: 20
+      reputation:
+        corporate: 250
+        street: 250
+        nomads: 200
+      unlocks:
+        - balanced_cybernetics_questline
+        - flexible_faction_access
+        - social_and_combat_quests
+
+  - id: ending_preserved_humanity
+    title: Сохраненная человечность
+    description: |
+      Вы сохранили свою человечность, ограничившись безопасными имплантами или отказавшись от них 
+      совсем. Полная человечность, минимальный риск киберпсихоза, ограниченные способности. Номады 
+      и улица уважают ваш выбор, но корпорации отворачиваются. Вы человек, и этим все сказано.
+    requirements:
+      choice_point_1: refuse_implant OR (choice_point_1 == "install_implant" AND choice_point_4 == "preserve_humanity")
+      choice_point_6: de_cyberneticization OR maintain_balance
+    rewards_modifier:
+      power_boost: 10
+      humanity_level: 100
+      cyberpsychosis_risk: 0
+      reputation:
+        corporate: -400
+        street: 400
+        nomads: 600
+      unlocks:
+        - humanity_preservation_questline
+        - nomad_alliance_quests
+        - social_quests_unlocked
+
+  - id: ending_high_risk_warrior
+    title: Воин высокого риска
+    description: |
+      Вы приняли высокий риск киберпсихоза ради максимальной мощи, но сохранили баланс между человеком 
+      и машиной. Высокая мощь, умеренная потеря человечности, высокий риск психоза. Корпорации и 
+      улица уважают вашу мощь, но предупреждают о рисках.
+    requirements:
+      choice_point_3: accept_high_risk
+      choice_point_4: find_balance
+      choice_point_6: maintain_balance
+    rewards_modifier:
+      power_boost: 60
+      humanity_level: 50
+      cyberpsychosis_risk: 60
+      reputation:
+        corporate: 400
+        street: 100
+        nomads: -200
+      unlocks:
+        - high_risk_cybernetics_questline
+        - powerful_combat_abilities
+
+  - id: ending_safe_enhancement
+    title: Безопасное усиление
+    description: |
+      Вы ограничились только безопасными имплантами, сохранив максимальную человечность при 
+      умеренных способностях. Низкий риск киберпсихоза, высокая человечность, умеренная мощь. 
+      Номады и улица уважают ваш выбор, корпорации разочарованы.
+    requirements:
+      choice_point_3: limit_safe
+      choice_point_4: preserve_humanity
+      choice_point_6: maintain_balance
+    rewards_modifier:
+      power_boost: 15
+      humanity_level: 90
+      cyberpsychosis_risk: 5
+      reputation:
+        corporate: -200
+        street: 300
+        nomads: 450
+      unlocks:
+        - safe_cybernetics_questline
+        - nomad_alliance_quests
+
+  - id: ending_independent_path
+    title: Независимый путь
+    description: |
+      Вы выбрали независимый путь, игнорируя мнение фракций и следуя собственным принципам. 
+      Гибкость в выборе имплантов, независимая репутация, доступ к большинству путей. Вы не 
+      принадлежите ни одной фракции, но сохраняете возможность работать со всеми.
+    requirements:
+      choice_point_5: ignore_factions
+      choice_point_6: maintain_balance
+    rewards_modifier:
+      power_boost: 25
+      humanity_level: 60
+      cyberpsychosis_risk: 25
+      reputation:
+        corporate: 150
+        street: 150
+        nomads: 100
+      unlocks:
+        - independent_cybernetics_questline
+        - flexible_faction_access
+
+npc_characters:
+  - id: dr_alex_ripper_moreno
+    name: Доктор Алекс "Риппер" Морено
+    role: underground_ripperdoc
+    location: underground_ripperdoc_clinic_seattle
+    personality_traits:
+      - experienced
+      - pragmatic
+      - knowledgeable
+      - values_choice
+      - warns_about_risks
+    relationship_range: -100 to 100
+    initial_relationship: 0
+    dialogue_branches:
+      high_trust:
+        greeting: "Друг! Хорошо видеть тебя. Готов к новым модификациям?"
+        advice: "Ты доверяешь мне - я дам тебе лучший совет. Но помни - выбор всегда за тобой."
+      neutral:
+        greeting: "А, это ты. Нужны импланты?"
+        advice: "Стандартный совет: баланс - ключ ко всему."
+      low_trust:
+        greeting: "Чего тебе нужно?"
+        advice: "Базовый совет: подумай дважды перед установкой."
+
+mechanics_integration:
+  cyberpsychosis_system:
+    risk_tracking: "Риск киберпсихоза отслеживается и влияет на доступные импланты и реакции NPC"
+    risk_levels:
+      low: 0-20
+      moderate: 21-40
+      high: 41-60
+      critical: 61-100
+    risk_consequences:
+      low: "Доступны все безопасные импланты, NPC реагируют нормально"
+      moderate: "Доступны большинство имплантов, некоторые NPC выражают обеспокоенность"
+      high: "Доступны мощные импланты, многие NPC боятся, риск психоза заметен"
+      critical: "Доступны максимально мощные импланты, большинство NPC избегают, высокий риск психоза"
+  
+  humanity_system:
+    humanity_tracking: "Уровень человечности отслеживается и влияет на реакции NPC и доступность квестов"
+    humanity_levels:
+      high: 70-100
+      moderate: 40-69
+      low: 20-39
+      very_low: 0-19
+    humanity_consequences:
+      high: "NPC реагируют позитивно, доступны социальные квесты, номады дружелюбны"
+      moderate: "NPC реагируют нейтрально, большинство квестов доступны"
+      low: "NPC реагируют настороженно, некоторые социальные квесты недоступны"
+      very_low: "NPC избегают или боятся, большинство социальных квестов недоступны, корпорации интересуются"
+  
+  faction_reaction_system:
+    corporate_reaction: "Корпорации предпочитают высокую кибернизацию и низкую человечность"
+    street_reaction: "Улица предпочитает баланс между кибернетикой и человечностью"
+    nomad_reaction: "Номады предпочитают низкую кибернизацию и высокую человечность"
+    reaction_impact: "Реакции фракций влияют на доступность квестов, репутацию и диалоги"
+
+content:
+  sections:
+  - id: quest_overview
+    title: Обзор квеста
+    body: |
+      "Путь Хрома" - это динамический квест-пример, демонстрирующий систему ветвления на основе 
+      моральных выборов и личного роста персонажа. Квест полностью адаптируется к выбору игрока, 
+      создавая уникальный опыт для каждого прохождения.
+      
+      Квест разработан как практическая демонстрация системы динамических квестов с фокусом на 
+      личный рост и моральные выборы, описанной в архитектурных документах проекта. Каждый выбор 
+      имеет значимые последствия, влияющие не только на текущий квест, но и на будущие возможности 
+      игрока в системе кибернетики и человечности.
+    mechanics_links:
+    - dynamic-quest-system
+    - cyberware-system
+    - cyberpsychosis-system
+    - humanity-system
+    - faction-reaction-system
+    - choice-consequence-system
+    assets: []
+
+  - id: choice_points_detail
+    title: Детальное описание точек выбора
+    body: |
+      Квест содержит 6 пронумерованных точек выбора (choice_point: 1-6), каждая из которых влияет 
+      на последующие возможности:
+      
+      1. Первый выбор: Установить первый имплант или остаться чистым (да/нет/отложить) - определяет 
+         начальный путь и доступность путей
+      2. Второй выбор: Выбор типа импланта (боевой/сенсорный/нейронный) - влияет на способности, 
+         риск и потерю человечности
+      3. Третий выбор: Риск киберпсихоза (принять/ограничить/баланс) - влияет на доступные импланты 
+         и риск психоза
+      4. Четвертый выбор: Потеря человечности (пожертвовать/сохранить/баланс) - влияет на способности 
+         и реакции NPC
+      5. Пятый выбор: Реакция на мнение фракций (игнорировать/адаптироваться/скрывать) - влияет на 
+         репутацию и доступность квестов
+      6. Шестой выбор: Финальный путь (полный борг/баланс/декибернизация) - влияет на финальный 
+         исход и доступность будущих квестов
+      
+      Каждый выбор имеет множественные последствия: немедленные (способности, риск), среднесрочные 
+      (доступность путей, репутация) и долгосрочные (финальные концовки, доступность будущих квестов, 
+      постоянные модификаторы).
+    mechanics_links:
+    - choice-point-system
+    - consequence-tracking
+    - branching-narrative-engine
+    - cyberpsychosis-mechanics
+    - humanity-mechanics
+    assets: []
+
+  - id: endings_system
+    title: Система концовок
+    body: |
+      Квест имеет 6 различных концовок, каждая из которых определяется комбинацией выборов игрока:
+      
+      1. Полный борг - максимальная мощь, минимальная человечность, критический риск психоза
+      2. Гармония человека и машины - баланс между силой и человечностью, оптимальный путь
+      3. Сохраненная человечность - высокая человечность, ограниченные способности, номадская поддержка
+      4. Воин высокого риска - высокая мощь при балансе, высокий риск психоза
+      5. Безопасное усиление - безопасные импланты, высокая человечность, умеренная мощь
+      6. Независимый путь - гибкость в выборе, независимая репутация, доступ к большинству путей
+      
+      Концовки не имеют "правильного" или "неправильного" пути - каждый путь открывает различные 
+      возможности для дальнейшего развития персонажа в системе кибернетики и человечности.
+    mechanics_links:
+    - multiple-endings-system
+    - consequence-chain-system
+    - cyberpsychosis-mechanics
+    - humanity-mechanics
+    assets: []
+
+gameplay:
+  type: main
+  difficulty: medium
+  estimated_duration: 60-90 minutes
+  replayability: very_high
+  choice_impact: critical
+  
+  mechanics:
+    - Dynamic branching based on player choices
+    - Cyberpsychosis risk tracking and evolution
+    - Humanity level tracking and consequences
+    - Faction reaction system based on cybernetic level
+    - Long-term consequence system
+    - Multiple ending paths
+    - Conditional quest unlocking
+    - NPC reaction system based on humanity and cyberware
+  
+  challenges:
+    - Balancing power and humanity
+    - Managing cyberpsychosis risk
+    - Deciding between short-term power and long-term consequences
+    - Choosing between different implant paths
+    - Navigating faction reactions to cybernetic modifications
+  
+  player_agency: |
+    Игрок имеет полный контроль над направлением квеста через серию выборов. Каждый выбор открывает 
+    новые пути и закрывает другие, создавая уникальный опыт прохождения для каждого игрока. Система 
+    не навязывает "правильный" путь, позволяя игроку исследовать различные последствия своих решений 
+    и находить стиль игры, который ему подходит - от полного борга до чистого человека, от высокого 
+    риска до безопасного пути.
+
+# Issue: #2244
+# Dynamic Quest System Implementation - Personal Growth Quest Example
+# Content Writer Agent - Ready for Backend import
