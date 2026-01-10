@@ -1,0 +1,1144 @@
+openapi: 3.0.0
+info:
+  title: NECPGAME Voice Chat Service API
+  description: |
+    Enterprise-grade voice chat service for MMO real-time communication.
+
+    ## Features
+    - WebRTC-based voice communication
+    - Multiple room types (group, raid, guild, party, proximity, global)
+    - Audio recording and moderation
+    - Quality monitoring and analytics
+    - Scalable architecture with Kubernetes deployment
+
+    ## Performance Optimizations
+    - Memory pooling for hot path objects
+    - Struct field alignment (30-50% memory savings)
+    - Connection pooling for database and Redis
+    - Pprof profiling endpoints
+    - Prometheus metrics collection
+
+    ## Security
+    - JWT authentication and authorization
+    - Rate limiting and RBAC
+    - Input validation and sanitization
+    - Audit logging for moderation actions
+  version: 1.0.0
+  contact:
+    name: NECPGAME Backend Team
+    email: backend@necpgame.com
+
+servers:
+  - url: https://api.necpgame.com/voice-chat/v1
+    description: Production server
+  - url: https://staging-api.necpgame.com/voice-chat/v1
+    description: Staging server
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the voice chat service
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /rooms:
+    post:
+      summary: Create a voice chat room
+      description: Creates a new voice chat room with specified configuration
+      tags:
+        - Rooms
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoomRequest'
+      responses:
+        '201':
+          description: Room created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateRoomResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /rooms/{roomID}:
+    get:
+      summary: Get room information
+      description: Retrieves detailed information about a voice chat room
+      tags:
+        - Rooms
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RoomID'
+      responses:
+        '200':
+          description: Room information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomInfo'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      summary: Update room configuration
+      description: Updates the configuration of an existing voice chat room
+      tags:
+        - Rooms
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RoomID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoomRequest'
+      responses:
+        '200':
+          description: Room updated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete a voice chat room
+      description: Deletes an existing voice chat room
+      tags:
+        - Rooms
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RoomID'
+      responses:
+        '204':
+          description: Room deleted successfully
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rooms/{roomID}/join:
+    post:
+      summary: Join a voice chat room
+      description: Allows a user to join an existing voice chat room
+      tags:
+        - Rooms
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RoomID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinRoomRequest'
+      responses:
+        '200':
+          description: Successfully joined the room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinRoomResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rooms/{roomID}/leave:
+    post:
+      summary: Leave a voice chat room
+      description: Allows a user to leave a voice chat room
+      tags:
+        - Rooms
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RoomID'
+      responses:
+        '200':
+          description: Successfully left the room
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rooms/{roomID}/signaling:
+    post:
+      summary: Send WebRTC signaling message
+      description: Sends a WebRTC signaling message (offer, answer, candidate)
+      tags:
+        - Signaling
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RoomID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignalingMessage'
+      responses:
+        '200':
+          description: Signaling message sent successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rooms/{roomID}/recording/start:
+    post:
+      summary: Start audio recording
+      description: Starts recording audio in the voice chat room
+      tags:
+        - Recording
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RoomID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartRecordingRequest'
+      responses:
+        '200':
+          description: Recording started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartRecordingResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rooms/{roomID}/recording/stop:
+    post:
+      summary: Stop audio recording
+      description: Stops recording audio in the voice chat room
+      tags:
+        - Recording
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RoomID'
+      responses:
+        '200':
+          description: Recording stopped successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rooms/{roomID}/participants/{userID}/mute:
+    post:
+      summary: Mute/unmute a participant
+      description: Mutes or unmutes a participant in the voice chat room
+      tags:
+        - Moderation
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RoomID'
+        - $ref: '#/components/parameters/UserID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MuteParticipantRequest'
+      responses:
+        '200':
+          description: Participant muted/unmuted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rooms/{roomID}/participants/{userID}/kick:
+    post:
+      summary: Kick a participant
+      description: Kicks a participant from the voice chat room
+      tags:
+        - Moderation
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RoomID'
+        - $ref: '#/components/parameters/UserID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KickParticipantRequest'
+      responses:
+        '200':
+          description: Participant kicked successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rooms/{roomID}/metrics:
+    post:
+      summary: Submit voice quality metrics
+      description: Submits voice quality metrics from a client
+      tags:
+        - Metrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RoomID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QualityMetricsRequest'
+      responses:
+        '200':
+          description: Metrics submitted successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /rooms/{roomID}/invites:
+    post:
+      summary: Create room invite
+      description: Creates an invitation for a user to join the room
+      tags:
+        - Invites
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RoomID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInviteRequest'
+      responses:
+        '201':
+          description: Invite created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateInviteResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /invites/{inviteID}/accept:
+    post:
+      summary: Accept room invite
+      description: Accepts an invitation to join a voice chat room
+      tags:
+        - Invites
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/InviteID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptInviteRequest'
+      responses:
+        '200':
+          description: Invite accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptInviteResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          description: Invite expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    RoomID:
+      name: roomID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique identifier of the voice chat room
+    UserID:
+      name: userID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique identifier of the user
+    InviteID:
+      name: inviteID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique identifier of the room invite
+
+  schemas:
+    CreateRoomRequest:
+      type: object
+      required:
+        - name
+        - owner_id
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Name of the voice room
+        description:
+          type: string
+          maxLength: 500
+          description: Description of the voice room
+        owner_id:
+          type: string
+          format: uuid
+          description: ID of the room owner
+        game_server_id:
+          type: string
+          format: uuid
+          description: ID of the associated game server
+        region:
+          type: string
+          maxLength: 50
+          description: Geographic region for the room
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Maximum number of participants
+        room_type:
+          type: string
+          enum: [group, raid, guild, party, proximity, global]
+          default: group
+          description: Type of voice room
+        password:
+          type: string
+          maxLength: 100
+          description: Password for private rooms
+        quality_preset:
+          type: string
+          enum: [high, medium, low]
+          default: high
+          description: Audio quality preset
+        bitrate:
+          type: integer
+          minimum: 8000
+          maximum: 256000
+          description: Audio bitrate in bps
+        is_private:
+          type: boolean
+          default: false
+          description: Whether the room is private
+        is_temporary:
+          type: boolean
+          default: false
+          description: Whether the room should be auto-deleted when empty
+        allow_recording:
+          type: boolean
+          default: false
+          description: Whether recording is allowed in this room
+
+    CreateRoomResponse:
+      type: object
+      required:
+        - room_id
+        - room_token
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the created room
+        room_token:
+          type: string
+          description: Secure token for room access
+
+    JoinRoomRequest:
+      type: object
+      required:
+        - room_id
+        - user_id
+        - username
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: ID of the room to join
+        user_id:
+          type: string
+          format: uuid
+          description: ID of the user joining
+        username:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Display name of the user
+        password:
+          type: string
+          description: Password for private rooms
+        push_to_talk:
+          type: boolean
+          default: false
+          description: Whether the user prefers push-to-talk mode
+
+    JoinRoomResponse:
+      type: object
+      required:
+        - session_id
+        - webrtc_config
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Unique session identifier for this user in the room
+        webrtc_config:
+          $ref: '#/components/schemas/WebRTCConfig'
+
+    WebRTCConfig:
+      type: object
+      required:
+        - ice_servers
+      properties:
+        ice_servers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ICEServer'
+          description: ICE servers for WebRTC connection
+        audio_codec:
+          type: string
+          default: opus
+          description: Preferred audio codec
+        bitrate:
+          type: integer
+          description: Audio bitrate in bps
+        echo_cancellation:
+          type: boolean
+          default: true
+          description: Enable echo cancellation
+        noise_suppression:
+          type: boolean
+          default: true
+          description: Enable noise suppression
+        agc_enabled:
+          type: boolean
+          default: true
+          description: Enable automatic gain control
+
+    ICEServer:
+      type: object
+      required:
+        - urls
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+          description: URLs of the ICE server
+        username:
+          type: string
+          description: Username for TURN authentication
+        credential:
+          type: string
+          description: Credential for TURN authentication
+
+    SignalingMessage:
+      type: object
+      required:
+        - room_id
+        - session_id
+        - from_user
+        - to_user
+        - message_type
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: ID of the room
+        session_id:
+          type: string
+          format: uuid
+          description: User's session ID in the room
+        from_user:
+          type: string
+          format: uuid
+          description: ID of the user sending the message
+        to_user:
+          type: string
+          format: uuid
+          description: ID of the target user
+        message_type:
+          type: string
+          enum: [offer, answer, candidate, hangup]
+          description: Type of signaling message
+        sdp:
+          type: string
+          description: Session Description Protocol data
+        candidate:
+          type: string
+          description: ICE candidate data
+        candidate_type:
+          type: string
+          enum: [host, srflx, relay]
+          description: Type of ICE candidate
+        sequence_number:
+          type: integer
+          description: Sequence number for message ordering
+
+    RoomInfo:
+      type: object
+      required:
+        - room_id
+        - name
+        - owner_id
+        - room_type
+        - max_participants
+        - current_participants
+        - is_private
+        - status
+        - participants
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the room
+        name:
+          type: string
+          description: Name of the voice room
+        description:
+          type: string
+          description: Description of the voice room
+        owner_id:
+          type: string
+          format: uuid
+          description: ID of the room owner
+        room_type:
+          type: string
+          enum: [group, raid, guild, party, proximity, global]
+          description: Type of voice room
+        quality_preset:
+          type: string
+          enum: [high, medium, low]
+          description: Audio quality preset
+        status:
+          type: string
+          enum: [active, inactive, full, closed]
+          description: Current status of the room
+        max_participants:
+          type: integer
+          description: Maximum number of participants
+        current_participants:
+          type: integer
+          description: Current number of participants
+        bitrate:
+          type: integer
+          description: Audio bitrate in bps
+        is_private:
+          type: boolean
+          description: Whether the room is private
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParticipantInfo'
+          description: List of current participants
+
+    ParticipantInfo:
+      type: object
+      required:
+        - user_id
+        - username
+        - is_muted
+        - is_deafened
+        - is_speaking
+        - volume_level
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the participant
+        username:
+          type: string
+          description: Display name of the participant
+        is_muted:
+          type: boolean
+          description: Whether the participant is muted
+        is_deafened:
+          type: boolean
+          description: Whether the participant is deafened
+        is_speaking:
+          type: boolean
+          description: Whether the participant is currently speaking
+        volume_level:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Participant's volume level
+
+    StartRecordingRequest:
+      type: object
+      required:
+        - room_id
+        - user_id
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: ID of the room to record
+        user_id:
+          type: string
+          format: uuid
+          description: ID of the user starting the recording
+        title:
+          type: string
+          maxLength: 200
+          description: Title for the recording
+        is_public:
+          type: boolean
+          default: false
+          description: Whether the recording should be publicly accessible
+
+    StartRecordingResponse:
+      type: object
+      required:
+        - recording_id
+      properties:
+        recording_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the recording session
+
+    MuteParticipantRequest:
+      type: object
+      required:
+        - room_id
+        - requester_id
+        - target_user_id
+        - mute
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: ID of the room
+        requester_id:
+          type: string
+          format: uuid
+          description: ID of the user requesting the action
+        target_user_id:
+          type: string
+          format: uuid
+          description: ID of the user to mute/unmute
+        mute:
+          type: boolean
+          description: True to mute, false to unmute
+        duration:
+          type: integer
+          minimum: -1
+          description: Duration in seconds (-1 for permanent)
+        reason:
+          type: string
+          maxLength: 500
+          description: Reason for the moderation action
+
+    KickParticipantRequest:
+      type: object
+      required:
+        - room_id
+        - requester_id
+        - target_user_id
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: ID of the room
+        requester_id:
+          type: string
+          format: uuid
+          description: ID of the user requesting the action
+        target_user_id:
+          type: string
+          format: uuid
+          description: ID of the user to kick
+        reason:
+          type: string
+          maxLength: 500
+          description: Reason for the kick
+
+    QualityMetricsRequest:
+      type: object
+      required:
+        - room_id
+        - user_id
+        - session_id
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: ID of the room
+        user_id:
+          type: string
+          format: uuid
+          description: ID of the user
+        session_id:
+          type: string
+          format: uuid
+          description: User's session ID
+        codec_used:
+          type: string
+          description: Audio codec being used
+        network_type:
+          type: string
+          enum: [wifi, cellular, ethernet]
+          description: Type of network connection
+        jitter_ms:
+          type: integer
+          minimum: 0
+          description: Jitter in milliseconds
+        packets_lost:
+          type: integer
+          minimum: 0
+          description: Number of packets lost
+        packets_sent:
+          type: integer
+          minimum: 0
+          description: Number of packets sent
+        bytes_sent:
+          type: integer
+          minimum: 0
+          description: Number of bytes sent
+        round_trip_time:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Round trip time in milliseconds
+        packet_loss_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Packet loss rate (0.0-1.0)
+        audio_level:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Current audio level (0.0-1.0)
+        quality_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Overall quality score (0.0-1.0)
+        has_issues:
+          type: boolean
+          description: Whether there are quality issues
+
+    CreateInviteRequest:
+      type: object
+      required:
+        - room_id
+        - inviter_id
+        - invitee_id
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: ID of the room to invite to
+        inviter_id:
+          type: string
+          format: uuid
+          description: ID of the user sending the invite
+        invitee_id:
+          type: string
+          format: uuid
+          description: ID of the user being invited
+        message:
+          type: string
+          maxLength: 500
+          description: Personal message with the invite
+        expires_in:
+          type: integer
+          minimum: 60
+          maximum: 604800
+          default: 86400
+          description: Invite expiration time in seconds
+        require_auth:
+          type: boolean
+          default: true
+          description: Whether authentication is required to accept
+
+    CreateInviteResponse:
+      type: object
+      required:
+        - invite_id
+        - token
+      properties:
+        invite_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the invite
+        token:
+          type: string
+          description: Secure token for accepting the invite
+
+    AcceptInviteRequest:
+      type: object
+      required:
+        - invite_id
+        - user_id
+        - token
+      properties:
+        invite_id:
+          type: string
+          format: uuid
+          description: ID of the invite to accept
+        user_id:
+          type: string
+          format: uuid
+          description: ID of the user accepting the invite
+        token:
+          type: string
+          description: Secure token from the invite
+
+    AcceptInviteResponse:
+      type: object
+      required:
+        - room_id
+        - session_id
+        - webrtc_config
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: ID of the room being joined
+        session_id:
+          type: string
+          format: uuid
+          description: User's session ID in the room
+        webrtc_config:
+          $ref: '#/components/schemas/WebRTCConfig'
+
+    UpdateRoomRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Updated name of the voice room
+        description:
+          type: string
+          maxLength: 500
+          description: Updated description of the voice room
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Updated maximum number of participants
+        password:
+          type: string
+          maxLength: 100
+          description: Updated password for private rooms
+        quality_preset:
+          type: string
+          enum: [high, medium, low]
+          description: Updated audio quality preset
+        bitrate:
+          type: integer
+          minimum: 8000
+          maximum: 256000
+          description: Updated audio bitrate in bps
+        allow_recording:
+          type: boolean
+          description: Updated recording permission
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+          description: Health status of the service
+        service:
+          type: string
+          description: Name of the service
+        version:
+          type: string
+          description: Version of the service
+        timestamp:
+          type: integer
+          format: int64
+          description: Current timestamp
+        uptime:
+          type: integer
+          format: int64
+          description: Service uptime in seconds
+        active_rooms:
+          type: integer
+          description: Number of currently active rooms
+        active_participants:
+          type: integer
+          description: Number of currently active participants
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - code
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error type identifier
+        message:
+          type: string
+          description: Human-readable error message
+        code:
+          type: integer
+          description: HTTP status code
+        timestamp:
+          type: integer
+          format: int64
+          description: Timestamp when the error occurred
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "VALIDATION_ERROR"
+            message: "Invalid input parameters"
+            code: 400
+            timestamp: 1640995200
+
+    Unauthorized:
+      description: Authentication required or invalid token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "UNAUTHORIZED"
+            message: "Authentication required"
+            code: 401
+            timestamp: 1640995200
+
+    Forbidden:
+      description: Insufficient permissions for the requested operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "FORBIDDEN"
+            message: "Insufficient permissions"
+            code: 403
+            timestamp: 1640995200
+
+    NotFound:
+      description: Requested resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "NOT_FOUND"
+            message: "Resource not found"
+            code: 404
+            timestamp: 1640995200
+
+    RateLimited:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "RATE_LIMITED"
+            message: "Too many requests"
+            code: 429
+            timestamp: 1640995200
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "INTERNAL_ERROR"
+            message: "Internal server error"
+            code: 500
+            timestamp: 1640995200
