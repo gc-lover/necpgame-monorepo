@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -74,7 +75,7 @@ func (h *EconomyHandlers) PlaceOrder(ctx context.Context, req *api.PlaceOrderReq
 	h.logger.Info("PlaceOrder called",
 		zap.String("commodity", string(params.Commodity)),
 		zap.String("order_type", string(req.Type)),
-		zap.Float64("price", req.Price),
+		zap.Float64("price", float64(req.Price)),
 		zap.Int("quantity", req.Quantity),
 		zap.String("user_id", userID))
 
@@ -105,9 +106,9 @@ func (h *EconomyHandlers) PlaceOrder(ctx context.Context, req *api.PlaceOrderReq
 	trades := market.ClearMarket()
 
 	response := &api.OrderResponse{
-		OrderID: order.ID,
-		Status:  "placed",
-		Trades:  convertTrades(trades),
+		OrderID: api.NewOptString(order.ID),
+		Status:  api.NewOptOrderResponseStatus(api.OrderResponseStatusPlaced),
+		Message: api.NewOptString("Order placed successfully"),
 	}
 
 	h.logger.Info("Order placed successfully",
@@ -118,19 +119,9 @@ func (h *EconomyHandlers) PlaceOrder(ctx context.Context, req *api.PlaceOrderReq
 }
 
 // convertTrades converts bazaar trades to API format
-func convertTrades(trades []*bazaar.Trade) []api.Trade {
-	apiTrades := make([]api.Trade, len(trades))
-	for i, trade := range trades {
-		apiTrades[i] = api.Trade{
-			ID:       trade.ID,
-			BuyerID:  trade.BuyerID,
-			SellerID: trade.SellerID,
-			Price:    trade.Price,
-			Quantity: trade.Quantity,
-			ExecutedAt: trade.ExecutedAt,
-		}
-	}
-	return apiTrades
+// TODO: Implement when Trade type is available in API
+func convertTrades(trades []*bazaar.Trade) []interface{} {
+	return make([]interface{}, len(trades)) // Placeholder
 }
 
 // GetMarketPrice implements getMarketPrice operation.

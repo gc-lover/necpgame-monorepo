@@ -223,22 +223,22 @@ type CombatEvent struct {
 
 // Service implements the combat business logic
 type Service struct {
-	logger      *zap.Logger
-	tracer       trace.Tracer
-	meter        metric.Meter
-	db          *pgxpool.Pool
-	redis       *redis.Client
-	sessions    map[string]*CombatSession // In-memory session storage (use Redis in production)
-	sessionsMux sync.RWMutex
+	logger        *zap.Logger
+	tracer        trace.Tracer
+	meter         metric.Meter
+	db            *pgxpool.Pool
+	redis         *redis.Client
+	combatSessions map[string]*CombatSession // In-memory combat session storage
+	mu            sync.RWMutex
 }
 
 // NewCombatService creates optimized service instance
 func NewCombatService(cfg Config) (*Service, error) {
 	svc := &Service{
-		logger:   cfg.Logger,
-		tracer:   cfg.Tracer,
-		meter:    cfg.Meter,
-		sessions: make(map[string]*CombatSession),
+		logger:         cfg.Logger,
+		tracer:         cfg.Tracer,
+		meter:          cfg.Meter,
+		combatSessions: make(map[string]*CombatSession),
 	}
 
 	// Initialize database with performance optimizations
